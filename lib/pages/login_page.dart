@@ -38,10 +38,9 @@ class _LoginPageState extends State<LoginPage> {
         );
 
         if (user != null) {
-          // Verificar contraseña (en un caso real, la contraseña estaría hasheada)
-          // Por ahora, usamos una verificación simple para demostración
+          // Para usuarios de prueba, usar contraseña simple
+          // En un caso real, la contraseña estaría hasheada en la base de datos
           if (_passwordController.text == '123456') {
-            // Contraseña de prueba
             // Generar token de sesión
             final token = SecurityService.generateSessionToken(user.id);
 
@@ -54,6 +53,15 @@ class _LoginPageState extends State<LoginPage> {
               'email': user.email,
               'phone': user.phone,
             });
+
+            // Actualizar último login en la base de datos
+            final db = await _dbHelper.database;
+            await db.update(
+              'users',
+              {'lastLogin': DateTime.now().toIso8601String()},
+              where: 'id = ?',
+              whereArgs: [user.id],
+            );
 
             if (mounted) {
               setState(() {
@@ -70,7 +78,9 @@ class _LoginPageState extends State<LoginPage> {
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Contraseña incorrecta'),
+                  content: Text(
+                    'Contraseña incorrecta. Usa 123456 para usuarios de prueba.',
+                  ),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -83,7 +93,9 @@ class _LoginPageState extends State<LoginPage> {
             });
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Usuario no encontrado. Regístrate primero.'),
+                content: Text(
+                  'Usuario no encontrado. Usa juan@test.com, maria@test.com o carlos@test.com',
+                ),
                 backgroundColor: Colors.orange,
               ),
             );

@@ -5,8 +5,14 @@ import 'pages/home_page.dart';
 // Remove this line
 // import 'pages/dashboard_page.dart';
 import 'utils/app_colors.dart';
+import 'services/notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar servicios de forma condicional
+  await NotificationService().initialize();
+
   runApp(const MyWorksApp());
 }
 

@@ -39,10 +39,6 @@ dependencies:
   sqflite: ^2.3.0
   path: ^1.8.3
   
-  # Notificaciones push
-  firebase_core: ^2.24.2
-  firebase_messaging: ^14.7.10
-  
   # Gestión de estado
   provider: ^6.1.1
   

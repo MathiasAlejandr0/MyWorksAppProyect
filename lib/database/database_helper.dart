@@ -151,6 +151,67 @@ class DatabaseHelper {
   }
 
   Future<void> _insertInitialData(Database db) async {
+    // Insertar usuarios de prueba
+    final testUsers = [
+      {
+        'id': 'user_1',
+        'name': 'Juan Pérez',
+        'email': 'juan@test.com',
+        'phone': '+56912345678',
+        'profileImage': '',
+        'addresses':
+            'Av. Providencia 123, Santiago,Av. Las Condes 456, Santiago',
+        'isProfessional': 0,
+        'professionalId': null,
+        'createdAt': DateTime.now()
+            .subtract(const Duration(days: 30))
+            .toIso8601String(),
+        'lastLogin': DateTime.now().toIso8601String(),
+        'isVerified': 1,
+        'fcmToken': null,
+      },
+      {
+        'id': 'user_2',
+        'name': 'María González',
+        'email': 'maria@test.com',
+        'phone': '+56987654321',
+        'profileImage': '',
+        'addresses': 'Av. Vitacura 789, Santiago',
+        'isProfessional': 0,
+        'professionalId': null,
+        'createdAt': DateTime.now()
+            .subtract(const Duration(days: 15))
+            .toIso8601String(),
+        'lastLogin': DateTime.now()
+            .subtract(const Duration(hours: 2))
+            .toIso8601String(),
+        'isVerified': 1,
+        'fcmToken': null,
+      },
+      {
+        'id': 'user_3',
+        'name': 'Carlos Rodríguez',
+        'email': 'carlos@test.com',
+        'phone': '+56911223344',
+        'profileImage': '',
+        'addresses': 'Av. Apoquindo 321, Santiago',
+        'isProfessional': 0,
+        'professionalId': null,
+        'createdAt': DateTime.now()
+            .subtract(const Duration(days: 7))
+            .toIso8601String(),
+        'lastLogin': DateTime.now()
+            .subtract(const Duration(days: 1))
+            .toIso8601String(),
+        'isVerified': 0,
+        'fcmToken': null,
+      },
+    ];
+
+    for (var userData in testUsers) {
+      await db.insert('users', userData);
+    }
+
     // Insertar servicios
     for (Service service in services) {
       await db.insert('services', {
@@ -217,6 +278,84 @@ class DatabaseHelper {
         'serviceType': review.serviceType,
         'isVerified': review.isVerified ? 1 : 0,
       });
+    }
+
+    // Insertar algunas solicitudes de prueba
+    final testRequests = [
+      {
+        'id': 'req_1',
+        'clientId': 'user_1',
+        'professionalId': 'prof_1',
+        'serviceId': 'service_1',
+        'address': 'Av. Providencia 123, Santiago',
+        'description': 'Necesito reparar una llave que gotea en el baño',
+        'requestedDate': DateTime.now()
+            .add(const Duration(days: 2))
+            .toIso8601String(),
+        'scheduledDate': DateTime.now()
+            .add(const Duration(days: 2))
+            .toIso8601String(),
+        'status': 'pending',
+        'estimatedCost': 25000.0,
+        'finalCost': null,
+        'notes': null,
+        'createdAt': DateTime.now()
+            .subtract(const Duration(hours: 2))
+            .toIso8601String(),
+        'updatedAt': null,
+      },
+      {
+        'id': 'req_2',
+        'clientId': 'user_1',
+        'professionalId': 'prof_2',
+        'serviceId': 'service_2',
+        'address': 'Av. Providencia 123, Santiago',
+        'description': 'Instalar una nueva cerradura en la puerta principal',
+        'requestedDate': DateTime.now()
+            .add(const Duration(days: 1))
+            .toIso8601String(),
+        'scheduledDate': DateTime.now()
+            .add(const Duration(days: 1))
+            .toIso8601String(),
+        'status': 'accepted',
+        'estimatedCost': 35000.0,
+        'finalCost': null,
+        'notes': 'Profesional confirmado para mañana',
+        'createdAt': DateTime.now()
+            .subtract(const Duration(days: 1))
+            .toIso8601String(),
+        'updatedAt': DateTime.now()
+            .subtract(const Duration(hours: 6))
+            .toIso8601String(),
+      },
+      {
+        'id': 'req_3',
+        'clientId': 'user_2',
+        'professionalId': 'prof_3',
+        'serviceId': 'service_3',
+        'address': 'Av. Vitacura 789, Santiago',
+        'description': 'Mantener el jardín y podar los árboles',
+        'requestedDate': DateTime.now()
+            .add(const Duration(days: 3))
+            .toIso8601String(),
+        'scheduledDate': DateTime.now()
+            .add(const Duration(days: 3))
+            .toIso8601String(),
+        'status': 'in_progress',
+        'estimatedCost': 45000.0,
+        'finalCost': null,
+        'notes': 'Trabajo en progreso',
+        'createdAt': DateTime.now()
+            .subtract(const Duration(days: 2))
+            .toIso8601String(),
+        'updatedAt': DateTime.now()
+            .subtract(const Duration(hours: 1))
+            .toIso8601String(),
+      },
+    ];
+
+    for (var requestData in testRequests) {
+      await db.insert('service_requests', requestData);
     }
   }
 
