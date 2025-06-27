@@ -498,7 +498,7 @@ class DatabaseHelper {
       'title': notification.title,
       'message': notification.message,
       'type': notification.type,
-      'data': notification.data == null ? null : notification.data.toString(),
+      'data': notification.data?.toString(),
       'isRead': notification.isRead ? 1 : 0,
       'createdAt': notification.createdAt.toIso8601String(),
     });
