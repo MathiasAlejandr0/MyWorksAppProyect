@@ -133,7 +133,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 ## 👨‍💻 Autor
 
-Desarrollado como proyecto de aplicación móvil para servicios al hogar.
+Desarrollado por Mathias Alejandro Jara Alvarado
 
 ## 📞 Soporte
 
