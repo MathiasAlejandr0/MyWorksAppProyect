@@ -41,8 +41,8 @@ class _WorkerRegisterPageState extends State<WorkerRegisterPage> {
 
   // Imágenes
   File? _profileImage;
-  List<File> _workImages = [];
-  List<File> _certificateFiles = [];
+  final List<File> _workImages = [];
+  final List<File> _certificateFiles = [];
 
   // Lista de profesiones
   final List<String> _professions = [
@@ -162,12 +162,14 @@ class _WorkerRegisterPageState extends State<WorkerRegisterPage> {
       final existingWorker =
           await _databaseHelper.getWorkerByEmail(_emailController.text);
       if (existingWorker != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('El email ya está registrado'),
-            backgroundColor: AppColors.errorColor,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('El email ya está registrado'),
+              backgroundColor: AppColors.errorColor,
+            ),
+          );
+        }
         return;
       }
 
@@ -592,7 +594,6 @@ class _WorkerRegisterPageState extends State<WorkerRegisterPage> {
                       _hasTitle = value;
                     });
                   },
-                  activeColor: AppColors.primaryColor,
                 ),
               ],
             ),

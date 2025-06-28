@@ -365,7 +365,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimaryColor,
@@ -374,7 +374,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               color: AppColors.textSecondaryColor,
             ),

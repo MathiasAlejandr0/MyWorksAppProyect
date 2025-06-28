@@ -28,7 +28,7 @@ class WorkerNotification {
       'type': type,
       'isRead': isRead ? 1 : 0,
       'createdAt': createdAt.toIso8601String(),
-      'data': data != null ? data.toString() : null,
+      'data': data?.toString(),
     };
   }
 

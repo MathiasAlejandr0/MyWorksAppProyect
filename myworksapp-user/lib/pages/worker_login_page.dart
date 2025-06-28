@@ -143,11 +143,11 @@ class _WorkerLoginPageState extends State<WorkerLoginPage> {
           decoration: BoxDecoration(
             color: AppColors.primaryColor,
             borderRadius: BorderRadius.circular(60),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: AppColors.shadowColor,
                 blurRadius: 10,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),

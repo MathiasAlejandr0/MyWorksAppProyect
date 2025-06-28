@@ -29,7 +29,7 @@ class MyWorksApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: AppColors.primaryColor,
-        colorScheme: ColorScheme.light(
+        colorScheme: const ColorScheme.light(
           primary: AppColors.primaryColor,
           secondary: AppColors.secondaryColor,
           surface: AppColors.backgroundColor,
@@ -40,10 +40,10 @@ class MyWorksApp extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
         ),
-        cardTheme: CardThemeData(
+        cardTheme: const CardThemeData(
           color: AppColors.cardColor,
           elevation: 2,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(

@@ -239,7 +239,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             colors: [AppColors.primaryColor, AppColors.primaryDarkColor],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -349,7 +349,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                   size: 24,
                 ),
                 const SizedBox(width: 12),
-                Text(
+                const Text(
                   'Estado de Disponibilidad',
                   style: TextStyle(
                     fontSize: 18,
@@ -364,7 +364,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
               _currentWorker!.isAvailable
                   ? 'Estás disponible para recibir solicitudes de trabajo. Los clientes podrán contactarte.'
                   : 'No estás disponible para recibir solicitudes. Los clientes no podrán contactarte.',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondaryColor,
               ),
@@ -457,7 +457,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             const SizedBox(height: 8),
             Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimaryColor,
@@ -466,7 +466,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             const SizedBox(height: 4),
             Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondaryColor,
               ),
@@ -489,7 +489,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Acciones Rápidas',
               style: TextStyle(
                 fontSize: 18,
@@ -575,7 +575,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 color: AppColors.textPrimaryColor,
                 fontWeight: FontWeight.w500,
@@ -599,7 +599,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Información del Perfil',
               style: TextStyle(
                 fontSize: 18,
@@ -635,7 +635,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             width: 80,
             child: Text(
               '$label:',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondaryColor,
@@ -645,7 +645,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textPrimaryColor,
               ),

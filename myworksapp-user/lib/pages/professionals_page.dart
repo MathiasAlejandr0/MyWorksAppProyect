@@ -155,13 +155,13 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.people_outline,
             size: 80,
             color: AppColors.textSecondaryColor,
           ),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'No hay profesionales disponibles',
             style: TextStyle(
               fontSize: 18,
@@ -170,7 +170,7 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Los profesionales registrados aparecerán aquí cuando estén disponibles',
             style: TextStyle(
               fontSize: 14,
@@ -193,7 +193,7 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
   }
 
   Widget _buildNoResults() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -202,7 +202,7 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
             size: 60,
             color: AppColors.textSecondaryColor,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'No se encontraron resultados',
             style: TextStyle(
@@ -211,7 +211,7 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
               color: AppColors.textPrimaryColor,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'Intenta con otros filtros o términos de búsqueda',
             style: TextStyle(
@@ -356,7 +356,7 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
                         Text(
                           _getProfessionFromService(
                               professional.services.first),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
                             color: AppColors.textSecondaryColor,
                           ),
@@ -364,7 +364,7 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.star,
                               size: 16,
                               color: AppColors.ratingColor,
@@ -378,7 +378,7 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
                               ),
                             ),
                             const SizedBox(width: 16),
-                            Icon(
+                            const Icon(
                               Icons.location_on,
                               size: 16,
                               color: AppColors.textSecondaryColor,
@@ -402,7 +402,7 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
                           const SizedBox(height: 8),
                           Text(
                             'Desde \$${professional.servicePrices.values.first.toStringAsFixed(0)}/hora',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primaryColor,

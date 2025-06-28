@@ -336,9 +336,9 @@ class _ProfessionalDetailPageState extends State<ProfessionalDetailPage> {
           if (_isLoadingReviews)
             const Center(child: CircularProgressIndicator())
           else if (_reviews.isEmpty)
-            Card(
+            const Card(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
                     Icon(
@@ -346,7 +346,7 @@ class _ProfessionalDetailPageState extends State<ProfessionalDetailPage> {
                       size: 48,
                       color: AppColors.textSecondaryColor,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       'No hay reseñas aún',
                       style: TextStyle(
@@ -395,7 +395,7 @@ class _ProfessionalDetailPageState extends State<ProfessionalDetailPage> {
                                   ),
                                   Row(
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.star,
                                         size: 16,
                                         color: AppColors.ratingColor,

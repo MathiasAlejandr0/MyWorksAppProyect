@@ -97,7 +97,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
           ),
           estimatedCost:
               widget.professional?.servicePrices[widget.service.id] ??
-              widget.service.basePrice,
+                  widget.service.basePrice,
           createdAt: DateTime.now(),
         );
 
@@ -141,8 +141,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
 
   @override
   Widget build(BuildContext context) {
-    final price =
-        widget.professional?.servicePrices[widget.service.id] ??
+    final price = widget.professional?.servicePrices[widget.service.id] ??
         widget.service.basePrice;
 
     return Scaffold(
@@ -188,7 +187,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                             const SizedBox(height: 4),
                             Text(
                               widget.service.description,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 14,
                               ),
@@ -216,24 +215,24 @@ class _RequestServicePageState extends State<RequestServicePage> {
                             borderRadius: BorderRadius.circular(25),
                             color: AppColors.primary.withOpacity(0.1),
                           ),
-                          child:
-                              widget.professional!.profileImage.startsWith(
-                                'assets/',
-                              )
+                          child: widget.professional!.profileImage.startsWith(
+                            'assets/',
+                          )
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(25),
                                   child: Image.asset(
                                     widget.professional!.profileImage,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
-                                      return Icon(
+                                      return const Icon(
                                         Icons.person,
                                         color: AppColors.primary,
                                       );
                                     },
                                   ),
                                 )
-                              : Icon(Icons.person, color: AppColors.primary),
+                              : const Icon(Icons.person,
+                                  color: AppColors.primary),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -249,7 +248,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                                     ),
                                   ),
                                   if (widget.professional!.isVerified)
-                                    Icon(
+                                    const Icon(
                                       Icons.verified,
                                       color: Colors.blue,
                                       size: 16,
@@ -258,7 +257,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                               ),
                               Text(
                                 '${widget.professional!.rating} ⭐ (${widget.professional!.totalReviews} reseñas)',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
@@ -268,7 +267,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                         ),
                         Text(
                           '\$${price.toStringAsFixed(0)}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
                           ),
@@ -390,7 +389,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                       ),
                       Text(
                         '\$${price.toStringAsFixed(0)}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,

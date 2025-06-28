@@ -97,7 +97,7 @@ class ServiceCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       service.description,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.textSecondaryColor,
                         fontSize: 14,
                       ),
