@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/worker.dart';
 import '../services/worker_security_service.dart';
-import '../database/worker_database_helper.dart';
+// import '../database/worker_database_helper.dart'; // Eliminado: no se usa
 import '../utils/app_colors.dart';
 
 class WorkerProfilePage extends StatefulWidget {
@@ -31,7 +31,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading worker data: $e');
+      // print('Error loading worker data: $e'); // Reemplazado por comentario
       setState(() {
         _isLoading = false;
       });
@@ -351,9 +351,21 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: Color.fromRGBO(
+          (color.r * 255.0).round() & 0xff,
+          (color.g * 255.0).round() & 0xff,
+          (color.b * 255.0).round() & 0xff,
+          0.1,
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(
+          color: Color.fromRGBO(
+            (color.r * 255.0).round() & 0xff,
+            (color.g * 255.0).round() & 0xff,
+            (color.b * 255.0).round() & 0xff,
+            0.3,
+          ),
+        ),
       ),
       child: Column(
         children: [

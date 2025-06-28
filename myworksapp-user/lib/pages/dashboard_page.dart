@@ -100,7 +100,12 @@ class DashboardPage extends StatelessWidget {
                         width: 120,
                         margin: const EdgeInsets.only(right: 16),
                         decoration: BoxDecoration(
-                          color: service.color.withOpacity(0.2),
+                          color: Color.fromRGBO(
+                            (service.color.r * 255.0).round() & 0xff,
+                            (service.color.g * 255.0).round() & 0xff,
+                            (service.color.b * 255.0).round() & 0xff,
+                            0.2,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -190,7 +195,12 @@ class DashboardPage extends StatelessWidget {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryColor.withOpacity(0.1),
+                  color: Color.fromRGBO(
+                    (AppColors.primaryColor.r * 255.0).round() & 0xff,
+                    (AppColors.primaryColor.g * 255.0).round() & 0xff,
+                    (AppColors.primaryColor.b * 255.0).round() & 0xff,
+                    0.1,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppColors.primaryColor),

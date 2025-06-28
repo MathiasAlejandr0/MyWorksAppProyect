@@ -18,9 +18,9 @@ class WorkerSyncService {
       final databasesPath = await getDatabasesPath();
       _workerDbPath = join(databasesPath, 'worker_database.db');
 
-      print('Worker database path: $_workerDbPath');
+      // print('Worker database path: \\$_workerDbPath');
     } catch (e) {
-      print('Error initializing worker sync service: $e');
+      // print('Error initializing worker sync service: \\${e}');
     }
   }
 
@@ -32,7 +32,7 @@ class WorkerSyncService {
       final file = File(_workerDbPath!);
       return await file.exists();
     } catch (e) {
-      print('Error checking worker database: $e');
+      // print('Error checking worker database: \\${e}');
       return false;
     }
   }
@@ -40,7 +40,7 @@ class WorkerSyncService {
   // Obtener todos los trabajadores disponibles
   Future<List<Professional>> getAvailableWorkers() async {
     if (!await workerDatabaseExists()) {
-      print('Worker database does not exist');
+      // print('Worker database does not exist');
       return [];
     }
 
@@ -57,7 +57,7 @@ class WorkerSyncService {
 
       return maps.map((map) => _convertWorkerToProfessional(map)).toList();
     } catch (e) {
-      print('Error getting available workers: $e');
+      // print('Error getting available workers: \\${e}');
       return [];
     }
   }
@@ -81,7 +81,7 @@ class WorkerSyncService {
 
       return maps.map((map) => _convertWorkerToProfessional(map)).toList();
     } catch (e) {
-      print('Error getting workers by profession: $e');
+      // print('Error getting workers by profession: \\${e}');
       return [];
     }
   }
@@ -108,7 +108,7 @@ class WorkerSyncService {
       }
       return null;
     } catch (e) {
-      print('Error getting worker by id: $e');
+      // print('Error getting worker by id: \\${e}');
       return null;
     }
   }
@@ -133,7 +133,7 @@ class WorkerSyncService {
 
       return maps.map((map) => _convertWorkerReviewToReview(map)).toList();
     } catch (e) {
-      print('Error getting worker reviews: $e');
+      // print('Error getting worker reviews: \\${e}');
       return [];
     }
   }
@@ -266,7 +266,7 @@ class WorkerSyncService {
         'professions': professions,
       };
     } catch (e) {
-      print('Error getting worker stats: $e');
+      // print('Error getting worker stats: \\${e}');
       return {
         'totalWorkers': 0,
         'availableWorkers': 0,
@@ -291,7 +291,7 @@ class WorkerSyncService {
 
       return (result.first['count'] as int) > 0;
     } catch (e) {
-      print('Error checking available workers: $e');
+      // print('Error checking available workers: \\${e}');
       return false;
     }
   }
@@ -317,7 +317,7 @@ class WorkerSyncService {
 
       return maps.map((map) => _convertWorkerToProfessional(map)).toList();
     } catch (e) {
-      print('Error getting featured workers: $e');
+      // print('Error getting featured workers: \\${e}');
       return [];
     }
   }

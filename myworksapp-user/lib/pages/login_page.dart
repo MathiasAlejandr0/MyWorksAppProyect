@@ -251,9 +251,10 @@ class _LoginPageState extends State<LoginPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: const Color.fromRGBO(0, 122, 255, 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    border: Border.all(
+                        color: const Color.fromRGBO(0, 122, 255, 0.3)),
                   ),
                   child: const Column(
                     children: [

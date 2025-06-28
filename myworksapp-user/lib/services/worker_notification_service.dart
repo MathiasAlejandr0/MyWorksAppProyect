@@ -19,7 +19,7 @@ class WorkerNotificationService {
 
   // Solicitar permisos de notificación
   Future<void> requestNotificationPermissions() async {
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+    await _firebaseMessaging.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -29,17 +29,17 @@ class WorkerNotificationService {
       sound: true,
     );
 
-    print('User granted permission: ${settings.authorizationStatus}');
+    // print('User granted permission: ${settings.authorizationStatus}');
   }
 
   // Obtener token FCM
   Future<String?> getFCMToken() async {
     try {
       String? token = await _firebaseMessaging.getToken();
-      print('FCM Token: $token');
+      // print('FCM Token: $token');
       return token;
     } catch (e) {
-      print('Error getting FCM token: $e');
+      // print('Error getting FCM token: $e');
       return null;
     }
   }
@@ -48,18 +48,18 @@ class WorkerNotificationService {
   void setupNotificationHandlers() {
     // Notificación cuando la app está en primer plano
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
+      // print('Got a message whilst in the foreground!');
+      // print('Message data: ${message.data}');
 
       if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
+        // print('Message also contained a notification: ${message.notification}');
         _handleForegroundNotification(message);
       }
     });
 
     // Notificación cuando la app está en segundo plano
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('A new onMessageOpenedApp event was published!');
+      // print('A new onMessageOpenedApp event was published!');
       _handleBackgroundNotification(message);
     });
 
@@ -68,7 +68,7 @@ class WorkerNotificationService {
         .getInitialMessage()
         .then((RemoteMessage? message) {
       if (message != null) {
-        print('App opened from terminated state');
+        // print('App opened from terminated state');
         _handleTerminatedNotification(message);
       }
     });
@@ -77,7 +77,7 @@ class WorkerNotificationService {
   // Manejar notificación en primer plano
   void _handleForegroundNotification(RemoteMessage message) {
     // Aquí puedes mostrar una notificación local o actualizar la UI
-    print('Handling foreground notification: ${message.notification?.title}');
+    // print('Handling foreground notification: ${message.notification?.title}');
 
     // Guardar notificación en la base de datos local
     _saveNotificationToDatabase(message);
@@ -85,13 +85,13 @@ class WorkerNotificationService {
 
   // Manejar notificación en segundo plano
   void _handleBackgroundNotification(RemoteMessage message) {
-    print('Handling background notification: ${message.notification?.title}');
+    // print('Handling background notification: ${message.notification?.title}');
     // Navegar a la pantalla correspondiente
   }
 
   // Manejar notificación cuando la app está cerrada
   void _handleTerminatedNotification(RemoteMessage message) {
-    print('Handling terminated notification: ${message.notification?.title}');
+    // print('Handling terminated notification: ${message.notification?.title}');
     // Navegar a la pantalla correspondiente
   }
 
@@ -109,7 +109,7 @@ class WorkerNotificationService {
 
       await _databaseHelper.insertNotification(notification);
     } catch (e) {
-      print('Error saving notification to database: $e');
+      // print('Error saving notification to database: $e');
     }
   }
 
@@ -133,7 +133,7 @@ class WorkerNotificationService {
 
       await _databaseHelper.insertNotification(notification);
     } catch (e) {
-      print('Error creating local notification: $e');
+      // print('Error creating local notification: $e');
     }
   }
 
@@ -142,7 +142,7 @@ class WorkerNotificationService {
     try {
       return await _databaseHelper.getNotificationsByWorkerId(workerId);
     } catch (e) {
-      print('Error getting worker notifications: $e');
+      // print('Error getting worker notifications: $e');
       return [];
     }
   }
@@ -152,7 +152,7 @@ class WorkerNotificationService {
     try {
       await _databaseHelper.markNotificationAsRead(notificationId);
     } catch (e) {
-      print('Error marking notification as read: $e');
+      // print('Error marking notification as read: $e');
     }
   }
 
@@ -161,7 +161,7 @@ class WorkerNotificationService {
     try {
       return await _databaseHelper.getUnreadNotificationsCount(workerId);
     } catch (e) {
-      print('Error getting unread notifications count: $e');
+      // print('Error getting unread notifications count: $e');
       return 0;
     }
   }
@@ -171,7 +171,7 @@ class WorkerNotificationService {
     try {
       await _databaseHelper.deleteNotification(notificationId);
     } catch (e) {
-      print('Error deleting notification: $e');
+      // print('Error deleting notification: $e');
     }
   }
 
@@ -179,9 +179,9 @@ class WorkerNotificationService {
   Future<void> subscribeToTopic(String topic) async {
     try {
       await _firebaseMessaging.subscribeToTopic(topic);
-      print('Subscribed to topic: $topic');
+      // print('Subscribed to topic: $topic');
     } catch (e) {
-      print('Error subscribing to topic: $e');
+      // print('Error subscribing to topic: $e');
     }
   }
 
@@ -189,9 +189,9 @@ class WorkerNotificationService {
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
       await _firebaseMessaging.unsubscribeFromTopic(topic);
-      print('Unsubscribed from topic: $topic');
+      // print('Unsubscribed from topic: $topic');
     } catch (e) {
-      print('Error unsubscribing from topic: $e');
+      // print('Error unsubscribing from topic: $e');
     }
   }
 
@@ -212,7 +212,7 @@ class WorkerNotificationService {
         await deleteNotification(notification.id!);
       }
     } catch (e) {
-      print('Error clearing worker notifications: $e');
+      // print('Error clearing worker notifications: $e');
     }
   }
 }

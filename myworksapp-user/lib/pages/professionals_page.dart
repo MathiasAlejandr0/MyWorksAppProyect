@@ -66,7 +66,7 @@ class _ProfessionalsPageState extends State<ProfessionalsPage> {
         });
       }
     } catch (e) {
-      print('Error loading professionals: $e');
+      // print('Error loading professionals: $e');
       setState(() {
         _professionals = [];
         _filteredProfessionals = [];

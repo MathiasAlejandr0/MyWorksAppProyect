@@ -37,7 +37,7 @@ class _ProfessionalDetailPageState extends State<ProfessionalDetailPage> {
         _isLoadingReviews = false;
       });
     } catch (e) {
-      print('Error loading reviews: $e');
+      // print('Error loading reviews: $e');
       setState(() {
         _isLoadingReviews = false;
       });

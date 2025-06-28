@@ -36,12 +36,14 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         // Cargar notificaciones no leídas
         final unreadCount =
             await _databaseHelper.getUnreadNotificationsCount(worker.id!);
-        setState(() {
-          _unreadNotifications = unreadCount;
-        });
+        if (mounted) {
+          setState(() {
+            _unreadNotifications = unreadCount;
+          });
+        }
       }
     } catch (e) {
-      print('Error loading worker data: $e');
+      // print('Error loading worker data: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -57,28 +59,34 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       await _databaseHelper.updateWorkerAvailability(
           _currentWorker!.id!, newAvailability);
 
-      setState(() {
-        _currentWorker = _currentWorker!.copyWith(isAvailable: newAvailability);
-      });
+      if (mounted) {
+        setState(() {
+          _currentWorker =
+              _currentWorker!.copyWith(isAvailable: newAvailability);
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            newAvailability
-                ? 'Ahora estás disponible para recibir solicitudes'
-                : 'Ya no estás disponible para recibir solicitudes',
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newAvailability
+                  ? 'Ahora estás disponible para recibir solicitudes'
+                  : 'Ya no estás disponible para recibir solicitudes',
+            ),
+            backgroundColor: newAvailability
+                ? AppColors.successColor
+                : AppColors.warningColor,
           ),
-          backgroundColor:
-              newAvailability ? AppColors.successColor : AppColors.warningColor,
-        ),
-      );
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al cambiar disponibilidad: $e'),
-          backgroundColor: AppColors.errorColor,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cambiar disponibilidad: $e'),
+            backgroundColor: AppColors.errorColor,
+          ),
+        );
+      }
     }
   }
 
@@ -89,7 +97,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         Navigator.of(context).pushReplacementNamed('/worker_login');
       }
     } catch (e) {
-      print('Error during logout: $e');
+      // print('Error during logout: $e');
     }
   }
 
