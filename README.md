@@ -232,7 +232,7 @@ Si tienes alguna pregunta o necesitas ayuda:
   <p>Desarrollador Full Stack | Flutter Developer</p>
   
   [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MathiasAlejandr0)
-  [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)]([https://linkedin.com/in/mathias-jara](https://www.linkedin.com/in/mathias-alejandro-jara-alvarado-47a786360/))
+  [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)]([https://www.linkedin.com/in/mathias-alejandro-jara-alvarado-47a786360/])
   
   <p><em>© 2025 MyWorksApp. Todos los derechos reservados.</em></p>
 </div>
