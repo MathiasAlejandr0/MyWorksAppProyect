@@ -132,10 +132,6 @@ cd ../myworksapp-worker
 flutter test
 ```
 
-## 📝 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
 ## 🤝 Contribución
 
 1. Fork el proyecto
@@ -159,6 +155,16 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 - [ ] Notificaciones push completas
 - [ ] Modo offline
 - [ ] Web dashboard para administradores
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+Desarrollado por Mathias Alejandro Jara Alvarado
+
+## 📞 Soporte
+
+Para soporte técnico o preguntas sobre el proyecto, por favor contacta al equipo de desarrollo.
 
 ---
 
