@@ -230,21 +230,12 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 Si tienes alguna pregunta o necesitas ayuda:
 
-- 📧 Email: [tu-email@ejemplo.com]
-- 🐛 Issues: [Crear un issue](https://github.com/MathiasAlejandr0/MyWorksAppProyect/issues)
-- 📖 Documentación: [Wiki del proyecto](https://github.com/MathiasAlejandr0/MyWorksAppProyect/wiki)
-
-## 🙏 Agradecimientos
-
-- Flutter team por el excelente framework
-- Firebase por la infraestructura backend
-- Comunidad de desarrolladores Flutter
-- Todos los contribuidores del proyecto
+- 📧 Email: [math.jaraa@duocuc.cl]
 
 ---
 
 <div align="center">
-  <p><strong>Desarrollado con ❤️ por</strong></p>
+  
   <h3>Mathias Alejandro Jara Alvarado</h3>
   <p>Desarrollador Full Stack | Flutter Developer</p>
   
