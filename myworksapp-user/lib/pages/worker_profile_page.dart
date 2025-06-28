@@ -13,7 +13,6 @@ class WorkerProfilePage extends StatefulWidget {
 
 class _WorkerProfilePageState extends State<WorkerProfilePage> {
   final _securityService = WorkerSecurityService();
-  final _databaseHelper = WorkerDatabaseHelper();
 
   Worker? _worker;
   bool _isLoading = true;

@@ -130,7 +130,7 @@ class WorkerSecurityService {
 
     // Validar título si se proporciona
     if (title != null && title.isNotEmpty) {
-      if (titleInstitution == null || titleInstitution!.trim().isEmpty) {
+      if (titleInstitution == null || titleInstitution.trim().isEmpty) {
         errors['titleInstitution'] = 'La institución del título es requerida';
       }
       if (titleYear == null ||
