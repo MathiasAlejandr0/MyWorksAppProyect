@@ -3,8 +3,8 @@
 <div align="center">
   <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter">
   <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart">
-  <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
   <img src="https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
 </div>
 
 ## 📋 Descripción
@@ -20,12 +20,12 @@ MyWorksApp es un sistema completo de servicios al hogar que conecta usuarios con
 - **Ubicación**: `myworksapp-user/`
 - **Propósito**: Permite a los usuarios solicitar servicios al hogar
 - **Funcionalidades**:
-  - Registro e inicio de sesión seguro
+  - Registro e inicio de sesión local
   - Explorar servicios disponibles
   - Ver profesionales disponibles con calificaciones
   - Solicitar servicios con detalles específicos
   - Gestionar solicitudes activas
-  - Sistema de notificaciones push
+  - Sistema de notificaciones push (Firebase)
   - Perfil de usuario personalizable
   - Historial de servicios
 
@@ -33,28 +33,30 @@ MyWorksApp es un sistema completo de servicios al hogar que conecta usuarios con
 - **Ubicación**: `myworksapp-worker/`
 - **Propósito**: Permite a los profesionales gestionar sus servicios
 - **Funcionalidades**:
-  - Registro de profesionales con verificación
+  - Registro de profesionales con verificación local
   - Gestión de perfil profesional
   - Recepción de solicitudes de trabajo
   - Aceptar/rechazar servicios
-  - Sistema de notificaciones
+  - Sistema de notificaciones push (Firebase)
   - Historial de trabajos realizados
   - Gestión de disponibilidad
 
 ## 🚀 Características Principales
 
 ### 🔐 Seguridad
-- Autenticación segura con Firebase
-- Encriptación de datos sensibles
-- Validación de permisos por rol
+- Autenticación local con encriptación
+- Validación de datos sensibles
+- Gestión de permisos por rol
 
 ### 💾 Base de Datos
-- SQLite local para datos offline
-- Sincronización automática con Firebase
-- Gestión eficiente de datos
+- **SQLite local** como base de datos principal
+- Almacenamiento offline completo
+- Gestión eficiente de datos locales
+- Sincronización manual (no automática)
 
 ### 🔔 Notificaciones
-- Notificaciones push en tiempo real
+- **Firebase Cloud Messaging** para notificaciones push
+- Notificaciones locales para eventos importantes
 - Alertas de nuevos servicios
 - Recordatorios de citas
 
@@ -73,7 +75,7 @@ MyWorksApp/
 │   │   ├── pages/           # Páginas de la aplicación
 │   │   ├── models/          # Modelos de datos
 │   │   ├── services/        # Servicios y lógica de negocio
-│   │   ├── database/        # Configuración de base de datos
+│   │   ├── database/        # Configuración SQLite
 │   │   └── utils/           # Utilidades y constantes
 │   ├── assets/              # Recursos (imágenes, iconos)
 │   └── pubspec.yaml         # Dependencias del proyecto
@@ -82,7 +84,7 @@ MyWorksApp/
 │   │   ├── pages/           # Páginas de la aplicación
 │   │   ├── models/          # Modelos de datos
 │   │   ├── services/        # Servicios y lógica de negocio
-│   │   ├── database/        # Configuración de base de datos
+│   │   ├── database/        # Configuración SQLite
 │   │   └── utils/           # Utilidades y constantes
 │   ├── assets/              # Recursos (imágenes, iconos)
 │   └── pubspec.yaml         # Dependencias del proyecto
@@ -98,9 +100,9 @@ MyWorksApp/
 - **Material Design 3**: Sistema de diseño
 
 ### Backend & Base de Datos
-- **Firebase**: Autenticación y base de datos en la nube
-- **SQLite**: Base de datos local
-- **Firebase Cloud Messaging**: Notificaciones push
+- **SQLite**: Base de datos local principal
+- **Firebase Cloud Messaging**: Notificaciones push únicamente
+- **Shared Preferences**: Almacenamiento de configuraciones
 
 ### Herramientas de Desarrollo
 - **Android Studio / VS Code**: IDEs
@@ -110,22 +112,22 @@ MyWorksApp/
 ## 📱 Requisitos del Sistema
 
 ### Para Desarrollo
-- Flutter SDK 3.0 o superior
-- Dart SDK 3.0 o superior
+- Flutter SDK 3.32.5 o superior
+- Dart SDK 3.4.4 o superior
 - Android Studio / VS Code
 - Git
 
 ### Para Ejecución
 - Android 5.0 (API 21) o superior
 - iOS 11.0 o superior
-- Conexión a internet para sincronización
+- Conexión a internet para notificaciones push (opcional)
 
 ## ⚙️ Instalación y Configuración
 
 ### 1. Clonar el Repositorio
 ```bash
-git clone https://github.com/MathiasAlejandr0/MyWorksAppPrpyect.git
-cd MyWorksAppPrpyect
+git clone https://github.com/MathiasAlejandr0/MyWorksAppProyect.git
+cd MyWorksAppProyect
 ```
 
 ### 2. Configurar MyWorksApp User
@@ -140,11 +142,12 @@ cd ../myworksapp-worker
 flutter pub get
 ```
 
-### 4. Configurar Firebase
+### 4. Configurar Firebase (Opcional - Solo para notificaciones)
 1. Crear proyecto en [Firebase Console](https://console.firebase.google.com/)
 2. Descargar `google-services.json` para Android
 3. Descargar `GoogleService-Info.plist` para iOS
 4. Colocar archivos en las carpetas correspondientes
+5. Habilitar Firebase Cloud Messaging
 
 ### 5. Ejecutar las Aplicaciones
 ```bash
@@ -157,34 +160,36 @@ cd myworksapp-worker
 flutter run
 ```
 
-## 🔧 Configuración de Firebase
+## 🔧 Configuración de Base de Datos
 
-### Autenticación
-- Habilitar autenticación por email/password
-- Configurar reglas de seguridad
+### SQLite (Base de Datos Principal)
+- **Ubicación**: Base de datos local en el dispositivo
+- **Tablas principales**:
+  - `users`: Información de usuarios
+  - `professionals`: Información de profesionales
+  - `services`: Catálogo de servicios
+  - `service_requests`: Solicitudes de servicio
+  - `reviews`: Evaluaciones y comentarios
+  - `notifications`: Notificaciones locales
 
-### Firestore Database
-- Crear colecciones: users, workers, services, requests
-- Configurar reglas de acceso
-
-### Cloud Messaging
-- Configurar notificaciones push
-- Generar claves de servidor
+### Firebase (Solo Notificaciones)
+- **Firebase Cloud Messaging**: Para notificaciones push
+- **Configuración mínima**: Solo para recibir notificaciones
 
 ## 📊 Funcionalidades por Aplicación
 
 ### MyWorksApp User
-- [x] Registro e inicio de sesión
+- [x] Registro e inicio de sesión local
 - [x] Explorar servicios disponibles
 - [x] Ver profesionales con calificaciones
 - [x] Solicitar servicios
 - [x] Gestionar solicitudes
-- [x] Sistema de notificaciones
+- [x] Sistema de notificaciones push
 - [x] Perfil de usuario
 - [x] Historial de servicios
 
 ### MyWorksApp Worker
-- [x] Registro de profesionales
+- [x] Registro de profesionales local
 - [x] Gestión de perfil
 - [x] Recepción de solicitudes
 - [x] Aceptar/rechazar servicios
@@ -195,21 +200,19 @@ flutter run
 ## 🚀 Roadmap
 
 ### Próximas Funcionalidades
+- [ ] Sincronización con servidor remoto
 - [ ] Sistema de pagos integrado
 - [ ] Chat en tiempo real
 - [ ] Geolocalización de servicios
-- [ ] Sistema de calificaciones y reseñas
-- [ ] Múltiples idiomas
+- [ ] Backup automático de datos
 - [ ] Modo offline mejorado
-- [ ] Analytics y reportes
-- [ ] Panel de administración web
 
-### Mejoras Técnicas
-- [ ] Migración a Flutter 4.0
-- [ ] Implementación de BLoC pattern
-- [ ] Tests unitarios y de integración
-- [ ] CI/CD pipeline
-- [ ] Optimización de rendimiento
+## 📝 Notas Importantes
+
+- **Base de Datos**: El sistema funciona completamente offline con SQLite
+- **Notificaciones**: Requieren configuración de Firebase para funcionar
+- **Datos**: Se almacenan localmente en el dispositivo
+- **Sincronización**: Manual, no automática entre dispositivos
 
 ## 🤝 Contribución
 
@@ -228,8 +231,8 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 Si tienes alguna pregunta o necesitas ayuda:
 
 - 📧 Email: [tu-email@ejemplo.com]
-- 🐛 Issues: [Crear un issue](https://github.com/MathiasAlejandr0/MyWorksAppPrpyect/issues)
-- 📖 Documentación: [Wiki del proyecto](https://github.com/MathiasAlejandr0/MyWorksAppPrpyect/wiki)
+- 🐛 Issues: [Crear un issue](https://github.com/MathiasAlejandr0/MyWorksAppProyect/issues)
+- 📖 Documentación: [Wiki del proyecto](https://github.com/MathiasAlejandr0/MyWorksAppProyect/wiki)
 
 ## 🙏 Agradecimientos
 
