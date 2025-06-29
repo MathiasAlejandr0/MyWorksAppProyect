@@ -37,6 +37,7 @@ class WorkerDatabaseHelper {
       }
     } catch (e) {
       // Ignorar errores de almacenamiento en web
+      // Los errores de SharedPreferences en web son comunes y no críticos
     }
   }
 
@@ -54,6 +55,7 @@ class WorkerDatabaseHelper {
       await prefs.setString(_storageKey, json.encode(data));
     } catch (e) {
       // Ignorar errores de almacenamiento en web
+      // Los errores de SharedPreferences en web son comunes y no críticos
     }
   }
 
