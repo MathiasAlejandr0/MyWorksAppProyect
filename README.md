@@ -1,3 +1,14 @@
+<!-- Badges de tecnologías principales -->
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter"/>
+  <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart"/>
+  <img src="https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"/>
+  <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase"/>
+  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android"/>
+  <img src="https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="iOS"/>
+  <img src="https://img.shields.io/badge/Web-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Web"/>
+</p>
+
 # 🏠 MyWorksApp - Sistema de Servicios al Hogar
 
 ## 📋 Descripción del Proyecto
@@ -351,3 +362,7 @@ mathias.jara@hotmail.com
 ---
 
 **¡El proyecto está terminado y listo para usar!** 🚀
+
+---
+
+<p align="center"><b>Mathias Alejandro Jara Alvarado - Full Stack Developer</b></p>
