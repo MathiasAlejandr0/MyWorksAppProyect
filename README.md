@@ -214,14 +214,6 @@ flutter run
 - **Datos**: Se almacenan localmente en el dispositivo
 - **Sincronización**: Manual, no automática entre dispositivos
 
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abrir un Pull Request
-
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
@@ -240,7 +232,7 @@ Si tienes alguna pregunta o necesitas ayuda:
   <p>Desarrollador Full Stack | Flutter Developer</p>
   
   [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MathiasAlejandr0)
-  [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/mathias-jara)
+  [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mathias-alejandro-jara-alvarado-47a786360)
   
   <p><em>© 2025 MyWorksApp. Todos los derechos reservados.</em></p>
 </div>
