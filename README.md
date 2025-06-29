@@ -331,20 +331,10 @@ dart test_comunicacion.dart
 
 Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
 
-## 👥 Contribución
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
 ## 📞 Soporte
 
 Para soporte técnico o preguntas:
-- Crear un issue en GitHub
-- Revisar la documentación
-- Ejecutar el script de prueba
+mathias.jara@hotmail.com
 
 ## 🎉 Estado del Proyecto
 
