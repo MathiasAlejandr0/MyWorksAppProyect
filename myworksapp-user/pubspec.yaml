@@ -50,6 +50,7 @@ dependencies:
   # Notificaciones
   firebase_messaging: ^14.7.10
   firebase_core: ^2.32.0
+  cloud_firestore: ^4.17.5
   
   # Seguridad y validación
   crypto: ^3.0.3

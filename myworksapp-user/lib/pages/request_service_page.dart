@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import '../models/models.dart';
-import '../database/database_helper.dart';
 import '../services/security_service.dart';
+import '../services/app_communication_service.dart';
 
 class RequestServicePage extends StatefulWidget {
   final Service service;
@@ -20,9 +20,8 @@ class RequestServicePage extends StatefulWidget {
 
 class _RequestServicePageState extends State<RequestServicePage> {
   final _formKey = GlobalKey<FormState>();
-  final _addressController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  final _addressController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   bool _isLoading = false;
@@ -60,81 +59,72 @@ class _RequestServicePageState extends State<RequestServicePage> {
     }
   }
 
-  void _submitRequest() async {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _submitRequest() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Obtener usuario actual (simulado)
+      final userId = await SecurityService.getUserId() ?? 'user_1';
+      final professionalId = widget.professional?.id ?? 'prof_1';
+
+      // Crear datos de solicitud
+      final requestData = {
+        'clientId': userId,
+        'professionalId': professionalId,
+        'serviceName': widget.service.name,
+        'description':
+            SecurityService.sanitizeInput(_descriptionController.text),
+        'address': SecurityService.sanitizeInput(_addressController.text),
+        'requestedDate': DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
+        ).toIso8601String(),
+        'estimatedCost':
+            widget.professional?.servicePrices[widget.service.id] ??
+                widget.service.basePrice,
+      };
+
+      // Usar el nuevo servicio de comunicación
+      final communicationService = AppCommunicationService();
+      await communicationService.createServiceRequest(requestData);
+
       setState(() {
-        _isLoading = true;
+        _isLoading = false;
       });
 
-      try {
-        // Obtener usuario actual (simulado)
-        final userId = await SecurityService.getUserId() ?? 'user_1';
-        final professionalId = widget.professional?.id ?? 'prof_1';
-
-        // Crear solicitud
-        final request = ServiceRequest(
-          id: SecurityService.generateUniqueId(),
-          clientId: userId,
-          professionalId: professionalId,
-          service: widget.service,
-          address: SecurityService.sanitizeInput(_addressController.text),
-          description: SecurityService.sanitizeInput(
-            _descriptionController.text,
+      // Mostrar mensaje de éxito
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Solicitud enviada exitosamente a ${widget.professional?.name ?? 'profesionales'}',
+            ),
+            backgroundColor: Colors.green,
           ),
-          requestedDate: DateTime(
-            _selectedDate.year,
-            _selectedDate.month,
-            _selectedDate.day,
-            _selectedTime.hour,
-            _selectedTime.minute,
-          ),
-          scheduledDate: DateTime(
-            _selectedDate.year,
-            _selectedDate.month,
-            _selectedDate.day,
-            _selectedTime.hour,
-            _selectedTime.minute,
-          ),
-          estimatedCost:
-              widget.professional?.servicePrices[widget.service.id] ??
-                  widget.service.basePrice,
-          createdAt: DateTime.now(),
         );
 
-        // Guardar en base de datos
-        await _dbHelper.insertServiceRequest(request);
+        // Navegar de vuelta
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
 
-        setState(() {
-          _isLoading = false;
-        });
-
-        // Mostrar mensaje de éxito
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Solicitud enviada exitosamente a ${widget.professional?.name ?? 'profesionales'}',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          // Navegar de vuelta
-          Navigator.pop(context);
-        }
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al enviar solicitud: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al enviar solicitud: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

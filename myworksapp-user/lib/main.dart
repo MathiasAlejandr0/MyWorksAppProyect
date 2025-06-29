@@ -9,6 +9,7 @@ import 'pages/profile_page.dart';
 import 'pages/professionals_page.dart';
 import 'utils/app_colors.dart';
 import 'services/notification_service.dart';
+import 'models/models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,7 +99,16 @@ class MyWorksApp extends StatelessWidget {
         '/services': (context) => const ServicesPage(),
         '/requests': (context) => const RequestsPage(),
         '/profile': (context) => const ProfilePage(),
-        '/professionals': (context) => const ProfessionalsPage(),
+        '/professionals': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments
+              as Map<String, dynamic>?;
+          final service = args?['service'] as Service?;
+          if (service == null) {
+            // Si no hay servicio, redirigir a servicios
+            return const ServicesPage();
+          }
+          return ProfessionalsPage(service: service);
+        },
       },
     );
   }

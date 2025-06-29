@@ -119,7 +119,7 @@ class ServiceDetailPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ProfessionalsPage(),
+                      builder: (context) => ProfessionalsPage(service: service),
                     ),
                   );
                 },

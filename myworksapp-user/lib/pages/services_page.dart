@@ -45,7 +45,11 @@ class ServicesPage extends StatelessWidget {
                   service: service,
                   onTap: () {
                     // Navegar directamente a la página de profesionales
-                    Navigator.pushNamed(context, '/professionals');
+                    Navigator.pushNamed(
+                      context,
+                      '/professionals',
+                      arguments: {'service': service},
+                    );
                   },
                 );
               },
