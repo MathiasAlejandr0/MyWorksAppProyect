@@ -152,8 +152,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: [
                                 CircleAvatar(
                                   radius: 50,
-                                  backgroundColor:
-                                      AppColors.primaryColor.withOpacity(0.2),
+                                  backgroundColor: AppColors.primaryColor
+                                      .withValues(alpha: 0.2),
                                   child: _user!.profileImage != null &&
                                           _user!.profileImage!.isNotEmpty
                                       ? ClipRRect(

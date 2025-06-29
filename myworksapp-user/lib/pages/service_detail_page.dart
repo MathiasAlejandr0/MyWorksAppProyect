@@ -27,7 +27,7 @@ class ServiceDetailPage extends StatelessWidget {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: service.color.withOpacity(0.2),
+                        color: service.color.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(service.icon, color: service.color, size: 40),

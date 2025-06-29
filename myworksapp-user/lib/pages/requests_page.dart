@@ -166,8 +166,8 @@ class _RequestsPageState extends State<RequestsPage> {
                             ),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor:
-                                    request.service.color.withOpacity(0.2),
+                                backgroundColor: request.service.color
+                                    .withValues(alpha: 0.2),
                                 child: Icon(
                                   request.service.icon,
                                   color: request.service.color,
@@ -195,7 +195,7 @@ class _RequestsPageState extends State<RequestsPage> {
                                     decoration: BoxDecoration(
                                       color: _getStatusColor(
                                         request.status,
-                                      ).withOpacity(0.1),
+                                      ).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(

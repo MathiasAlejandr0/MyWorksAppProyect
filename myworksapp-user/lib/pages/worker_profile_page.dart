@@ -69,13 +69,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              // TODO: Implementar edición de perfil
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Función de edición en desarrollo'),
-                  backgroundColor: AppColors.infoColor,
-                ),
-              );
+              Navigator.of(context).pushNamed('/worker_edit_profile');
             },
           ),
         ],

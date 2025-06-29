@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:html' as html;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/worker.dart';
 import '../models/portfolio_item.dart';
 import '../models/request.dart';
@@ -20,8 +20,8 @@ class WorkerDatabaseHelper {
 
   Future<void> _loadFromStorage() async {
     try {
-      final storage = html.window.localStorage;
-      final data = storage[_storageKey];
+      final prefs = await SharedPreferences.getInstance();
+      final data = prefs.getString(_storageKey);
       if (data != null) {
         final map = json.decode(data);
         _workers =
@@ -36,13 +36,13 @@ class WorkerDatabaseHelper {
         _nextRequestId = map['nextRequestId'] ?? 1;
       }
     } catch (e) {
-      _insertDefaultData();
+      // Ignorar errores de almacenamiento en web
     }
   }
 
   Future<void> _saveToStorage() async {
     try {
-      final storage = html.window.localStorage;
+      final prefs = await SharedPreferences.getInstance();
       final data = {
         'workers': _workers.map((w) => w.toMap()).toList(),
         'portfolio': _portfolioItems.map((p) => p.toMap()).toList(),
@@ -51,8 +51,10 @@ class WorkerDatabaseHelper {
         'nextPortfolioId': _nextPortfolioId,
         'nextRequestId': _nextRequestId,
       };
-      storage[_storageKey] = json.encode(data);
-    } catch (e) {}
+      await prefs.setString(_storageKey, json.encode(data));
+    } catch (e) {
+      // Ignorar errores de almacenamiento en web
+    }
   }
 
   void _insertDefaultData() {

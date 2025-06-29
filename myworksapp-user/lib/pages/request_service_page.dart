@@ -163,7 +163,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: widget.service.color.withOpacity(0.2),
+                          color: widget.service.color.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -213,7 +213,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                           height: 50,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(25),
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                           ),
                           child: widget.professional!.profileImage.startsWith(
                             'assets/',

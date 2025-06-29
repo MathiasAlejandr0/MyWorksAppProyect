@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../database/worker_database_helper.dart';
 import '../models/worker.dart';
 import '../utils/app_colors.dart';
+import 'worker_edit_profile_page.dart';
 
 class WorkerProfilePage extends StatefulWidget {
   final int workerId;
@@ -84,6 +85,18 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
         title: const Text('Mi Perfil'),
         backgroundColor: AppColors.primaryColor,
         foregroundColor: AppColors.textOnPrimaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const WorkerEditProfilePage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
