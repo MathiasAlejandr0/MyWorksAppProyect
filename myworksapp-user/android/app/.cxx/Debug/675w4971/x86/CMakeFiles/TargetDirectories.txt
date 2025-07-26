@@ -1,0 +1,2 @@
+D:/MyWorksAppProyect/myworksapp-user/android/app/.cxx/Debug/675w4971/x86/CMakeFiles/edit_cache.dir
+D:/MyWorksAppProyect/myworksapp-user/android/app/.cxx/Debug/675w4971/x86/CMakeFiles/rebuild_cache.dir
