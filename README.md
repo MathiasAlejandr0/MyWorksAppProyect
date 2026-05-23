@@ -1,30 +1,70 @@
 # MyWorksApp
 
-Plataforma móvil Flutter para conectar **usuarios** con **trabajadores de oficios**. Esta versión está pensada como **demo funcional offline-first**: todo corre en el dispositivo con SQLite, sin backend remoto.
+Plataforma móvil **Flutter** para conectar **usuarios** con **trabajadores de oficios**. Esta versión es una **demo funcional offline-first**: todos los datos viven en el dispositivo (SQLite), sin backend remoto ni sincronización entre teléfonos.
+
+## Descripción
+
+MyWorksApp permite a un usuario buscar servicios del hogar, ver perfiles de trabajadores con portafolio y tarifas, agendar visitas y gestionar trabajos de punta a punta. Los trabajadores pueden aceptar ofertas, actualizar el estado del trabajo, chatear y mostrar su experiencia en un perfil profesional.
+
+Incluye **16 trabajadores demo** repartidos en 8 categorías (electricidad, gasfitería, limpieza, construcción, armado de muebles, soporte técnico, jardinería y mudanzas), con fotos de perfil y portafolio precargado.
+
+## Características
+
+- **Diseño renovado** con identidad visual naranja / azul marino (welcome, login, home usuario y dashboard trabajador)
+- **Dos roles** en una sola app: usuario y trabajador
+- **Catálogo demo** sincronizado al arranque con perfiles, portafolios y trabajos de muestra
+- **Flujo completo**: servicio → listado de trabajadores → perfil → agendar visita → chat → calificación
+- **Portafolio multimedia** con fotos y miniaturas de video demo
+- **Responsive básico** para tablet y escritorio (breakpoints + ancho máximo)
+- **Accesibilidad**: escalado de texto del sistema respetado (0.85–1.4)
+- **Permisos** actualizados en Android e iOS (cámara, fotos, ubicación, notificaciones)
+- **Tour guiado** opcional para nuevos usuarios demo
+- **SQLite cifrado** y persistencia local entre sesiones
 
 ## Estructura del proyecto
 
 ```
 MyWorksAppProyect/
-└── myworksapp/          # App única (roles usuario + trabajador)
-    └── lib/
-        ├── bootstrap/   # Inicialización
-        ├── core/        # BD, servicios, router, tema
-        └── features/    # Pantallas por módulo
+└── myworksapp/                    # App Flutter (usuario + trabajador)
+    ├── assets/images/             # Imágenes locales (hero welcome, etc.)
+    ├── lib/
+    │   ├── bootstrap/             # Inicialización de la app
+    │   ├── core/                  # BD, router, tema, servicios, widgets compartidos
+    │   └── features/              # Pantallas por módulo (auth, user, worker, jobs…)
+    ├── run.ps1                    # Script rápido Android (Windows)
+    └── scripts/run_ios.sh         # Script rápido iOS (macOS)
 ```
 
 ## Requisitos
 
 - Flutter SDK 3.0+
-- Android Studio / VS Code
-- Dispositivo o emulador Android/iOS
+- Android Studio / Xcode (iOS) / VS Code
+- Dispositivo o emulador Android / iOS
 
 ## Ejecutar la demo
+
+### Windows (Android)
+
+```powershell
+cd myworksapp
+.\run.ps1 -LaunchEmulator
+```
+
+### macOS (iOS)
+
+```bash
+cd myworksapp
+chmod +x scripts/run_ios.sh
+./scripts/run_ios.sh
+```
+
+### Comandos estándar
 
 ```bash
 cd myworksapp
 flutter pub get
 flutter run
+flutter analyze
 ```
 
 ## Cuentas de demostración
@@ -38,25 +78,30 @@ Al iniciar la app se cargan automáticamente usuarios de prueba:
 
 Trabajadores adicionales precargados: `pedro@demo.com`, `maria@demo.com` (misma contraseña).
 
-En la pantalla de login hay un botón **Entrar con demo** para acceso rápido.
+En la pantalla de login puedes usar **Entrar con demo** o el selector de rol Usuario / Trabajador.
 
 ## Flujo recomendado para demostrar
 
-1. Entra como **usuario demo** → elige un servicio → crea una solicitud.
-2. Cierra sesión (Ajustes → Cerrar sesión).
-3. Entra como **trabajador demo** → acepta el trabajo en la pestaña Pendientes.
-4. Avanza el estado del trabajo (iniciar → completar).
-5. Vuelve como usuario → califica, chatea y revisa el historial.
+1. Entra como **usuario demo** → elige un servicio (ej. Armado de muebles) → abre un perfil (ej. Tomás IKEA Pro).
+2. Revisa tarifa de visita, descripción y **trabajos anteriores** del portafolio.
+3. Crea una solicitud o agenda una visita.
+4. Cierra sesión (Ajustes → Cerrar sesión).
+5. Entra como **trabajador demo** → acepta el trabajo en Pendientes → avanza el estado.
+6. Vuelve como usuario → califica, chatea y revisa el historial.
 
 > Todo ocurre en el mismo dispositivo. Los datos persisten en SQLite local.
 
 ## Tecnologías
 
-- **Flutter** + **Dart**
-- **Riverpod** (estado)
-- **GoRouter** (navegación)
-- **SQLite** (persistencia local)
-- **Google Maps** (ubicación en detalle de trabajo)
+| Área | Stack |
+|------|--------|
+| UI | Flutter, Material 3, Google Fonts |
+| Estado | Riverpod |
+| Navegación | GoRouter |
+| Persistencia | SQLite (sqflite + sqlcipher) |
+| Imágenes | cached_network_image, image_picker |
+| Mapas | Google Maps, Geolocator |
+| Notificaciones | flutter_local_notifications (locales) |
 
 ## Compilar APK
 
@@ -65,21 +110,25 @@ cd myworksapp
 flutter build apk --debug
 ```
 
+El APK queda en `myworksapp/build/app/outputs/flutter-apk/`.
+
 ## Alcance de esta versión
 
-Incluido en la demo:
+**Incluido**
 
 - Registro e inicio de sesión local
-- Catálogo de servicios (limpieza, plomería, electricidad, etc.)
-- Solicitud de trabajos y matching de trabajadores
-- Chat, fotos, calificaciones y notificaciones locales
-- Perfil de trabajador y estadísticas básicas
+- Catálogo de servicios y trabajadores demo por categoría
+- Perfil de trabajador con portafolio y tarifa de visita
+- Solicitud de trabajos, chat, fotos, calificaciones y notificaciones locales
+- Dashboard trabajador con estadísticas básicas
+- Diseño responsive y accesibilidad de texto
 
-No incluido (fuera de alcance demo):
+**No incluido** (fuera de alcance demo)
 
-- Backend remoto / sincronización entre dispositivos
+- Backend remoto / sync entre dispositivos
 - Pagos reales (mock local)
 - Push notifications remotas
+- Reproducción de video real en portafolio (solo miniaturas demo)
 - Supabase / Firebase
 
 ## Licencia

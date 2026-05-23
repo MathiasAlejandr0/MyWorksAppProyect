@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,6 +12,11 @@ import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/database/repositories/portfolio_repository.dart';
+import '../../../../core/services/photo_service.dart';
+import '../../../../core/services/profile_photo_service.dart';
+import '../../../../core/widgets/portfolio_media_tile.dart';
+import '../../../../core/widgets/profile_avatar_picker.dart';
+import '../../../../core/database/models/user_model.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/models/portfolio_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -36,6 +42,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
   final ImagePicker _imagePicker = ImagePicker();
   
   bool _isLoading = false;
+  bool _photoLoading = false;
   bool _isEditing = false;
   WorkerModel? _worker;
   List<PortfolioModel> _portfolio = [];
@@ -59,7 +66,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
   Future<void> _loadData() async {
     final authState = ref.read(authProvider);
     final user = authState.user;
-    if (user == null) return;
+    if (user == null || !mounted) return;
 
     setState(() => _isLoading = true);
 
@@ -68,6 +75,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
       final portfolio = await _portfolioRepository.getPortfolioByWorkerId(user.id);
       final avgRating = await _ratingRepository.getAverageRatingByWorkerId(user.id);
 
+      if (!mounted) return;
       setState(() {
         _worker = worker;
         _portfolio = portfolio;
@@ -81,19 +89,84 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _updateProfilePhoto(ImageSource source) async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+
+    if (!mounted) return;
+    setState(() => _photoLoading = true);
+    try {
+      final path = await ProfilePhotoService.instance.pickAndSave(
+        userId: user.id,
+        source: source,
+        currentPath: user.profilePhotoPath,
+      );
+      if (path == null || !mounted) return;
+
+      final updated = user.copyWith(profilePhotoPath: path);
+      await _userRepository.updateUser(updated);
+      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      if (mounted) await _loadData();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto de perfil actualizada')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo actualizar la foto: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _photoLoading = false);
+    }
+  }
+
+  Future<void> _removeProfilePhoto() async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+
+    if (!mounted) return;
+    setState(() => _photoLoading = true);
+    try {
+      await ProfilePhotoService.instance.removePhoto(user.profilePhotoPath);
+      final updated = user.copyWith(clearProfilePhoto: true);
+      await _userRepository.updateUser(updated);
+      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      if (mounted) await _loadData();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto de perfil eliminada')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _photoLoading = false);
     }
   }
 
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
       final authState = ref.read(authProvider);
       final user = authState.user;
-      if (user == null) return;
+      if (user == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
 
       // Actualizar usuario
       final updatedUser = user.copyWith(
@@ -111,8 +184,8 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
         await _workerRepository.updateWorker(updatedWorker);
       }
 
-      ref.read(authProvider.notifier).loadCurrentUser(user.id);
-      await _loadData();
+      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      if (mounted) await _loadData();
 
       if (!mounted) return;
       setState(() {
@@ -134,8 +207,33 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
 
   Future<void> _addPortfolioPhoto() async {
     try {
+      final source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: const Text('Tomar foto'),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Galería'),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (source == null) return;
+
       final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 80,
       );
 
@@ -145,12 +243,22 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
       final user = authState.user;
       if (user == null) return;
 
-      // En una app real, aquí subirías la imagen a un servidor
-      // Por ahora, guardamos la ruta local
+      final savedPath = await PhotoService.instance.savePortfolioPhoto(
+        File(image.path),
+        user.id,
+      );
+      if (savedPath == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo guardar la imagen')),
+        );
+        return;
+      }
+
       final portfolioItem = PortfolioModel(
         id: const Uuid().v4(),
         workerId: user.id,
-        photoPath: image.path,
+        photoPath: savedPath,
         createdAt: DateTime.now(),
       );
 
@@ -202,17 +310,16 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-    final user = authState.user;
+    final user = ref.watch(authProvider.select((s) => s.user));
 
-    if (user == null || _isLoading) {
+    if (user == null) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: Text('Usuario no encontrado')),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Mi Perfil'),
         actions: [
           if (_isEditing)
@@ -234,30 +341,53 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Avatar y calificación
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildProfileContent(context, user),
+                ],
+              ),
+            ),
+          ),
+          if (_isLoading)
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(minHeight: 3),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileContent(BuildContext context, UserModel user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
               Center(
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: Text(
-                        user.name.substring(0, 1).toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                    ProfileAvatarPicker(
+                      displayName: user.name,
+                      photoPath: user.profilePhotoPath,
+                      isLoading: _photoLoading,
+                      onPickFromSource: _updateProfilePhoto,
+                      onRemove: _removeProfilePhoto,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Toca la foto para cambiarla o usar la cámara',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -355,30 +485,37 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 1,
                       ),
                       itemCount: _portfolio.length,
                       itemBuilder: (context, index) {
                         final item = _portfolio[index];
                         return Stack(
+                          fit: StackFit.expand,
                           children: [
-                            Image.file(
-                              File(item.photoPath),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
+                            PortfolioMediaTile(
+                              photoPath: item.photoPath,
+                              mediaType: item.mediaType,
+                              description: item.description,
                             ),
                             if (_isEditing)
                               Positioned(
                                 top: 4,
                                 right: 4,
-                                child: IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deletePortfolioPhoto(item.id),
-                                  iconSize: 20,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
+                                child: Material(
+                                  color: Colors.white,
+                                  shape: const CircleBorder(),
+                                  child: IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                    onPressed: () => _deletePortfolioPhoto(item.id),
+                                    padding: const EdgeInsets.all(4),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 32,
+                                      minHeight: 32,
+                                    ),
+                                  ),
                                 ),
                               ),
                           ],
@@ -449,10 +586,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                   foregroundColor: Colors.red,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+      ],
     );
   }
 }

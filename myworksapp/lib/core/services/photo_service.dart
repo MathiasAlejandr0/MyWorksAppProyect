@@ -35,6 +35,16 @@ class PhotoService {
     return jobsDir;
   }
 
+  /// Directorio de fotos de perfil por usuario.
+  Future<Directory> _getProfileDirectory(String userId) async {
+    final appDir = await _getAppDocumentsDirectory();
+    final profileDir = Directory('${appDir.path}/profiles/$userId');
+    if (!await profileDir.exists()) {
+      await profileDir.create(recursive: true);
+    }
+    return profileDir;
+  }
+
   /// Obtiene el directorio de portafolio de trabajador
   Future<Directory> _getPortfolioDirectory(String workerId) async {
     final appDir = await _getAppDocumentsDirectory();
@@ -130,6 +140,30 @@ class PhotoService {
       return savedFile.path;
     } catch (e) {
       AppLogger.e('Error al guardar foto de trabajo', e);
+      return null;
+    }
+  }
+
+  /// Guarda la foto de perfil del usuario.
+  Future<String?> saveProfilePhoto(File imageFile, String userId) async {
+    try {
+      final compressedFile = await compressImage(imageFile);
+      if (compressedFile == null) return null;
+
+      final profileDir = await _getProfileDirectory(userId);
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final savedFile = File('${profileDir.path}/avatar_$timestamp.jpg');
+
+      await compressedFile.copy(savedFile.path);
+
+      if (compressedFile.path != imageFile.path && await compressedFile.exists()) {
+        await compressedFile.delete();
+      }
+
+      AppLogger.i('Foto de perfil guardada: ${savedFile.path}');
+      return savedFile.path;
+    } catch (e) {
+      AppLogger.e('Error al guardar foto de perfil', e);
       return null;
     }
   }

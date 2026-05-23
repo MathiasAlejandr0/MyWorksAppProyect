@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../../design_system/app_spacing.dart';
-import '../../design_system/app_elevation.dart';
-import '../../theme/app_theme.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_decorations.dart';
 
 /// Card para trabajadores
 class WorkerCard extends StatelessWidget {
@@ -25,100 +25,96 @@ class WorkerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: AppElevation.card,
+    return Container(
       margin: EdgeInsets.symmetric(
         horizontal: AppSpacing.screenPadding,
         vertical: AppSpacing.sm,
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.cardPadding),
-          child: Row(
-            children: [
-              // Avatar
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: AppColors.primaryLight.withOpacity(0.1),
-                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-                child: avatarUrl == null
-                    ? Text(
-                        name.isNotEmpty ? name[0].toUpperCase() : '?',
-                        style: TextStyle(
-                          color: AppColors.primaryLight,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    : null,
-              ),
-              SizedBox(width: AppSpacing.lg),
-              // Información
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    SizedBox(height: AppSpacing.xs),
-                    Text(
-                      profession,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.grayMedium,
-                          ),
-                    ),
-                    if (rating != null) ...[
+      decoration: AppDecorations.surfaceCard(
+        accent: isAvailable ? AppColors.success : AppColors.grayMedium,
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: AppColors.primaryLight.withValues(alpha: 0.12),
+                  backgroundImage:
+                      avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+                  child: avatarUrl == null
+                      ? Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: AppColors.primaryLight,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        )
+                      : null,
+                ),
+                SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       SizedBox(height: AppSpacing.xs),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.star,
-                            size: 16,
-                            color: AppColors.warning,
-                          ),
-                          SizedBox(width: AppSpacing.xs),
-                          Text(
-                            rating!.toStringAsFixed(1),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ],
+                      Text(
+                        profession,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.grayMedium,
+                            ),
                       ),
+                      if (rating != null) ...[
+                        SizedBox(height: AppSpacing.xs),
+                        Row(
+                          children: [
+                            const Icon(Icons.star_rounded,
+                                size: 16, color: AppColors.warning),
+                            SizedBox(width: AppSpacing.xs),
+                            Text(
+                              rating!.toStringAsFixed(1),
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              // Estado de disponibilidad
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.xs,
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (isAvailable ? AppColors.success : AppColors.grayMedium)
+                        .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    isAvailable ? 'Disponible' : 'Ocupado',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color:
+                              isAvailable ? AppColors.success : AppColors.grayMedium,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: isAvailable
-                      ? AppColors.success.withOpacity(0.1)
-                      : AppColors.grayMedium.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isAvailable ? 'Disponible' : 'Ocupado',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: isAvailable ? AppColors.success : AppColors.grayMedium,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
-

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/database/repositories/job_repository.dart';
@@ -67,7 +68,7 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
     final selectedJobs = _getJobsForDay(_selectedDay);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Calendario de Trabajos'),
       ),
       body: Column(

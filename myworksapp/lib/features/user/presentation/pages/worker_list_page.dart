@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/constants.dart';
@@ -11,9 +12,12 @@ import '../../../../core/database/models/user_model.dart';
 import '../../../../core/services/matching_service.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
-import '../../../../core/widgets/premium_card.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/profile_avatar_picker.dart';
+import '../../../../core/database/repositories/service_repository.dart';
+import '../../../../core/database/models/service_model.dart';
+import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +35,9 @@ class WorkerListPage extends ConsumerStatefulWidget {
 class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   final WorkerRepository _workerRepository = WorkerRepository();
   final UserRepository _userRepository = UserRepository();
+  final ServiceRepository _serviceRepository = ServiceRepository();
   final MatchingService _matchingService = MatchingService.instance;
+  final _currency = NumberFormat.currency(locale: 'es_CL', symbol: '\$', decimalDigits: 0);
   final _searchController = TextEditingController();
   final _debouncer = Debouncer(delay: const Duration(milliseconds: 500));
   List<WorkerModel> _workers = [];
@@ -40,8 +46,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   Map<String, double> _matchScores = {}; // Para mostrar scores en modo automático
   bool _isLoading = true;
   bool _isAutomaticMode = false; // false = Manual, true = Inteligente
-  String _sortBy = 'rating'; // 'rating', 'name'
+  String _sortBy = 'rating';
   double _minRating = 0.0;
+  String? _serviceName;
 
   @override
   void initState() {
@@ -162,24 +169,28 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
 
   Future<void> _loadManualWorkers() async {
     List<WorkerModel> workers;
+
     if (widget.serviceId != null) {
-      // Filtrar por profesión según el servicio
-      final profession = await _getProfessionFromService(widget.serviceId!);
-      final allWorkers = await _workerRepository.getWorkersByProfession(profession);
-      // Filtrar solo los que no tienen trabajos activos
-      final JobRepository _jobRepository = JobRepository();
-      workers = [];
-      for (var worker in allWorkers) {
-        if (worker.isAvailable) {
-          final hasActiveJobs = await _jobRepository.hasActiveJobs(worker.userId);
-          if (!hasActiveJobs) {
-            workers.add(worker);
-          }
-        }
+      final service = await _serviceRepository.getServiceById(widget.serviceId!);
+      _serviceName = service?.name;
+
+      if (service != null) {
+        workers = await _workerRepository.getWorkersByServiceCategory(service.category);
+      } else {
+        workers = await _workerRepository.getAvailableWorkersWithoutActiveJobs();
       }
     } else {
       workers = await _workerRepository.getAvailableWorkersWithoutActiveJobs();
     }
+
+    final jobRepository = JobRepository();
+    final available = <WorkerModel>[];
+    for (final worker in workers) {
+      if (worker.isAvailable && !await jobRepository.hasActiveJobs(worker.userId)) {
+        available.add(worker);
+      }
+    }
+    workers = available;
 
     // Cargar información de usuarios
     final users = <String, UserModel>{};
@@ -199,24 +210,12 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     _filterWorkers();
   }
 
-  Future<String> _getProfessionFromService(String serviceId) async {
-    // Mapeo simple de servicio a profesión
-    final serviceProfessionMap = {
-      '1': 'Maestro Constructor',
-      '2': 'Gasfiter',
-      '3': 'Electricista',
-      '4': 'Cerrajero',
-      '5': 'Pintor',
-      '6': 'Técnico en General',
-    };
-    return serviceProfessionMap[serviceId] ?? 'Técnico en General';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trabajadores Disponibles'),
+      backgroundColor: AppDecorations.screenBackground,
+      appBar: AppGradientAppBar(
+        title: Text(_serviceName ?? 'Trabajadores disponibles'),
       ),
       body: _isLoading
           ? const LoadingWidget()
@@ -224,9 +223,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
               ? EmptyStateWidget(
                   icon: Icons.person_off,
                   title: 'No hay trabajadores disponibles',
-                  message: 'Intenta más tarde o busca otro servicio',
-                  actionLabel: 'Recargar',
-                  onAction: _loadWorkers,
+                  message: 'Prueba otro servicio o vuelve al inicio para explorar categorías.',
+                  actionLabel: 'Ver otros servicios',
+                  onAction: () => context.go(AppConstants.routeUserHome),
                 )
               : Column(
                   children: [
@@ -355,11 +354,13 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                   return _WorkerCard(
                                     worker: worker,
                                     user: user,
+                                    visitFeeLabel: _currency.format(worker.visitFee),
                                     isRecommended: _isAutomaticMode && score != null,
                                     matchScore: score,
                                     onTap: () {
                                       context.push(
                                         '${AppConstants.routeWorkerDetail}/${worker.userId}',
+                                        extra: {'serviceId': widget.serviceId},
                                       );
                                     },
                                   );
@@ -376,6 +377,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
 class _WorkerCard extends StatelessWidget {
   final WorkerModel worker;
   final UserModel? user;
+  final String visitFeeLabel;
   final bool isRecommended;
   final double? matchScore;
   final VoidCallback onTap;
@@ -383,6 +385,7 @@ class _WorkerCard extends StatelessWidget {
   const _WorkerCard({
     required this.worker,
     this.user,
+    required this.visitFeeLabel,
     this.isRecommended = false,
     this.matchScore,
     required this.onTap,
@@ -390,167 +393,118 @@ class _WorkerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PremiumCard(
-      onTap: onTap,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Badge Recomendado
-          if (isRecommended)
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.success),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.star,
-                    size: 16,
-                    color: AppColors.success,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Recomendado',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.success,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (matchScore != null) ...[
-                    const SizedBox(width: 4),
-                    Text(
-                      '${(matchScore! * 100).toStringAsFixed(0)}%',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.success,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          Row(
-            children: [
-              // Avatar con gradiente
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primaryLight.withOpacity(0.2),
-                      AppColors.primaryLight.withOpacity(0.1),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: AppDecorations.surfaceCard(accent: AppColors.primaryLight),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                ProfileAvatarView(
+                  displayName: user?.name ?? 'Trabajador',
+                  photoPath: user?.profilePhotoPath,
+                  radius: 26,
+                  onDarkBackground: false,
                 ),
-                child: Center(
-                  child: Text(
-                    user?.name.substring(0, 1).toUpperCase() ?? '?',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primaryLight,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user?.name ?? 'Trabajador',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (isRecommended)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            'Recomendado${matchScore != null ? ' ${(matchScore! * 100).toStringAsFixed(0)}%' : ''}',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
-                    ),
-                const SizedBox(height: 4),
-                Text(
-                  worker.profession,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.grayMedium,
+                        ),
+                      Text(
+                        user?.name ?? 'Trabajador',
+                        style: Theme.of(context).textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.warning.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                      Text(
+                        worker.profession,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.grayMedium,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            size: 16,
+                          _ChipBadge(
+                            icon: Icons.star_rounded,
+                            label: worker.rating.toStringAsFixed(1),
                             color: AppColors.warning,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            worker.rating.toStringAsFixed(1),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.warning,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                          _ChipBadge(
+                            icon: Icons.payments_outlined,
+                            label: 'Visita $visitFeeLabel',
+                            color: AppColors.primaryLight,
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: worker.isAvailable
-                            ? AppColors.success.withOpacity(0.1)
-                            : AppColors.grayMedium.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            worker.isAvailable ? Icons.circle : Icons.circle_outlined,
-                            size: 8,
-                            color: worker.isAvailable ? AppColors.success : AppColors.grayMedium,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            worker.isAvailable ? 'Disponible' : 'Ocupado',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: worker.isAvailable ? AppColors.success : AppColors.grayMedium,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                Icon(Icons.chevron_right_rounded, color: AppColors.grayMedium),
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right,
-            color: AppColors.grayMedium,
+        ),
+      ),
+    );
+  }
+}
+
+class _ChipBadge extends StatelessWidget {
+  const _ChipBadge({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
           ),
         ],
       ),
-    ],
-    ),
     );
   }
 }

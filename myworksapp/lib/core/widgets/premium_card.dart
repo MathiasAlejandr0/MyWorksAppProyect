@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+import '../theme/app_decorations.dart';
+
 class PremiumCard extends StatelessWidget {
   final Widget child;
   final EdgeInsets? margin;
   final EdgeInsets? padding;
   final VoidCallback? onTap;
   final Color? backgroundColor;
-  final double? elevation;
+  final Color? accentColor;
 
   const PremiumCard({
     super.key,
@@ -15,32 +18,28 @@ class PremiumCard extends StatelessWidget {
     this.padding,
     this.onTap,
     this.backgroundColor,
-    this.elevation,
+    this.accentColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final card = Card(
-      elevation: elevation ?? 0,
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      color: backgroundColor ?? Theme.of(context).cardColor,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: padding ?? const EdgeInsets.all(20),
-          child: child,
+    final accent = accentColor ?? AppColors.primaryLight;
+
+    return Container(
+      margin: margin ?? EdgeInsets.zero,
+      decoration: AppDecorations.surfaceCard(accent: accent),
+      child: Material(
+        color: backgroundColor ?? Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: padding ?? const EdgeInsets.all(16),
+            child: child,
+          ),
         ),
       ),
     );
-
-    if (onTap != null) {
-      return card;
-    }
-    return card;
   }
 }
-

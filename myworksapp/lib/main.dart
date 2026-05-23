@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/utils/app_logger.dart';
 import 'app.dart';
 
@@ -12,6 +13,7 @@ import 'app.dart';
 /// 4. MyWorksApp (Widget principal)
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('es_CL', null);
   
   AppLogger.i('🚀 Iniciando MyWorksApp...');
   

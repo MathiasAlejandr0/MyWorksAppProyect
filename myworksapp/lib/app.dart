@@ -7,6 +7,8 @@ import 'core/theme/app_colors.dart';
 import 'core/router/app_router.dart';
 import 'core/services/app_lifecycle_service.dart';
 import 'core/utils/app_logger.dart';
+import 'core/utils/app_text_scaling.dart';
+import 'core/widgets/design_system/responsive_shell.dart';
 
 /// Widget principal de la aplicación
 /// 
@@ -106,9 +108,12 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
       routerConfig: router,
       // Agregar error builder para capturar errores de renderizado
       builder: (context, child) {
+        final mediaQuery = AppTextScaling.apply(MediaQuery.of(context));
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-          child: child ?? const SizedBox.shrink(),
+          data: mediaQuery,
+          child: ResponsiveShell(
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/database/repositories/message_repository.dart';
@@ -146,7 +147,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final currentUser = authState.user;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

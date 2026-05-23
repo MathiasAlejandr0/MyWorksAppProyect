@@ -137,6 +137,7 @@ class AppInitializer {
             // Restaurar sesión en el provider
             final authNotifier = ref.read(authProvider.notifier);
             await authNotifier.restoreSession();
+            await authNotifier.loadCurrentUser(userId, silent: true);
             AppLogger.i('✅ Sesión restaurada para usuario: $userId');
           }
         } else {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../design_system/app_spacing.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/app_media_permissions.dart';
 import 'permission_request_widget.dart';
 
 /// Pantalla explicativa para solicitar permiso de almacenamiento
@@ -18,14 +20,14 @@ class StoragePermissionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Permiso de Almacenamiento'),
       ),
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(AppSpacing.xl),
           child: PermissionRequestWidget(
-            permission: Permission.storage,
+            permission: AppMediaPermissions.galleryRead,
             title: 'Necesitamos acceso al almacenamiento',
             description:
                 'Para guardar y acceder a las fotos de los trabajos, necesitamos permiso de almacenamiento.\n\n'

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/validators.dart';
@@ -90,7 +91,7 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Nueva Contraseña'),
       ),
       body: SingleChildScrollView(

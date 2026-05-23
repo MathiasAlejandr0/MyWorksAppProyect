@@ -164,7 +164,7 @@ class AppLifecycleService extends WidgetsBindingObserver {
           
           // Recargar usuario para obtener datos actualizados (sin hacer logout)
           try {
-            await authNotifier.loadCurrentUser(authState.user!.id);
+            await authNotifier.loadCurrentUser(authState.user!.id, silent: true);
           } catch (e) {
             // Si falla recargar, no es crítico, solo loguear
             AppLogger.w('No se pudo recargar usuario, pero sesión sigue activa: $e');

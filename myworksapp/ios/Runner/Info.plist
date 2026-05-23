@@ -52,6 +52,10 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Necesitamos acceso a la cámara para tomar fotos de los trabajos</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Necesitamos acceso a tus fotos para seleccionar imágenes de los trabajos</string>
+	<string>Necesitamos acceso a tus fotos para seleccionar imágenes de los trabajos y tu perfil</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Necesitamos guardar fotos de trabajos y de perfil en tu biblioteca cuando lo solicites</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Necesitamos tu ubicación para mostrar el mapa y seleccionar la dirección del servicio</string>
 </dict>
 </plist>

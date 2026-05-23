@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/constants.dart';
@@ -510,7 +511,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
 
     if (_error != null || _job == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: AppGradientAppBar(),
         body: ErrorDisplayWidget(
           message: _error ?? 'Trabajo no encontrado',
           onRetry: _loadJobDetails,
@@ -524,7 +525,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     final isOwner = currentUser?.id == _job!.userId || currentUser?.id == _job!.workerId;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Detalles del Trabajo'),
       ),
       body: SingleChildScrollView(

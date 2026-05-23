@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/constants.dart';
@@ -29,10 +30,8 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Centro de Ayuda'),
-        backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

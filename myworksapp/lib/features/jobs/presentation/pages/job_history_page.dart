@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/constants.dart';
@@ -33,7 +34,7 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Historial de Trabajos'),
       ),
       body: FutureBuilder<List<JobModel>>(

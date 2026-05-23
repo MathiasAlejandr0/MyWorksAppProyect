@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -11,7 +12,7 @@ class TermsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Términos y Condiciones'),
       ),
       body: SingleChildScrollView(

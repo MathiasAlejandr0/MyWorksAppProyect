@@ -26,6 +26,22 @@ class WorkerRepository {
     return getWorkerByUserId(userId);
   }
 
+  Future<List<WorkerModel>> getWorkersByServiceCategory(String category) async {
+    final db = await _dbHelper.database;
+    final maps = await db.rawQuery(
+      '''
+      SELECT w.* FROM workers w
+      LEFT JOIN worker_services ws ON w.userId = ws.workerId
+      WHERE w.isAvailable = 1
+        AND (ws.serviceCategory = ? OR w.serviceCategory = ?)
+      GROUP BY w.userId
+      ORDER BY w.rating DESC
+      ''',
+      [category, category],
+    );
+    return maps.map((map) => WorkerModel.fromMap(map)).toList();
+  }
+
   Future<List<WorkerModel>> getWorkersByProfession(String profession) async {
     final db = await _dbHelper.database;
     final maps = await db.query(

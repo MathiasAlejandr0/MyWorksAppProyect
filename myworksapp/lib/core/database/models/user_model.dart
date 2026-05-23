@@ -5,6 +5,7 @@ class UserModel {
   final String? password; // Hash de contraseña (nullable para usuarios existentes)
   final String role; // 'user' or 'worker'
   final String accountStatus; // 'active', 'suspended', 'blocked'
+  final String? profilePhotoPath;
   final DateTime createdAt;
 
   UserModel({
@@ -14,6 +15,7 @@ class UserModel {
     this.password,
     required this.role,
     this.accountStatus = 'active',
+    this.profilePhotoPath,
     required this.createdAt,
   });
 
@@ -25,6 +27,7 @@ class UserModel {
       'password': password,
       'role': role,
       'accountStatus': accountStatus,
+      'profilePhotoPath': profilePhotoPath,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -37,6 +40,7 @@ class UserModel {
       password: map['password'] as String?,
       role: map['role'] as String,
       accountStatus: (map['accountStatus'] as String?) ?? 'active',
+      profilePhotoPath: map['profilePhotoPath'] as String?,
       createdAt: DateTime.parse(map['createdAt'] as String),
     );
   }
@@ -48,6 +52,8 @@ class UserModel {
     String? password,
     String? role,
     String? accountStatus,
+    String? profilePhotoPath,
+    bool clearProfilePhoto = false,
     DateTime? createdAt,
   }) {
     return UserModel(
@@ -57,6 +63,7 @@ class UserModel {
       password: password ?? this.password,
       role: role ?? this.role,
       accountStatus: accountStatus ?? this.accountStatus,
+      profilePhotoPath: clearProfilePhoto ? null : (profilePhotoPath ?? this.profilePhotoPath),
       createdAt: createdAt ?? this.createdAt,
     );
   }

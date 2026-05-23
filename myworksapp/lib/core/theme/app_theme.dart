@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import '../design_system/app_spacing.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import '../design_system/app_elevation.dart';
+import '../design_system/app_spacing.dart';
 import 'app_colors.dart';
+import 'app_decorations.dart';
 import 'app_text_styles.dart';
 
 /// Design System formal centralizado
@@ -56,34 +59,40 @@ class AppTheme {
       onError: AppColors.white,
     );
 
+    final textTheme = _buildTextTheme(colorScheme);
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.backgroundLight,
-      fontFamily: null, // Fuente del sistema
-      textTheme: _buildTextTheme(colorScheme),
+      scaffoldBackgroundColor: AppDecorations.screenBackground,
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(textTheme),
       
       // AppBar
       appBarTheme: AppBarTheme(
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
         backgroundColor: AppColors.primaryDark,
         foregroundColor: AppColors.white,
-        titleTextStyle: AppTextStyles.headlineMedium(color: AppColors.white),
+        titleTextStyle: AppTextStyles.titleLarge(color: AppColors.white),
         iconTheme: const IconThemeData(color: AppColors.white),
       ),
 
-      // Cards
       cardTheme: CardThemeData(
-        elevation: AppElevation.card,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(
+            color: AppColors.primaryLight.withValues(alpha: 0.12),
+          ),
         ),
         color: AppColors.surfaceLight,
         margin: EdgeInsets.symmetric(
           horizontal: AppSpacing.screenPadding,
           vertical: AppSpacing.sm,
         ),
+        shadowColor: AppColors.primaryDark.withValues(alpha: 0.08),
       ),
 
       // Botones
@@ -207,28 +216,33 @@ class AppTheme {
       onError: AppColors.white,
     );
 
+    final textTheme = _buildTextTheme(colorScheme);
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.backgroundDark,
-      fontFamily: null, // Fuente del sistema
       brightness: Brightness.dark,
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(textTheme),
       
-      // AppBar
       appBarTheme: AppBarTheme(
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
         backgroundColor: AppColors.primaryDark,
         foregroundColor: AppColors.white,
-        titleTextStyle: AppTextStyles.headlineMedium(color: AppColors.white),
+        titleTextStyle: AppTextStyles.titleLarge(color: AppColors.white),
         iconTheme: const IconThemeData(color: AppColors.white),
       ),
 
-      // Cards
       cardTheme: CardThemeData(
-        elevation: AppElevation.card,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(
+            color: AppColors.primaryLight.withValues(alpha: 0.12),
+          ),
         ),
         color: AppColors.surfaceDark,
         margin: EdgeInsets.symmetric(
@@ -290,7 +304,6 @@ class AppTheme {
       ),
 
       // Textos
-      textTheme: _buildTextTheme(colorScheme),
     );
   }
   

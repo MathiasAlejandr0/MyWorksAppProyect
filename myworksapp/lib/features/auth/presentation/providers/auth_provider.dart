@@ -113,8 +113,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // Verificar contraseña
       if (user.password == null) {
-        // Usuario antiguo sin contraseña (compatibilidad)
-        state = state.copyWith(user: user, isLoading: false);
+        await _sessionManager.saveSession(user.id, user.role);
+        await loadCurrentUser(user.id);
         return true;
       }
 
@@ -129,7 +129,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Guardar sesión
       await _sessionManager.saveSession(user.id, user.role);
 
-      state = state.copyWith(user: user, isLoading: false);
+      await loadCurrentUser(user.id);
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -182,8 +182,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> loadCurrentUser(String userId) async {
-    state = state.copyWith(isLoading: true);
+  /// Recarga el usuario desde SQLite. [silent] evita isLoading global (no reinicia el router).
+  Future<void> loadCurrentUser(String userId, {bool silent = false}) async {
+    if (!silent) {
+      state = state.copyWith(isLoading: true);
+    }
     try {
       final user = await _userRepository.getUserById(userId);
       state = state.copyWith(user: user, isLoading: false);

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
+
+import '../../../../core/database/repositories/job_repository.dart';
+import '../../../../core/database/repositories/user_repository.dart';
+import '../../../../core/services/profile_photo_service.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/database/repositories/user_repository.dart';
-import '../../../../core/database/repositories/job_repository.dart';
-import '../../../../core/database/repositories/rating_repository.dart';
+import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class UserProfilePage extends ConsumerStatefulWidget {
@@ -21,14 +25,22 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
   final _emailController = TextEditingController();
   final UserRepository _userRepository = UserRepository();
   final JobRepository _jobRepository = JobRepository();
-  final RatingRepository _ratingRepository = RatingRepository();
   bool _isLoading = false;
+  bool _photoLoading = false;
   bool _isEditing = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+  }
+
+  void _loadUserData() {
+    final user = ref.read(authProvider).user;
+    if (user != null) {
+      _nameController.text = user.name;
+      _emailController.text = user.email;
+    }
   }
 
   @override
@@ -38,12 +50,61 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
     super.dispose();
   }
 
-  Future<void> _loadUserData() async {
-    final authState = ref.read(authProvider);
-    final user = authState.user;
-    if (user != null) {
-      _nameController.text = user.name;
-      _emailController.text = user.email;
+  Future<void> _updateProfilePhoto(ImageSource source) async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+
+    if (!mounted) return;
+    setState(() => _photoLoading = true);
+    try {
+      final path = await ProfilePhotoService.instance.pickAndSave(
+        userId: user.id,
+        source: source,
+        currentPath: user.profilePhotoPath,
+      );
+      if (path == null || !mounted) return;
+
+      final updated = user.copyWith(profilePhotoPath: path);
+      await _userRepository.updateUser(updated);
+      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto de perfil actualizada')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo actualizar la foto: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _photoLoading = false);
+    }
+  }
+
+  Future<void> _removeProfilePhoto() async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+
+    if (!mounted) return;
+    setState(() => _photoLoading = true);
+    try {
+      await ProfilePhotoService.instance.removePhoto(user.profilePhotoPath);
+      final updated = user.copyWith(clearProfilePhoto: true);
+      await _userRepository.updateUser(updated);
+      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto de perfil eliminada')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _photoLoading = false);
     }
   }
 
@@ -63,7 +124,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
       );
 
       await _userRepository.updateUser(updatedUser);
-      ref.read(authProvider.notifier).loadCurrentUser(user.id);
+      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
 
       if (!mounted) return;
       setState(() {
@@ -111,8 +172,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-    final user = authState.user;
+    final user = ref.watch(authProvider.select((s) => s.user));
 
     if (user == null) {
       return const Scaffold(
@@ -121,7 +181,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Mi Perfil'),
         actions: [
           if (_isEditing)
@@ -150,22 +210,22 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Avatar
               Center(
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: Text(
-                    user.name.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                child: ProfileAvatarPicker(
+                  displayName: user.name,
+                  photoPath: user.profilePhotoPath,
+                  isLoading: _photoLoading,
+                  onPickFromSource: _updateProfilePhoto,
+                  onRemove: _removeProfilePhoto,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              Text(
+                'Toca la foto para cambiarla o usar la cámara',
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
               // Información
               TextFormField(
                 controller: _nameController,

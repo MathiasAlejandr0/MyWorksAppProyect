@@ -4,6 +4,8 @@ class WorkerModel {
   final String? description;
   final double rating;
   final bool isAvailable;
+  final double visitFee;
+  final String serviceCategory;
 
   WorkerModel({
     required this.userId,
@@ -11,6 +13,8 @@ class WorkerModel {
     this.description,
     this.rating = 0.0,
     this.isAvailable = true,
+    this.visitFee = 15000,
+    this.serviceCategory = 'general',
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +24,8 @@ class WorkerModel {
       'description': description,
       'rating': rating,
       'isAvailable': isAvailable ? 1 : 0,
+      'visitFee': visitFee,
+      'serviceCategory': serviceCategory,
     };
   }
 
@@ -30,6 +36,8 @@ class WorkerModel {
       description: map['description'] as String?,
       rating: (map['rating'] as num?)?.toDouble() ?? 0.0,
       isAvailable: (map['isAvailable'] as int? ?? 0) == 1,
+      visitFee: (map['visitFee'] as num?)?.toDouble() ?? 15000,
+      serviceCategory: map['serviceCategory'] as String? ?? 'general',
     );
   }
 
@@ -39,6 +47,8 @@ class WorkerModel {
     String? description,
     double? rating,
     bool? isAvailable,
+    double? visitFee,
+    String? serviceCategory,
   }) {
     return WorkerModel(
       userId: userId ?? this.userId,
@@ -46,7 +56,8 @@ class WorkerModel {
       description: description ?? this.description,
       rating: rating ?? this.rating,
       isAvailable: isAvailable ?? this.isAvailable,
+      visitFee: visitFee ?? this.visitFee,
+      serviceCategory: serviceCategory ?? this.serviceCategory,
     );
   }
 }
-

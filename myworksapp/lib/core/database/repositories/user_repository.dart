@@ -42,6 +42,16 @@ class UserRepository {
     );
   }
 
+  Future<void> updateProfilePhotoPath(String userId, String? photoPath) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'users',
+      {'profilePhotoPath': photoPath},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
   /// Actualiza solo la contraseña de un usuario
   Future<void> updatePassword(String userId, String passwordHash) async {
     final db = await _dbHelper.database;

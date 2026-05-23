@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/config/demo_credentials.dart';
-import '../../../../core/utils/constants.dart';
-import '../../../../core/widgets/premium_button.dart';
-import '../../../../core/theme/app_theme.dart';
+
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/constants.dart';
+import '../../../../core/widgets/design_system/app_brand_logo.dart';
+import '../../../../core/widgets/design_system/auth_soft_background.dart';
+import '../../../../core/widgets/design_system/wave_bottom_clipper.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -12,287 +13,195 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primaryDark,
-              AppColors.primaryDark.withOpacity(0.8),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
-                  // Logo/Icono
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight.withOpacity(0.2),
-                      shape: BoxShape.circle,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 16),
+              const AppBrandLogo(size: 52, textSize: 24),
+              const SizedBox(height: 6),
+              Text(
+                'Soluciones Profesionales para tu Hogar',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.grayMedium,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _HeroImage(),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Column(
+                  children: [
+                    const Text(
+                      '¡Bienvenido a myworksapp!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.grayDark,
+                        height: 1.25,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.build_circle,
-                      size: 64,
-                      color: AppColors.primaryLight,
+                    const SizedBox(height: 12),
+                    Text(
+                      'Encuentra y contrata a los mejores profesionales para tu hogar de forma rápida y segura.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.grayMedium,
+                        height: 1.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                  // Título
-                  Text(
-                    'MyWorksApp',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -1,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Servicios profesionales\na tu alcance',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white.withOpacity(0.9),
-                          height: 1.5,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Información sobre qué se puede hacer
-                  _buildFeatureItem(
-                    context,
-                    Icons.search,
-                    'Busca profesionales',
-                    'Encuentra trabajadores calificados cerca de ti',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildFeatureItem(
-                    context,
-                    Icons.chat_bubble_outline,
-                    'Comunícate directamente',
-                    'Chatea con el trabajador antes de contratar',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildFeatureItem(
-                    context,
-                    Icons.star,
-                    'Califica y opina',
-                    'Ayuda a otros usuarios con tus experiencias',
-                  ),
-                  const SizedBox(height: 24),
-                  _buildDemoInfo(context),
-                  const SizedBox(height: 24),
-                  // Título de selección de rol
-                  Text(
-                    '¿Cómo quieres usar la app?',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Opción Usuario
-                  _buildRoleOption(
-                    context,
-                    icon: Icons.person,
-                    title: 'Usuario',
-                    description: 'Busco servicios profesionales',
-                    color: AppColors.primaryLight,
-                    onTap: () {
-                      context.push(
+                    const SizedBox(height: 24),
+                    _ServiceCategoriesRow(),
+                    const SizedBox(height: 28),
+                    BrandPrimaryButton(
+                      label: 'Comenzar Ahora',
+                      onPressed: () => context.push(
                         AppConstants.routeLogin,
                         extra: {'role': AppConstants.roleUser},
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Opción Trabajador
-                  _buildRoleOption(
-                    context,
-                    icon: Icons.work,
-                    title: 'Trabajador',
-                    description: 'Ofrezco servicios profesionales',
-                    color: AppColors.success,
-                    onTap: () {
-                      context.push(
-                        AppConstants.routeLogin,
-                        extra: {'role': AppConstants.roleWorker},
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDemoInfo(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primaryLight.withOpacity(0.4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.info_outline, color: AppColors.primaryLight, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'Modo demostración',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                      ),
                     ),
+                    const SizedBox(height: 16),
+                    _LoginLink(
+                      onTap: () => context.push(AppConstants.routeLogin),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Usuario: ${DemoCredentials.userEmail}\n'
-            'Trabajador: ${DemoCredentials.workerEmail}\n'
-            'Contraseña: ${DemoCredentials.demoPassword}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withOpacity(0.85),
-                  height: 1.5,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '3 trabajadores precargados listos para recibir solicitudes.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withOpacity(0.7),
-                ),
-          ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildFeatureItem(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String description,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: AppColors.primaryLight,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                ),
-              ],
+class _HeroImage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    return SizedBox(
+      height: width * 0.52,
+      width: width,
+      child: ClipPath(
+        clipper: WaveBottomClipper(),
+        child: Image.asset(
+          'assets/images/welcome_hero.jpg',
+          fit: BoxFit.cover,
+          width: width,
+          errorBuilder: (_, __, ___) => Container(
+            color: AppColors.brandBlueSoft,
+            child: const Center(
+              child: Icon(
+                Icons.people_alt_rounded,
+                size: 64,
+                color: AppColors.brandNavy,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRoleOption(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String description,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.3),
-            width: 1.5,
           ),
         ),
-        child: Row(
+      ),
+    );
+  }
+}
+
+class _ServiceCategoriesRow extends StatelessWidget {
+  static const _items = [
+    _ServiceItem(Icons.cleaning_services_outlined, 'Limpieza'),
+    _ServiceItem(Icons.plumbing_outlined, 'Plomería'),
+    _ServiceItem(Icons.bolt_outlined, 'Electricidad'),
+    _ServiceItem(Icons.handyman_outlined, 'Hogar'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: _items
+          .map(
+            (item) => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: item,
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _ServiceItem extends StatelessWidget {
+  const _ServiceItem(this.icon, this.label);
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: AppColors.brandOrangeSoft,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: AppColors.brandOrange.withValues(alpha: 0.12),
+            ),
+          ),
+          child: Icon(icon, color: AppColors.brandNavy, size: 26),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.grayDark,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LoginLink extends StatelessWidget {
+  const _LoginLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.grayMedium,
+            fontWeight: FontWeight.w500,
+          ),
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
+            const TextSpan(text: '¿Ya tienes cuenta? '),
+            TextSpan(
+              text: 'Inicia Sesión',
+              style: TextStyle(
+                color: AppColors.brandTeal,
+                fontWeight: FontWeight.w700,
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: color,
-              size: 20,
             ),
           ],
         ),

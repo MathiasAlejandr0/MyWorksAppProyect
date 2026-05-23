@@ -14,6 +14,23 @@ class AppColors {
   
   /// Azul claro - Color primario secundario
   static const Color primaryLight = Color(0xFF3DA9FC);
+
+  // ========== BRAND (Marketing / Auth) ==========
+
+  /// Naranja CTA — botones principales en welcome/login
+  static const Color brandOrange = Color(0xFFF0782A);
+
+  /// Azul marino — logo y títulos
+  static const Color brandNavy = Color(0xFF1A4066);
+
+  /// Teal — enlaces secundarios
+  static const Color brandTeal = Color(0xFF1E9AAA);
+
+  /// Fondo suave naranja para iconos de servicio
+  static const Color brandOrangeSoft = Color(0xFFFFF0E8);
+
+  /// Fondo suave azul para selector de rol
+  static const Color brandBlueSoft = Color(0xFFE8F4FC);
   
   // ========== SECONDARY COLORS ==========
   
@@ -40,7 +57,7 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   
   /// Gris claro - Backgrounds claros
-  static const Color grayLight = Color(0xFFF2F2F2);
+  static const Color grayLight = Color(0xFFF0F4F8);
   
   /// Gris medio - Textos secundarios, bordes
   static const Color grayMedium = Color(0xFF9CA3AF);

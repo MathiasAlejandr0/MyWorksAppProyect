@@ -177,6 +177,8 @@ class PermissionDeniedHandler {
         return 'Puedes ingresar la dirección manualmente en el formulario.';
       case Permission.camera:
         return 'Puedes seleccionar una foto desde tu galería.';
+      case Permission.photos:
+        return 'Puedes continuar sin adjuntar fotos desde la galería.';
       case Permission.storage:
         return 'Algunas funcionalidades pueden estar limitadas.';
       default:

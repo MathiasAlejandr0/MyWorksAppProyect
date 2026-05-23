@@ -8,8 +8,24 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
   static Future<Database>? _initFuture;
+  static bool _testMode = false;
 
   DatabaseHelper._init();
+
+  /// Modo prueba: base de datos en memoria (solo tests).
+  static void enableTestMode() {
+    _testMode = true;
+    _database = null;
+    _initFuture = null;
+  }
+
+  static Future<void> resetForTest() async {
+    if (_database != null) {
+      await _database!.close();
+    }
+    _database = null;
+    _initFuture = null;
+  }
 
   /// Obtiene la base de datos, asegurándose de que esté inicializada
   /// 
@@ -62,12 +78,13 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await sqflite.getDatabasesPath();
-    final path = join(dbPath, filePath);
+    final path = _testMode
+        ? inMemoryDatabasePath
+        : join(await sqflite.getDatabasesPath(), filePath);
 
     final db = await openDatabase(
       path,
-      version: 11, // v11: serviceMetadata en jobs
+      version: 14, // v14: profilePhotoPath en users
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -663,6 +680,104 @@ class DatabaseHelper {
       }
     }
 
+    if (oldVersion < 12) {
+      final result = await migrationManager.executeMigration(
+        fromVersion: 11,
+        toVersion: 12,
+        migration: () async {
+          try {
+            await db.execute(
+              'ALTER TABLE workers ADD COLUMN visitFee REAL DEFAULT 15000',
+            );
+          } catch (e) {
+            AppLogger.d('Columna visitFee puede ya existir: $e');
+          }
+          try {
+            await db.execute(
+              "ALTER TABLE workers ADD COLUMN serviceCategory TEXT DEFAULT 'general'",
+            );
+          } catch (e) {
+            AppLogger.d('Columna serviceCategory puede ya existir: $e');
+          }
+          try {
+            await db.execute(
+              "ALTER TABLE worker_portfolio ADD COLUMN mediaType TEXT DEFAULT 'photo'",
+            );
+          } catch (e) {
+            AppLogger.d('Columna mediaType puede ya existir: $e');
+          }
+        },
+        validation: () async {
+          final hasVisitFee =
+              await migrationManager.validateColumnExists('workers', 'visitFee');
+          final hasCategory = await migrationManager.validateColumnExists(
+            'workers',
+            'serviceCategory',
+          );
+          return hasVisitFee && hasCategory;
+        },
+      );
+
+      if (!result.success) {
+        AppLogger.e('Migración v11->v12 falló: ${result.message}');
+        throw Exception('Migración v11->v12 falló: ${result.message}');
+      }
+    }
+
+    if (oldVersion < 13) {
+      final result = await migrationManager.executeMigration(
+        fromVersion: 12,
+        toVersion: 13,
+        migration: () async {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS worker_services (
+              workerId TEXT NOT NULL,
+              serviceCategory TEXT NOT NULL,
+              PRIMARY KEY (workerId, serviceCategory),
+              FOREIGN KEY (workerId) REFERENCES workers(userId) ON DELETE CASCADE
+            )
+          ''');
+          await db.execute('''
+            INSERT OR IGNORE INTO worker_services (workerId, serviceCategory)
+            SELECT userId, serviceCategory FROM workers
+            WHERE serviceCategory IS NOT NULL AND serviceCategory != ''
+          ''');
+        },
+        validation: () async =>
+            await migrationManager.validateTableExists('worker_services'),
+      );
+
+      if (!result.success) {
+        AppLogger.e('Migración v12->v13 falló: ${result.message}');
+        throw Exception('Migración v12->v13 falló: ${result.message}');
+      }
+    }
+
+    if (oldVersion < 14) {
+      final result = await migrationManager.executeMigration(
+        fromVersion: 13,
+        toVersion: 14,
+        migration: () async {
+          try {
+            await db.execute(
+              'ALTER TABLE users ADD COLUMN profilePhotoPath TEXT',
+            );
+          } catch (e) {
+            AppLogger.d('Columna profilePhotoPath puede ya existir: $e');
+          }
+        },
+        validation: () async => await migrationManager.validateColumnExists(
+          'users',
+          'profilePhotoPath',
+        ),
+      );
+
+      if (!result.success) {
+        AppLogger.e('Migración v13->v14 falló: ${result.message}');
+        throw Exception('Migración v13->v14 falló: ${result.message}');
+      }
+    }
+
     AppLogger.i('Migración completada exitosamente de v$oldVersion a v$newVersion');
   }
 
@@ -676,6 +791,7 @@ class DatabaseHelper {
         password TEXT,
         role TEXT NOT NULL CHECK(role IN ('user', 'worker')),
         accountStatus TEXT DEFAULT 'active' CHECK(accountStatus IN ('active', 'suspended', 'blocked', 'deleted')),
+        profilePhotoPath TEXT,
         createdAt TEXT NOT NULL
       )
     ''');
@@ -726,7 +842,18 @@ class DatabaseHelper {
         description TEXT,
         rating REAL DEFAULT 0.0,
         isAvailable INTEGER DEFAULT 1,
+        visitFee REAL DEFAULT 15000,
+        serviceCategory TEXT DEFAULT 'general',
         FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE worker_services (
+        workerId TEXT NOT NULL,
+        serviceCategory TEXT NOT NULL,
+        PRIMARY KEY (workerId, serviceCategory),
+        FOREIGN KEY (workerId) REFERENCES workers(userId) ON DELETE CASCADE
       )
     ''');
 
@@ -842,6 +969,7 @@ class DatabaseHelper {
         photoPath TEXT NOT NULL,
         description TEXT,
         createdAt TEXT NOT NULL,
+        mediaType TEXT DEFAULT 'photo',
         FOREIGN KEY (workerId) REFERENCES workers(userId) ON DELETE CASCADE
       )
     ''');
@@ -1087,8 +1215,11 @@ class DatabaseHelper {
   }
 
   Future<void> close() async {
-    final db = await instance.database;
-    await db.close();
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+      _initFuture = null;
+    }
   }
 }
 

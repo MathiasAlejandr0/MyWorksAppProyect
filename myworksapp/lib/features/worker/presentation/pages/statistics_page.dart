@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/rating_repository.dart';
@@ -28,7 +29,7 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Estadísticas'),
       ),
       body: FutureBuilder(

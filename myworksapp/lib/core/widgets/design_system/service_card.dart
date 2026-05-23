@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../../design_system/app_spacing.dart';
-import '../../design_system/app_elevation.dart';
-import '../../theme/app_theme.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_decorations.dart';
 
 /// Card para servicios
 class ServiceCard extends StatelessWidget {
@@ -23,54 +23,59 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = color ?? AppColors.primaryLight;
-    
-    return Card(
-      elevation: AppElevation.card,
-      margin: EdgeInsets.all(AppSpacing.sm),
+    final accent = color ?? AppColors.primaryLight;
+
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: cardColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  icon,
-                  size: 32,
-                  color: cardColor,
-                ),
-              ),
-              SizedBox(height: AppSpacing.md),
-              Text(
-                name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          decoration: AppDecorations.surfaceCard(accent: accent),
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        accent.withValues(alpha: 0.22),
+                        accent.withValues(alpha: 0.08),
+                      ],
                     ),
-                textAlign: TextAlign.center,
-              ),
-              if (description != null) ...[
-                SizedBox(height: AppSpacing.xs),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(icon, size: 24, color: accent),
+                ),
+                SizedBox(height: AppSpacing.sm),
                 Text(
-                  description!,
-                  style: Theme.of(context).textTheme.bodySmall,
+                  name,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (description != null) ...[
+                  SizedBox(height: AppSpacing.xs),
+                  Text(
+                    description!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 }
-

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/utils/constants.dart';
-import '../../../../core/database/repositories/service_repository.dart';
+
 import '../../../../core/database/models/service_model.dart';
-import '../../../../core/widgets/loading_widget.dart';
-import '../../../../core/widgets/error_widget.dart';
-import '../../../../core/widgets/premium_card.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/database/repositories/service_repository.dart';
+import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/constants.dart';
+import '../../../../core/widgets/demo_tour_overlay.dart';
+import '../../../../core/widgets/design_system/app_brand_logo.dart';
+import '../../../../core/widgets/design_system/auth_soft_background.dart';
+import '../../../../core/widgets/error_widget.dart';
+import '../../../../core/widgets/loading_widget.dart';
+import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class UserHomePage extends ConsumerStatefulWidget {
@@ -20,6 +24,26 @@ class UserHomePage extends ConsumerStatefulWidget {
 
 class _UserHomePageState extends ConsumerState<UserHomePage> {
   final ServiceRepository _serviceRepository = ServiceRepository();
+  final _searchController = TextEditingController();
+  List<ServiceModel> _allServices = [];
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<ServiceModel> get _filteredServices {
+    if (_query.trim().isEmpty) return _allServices;
+    final q = _query.toLowerCase();
+    return _allServices.where((s) {
+      final label = _ServiceCard.displayName(s).toLowerCase();
+      return label.contains(q) ||
+          s.name.toLowerCase().contains(q) ||
+          (s.description ?? '').toLowerCase().contains(q);
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,81 +51,26 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
     final user = authState.user;
     final userName = user?.name.split(' ').first ?? 'Usuario';
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // AppBar personalizado
-          SliverAppBar(
-            expandedHeight: 120,
-            floating: false,
-            pinned: true,
-            backgroundColor: AppColors.primaryDark,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                'Hola, $userName 👋',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 20,
+    return DemoTourOverlay(
+      child: Scaffold(
+        body: AuthSoftBackground(
+          showDecorations: false,
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _TopBar(
+                  userName: user?.name ?? 'Usuario',
+                  photoPath: user?.profilePhotoPath,
+                  onProfile: () => context.push(AppConstants.routeUserProfile),
+                  onSettings: () => context.push(AppConstants.routeSettings),
                 ),
-              ),
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-            ),
-            actions: [
-              IconButton(
-                icon: Stack(
-                  children: [
-                    const Icon(Icons.notifications_outlined),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.error,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                onPressed: () => context.push(AppConstants.routeNotifications),
-                tooltip: 'Notificaciones',
-              ),
-              IconButton(
-                icon: const Icon(Icons.person_outline),
-                onPressed: () => context.push(AppConstants.routeUserProfile),
-                tooltip: 'Perfil',
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
-          // Contenido
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '¿Qué servicio necesitas?',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Selecciona el tipo de servicio que necesitas',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.grayMedium,
-                        ),
-                  ),
-                  const SizedBox(height: 24),
-                  FutureBuilder<List<ServiceModel>>(
+                Expanded(
+                  child: FutureBuilder<List<ServiceModel>>(
                     future: _serviceRepository.getMainServices(),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          _allServices.isEmpty) {
                         return const LoadingWidget();
                       }
 
@@ -112,81 +81,171 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                         );
                       }
 
-                      final services = snapshot.data ?? [];
-
-                      if (services.isEmpty) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(32.0),
-                            child: Text('No hay servicios disponibles'),
-                          ),
-                        );
+                      if (snapshot.hasData) {
+                        _allServices = snapshot.data!;
                       }
 
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.9,
+                      final services = _filteredServices;
+                      final crossCount = AppBreakpoints.gridColumns(
+                        context,
+                        phone: 2,
+                        tablet: 3,
+                        desktopCols: 4,
+                      );
+
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              '¡Hola de nuevo, $userName!',
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.grayDark,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '¿Qué necesitas hoy?',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.grayMedium.withValues(alpha: 0.95),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _SearchBar(
+                              controller: _searchController,
+                              onChanged: (value) => setState(() => _query = value),
+                            ),
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Servicios Disponibles',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.grayDark,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (services.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 48, bottom: 24),
+                                child: Text(
+                                  _query.isEmpty
+                                      ? 'No hay servicios disponibles'
+                                      : 'Sin resultados para "$_query"',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: AppColors.grayMedium,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              )
+                            else
+                              GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossCount,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                  childAspectRatio:
+                                      AppBreakpoints.isTablet(context) ? 0.96 : 0.9,
+                                ),
+                                itemCount: services.length,
+                                itemBuilder: (context, index) {
+                                  final service = services[index];
+                                  return _ServiceCard(
+                                    service: service,
+                                    compact: true,
+                                    onRequest: () => context.push(
+                                      AppConstants.routeWorkerList,
+                                      extra: {'serviceId': service.id},
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
                         ),
-                        itemCount: services.length,
-                        itemBuilder: (context, index) {
-                          final service = services[index];
-                          return _PremiumServiceCard(service: service);
-                        },
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
-                  // Acceso rápido al historial
-                  PremiumCard(
-                    onTap: () => context.push(AppConstants.routeJobHistory),
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryLight.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.history,
-                            color: AppColors.primaryLight,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Ver Historial',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Revisa tus trabajos anteriores',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: AppColors.grayMedium,
-                        ),
-                      ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  const _TopBar({
+    required this.userName,
+    required this.photoPath,
+    required this.onProfile,
+    required this.onSettings,
+  });
+
+  final String userName;
+  final String? photoPath;
+  final VoidCallback onProfile;
+  final VoidCallback onSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Row(
+        children: [
+          const AppBrandLogo(size: 32, textSize: 16),
+          const Spacer(),
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                GestureDetector(
+                  onTap: onProfile,
+                  child: ProfileAvatarView(
+                    displayName: userName,
+                    photoPath: photoPath,
+                    radius: 20,
+                    onDarkBackground: false,
+                  ),
+                ),
+                Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: GestureDetector(
+                    onTap: onSettings,
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: AppColors.brandOrange,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.settings_rounded,
+                        size: 12,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -195,86 +254,271 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
   }
 }
 
-class _PremiumServiceCard extends StatelessWidget {
-  final ServiceModel service;
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({
+    required this.controller,
+    required this.onChanged,
+  });
 
-  const _PremiumServiceCard({required this.service});
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return PremiumCard(
-      onTap: () {
-        context.push(
-          AppConstants.routeServiceRequest,
-          extra: {'serviceId': service.id},
-        );
-      },
-      padding: const EdgeInsets.all(20),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: AppColors.grayMedium.withValues(alpha: 0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        style: const TextStyle(
+          fontSize: 14,
+          color: AppColors.grayDark,
+        ),
+        decoration: InputDecoration(
+          hintText: "Buscar servicios (ej. 'llave')",
+          hintStyle: TextStyle(
+            fontSize: 12,
+            color: AppColors.grayMedium.withValues(alpha: 0.85),
+          ),
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          suffixIcon: Icon(
+            Icons.search_rounded,
+            color: AppColors.grayMedium.withValues(alpha: 0.7),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ServiceCard extends StatelessWidget {
+  const _ServiceCard({
+    required this.service,
+    required this.onRequest,
+    this.compact = false,
+  });
+
+  final ServiceModel service;
+  final VoidCallback onRequest;
+  final bool compact;
+
+  static String displayName(ServiceModel service) {
+    switch (service.category) {
+      case ServiceCategories.construction:
+        return 'Maestro Constructor';
+      case ServiceCategories.plumbing:
+        return 'Gásfiter';
+      case ServiceCategories.electrical:
+        return 'Electricista';
+      case ServiceCategories.gardening:
+        return 'Jardinero';
+      case ServiceCategories.cleaning:
+        return 'Limpieza';
+      case ServiceCategories.assembly:
+        return 'Armado de muebles';
+      case ServiceCategories.techSupport:
+        return 'Soporte técnico';
+      case ServiceCategories.moving:
+        return 'Mudanzas';
+      default:
+        return service.name;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = _paletteFor(service.category);
+    final label = displayName(service);
+    final iconSize = compact ? 28.0 : 36.0;
+    final margin = compact ? 6.0 : 8.0;
+    final btnHeight = compact ? 28.0 : 32.0;
+    final labelSize = compact ? 10.5 : 12.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(compact ? 12 : 14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primaryLight.withOpacity(0.2),
-                  AppColors.primaryLight.withOpacity(0.1),
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.all(margin),
+              decoration: BoxDecoration(
+                color: palette.background,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    _iconFor(service.category),
+                    size: iconSize,
+                    color: palette.primary,
+                  ),
+                  if (palette.secondaryIcon != null && !compact)
+                    Positioned(
+                      right: 12,
+                      bottom: 10,
+                      child: Icon(
+                        palette.secondaryIcon,
+                        size: 18,
+                        color: palette.secondary,
+                      ),
+                    ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              _getServiceIcon(service.name),
-              size: 32,
-              color: AppColors.primaryLight,
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            service.name,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (service.description != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              service.description!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.grayMedium,
-                  ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: margin),
+            child: Text(
+              label,
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: labelSize,
+                fontWeight: FontWeight.w800,
+                color: AppColors.grayDark,
+                height: 1.15,
+              ),
             ),
-          ],
+          ),
+          SizedBox(height: compact ? 4 : 6),
+          Padding(
+            padding: EdgeInsets.fromLTRB(margin + 2, 0, margin + 2, margin),
+            child: SizedBox(
+              height: btnHeight,
+              child: TextButton(
+                onPressed: onRequest,
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.brandBlueSoft,
+                  foregroundColor: AppColors.brandNavy,
+                  elevation: 0,
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: TextStyle(
+                    fontSize: compact ? 11 : 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                child: const Text('Solicitar'),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  IconData _getServiceIcon(String serviceName) {
-    // Iconos únicos para cada servicio principal
-    final name = serviceName.toLowerCase();
-    
-    if (name.contains('limpieza') || name.contains('cleaning')) return Icons.cleaning_services;
-    if (name.contains('construcción') || name.contains('construction')) return Icons.home_work;
-    if (name.contains('plomería') || name.contains('plumbing') || name.contains('gasfiter')) return Icons.plumbing;
-    if (name.contains('electricidad') || name.contains('electrical') || name.contains('electricista')) return Icons.electrical_services;
-    if (name.contains('cerrajero') || name.contains('locksmith')) return Icons.lock;
-    if (name.contains('pintor') || name.contains('painter')) return Icons.format_paint;
-    if (name.contains('armado') || name.contains('assembly') || name.contains('muebles')) return Icons.build_circle;
-    if (name.contains('soporte técnico') || name.contains('tech support')) return Icons.computer;
-    if (name.contains('jardinería') || name.contains('gardening')) return Icons.local_florist;
-    if (name.contains('mudanza') || name.contains('moving')) return Icons.local_shipping;
-    
-    return Icons.build;
+  static IconData _iconFor(String category) {
+    switch (category) {
+      case ServiceCategories.construction:
+        return Icons.architecture_rounded;
+      case ServiceCategories.plumbing:
+        return Icons.plumbing_rounded;
+      case ServiceCategories.electrical:
+        return Icons.bolt_rounded;
+      case ServiceCategories.gardening:
+        return Icons.yard_rounded;
+      case ServiceCategories.cleaning:
+        return Icons.cleaning_services_rounded;
+      case ServiceCategories.assembly:
+        return Icons.chair_rounded;
+      case ServiceCategories.techSupport:
+        return Icons.computer_rounded;
+      case ServiceCategories.moving:
+        return Icons.local_shipping_rounded;
+      default:
+        return Icons.handyman_rounded;
+    }
   }
+
+  static _ServicePalette _paletteFor(String category) {
+    switch (category) {
+      case ServiceCategories.construction:
+        return const _ServicePalette(
+          background: Color(0xFFFFF8E7),
+          primary: Color(0xFFF59E0B),
+          secondary: Color(0xFF92400E),
+          secondaryIcon: Icons.straighten_rounded,
+        );
+      case ServiceCategories.plumbing:
+        return const _ServicePalette(
+          background: Color(0xFFE8F6FF),
+          primary: Color(0xFF0EA5E9),
+          secondary: Color(0xFF0369A1),
+          secondaryIcon: Icons.water_drop_outlined,
+        );
+      case ServiceCategories.electrical:
+        return const _ServicePalette(
+          background: Color(0xFFFFF7ED),
+          primary: Color(0xFFF97316),
+          secondary: Color(0xFFCA8A04),
+          secondaryIcon: Icons.power_rounded,
+        );
+      case ServiceCategories.gardening:
+        return const _ServicePalette(
+          background: Color(0xFFECFDF5),
+          primary: Color(0xFF22C55E),
+          secondary: Color(0xFF15803D),
+          secondaryIcon: Icons.eco_rounded,
+        );
+      case ServiceCategories.cleaning:
+        return const _ServicePalette(
+          background: Color(0xFFF0F9FF),
+          primary: Color(0xFF38BDF8),
+        );
+      default:
+        return const _ServicePalette(
+          background: AppColors.brandOrangeSoft,
+          primary: AppColors.brandNavy,
+        );
+    }
+  }
+}
+
+class _ServicePalette {
+  const _ServicePalette({
+    required this.background,
+    required this.primary,
+    this.secondary,
+    this.secondaryIcon,
+  });
+
+  final Color background;
+  final Color primary;
+  final Color? secondary;
+  final IconData? secondaryIcon;
 }

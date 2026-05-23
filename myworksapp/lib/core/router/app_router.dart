@@ -14,6 +14,7 @@ import '../../features/worker/presentation/pages/worker_register_page.dart';
 import '../../features/user/presentation/pages/service_request_page.dart';
 import '../../features/user/presentation/pages/worker_list_page.dart';
 import '../../features/user/presentation/pages/worker_detail_page.dart';
+import '../../features/user/presentation/pages/quick_booking_page.dart';
 import '../../features/jobs/presentation/pages/job_detail_page.dart';
 import '../../features/jobs/presentation/pages/job_history_page.dart';
 import '../../features/ratings/presentation/pages/rating_page.dart';
@@ -35,13 +36,14 @@ import '../../core/presentation/pages/help_center_page.dart';
 import '../../core/utils/constants.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  // Solo reaccionar a login/logout, no a isLoading (evita resetear la pila al abrir perfil).
+  final authUser = ref.watch(authProvider.select((s) => s.user));
 
   return GoRouter(
     initialLocation: AppConstants.routeWelcome,
     redirect: (context, state) async {
       try {
-        final isLoggedIn = authState.user != null;
+        final isLoggedIn = authUser != null;
         
         // Verificar si es la primera vez (onboarding)
         if (!isLoggedIn && 
@@ -72,8 +74,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
         // Si está logueado y está en welcome/auth/onboarding, redirigir según rol
         if (isLoggedIn && (isOnWelcome || isOnAuth)) {
-          final user = authState.user;
-          if (user?.role == AppConstants.roleUser) {
+          if (authUser.role == AppConstants.roleUser) {
             return AppConstants.routeUserHome;
           } else {
             return AppConstants.routeWorkerHome;
@@ -155,7 +156,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppConstants.routeServiceRequest,
         builder: (context, state) {
           final args = state.extra as Map<String, dynamic>?;
-          return ServiceRequestPage(serviceId: args?['serviceId'] as String?);
+          return ServiceRequestPage(
+            serviceId: args?['serviceId'] as String?,
+            workerId: args?['workerId'] as String?,
+          );
         },
       ),
       GoRoute(
@@ -172,7 +176,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '${AppConstants.routeWorkerDetail}/:workerId',
         builder: (context, state) {
           final workerId = state.pathParameters['workerId']!;
-          return WorkerDetailPage(workerId: workerId);
+          final args = state.extra as Map<String, dynamic>?;
+          return WorkerDetailPage(
+            workerId: workerId,
+            serviceId: args?['serviceId'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppConstants.routeQuickBooking,
+        builder: (context, state) {
+          final args = state.extra as Map<String, dynamic>?;
+          return QuickBookingPage(
+            workerId: args?['workerId'] as String? ?? '',
+            serviceId: args?['serviceId'] as String? ?? '',
+          );
         },
       ),
       GoRoute(

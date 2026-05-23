@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -15,18 +16,20 @@ import '../../../../core/widgets/location_picker_widget.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/job_service.dart';
 import '../../../../core/services/service_legal_validator.dart';
+import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/widgets/service_disclaimer_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/dynamic_service_form.dart';
 import '../widgets/price_estimate_card.dart';
 import 'package:intl/intl.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 
 class ServiceRequestPage extends ConsumerStatefulWidget {
   final String? serviceId;
+  final String? workerId;
 
-  const ServiceRequestPage({super.key, this.serviceId});
+  const ServiceRequestPage({super.key, this.serviceId, this.workerId});
 
   @override
   ConsumerState<ServiceRequestPage> createState() => _ServiceRequestPageState();
@@ -40,8 +43,11 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   final ServiceConfigRepository _configRepository = ServiceConfigRepository();
   final JobService _jobService = JobService.instance;
   final ServiceLegalValidator _legalValidator = ServiceLegalValidator.instance;
+  final WorkerRepository _workerRepository = WorkerRepository();
   bool _isLoading = false;
   String? _selectedServiceId;
+  String? _selectedWorkerId;
+  WorkerModel? _selectedWorker;
   ServiceModel? _selectedService;
   ServiceConfigModel? _serviceConfig;
   Map<String, dynamic> _serviceMetadata = {};
@@ -57,9 +63,18 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   void initState() {
     super.initState();
     _selectedServiceId = widget.serviceId;
+    _selectedWorkerId = widget.workerId;
     if (_selectedServiceId != null) {
       _loadServiceConfig(_selectedServiceId!);
     }
+    if (_selectedWorkerId != null) {
+      _loadSelectedWorker(_selectedWorkerId!);
+    }
+  }
+
+  Future<void> _loadSelectedWorker(String workerId) async {
+    final worker = await _workerRepository.getWorkerByUserId(workerId);
+    if (mounted) setState(() => _selectedWorker = worker);
   }
 
   Future<void> _loadServiceConfig(String serviceId) async {
@@ -197,27 +212,26 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         return;
       }
 
-      // Notificar a trabajadores disponibles del mismo servicio que no tienen trabajos activos
-      final WorkerRepository _workerRepository = WorkerRepository();
-      final JobRepository _jobRepository = JobRepository();
-      final workers = await _workerRepository.getWorkersByProfession(
-        await _getProfessionFromService(_selectedServiceId!),
-      );
+      // Notificar trabajadores de la categoría del servicio
+      final jobRepository = JobRepository();
+      final workers = service != null
+          ? await _workerRepository.getWorkersByServiceCategory(service.category)
+          : <WorkerModel>[];
 
-      for (var worker in workers) {
-        if (worker.isAvailable) {
-          // Verificar que no tenga trabajos activos
-          final hasActiveJobs = await _jobRepository.hasActiveJobs(worker.userId);
-          if (!hasActiveJobs) {
-            await NotificationService.instance.showNotification(
-              title: 'Nueva Solicitud',
-              body: 'Hay una nueva solicitud de servicio disponible',
-              userId: worker.userId,
-              type: 'new_job',
-              relatedId: job.id,
-            );
-          }
+      for (final worker in workers) {
+        if (worker.isAvailable && !await jobRepository.hasActiveJobs(worker.userId)) {
+          await NotificationService.instance.showNotification(
+            title: 'Nueva solicitud',
+            body: 'Hay una nueva solicitud de servicio disponible',
+            userId: worker.userId,
+            type: 'new_job',
+            relatedId: job.id,
+          );
         }
+      }
+
+      if (_selectedWorkerId != null) {
+        await jobRepository.assignWorker(job.id, _selectedWorkerId!);
       }
 
       if (!mounted) return;
@@ -226,13 +240,17 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         const SnackBar(content: Text('Solicitud creada exitosamente')),
       );
 
-      context.push(
-        AppConstants.routeWorkerList,
-        extra: {
-          'serviceId': _selectedServiceId,
-          'jobId': job.id,
-        },
-      );
+      if (_selectedWorkerId != null) {
+        context.push('${AppConstants.routeJobDetail}/${job.id}');
+      } else {
+        context.push(
+          AppConstants.routeWorkerList,
+          extra: {
+            'serviceId': _selectedServiceId,
+            'jobId': job.id,
+          },
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -248,7 +266,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Solicitar Servicio'),
       ),
       body: FutureBuilder(
@@ -271,6 +289,39 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                     'Completa los datos de tu solicitud',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
+                  if (_selectedWorker != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.primaryLight.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Trabajador seleccionado',
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: AppColors.primaryLight,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _selectedWorker!.profession,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          Text(
+                            'Visita: ${NumberFormat.currency(locale: 'es_CL', symbol: '\$', decimalDigits: 0).format(_selectedWorker!.visitFee)} · El precio final se define en la visita',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   DropdownButtonFormField<String>(
                     initialValue: _selectedServiceId,
@@ -479,18 +530,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         },
       ),
     );
-  }
-
-  Future<String> _getProfessionFromService(String serviceId) async {
-    final serviceProfessionMap = {
-      '1': 'Maestro Constructor',
-      '2': 'Gasfiter',
-      '3': 'Electricista',
-      '4': 'Cerrajero',
-      '5': 'Pintor',
-      '6': 'Técnico en General',
-    };
-    return serviceProfessionMap[serviceId] ?? 'Técnico en General';
   }
 
   /// Compara dos mapas para determinar si son diferentes
