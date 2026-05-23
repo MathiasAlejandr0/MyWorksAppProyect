@@ -57,5 +57,7 @@
 	<string>Necesitamos guardar fotos de trabajos y de perfil en tu biblioteca cuando lo solicites</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Necesitamos tu ubicación para mostrar el mapa y seleccionar la dirección del servicio</string>
+	<key>GMSApiKey</key>
+	<string>$(GOOGLE_MAPS_API_KEY)</string>
 </dict>
 </plist>

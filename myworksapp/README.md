@@ -46,3 +46,11 @@ flutter analyze
 |-----|-------|------------|
 | Usuario | `usuario@demo.com` | `demo123` |
 | Trabajador | `trabajador@demo.com` | `demo123` |
+
+## Claves Google Maps (local)
+
+No commitear claves. Ver sección **Seguridad y claves API** en [../README.md](../README.md).
+
+```powershell
+copy android\secrets.properties.example android\secrets.properties
+```

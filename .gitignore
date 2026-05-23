@@ -135,4 +135,8 @@ GoogleService-Info.plist
 *.pem
 *.key
 *.crt
-*.cer 
+*.cer
+
+# API keys locales (no subir a Git)
+**/android/secrets.properties
+**/ios/Flutter/Secrets.xcconfig

@@ -131,6 +131,41 @@ El APK queda en `myworksapp/build/app/outputs/flutter-apk/`.
 - Reproducción de video real en portafolio (solo miniaturas demo)
 - Supabase / Firebase
 
+## Seguridad y claves API
+
+**No subas claves de Google Maps ni otros secretos a GitHub.** El correo de Google suele referirse a **API keys de Maps** expuestas en el código.
+
+### Si recibiste alerta de Google
+
+1. Entra a [Google Cloud Console → Credenciales](https://console.cloud.google.com/google/maps-apis/credentials).
+2. **Elimina o regenera** las claves que estuvieron en el repositorio (ya no están en el código actual, pero siguen en el historial de Git hasta que las revoques).
+3. Crea claves **nuevas** con restricciones:
+   - **Android:** app `com.example.myworksapp` + huella SHA-1 de tu keystore.
+   - **iOS:** bundle ID de tu app.
+   - Limita APIs solo a **Maps SDK for Android/iOS** (y las que uses).
+
+### Configurar claves en local (desarrollo)
+
+**Android** — copia el ejemplo y pega tu clave:
+
+```powershell
+cd myworksapp\android
+copy secrets.properties.example secrets.properties
+# Edita secrets.properties y añade: GOOGLE_MAPS_API_KEY=tu_clave_nueva
+```
+
+**iOS (macOS):**
+
+```bash
+cd myworksapp/ios/Flutter
+cp Secrets.xcconfig.example Secrets.xcconfig
+# Edita Secrets.xcconfig con GOOGLE_MAPS_API_KEY=tu_clave_nueva
+```
+
+También puedes usar la variable de entorno `GOOGLE_MAPS_API_KEY` en Android.
+
+Los archivos `secrets.properties` y `Secrets.xcconfig` están en `.gitignore` y **no se suben** al repositorio.
+
 ## Licencia
 
 MIT
