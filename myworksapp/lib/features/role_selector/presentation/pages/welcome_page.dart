@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/config/demo_credentials.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/premium_button.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -85,7 +86,9 @@ class WelcomePage extends StatelessWidget {
                     'Califica y opina',
                     'Ayuda a otros usuarios con tus experiencias',
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
+                  _buildDemoInfo(context),
+                  const SizedBox(height: 24),
                   // Título de selección de rol
                   Text(
                     '¿Cómo quieres usar la app?',
@@ -131,6 +134,53 @@ class WelcomePage extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDemoInfo(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primaryLight.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline, color: AppColors.primaryLight, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Modo demostración',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Usuario: ${DemoCredentials.userEmail}\n'
+            'Trabajador: ${DemoCredentials.workerEmail}\n'
+            'Contraseña: ${DemoCredentials.demoPassword}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withOpacity(0.85),
+                  height: 1.5,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '3 trabajadores precargados listos para recibir solicitudes.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withOpacity(0.7),
+                ),
+          ),
+        ],
       ),
     );
   }

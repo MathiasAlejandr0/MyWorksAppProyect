@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'bootstrap/app_initializer.dart';
-import 'core/theme/app_theme.dart';
 import 'core/utils/app_logger.dart';
 import 'app.dart';
 

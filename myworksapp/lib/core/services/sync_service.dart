@@ -3,14 +3,10 @@ import '../database/models/pending_action_model.dart';
 import '../utils/app_logger.dart';
 import 'dart:convert';
 
-/// Servicio de sincronización con backend
-/// 
-/// Maneja:
-/// - Sincronización de pending_actions
-/// - Reintentos automáticos
-/// - Manejo de errores
-/// 
-/// Preparado para implementar cuando tengamos backend.
+/// Servicio de sincronización local (modo demo offline-first).
+///
+/// En esta versión de demostración las acciones se procesan localmente.
+/// La arquitectura de pending_actions queda lista para conectar un backend.
 class SyncService {
   static final SyncService instance = SyncService._();
   SyncService._();
@@ -68,13 +64,8 @@ class SyncService {
       // Marcar como sincronizando
       await _pendingActionRepository.updateStatus(action.id, 'syncing');
 
-      // TODO: Implementar llamada real al backend
-      // final response = await apiClient.syncAction(action);
-      // return response.success;
-
-      // Por ahora, simular éxito
-      AppLogger.i('Sincronizando acción: ${action.actionType} - ${action.entityId}');
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Modo demo: la acción ya quedó persistida en SQLite localmente.
+      AppLogger.i('Acción procesada localmente: ${action.actionType} - ${action.entityId}');
       return true;
     } catch (e) {
       AppLogger.e('Error sincronizando acción', e);

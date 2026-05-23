@@ -5,6 +5,7 @@ import '../core/services/notification_service.dart';
 import '../core/services/session_manager.dart';
 import '../core/services/app_lifecycle_service.dart';
 import '../core/services/service_seeder.dart';
+import '../core/services/demo_data_seeder.dart';
 import '../core/services/app_health_service.dart';
 import '../core/utils/app_logger.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
@@ -89,9 +90,17 @@ class AppInitializer {
         // Continuar sin servicios (pueden existir ya)
       }
 
+      // Datos de demostración (usuarios y trabajadores precargados)
+      try {
+        await DemoDataSeeder.instance.seedDemoData();
+      } catch (e) {
+        AppLogger.w('⚠️ Error al cargar datos demo', e);
+      }
+
       // 3. Cargar preferencias
       AppLogger.i('⚙️ Cargando preferencias...');
       final prefs = await SharedPreferences.getInstance();
+      await _ensureDemoPreferences(prefs);
       final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
       final isFirstLaunch = !prefs.containsKey('onboarding_completed');
       AppLogger.i('✅ Preferencias cargadas');
@@ -205,5 +214,21 @@ class AppInitializer {
 
   /// Verifica si la app está inicializada
   bool get isInitialized => _isInitialized;
+
+  /// Configura preferencias mínimas para la demo local
+  Future<void> _ensureDemoPreferences(SharedPreferences prefs) async {
+    if (!prefs.containsKey('privacy_policy_url')) {
+      await prefs.setString(
+        'privacy_policy_url',
+        'https://myworksapp.demo/privacy',
+      );
+    }
+    if (!prefs.containsKey('terms_accepted')) {
+      await prefs.setBool('terms_accepted', true);
+    }
+    if (!prefs.containsKey('permissions_explained')) {
+      await prefs.setBool('permissions_explained', true);
+    }
+  }
 }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/config/demo_credentials.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/constants.dart';
 import '../providers/auth_provider.dart';
@@ -30,10 +31,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
+    await _loginWithCredentials(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+  }
+
+  Future<void> _loginWithCredentials(String email, String password) async {
     final authNotifier = ref.read(authProvider.notifier);
     final success = await authNotifier.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
+      email: email,
+      password: password,
     );
 
     if (!mounted) return;
@@ -41,7 +49,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (success) {
       final authState = ref.read(authProvider);
       final user = authState.user;
-      
+
       if (user != null) {
         if (user.role == AppConstants.roleUser) {
           context.go(AppConstants.routeUserHome);
@@ -58,6 +66,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         ),
       );
     }
+  }
+
+  Future<void> _loginWithDemoAccount() async {
+    final isWorkerRole = widget.role == AppConstants.roleWorker;
+    _emailController.text =
+        isWorkerRole ? DemoCredentials.workerEmail : DemoCredentials.userEmail;
+    _passwordController.text = DemoCredentials.demoPassword;
+    await _loginWithCredentials(
+      _emailController.text,
+      _passwordController.text,
+    );
   }
 
   @override
@@ -129,6 +148,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Text('Iniciar sesión'),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: authState.isLoading ? null : _loginWithDemoAccount,
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: Text(
+                    widget.role == AppConstants.roleWorker
+                        ? 'Entrar con trabajador demo'
+                        : 'Entrar con usuario demo',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Demo: ${widget.role == AppConstants.roleWorker ? DemoCredentials.workerEmail : DemoCredentials.userEmail} / ${DemoCredentials.demoPassword}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
                 ),
                 const SizedBox(height: 16),
                 TextButton(

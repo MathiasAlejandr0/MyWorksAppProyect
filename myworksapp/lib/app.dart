@@ -25,7 +25,6 @@ class MyWorksApp extends ConsumerStatefulWidget {
 class _MyWorksAppState extends ConsumerState<MyWorksApp> {
   bool _isDarkMode = false;
   bool _isInitialized = false;
-  AppInitializationResult? _initResult;
 
   @override
   void initState() {
@@ -61,7 +60,6 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
       final result = await AppInitializer.instance.initialize(ref);
       
       setState(() {
-        _initResult = result;
         _isInitialized = true;
       });
 
