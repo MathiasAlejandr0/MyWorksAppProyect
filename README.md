@@ -2,6 +2,14 @@
 
 Plataforma móvil **Flutter** para conectar **usuarios** con **trabajadores de oficios**. Esta versión es una **demo funcional offline-first**: todos los datos viven en el dispositivo (SQLite), sin backend remoto ni sincronización entre teléfonos.
 
+## Documentación
+
+| Documento | Contenido |
+|-----------|-----------|
+| **[INSTALL.md](INSTALL.md)** | Instalar APK en Android, iPhone desde Mac, TestFlight, QR |
+| **[DEMO.md](DEMO.md)** | Guión de demo para financistas, universidad, limitaciones |
+| **[myworksapp/README.md](myworksapp/README.md)** | Referencia rápida para desarrolladores |
+
 ## Descripción
 
 MyWorksApp permite a un usuario buscar servicios del hogar, ver perfiles de trabajadores con portafolio y tarifas, agendar visitas y gestionar trabajos de punta a punta. Los trabajadores pueden aceptar ofertas, actualizar el estado del trabajo, chatear y mostrar su experiencia en un perfil profesional.
@@ -25,14 +33,20 @@ Incluye **16 trabajadores demo** repartidos en 8 categorías (electricidad, gasf
 
 ```
 MyWorksAppProyect/
+├── README.md                      # Este archivo
+├── INSTALL.md                     # Instalación APK / iPhone
+├── DEMO.md                        # Guía de demostración
 └── myworksapp/                    # App Flutter (usuario + trabajador)
     ├── assets/images/             # Imágenes locales (hero welcome, etc.)
     ├── lib/
     │   ├── bootstrap/             # Inicialización de la app
     │   ├── core/                  # BD, router, tema, servicios, widgets compartidos
     │   └── features/              # Pantallas por módulo (auth, user, worker, jobs…)
-    ├── run.ps1                    # Script rápido Android (Windows)
-    └── scripts/run_ios.sh         # Script rápido iOS (macOS)
+    ├── run.ps1                    # Ejecutar en emulador Android (Windows)
+    └── scripts/
+        ├── build-apk.ps1          # Compilar APK (Windows)
+        ├── run_ios.sh             # Ejecutar en simulador iOS (macOS)
+        └── install_ios_device.sh  # Instalar en iPhone físico (macOS)
 ```
 
 ## Requisitos
@@ -43,19 +57,29 @@ MyWorksAppProyect/
 
 ## Ejecutar la demo
 
-### Windows (Android)
+### Windows (Android — emulador)
 
 ```powershell
 cd myworksapp
 .\run.ps1 -LaunchEmulator
 ```
 
-### macOS (iOS)
+### macOS (iOS — simulador)
 
 ```bash
 cd myworksapp
 chmod +x scripts/run_ios.sh
 ./scripts/run_ios.sh
+```
+
+### macOS (iPhone físico)
+
+Ver [INSTALL.md](INSTALL.md) o:
+
+```bash
+cd myworksapp
+chmod +x scripts/install_ios_device.sh
+./scripts/install_ios_device.sh
 ```
 
 ### Comandos estándar
@@ -80,11 +104,15 @@ Trabajadores adicionales precargados: `pedro@demo.com`, `maria@demo.com` (misma 
 
 En la pantalla de login puedes usar **Entrar con demo** o el selector de rol Usuario / Trabajador.
 
+También puedes **registrar cuentas nuevas** (usuario recomendado para onboarding; trabajadores nuevos no aparecen en listados por categoría como los 16 demos).
+
 ## Flujo recomendado para demostrar
+
+Resumen rápido; guión completo en **[DEMO.md](DEMO.md)**.
 
 1. Entra como **usuario demo** → elige un servicio (ej. Armado de muebles) → abre un perfil (ej. Tomás IKEA Pro).
 2. Revisa tarifa de visita, descripción y **trabajos anteriores** del portafolio.
-3. Crea una solicitud o agenda una visita.
+3. Crea una solicitud o **agenda una visita**.
 4. Cierra sesión (Ajustes → Cerrar sesión).
 5. Entra como **trabajador demo** → acepta el trabajo en Pendientes → avanza el estado.
 6. Vuelve como usuario → califica, chatea y revisa el historial.
@@ -103,14 +131,23 @@ En la pantalla de login puedes usar **Entrar con demo** o el selector de rol Usu
 | Mapas | Google Maps, Geolocator |
 | Notificaciones | flutter_local_notifications (locales) |
 
-## Compilar APK
+## Compilar e instalar APK (Android)
 
 ```bash
 cd myworksapp
-flutter build apk --debug
+flutter build apk --release
 ```
 
-El APK queda en `myworksapp/build/app/outputs/flutter-apk/`.
+Windows (copia también a `releases/`):
+
+```powershell
+cd myworksapp
+.\scripts\build-apk.ps1
+```
+
+Salida: `myworksapp/build/app/outputs/flutter-apk/app-release.apk`
+
+Instrucciones de instalación en teléfono: **[INSTALL.md](INSTALL.md)**
 
 ## Alcance de esta versión
 
@@ -126,10 +163,11 @@ El APK queda en `myworksapp/build/app/outputs/flutter-apk/`.
 **No incluido** (fuera de alcance demo)
 
 - Backend remoto / sync entre dispositivos
-- Pagos reales (mock local)
+- Pagos reales (mock local; ver `lib/core/services/payment_service.dart`)
 - Push notifications remotas
 - Reproducción de video real en portafolio (solo miniaturas demo)
 - Supabase / Firebase
+- Trabajadores registrados en el listado por categoría (solo demos precargados)
 
 ## Seguridad y claves API
 

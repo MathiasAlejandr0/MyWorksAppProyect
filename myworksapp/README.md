@@ -1,12 +1,33 @@
 # MyWorksApp — App Flutter
 
-Demo móvil offline-first para conectar usuarios con trabajadores de oficios. Documentación completa del repositorio en [../README.md](../README.md).
+Demo móvil offline-first para conectar usuarios con trabajadores de oficios.
+
+## Documentación del repositorio
+
+| Archivo | Uso |
+|---------|-----|
+| [../README.md](../README.md) | Visión general, stack, alcance |
+| [../INSTALL.md](../INSTALL.md) | APK Android, iPhone, TestFlight |
+| [../DEMO.md](../DEMO.md) | Presentación a financistas / universidad |
 
 ## Inicio rápido
 
 ```powershell
 # Windows + emulador Android
 .\run.ps1 -LaunchEmulator
+```
+
+```powershell
+# Compilar APK release (Windows)
+.\scripts\build-apk.ps1
+```
+
+```bash
+# macOS — simulador iOS
+chmod +x scripts/run_ios.sh && ./scripts/run_ios.sh
+
+# macOS — iPhone físico
+chmod +x scripts/install_ios_device.sh && ./scripts/install_ios_device.sh
 ```
 
 ```bash
@@ -49,8 +70,21 @@ flutter analyze
 
 ## Claves Google Maps (local)
 
-No commitear claves. Ver sección **Seguridad y claves API** en [../README.md](../README.md).
+No commitear claves. Ver [../README.md#seguridad-y-claves-api](../README.md#seguridad-y-claves-api).
 
 ```powershell
 copy android\secrets.properties.example android\secrets.properties
 ```
+
+```bash
+cp ios/Flutter/Secrets.xcconfig.example ios/Flutter/Secrets.xcconfig
+```
+
+## Scripts
+
+| Script | Plataforma | Descripción |
+|--------|------------|-------------|
+| `run.ps1` | Windows | Flutter run en emulador Android |
+| `scripts/build-apk.ps1` | Windows | Compila APK release → `../releases/` |
+| `scripts/run_ios.sh` | macOS | Flutter run en simulador iOS |
+| `scripts/install_ios_device.sh` | macOS | Instala en iPhone físico (release) |
