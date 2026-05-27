@@ -6,6 +6,7 @@ Plataforma móvil **Flutter** para conectar **usuarios** con **trabajadores de o
 
 | Documento | Contenido |
 |-----------|-----------|
+| **[ESTADO_DEL_PROYECTO.md](ESTADO_DEL_PROYECTO.md)** | **Qué tiene la app y qué falta** (MVP vs. producción) |
 | **[INSTALL.md](INSTALL.md)** | Instalar APK en Android, iPhone desde Mac, TestFlight, QR |
 | **[DEMO.md](DEMO.md)** | Guión de demo para financistas, universidad, limitaciones |
 | **[myworksapp/README.md](myworksapp/README.md)** | Referencia rápida para desarrolladores |
@@ -34,6 +35,7 @@ Incluye **16 trabajadores demo** repartidos en 8 categorías (electricidad, gasf
 ```
 MyWorksAppProyect/
 ├── README.md                      # Este archivo
+├── ESTADO_DEL_PROYECTO.md         # Inventario: implementado vs. pendiente
 ├── INSTALL.md                     # Instalación APK / iPhone
 ├── DEMO.md                        # Guía de demostración
 └── myworksapp/                    # App Flutter (usuario + trabajador)

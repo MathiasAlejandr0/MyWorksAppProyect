@@ -7,6 +7,7 @@ Demo móvil offline-first para conectar usuarios con trabajadores de oficios.
 | Archivo | Uso |
 |---------|-----|
 | [../README.md](../README.md) | Visión general, stack, alcance |
+| [../ESTADO_DEL_PROYECTO.md](../ESTADO_DEL_PROYECTO.md) | Qué tiene / qué falta (MVP vs. producción) |
 | [../INSTALL.md](../INSTALL.md) | APK Android, iPhone, TestFlight |
 | [../DEMO.md](../DEMO.md) | Presentación a financistas / universidad |
 

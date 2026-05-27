@@ -133,5 +133,6 @@ Lleva una diapositiva con credenciales demo y el guión de arriba.
 
 ## Más información
 
+- Qué tiene y qué falta: [ESTADO_DEL_PROYECTO.md](ESTADO_DEL_PROYECTO.md)
 - Instalación APK / iPhone: [INSTALL.md](INSTALL.md)
 - Documentación técnica: [README.md](README.md)
