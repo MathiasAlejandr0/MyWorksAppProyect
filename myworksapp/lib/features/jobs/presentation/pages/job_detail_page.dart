@@ -94,7 +94,11 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     ];
 
     for (final status in possibleStatuses) {
-      final canTransition = _stateMachine.isValidTransition(job.status, status);
+      final canTransition = _stateMachine.isValidTransition(
+        job.status,
+        status,
+        pricingMode: job.pricingMode,
+      );
       transitions[status] = canTransition;
     }
 
@@ -141,7 +145,11 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       if (user == null || _job == null) return;
 
       // Validar transición usando JobStateMachine
-      if (!_stateMachine.isValidTransition(_job!.status, newStatus)) {
+      if (!_stateMachine.isValidTransition(
+        _job!.status,
+        newStatus,
+        pricingMode: _job!.pricingMode,
+      )) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -228,7 +236,11 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     if (user == null || _job == null) return;
 
     // Validar transición usando JobStateMachine
-    if (!_stateMachine.isValidTransition(_job!.status, AppConstants.jobStatusAccepted)) {
+    if (!_stateMachine.isValidTransition(
+      _job!.status,
+      AppConstants.jobStatusAccepted,
+      pricingMode: _job!.pricingMode,
+    )) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -314,7 +326,11 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     if (_job == null) return;
 
     // Validar transición usando JobStateMachine
-    if (!_stateMachine.isValidTransition(_job!.status, AppConstants.jobStatusCompleted)) {
+    if (!_stateMachine.isValidTransition(
+      _job!.status,
+      AppConstants.jobStatusCompleted,
+      pricingMode: _job!.pricingMode,
+    )) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -407,7 +423,11 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     if (_job == null) return;
 
     // Validar transición usando JobStateMachine
-    if (!_stateMachine.isValidTransition(_job!.status, AppConstants.jobStatusCancelled)) {
+    if (!_stateMachine.isValidTransition(
+      _job!.status,
+      AppConstants.jobStatusCancelled,
+      pricingMode: _job!.pricingMode,
+    )) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

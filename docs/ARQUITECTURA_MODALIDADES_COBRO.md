@@ -765,14 +765,27 @@ final pricingServiceProvider = Provider<PricingService>((ref) {
 
 ## 6. Roadmap de implementación sugerido
 
-| Fase | Entregable |
-|------|------------|
-| 1 | Migración SQLite + campos `pricing_mode`, `pricing_snapshot` |
-| 2 | `TransitionMatrix` + `PaymentGuard` en `JobStateMachine` |
-| 3 | Modalidad **fixed_price** end-to-end (mock pago) |
-| 4 | Modalidad **hourly_block** + overtime change order |
-| 5 | Modalidad **open_quote** + propuestas |
-| 6 | PostgreSQL + API + pasarela Chile (Webpay/Mercado Pago) |
+| Fase | Entregable | Estado |
+|------|------------|--------|
+| 1 | Migración SQLite v15 + `JobModel` + tablas `quote_proposals` / `change_orders` | ✅ En código |
+| 2 | `JobTransitionMatrix` + `PaymentGuard` + `JobStateMachine` integrado | ✅ En código |
+| 3 | `PricingService.calculateFixedPrice` / `calculateHourlyBlock` / `ChangeOrderService` | ✅ Stubs locales |
+| 4 | UI flujo **fixed_price** (checkout → escrow) | Pendiente |
+| 5 | UI **hourly_block** + overtime | Pendiente |
+| 6 | UI **open_quote** + propuestas | Pendiente |
+| 7 | PostgreSQL + API + pasarela Chile (Webpay/Mercado Pago) | Pendiente |
+
+### Archivos Flutter (Fase 1)
+
+| Archivo | Rol |
+|---------|-----|
+| `lib/core/domain/pricing_constants.dart` | Modalidades y estados |
+| `lib/core/domain/price_quote.dart` | Snapshot de precio |
+| `lib/core/services/job_transition_matrix.dart` | Transiciones por modalidad |
+| `lib/core/services/payment_guard.dart` | Guards de escrow |
+| `lib/core/services/change_order_service.dart` | Órdenes de cambio |
+| `lib/core/database/models/change_order_model.dart` | Modelo CO |
+| `lib/core/database/models/quote_proposal_model.dart` | Modelo cotización |
 
 ---
 

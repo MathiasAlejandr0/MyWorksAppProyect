@@ -8,7 +8,9 @@
 /// - refunded: Pago reembolsado
 class PaymentModel {
   final String id;
-  final String jobId; // Relación 1:1 con job
+  final String jobId;
+  final String? changeOrderId;
+  final String paymentType; // primary | change_order | overtime
   final double amount;
   final String currency;
   final String status; // 'pending', 'authorized', 'held', 'released', 'refunded'
@@ -23,8 +25,10 @@ class PaymentModel {
   PaymentModel({
     required this.id,
     required this.jobId,
+    this.changeOrderId,
+    this.paymentType = 'primary',
     required this.amount,
-    this.currency = 'USD',
+    this.currency = 'CLP',
     required this.status,
     this.paymentMethod,
     this.transactionId,
@@ -39,6 +43,8 @@ class PaymentModel {
     return {
       'id': id,
       'jobId': jobId,
+      'changeOrderId': changeOrderId,
+      'paymentType': paymentType,
       'amount': amount,
       'currency': currency,
       'status': status,
@@ -56,8 +62,10 @@ class PaymentModel {
     return PaymentModel(
       id: map['id'] as String,
       jobId: map['jobId'] as String,
+      changeOrderId: map['changeOrderId'] as String?,
+      paymentType: map['paymentType'] as String? ?? 'primary',
       amount: (map['amount'] as num).toDouble(),
-      currency: map['currency'] as String? ?? 'USD',
+      currency: map['currency'] as String? ?? 'CLP',
       status: map['status'] as String,
       paymentMethod: map['paymentMethod'] as String?,
       transactionId: map['transactionId'] as String?,
@@ -78,6 +86,8 @@ class PaymentModel {
   PaymentModel copyWith({
     String? id,
     String? jobId,
+    String? changeOrderId,
+    String? paymentType,
     double? amount,
     String? currency,
     String? status,
@@ -92,6 +102,8 @@ class PaymentModel {
     return PaymentModel(
       id: id ?? this.id,
       jobId: jobId ?? this.jobId,
+      changeOrderId: changeOrderId ?? this.changeOrderId,
+      paymentType: paymentType ?? this.paymentType,
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
       status: status ?? this.status,

@@ -27,12 +27,12 @@ class DatabaseHelper {
     _initFuture = null;
   }
 
-  /// Obtiene la base de datos, asegurándose de que esté inicializada
+  /// Obtiene la base de datos, asegur?ndose de que est? inicializada
   /// 
-  /// Si la BD está en proceso de inicialización, espera a que termine.
-  /// Si hay un error, lo propaga con información detallada.
+  /// Si la BD est? en proceso de inicializaci?n, espera a que termine.
+  /// Si hay un error, lo propaga con informaci?n detallada.
   Future<Database> get database async {
-    // Si ya está inicializada, retornarla inmediatamente
+    // Si ya est? inicializada, retornarla inmediatamente
     if (_database != null) {
       // Verificar que la BD sigue abierta
       try {
@@ -46,12 +46,12 @@ class DatabaseHelper {
       }
     }
 
-    // Si ya hay una inicialización en curso, esperar a que termine
+    // Si ya hay una inicializaci?n en curso, esperar a que termine
     if (_initFuture != null) {
       return await _initFuture!;
     }
 
-    // Iniciar nueva inicialización
+    // Iniciar nueva inicializaci?n
     _initFuture = _initDB('myworksapp.db');
     try {
       _database = await _initFuture!;
@@ -66,7 +66,7 @@ class DatabaseHelper {
     }
   }
 
-  /// Verifica si la base de datos está lista para usar
+  /// Verifica si la base de datos est? lista para usar
   Future<bool> isReady() async {
     try {
       if (_database == null) return false;
@@ -84,7 +84,7 @@ class DatabaseHelper {
 
     final db = await openDatabase(
       path,
-      version: 14, // v14: profilePhotoPath en users
+      version: 15, // v15: pricing modes, escrow, quote_proposals, change_orders
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -105,9 +105,9 @@ class DatabaseHelper {
     final dbFilePath = join(dbPath, 'myworksapp.db');
     final migrationManager = MigrationManager(db: db, dbPath: dbFilePath);
 
-    AppLogger.i('Iniciando migración de versión $oldVersion a $newVersion');
+    AppLogger.i('Iniciando migraci?n de versi?n $oldVersion a $newVersion');
 
-    // Migración v1 -> v2: Agregar latitud y longitud a jobs
+    // Migraci?n v1 -> v2: Agregar latitud y longitud a jobs
     if (oldVersion < 2) {
       final result = await migrationManager.executeMigration(
         fromVersion: 1,
@@ -124,11 +124,11 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v1->v2 falló: ${result.message}');
-        throw Exception('Migración v1->v2 falló: ${result.message}');
+        AppLogger.e('Migraci?n v1->v2 fall?: ${result.message}');
+        throw Exception('Migraci?n v1->v2 fall?: ${result.message}');
       }
     }
-    // Migración v2 -> v3: Agregar tablas messages, notifications, worker_portfolio
+    // Migraci?n v2 -> v3: Agregar tablas messages, notifications, worker_portfolio
     if (oldVersion < 3) {
       final result = await migrationManager.executeMigration(
         fromVersion: 2,
@@ -181,11 +181,11 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v2->v3 falló: ${result.message}');
-        throw Exception('Migración v2->v3 falló: ${result.message}');
+        AppLogger.e('Migraci?n v2->v3 fall?: ${result.message}');
+        throw Exception('Migraci?n v2->v3 fall?: ${result.message}');
       }
     }
-    // Migración v3 -> v4: Agregar password, accountStatus, password_reset_codes, pending_actions
+    // Migraci?n v3 -> v4: Agregar password, accountStatus, password_reset_codes, pending_actions
     if (oldVersion < 4) {
       final result = await migrationManager.executeMigration(
         fromVersion: 3,
@@ -196,7 +196,7 @@ class DatabaseHelper {
           // Agregar accountStatus a users
           await db.execute('ALTER TABLE users ADD COLUMN accountStatus TEXT DEFAULT "active" CHECK(accountStatus IN ("active", "suspended", "blocked", "deleted"))');
           
-          // Tabla para códigos de recuperación de contraseña
+          // Tabla para c?digos de recuperaci?n de contrase?a
           await db.execute('''
             CREATE TABLE IF NOT EXISTS password_reset_codes (
               id TEXT PRIMARY KEY,
@@ -210,7 +210,7 @@ class DatabaseHelper {
             )
           ''');
           
-          // Tabla para acciones pendientes de sincronización (offline-first)
+          // Tabla para acciones pendientes de sincronizaci?n (offline-first)
           await db.execute('''
             CREATE TABLE IF NOT EXISTS pending_actions (
               id TEXT PRIMARY KEY,
@@ -228,7 +228,7 @@ class DatabaseHelper {
             )
           ''');
           
-          // Índices para optimización
+          // ��ndices para optimizaci?n
           await db.execute('CREATE INDEX IF NOT EXISTS idx_password_reset_codes_userId ON password_reset_codes(userId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_password_reset_codes_code ON password_reset_codes(code)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_pending_actions_userId ON pending_actions(userId)');
@@ -244,12 +244,12 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v3->v4 falló: ${result.message}');
-        throw Exception('Migración v3->v4 falló: ${result.message}');
+        AppLogger.e('Migraci?n v3->v4 fall?: ${result.message}');
+        throw Exception('Migraci?n v3->v4 fall?: ${result.message}');
       }
     }
 
-    // Migración v4 -> v5: Agregar job_cancellations, app_meta, reports
+    // Migraci?n v4 -> v5: Agregar job_cancellations, app_meta, reports
     if (oldVersion < 5) {
       final result = await migrationManager.executeMigration(
         fromVersion: 4,
@@ -304,7 +304,7 @@ class DatabaseHelper {
             )
           ''');
           
-          // Índices
+          // ��ndices
           await db.execute('CREATE INDEX IF NOT EXISTS idx_job_cancellations_jobId ON job_cancellations(jobId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_reports_reporterId ON reports(reporterId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_reports_reportedUserId ON reports(reportedUserId)');
@@ -320,36 +320,36 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v4->v5 falló: ${result.message}');
-        throw Exception('Migración v4->v5 falló: ${result.message}');
+        AppLogger.e('Migraci?n v4->v5 fall?: ${result.message}');
+        throw Exception('Migraci?n v4->v5 fall?: ${result.message}');
       }
     }
 
-    // Migración v5 -> v6: Agregar estados avanzados de job (expired, no_show)
+    // Migraci?n v5 -> v6: Agregar estados avanzados de job (expired, no_show)
     if (oldVersion < 6) {
       final result = await migrationManager.executeMigration(
         fromVersion: 5,
         toVersion: 6,
         migration: () async {
           // Actualizar constraint de status para incluir nuevos estados
-          // SQLite no permite ALTER TABLE para modificar CHECK, así que recreamos la tabla
-          // Por simplicidad, solo actualizamos el comentario y validamos en código
+          // SQLite no permite ALTER TABLE para modificar CHECK, as? que recreamos la tabla
+          // Por simplicidad, solo actualizamos el comentario y validamos en c?digo
           // Los nuevos estados se pueden usar sin modificar la BD (son strings)
-          AppLogger.i('Migración v6: Estados avanzados preparados (expired, no_show)');
+          AppLogger.i('Migraci?n v6: Estados avanzados preparados (expired, no_show)');
         },
         validation: () async {
-          // Validación: Verificar que la tabla jobs existe
+          // Validaci?n: Verificar que la tabla jobs existe
           return await migrationManager.validateTableExists('jobs');
         },
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v5->v6 falló: ${result.message}');
-        throw Exception('Migración v5->v6 falló: ${result.message}');
+        AppLogger.e('Migraci?n v5->v6 fall?: ${result.message}');
+        throw Exception('Migraci?n v5->v6 fall?: ${result.message}');
       }
     }
 
-    // Migración v6 -> v7: Agregar tabla user_consents (GDPR)
+    // Migraci?n v6 -> v7: Agregar tabla user_consents (GDPR)
     if (oldVersion < 7) {
       final result = await migrationManager.executeMigration(
         fromVersion: 6,
@@ -376,12 +376,12 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v6->v7 falló: ${result.message}');
-        throw Exception('Migración v6->v7 falló: ${result.message}');
+        AppLogger.e('Migraci?n v6->v7 fall?: ${result.message}');
+        throw Exception('Migraci?n v6->v7 fall?: ${result.message}');
       }
     }
 
-    // Migración v7 -> v8: Agregar tablas para producción internacional
+    // Migraci?n v7 -> v8: Agregar tablas para producci?n internacional
     if (oldVersion < 8) {
       final result = await migrationManager.executeMigration(
         fromVersion: 7,
@@ -481,7 +481,7 @@ class DatabaseHelper {
             )
           ''');
 
-          // Índices
+          // ��ndices
           await db.execute('CREATE INDEX IF NOT EXISTS idx_payments_jobId ON payments(jobId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_disputes_jobId ON disputes(jobId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_disputes_status ON disputes(status)');
@@ -497,12 +497,12 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v7->v8 falló: ${result.message}');
-        throw Exception('Migración v7->v8 falló: ${result.message}');
+        AppLogger.e('Migraci?n v7->v8 fall?: ${result.message}');
+        throw Exception('Migraci?n v7->v8 fall?: ${result.message}');
       }
     }
 
-    // Migración v8 -> v9: Agregar tablas analytics_events y abuse_events
+    // Migraci?n v8 -> v9: Agregar tablas analytics_events y abuse_events
     if (oldVersion < 9) {
       final result = await migrationManager.executeMigration(
         fromVersion: 8,
@@ -536,7 +536,7 @@ class DatabaseHelper {
             )
           ''');
 
-          // Índices
+          // ��ndices
           await db.execute('CREATE INDEX IF NOT EXISTS idx_analytics_events_userId ON analytics_events(userId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_analytics_events_eventName ON analytics_events(eventName)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_analytics_events_timestamp ON analytics_events(timestamp)');
@@ -552,12 +552,12 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v8->v9 falló: ${result.message}');
-        throw Exception('Migración v8->v9 falló: ${result.message}');
+        AppLogger.e('Migraci?n v8->v9 fall?: ${result.message}');
+        throw Exception('Migraci?n v8->v9 fall?: ${result.message}');
       }
     }
 
-    // Migración v9 -> v10: Extender tabla services y agregar service_configs
+    // Migraci?n v9 -> v10: Extender tabla services y agregar service_configs
     if (oldVersion < 10) {
       final result = await migrationManager.executeMigration(
         fromVersion: 9,
@@ -619,7 +619,7 @@ class DatabaseHelper {
             )
           ''');
 
-          // Índices
+          // ��ndices
           await db.execute('CREATE INDEX IF NOT EXISTS idx_service_configs_serviceId ON service_configs(serviceId)');
         },
         validation: () async {
@@ -641,12 +641,12 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v9->v10 falló: ${result.message}');
-        throw Exception('Migración v9->v10 falló: ${result.message}');
+        AppLogger.e('Migraci?n v9->v10 fall?: ${result.message}');
+        throw Exception('Migraci?n v9->v10 fall?: ${result.message}');
       }
     }
 
-    // Migración v10 -> v11: Agregar serviceMetadata y updatedAt a jobs
+    // Migraci?n v10 -> v11: Agregar serviceMetadata y updatedAt a jobs
     if (oldVersion < 11) {
       final result = await migrationManager.executeMigration(
         fromVersion: 10,
@@ -675,8 +675,8 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v10->v11 falló: ${result.message}');
-        throw Exception('Migración v10->v11 falló: ${result.message}');
+        AppLogger.e('Migraci?n v10->v11 fall?: ${result.message}');
+        throw Exception('Migraci?n v10->v11 fall?: ${result.message}');
       }
     }
 
@@ -719,8 +719,8 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v11->v12 falló: ${result.message}');
-        throw Exception('Migración v11->v12 falló: ${result.message}');
+        AppLogger.e('Migraci?n v11->v12 fall?: ${result.message}');
+        throw Exception('Migraci?n v11->v12 fall?: ${result.message}');
       }
     }
 
@@ -748,8 +748,8 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v12->v13 falló: ${result.message}');
-        throw Exception('Migración v12->v13 falló: ${result.message}');
+        AppLogger.e('Migraci?n v12->v13 fall?: ${result.message}');
+        throw Exception('Migraci?n v12->v13 fall?: ${result.message}');
       }
     }
 
@@ -773,12 +773,147 @@ class DatabaseHelper {
       );
 
       if (!result.success) {
-        AppLogger.e('Migración v13->v14 falló: ${result.message}');
-        throw Exception('Migración v13->v14 falló: ${result.message}');
+        AppLogger.e('Migraci?n v13->v14 fall?: ${result.message}');
+        throw Exception('Migraci?n v13->v14 fall?: ${result.message}');
       }
     }
 
-    AppLogger.i('Migración completada exitosamente de v$oldVersion a v$newVersion');
+    if (oldVersion < 15) {
+      final result = await migrationManager.executeMigration(
+        fromVersion: 14,
+        toVersion: 15,
+        migration: () async {
+          await db.execute('''
+            CREATE TABLE jobs_new (
+              id TEXT PRIMARY KEY,
+              userId TEXT NOT NULL,
+              workerId TEXT,
+              serviceId TEXT NOT NULL,
+              status TEXT NOT NULL,
+              address TEXT NOT NULL,
+              latitude REAL,
+              longitude REAL,
+              description TEXT,
+              scheduledDate TEXT,
+              serviceMetadata TEXT,
+              pricingMode TEXT NOT NULL DEFAULT 'legacy',
+              paymentStatus TEXT NOT NULL DEFAULT 'none',
+              comunaId TEXT,
+              pricingSnapshot TEXT,
+              serviceSkuId TEXT,
+              hourlyBlockHours INTEGER,
+              selectedQuoteId TEXT,
+              createdAt TEXT NOT NULL,
+              updatedAt TEXT NOT NULL,
+              FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+              FOREIGN KEY (workerId) REFERENCES workers(userId) ON DELETE SET NULL,
+              FOREIGN KEY (serviceId) REFERENCES services(id)
+            )
+          ''');
+          await db.execute('''
+            INSERT INTO jobs_new (
+              id, userId, workerId, serviceId, status, address,
+              latitude, longitude, description, scheduledDate, serviceMetadata,
+              pricingMode, paymentStatus, createdAt, updatedAt
+            )
+            SELECT
+              id, userId, workerId, serviceId, status, address,
+              latitude, longitude, description, scheduledDate, serviceMetadata,
+              'legacy', 'none', createdAt, updatedAt
+            FROM jobs
+          ''');
+          await db.execute('DROP TABLE jobs');
+          await db.execute('ALTER TABLE jobs_new RENAME TO jobs');
+
+          await db.execute('''
+            CREATE TABLE payments_new (
+              id TEXT PRIMARY KEY,
+              jobId TEXT NOT NULL,
+              changeOrderId TEXT,
+              paymentType TEXT NOT NULL DEFAULT 'primary',
+              amount REAL NOT NULL,
+              currency TEXT DEFAULT 'CLP',
+              status TEXT NOT NULL,
+              paymentMethod TEXT,
+              transactionId TEXT,
+              authorizedAt TEXT,
+              releasedAt TEXT,
+              refundedAt TEXT,
+              createdAt TEXT NOT NULL,
+              updatedAt TEXT NOT NULL,
+              FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
+            )
+          ''');
+          await db.execute('''
+            INSERT INTO payments_new (
+              id, jobId, changeOrderId, paymentType, amount, currency,
+              status, paymentMethod, transactionId,
+              authorizedAt, releasedAt, refundedAt, createdAt, updatedAt
+            )
+            SELECT
+              id, jobId, NULL, 'primary', amount,
+              COALESCE(currency, 'CLP'),
+              status, paymentMethod, transactionId,
+              authorizedAt, releasedAt, refundedAt, createdAt, updatedAt
+            FROM payments
+          ''');
+          await db.execute('DROP TABLE payments');
+          await db.execute('ALTER TABLE payments_new RENAME TO payments');
+          await db.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_job_primary ON payments(jobId) WHERE paymentType = 'primary'",
+          );
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS quote_proposals (
+              id TEXT PRIMARY KEY,
+              jobId TEXT NOT NULL,
+              workerId TEXT NOT NULL,
+              montoTotalClp INTEGER NOT NULL,
+              descripcion TEXT NOT NULL,
+              validezHasta TEXT,
+              desglose TEXT,
+              estado TEXT NOT NULL DEFAULT 'submitted',
+              createdAt TEXT NOT NULL,
+              FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE,
+              UNIQUE (jobId, workerId)
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS change_orders (
+              id TEXT PRIMARY KEY,
+              jobId TEXT NOT NULL,
+              workerId TEXT NOT NULL,
+              tipo TEXT NOT NULL,
+              titulo TEXT NOT NULL,
+              descripcion TEXT NOT NULL,
+              montoClp INTEGER NOT NULL,
+              estado TEXT NOT NULL DEFAULT 'pending_client',
+              paymentId TEXT,
+              createdAt TEXT NOT NULL,
+              respondedAt TEXT,
+              FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
+            )
+          ''');
+        },
+        validation: () async {
+          final hasMode =
+              await migrationManager.validateColumnExists('jobs', 'pricingMode');
+          final hasQuotes =
+              await migrationManager.validateTableExists('quote_proposals');
+          final hasCo =
+              await migrationManager.validateTableExists('change_orders');
+          return hasMode && hasQuotes && hasCo;
+        },
+      );
+
+      if (!result.success) {
+        AppLogger.e('Migracion v14->v15 fallo: ${result.message}');
+        throw Exception('Migracion v14->v15 fallo: ${result.message}');
+      }
+    }
+
+    AppLogger.i('Migraci?n completada exitosamente de v$oldVersion a v$newVersion');
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -828,7 +963,7 @@ class DatabaseHelper {
       )
     ''');
     
-    // Índices
+    // ��ndices
     await db.execute('CREATE INDEX idx_password_reset_codes_userId ON password_reset_codes(userId)');
     await db.execute('CREATE INDEX idx_password_reset_codes_code ON password_reset_codes(code)');
     await db.execute('CREATE INDEX idx_pending_actions_userId ON pending_actions(userId)');
@@ -892,13 +1027,20 @@ class DatabaseHelper {
         userId TEXT NOT NULL,
         workerId TEXT,
         serviceId TEXT NOT NULL,
-        status TEXT NOT NULL CHECK(status IN ('pending', 'accepted', 'in_progress', 'completed', 'cancelled', 'expired', 'no_show')),
+        status TEXT NOT NULL,
         address TEXT NOT NULL,
         latitude REAL,
         longitude REAL,
         description TEXT,
         scheduledDate TEXT,
         serviceMetadata TEXT,
+        pricingMode TEXT NOT NULL DEFAULT 'legacy',
+        paymentStatus TEXT NOT NULL DEFAULT 'none',
+        comunaId TEXT,
+        pricingSnapshot TEXT,
+        serviceSkuId TEXT,
+        hourlyBlockHours INTEGER,
+        selectedQuoteId TEXT,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL,
         FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
@@ -1037,7 +1179,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // Índices adicionales
+    // ��ndices adicionales
     await db.execute('CREATE INDEX idx_job_cancellations_jobId ON job_cancellations(jobId)');
     await db.execute('CREATE INDEX idx_reports_reporterId ON reports(reporterId)');
     await db.execute('CREATE INDEX idx_reports_reportedUserId ON reports(reportedUserId)');
@@ -1049,9 +1191,11 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE payments (
         id TEXT PRIMARY KEY,
-        jobId TEXT NOT NULL UNIQUE,
+        jobId TEXT NOT NULL,
+        changeOrderId TEXT,
+        paymentType TEXT NOT NULL DEFAULT 'primary',
         amount REAL NOT NULL,
-        currency TEXT DEFAULT 'USD',
+        currency TEXT DEFAULT 'CLP',
         status TEXT NOT NULL CHECK(status IN ('pending', 'authorized', 'held', 'released', 'refunded')),
         paymentMethod TEXT,
         transactionId TEXT,
@@ -1060,6 +1204,42 @@ class DatabaseHelper {
         refundedAt TEXT,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL,
+        FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute(
+      "CREATE UNIQUE INDEX idx_payments_job_primary ON payments(jobId) WHERE paymentType = 'primary'",
+    );
+
+    await db.execute('''
+      CREATE TABLE quote_proposals (
+        id TEXT PRIMARY KEY,
+        jobId TEXT NOT NULL,
+        workerId TEXT NOT NULL,
+        montoTotalClp INTEGER NOT NULL,
+        descripcion TEXT NOT NULL,
+        validezHasta TEXT,
+        desglose TEXT,
+        estado TEXT NOT NULL DEFAULT 'submitted',
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE,
+        UNIQUE (jobId, workerId)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE change_orders (
+        id TEXT PRIMARY KEY,
+        jobId TEXT NOT NULL,
+        workerId TEXT NOT NULL,
+        tipo TEXT NOT NULL,
+        titulo TEXT NOT NULL,
+        descripcion TEXT NOT NULL,
+        montoClp INTEGER NOT NULL,
+        estado TEXT NOT NULL DEFAULT 'pending_client',
+        paymentId TEXT,
+        createdAt TEXT NOT NULL,
+        respondedAt TEXT,
         FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE
       )
     ''');
@@ -1139,7 +1319,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // Índices adicionales
+    // ��ndices adicionales
     await db.execute('CREATE INDEX idx_payments_jobId ON payments(jobId)');
     await db.execute('CREATE INDEX idx_disputes_jobId ON disputes(jobId)');
     await db.execute('CREATE INDEX idx_disputes_status ON disputes(status)');
@@ -1155,7 +1335,7 @@ class DatabaseHelper {
   Future<void> _initializeAppMeta(Database db) async {
     final now = DateTime.now().toIso8601String();
     
-    // Versión de la app (debe coincidir con pubspec.yaml)
+    // Versi?n de la app (debe coincidir con pubspec.yaml)
     await db.insert('app_meta', {'key': 'app_version', 'value': '1.0.0'});
     await db.insert('app_meta', {'key': 'first_launch_date', 'value': now});
     await db.insert('app_meta', {'key': 'last_migration_version', 'value': '5'});
@@ -1168,8 +1348,8 @@ class DatabaseHelper {
     final services = [
       {
         'id': 'construction',
-        'name': 'Construcción',
-        'description': 'Construcción y reparaciones generales',
+        'name': 'Construcci?n',
+        'description': 'Construcci?n y reparaciones generales',
         'category': 'construction',
         'isActive': 1,
         'requiresCertification': 0,
@@ -1179,8 +1359,8 @@ class DatabaseHelper {
       },
       {
         'id': 'plumbing',
-        'name': 'Plomería',
-        'description': 'Instalación y reparación de tuberías',
+        'name': 'Plomer?a',
+        'description': 'Instalaci?n y reparaci?n de tuber?as',
         'category': 'plumbing',
         'isActive': 1,
         'requiresCertification': 0,
@@ -1191,7 +1371,7 @@ class DatabaseHelper {
       {
         'id': 'electrical',
         'name': 'Electricidad',
-        'description': 'Instalaciones y reparaciones eléctricas',
+        'description': 'Instalaciones y reparaciones el?ctricas',
         'category': 'electrical',
         'isActive': 1,
         'requiresCertification': 0,

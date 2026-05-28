@@ -1,5 +1,6 @@
 import '../database_helper.dart';
 import '../models/payment_model.dart';
+import '../../domain/pricing_constants.dart';
 
 class PaymentRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -20,14 +21,30 @@ class PaymentRepository {
     return PaymentModel.fromMap(maps.first);
   }
 
+  /// Primer pago del job (compatibilidad con esquema 1:1 anterior).
   Future<PaymentModel?> getPaymentByJobId(String jobId) async {
+    return getPrimaryByJobId(jobId);
+  }
+
+  Future<PaymentModel?> getPrimaryByJobId(String jobId) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'payments',
-      where: 'jobId = ?',
-      whereArgs: [jobId],
+      where: 'jobId = ? AND paymentType = ?',
+      whereArgs: [jobId, PricingConstants.paymentTypePrimary],
+      limit: 1,
     );
-    if (maps.isEmpty) return null;
+    if (maps.isEmpty) {
+      // Fallback registros antiguos sin paymentType
+      final legacy = await db.query(
+        'payments',
+        where: 'jobId = ?',
+        whereArgs: [jobId],
+        limit: 1,
+      );
+      if (legacy.isEmpty) return null;
+      return PaymentModel.fromMap(legacy.first);
+    }
     return PaymentModel.fromMap(maps.first);
   }
 
@@ -41,4 +58,3 @@ class PaymentRepository {
     );
   }
 }
-

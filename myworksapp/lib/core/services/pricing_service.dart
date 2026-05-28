@@ -1,5 +1,7 @@
 import '../database/repositories/service_repository.dart';
 import '../database/models/service_pricing_model.dart';
+import '../domain/price_quote.dart';
+import '../domain/pricing_constants.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 
@@ -136,6 +138,91 @@ class PricingService {
   /// Limpia el cache de precios
   void clearCache() {
     _pricingCache.clear();
+  }
+
+  static const _comunaFactors = <String, double>{
+    'providencia': 1.08,
+    'las_condes': 1.10,
+    'santiago': 1.0,
+    'maipu': 0.95,
+    'puente_alto': 0.92,
+  };
+
+  static const _skuBaseClp = <String, int>{
+    'LOCK_CYLINDER_REPLACE': 45000,
+    'WATER_HEATER_INSTALL': 120000,
+    'FAUCET_REPLACE': 35000,
+  };
+
+  /// Modalidad 1: precio fijo (SKU + comuna).
+  Future<PriceQuote> calculateFixedPrice({
+    required String skuCode,
+    String? comunaKey,
+    int comunaSurchargeClp = 0,
+  }) async {
+    final base = _skuBaseClp[skuCode] ?? 40000;
+    final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
+    final subtotal = (base * factor).round() + comunaSurchargeClp;
+    const feePercent = 0.10;
+    final fee = (subtotal * feePercent).round();
+    return PriceQuote(
+      pricingMode: PricingConstants.modeFixedPrice,
+      subtotalClp: subtotal,
+      platformFeeClp: fee,
+      totalClp: subtotal + fee,
+      breakdown: {
+        'sku_code': skuCode,
+        'base_clp': base,
+        'comuna_factor': factor,
+        'comuna_surcharge_clp': comunaSurchargeClp,
+      },
+      message: 'Precio fijo incluye visita y mano de obra estándar del ítem.',
+    );
+  }
+
+  /// Modalidad 2: bloque de horas × tarifa del trabajador.
+  Future<PriceQuote> calculateHourlyBlock({
+    required int hourlyRateClp,
+    required int blockHours,
+    String? comunaKey,
+  }) async {
+    if (![2, 4, 8].contains(blockHours)) {
+      throw AppError.validation('El bloque debe ser de 2, 4 u 8 horas');
+    }
+    final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
+    final subtotal = (hourlyRateClp * blockHours * factor).round();
+    const feePercent = 0.10;
+    final fee = (subtotal * feePercent).round();
+    return PriceQuote(
+      pricingMode: PricingConstants.modeHourlyBlock,
+      subtotalClp: subtotal,
+      platformFeeClp: fee,
+      totalClp: subtotal + fee,
+      breakdown: {
+        'hourly_rate_clp': hourlyRateClp,
+        'block_hours': blockHours,
+        'comuna_factor': factor,
+      },
+      message: 'Pago adelantado por bloque de $blockHours horas.',
+    );
+  }
+
+  /// Modalidad 3: validar monto de propuesta aceptada.
+  PriceQuote quoteFromOpenProposal({
+    required int proposalAmountClp,
+    int platformFeeClp = 0,
+  }) {
+    final fee = platformFeeClp > 0
+        ? platformFeeClp
+        : (proposalAmountClp * 0.08).round();
+    return PriceQuote(
+      pricingMode: PricingConstants.modeOpenQuote,
+      subtotalClp: proposalAmountClp,
+      platformFeeClp: fee,
+      totalClp: proposalAmountClp + fee,
+      breakdown: {'proposal_amount_clp': proposalAmountClp},
+      message: 'Monto acordado en cotización abierta.',
+    );
   }
 
   /// Actualiza el pricing de un servicio (para override server-side)

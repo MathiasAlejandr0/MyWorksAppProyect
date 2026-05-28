@@ -1,7 +1,9 @@
 import 'package:uuid/uuid.dart';
 import '../database/repositories/payment_repository.dart';
+import '../database/repositories/job_repository.dart';
 import '../database/models/payment_model.dart';
-import '../database/models/job_model.dart';
+import '../domain/pricing_constants.dart';
+import '../domain/price_quote.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 
@@ -18,6 +20,7 @@ class PaymentService {
   PaymentService._();
 
   final PaymentRepository _paymentRepository = PaymentRepository();
+  final JobRepository _jobRepository = JobRepository();
 
   /// Crea un pago para un job (MOCK)
   /// 
@@ -170,19 +173,118 @@ class PaymentService {
     }
   }
 
-  /// Obtiene el pago de un job
-  Future<PaymentModel?> getPaymentByJobId(String jobId) async {
+  /// Pago principal del job (escrow).
+  Future<PaymentModel?> getPrimaryPayment(String jobId) async {
     try {
-      return await _paymentRepository.getPaymentByJobId(jobId);
+      return await _paymentRepository.getPrimaryByJobId(jobId);
     } catch (e) {
       AppLogger.e('Error obteniendo pago del job', e);
       return null;
     }
   }
 
-  /// Verifica si un job tiene pago
+  Future<PaymentModel?> getPaymentByJobId(String jobId) => getPrimaryPayment(jobId);
+
+  /// Pago adicional (orden de cambio / overtime).
+  Future<PaymentModel> createSupplementalPayment({
+    required String jobId,
+    required String changeOrderId,
+    required String paymentType,
+    required PriceQuote quote,
+    String? paymentMethod,
+  }) async {
+    final now = DateTime.now();
+    final payment = PaymentModel(
+      id: const Uuid().v4(),
+      jobId: jobId,
+      changeOrderId: changeOrderId,
+      paymentType: paymentType,
+      amount: quote.totalClp.toDouble(),
+      currency: quote.currency,
+      status: 'pending',
+      paymentMethod: paymentMethod ?? 'card',
+      createdAt: now,
+      updatedAt: now,
+    );
+    await _paymentRepository.createPayment(payment);
+    return payment;
+  }
+
+  /// Crea checkout del pago principal a partir de [PriceQuote].
+  Future<PaymentModel> createPrimaryPayment({
+    required String jobId,
+    required PriceQuote quote,
+    String? paymentMethod,
+  }) async {
+    final existing = await getPrimaryPayment(jobId);
+    if (existing != null && existing.status != 'refunded') {
+      throw AppError.validation('Este trabajo ya tiene un pago registrado');
+    }
+
+    final now = DateTime.now();
+    final payment = PaymentModel(
+      id: const Uuid().v4(),
+      jobId: jobId,
+      paymentType: PricingConstants.paymentTypePrimary,
+      amount: quote.totalClp.toDouble(),
+      currency: quote.currency,
+      status: 'pending',
+      paymentMethod: paymentMethod ?? 'card',
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await _paymentRepository.createPayment(payment);
+    await _syncJobPaymentStatus(jobId, PricingConstants.paymentPending);
+    return payment;
+  }
+
+  /// Autoriza escrow (mock pasarela) y habilita transición a accepted / in_progress.
+  Future<PaymentModel> authorizePrimaryForJob(String jobId) async {
+    final payment = await getPrimaryPayment(jobId);
+    if (payment == null) {
+      throw AppError.notFound('No hay pago principal para este trabajo');
+    }
+    final authorized = await authorizePayment(payment.id);
+    await _syncJobPaymentStatus(jobId, PricingConstants.paymentAuthorized);
+    return authorized;
+  }
+
+  /// Libera fondos al completar el trabajo.
+  Future<PaymentModel?> releasePrimaryOnJobCompleted(String jobId) async {
+    final payment = await getPrimaryPayment(jobId);
+    if (payment == null) return null;
+    if (payment.status == 'released') return payment;
+    final released = await releasePayment(payment.id);
+    await _syncJobPaymentStatus(jobId, PricingConstants.paymentReleased);
+    return released;
+  }
+
+  Future<void> refundPrimaryOnCancellation(String jobId) async {
+    final payment = await getPrimaryPayment(jobId);
+    if (payment == null) return;
+    if (['authorized', 'held'].contains(payment.status)) {
+      await refundPayment(payment.id);
+      await _syncJobPaymentStatus(jobId, PricingConstants.paymentRefunded);
+    }
+  }
+
+  Future<void> _syncJobPaymentStatus(String jobId, String paymentStatus) async {
+    final job = await _jobRepository.getJobById(jobId);
+    if (job == null) return;
+    await _jobRepository.updateJob(
+      job.copyWith(paymentStatus: paymentStatus, updatedAt: DateTime.now()),
+    );
+  }
+
+  /// Verifica si un job tiene pago principal autorizado (garantía).
+  Future<bool> hasAuthorizedPrimaryPayment(String jobId) async {
+    final payment = await getPrimaryPayment(jobId);
+    return payment != null && payment.status == 'authorized';
+  }
+
   Future<bool> hasPayment(String jobId) async {
-    final payment = await getPaymentByJobId(jobId);
+    final payment = await getPrimaryPayment(jobId);
     return payment != null;
   }
 }
