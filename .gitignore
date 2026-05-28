@@ -100,10 +100,6 @@ coverage/
 test/
 **/test/
 
-# Documentation
-docs/
-**/docs/
-
 # Backup files
 *.bak
 *.backup

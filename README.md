@@ -7,6 +7,7 @@ Plataforma móvil **Flutter** para conectar **usuarios** con **trabajadores de o
 | Documento | Contenido |
 |-----------|-----------|
 | **[ESTADO_DEL_PROYECTO.md](ESTADO_DEL_PROYECTO.md)** | **Qué tiene la app y qué falta** (MVP vs. producción) |
+| **[docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADES_COBRO.md)** | **Modalidades de cobro** (fijo, hora, cotización) + estados + SQL |
 | **[INSTALL.md](INSTALL.md)** | Instalar APK en Android, iPhone desde Mac, TestFlight, QR |
 | **[DEMO.md](DEMO.md)** | Guión de demo para financistas, universidad, limitaciones |
 | **[myworksapp/README.md](myworksapp/README.md)** | Referencia rápida para desarrolladores |
