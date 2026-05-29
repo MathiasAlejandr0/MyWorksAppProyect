@@ -1,5 +1,4 @@
 import '../database/repositories/job_repository.dart';
-import '../database/models/job_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 import 'job_state_machine.dart';

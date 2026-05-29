@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/constants.dart';
-import '../pages/privacy_policy_page.dart';
-import '../pages/terms_page.dart';
-
 /// Widget de checkbox de consentimiento GDPR
 /// 
 /// Muestra checkbox obligatorio con enlaces a términos y política de privacidad.

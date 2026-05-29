@@ -189,7 +189,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               color: Theme.of(context).colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -250,7 +250,7 @@ class _MessageBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: isMe
               ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.surfaceVariant,
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
         ),
         constraints: BoxConstraints(
@@ -274,7 +274,7 @@ class _MessageBubble extends StatelessWidget {
                 fontSize: 10,
                 color: isMe
                     ? Colors.white70
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],

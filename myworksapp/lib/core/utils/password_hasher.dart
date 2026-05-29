@@ -34,10 +34,8 @@ class PasswordHasher {
         throw ArgumentError('La contraseña no puede estar vacía');
       }
 
-      // Generar hash bcrypt con salt automático
-      // BCrypt genera un salt único por defecto
-      // Nota: BCrypt.gensalt() no acepta rounds directamente, usa el default
-      final salt = BCrypt.gensalt();
+      // Generar hash bcrypt con salt automático y cost factor configurado
+      final salt = BCrypt.gensalt(logRounds: _bcryptRounds);
       final hash = BCrypt.hashpw(password, salt);
       
       AppLogger.i('Hash bcrypt generado exitosamente');

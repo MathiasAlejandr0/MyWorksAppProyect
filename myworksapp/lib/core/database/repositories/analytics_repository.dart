@@ -1,4 +1,3 @@
-import 'dart:convert';
 import '../database_helper.dart';
 import '../models/analytics_event_model.dart';
 import '../../interfaces/analytics_repository_interface.dart';

@@ -50,12 +50,10 @@ class AppTheme {
       primary: AppColors.primaryLight,
       secondary: AppColors.primaryDark,
       surface: AppColors.white,
-      background: AppColors.grayLight,
       error: AppColors.error,
       onPrimary: AppColors.white,
       onSecondary: AppColors.white,
       onSurface: AppColors.primaryDark,
-      onBackground: AppColors.primaryDark,
       onError: AppColors.white,
     );
 
@@ -141,11 +139,11 @@ class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.grayMedium.withOpacity(0.3)),
+          borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.3)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.grayMedium.withOpacity(0.3)),
+          borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -194,7 +192,7 @@ class AppTheme {
 
       // Divider
       dividerTheme: DividerThemeData(
-        color: AppColors.grayMedium.withOpacity(0.2),
+        color: AppColors.grayMedium.withValues(alpha: 0.2),
         thickness: 1,
         space: 1,
       ),
@@ -207,12 +205,10 @@ class AppTheme {
       primary: AppColors.primaryLight,
       secondary: AppColors.primaryLight,
       surface: AppColors.surfaceDark,
-      background: AppColors.backgroundDark,
       error: AppColors.error,
       onPrimary: AppColors.white,
       onSecondary: AppColors.white,
       onSurface: AppColors.white,
-      onBackground: AppColors.white,
       onError: AppColors.white,
     );
 
@@ -289,11 +285,11 @@ class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.grayMedium.withOpacity(0.3)),
+          borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.3)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.grayMedium.withOpacity(0.3)),
+          borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

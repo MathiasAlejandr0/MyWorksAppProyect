@@ -1,8 +1,6 @@
 import 'package:uuid/uuid.dart';
 import '../database/repositories/job_repository.dart';
 import '../database/repositories/job_cancellation_repository.dart';
-import '../database/repositories/notification_repository.dart';
-import '../database/models/job_model.dart';
 import '../database/models/job_cancellation_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
@@ -12,7 +10,6 @@ import 'notification_service.dart';
 class JobCancellationService {
   final JobRepository _jobRepository = JobRepository();
   final JobCancellationRepository _cancellationRepository = JobCancellationRepository();
-  final NotificationRepository _notificationRepository = NotificationRepository();
 
   /// Cancela un trabajo con validaciones y motivo
   /// Retorna true si se canceló exitosamente, false si no se puede cancelar

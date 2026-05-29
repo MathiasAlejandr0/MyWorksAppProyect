@@ -108,6 +108,8 @@ class JobStateMachine {
     if (job.userId == userId) {
       const clientActions = [
         PricingConstants.jobQuoteSelected,
+        PricingConstants.jobAwaitingPayment,
+        AppConstants.jobStatusAccepted,
         AppConstants.jobStatusCancelled,
       ];
       return clientActions.contains(newStatus);

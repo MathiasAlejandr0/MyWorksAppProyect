@@ -20,7 +20,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final List<_OnboardingItem> _pages = const [
     _OnboardingItem(
       icon: Icons.handyman_rounded,
-      title: 'Bienvenido a MyWorksApp',
+      title: 'Bienvenido a My Works App',
       description:
           'Conectamos usuarios con profesionales de servicios de manera rápida y segura.',
     ),

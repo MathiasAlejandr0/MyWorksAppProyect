@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../utils/app_logger.dart';
 
 /// Servicio para manejar permisos denegados de manera avanzada

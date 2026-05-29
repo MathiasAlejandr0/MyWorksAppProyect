@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../utils/constants.dart';
 
 /// Logo de marca: casa + herramienta, como en los mockups.
 class AppBrandLogo extends StatelessWidget {
@@ -45,12 +46,12 @@ class AppBrandLogo extends StatelessWidget {
         if (showText) ...[
           SizedBox(height: size * 0.12),
           Text(
-            'myworksapp',
+            AppConstants.appBrandDisplayName,
             style: TextStyle(
               fontSize: textSize,
               fontWeight: FontWeight.w800,
               color: AppColors.brandNavy,
-              letterSpacing: -0.5,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -72,7 +73,7 @@ class AppBrandFooter extends StatelessWidget {
         Icon(Icons.home_work_outlined, size: 18, color: AppColors.grayMedium),
         const SizedBox(width: 6),
         Text(
-          'myworksapp',
+          AppConstants.appBrandDisplayName,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,

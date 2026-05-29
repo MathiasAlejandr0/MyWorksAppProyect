@@ -1,4 +1,3 @@
-import '../database/repositories/service_repository.dart';
 import '../database/models/service_pricing_model.dart';
 import '../domain/price_quote.dart';
 import '../domain/pricing_constants.dart';
@@ -44,8 +43,6 @@ class PriceEstimate {
 class PricingService {
   static final PricingService instance = PricingService._();
   PricingService._();
-
-  final ServiceRepository _serviceRepository = ServiceRepository();
 
   // Cache local de precios (por serviceId)
   final Map<String, ServicePricingModel> _pricingCache = {};
@@ -163,20 +160,23 @@ class PricingService {
     final base = _skuBaseClp[skuCode] ?? 40000;
     final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
     final subtotal = (base * factor).round() + comunaSurchargeClp;
-    const feePercent = 0.10;
-    final fee = (subtotal * feePercent).round();
+    final fee = serviceFeeFor(subtotal);
     return PriceQuote(
       pricingMode: PricingConstants.modeFixedPrice,
       subtotalClp: subtotal,
       platformFeeClp: fee,
-      totalClp: subtotal + fee,
+      totalClp: subtotal,
+      workerPayoutClp: subtotal - fee,
       breakdown: {
         'sku_code': skuCode,
         'base_clp': base,
         'comuna_factor': factor,
         'comuna_surcharge_clp': comunaSurchargeClp,
+        'service_fee_rate': serviceFeeRate,
+        'service_fee_clp': fee,
+        'worker_payout_clp': subtotal - fee,
       },
-      message: 'Precio fijo incluye visita y mano de obra estándar del ítem.',
+      message: 'Precio fijo de referencia del ítem. La comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
     );
   }
 
@@ -191,37 +191,115 @@ class PricingService {
     }
     final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
     final subtotal = (hourlyRateClp * blockHours * factor).round();
-    const feePercent = 0.10;
-    final fee = (subtotal * feePercent).round();
+    final fee = serviceFeeFor(subtotal);
     return PriceQuote(
       pricingMode: PricingConstants.modeHourlyBlock,
       subtotalClp: subtotal,
       platformFeeClp: fee,
-      totalClp: subtotal + fee,
+      totalClp: subtotal,
+      workerPayoutClp: subtotal - fee,
       breakdown: {
         'hourly_rate_clp': hourlyRateClp,
         'block_hours': blockHours,
         'comuna_factor': factor,
+        'service_fee_rate': serviceFeeRate,
+        'service_fee_clp': fee,
+        'worker_payout_clp': subtotal - fee,
       },
-      message: 'Pago adelantado por bloque de $blockHours horas.',
+      message: 'Pago adelantado por bloque de $blockHours horas. La comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
     );
   }
 
+  /// Tarifa de visita (agendar desde perfil del trabajador).
+  PriceQuote calculateVisitBooking({
+    required int visitFeeClp,
+    String? comunaKey,
+  }) {
+    final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
+    final subtotal = (visitFeeClp * factor).round();
+    const feePercent = 0.10;
+    final fee = (subtotal * feePercent).round();
+    return PriceQuote(
+      pricingMode: PricingConstants.modeFixedPrice,
+      subtotalClp: subtotal,
+      platformFeeClp: fee,
+      totalClp: subtotal + fee,
+      breakdown: {
+        'visit_fee_clp': visitFeeClp,
+        'comuna_factor': factor,
+      },
+      message: 'Pago de visita con fondos en garantía hasta completar el servicio.',
+    );
+  }
+
+  /// Horas extra fuera del bloque prepagado (modalidad hourly_block).
+  PriceQuote calculateHourlyOvertime({
+    required int hourlyRateClp,
+    required int extraHours,
+    String? comunaKey,
+  }) {
+    if (extraHours < 1 || extraHours > 8) {
+      throw AppError.validation('Las horas extra deben ser entre 1 y 8');
+    }
+    final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
+    final subtotal = (hourlyRateClp * extraHours * factor * 1.15).round();
+    final fee = serviceFeeFor(subtotal);
+    return PriceQuote(
+      pricingMode: PricingConstants.modeHourlyBlock,
+      subtotalClp: subtotal,
+      platformFeeClp: fee,
+      totalClp: subtotal,
+      workerPayoutClp: subtotal - fee,
+      breakdown: {
+        'overtime_hours': extraHours,
+        'hourly_rate_clp': hourlyRateClp,
+        'surge_factor': 1.15,
+        'comuna_factor': factor,
+        'service_fee_rate': serviceFeeRate,
+        'service_fee_clp': fee,
+        'worker_payout_clp': subtotal - fee,
+      },
+      message: 'Cobro por $extraHours hora(s) adicional(es). La comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
+    );
+  }
+
+  /// Tarifa hora estimada desde tarifa de visita (demo, sin columna hourly en BD).
+  int estimateHourlyRateFromVisitFee(int visitFeeClp) =>
+      (visitFeeClp * 2.5).round().clamp(15000, 120000);
+
+  /// Comisión del servicio: 5% del monto de la cotización aprobada,
+  /// con un mínimo de [PricingService.minServiceFeeClp] CLP.
+  static const double serviceFeeRate = 0.05;
+  static const int minServiceFeeClp = 1000;
+
+  int serviceFeeFor(int amountClp) {
+    final fee = (amountClp * serviceFeeRate).round();
+    return fee < minServiceFeeClp ? minServiceFeeClp : fee;
+  }
+
   /// Modalidad 3: validar monto de propuesta aceptada.
+  ///
+  /// El cliente paga el total de la cotización aprobada. La comisión del
+  /// servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.
   PriceQuote quoteFromOpenProposal({
     required int proposalAmountClp,
     int platformFeeClp = 0,
   }) {
-    final fee = platformFeeClp > 0
-        ? platformFeeClp
-        : (proposalAmountClp * 0.08).round();
+    final fee = platformFeeClp > 0 ? platformFeeClp : serviceFeeFor(proposalAmountClp);
+    final workerPayout = proposalAmountClp - fee;
     return PriceQuote(
       pricingMode: PricingConstants.modeOpenQuote,
       subtotalClp: proposalAmountClp,
       platformFeeClp: fee,
-      totalClp: proposalAmountClp + fee,
-      breakdown: {'proposal_amount_clp': proposalAmountClp},
-      message: 'Monto acordado en cotización abierta.',
+      totalClp: proposalAmountClp,
+      workerPayoutClp: workerPayout,
+      breakdown: {
+        'proposal_amount_clp': proposalAmountClp,
+        'service_fee_rate': serviceFeeRate,
+        'service_fee_clp': fee,
+        'worker_payout_clp': workerPayout,
+      },
+      message: 'La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.',
     );
   }
 

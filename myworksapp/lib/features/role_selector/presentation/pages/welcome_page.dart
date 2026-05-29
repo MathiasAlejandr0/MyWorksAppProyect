@@ -39,8 +39,8 @@ class WelcomePage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Column(
                   children: [
-                    const Text(
-                      '¡Bienvenido a myworksapp!',
+                    Text(
+                      '¡Bienvenido a ${AppConstants.appBrandDisplayName}!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 22,

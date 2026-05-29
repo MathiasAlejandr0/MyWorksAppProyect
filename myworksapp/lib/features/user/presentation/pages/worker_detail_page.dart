@@ -12,12 +12,12 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/utils/service_worker_mapper.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/portfolio_media_tile.dart';
-import '../../../../core/widgets/price_summary_card.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 class WorkerDetailPage extends ConsumerStatefulWidget {
   final String workerId;
@@ -84,24 +84,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
     }
   }
 
-  void _openQuickBooking() {
-    if (_resolvedServiceId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo determinar el servicio')),
-      );
-      return;
-    }
-
-    context.push(
-      AppConstants.routeQuickBooking,
-      extra: {
-        'serviceId': _resolvedServiceId,
-        'workerId': widget.workerId,
-      },
-    );
-  }
-
-  void _openFullRequest() {
+  void _openServiceRequest() {
     if (_resolvedServiceId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo determinar el servicio')),
@@ -208,25 +191,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
               ),
             ),
             const SizedBox(height: 14),
-            PriceSummaryCard(
-              visitFee: _worker!.visitFee,
-              workerName: _user!.name,
-            ),
-            if (_worker!.description != null) ...[
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: AppDecorations.surfaceCard(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Sobre mí', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 6),
-                    Text(_worker!.description!, style: Theme.of(context).textTheme.bodyMedium),
-                  ],
-                ),
-              ),
-            ],
+            _buildAboutCard(context),
             const SizedBox(height: 14),
             Text('Trabajos anteriores', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 10),
@@ -257,16 +222,121 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
                   ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _worker!.isAvailable ? _openQuickBooking : null,
-              child: const Text('Agendar visita'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: _worker!.isAvailable ? _openFullRequest : null,
+              onPressed: _worker!.isAvailable ? _openServiceRequest : null,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
               child: const Text('Crear solicitud de servicio'),
             ),
+            if (!_worker!.isAvailable) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Este profesional no está disponible en este momento.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.grayMedium,
+                    ),
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAboutCard(BuildContext context) {
+    final categoryLabel = ServiceWorkerMapper.categoryLabels[_worker!.serviceCategory] ??
+        _worker!.profession;
+    final rawDescription = _worker!.description?.trim() ?? '';
+    final description = rawDescription.isNotEmpty
+        ? rawDescription
+        : 'Profesional de $categoryLabel comprometido con un trabajo de calidad, '
+            'puntualidad y atención cercana. Evalúo cada solicitud en detalle para '
+            'entregarte una propuesta clara antes de comenzar.';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: AppDecorations.surfaceCard(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.badge_outlined, color: AppColors.primaryLight, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Sobre mí',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            description,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.45),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Especialidad',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: AppColors.grayMedium,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _infoChip(context, Icons.handyman_outlined, _worker!.profession),
+              _infoChip(context, Icons.category_outlined, categoryLabel),
+              _infoChip(
+                context,
+                Icons.star_rounded,
+                '${_worker!.rating.toStringAsFixed(1)} de calificación',
+              ),
+              _infoChip(
+                context,
+                Icons.photo_library_outlined,
+                _portfolio.isEmpty
+                    ? 'Portafolio en construcción'
+                    : '${_portfolio.length} ${_portfolio.length == 1 ? 'trabajo' : 'trabajos'} publicados',
+              ),
+              _infoChip(
+                context,
+                _worker!.isAvailable ? Icons.event_available_outlined : Icons.schedule_outlined,
+                _worker!.isAvailable ? 'Disponible ahora' : 'Agenda ocupada',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoChip(BuildContext context, IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: AppColors.primaryLight),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryDark,
+                ),
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,7 @@
 class AppConstants {
+  /// Nombre de marca en logos, launcher y textos de la UI.
+  static const String appBrandDisplayName = 'My Works App';
+
   // Roles
   static const String roleUser = 'user';
   static const String roleWorker = 'worker';

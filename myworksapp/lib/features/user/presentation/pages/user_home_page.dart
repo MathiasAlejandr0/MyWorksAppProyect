@@ -347,99 +347,144 @@ class _ServiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = _paletteFor(service.category);
     final label = displayName(service);
-    final iconSize = compact ? 28.0 : 36.0;
-    final margin = compact ? 6.0 : 8.0;
-    final btnHeight = compact ? 28.0 : 32.0;
-    final labelSize = compact ? 10.5 : 12.0;
+    final tagline = _taglineFor(service.category);
+    final accent = palette.secondary ?? palette.primary;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(compact ? 12 : 14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: Container(
-              margin: EdgeInsets.all(margin),
-              decoration: BoxDecoration(
-                color: palette.background,
-                borderRadius: BorderRadius.circular(10),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onRequest,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white,
+                palette.background.withValues(alpha: 0.45),
+              ],
+            ),
+            border: Border.all(color: palette.primary.withValues(alpha: 0.12)),
+            boxShadow: [
+              BoxShadow(
+                color: palette.primary.withValues(alpha: 0.10),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
-              child: Stack(
+            ],
+          ),
+          padding: EdgeInsets.all(compact ? 12 : 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: compact ? 44 : 52,
+                height: compact ? 44 : 52,
                 alignment: Alignment.center,
-                children: [
-                  Icon(
-                    _iconFor(service.category),
-                    size: iconSize,
-                    color: palette.primary,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      palette.background,
+                      palette.background.withValues(alpha: 0.45),
+                    ],
                   ),
-                  if (palette.secondaryIcon != null && !compact)
-                    Positioned(
-                      right: 12,
-                      bottom: 10,
-                      child: Icon(
-                        palette.secondaryIcon,
-                        size: 18,
-                        color: palette.secondary,
-                      ),
+                  border:
+                      Border.all(color: palette.primary.withValues(alpha: 0.18)),
+                ),
+                child: Icon(
+                  _iconFor(service.category),
+                  size: compact ? 22 : 26,
+                  color: palette.primary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: compact ? 13 : 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.grayDark,
+                  letterSpacing: -0.2,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                tagline,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: compact ? 10.5 : 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.grayMedium,
+                  height: 1.15,
+                ),
+              ),
+              SizedBox(height: compact ? 10 : 14),
+              Row(
+                children: [
+                  Text(
+                    'Solicitar',
+                    style: TextStyle(
+                      fontSize: compact ? 12 : 13,
+                      fontWeight: FontWeight.w700,
+                      color: accent,
+                      letterSpacing: 0.1,
                     ),
+                  ),
+                  const SizedBox(width: 5),
+                  Container(
+                    width: compact ? 18 : 20,
+                    height: compact ? 18 : 20,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: accent.withValues(alpha: 0.12),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      size: compact ? 12 : 13,
+                      color: accent,
+                    ),
+                  ),
                 ],
               ),
-            ),
+            ],
           ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: margin),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: labelSize,
-                fontWeight: FontWeight.w800,
-                color: AppColors.grayDark,
-                height: 1.15,
-              ),
-            ),
-          ),
-          SizedBox(height: compact ? 4 : 6),
-          Padding(
-            padding: EdgeInsets.fromLTRB(margin + 2, 0, margin + 2, margin),
-            child: SizedBox(
-              height: btnHeight,
-              child: TextButton(
-                onPressed: onRequest,
-                style: TextButton.styleFrom(
-                  backgroundColor: AppColors.brandBlueSoft,
-                  foregroundColor: AppColors.brandNavy,
-                  elevation: 0,
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  textStyle: TextStyle(
-                    fontSize: compact ? 11 : 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                child: const Text('Solicitar'),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  static String _taglineFor(String category) {
+    switch (category) {
+      case ServiceCategories.construction:
+        return 'Obra y reparaciones';
+      case ServiceCategories.plumbing:
+        return 'Fugas y grifería';
+      case ServiceCategories.electrical:
+        return 'Enchufes e iluminación';
+      case ServiceCategories.gardening:
+        return 'Poda y mantención';
+      case ServiceCategories.cleaning:
+        return 'Hogar y oficina';
+      case ServiceCategories.assembly:
+        return 'Montaje de muebles';
+      case ServiceCategories.techSupport:
+        return 'Equipos y redes';
+      case ServiceCategories.moving:
+        return 'Traslados y fletes';
+      default:
+        return 'Profesionales verificados';
+    }
   }
 
   static IconData _iconFor(String category) {
@@ -469,41 +514,57 @@ class _ServiceCard extends StatelessWidget {
     switch (category) {
       case ServiceCategories.construction:
         return const _ServicePalette(
-          background: Color(0xFFFFF8E7),
-          primary: Color(0xFFF59E0B),
+          background: Color(0xFFFEF3E2),
+          primary: Color(0xFFD97706),
           secondary: Color(0xFF92400E),
-          secondaryIcon: Icons.straighten_rounded,
         );
       case ServiceCategories.plumbing:
         return const _ServicePalette(
-          background: Color(0xFFE8F6FF),
-          primary: Color(0xFF0EA5E9),
-          secondary: Color(0xFF0369A1),
-          secondaryIcon: Icons.water_drop_outlined,
+          background: Color(0xFFE6F4FB),
+          primary: Color(0xFF0284C7),
+          secondary: Color(0xFF075985),
         );
       case ServiceCategories.electrical:
         return const _ServicePalette(
-          background: Color(0xFFFFF7ED),
-          primary: Color(0xFFF97316),
-          secondary: Color(0xFFCA8A04),
-          secondaryIcon: Icons.power_rounded,
+          background: Color(0xFFFEF6E0),
+          primary: Color(0xFFD9A406),
+          secondary: Color(0xFF92660B),
         );
       case ServiceCategories.gardening:
         return const _ServicePalette(
-          background: Color(0xFFECFDF5),
-          primary: Color(0xFF22C55E),
+          background: Color(0xFFE7F6EC),
+          primary: Color(0xFF16A34A),
           secondary: Color(0xFF15803D),
-          secondaryIcon: Icons.eco_rounded,
         );
       case ServiceCategories.cleaning:
         return const _ServicePalette(
-          background: Color(0xFFF0F9FF),
-          primary: Color(0xFF38BDF8),
+          background: Color(0xFFE7F3FA),
+          primary: Color(0xFF0EA5E9),
+          secondary: Color(0xFF0369A1),
+        );
+      case ServiceCategories.assembly:
+        return const _ServicePalette(
+          background: Color(0xFFF2EDE6),
+          primary: Color(0xFF92704E),
+          secondary: Color(0xFF5C4733),
+        );
+      case ServiceCategories.techSupport:
+        return const _ServicePalette(
+          background: Color(0xFFEDF1F4),
+          primary: Color(0xFF52707E),
+          secondary: Color(0xFF37474F),
+        );
+      case ServiceCategories.moving:
+        return const _ServicePalette(
+          background: Color(0xFFEDEEFB),
+          primary: Color(0xFF5B5FD6),
+          secondary: Color(0xFF3F3FAE),
         );
       default:
         return const _ServicePalette(
-          background: AppColors.brandOrangeSoft,
+          background: Color(0xFFEEF2F6),
           primary: AppColors.brandNavy,
+          secondary: AppColors.brandNavy,
         );
     }
   }
@@ -514,11 +575,9 @@ class _ServicePalette {
     required this.background,
     required this.primary,
     this.secondary,
-    this.secondaryIcon,
   });
 
   final Color background;
   final Color primary;
   final Color? secondary;
-  final IconData? secondaryIcon;
 }

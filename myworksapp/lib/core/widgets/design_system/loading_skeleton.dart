@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../design_system/app_spacing.dart';
-import '../../theme/app_theme.dart';
 import '../../theme/app_colors.dart';
 
 /// Skeleton loader para estados de carga

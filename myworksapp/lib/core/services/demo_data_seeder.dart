@@ -353,7 +353,7 @@ class DemoDataSeeder {
       userId: workerId,
       type: 'new_job',
       title: 'Nuevo trabajo',
-      body: 'Tienes una visita programada en Providencia',
+      body: 'Tienes un trabajo agendado en Providencia',
       relatedId: jobId,
       isRead: false,
       createdAt: now.subtract(const Duration(hours: 5)),

@@ -67,8 +67,9 @@ Documento de referencia para **presentaciones universitarias**, **financiamiento
 | Home con servicios | ✅ |
 | Ver trabajadores de una categoría | ✅ |
 | Ver perfil y portafolio | ✅ |
-| Agendar visita (reserva rápida) | ✅ |
-| Solicitar servicio completo (descripción, mapa, fecha) | ✅ |
+| Agendar visita (reserva rápida + pago en garantía **simulado**) | ✅ |
+| Solicitar servicio con **modalidad de cobro** (cotización abierta, precio fijo, bloque horas, clásico) | ✅ |
+| Checkout escrow **mock** (sin Webpay — etapa universitaria / pre-empresa) | ✅ |
 | Confirmación legal / disclaimer del servicio | ✅ |
 | Historial de trabajos | ✅ |
 | Detalle del trabajo | ✅ |
@@ -120,7 +121,9 @@ Están **diseñados en el código** pero operan en modo **local o mock**:
 
 | Servicio | Propósito |
 |----------|-----------|
-| `PaymentService` | Pagos, escrow, reembolsos (mock) |
+| `PaymentService` | Pagos, escrow, reembolsos (**solo simulación local**; Webpay requiere empresa en Chile) |
+| `QuoteProposalService` | Cotizaciones abiertas (modalidad 3) |
+| `JobBookingService` | Creación de trabajos con escrow por modalidad |
 | `SubscriptionService` | Planes de suscripción (mock) |
 | `SyncService` | Cola de acciones para sincronizar con servidor |
 | `AnalyticsService` | Eventos de producto (local) |
@@ -165,7 +168,7 @@ Están **diseñados en el código** pero operan en modo **local o mock**:
 | **Backend / API REST o GraphQL** | No existe | Servidor + base de datos en nube (ej. Supabase, Firebase, Node + PostgreSQL) |
 | **Sincronización entre dispositivos** | Cada teléfono tiene su propia BD | API + auth + sync de jobs, usuarios, chat |
 | **Autenticación en la nube** | Solo local | Firebase Auth, Supabase Auth, o JWT propio |
-| **Pagos reales** | Mock en `PaymentService` | Mercado Pago, Stripe, Webpay u otra pasarela |
+| **Pagos reales** | Mock en `PaymentService` (flujo escrow completo en demo) | Pasarela cuando exista empresa (en Chile Webpay exige razón social); hasta entonces el MVP valida UX y estados |
 | **Notificaciones push remotas** | Solo locales | FCM (Android) + APNs (iOS) |
 | **Chat en tiempo real** | Mensajes locales por trabajo | WebSockets, Firestore o Supabase Realtime |
 | **Publicación en tiendas** | No publicada | Google Play + App Store (+ cuentas developer) |

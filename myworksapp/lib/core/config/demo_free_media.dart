@@ -78,25 +78,6 @@ class DemoFreeMedia {
     'moving_appliances': 'https://images.unsplash.com/photo-1558611843-3f61425a74da?w=600&h=450&$_params',
   };
 
-  static const Map<String, String> _workerProfileKeys = {
-    'demo-worker-001': 'profile_electrical_1',
-    'demo-worker-electrical-2': 'profile_electrical_2',
-    'demo-worker-002': 'profile_plumbing_1',
-    'demo-worker-plumbing-2': 'profile_plumbing_2',
-    'demo-worker-003': 'profile_cleaning_1',
-    'demo-worker-cleaning-2': 'profile_cleaning_2',
-    'demo-worker-construction-1': 'profile_construction_1',
-    'demo-worker-construction-2': 'profile_construction_2',
-    'demo-worker-assembly-1': 'profile_assembly_1',
-    'demo-worker-assembly-2': 'profile_assembly_2',
-    'demo-worker-tech-1': 'profile_tech_1',
-    'demo-worker-tech-2': 'profile_tech_2',
-    'demo-worker-garden-1': 'profile_garden_1',
-    'demo-worker-garden-2': 'profile_garden_2',
-    'demo-worker-moving-1': 'profile_moving_1',
-    'demo-worker-moving-2': 'profile_moving_2',
-  };
-
   static String url(String imageKey) {
     return _urls[imageKey] ??
         'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&$_params';

@@ -170,7 +170,7 @@ class AuthService {
         return null;
       }
 
-      final userId = sessionData['userId'] as String?;
+      final userId = sessionData['userId'];
       if (userId == null) {
         AppLogger.w('UserId no encontrado en sesión');
         return null;
@@ -224,7 +224,7 @@ class AuthService {
     final sessionData = await _sessionManager.getSessionData();
     if (sessionData == null) return null;
 
-    final userId = sessionData['userId'] as String?;
+    final userId = sessionData['userId'];
     if (userId == null) return null;
 
     return await _userRepository.getUserById(userId);

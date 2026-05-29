@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/domain/pricing_constants.dart';
 import '../../../core/utils/constants.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/design_system/app_spacing.dart';
 
@@ -27,6 +27,14 @@ class StatusBadge extends StatelessWidget {
         return AppColors.success;
       case AppConstants.jobStatusCancelled:
         return AppColors.error;
+      case PricingConstants.jobAwaitingPayment:
+        return AppColors.brandOrange;
+      case PricingConstants.jobAwaitingQuotes:
+        return AppColors.warning;
+      case PricingConstants.jobQuoteSelected:
+        return AppColors.brandTeal;
+      case PricingConstants.jobPausedChangeOrder:
+        return AppColors.warning;
       default:
         return AppColors.grayMedium;
     }
@@ -44,6 +52,14 @@ class StatusBadge extends StatelessWidget {
         return 'Completado';
       case AppConstants.jobStatusCancelled:
         return 'Cancelado';
+      case PricingConstants.jobAwaitingPayment:
+        return 'Pago pendiente';
+      case PricingConstants.jobAwaitingQuotes:
+        return 'Esperando cotizaciones';
+      case PricingConstants.jobQuoteSelected:
+        return 'Cotización elegida';
+      case PricingConstants.jobPausedChangeOrder:
+        return 'Cobro extra pendiente';
       default:
         return status;
     }
@@ -61,6 +77,14 @@ class StatusBadge extends StatelessWidget {
         return Icons.check_circle;
       case AppConstants.jobStatusCancelled:
         return Icons.cancel;
+      case PricingConstants.jobAwaitingPayment:
+        return Icons.payment_outlined;
+      case PricingConstants.jobAwaitingQuotes:
+        return Icons.request_quote_outlined;
+      case PricingConstants.jobQuoteSelected:
+        return Icons.fact_check_outlined;
+      case PricingConstants.jobPausedChangeOrder:
+        return Icons.pause_circle_outline;
       default:
         return Icons.info;
     }
@@ -76,9 +100,9 @@ class StatusBadge extends StatelessWidget {
         vertical: compact ? AppSpacing.xs : AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

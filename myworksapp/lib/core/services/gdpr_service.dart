@@ -6,10 +6,8 @@ import '../database/repositories/job_repository.dart';
 import '../database/repositories/message_repository.dart';
 import '../database/repositories/rating_repository.dart';
 import '../database/models/user_consent_model.dart';
-import '../database/models/user_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
-import '../utils/constants.dart';
 import 'account_deletion_service.dart';
 
 /// Servicio para cumplimiento GDPR

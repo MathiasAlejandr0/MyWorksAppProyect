@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/database/repositories/user_repository.dart';
 import '../providers/auth_provider.dart';
 
 class ResetPasswordNewPage extends ConsumerStatefulWidget {

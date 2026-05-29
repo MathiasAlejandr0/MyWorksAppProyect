@@ -3,13 +3,10 @@ import '../database/repositories/job_repository.dart';
 import '../database/repositories/user_repository.dart';
 import '../database/repositories/abuse_repository.dart';
 import '../database/models/abuse_event_model.dart';
-import '../database/models/job_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 import 'trust_score_service.dart';
 import 'analytics_service.dart';
-import 'dart:io' show Platform;
-
 /// Tipos de abuso detectables
 enum AbuseType {
   excessiveJobs, // Demasiados jobs creados por día

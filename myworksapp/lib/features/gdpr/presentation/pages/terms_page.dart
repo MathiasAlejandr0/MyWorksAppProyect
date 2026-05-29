@@ -33,7 +33,7 @@ class TermsPage extends StatelessWidget {
             _buildSection(
               '1. Aceptación de Términos',
               '''
-Al usar MyWorksApp, aceptas estos términos y condiciones.
+Al usar My Works App, aceptas estos términos y condiciones.
 Si no estás de acuerdo, no uses la aplicación.
               ''',
             ),
@@ -65,14 +65,14 @@ Como Trabajador:
               '4. Pagos',
               '''
 • Los pagos se realizan fuera de la app
-• MyWorksApp no es responsable de transacciones
+• My Works App no es responsable de transacciones
 • Cualquier disputa debe resolverse entre las partes
               ''',
             ),
             _buildSection(
               '5. Propiedad Intelectual',
               '''
-• El contenido de la app es propiedad de MyWorksApp
+• El contenido de la app es propiedad de My Works App
 • No puedes copiar, modificar o distribuir sin autorización
 • Las fotos subidas permanecen propiedad del usuario
               ''',
@@ -80,14 +80,14 @@ Como Trabajador:
             _buildSection(
               '6. Naturaleza de la Plataforma (IMPORTANTE)',
               '''
-MyWorksApp actúa ÚNICAMENTE como intermediario tecnológico entre usuarios y trabajadores independientes.
+My Works App actúa ÚNICAMENTE como intermediario tecnológico entre usuarios y trabajadores independientes.
 
 DECLARACIÓN LEGAL:
-• MyWorksApp NO presta servicios profesionales ni técnicos regulados
-• MyWorksApp NO asume responsabilidad por la calidad, resultado o cumplimiento de los servicios
-• Los trabajadores son independientes y no tienen relación laboral con MyWorksApp
+• My Works App NO presta servicios profesionales ni técnicos regulados
+• My Works App NO asume responsabilidad por la calidad, resultado o cumplimiento de los servicios
+• Los trabajadores son independientes y no tienen relación laboral con My Works App
 • El pago se realiza directamente entre usuario y trabajador (Fase 1)
-• MyWorksApp no procesa pagos ni emite boletas en esta etapa
+• My Works App no procesa pagos ni emite boletas en esta etapa
 
 Esta estructura protege a la plataforma frente a:
 • Dirección del Trabajo (sin relación laboral)
@@ -99,7 +99,7 @@ Esta estructura protege a la plataforma frente a:
             _buildSection(
               '7. Limitación de Responsabilidad',
               '''
-MyWorksApp actúa como plataforma de conexión.
+My Works App actúa como plataforma de conexión.
 No somos responsables de:
 • Calidad de servicios prestados por trabajadores independientes
 • Disputas entre usuarios y trabajadores

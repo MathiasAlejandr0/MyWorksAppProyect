@@ -14,10 +14,8 @@ import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../../core/database/repositories/service_repository.dart';
-import '../../../../core/database/models/service_model.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,7 +35,6 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   final UserRepository _userRepository = UserRepository();
   final ServiceRepository _serviceRepository = ServiceRepository();
   final MatchingService _matchingService = MatchingService.instance;
-  final _currency = NumberFormat.currency(locale: 'es_CL', symbol: '\$', decimalDigits: 0);
   final _searchController = TextEditingController();
   final _debouncer = Debouncer(delay: const Duration(milliseconds: 500));
   List<WorkerModel> _workers = [];
@@ -292,7 +289,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<String>(
-                                  value: _sortBy,
+                                  initialValue: _sortBy,
                                   decoration: const InputDecoration(
                                     labelText: 'Ordenar por',
                                     isDense: true,
@@ -311,7 +308,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: DropdownButtonFormField<double>(
-                                  value: _minRating,
+                                  initialValue: _minRating,
                                   decoration: const InputDecoration(
                                     labelText: 'Calificación mín.',
                                     isDense: true,
@@ -354,7 +351,6 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                   return _WorkerCard(
                                     worker: worker,
                                     user: user,
-                                    visitFeeLabel: _currency.format(worker.visitFee),
                                     isRecommended: _isAutomaticMode && score != null,
                                     matchScore: score,
                                     onTap: () {
@@ -377,7 +373,6 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
 class _WorkerCard extends StatelessWidget {
   final WorkerModel worker;
   final UserModel? user;
-  final String visitFeeLabel;
   final bool isRecommended;
   final double? matchScore;
   final VoidCallback onTap;
@@ -385,7 +380,6 @@ class _WorkerCard extends StatelessWidget {
   const _WorkerCard({
     required this.worker,
     this.user,
-    required this.visitFeeLabel,
     this.isRecommended = false,
     this.matchScore,
     required this.onTap,
@@ -451,11 +445,6 @@ class _WorkerCard extends StatelessWidget {
                             icon: Icons.star_rounded,
                             label: worker.rating.toStringAsFixed(1),
                             color: AppColors.warning,
-                          ),
-                          _ChipBadge(
-                            icon: Icons.payments_outlined,
-                            label: 'Visita $visitFeeLabel',
-                            color: AppColors.primaryLight,
                           ),
                         ],
                       ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../design_system/app_spacing.dart';
-import '../../theme/app_theme.dart';
 import 'permission_request_widget.dart';
 
 /// Pantalla explicativa para solicitar permiso de cámara

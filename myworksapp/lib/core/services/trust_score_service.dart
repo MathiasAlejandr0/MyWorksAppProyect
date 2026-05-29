@@ -1,6 +1,4 @@
 import '../database/repositories/job_repository.dart';
-import '../database/repositories/user_repository.dart';
-import '../database/models/job_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 
@@ -35,7 +33,6 @@ class TrustScoreService {
   TrustScoreService._();
 
   final JobRepository _jobRepository = JobRepository();
-  final UserRepository _userRepository = UserRepository();
 
   // Límites configurables
   static const int maxCancellationsPerMonth = 3;

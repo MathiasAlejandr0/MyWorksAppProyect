@@ -115,7 +115,7 @@ class _WorkerRegisterPageState extends ConsumerState<WorkerRegisterPage> {
               ),
               const SizedBox(height: 32),
               DropdownButtonFormField<String>(
-                value: _selectedProfession,
+                initialValue: _selectedProfession,
                 decoration: const InputDecoration(
                   labelText: 'Profesión',
                   prefixIcon: Icon(Icons.work),

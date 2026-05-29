@@ -78,9 +78,9 @@ class AccessibilityService {
 
   /// Calcula la luminancia relativa
   static double _getRelativeLuminance(Color color) {
-    final r = _linearize(color.red / 255.0);
-    final g = _linearize(color.green / 255.0);
-    final b = _linearize(color.blue / 255.0);
+    final r = _linearize(color.r);
+    final g = _linearize(color.g);
+    final b = _linearize(color.b);
 
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }

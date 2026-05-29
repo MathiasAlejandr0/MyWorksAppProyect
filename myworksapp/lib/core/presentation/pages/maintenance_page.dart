@@ -67,9 +67,9 @@ class _MaintenancePageState extends State<MaintenancePage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.1),
+                    color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +85,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                       if (failureMessage != null) ...[
                         const SizedBox(height: 8),
                         Text(
-                          failureMessage!,
+                          failureMessage,
                           style: TextStyle(
                             color: AppColors.grayDark,
                             fontSize: 12,

@@ -2,27 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:uuid/uuid.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/repositories/service_config_repository.dart';
 import '../../../../core/database/repositories/job_repository.dart';
-import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/service_model.dart';
-import '../../../../core/database/models/service_config_model.dart';
+import '../../../../core/domain/pricing_constants.dart';
+import '../../../../core/domain/price_quote.dart';
+import '../../../../core/services/job_booking_service.dart';
+import '../../../../core/services/open_quote_notification_service.dart';
+import '../../../../core/services/pricing_service.dart';
+import '../../../../core/utils/comuna_utils.dart';
+import '../../../../core/utils/sku_utils.dart';
+import '../../../../core/domain/pricing_mode_recommendation.dart';
+import '../widgets/pricing_mode_questionnaire.dart';
+import '../widgets/open_quote_submitted_dialog.dart';
+import '../../../../core/widgets/pricing_quote_card.dart';
+import '../../../../core/widgets/escrow_checkout_sheet.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/location_picker_widget.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/job_service.dart';
-import '../../../../core/services/service_legal_validator.dart';
+import '../../../../core/database/models/user_model.dart';
 import '../../../../core/database/models/worker_model.dart';
+import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/widgets/service_disclaimer_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../widgets/dynamic_service_form.dart';
-import '../widgets/price_estimate_card.dart';
 import 'package:intl/intl.dart';
 
 class ServiceRequestPage extends ConsumerStatefulWidget {
@@ -37,19 +45,17 @@ class ServiceRequestPage extends ConsumerStatefulWidget {
 
 class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   final _formKey = GlobalKey<FormState>();
-  final _dynamicFormKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final ServiceRepository _serviceRepository = ServiceRepository();
   final ServiceConfigRepository _configRepository = ServiceConfigRepository();
   final JobService _jobService = JobService.instance;
-  final ServiceLegalValidator _legalValidator = ServiceLegalValidator.instance;
   final WorkerRepository _workerRepository = WorkerRepository();
+  final UserRepository _userRepository = UserRepository();
   bool _isLoading = false;
   String? _selectedServiceId;
   String? _selectedWorkerId;
   WorkerModel? _selectedWorker;
-  ServiceModel? _selectedService;
-  ServiceConfigModel? _serviceConfig;
+  UserModel? _selectedWorkerUser;
   Map<String, dynamic> _serviceMetadata = {};
   String? _selectedVariant; // Variante seleccionada (para servicios con variantes)
   List<Map<String, dynamic>> _serviceVariants = []; // Variantes disponibles
@@ -58,10 +64,27 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   double? _selectedLongitude;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  String _pricingMode = '';
+  int _blockHours = 4;
+  PriceQuote? _pricePreview;
+  PricingModeRecommendation? _pricingRecommendation;
+  bool _questionnaireComplete = false;
+  late final Future<List<ServiceModel>> _servicesFuture;
+  List<ServiceModel> _services = [];
+  bool _servicesReady = false;
 
   @override
   void initState() {
     super.initState();
+    _servicesFuture = _serviceRepository.getAllServices();
+    _servicesFuture.then((list) {
+      if (mounted) {
+        setState(() {
+          _services = list;
+          _servicesReady = true;
+        });
+      }
+    });
     _selectedServiceId = widget.serviceId;
     _selectedWorkerId = widget.workerId;
     if (_selectedServiceId != null) {
@@ -74,12 +97,58 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
 
   Future<void> _loadSelectedWorker(String workerId) async {
     final worker = await _workerRepository.getWorkerByUserId(workerId);
-    if (mounted) setState(() => _selectedWorker = worker);
+    final user = await _userRepository.getUserById(workerId);
+    if (mounted) {
+      setState(() {
+        _selectedWorker = worker;
+        _selectedWorkerUser = user;
+      });
+      _refreshPricePreview();
+    }
+  }
+
+  String? _categoryForSelectedService() {
+    if (_selectedServiceId == null) return null;
+    for (final s in _services) {
+      if (s.id == _selectedServiceId) return s.category;
+    }
+    return null;
+  }
+
+  Future<void> _refreshPricePreview() async {
+    if (_selectedAddress.length < 5) return;
+    final comuna = inferComunaKey(_selectedAddress);
+    PriceQuote? preview;
+
+    try {
+      if (_pricingMode == PricingConstants.modeFixedPrice) {
+        final sku = _pricingRecommendation?.skuCode ??
+            variantToSkuCode(_selectedVariant);
+        if (sku != null) {
+          preview = await PricingService.instance.calculateFixedPrice(
+            skuCode: sku,
+            comunaKey: comuna,
+          );
+        }
+      } else if (_pricingMode == PricingConstants.modeHourlyBlock &&
+          _selectedWorker != null) {
+        final rate = PricingService.instance
+            .estimateHourlyRateFromVisitFee(_selectedWorker!.visitFee.round());
+        preview = await PricingService.instance.calculateHourlyBlock(
+          hourlyRateClp: rate,
+          blockHours: _blockHours,
+          comunaKey: comuna,
+        );
+      }
+    } catch (_) {
+      preview = null;
+    }
+
+    if (mounted) setState(() => _pricePreview = preview);
   }
 
   Future<void> _loadServiceConfig(String serviceId) async {
     try {
-      final service = await _serviceRepository.getServiceById(serviceId);
       final config = await _configRepository.getConfigByServiceId(serviceId);
       
       // Extraer variantes si existen
@@ -98,8 +167,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       }
       
       setState(() {
-        _selectedService = service;
-        _serviceConfig = config;
         _serviceVariants = variants;
         _selectedVariant = selectedVariant;
         // Agregar variante seleccionada a metadata
@@ -120,20 +187,28 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    // Validar formulario dinámico si existe
-    if (_serviceConfig != null && _dynamicFormKey.currentState != null) {
-      if (!_dynamicFormKey.currentState!.validate()) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Por favor completa todos los campos requeridos')),
-        );
-        return;
-      }
-    }
-    
+
     if (_selectedServiceId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor selecciona un servicio')),
+      );
+      return;
+    }
+    if (!_questionnaireComplete || _pricingMode.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Responde el cuestionario para definir la forma de cobro'),
+        ),
+      );
+      return;
+    }
+    if (_pricingMode != PricingConstants.modeLegacy && _selectedWorkerId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Elige un profesional desde su perfil para enviarle la solicitud',
+          ),
+        ),
       );
       return;
     }
@@ -192,16 +267,121 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         );
       }
 
-      // Crear trabajo usando JobService (incluye validaciones legales)
+      final comuna = inferComunaKey(_selectedAddress);
+      final metadata =
+          _serviceMetadata.isNotEmpty ? Map<String, dynamic>.from(_serviceMetadata) : null;
+      final description = _descriptionController.text.trim();
+
+      if (_pricingMode == PricingConstants.modeFixedPrice) {
+        final sku = _pricingRecommendation?.skuCode ??
+            variantToSkuCode(_selectedVariant) ??
+            'FAUCET_REPLACE';
+        final booking = await JobBookingService.instance.createFixedSkuBooking(
+          userId: user.id,
+          workerId: _selectedWorkerId!,
+          serviceId: _selectedServiceId!,
+          address: _selectedAddress,
+          skuCode: sku,
+          description: description,
+          scheduledDate: scheduledDate,
+          comunaKey: comuna,
+          latitude: _selectedLatitude,
+          longitude: _selectedLongitude,
+          serviceMetadata: metadata,
+        );
+        if (!mounted) return;
+        final paid = await EscrowCheckoutSheet.show(
+          context,
+          jobId: booking.job.id,
+          quote: booking.quote,
+        );
+        if (paid) {
+          await JobBookingService.instance.confirmEscrowAndAccept(
+            jobId: booking.job.id,
+            userId: user.id,
+          );
+        }
+        if (!mounted) return;
+        context.push('${AppConstants.routeJobDetail}/${booking.job.id}');
+        return;
+      }
+
+      if (_pricingMode == PricingConstants.modeHourlyBlock) {
+        final rate = PricingService.instance
+            .estimateHourlyRateFromVisitFee(_selectedWorker!.visitFee.round());
+        final booking = await JobBookingService.instance.createHourlyBlockBooking(
+          userId: user.id,
+          workerId: _selectedWorkerId!,
+          serviceId: _selectedServiceId!,
+          address: _selectedAddress,
+          hourlyRateClp: rate,
+          blockHours: _blockHours,
+          description: description,
+          scheduledDate: scheduledDate,
+          comunaKey: comuna,
+          latitude: _selectedLatitude,
+          longitude: _selectedLongitude,
+          serviceMetadata: metadata,
+        );
+        if (!mounted) return;
+        final paid = await EscrowCheckoutSheet.show(
+          context,
+          jobId: booking.job.id,
+          quote: booking.quote,
+        );
+        if (paid) {
+          await JobBookingService.instance.confirmEscrowAndAccept(
+            jobId: booking.job.id,
+            userId: user.id,
+          );
+        }
+        if (!mounted) return;
+        context.push('${AppConstants.routeJobDetail}/${booking.job.id}');
+        return;
+      }
+
+      if (_pricingMode == PricingConstants.modeOpenQuote) {
+        final workerId = _selectedWorkerId!;
+        final workerName = _selectedWorkerUser?.name ?? 'el profesional';
+
+        final job = await JobBookingService.instance.createOpenQuoteJob(
+          userId: user.id,
+          invitedWorkerId: workerId,
+          serviceId: _selectedServiceId!,
+          address: _selectedAddress,
+          description: description,
+          scheduledDate: scheduledDate,
+          comunaKey: comuna,
+          latitude: _selectedLatitude,
+          longitude: _selectedLongitude,
+          serviceMetadata: metadata,
+        );
+
+        await OpenQuoteNotificationService.instance.notifyInvitedWorker(
+          jobId: job.id,
+          workerId: workerId,
+        );
+
+        if (!mounted) return;
+        await OpenQuoteSubmittedDialog.show(
+          context,
+          workerName: workerName,
+        );
+        if (!mounted) return;
+        context.push('${AppConstants.routeJobDetail}/${job.id}');
+        return;
+      }
+
+      // Legacy: sin escrow
       final job = await _jobService.createJob(
         userId: user.id,
         serviceId: _selectedServiceId!,
-        description: _descriptionController.text.trim(),
+        description: description,
         address: _selectedAddress,
         latitude: _selectedLatitude,
         longitude: _selectedLongitude,
         scheduledDate: scheduledDate,
-        serviceMetadata: _serviceMetadata.isNotEmpty ? _serviceMetadata : null,
+        serviceMetadata: metadata,
       );
 
       if (job == null) {
@@ -212,12 +392,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         return;
       }
 
-      // Notificar trabajadores de la categoría del servicio
       final jobRepository = JobRepository();
-      final workers = service != null
-          ? await _workerRepository.getWorkersByServiceCategory(service.category)
-          : <WorkerModel>[];
-
+      final workers = await _workerRepository.getWorkersByServiceCategory(service.category);
       for (final worker in workers) {
         if (worker.isAvailable && !await jobRepository.hasActiveJobs(worker.userId)) {
           await NotificationService.instance.showNotification(
@@ -235,7 +411,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       }
 
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Solicitud creada exitosamente')),
       );
@@ -269,16 +444,9 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       appBar: AppGradientAppBar(
         title: const Text('Solicitar Servicio'),
       ),
-      body: FutureBuilder(
-        future: _serviceRepository.getAllServices(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingWidget();
-          }
-
-          final services = snapshot.data ?? [];
-
-          return SingleChildScrollView(
+      body: !_servicesReady
+          ? const LoadingWidget(message: 'Cargando servicios...')
+          : SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Form(
               key: _formKey,
@@ -311,11 +479,17 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _selectedWorker!.profession,
-                            style: Theme.of(context).textTheme.titleSmall,
+                            _selectedWorkerUser?.name ?? _selectedWorker!.profession,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                           Text(
-                            'Visita: ${NumberFormat.currency(locale: 'es_CL', symbol: '\$', decimalDigits: 0).format(_selectedWorker!.visitFee)} · El precio final se define en la visita',
+                            _selectedWorker!.profession,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          Text(
+                            'El profesional revisará tu solicitud y te enviará una cotización. Pagas el total aprobado; la comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -329,7 +503,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                       labelText: 'Tipo de servicio',
                       prefixIcon: Icon(Icons.category),
                     ),
-                    items: services.map((service) {
+                    items: _services.map((service) {
                       return DropdownMenuItem(
                         value: service.id,
                         child: Text(service.name),
@@ -338,8 +512,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                     onChanged: (value) {
                       setState(() {
                         _selectedServiceId = value;
-                        _serviceConfig = null;
-                        _selectedService = null;
                         _serviceMetadata = {};
                         _serviceVariants = [];
                         _selectedVariant = null;
@@ -370,54 +542,83 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                   const SizedBox(height: 8),
                   LocationPickerWidget(
                     onLocationSelected: (address, latitude, longitude) {
+                      if (_selectedAddress == address &&
+                          _selectedLatitude == latitude &&
+                          _selectedLongitude == longitude) {
+                        return;
+                      }
                       setState(() {
                         _selectedAddress = address;
                         _selectedLatitude = latitude;
                         _selectedLongitude = longitude;
                       });
+                      _refreshPricePreview();
                     },
                   ),
+                  const SizedBox(height: 20),
+                  PricingModeQuestionnaire(
+                    workerPreselected: _selectedWorkerId != null,
+                    category: _categoryForSelectedService(),
+                    initialRecommendation: _pricingRecommendation,
+                    onRecommendation: _applyPricingRecommendation,
+                  ),
+                  if (_pricePreview != null) ...[
+                    const SizedBox(height: 12),
+                    PricingQuoteCard(quote: _pricePreview!),
+                  ],
                   const SizedBox(height: 16),
-                  // Selector de variantes (si el servicio tiene variantes)
-                  if (_serviceVariants.isNotEmpty) ...[
+                  // Variantes del catálogo (solo si el cuestionario no fijó ítem)
+                  if (_serviceVariants.isNotEmpty &&
+                      _pricingRecommendation?.variantKey == null) ...[
                     Text(
                       'Tipo de servicio',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    ...(_serviceVariants.map((variant) {
-                      final variantId = variant['id'] as String;
-                      final variantName = variant['name'] as String;
-                      final variantDesc = variant['description'] as String?;
-                      final isSelected = _selectedVariant == variantId;
-                      
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        color: isSelected 
-                          ? AppColors.primaryLight.withOpacity(0.1)
-                          : null,
-                        child: RadioListTile<String>(
-                          title: Text(
-                            variantName,
-                            style: TextStyle(
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    RadioGroup<String>(
+                      groupValue: _selectedVariant,
+                      onChanged: (value) {
+                        if (value == null) return;
+                        final variant = _serviceVariants
+                            .firstWhere((v) => v['id'] == value);
+                        setState(() {
+                          _selectedVariant = value;
+                          _serviceMetadata['variant'] = value;
+                          _serviceMetadata['variantName'] = variant['name'];
+                          _serviceMetadata['variantDescription'] =
+                              variant['description'];
+                        });
+                        _refreshPricePreview();
+                      },
+                      child: Column(
+                        children: _serviceVariants.map((variant) {
+                          final variantId = variant['id'] as String;
+                          final variantName = variant['name'] as String;
+                          final variantDesc = variant['description'] as String?;
+                          final isSelected = _selectedVariant == variantId;
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            color: isSelected
+                                ? AppColors.primaryLight.withValues(alpha: 0.1)
+                                : null,
+                            child: RadioListTile<String>(
+                              title: Text(
+                                variantName,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                              subtitle:
+                                  variantDesc != null ? Text(variantDesc) : null,
+                              value: variantId,
                             ),
-                          ),
-                          subtitle: variantDesc != null ? Text(variantDesc) : null,
-                          value: variantId,
-                          groupValue: _selectedVariant,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedVariant = value;
-                              _serviceMetadata['variant'] = value;
-                              // Actualizar metadata con información de la variante
-                              _serviceMetadata['variantName'] = variantName;
-                              _serviceMetadata['variantDescription'] = variantDesc;
-                            });
-                          },
-                        ),
-                      );
-                    }).toList()),
+                          );
+                        }).toList(),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                   ],
                   TextFormField(
@@ -430,42 +631,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                     maxLines: 5,
                     validator: Validators.validateDescription,
                   ),
-                  // Campos dinámicos del servicio
-                  if (_serviceConfig != null) ...[
-                    const SizedBox(height: 24),
-                    DynamicServiceForm(
-                      key: ValueKey('${_selectedServiceId}_${_serviceConfig!.id}'), // Clave única para evitar rebuilds innecesarios
-                      config: _serviceConfig!,
-                      formKey: _dynamicFormKey,
-                      initialValues: null, // No pasar initialValues para evitar reinicializaciones
-                      onChanged: (values) {
-                        // Solo actualizar si realmente hay cambios y el widget está montado
-                        if (!mounted) return;
-                        
-                        final newMetadata = Map<String, dynamic>.from(values);
-                        // Comparar para evitar actualizaciones innecesarias que causan rebuilds
-                        if (_mapsAreDifferent(_serviceMetadata, newMetadata)) {
-                          // Usar Future.microtask para evitar setState durante build
-                          Future.microtask(() {
-                            if (mounted) {
-                              setState(() {
-                                _serviceMetadata = newMetadata;
-                              });
-                            }
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                  // Precio estimado
-                  if (_selectedService != null) ...[
-                    const SizedBox(height: 24),
-                    PriceEstimateCard(
-                      service: _selectedService!,
-                      serviceMetadata: _serviceMetadata.isNotEmpty ? _serviceMetadata : null,
-                      itemCount: _serviceMetadata['quantity'] as int?,
-                    ),
-                  ],
                   const SizedBox(height: 16),
                   // Fecha y hora
                   Row(
@@ -521,24 +686,39 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Continuar'),
+                        : Text(
+                            !_questionnaireComplete
+                                ? 'Solicitar al profesional'
+                                : _pricingMode == PricingConstants.modeOpenQuote
+                                    ? 'Enviar solicitud al profesional'
+                                    : _pricingMode == PricingConstants.modeLegacy
+                                        ? 'Continuar'
+                                        : 'Continuar al pago',
+                          ),
                   ),
                 ],
               ),
             ),
-          );
-        },
-      ),
+          ),
     );
   }
 
-  /// Compara dos mapas para determinar si son diferentes
-  bool _mapsAreDifferent(Map<String, dynamic> map1, Map<String, dynamic> map2) {
-    if (map1.length != map2.length) return true;
-    for (final key in map1.keys) {
-      if (map1[key] != map2[key]) return true;
-    }
-    return false;
+  void _applyPricingRecommendation(PricingModeRecommendation rec) {
+    setState(() {
+      _pricingRecommendation = rec;
+      _pricingMode = rec.mode;
+      _questionnaireComplete = true;
+      if (rec.blockHours != null) {
+        _blockHours = rec.blockHours!;
+      }
+      if (rec.variantKey != null) {
+        _selectedVariant = rec.variantKey;
+        _serviceMetadata['variant'] = rec.variantKey;
+      }
+      _serviceMetadata['pricing_questionnaire'] = rec.questionnaireAnswers;
+    });
+    _refreshPricePreview();
   }
+
 }
 

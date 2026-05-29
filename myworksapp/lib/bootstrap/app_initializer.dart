@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/database/database_helper.dart';
 import '../core/services/notification_service.dart';
@@ -131,7 +130,7 @@ class AppInitializer {
         
         if (hasActiveSession) {
           final sessionData = await SessionManager.instance.getSessionData();
-          userId = sessionData?['userId'] as String?;
+          userId = sessionData?['userId'];
           
           if (userId != null) {
             // Restaurar sesión en el provider
@@ -152,7 +151,6 @@ class AppInitializer {
       if (hasActiveSession && userId != null) {
         AppLogger.i('🔍 Validando estado de cuenta...');
         try {
-          final authNotifier = ref.read(authProvider.notifier);
           final authState = ref.read(authProvider);
           
           if (authState.user != null) {

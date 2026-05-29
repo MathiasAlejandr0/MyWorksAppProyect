@@ -1,13 +1,9 @@
 import 'package:uuid/uuid.dart';
 import '../database/repositories/dispute_repository.dart';
 import '../database/repositories/job_repository.dart';
-import '../database/repositories/payment_repository.dart';
-import '../database/repositories/rating_repository.dart';
 import '../database/models/dispute_model.dart';
-import '../database/models/job_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
-import '../utils/constants.dart';
 import 'payment_service.dart';
 
 /// Servicio de disputas
@@ -22,8 +18,6 @@ class DisputeService {
 
   final DisputeRepository _disputeRepository = DisputeRepository();
   final JobRepository _jobRepository = JobRepository();
-  final PaymentRepository _paymentRepository = PaymentRepository();
-  final RatingRepository _ratingRepository = RatingRepository();
   final PaymentService _paymentService = PaymentService.instance;
 
   /// Abre una disputa para un job

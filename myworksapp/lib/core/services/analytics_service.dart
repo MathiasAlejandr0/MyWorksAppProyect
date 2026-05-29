@@ -374,7 +374,6 @@ class AnalyticsService {
       );
       
       final registeredCount = registeredUsers[AnalyticsEvents.registerCompleted] ?? 0;
-      final jobCreatedCount = registeredUsers[AnalyticsEvents.jobCreated] ?? 0;
       
       if (registeredCount == 0) return 0.0;
       

@@ -29,7 +29,6 @@ class DynamicServiceForm extends StatefulWidget {
 class _DynamicServiceFormState extends State<DynamicServiceForm> {
   final Map<String, dynamic> _values = {};
   final Map<String, TextEditingController> _textControllers = {};
-  bool _hasCalledInitialOnChanged = false;
 
   @override
   void initState() {
@@ -91,9 +90,6 @@ class _DynamicServiceFormState extends State<DynamicServiceForm> {
     setState(() {
       _values[name] = value;
     });
-    
-    // Marcar que ya se llamó onChanged al menos una vez
-    _hasCalledInitialOnChanged = true;
     
     // Llamar onChanged solo cuando el usuario realmente cambia un valor
     // Usar Future.microtask para evitar setState durante build
@@ -192,7 +188,7 @@ class _DynamicServiceFormState extends State<DynamicServiceForm> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: DropdownButtonFormField<String>(
-        value: _values[name]?.toString(),
+        initialValue: _values[name]?.toString(),
         decoration: InputDecoration(
           labelText: label + (required ? ' *' : ''),
           border: OutlineInputBorder(
@@ -281,7 +277,7 @@ class _DynamicServiceFormState extends State<DynamicServiceForm> {
           Switch(
             value: _values[name] as bool? ?? false,
             onChanged: (value) => _updateValue(name, value),
-            activeColor: AppColors.primaryLight,
+            activeThumbColor: AppColors.primaryLight,
           ),
         ],
       ),

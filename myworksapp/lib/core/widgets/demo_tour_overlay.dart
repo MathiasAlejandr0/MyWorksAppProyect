@@ -22,8 +22,8 @@ class _DemoTourOverlayState extends State<DemoTourOverlay> {
 
   static const _steps = [
     ('1. Elige un servicio', 'Toca la categoría que necesitas (limpieza, electricidad, etc.).'),
-    ('2. Compara trabajadores', 'Revisa calificación, visita y trabajos anteriores.'),
-    ('3. Agenda la visita', 'Reserva en pocos pasos; el precio final se define en sitio.'),
+    ('2. Compara trabajadores', 'Revisa calificación, perfil y trabajos anteriores.'),
+    ('3. Envía tu solicitud', 'El profesional revisa tu pedido y te envía una cotización.'),
   ];
 
   @override

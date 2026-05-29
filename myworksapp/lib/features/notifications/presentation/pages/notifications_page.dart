@@ -7,8 +7,6 @@ import '../../../../core/database/models/notification_model.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../jobs/presentation/pages/job_detail_page.dart';
-import '../../../chat/presentation/pages/chat_page.dart';
 import '../../../../core/utils/constants.dart';
 
 class NotificationsPage extends ConsumerStatefulWidget {
@@ -172,10 +170,10 @@ class _NotificationItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: notification.isRead
           ? null
-          : Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+          : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getColor().withOpacity(0.2),
+          backgroundColor: _getColor().withValues(alpha: 0.2),
           child: Icon(
             _getIcon(),
             color: _getColor(),

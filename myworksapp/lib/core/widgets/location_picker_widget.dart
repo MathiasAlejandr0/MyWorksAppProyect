@@ -20,8 +20,13 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   String _currentAddress = 'Detectando tu ubicación...';
   bool _isLoading = true;
   bool _hasError = false;
-  double? _latitude;
-  double? _longitude;
+  String? _lastEmittedAddress;
+
+  void _emitLocation(String address, double latitude, double longitude) {
+    if (_lastEmittedAddress == address) return;
+    _lastEmittedAddress = address;
+    widget.onLocationSelected(address, latitude, longitude);
+  }
 
   @override
   void initState() {
@@ -82,10 +87,6 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       );
 
       if (!mounted) return;
-      setState(() {
-        _latitude = position.latitude;
-        _longitude = position.longitude;
-      });
 
       // Obtener dirección desde las coordenadas
       await _getAddressFromCoordinates(position.latitude, position.longitude);
@@ -116,9 +117,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           _isLoading = false;
           _hasError = false;
         });
-        if (mounted) {
-          widget.onLocationSelected(address, latitude, longitude);
-        }
+        _emitLocation(address, latitude, longitude);
       } else {
         if (!mounted) return;
         setState(() {
@@ -127,13 +126,11 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           _hasError = false;
         });
         // Aún así, notificamos la ubicación con coordenadas
-        if (mounted) {
-          widget.onLocationSelected(
-            'Ubicación: $latitude, $longitude',
-            latitude,
-            longitude,
-          );
-        }
+        _emitLocation(
+          'Ubicación: $latitude, $longitude',
+          latitude,
+          longitude,
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -142,14 +139,11 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         _isLoading = false;
         _hasError = false;
       });
-      // Notificamos con coordenadas si no podemos obtener la dirección
-      if (mounted) {
-        widget.onLocationSelected(
-          'Ubicación: $latitude, $longitude',
-          latitude,
-          longitude,
-        );
-      }
+      _emitLocation(
+        'Ubicación: $latitude, $longitude',
+        latitude,
+        longitude,
+      );
     }
   }
 

@@ -5,9 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/database/repositories/password_reset_repository.dart';
-import '../../../../core/database/repositories/user_repository.dart';
-import '../../../../core/utils/password_utils.dart';
-
 class ResetPasswordCodePage extends ConsumerStatefulWidget {
   final String email;
 

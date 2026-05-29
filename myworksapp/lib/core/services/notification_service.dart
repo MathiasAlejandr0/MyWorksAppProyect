@@ -87,7 +87,7 @@ class NotificationService {
     // Mostrar notificación local
     const androidDetails = AndroidNotificationDetails(
       'myworksapp_channel',
-      'MyWorksApp Notifications',
+      'My Works App Notifications',
       channelDescription: 'Notificaciones de trabajos y mensajes',
       importance: Importance.high,
       priority: Priority.high,
@@ -130,7 +130,7 @@ class NotificationService {
 
     const androidDetails = AndroidNotificationDetails(
       'myworksapp_channel',
-      'MyWorksApp Notifications',
+      'My Works App Notifications',
       channelDescription: 'Notificaciones programadas',
       importance: Importance.high,
       priority: Priority.high,

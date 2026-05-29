@@ -1,7 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
-import '../utils/constants.dart';
-
 /// Servicio de validación de preparación para lanzamiento
 /// 
 /// Valida requisitos de App Store / Play Store antes de build release

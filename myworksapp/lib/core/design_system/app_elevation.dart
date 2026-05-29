@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 /// Elevaciones estándar del Design System
 class AppElevation {
   AppElevation._();

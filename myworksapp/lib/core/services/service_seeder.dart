@@ -74,8 +74,6 @@ class ServiceSeeder {
 
   /// Servicios existentes (mantener compatibilidad)
   Future<void> _seedExistingServices() async {
-    final now = DateTime.now();
-    
     // Construcción
     await _createServiceIfNotExists(
       id: 'construction',

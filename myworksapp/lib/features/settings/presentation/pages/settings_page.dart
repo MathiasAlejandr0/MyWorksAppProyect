@@ -5,10 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../gdpr/presentation/pages/user_rights_page.dart';
-import '../../../gdpr/presentation/pages/privacy_policy_page.dart';
-import '../../../gdpr/presentation/pages/terms_page.dart';
-
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
@@ -92,13 +88,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ListTile(
             leading: const Icon(Icons.info),
             title: const Text('Acerca de'),
-            subtitle: const Text('MyWorksApp v1.0.0'),
+            subtitle: Text('${AppConstants.appBrandDisplayName} v1.0.0'),
             onTap: () {
               showAboutDialog(
                 context: context,
-                applicationName: 'MyWorksApp',
+                applicationName: AppConstants.appBrandDisplayName,
                 applicationVersion: '1.0.0',
-                applicationLegalese: '© 2025 MyWorksApp',
+                applicationLegalese: '© 2025 ${AppConstants.appBrandDisplayName}',
               );
             },
           ),

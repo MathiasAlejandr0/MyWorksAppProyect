@@ -228,7 +228,7 @@ class DatabaseHelper {
             )
           ''');
           
-          // ˇˇndices para optimizaci?n
+          // √çndices para optimizaci?n
           await db.execute('CREATE INDEX IF NOT EXISTS idx_password_reset_codes_userId ON password_reset_codes(userId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_password_reset_codes_code ON password_reset_codes(code)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_pending_actions_userId ON pending_actions(userId)');
@@ -304,7 +304,7 @@ class DatabaseHelper {
             )
           ''');
           
-          // ˇˇndices
+          // √çndices
           await db.execute('CREATE INDEX IF NOT EXISTS idx_job_cancellations_jobId ON job_cancellations(jobId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_reports_reporterId ON reports(reporterId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_reports_reportedUserId ON reports(reportedUserId)');
@@ -481,7 +481,7 @@ class DatabaseHelper {
             )
           ''');
 
-          // ˇˇndices
+          // √çndices
           await db.execute('CREATE INDEX IF NOT EXISTS idx_payments_jobId ON payments(jobId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_disputes_jobId ON disputes(jobId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_disputes_status ON disputes(status)');
@@ -536,7 +536,7 @@ class DatabaseHelper {
             )
           ''');
 
-          // ˇˇndices
+          // √çndices
           await db.execute('CREATE INDEX IF NOT EXISTS idx_analytics_events_userId ON analytics_events(userId)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_analytics_events_eventName ON analytics_events(eventName)');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_analytics_events_timestamp ON analytics_events(timestamp)');
@@ -619,7 +619,7 @@ class DatabaseHelper {
             )
           ''');
 
-          // ˇˇndices
+          // √çndices
           await db.execute('CREATE INDEX IF NOT EXISTS idx_service_configs_serviceId ON service_configs(serviceId)');
         },
         validation: () async {
@@ -963,7 +963,7 @@ class DatabaseHelper {
       )
     ''');
     
-    // ˇˇndices
+    // √çndices
     await db.execute('CREATE INDEX idx_password_reset_codes_userId ON password_reset_codes(userId)');
     await db.execute('CREATE INDEX idx_password_reset_codes_code ON password_reset_codes(code)');
     await db.execute('CREATE INDEX idx_pending_actions_userId ON pending_actions(userId)');
@@ -1179,7 +1179,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // ˇˇndices adicionales
+    // √çndices adicionales
     await db.execute('CREATE INDEX idx_job_cancellations_jobId ON job_cancellations(jobId)');
     await db.execute('CREATE INDEX idx_reports_reporterId ON reports(reporterId)');
     await db.execute('CREATE INDEX idx_reports_reportedUserId ON reports(reportedUserId)');
@@ -1319,7 +1319,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // ˇˇndices adicionales
+    // √çndices adicionales
     await db.execute('CREATE INDEX idx_payments_jobId ON payments(jobId)');
     await db.execute('CREATE INDEX idx_disputes_jobId ON disputes(jobId)');
     await db.execute('CREATE INDEX idx_disputes_status ON disputes(status)');

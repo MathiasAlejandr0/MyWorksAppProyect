@@ -73,7 +73,7 @@ class ServiceDisclaimerDialog extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'El pago se realiza directamente con el trabajador. MyWorksApp no procesa pagos en esta etapa.',
+                      'El pago se realiza directamente con el trabajador. My Works App no procesa pagos en esta etapa.',
                       style: AppTextStyles.bodySmall().copyWith(
                         color: Colors.orange.shade900,
                       ),

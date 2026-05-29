@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../design_system/app_spacing.dart';
 import '../../design_system/app_elevation.dart';
-import '../../theme/app_theme.dart';
 import '../../theme/app_colors.dart';
 
 /// Botón primario del Design System

@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import '../database/repositories/worker_repository.dart';
 import '../database/repositories/job_repository.dart';
-import '../database/repositories/rating_repository.dart';
 import '../database/repositories/user_repository.dart';
 import '../database/models/worker_model.dart';
 import '../database/models/job_model.dart';
@@ -49,12 +48,10 @@ class MatchingService {
 
   final WorkerRepository _workerRepository = WorkerRepository();
   final JobRepository _jobRepository = JobRepository();
-  final RatingRepository _ratingRepository = RatingRepository();
   final UserRepository _userRepository = UserRepository();
 
   // Pesos para cálculo de score (configurables)
   static const double _weightRating = 0.35;
-  static const double _weightDistance = 0.25;
   static const double _weightAvailability = 0.20;
   static const double _weightCancellations = 0.15;
   static const double _weightActivity = 0.05;

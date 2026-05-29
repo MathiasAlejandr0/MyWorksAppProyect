@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/gdpr_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/utils/constants.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -224,8 +223,8 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
       // Compartir archivo
       await Share.shareXFiles(
         [XFile(file.path)],
-        subject: 'Exportación de Datos - MyWorksApp',
-        text: 'Mis datos personales exportados desde MyWorksApp',
+        subject: 'Exportación de Datos - My Works App',
+        text: 'Mis datos personales exportados desde My Works App',
       );
 
       if (mounted) {

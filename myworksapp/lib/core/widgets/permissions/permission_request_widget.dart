@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../design_system/app_spacing.dart';
-import '../../theme/app_theme.dart';
 import '../../theme/app_colors.dart';
 import '../design_system/primary_button.dart';
 
@@ -70,7 +69,7 @@ class PermissionRequestWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grayMedium.withOpacity(0.3)),
+        border: Border.all(color: AppColors.grayMedium.withValues(alpha: 0.3)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

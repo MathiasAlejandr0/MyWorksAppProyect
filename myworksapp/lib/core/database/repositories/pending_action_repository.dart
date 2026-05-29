@@ -173,11 +173,5 @@ class PendingActionRepository {
     return data.toString();
   }
 
-  /// Decodifica datos de JSON string
-  Map<String, dynamic> _decodeData(String data) {
-    // En producción, usar jsonDecode de dart:convert
-    // Por ahora, retornamos un mapa vacío
-    return {};
-  }
 }
 

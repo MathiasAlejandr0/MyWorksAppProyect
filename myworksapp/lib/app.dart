@@ -7,6 +7,7 @@ import 'core/theme/app_colors.dart';
 import 'core/router/app_router.dart';
 import 'core/services/app_lifecycle_service.dart';
 import 'core/utils/app_logger.dart';
+import 'core/utils/constants.dart';
 import 'core/utils/app_text_scaling.dart';
 import 'core/widgets/design_system/responsive_shell.dart';
 
@@ -100,7 +101,7 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'MyWorksApp',
+      title: AppConstants.appBrandDisplayName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

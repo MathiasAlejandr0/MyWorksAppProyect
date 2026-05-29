@@ -1,8 +1,6 @@
 import '../database/models/service_model.dart';
 import '../database/repositories/service_repository.dart';
 import '../utils/app_logger.dart';
-import '../utils/app_error.dart';
-
 /// Validador legal de servicios para Chile
 /// 
 /// Asegura que los servicios cumplan con:
@@ -17,7 +15,7 @@ class ServiceLegalValidator {
 
   /// Declaración legal obligatoria
   static const String platformDisclaimer = 
-      'MyWorksApp actúa únicamente como intermediario tecnológico entre usuarios '
+      'My Works App actúa únicamente como intermediario tecnológico entre usuarios '
       'y trabajadores independientes. No presta servicios profesionales ni técnicos '
       'regulados. La plataforma no asume responsabilidad por la calidad, resultado '
       'o cumplimiento de los servicios prestados por trabajadores independientes.';

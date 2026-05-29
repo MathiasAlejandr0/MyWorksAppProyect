@@ -44,7 +44,7 @@ En login: botón **Entrar con demo** o selector **Usuario / Trabajador**.
 |------------|-------------------------------|
 | **Un solo dispositivo** | Usuario y trabajador se demuestran cerrando sesión en el mismo teléfono |
 | **Sin backend** | No hay sync entre dos teléfonos distintos |
-| **Pagos mock** | La arquitectura de pagos existe; no hay cobro real |
+| **Pagos mock (sin Webpay)** | Escrow simulado: garantía, liberación y reembolso en la app; no hay cobro bancario (Webpay en Chile requiere empresa constituida) |
 | **Trabajador nuevo registrado** | Puede crear perfil, pero **no aparece** en listados por categoría como los 16 demos |
 | **Videos del portafolio** | Miniaturas con icono play, no reproductor de video real |
 | **Mapas** | Requieren clave Google Maps configurada localmente |
@@ -82,7 +82,7 @@ En login: botón **Entrar con demo** o selector **Usuario / Trabajador**.
 
 **Frase de cierre:**
 
-> “Hoy mostramos producto y UX. La siguiente fase es backend, pasarela de pagos, matching geográfico y despliegue multiusuario.”
+> “Hoy mostramos producto, modalidades de cobro y pago en garantía simulado. La siguiente fase es backend en la nube y, con empresa constituida, pasarela real (Webpay u otra).”
 
 ---
 

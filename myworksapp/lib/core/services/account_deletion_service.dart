@@ -1,10 +1,5 @@
 import '../database/repositories/user_repository.dart';
-import '../database/repositories/job_repository.dart';
-import '../database/repositories/message_repository.dart';
 import '../database/repositories/user_consent_repository.dart';
-import '../database/repositories/rating_repository.dart';
-import '../database/repositories/report_repository.dart';
-import '../database/repositories/user_block_repository.dart';
 import '../database/models/user_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
@@ -21,12 +16,7 @@ class AccountDeletionService {
   AccountDeletionService._();
 
   final UserRepository _userRepository = UserRepository();
-  final JobRepository _jobRepository = JobRepository();
-  final MessageRepository _messageRepository = MessageRepository();
   final UserConsentRepository _consentRepository = UserConsentRepository();
-  final RatingRepository _ratingRepository = RatingRepository();
-  final ReportRepository _reportRepository = ReportRepository();
-  final UserBlockRepository _blockRepository = UserBlockRepository();
 
   /// Elimina una cuenta completamente (GDPR - Derecho al Olvido)
   /// 

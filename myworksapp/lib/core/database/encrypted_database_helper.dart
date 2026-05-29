@@ -4,7 +4,6 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:path/path.dart' as path;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../utils/app_logger.dart';
-import 'database_helper.dart';
 
 /// Helper para base de datos encriptada con SQLCipher
 /// 
@@ -33,7 +32,6 @@ class EncryptedDatabaseHelper {
   // Claves para almacenamiento seguro
   static const String _encryptionKeyStorageKey = 'db_encryption_key';
   static const String _dbEncryptedFlagKey = 'db_is_encrypted';
-  static const String _encryptionEnabledKey = 'encryption_enabled';
 
   /// Obtiene la base de datos encriptada
   /// 
@@ -166,10 +164,8 @@ class EncryptedDatabaseHelper {
       AppLogger.i('Iniciando migración a base de datos encriptada...');
 
       // 1. Cerrar conexión no encriptada si está abierta
-      if (DatabaseHelper.instance.database != null) {
-        // DatabaseHelper no expone close(), pero podemos forzar la recreación
-        AppLogger.i('Cerrando conexión no encriptada...');
-      }
+      // DatabaseHelper no expone close(), pero podemos forzar la recreación
+      AppLogger.i('Cerrando conexión no encriptada...');
 
       // 2. Crear backup de seguridad
       final backupPath = '${dbFilePath}_backup_${DateTime.now().millisecondsSinceEpoch}';

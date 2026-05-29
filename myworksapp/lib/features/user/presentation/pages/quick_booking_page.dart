@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
-
-import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/user_model.dart';
 import '../../../../core/database/models/worker_model.dart';
-import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
+import '../../../../core/services/job_booking_service.dart';
+import '../../../../core/services/pricing_service.dart';
 import '../../../../core/theme/app_decorations.dart';
+import '../../../../core/utils/comuna_utils.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/widgets/escrow_checkout_sheet.dart';
 import '../../../../core/widgets/loading_widget.dart';
-import '../../../../core/widgets/price_summary_card.dart';
+import '../../../../core/widgets/pricing_quote_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Reserva rápida: dirección, fecha y confirmación con precio de visita.
@@ -36,7 +36,6 @@ class QuickBookingPage extends ConsumerStatefulWidget {
 class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
   final _addressController = TextEditingController(text: 'Av. Providencia 1234, Santiago');
   final _notesController = TextEditingController();
-  final _jobRepository = JobRepository();
   final _workerRepository = WorkerRepository();
   final _userRepository = UserRepository();
   final _serviceRepository = ServiceRepository();
@@ -100,32 +99,51 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
 
     setState(() => _submitting = true);
     try {
-      final now = DateTime.now();
       final notes = _notesController.text.trim();
       final description = notes.isNotEmpty
           ? notes
           : 'Visita programada con ${_workerUser?.name ?? 'trabajador'}';
 
-      final job = JobModel(
-        id: const Uuid().v4(),
+      final booking = await JobBookingService.instance.createVisitBooking(
         userId: auth.id,
         workerId: widget.workerId,
         serviceId: widget.serviceId,
-        status: AppConstants.jobStatusAccepted,
         address: address,
-        description: description,
+        visitFeeClp: _worker!.visitFee.round(),
         scheduledDate: _selectedDate,
-        createdAt: now,
-        updatedAt: now,
+        description: description,
+        comunaKey: inferComunaKey(address),
       );
-
-      await _jobRepository.createJob(job);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Visita agendada correctamente')),
+
+      final paid = await EscrowCheckoutSheet.show(
+        context,
+        jobId: booking.job.id,
+        quote: booking.quote,
+        workerName: _workerUser?.name,
+        serviceName: _serviceName,
       );
-      context.go('${AppConstants.routeJobDetail}/${job.id}');
+
+      if (paid) {
+        await JobBookingService.instance.confirmEscrowAndAccept(
+          jobId: booking.job.id,
+          userId: auth.id,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Visita agendada y pago en garantía')),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reserva creada. Completa el pago desde el detalle del trabajo.'),
+          ),
+        );
+      }
+
+      context.go('${AppConstants.routeJobDetail}/${booking.job.id}');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -159,8 +177,11 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            PriceSummaryCard(
-              visitFee: _worker!.visitFee,
+            PricingQuoteCard(
+              quote: PricingService.instance.calculateVisitBooking(
+                visitFeeClp: _worker!.visitFee.round(),
+                comunaKey: inferComunaKey(_addressController.text),
+              ),
               workerName: _workerUser?.name,
               serviceName: _serviceName,
             ),
@@ -201,7 +222,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
                       width: 22,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Confirmar visita'),
+                  : const Text('Continuar al pago'),
             ),
           ],
         ),

@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../theme/app_theme.dart';
 import '../../theme/app_colors.dart';
 import '../../design_system/app_spacing.dart';
 import '../../widgets/design_system/primary_button.dart';
 import '../../widgets/design_system/secondary_button.dart';
-import '../../utils/constants.dart';
-
 /// Empty state específico para "Sin trabajadores disponibles"
 class NoWorkersEmptyState extends StatelessWidget {
   final String? message;

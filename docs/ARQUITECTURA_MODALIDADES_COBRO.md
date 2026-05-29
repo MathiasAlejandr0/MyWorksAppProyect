@@ -770,10 +770,11 @@ final pricingServiceProvider = Provider<PricingService>((ref) {
 | 1 | Migración SQLite v15 + `JobModel` + tablas `quote_proposals` / `change_orders` | ✅ En código |
 | 2 | `JobTransitionMatrix` + `PaymentGuard` + `JobStateMachine` integrado | ✅ En código |
 | 3 | `PricingService.calculateFixedPrice` / `calculateHourlyBlock` / `ChangeOrderService` | ✅ Stubs locales |
-| 4 | UI flujo **fixed_price** (checkout → escrow) | Pendiente |
-| 5 | UI **hourly_block** + overtime | Pendiente |
-| 6 | UI **open_quote** + propuestas | Pendiente |
-| 7 | PostgreSQL + API + pasarela Chile (Webpay/Mercado Pago) | Pendiente |
+| 4 | UI flujo **fixed_price** (checkout → escrow mock) | ✅ |
+| 5 | UI **hourly_block** + overtime | ✅ Solicitud + horas extra |
+| 6 | UI **open_quote** + propuestas | ✅ |
+| 7 | PostgreSQL + API en nube | Pendiente |
+| 8 | Pasarela real (Webpay / Mercado Pago) | **Fuera de alcance MVP** — requiere empresa constituida en Chile; la app usa **checkout simulado** |
 
 ### Archivos Flutter (Fase 1)
 
@@ -786,6 +787,10 @@ final pricingServiceProvider = Provider<PricingService>((ref) {
 | `lib/core/services/change_order_service.dart` | Órdenes de cambio |
 | `lib/core/database/models/change_order_model.dart` | Modelo CO |
 | `lib/core/database/models/quote_proposal_model.dart` | Modelo cotización |
+| `lib/core/services/job_booking_service.dart` | Reserva visita `awaiting_payment` |
+| `lib/core/widgets/escrow_checkout_sheet.dart` | Checkout mock escrow |
+| `lib/core/widgets/pricing_quote_card.dart` | Desglose de precio |
+| `lib/features/user/presentation/pages/quick_booking_page.dart` | Flujo pago visita |
 
 ---
 

@@ -9,7 +9,9 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/notification_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/open_quote_utils.dart';
 import '../../../../core/utils/location_utils.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
@@ -287,8 +289,15 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
   Future<List<JobModel>> _fetchPendingJobs(String workerId) async {
     final hasActiveJobs = await _jobRepository.hasActiveJobs(workerId);
     if (hasActiveJobs) return [];
-    final allJobs = await _jobRepository.getJobsByStatus(AppConstants.jobStatusPending);
-    return allJobs.where((j) => j.workerId == null).toList();
+    final pending = await _jobRepository.getJobsByStatus(AppConstants.jobStatusPending);
+    final openQuotes = await _jobRepository.getJobsByStatus(
+      PricingConstants.jobAwaitingQuotes,
+    );
+    final openForWorker = openQuotes.where((j) {
+      return OpenQuoteUtils.canWorkerSubmitQuote(j, workerId);
+    });
+    final legacy = pending.where((j) => j.workerId == null).toList();
+    return [...legacy, ...openForWorker];
   }
 
   Future<List<JobModel>> _fetchActiveJobs(String workerId) async {
@@ -426,7 +435,6 @@ class _WorkerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final worker = dashboard?.worker;
-    final currency = NumberFormat.currency(locale: 'es_CL', symbol: '\$', decimalDigits: 0);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
@@ -459,7 +467,7 @@ class _WorkerHeader extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              if (worker != null) ...[
+              if (worker != null)
                 Expanded(
                   child: _HeaderChip(
                     icon: Icons.star_rounded,
@@ -467,15 +475,6 @@ class _WorkerHeader extends StatelessWidget {
                     color: AppColors.brandOrange,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _HeaderChip(
-                    icon: Icons.payments_outlined,
-                    label: 'Visita ${currency.format(worker.visitFee)}',
-                    color: AppColors.brandNavy,
-                  ),
-                ),
-              ],
               if (worker != null) const SizedBox(width: 8),
               if (!loading)
                 _AvailabilityPill(
@@ -854,7 +853,7 @@ class _ActiveJobBanner extends StatelessWidget {
                       ),
                       if (job.scheduledDate != null)
                         Text(
-                          'Visita: ${DateFormat('d MMM', 'es_CL').format(job.scheduledDate!)}',
+                          'Agendado: ${DateFormat('d MMM', 'es_CL').format(job.scheduledDate!)}',
                           style: TextStyle(
                             color: AppColors.grayMedium,
                             fontSize: 12,
@@ -1127,6 +1126,9 @@ class _StatusBadge extends StatelessWidget {
       AppConstants.jobStatusInProgress => (AppColors.brandTeal, 'En curso'),
       AppConstants.jobStatusCompleted => (AppColors.success, 'Completado'),
       AppConstants.jobStatusCancelled => (AppColors.error, 'Cancelado'),
+      PricingConstants.jobAwaitingQuotes => (AppColors.brandOrange, 'Cotizar'),
+      PricingConstants.jobAwaitingPayment => (AppColors.brandOrange, 'Pago cliente'),
+      PricingConstants.jobPausedChangeOrder => (AppColors.warning, 'Cobro extra'),
       _ => (AppColors.grayMedium, status),
     };
 

@@ -3,19 +3,32 @@ import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/domain/price_quote.dart';
+import '../../../../core/domain/pricing_constants.dart';
+import '../../../../core/database/models/change_order_model.dart';
+import '../../../../core/database/models/quote_proposal_model.dart';
+import '../../../../core/database/repositories/change_order_repository.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
-import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/utils/location_utils.dart';
 import '../../../../core/services/notification_service.dart';
-import '../../../../core/services/job_service.dart';
 import '../../../../core/services/job_state_machine.dart';
+import '../../../../core/services/job_booking_service.dart';
+import '../../../../core/services/change_order_service.dart';
+import '../../../../core/services/quote_proposal_service.dart';
+import '../../../../core/services/pricing_service.dart';
+import '../../../../core/database/repositories/worker_repository.dart';
+import '../widgets/quote_proposals_section.dart';
+import '../widgets/open_quote_status_banner.dart';
+import '../widgets/worker_quote_form_dialog.dart';
+import '../../../../core/utils/open_quote_utils.dart';
+import '../../../../core/widgets/escrow_checkout_sheet.dart';
+import '../../../../core/widgets/pricing_quote_card.dart';
 import '../../../../core/utils/app_error.dart';
 import '../../../../core/database/repositories/job_photo_repository.dart';
-import '../../../../core/database/repositories/worker_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -32,12 +45,15 @@ class JobDetailPage extends ConsumerStatefulWidget {
 class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   final JobRepository _jobRepository = JobRepository();
   final UserRepository _userRepository = UserRepository();
-  final ServiceRepository _serviceRepository = ServiceRepository();
   final JobPhotoRepository _jobPhotoRepository = JobPhotoRepository();
-  final JobService _jobService = JobService.instance;
   final JobStateMachine _stateMachine = JobStateMachine.instance;
+  final ChangeOrderRepository _changeOrderRepository = ChangeOrderRepository();
 
   JobModel? _job;
+  List<ChangeOrderModel> _changeOrders = [];
+  List<QuoteProposalModel> _quoteProposals = [];
+  final WorkerRepository _workerRepository = WorkerRepository();
+  String? _invitedWorkerName;
   bool _isLoading = true;
   String? _error;
   String _displayAddress = '';
@@ -68,6 +84,11 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       if (job != null) {
         _loadAddress(job);
         _loadValidTransitions(job);
+        await _loadChangeOrders(job.id);
+        if (job.pricingMode == PricingConstants.modeOpenQuote) {
+          await _loadQuoteProposals(job.id);
+          await _loadInvitedWorkerName(job);
+        }
       }
     } catch (e) {
       setState(() {
@@ -87,10 +108,12 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     
     // Verificar cada transición posible
     final possibleStatuses = [
+      PricingConstants.jobAwaitingPayment,
       AppConstants.jobStatusAccepted,
       AppConstants.jobStatusInProgress,
       AppConstants.jobStatusCompleted,
       AppConstants.jobStatusCancelled,
+      PricingConstants.jobPausedChangeOrder,
     ];
 
     for (final status in possibleStatuses) {
@@ -105,6 +128,339 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     setState(() {
       _canTransition = transitions;
     });
+  }
+
+  Future<void> _loadChangeOrders(String jobId) async {
+    final orders = await _changeOrderRepository.getByJobId(jobId);
+    if (mounted) setState(() => _changeOrders = orders);
+  }
+
+  Future<void> _loadQuoteProposals(String jobId) async {
+    final list = await QuoteProposalService.instance.listForJob(jobId);
+    if (mounted) setState(() => _quoteProposals = list);
+  }
+
+  Future<void> _loadInvitedWorkerName(JobModel job) async {
+    final invitedId = OpenQuoteUtils.invitedWorkerId(job);
+    if (invitedId == null) {
+      if (mounted) setState(() => _invitedWorkerName = null);
+      return;
+    }
+    final user = await _userRepository.getUserById(invitedId);
+    if (mounted) setState(() => _invitedWorkerName = user?.name);
+  }
+
+  Future<void> _submitQuoteProposal() async {
+    final job = _job;
+    final user = ref.read(authProvider).user;
+    if (job == null || user == null) return;
+
+    if (!OpenQuoteUtils.canWorkerSubmitQuote(job, user.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Esta solicitud fue enviada a otro profesional'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final form = await WorkerQuoteFormDialog.show(context);
+    if (form == null || !mounted) return;
+
+    try {
+      await QuoteProposalService.instance.submit(
+        jobId: job.id,
+        workerId: user.id,
+        montoTotalClp: form.montoTotalClp,
+        descripcion: form.descripcion,
+        materialesClp: form.materialesClp,
+        manoObraClp: form.manoObraClp,
+        horasEstimadas: form.horasEstimadas,
+      );
+      await _loadQuoteProposals(job.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Propuesta enviada. El cliente fue notificado y podrá aceptar el precio.'),
+        ),
+      );
+    } on AppError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _selectQuoteProposal(QuoteProposalModel proposal) async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Aceptas esta cotización?'),
+        content: Text(
+          'Al aceptar, confirmas el precio total de \$${proposal.montoTotalClp} propuesto por el profesional.\n\n'
+          'Después deberás completar el pago en garantía (demo) para reservar el trabajo.\n\n'
+          '${proposal.descripcion}',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Rechazar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Aceptar precio')),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    try {
+      await QuoteProposalService.instance.selectProposal(
+        jobId: widget.jobId,
+        proposalId: proposal.id,
+        clientUserId: user.id,
+      );
+      await _loadJobDetails();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cotización aceptada. Usa el botón de pago para confirmar en garantía.'),
+        ),
+      );
+    } on AppError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _requestOvertimeHours() async {
+    final job = _job;
+    final user = ref.read(authProvider).user;
+    if (job == null || user == null || job.workerId != user.id) return;
+
+    final worker = await _workerRepository.getWorkerByUserId(user.id);
+    if (worker == null) return;
+
+    final hoursCtrl = TextEditingController(text: '1');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Horas extra'),
+        content: TextField(
+          controller: hoursCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Horas adicionales (1-8)',
+            helperText: 'Fuera del bloque ya pagado por el cliente',
+          ),
+          keyboardType: TextInputType.number,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Solicitar')),
+        ],
+      ),
+    );
+
+    final extra = int.tryParse(hoursCtrl.text.trim());
+    hoursCtrl.dispose();
+    if (ok != true || !mounted || extra == null) return;
+
+    try {
+      final rate =
+          PricingService.instance.estimateHourlyRateFromVisitFee(worker.visitFee.round());
+      final quote = PricingService.instance.calculateHourlyOvertime(
+        hourlyRateClp: rate,
+        extraHours: extra,
+        comunaKey: job.comunaId,
+      );
+      await ChangeOrderService.instance.submit(
+        jobId: job.id,
+        workerId: user.id,
+        titulo: 'Horas extra ($extra h)',
+        descripcion: quote.message ?? 'Horas adicionales',
+        montoClp: quote.subtotalClp,
+        tipo: 'overtime',
+      );
+      await _loadJobDetails();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Solicitud de horas extra enviada')),
+      );
+    } on AppError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  PriceQuote? _quoteFromJob(JobModel job) {
+    final snap = job.pricingSnapshot;
+    if (snap == null || snap.isEmpty) return null;
+    return PriceQuote.fromJson(snap);
+  }
+
+  Future<void> _payEscrow() async {
+    final job = _job;
+    final auth = ref.read(authProvider).user;
+    if (job == null || auth == null) return;
+
+    final quote = _quoteFromJob(job);
+    if (quote == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay cotización para este trabajo')),
+      );
+      return;
+    }
+
+    final paid = await EscrowCheckoutSheet.show(
+      context,
+      jobId: job.id,
+      quote: quote,
+    );
+
+    if (!paid || !mounted) return;
+
+    try {
+      await JobBookingService.instance.confirmEscrowAndAccept(
+        jobId: job.id,
+        userId: auth.id,
+      );
+      await _loadJobDetails();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pago confirmado y en garantía.')),
+      );
+    } on AppError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _requestChangeOrder() async {
+    final job = _job;
+    final user = ref.read(authProvider).user;
+    if (job == null || user == null) return;
+
+    final tituloCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    final montoCtrl = TextEditingController();
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Solicitar cobro adicional'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: tituloCtrl,
+                decoration: const InputDecoration(labelText: 'Título'),
+              ),
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(labelText: 'Descripción'),
+                maxLines: 2,
+              ),
+              TextField(
+                controller: montoCtrl,
+                decoration: const InputDecoration(labelText: 'Monto (CLP)'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enviar')),
+        ],
+      ),
+    );
+
+    final titulo = tituloCtrl.text.trim();
+    final descripcion = descCtrl.text.trim();
+    final monto = int.tryParse(montoCtrl.text.trim());
+    tituloCtrl.dispose();
+    descCtrl.dispose();
+    montoCtrl.dispose();
+
+    if (ok != true || !mounted) return;
+
+    if (titulo.isEmpty || monto == null || monto < 1000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Completa título y monto válido (mín. 1000 CLP)')),
+      );
+      return;
+    }
+
+    try {
+      await ChangeOrderService.instance.submit(
+        jobId: job.id,
+        workerId: user.id,
+        titulo: titulo,
+        descripcion: descripcion.isEmpty ? titulo : descripcion,
+        montoClp: monto,
+      );
+      await _loadJobDetails();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cobro adicional enviado al cliente')),
+      );
+    } on AppError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _approveChangeOrder(ChangeOrderModel order) async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(order.titulo),
+        content: Text(
+          '${order.descripcion}\n\nMonto: \$${order.montoClp}\n\nSe autorizará el cobro adicional (demo).',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Rechazar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Aprobar y pagar')),
+        ],
+      ),
+    );
+
+    if (confirm != true) {
+      await ChangeOrderService.instance.reject(order: order, clientUserId: user.id);
+      await _loadJobDetails();
+      return;
+    }
+
+    try {
+      await ChangeOrderService.instance.approveAndPay(
+        order: order,
+        clientUserId: user.id,
+      );
+      await _loadJobDetails();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cobro adicional aprobado')),
+      );
+    } on AppError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Future<void> _loadAddress(JobModel job) async {
@@ -557,7 +913,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _getStatusColor(_job!.status).withOpacity(0.1),
+                color: _getStatusColor(_job!.status).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -578,6 +934,47 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 ],
               ),
             ),
+            if (_job!.pricingMode != PricingConstants.modeLegacy &&
+                _job!.paymentStatus != PricingConstants.paymentNone) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Pago: ${_paymentStatusLabel(_job!.paymentStatus)}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            if (_job!.pricingMode == PricingConstants.modeOpenQuote) ...[
+              const SizedBox(height: 12),
+              OpenQuoteStatusBanner(
+                jobStatus: _job!.status,
+                isClient: !isWorker && currentUser?.id == _job!.userId,
+                workerName: _invitedWorkerName,
+                proposalsCount: _quoteProposals
+                    .where((p) => p.estado == PricingConstants.quoteSubmitted)
+                    .length,
+              ),
+            ],
+            if (_job!.status == PricingConstants.jobAwaitingPayment &&
+                !isWorker &&
+                currentUser?.id == _job!.userId) ...[
+              const SizedBox(height: 16),
+              if (_quoteFromJob(_job!) != null)
+                PricingQuoteCard(quote: _quoteFromJob(_job!)!),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _payEscrow,
+                icon: const Icon(Icons.lock_outline),
+                label: const Text('Pagar y confirmar reserva'),
+              ),
+            ],
+            if (_job!.status == PricingConstants.jobAwaitingPayment && isWorker) ...[
+              const SizedBox(height: 16),
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text('El cliente debe completar el pago en garantía para confirmar el trabajo.'),
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             // Descripción
             Text(
@@ -701,6 +1098,45 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 label: const Text('Abrir en Google Maps'),
               ),
             ],
+            if (_job!.pricingMode == PricingConstants.modeHourlyBlock &&
+                _job!.hourlyBlockHours != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Bloque prepagado: ${_job!.hourlyBlockHours} horas',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            if (_job!.pricingMode == PricingConstants.modeOpenQuote) ...[
+              const SizedBox(height: 24),
+              QuoteProposalsSection(
+                proposals: _quoteProposals,
+                isClient: !isWorker && currentUser?.id == _job!.userId,
+                jobStatus: _job!.status,
+                onSubmitQuote: isWorker ? _submitQuoteProposal : null,
+                onSelect: !isWorker && currentUser?.id == _job!.userId
+                    ? _selectQuoteProposal
+                    : null,
+              ),
+            ],
+            if (_changeOrders.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              Text('Cobros adicionales', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              ..._changeOrders.map((o) => Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      title: Text(o.titulo),
+                      subtitle: Text('${o.descripcion}\n\$${o.montoClp} · ${o.estado}'),
+                      isThreeLine: true,
+                      trailing: o.isPendingClient && !isWorker
+                          ? TextButton(
+                              onPressed: () => _approveChangeOrder(o),
+                              child: const Text('Revisar'),
+                            )
+                          : null,
+                    ),
+                  )),
+            ],
             const SizedBox(height: 24),
             // Acciones según el rol y estado (validadas con JobStateMachine)
             if (isOwner) ...[
@@ -741,12 +1177,36 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                   child: const Text('Iniciar Trabajo'),
                 ),
               ],
+              if (isWorker &&
+                  _job!.status == AppConstants.jobStatusInProgress) ...[
+                OutlinedButton.icon(
+                  onPressed: _requestChangeOrder,
+                  icon: const Icon(Icons.add_card_outlined),
+                  label: const Text('Solicitar cobro extra'),
+                ),
+                if (_job!.pricingMode == PricingConstants.modeHourlyBlock) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: _requestOvertimeHours,
+                    icon: const Icon(Icons.more_time),
+                    label: const Text('Solicitar horas extra'),
+                  ),
+                ],
+                const SizedBox(height: 8),
+              ],
               if (isWorker && 
                   _job!.status == AppConstants.jobStatusInProgress &&
                   _canTransition[AppConstants.jobStatusCompleted] == true) ...[
                 ElevatedButton(
                   onPressed: _completeJob,
                   child: const Text('Finalizar Trabajo'),
+                ),
+              ],
+              if (isWorker &&
+                  _job!.status == PricingConstants.jobAwaitingPayment) ...[
+                const Text(
+                  'El trabajo se confirmará cuando el cliente complete el pago.',
+                  style: TextStyle(color: Colors.grey),
                 ),
               ],
               if (!isWorker && _job!.status == AppConstants.jobStatusCompleted) ...[
@@ -800,8 +1260,31 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         return Colors.green;
       case AppConstants.jobStatusCancelled:
         return Colors.red;
+      case PricingConstants.jobAwaitingPayment:
+        return Colors.deepOrange;
+      case PricingConstants.jobAwaitingQuotes:
+        return Colors.amber;
+      case PricingConstants.jobQuoteSelected:
+        return Colors.teal;
+      case PricingConstants.jobPausedChangeOrder:
+        return Colors.amber.shade800;
       default:
         return Colors.grey;
+    }
+  }
+
+  String _paymentStatusLabel(String status) {
+    switch (status) {
+      case PricingConstants.paymentPending:
+        return 'Pendiente';
+      case PricingConstants.paymentAuthorized:
+        return 'En garantía';
+      case PricingConstants.paymentReleased:
+        return 'Liberado al trabajador';
+      case PricingConstants.paymentRefunded:
+        return 'Reembolsado';
+      default:
+        return status;
     }
   }
 
@@ -817,6 +1300,14 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         return Icons.check_circle;
       case AppConstants.jobStatusCancelled:
         return Icons.cancel;
+      case PricingConstants.jobAwaitingPayment:
+        return Icons.payment;
+      case PricingConstants.jobAwaitingQuotes:
+        return Icons.request_quote;
+      case PricingConstants.jobQuoteSelected:
+        return Icons.fact_check;
+      case PricingConstants.jobPausedChangeOrder:
+        return Icons.pause_circle;
       default:
         return Icons.help_outline;
     }
@@ -834,6 +1325,14 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         return 'Completado';
       case AppConstants.jobStatusCancelled:
         return 'Cancelado';
+      case PricingConstants.jobAwaitingPayment:
+        return 'Pago pendiente';
+      case PricingConstants.jobAwaitingQuotes:
+        return 'Esperando cotizaciones';
+      case PricingConstants.jobQuoteSelected:
+        return 'Cotización seleccionada';
+      case PricingConstants.jobPausedChangeOrder:
+        return 'Cobro extra pendiente';
       default:
         return status;
     }
