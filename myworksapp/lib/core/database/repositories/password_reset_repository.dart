@@ -1,20 +1,22 @@
-import '../database_helper.dart';
 import '../models/password_reset_code_model.dart';
+import '../supabase_db.dart';
 import 'package:uuid/uuid.dart';
 
+/// Códigos de recuperación de contraseña.
+///
+/// Nota: con Supabase Auth la recuperación se gestiona vía email/OTP de
+/// Supabase. Este repositorio se mantiene por compatibilidad del flujo previo.
 class PasswordResetRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'password_reset_codes';
 
-  /// Crea un código de recuperación
   Future<String> createResetCode({
     required String userId,
     required String email,
     required String code,
   }) async {
-    final db = await _dbHelper.database;
     final id = const Uuid().v4();
-    final expiresAt = DateTime.now().add(const Duration(minutes: 15)); // Código válido por 15 minutos
-    
+    final expiresAt = DateTime.now().add(const Duration(minutes: 15));
+
     final resetCode = PasswordResetCodeModel(
       id: id,
       userId: userId,
@@ -25,66 +27,44 @@ class PasswordResetRepository {
       createdAt: DateTime.now(),
     );
 
-    await db.insert('password_reset_codes', resetCode.toMap());
+    await supabase.from(_table).insert(resetCode.toMap());
     return id;
   }
 
-  /// Valida un código de recuperación
   Future<PasswordResetCodeModel?> validateCode({
     required String email,
     required String code,
   }) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'password_reset_codes',
-      where: 'email = ? AND code = ? AND isUsed = 0',
-      whereArgs: [email.toLowerCase().trim(), code],
-      orderBy: 'createdAt DESC',
-      limit: 1,
-    );
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('email', email.toLowerCase().trim())
+        .eq('code', code)
+        .eq('isUsed', 0)
+        .order('createdAt', ascending: false)
+        .limit(1);
 
-    if (maps.isEmpty) return null;
+    if (rows.isEmpty) return null;
 
-    final resetCode = PasswordResetCodeModel.fromMap(maps.first);
-    
-    // Verificar si está expirado
-    if (resetCode.isExpired) {
-      return null;
-    }
-
+    final resetCode = PasswordResetCodeModel.fromMap(rows.first);
+    if (resetCode.isExpired) return null;
     return resetCode;
   }
 
-  /// Marca un código como usado
   Future<void> markCodeAsUsed(String codeId) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'password_reset_codes',
-      {'isUsed': 1},
-      where: 'id = ?',
-      whereArgs: [codeId],
-    );
+    await supabase.from(_table).update({'isUsed': 1}).eq('id', codeId);
   }
 
-  /// Elimina códigos expirados (limpieza)
   Future<void> deleteExpiredCodes() async {
-    final db = await _dbHelper.database;
     final now = DateTime.now().toIso8601String();
-    await db.delete(
-      'password_reset_codes',
-      where: 'expiresAt < ?',
-      whereArgs: [now],
-    );
+    await supabase.from(_table).delete().lt('expiresAt', now);
   }
 
-  /// Elimina todos los códigos de un usuario (para invalidar códigos anteriores)
   Future<void> invalidateUserCodes(String userId) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'password_reset_codes',
-      where: 'userId = ? AND isUsed = 0',
-      whereArgs: [userId],
-    );
+    await supabase
+        .from(_table)
+        .delete()
+        .eq('userId', userId)
+        .eq('isUsed', 0);
   }
 }
-

@@ -1,38 +1,30 @@
-import '../database_helper.dart';
 import '../models/boost_model.dart';
+import '../supabase_db.dart';
 
 class BoostRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'boosts';
 
   Future<void> createBoost(BoostModel boost) async {
-    final db = await _dbHelper.database;
-    await db.insert('boosts', boost.toMap());
+    await supabase.from(_table).insert(boost.toMap());
   }
 
   Future<List<BoostModel>> getActiveBoosts(String workerId) async {
-    final db = await _dbHelper.database;
     final now = DateTime.now().toIso8601String();
-    final maps = await db.query(
-      'boosts',
-      where: 'workerId = ? AND startDate <= ? AND endDate >= ?',
-      whereArgs: [workerId, now, now],
-    );
-    return maps.map((map) => BoostModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('workerId', workerId)
+        .lte('startDate', now)
+        .gte('endDate', now);
+    return rows.map<BoostModel>((m) => BoostModel.fromMap(m)).toList();
   }
 
   Future<List<BoostModel>> getAllBoosts() async {
-    final db = await _dbHelper.database;
-    final maps = await db.query('boosts');
-    return maps.map((map) => BoostModel.fromMap(map)).toList();
+    final rows = await supabase.from(_table).select();
+    return rows.map<BoostModel>((m) => BoostModel.fromMap(m)).toList();
   }
 
   Future<void> deleteBoost(String id) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'boosts',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await supabase.from(_table).delete().eq('id', id);
   }
 }
-

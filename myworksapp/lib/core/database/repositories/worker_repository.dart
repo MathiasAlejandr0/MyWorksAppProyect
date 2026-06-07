@@ -1,24 +1,22 @@
-import '../database_helper.dart';
 import '../models/worker_model.dart';
+import '../supabase_db.dart';
 import 'job_repository.dart';
 
 class WorkerRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'workers';
 
   Future<void> createWorker(WorkerModel worker) async {
-    final db = await _dbHelper.database;
-    await db.insert('workers', worker.toMap());
+    await supabase.from(_table).upsert(worker.toMap());
   }
 
   Future<WorkerModel?> getWorkerByUserId(String userId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'workers',
-      where: 'userId = ?',
-      whereArgs: [userId],
-    );
-    if (maps.isEmpty) return null;
-    return WorkerModel.fromMap(maps.first);
+    final row = await supabase
+        .from(_table)
+        .select()
+        .eq('userId', userId)
+        .maybeSingle();
+    if (row == null) return null;
+    return WorkerModel.fromMap(row);
   }
 
   /// Obtiene un trabajador por su ID (alias para getWorkerByUserId)
@@ -27,91 +25,64 @@ class WorkerRepository {
   }
 
   Future<List<WorkerModel>> getWorkersByServiceCategory(String category) async {
-    final db = await _dbHelper.database;
-    final maps = await db.rawQuery(
-      '''
-      SELECT w.* FROM workers w
-      LEFT JOIN worker_services ws ON w.userId = ws.workerId
-      WHERE w.isAvailable = 1
-        AND (ws.serviceCategory = ? OR w.serviceCategory = ?)
-      GROUP BY w.userId
-      ORDER BY w.rating DESC
-      ''',
-      [category, category],
-    );
-    return maps.map((map) => WorkerModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('isAvailable', 1)
+        .eq('serviceCategory', category)
+        .order('rating', ascending: false);
+    return rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
   }
 
   Future<List<WorkerModel>> getWorkersByProfession(String profession) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'workers',
-      where: 'profession = ? AND isAvailable = 1',
-      whereArgs: [profession],
-    );
-    return maps.map((map) => WorkerModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('profession', profession)
+        .eq('isAvailable', 1);
+    return rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
   }
 
   Future<List<WorkerModel>> getAllAvailableWorkers() async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'workers',
-      where: 'isAvailable = 1',
-    );
-    return maps.map((map) => WorkerModel.fromMap(map)).toList();
+    final rows = await supabase.from(_table).select().eq('isAvailable', 1);
+    return rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
   }
 
   Future<void> updateWorker(WorkerModel worker) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'workers',
-      worker.toMap(),
-      where: 'userId = ?',
-      whereArgs: [worker.userId],
-    );
+    await supabase
+        .from(_table)
+        .update(worker.toMap())
+        .eq('userId', worker.userId);
   }
 
   Future<void> updateAvailability(String userId, bool isAvailable) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'workers',
-      {'isAvailable': isAvailable ? 1 : 0},
-      where: 'userId = ?',
-      whereArgs: [userId],
-    );
+    await supabase
+        .from(_table)
+        .update({'isAvailable': isAvailable ? 1 : 0}).eq('userId', userId);
   }
 
   Future<void> updateRating(String userId, double rating) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'workers',
-      {'rating': rating},
-      where: 'userId = ?',
-      whereArgs: [userId],
-    );
+    await supabase.from(_table).update({'rating': rating}).eq('userId', userId);
   }
 
   // Obtener trabajadores disponibles que no tienen trabajos activos
   Future<List<WorkerModel>> getAvailableWorkersWithoutActiveJobs() async {
-    final db = await _dbHelper.database;
-    final allWorkers = await db.query(
-      'workers',
-      where: 'isAvailable = 1',
-      orderBy: 'rating DESC',
-    );
-    
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('isAvailable', 1)
+        .order('rating', ascending: false);
+    final allWorkers =
+        rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
+
     final jobRepository = JobRepository();
     final availableWorkers = <WorkerModel>[];
-    
-    for (var map in allWorkers) {
-      final worker = WorkerModel.fromMap(map);
+    for (final worker in allWorkers) {
       final hasActiveJobs = await jobRepository.hasActiveJobs(worker.userId);
       if (!hasActiveJobs) {
         availableWorkers.add(worker);
       }
     }
-    
     return availableWorkers;
   }
 }
-

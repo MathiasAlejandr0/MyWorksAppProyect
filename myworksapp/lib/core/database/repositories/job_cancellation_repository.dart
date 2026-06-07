@@ -1,23 +1,20 @@
-import '../database_helper.dart';
 import '../models/job_cancellation_model.dart';
+import '../supabase_db.dart';
 
 class JobCancellationRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'job_cancellations';
 
   Future<void> createCancellation(JobCancellationModel cancellation) async {
-    final db = await _dbHelper.database;
-    await db.insert('job_cancellations', cancellation.toMap());
+    await supabase.from(_table).insert(cancellation.toMap());
   }
 
   Future<JobCancellationModel?> getCancellationByJobId(String jobId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'job_cancellations',
-      where: 'jobId = ?',
-      whereArgs: [jobId],
-    );
-    if (maps.isEmpty) return null;
-    return JobCancellationModel.fromMap(maps.first);
+    final row = await supabase
+        .from(_table)
+        .select()
+        .eq('jobId', jobId)
+        .maybeSingle();
+    if (row == null) return null;
+    return JobCancellationModel.fromMap(row);
   }
 }
-

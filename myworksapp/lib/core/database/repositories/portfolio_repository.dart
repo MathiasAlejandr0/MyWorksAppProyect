@@ -1,32 +1,23 @@
-import '../database_helper.dart';
 import '../models/portfolio_model.dart';
+import '../supabase_db.dart';
 
 class PortfolioRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'worker_portfolio';
 
   Future<void> createPortfolioItem(PortfolioModel item) async {
-    final db = await _dbHelper.database;
-    await db.insert('worker_portfolio', item.toMap());
+    await supabase.from(_table).insert(item.toMap());
   }
 
   Future<List<PortfolioModel>> getPortfolioByWorkerId(String workerId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'worker_portfolio',
-      where: 'workerId = ?',
-      whereArgs: [workerId],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => PortfolioModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('workerId', workerId)
+        .order('createdAt', ascending: false);
+    return rows.map<PortfolioModel>((m) => PortfolioModel.fromMap(m)).toList();
   }
 
   Future<void> deletePortfolioItem(String id) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'worker_portfolio',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await supabase.from(_table).delete().eq('id', id);
   }
 }
-

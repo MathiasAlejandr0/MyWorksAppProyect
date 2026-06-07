@@ -1,21 +1,14 @@
-import 'package:sqflite/sqflite.dart';
-import '../database_helper.dart';
 import '../models/feature_flag_model.dart';
+import '../supabase_db.dart';
 import '../../utils/app_logger.dart';
 
 /// Repositorio para feature flags
 class FeatureFlagRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'feature_flags';
 
-  /// Crea o actualiza un feature flag
   Future<void> upsertFlag(FeatureFlagModel flag) async {
     try {
-      final db = await _dbHelper.database;
-      await db.insert(
-        'feature_flags',
-        flag.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await supabase.from(_table).upsert(flag.toMap());
       AppLogger.d('Feature flag upserted: ${flag.flagName}');
     } catch (e) {
       AppLogger.e('Error upserting feature flag', e);
@@ -23,7 +16,6 @@ class FeatureFlagRepository {
     }
   }
 
-  /// Obtiene un feature flag por nombre y contexto
   Future<FeatureFlagModel?> getFlag({
     required String flagName,
     String? appVersion,
@@ -31,60 +23,58 @@ class FeatureFlagRepository {
     String? userId,
   }) async {
     try {
-      final db = await _dbHelper.database;
-      
-      // Buscar flag más específico primero (usuario > rol > versión > global)
-      final where = <String>['flagName = ?'];
-      final whereArgs = <dynamic>[flagName];
+      final rows =
+          await supabase.from(_table).select().eq('flagName', flagName);
+      var flags = rows
+          .map<FeatureFlagModel>((m) => FeatureFlagModel.fromMap(m))
+          .toList();
 
-      // Prioridad: userId > role > appVersion > global
+      // Filtrar por el contexto más específico disponible.
       if (userId != null) {
-        where.add('(userId = ? OR userId IS NULL)');
-        whereArgs.add(userId);
+        flags = flags
+            .where((f) => f.userId == userId || f.userId == null)
+            .toList();
       } else if (role != null) {
-        where.add('(role = ? OR role IS NULL)');
-        whereArgs.add(role);
+        flags = flags.where((f) => f.role == role || f.role == null).toList();
       } else if (appVersion != null) {
-        where.add('(appVersion = ? OR appVersion IS NULL)');
-        whereArgs.add(appVersion);
+        flags = flags
+            .where((f) => f.appVersion == appVersion || f.appVersion == null)
+            .toList();
       }
 
-      final maps = await db.query(
-        'feature_flags',
-        where: where.join(' AND '),
-        whereArgs: whereArgs,
-        orderBy: 'CASE WHEN userId IS NOT NULL THEN 1 WHEN role IS NOT NULL THEN 2 WHEN appVersion IS NOT NULL THEN 3 ELSE 4 END',
-      );
+      if (flags.isEmpty) return null;
 
-      if (maps.isEmpty) {
-        return null;
+      int specificity(FeatureFlagModel f) {
+        if (f.userId != null) return 1;
+        if (f.role != null) return 2;
+        if (f.appVersion != null) return 3;
+        return 4;
       }
 
-      // Retornar el más específico (primero en la lista ordenada)
-      return FeatureFlagModel.fromMap(maps.first);
+      flags.sort((a, b) => specificity(a).compareTo(specificity(b)));
+      return flags.first;
     } catch (e) {
       AppLogger.e('Error getting feature flag', e);
       return null;
     }
   }
 
-  /// Obtiene todos los feature flags
   Future<List<FeatureFlagModel>> getAllFlags() async {
     try {
-      final db = await _dbHelper.database;
-      final maps = await db.query('feature_flags', orderBy: 'flagName ASC');
-      return maps.map((map) => FeatureFlagModel.fromMap(map)).toList();
+      final rows =
+          await supabase.from(_table).select().order('flagName', ascending: true);
+      return rows
+          .map<FeatureFlagModel>((m) => FeatureFlagModel.fromMap(m))
+          .toList();
     } catch (e) {
       AppLogger.e('Error getting all feature flags', e);
       return [];
     }
   }
 
-  /// Elimina un feature flag
   Future<void> deleteFlag(String flagId) async {
     try {
-      final db = await _dbHelper.database;
-      await db.delete('feature_flags', where: 'id = ?', whereArgs: [flagId]);
+      await supabase.from(_table).delete().eq('id', flagId);
       AppLogger.d('Feature flag deleted: $flagId');
     } catch (e) {
       AppLogger.e('Error deleting feature flag', e);
@@ -92,4 +82,3 @@ class FeatureFlagRepository {
     }
   }
 }
-

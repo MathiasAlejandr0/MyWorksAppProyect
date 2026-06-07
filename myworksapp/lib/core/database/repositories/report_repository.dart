@@ -1,44 +1,33 @@
-import '../database_helper.dart';
 import '../models/report_model.dart';
+import '../supabase_db.dart';
 
 class ReportRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'reports';
 
   Future<void> createReport(ReportModel report) async {
-    final db = await _dbHelper.database;
-    await db.insert('reports', report.toMap());
+    await supabase.from(_table).insert(report.toMap());
   }
 
   Future<List<ReportModel>> getReportsByReporterId(String reporterId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'reports',
-      where: 'reporterId = ?',
-      whereArgs: [reporterId],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => ReportModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('reporterId', reporterId)
+        .order('createdAt', ascending: false);
+    return rows.map<ReportModel>((m) => ReportModel.fromMap(m)).toList();
   }
 
-  Future<List<ReportModel>> getReportsByReportedUserId(String reportedUserId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'reports',
-      where: 'reportedUserId = ?',
-      whereArgs: [reportedUserId],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => ReportModel.fromMap(map)).toList();
+  Future<List<ReportModel>> getReportsByReportedUserId(
+      String reportedUserId) async {
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('reportedUserId', reportedUserId)
+        .order('createdAt', ascending: false);
+    return rows.map<ReportModel>((m) => ReportModel.fromMap(m)).toList();
   }
 
   Future<void> updateReportStatus(String id, String status) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'reports',
-      {'status': status},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await supabase.from(_table).update({'status': status}).eq('id', id);
   }
 }
-

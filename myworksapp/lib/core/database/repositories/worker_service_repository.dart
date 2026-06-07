@@ -1,40 +1,26 @@
-import 'package:sqflite/sqflite.dart';
-
-import '../database_helper.dart';
+import '../supabase_db.dart';
 
 /// Relación N:M entre trabajadores y categorías de servicio.
 class WorkerServiceRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'worker_services';
 
-  Future<void> linkWorkerToCategory(String workerId, String serviceCategory) async {
-    final db = await _dbHelper.database;
-    await db.insert(
-      'worker_services',
-      {
-        'workerId': workerId,
-        'serviceCategory': serviceCategory,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+  Future<void> linkWorkerToCategory(
+      String workerId, String serviceCategory) async {
+    await supabase.from(_table).upsert({
+      'workerId': workerId,
+      'serviceCategory': serviceCategory,
+    });
   }
 
   Future<void> clearWorkerLinks(String workerId) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'worker_services',
-      where: 'workerId = ?',
-      whereArgs: [workerId],
-    );
+    await supabase.from(_table).delete().eq('workerId', workerId);
   }
 
   Future<List<String>> getCategoriesForWorker(String workerId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'worker_services',
-      columns: ['serviceCategory'],
-      where: 'workerId = ?',
-      whereArgs: [workerId],
-    );
-    return maps.map((m) => m['serviceCategory'] as String).toList();
+    final rows = await supabase
+        .from(_table)
+        .select('serviceCategory')
+        .eq('workerId', workerId);
+    return rows.map<String>((m) => m['serviceCategory'] as String).toList();
   }
 }

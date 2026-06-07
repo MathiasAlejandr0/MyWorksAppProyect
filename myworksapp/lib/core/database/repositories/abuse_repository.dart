@@ -1,16 +1,14 @@
-import '../database_helper.dart';
 import '../models/abuse_event_model.dart';
+import '../supabase_db.dart';
 import '../../utils/app_logger.dart';
 
 /// Repositorio para eventos de abuso
 class AbuseRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'abuse_events';
 
-  /// Crea un evento de abuso
   Future<void> createAbuseEvent(AbuseEventModel event) async {
     try {
-      final db = await _dbHelper.database;
-      await db.insert('abuse_events', event.toMap());
+      await supabase.from(_table).insert(event.toMap());
       AppLogger.d('Abuse event created: ${event.id}');
     } catch (e) {
       AppLogger.e('Error creating abuse event', e);
@@ -18,50 +16,41 @@ class AbuseRepository {
     }
   }
 
-  /// Obtiene eventos de abuso por usuario
   Future<List<AbuseEventModel>> getAbuseEventsByUserId(String userId) async {
     try {
-      final db = await _dbHelper.database;
-      final maps = await db.query(
-        'abuse_events',
-        where: 'userId = ?',
-        whereArgs: [userId],
-        orderBy: 'detectedAt DESC',
-      );
-      return maps.map((map) => AbuseEventModel.fromMap(map)).toList();
+      final rows = await supabase
+          .from(_table)
+          .select()
+          .eq('userId', userId)
+          .order('detectedAt', ascending: false);
+      return rows
+          .map<AbuseEventModel>((m) => AbuseEventModel.fromMap(m))
+          .toList();
     } catch (e) {
       AppLogger.e('Error getting abuse events', e);
       return [];
     }
   }
 
-  /// Obtiene eventos de abuso no resueltos
   Future<List<AbuseEventModel>> getUnresolvedAbuseEvents() async {
     try {
-      final db = await _dbHelper.database;
-      final maps = await db.query(
-        'abuse_events',
-        where: 'isResolved = ?',
-        whereArgs: [0],
-        orderBy: 'detectedAt DESC',
-      );
-      return maps.map((map) => AbuseEventModel.fromMap(map)).toList();
+      final rows = await supabase
+          .from(_table)
+          .select()
+          .eq('isResolved', 0)
+          .order('detectedAt', ascending: false);
+      return rows
+          .map<AbuseEventModel>((m) => AbuseEventModel.fromMap(m))
+          .toList();
     } catch (e) {
       AppLogger.e('Error getting unresolved abuse events', e);
       return [];
     }
   }
 
-  /// Actualiza un evento de abuso
   Future<void> updateAbuseEvent(AbuseEventModel event) async {
     try {
-      final db = await _dbHelper.database;
-      await db.update(
-        'abuse_events',
-        event.toMap(),
-        where: 'id = ?',
-        whereArgs: [event.id],
-      );
+      await supabase.from(_table).update(event.toMap()).eq('id', event.id);
       AppLogger.d('Abuse event updated: ${event.id}');
     } catch (e) {
       AppLogger.e('Error updating abuse event', e);
@@ -69,18 +58,9 @@ class AbuseRepository {
     }
   }
 
-  /// Resuelve un evento de abuso
   Future<void> resolveAbuseEvent(String eventId) async {
     try {
-      final db = await _dbHelper.database;
-      await db.update(
-        'abuse_events',
-        {
-          'isResolved': 1,
-        },
-        where: 'id = ?',
-        whereArgs: [eventId],
-      );
+      await supabase.from(_table).update({'isResolved': 1}).eq('id', eventId);
       AppLogger.d('Abuse event resolved: $eventId');
     } catch (e) {
       AppLogger.e('Error resolving abuse event', e);
@@ -88,4 +68,3 @@ class AbuseRepository {
     }
   }
 }
-

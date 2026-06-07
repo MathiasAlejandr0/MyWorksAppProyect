@@ -1,69 +1,58 @@
-import '../database_helper.dart';
 import '../models/job_model.dart';
+import '../supabase_db.dart';
 
 class JobRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'jobs';
 
   Future<String> createJob(JobModel job) async {
-    final db = await _dbHelper.database;
-    await db.insert('jobs', job.toMap());
+    await supabase.from(_table).insert(job.toMap());
     return job.id;
   }
 
   Future<JobModel?> getJobById(String id) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'jobs',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    if (maps.isEmpty) return null;
-    return JobModel.fromMap(maps.first);
+    final row =
+        await supabase.from(_table).select().eq('id', id).maybeSingle();
+    if (row == null) return null;
+    return JobModel.fromMap(row);
   }
 
   Future<List<JobModel>> getJobsByUserId(String userId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'jobs',
-      where: 'userId = ?',
-      whereArgs: [userId],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => JobModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('userId', userId)
+        .order('createdAt', ascending: false);
+    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
   Future<List<JobModel>> getJobsByWorkerId(String workerId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'jobs',
-      where: 'workerId = ?',
-      whereArgs: [workerId],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => JobModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('workerId', workerId)
+        .order('createdAt', ascending: false);
+    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
   Future<List<JobModel>> getPendingJobsForWorker(String workerId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'jobs',
-      where: 'workerId = ? AND status = ?',
-      whereArgs: [workerId, 'pending'],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => JobModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('workerId', workerId)
+        .eq('status', 'pending')
+        .order('createdAt', ascending: false);
+    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
   // Obtener trabajos activos (accepted o in_progress) de un trabajador
   Future<List<JobModel>> getActiveJobsByWorkerId(String workerId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'jobs',
-      where: 'workerId = ? AND (status = ? OR status = ?)',
-      whereArgs: [workerId, 'accepted', 'in_progress'],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => JobModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('workerId', workerId)
+        .inFilter('status', ['accepted', 'in_progress'])
+        .order('createdAt', ascending: false);
+    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
   // Verificar si un trabajador tiene trabajos activos
@@ -73,53 +62,30 @@ class JobRepository {
   }
 
   Future<List<JobModel>> getJobsByStatus(String status) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'jobs',
-      where: 'status = ?',
-      whereArgs: [status],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => JobModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('status', status)
+        .order('createdAt', ascending: false);
+    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
   Future<void> updateJob(JobModel job) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'jobs',
-      job.toMap(),
-      where: 'id = ?',
-      whereArgs: [job.id],
-    );
+    await supabase.from(_table).update(job.toMap()).eq('id', job.id);
   }
 
   Future<void> updateJobStatus(String id, String status) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'jobs',
-      {'status': status},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await supabase.from(_table).update({'status': status}).eq('id', id);
   }
 
   Future<void> assignWorker(String jobId, String workerId) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'jobs',
-      {'workerId': workerId, 'status': 'accepted'},
-      where: 'id = ?',
-      whereArgs: [jobId],
-    );
+    await supabase
+        .from(_table)
+        .update({'workerId': workerId, 'status': 'accepted'}).eq('id', jobId);
   }
 
   Future<void> deleteJob(String id) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'jobs',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await supabase.from(_table).delete().eq('id', id);
   }
 
   /// Obtiene todos los trabajos de un trabajador (alias para getJobsByWorkerId)
@@ -127,4 +93,3 @@ class JobRepository {
     return await getJobsByWorkerId(workerId);
   }
 }
-

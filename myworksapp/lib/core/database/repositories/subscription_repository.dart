@@ -1,56 +1,44 @@
-import '../database_helper.dart';
 import '../models/subscription_model.dart';
+import '../supabase_db.dart';
 
 class SubscriptionRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'subscriptions';
 
   Future<void> createSubscription(SubscriptionModel subscription) async {
-    final db = await _dbHelper.database;
-    await db.insert('subscriptions', subscription.toMap());
+    await supabase.from(_table).insert(subscription.toMap());
   }
 
   Future<SubscriptionModel?> getSubscriptionById(String id) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'subscriptions',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    if (maps.isEmpty) return null;
-    return SubscriptionModel.fromMap(maps.first);
+    final row =
+        await supabase.from(_table).select().eq('id', id).maybeSingle();
+    if (row == null) return null;
+    return SubscriptionModel.fromMap(row);
   }
 
   Future<SubscriptionModel?> getActiveSubscription(String userId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'subscriptions',
-      where: 'userId = ? AND status = ?',
-      whereArgs: [userId, 'active'],
-      orderBy: 'startDate DESC',
-      limit: 1,
-    );
-    if (maps.isEmpty) return null;
-    return SubscriptionModel.fromMap(maps.first);
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('userId', userId)
+        .eq('status', 'active')
+        .order('startDate', ascending: false)
+        .limit(1);
+    if (rows.isEmpty) return null;
+    return SubscriptionModel.fromMap(rows.first);
   }
 
   Future<List<SubscriptionModel>> getActiveSubscriptions() async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'subscriptions',
-      where: 'status = ?',
-      whereArgs: ['active'],
-    );
-    return maps.map((map) => SubscriptionModel.fromMap(map)).toList();
+    final rows =
+        await supabase.from(_table).select().eq('status', 'active');
+    return rows
+        .map<SubscriptionModel>((m) => SubscriptionModel.fromMap(m))
+        .toList();
   }
 
   Future<void> updateSubscription(SubscriptionModel subscription) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'subscriptions',
-      subscription.toMap(),
-      where: 'id = ?',
-      whereArgs: [subscription.id],
-    );
+    await supabase
+        .from(_table)
+        .update(subscription.toMap())
+        .eq('id', subscription.id);
   }
 }
-

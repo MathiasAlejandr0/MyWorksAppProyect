@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/models/user_model.dart';
-import '../../../../core/utils/password_utils.dart';
+import '../../../../core/database/supabase_db.dart';
 import '../../../../core/services/session_manager.dart';
-import 'package:uuid/uuid.dart';
 
 class AuthState {
   final UserModel? user;
@@ -44,35 +44,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // Verificar si el usuario ya existe
-      final existingUser = await _userRepository.getUserByEmail(email);
-      if (existingUser != null) {
+      final res = await supabase.auth.signUp(
+        email: email.toLowerCase().trim(),
+        password: password,
+        data: {'name': name.trim(), 'role': role},
+      );
+
+      final authUser = res.user;
+      if (authUser == null) {
         state = state.copyWith(
           isLoading: false,
-          error: 'El email ya está registrado',
+          error: 'No se pudo registrar el usuario',
         );
         return false;
       }
 
-      // Crear nuevo usuario con contraseña hasheada
-      final passwordHash = PasswordUtils.hashPassword(password);
-      final user = UserModel(
-        id: const Uuid().v4(),
-        name: name,
-        email: email.toLowerCase().trim(),
-        password: passwordHash,
-        role: role,
-        accountStatus: 'active',
-        createdAt: DateTime.now(),
-      );
+      // Si el proyecto exige confirmación por email, no habrá sesión todavía.
+      if (res.session == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error:
+              'Cuenta creada. Revisa tu correo para confirmarla antes de iniciar sesión.',
+        );
+        return false;
+      }
 
-      await _userRepository.createUser(user);
-      
-      // Guardar sesión
-      await _sessionManager.saveSession(user.id, user.role);
-      
-      state = state.copyWith(user: user, isLoading: false);
+      await _sessionManager.saveSession(authUser.id, role);
+      await loadCurrentUser(authUser.id);
       return true;
+    } on AuthException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -89,8 +91,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final user = await _userRepository.getUserByEmail(email);
-      if (user == null) {
+      final res = await supabase.auth.signInWithPassword(
+        email: email.toLowerCase().trim(),
+        password: password,
+      );
+
+      final authUser = res.user;
+      if (authUser == null) {
         state = state.copyWith(
           isLoading: false,
           error: 'Email o contraseña incorrectos',
@@ -98,39 +105,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       }
 
-      // Verificar estado de cuenta
-      if (!user.isActive) {
-        String errorMessage = 'Tu cuenta está suspendida';
-        if (user.isBlocked) {
-          errorMessage = 'Tu cuenta está bloqueada. Contacta con soporte';
-        }
+      final user = await _userRepository.getUserById(authUser.id);
+      if (user != null && !user.isActive) {
+        await _sessionManager.clearSession();
         state = state.copyWith(
           isLoading: false,
-          error: errorMessage,
+          error: user.isBlocked
+              ? 'Tu cuenta está bloqueada. Contacta con soporte'
+              : 'Tu cuenta está suspendida',
         );
         return false;
       }
 
-      // Verificar contraseña
-      if (user.password == null) {
-        await _sessionManager.saveSession(user.id, user.role);
-        await loadCurrentUser(user.id);
-        return true;
-      }
-
-      if (!PasswordUtils.verifyPassword(password, user.password!)) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Email o contraseña incorrectos',
-        );
-        return false;
-      }
-
-      // Guardar sesión
-      await _sessionManager.saveSession(user.id, user.role);
-
-      await loadCurrentUser(user.id);
+      await _sessionManager.saveSession(authUser.id, user?.role ?? 'user');
+      state = state.copyWith(user: user, isLoading: false);
       return true;
+    } on AuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.statusCode == '400'
+            ? 'Email o contraseña incorrectos'
+            : e.message,
+      );
+      return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -141,30 +138,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    // Limpiar sesión
     await _sessionManager.clearSession();
-    
-    // Limpiar estado
     state = AuthState();
   }
 
-  /// Restaura la sesión desde SharedPreferences
+  /// Restaura la sesión desde Supabase Auth.
   Future<bool> restoreSession() async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
       final userId = await _sessionManager.restoreSession();
-      
       if (userId == null) {
         state = state.copyWith(isLoading: false);
         return false;
       }
 
-      // Cargar usuario desde la base de datos
       final user = await _userRepository.getUserById(userId);
-      
       if (user == null || user.accountStatus != 'active') {
-        // Si el usuario no existe o no está activo, limpiar sesión
         await _sessionManager.clearSession();
         state = state.copyWith(isLoading: false);
         return false;
@@ -173,7 +163,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(user: user, isLoading: false);
       return true;
     } catch (e) {
-      await _sessionManager.clearSession();
       state = state.copyWith(
         isLoading: false,
         error: 'Error al restaurar sesión: ${e.toString()}',
@@ -182,7 +171,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Recarga el usuario desde SQLite. [silent] evita isLoading global (no reinicia el router).
+  /// Recarga el usuario desde Supabase. [silent] evita isLoading global.
   Future<void> loadCurrentUser(String userId, {bool silent = false}) async {
     if (!silent) {
       state = state.copyWith(isLoading: true);
@@ -198,14 +187,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Cambia la contraseña de un usuario
+  /// Cambia la contraseña del usuario autenticado en Supabase Auth.
   Future<bool> changePassword({
     required String userId,
     required String newPassword,
   }) async {
     try {
-      final passwordHash = PasswordUtils.hashPassword(newPassword);
-      await _userRepository.updatePassword(userId, passwordHash);
+      await supabase.auth.updateUser(UserAttributes(password: newPassword));
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -219,4 +207,3 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(UserRepository());
 });
-

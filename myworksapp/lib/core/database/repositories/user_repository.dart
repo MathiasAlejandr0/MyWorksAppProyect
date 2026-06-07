@@ -1,92 +1,67 @@
-import '../database_helper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
 import '../models/user_model.dart';
+import '../supabase_db.dart';
 
+/// Repositorio de usuarios sobre la tabla `profiles` de Supabase.
+///
+/// La autenticación (email/contraseña) la maneja Supabase Auth; aquí solo se
+/// gestiona el perfil público asociado a cada `auth.users.id`.
 class UserRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'profiles';
 
   Future<String> createUser(UserModel user) async {
-    final db = await _dbHelper.database;
-    await db.insert('users', user.toMap());
+    // El perfil normalmente lo crea un trigger al registrarse en Supabase Auth.
+    // Este upsert cubre el caso de completar/actualizar datos del propio perfil.
+    final data = user.toMap()..remove('password');
+    await supabase.from(_table).upsert(data);
     return user.id;
   }
 
   Future<UserModel?> getUserById(String id) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'users',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    if (maps.isEmpty) return null;
-    return UserModel.fromMap(maps.first);
+    final row =
+        await supabase.from(_table).select().eq('id', id).maybeSingle();
+    if (row == null) return null;
+    return UserModel.fromMap(row);
   }
 
   Future<UserModel?> getUserByEmail(String email) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: [email.toLowerCase().trim()],
-    );
-    if (maps.isEmpty) return null;
-    return UserModel.fromMap(maps.first);
+    final row = await supabase
+        .from(_table)
+        .select()
+        .eq('email', email.toLowerCase().trim())
+        .maybeSingle();
+    if (row == null) return null;
+    return UserModel.fromMap(row);
   }
 
   Future<void> updateUser(UserModel user) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'users',
-      user.toMap(),
-      where: 'id = ?',
-      whereArgs: [user.id],
-    );
+    final data = user.toMap()..remove('password');
+    await supabase.from(_table).update(data).eq('id', user.id);
   }
 
   Future<void> updateProfilePhotoPath(String userId, String? photoPath) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'users',
-      {'profilePhotoPath': photoPath},
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
+    await supabase
+        .from(_table)
+        .update({'profilePhotoPath': photoPath}).eq('id', userId);
   }
 
-  /// Actualiza solo la contraseña de un usuario
+  /// La contraseña la gestiona Supabase Auth; se mantiene por compatibilidad.
   Future<void> updatePassword(String userId, String passwordHash) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'users',
-      {'password': passwordHash},
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
+    await supabase.auth.updateUser(UserAttributes(password: passwordHash));
   }
 
-  /// Actualiza el estado de cuenta de un usuario
   Future<void> updateAccountStatus(String userId, String status) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'users',
-      {'accountStatus': status},
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
+    await supabase
+        .from(_table)
+        .update({'accountStatus': status}).eq('id', userId);
   }
 
   Future<void> deleteUser(String id) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'users',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await supabase.from(_table).delete().eq('id', id);
   }
 
   Future<List<UserModel>> getAllUsers() async {
-    final db = await _dbHelper.database;
-    final maps = await db.query('users');
-    return maps.map((map) => UserModel.fromMap(map)).toList();
+    final rows = await supabase.from(_table).select();
+    return rows.map<UserModel>((m) => UserModel.fromMap(m)).toList();
   }
 }
-

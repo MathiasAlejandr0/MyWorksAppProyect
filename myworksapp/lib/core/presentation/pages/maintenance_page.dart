@@ -54,7 +54,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
               
               // Mensaje principal
               Text(
-                'Estamos reparando el sistema local.\nTus datos están seguros.',
+                'No pudimos conectar con el servidor.\nRevisa tu conexión a internet.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: AppColors.grayMedium,
                 ),
@@ -129,22 +129,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                
-                // Botón: Restaurar Backup
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _handleRestoreBackup,
-                    icon: const Icon(Icons.restore),
-                    label: const Text('Restaurar Último Backup'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primaryLight,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
+
                 // Botón: Contactar Soporte
                 SizedBox(
                   width: double.infinity,
@@ -193,13 +178,13 @@ class _MaintenancePageState extends State<MaintenancePage> {
   String _formatFailureType(CriticalFailureType type) {
     switch (type) {
       case CriticalFailureType.databaseNotInitialized:
-        return 'Base de datos no inicializada';
+        return 'Servidor no disponible';
       case CriticalFailureType.migrationInterrupted:
-        return 'Migración interrumpida';
+        return 'Error de sincronización';
       case CriticalFailureType.partialCorruption:
-        return 'Corrupción parcial detectada';
+        return 'Datos incompletos';
       case CriticalFailureType.databaseClosed:
-        return 'Base de datos cerrada';
+        return 'Conexión cerrada';
       case CriticalFailureType.unknown:
         return 'Error desconocido';
     }
@@ -228,69 +213,12 @@ class _MaintenancePageState extends State<MaintenancePage> {
         }
       } else {
         setState(() {
-          _recoveryMessage = 'No se pudo recuperar. Intenta restaurar un backup.';
+          _recoveryMessage = 'No se pudo reconectar. Verifica tu internet.';
           _isRecovering = false;
         });
       }
     } catch (e) {
       AppLogger.e('Error durante recuperación', e);
-      setState(() {
-        _recoveryMessage = 'Error: $e';
-        _isRecovering = false;
-      });
-    }
-  }
-
-  Future<void> _handleRestoreBackup() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Restaurar Backup'),
-        content: const Text(
-          'Esto restaurará el último backup disponible. '
-          '¿Estás seguro?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Restaurar'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() {
-      _isRecovering = true;
-      _recoveryMessage = 'Restaurando backup...';
-    });
-
-    try {
-      final success = await _healthService.attemptRecovery(restoreBackup: true);
-      
-      if (success) {
-        setState(() {
-          _recoveryMessage = '¡Backup restaurado exitosamente!';
-        });
-        
-        await Future.delayed(const Duration(seconds: 1));
-        
-        if (mounted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-      } else {
-        setState(() {
-          _recoveryMessage = 'No se pudo restaurar el backup.';
-          _isRecovering = false;
-        });
-      }
-    } catch (e) {
-      AppLogger.e('Error al restaurar backup', e);
       setState(() {
         _recoveryMessage = 'Error: $e';
         _isRecovering = false;

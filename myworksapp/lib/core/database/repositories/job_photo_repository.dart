@@ -1,51 +1,33 @@
-import '../database_helper.dart';
 import '../models/job_photo_model.dart';
+import '../supabase_db.dart';
 
 class JobPhotoRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'job_photos';
 
   Future<void> createJobPhoto(JobPhotoModel photo) async {
-    final db = await _dbHelper.database;
-    await db.insert('job_photos', photo.toMap());
+    await supabase.from(_table).insert(photo.toMap());
   }
 
   Future<List<JobPhotoModel>> getPhotosByJobId(String jobId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'job_photos',
-      where: 'jobId = ?',
-      whereArgs: [jobId],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => JobPhotoModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('jobId', jobId)
+        .order('createdAt', ascending: false);
+    return rows.map<JobPhotoModel>((m) => JobPhotoModel.fromMap(m)).toList();
   }
 
   Future<void> deleteJobPhoto(String id) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'job_photos',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await supabase.from(_table).delete().eq('id', id);
   }
 
   Future<void> deletePhotosByJobId(String jobId) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'job_photos',
-      where: 'jobId = ?',
-      whereArgs: [jobId],
-    );
+    await supabase.from(_table).delete().eq('jobId', jobId);
   }
 
   // Contar fotos de un trabajo
   Future<int> getPhotoCountByJobId(String jobId) async {
-    final db = await _dbHelper.database;
-    final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM job_photos WHERE jobId = ?',
-      [jobId],
-    );
-    return result.first['count'] as int;
+    final rows = await supabase.from(_table).select('id').eq('jobId', jobId);
+    return rows.length;
   }
 }
-

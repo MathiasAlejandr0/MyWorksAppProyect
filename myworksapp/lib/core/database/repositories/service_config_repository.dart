@@ -1,20 +1,19 @@
-import '../database_helper.dart';
 import '../models/service_config_model.dart';
+import '../supabase_db.dart';
 import '../../utils/app_logger.dart';
 
 class ServiceConfigRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'service_configs';
 
   Future<ServiceConfigModel?> getConfigByServiceId(String serviceId) async {
     try {
-      final db = await _dbHelper.database;
-      final maps = await db.query(
-        'service_configs',
-        where: 'serviceId = ?',
-        whereArgs: [serviceId],
-      );
-      if (maps.isEmpty) return null;
-      return ServiceConfigModel.fromMap(maps.first);
+      final row = await supabase
+          .from(_table)
+          .select()
+          .eq('serviceId', serviceId)
+          .maybeSingle();
+      if (row == null) return null;
+      return ServiceConfigModel.fromMap(row);
     } catch (e) {
       AppLogger.e('Error getting service config', e);
       return null;
@@ -23,8 +22,7 @@ class ServiceConfigRepository {
 
   Future<void> createConfig(ServiceConfigModel config) async {
     try {
-      final db = await _dbHelper.database;
-      await db.insert('service_configs', config.toMap());
+      await supabase.from(_table).upsert(config.toMap());
     } catch (e) {
       AppLogger.e('Error creating service config', e);
       rethrow;
@@ -33,17 +31,13 @@ class ServiceConfigRepository {
 
   Future<void> updateConfig(ServiceConfigModel config) async {
     try {
-      final db = await _dbHelper.database;
-      await db.update(
-        'service_configs',
-        config.toMap(),
-        where: 'serviceId = ?',
-        whereArgs: [config.serviceId],
-      );
+      await supabase
+          .from(_table)
+          .update(config.toMap())
+          .eq('serviceId', config.serviceId);
     } catch (e) {
       AppLogger.e('Error updating service config', e);
       rethrow;
     }
   }
 }
-

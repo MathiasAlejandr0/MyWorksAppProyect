@@ -1,46 +1,39 @@
-import '../database_helper.dart';
 import '../models/user_block_model.dart';
+import '../supabase_db.dart';
 
 class UserBlockRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'user_blocks';
 
   Future<void> createBlock(UserBlockModel block) async {
-    final db = await _dbHelper.database;
     try {
-      await db.insert('user_blocks', block.toMap());
+      await supabase.from(_table).insert(block.toMap());
     } catch (e) {
-      // Si ya existe el bloqueo (UNIQUE constraint), ignorar
-      // Esto evita errores si se intenta bloquear dos veces
+      // Si ya existe el bloqueo (UNIQUE constraint), ignorar.
     }
   }
 
   Future<bool> isBlocked(String blockerId, String blockedUserId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'user_blocks',
-      where: 'blockerId = ? AND blockedUserId = ?',
-      whereArgs: [blockerId, blockedUserId],
-    );
-    return maps.isNotEmpty;
+    final rows = await supabase
+        .from(_table)
+        .select('id')
+        .eq('blockerId', blockerId)
+        .eq('blockedUserId', blockedUserId);
+    return rows.isNotEmpty;
   }
 
   Future<List<String>> getBlockedUserIds(String blockerId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'user_blocks',
-      where: 'blockerId = ?',
-      whereArgs: [blockerId],
-    );
-    return maps.map((map) => map['blockedUserId'] as String).toList();
+    final rows = await supabase
+        .from(_table)
+        .select('blockedUserId')
+        .eq('blockerId', blockerId);
+    return rows.map<String>((m) => m['blockedUserId'] as String).toList();
   }
 
   Future<void> removeBlock(String blockerId, String blockedUserId) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'user_blocks',
-      where: 'blockerId = ? AND blockedUserId = ?',
-      whereArgs: [blockerId, blockedUserId],
-    );
+    await supabase
+        .from(_table)
+        .delete()
+        .eq('blockerId', blockerId)
+        .eq('blockedUserId', blockedUserId);
   }
 }
-

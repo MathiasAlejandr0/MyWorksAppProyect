@@ -1,72 +1,56 @@
-import '../database_helper.dart';
 import '../models/notification_model.dart';
+import '../supabase_db.dart';
 
 class NotificationRepository {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  static const String _table = 'notifications';
 
   Future<void> createNotification(NotificationModel notification) async {
-    final db = await _dbHelper.database;
-    await db.insert('notifications', notification.toMap());
+    await supabase.from(_table).insert(notification.toMap());
   }
 
   Future<List<NotificationModel>> getNotificationsByUserId(String userId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'notifications',
-      where: 'userId = ?',
-      whereArgs: [userId],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => NotificationModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('userId', userId)
+        .order('createdAt', ascending: false);
+    return rows
+        .map<NotificationModel>((m) => NotificationModel.fromMap(m))
+        .toList();
   }
 
   Future<List<NotificationModel>> getUnreadNotifications(String userId) async {
-    final db = await _dbHelper.database;
-    final maps = await db.query(
-      'notifications',
-      where: 'userId = ? AND isRead = 0',
-      whereArgs: [userId],
-      orderBy: 'createdAt DESC',
-    );
-    return maps.map((map) => NotificationModel.fromMap(map)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('userId', userId)
+        .eq('isRead', 0)
+        .order('createdAt', ascending: false);
+    return rows
+        .map<NotificationModel>((m) => NotificationModel.fromMap(m))
+        .toList();
   }
 
   Future<void> markAsRead(String notificationId) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'notifications',
-      {'isRead': 1},
-      where: 'id = ?',
-      whereArgs: [notificationId],
-    );
+    await supabase
+        .from(_table)
+        .update({'isRead': 1}).eq('id', notificationId);
   }
 
   Future<void> markAllAsRead(String userId) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'notifications',
-      {'isRead': 1},
-      where: 'userId = ?',
-      whereArgs: [userId],
-    );
+    await supabase.from(_table).update({'isRead': 1}).eq('userId', userId);
   }
 
   Future<int> getUnreadCount(String userId) async {
-    final db = await _dbHelper.database;
-    final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM notifications WHERE userId = ? AND isRead = 0',
-      [userId],
-    );
-    return result.first['count'] as int;
+    final rows = await supabase
+        .from(_table)
+        .select('id')
+        .eq('userId', userId)
+        .eq('isRead', 0);
+    return rows.length;
   }
 
   Future<void> deleteNotification(String id) async {
-    final db = await _dbHelper.database;
-    await db.delete(
-      'notifications',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await supabase.from(_table).delete().eq('id', id);
   }
 }
-
