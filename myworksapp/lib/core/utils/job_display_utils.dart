@@ -38,7 +38,12 @@ class JobDisplayUtils {
   static String? priceLine(JobModel job) {
     final meta = job.serviceMetadata;
     final metaPrice = meta?['worker_tier_price_clp'];
+    final squareMeters = meta?['worker_tier_square_meters'];
+    final unitRate = meta?['worker_tier_unit_rate_clp'];
     if (metaPrice is num && metaPrice > 0) {
+      if (squareMeters is num && squareMeters > 0 && unitRate is num) {
+        return '${_formatClp(metaPrice.toInt())} (${squareMeters.toInt()} m² × ${_formatClp(unitRate.toInt())}/m²)';
+      }
       return _formatClp(metaPrice.toInt());
     }
 

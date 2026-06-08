@@ -72,8 +72,7 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
 
 
   List<WorkerServiceOptionDef> get _catalogOptions =>
-
-      WorkerServiceOptionsCatalog.catalogOptionsFor(widget.category);
+      WorkerServiceOptionsCatalog.clientOptionsFor(widget.worker);
 
 
 

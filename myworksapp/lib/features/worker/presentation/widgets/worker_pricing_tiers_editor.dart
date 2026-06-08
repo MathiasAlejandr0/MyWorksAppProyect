@@ -45,7 +45,8 @@ class _WorkerPricingTiersEditorState extends State<WorkerPricingTiersEditor> {
   }
 
   void _syncControllers() {
-    final options = WorkerServiceOptionsCatalog.optionsFor(widget.category);
+    final options =
+        WorkerServiceOptionsCatalog.pricingOptionsFor(widget.category);
     for (final option in options) {
       final value = WorkerServiceOptionsCatalog.priceFor(
         workerTiers: _tiers,
@@ -73,7 +74,8 @@ class _WorkerPricingTiersEditorState extends State<WorkerPricingTiersEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final options = WorkerServiceOptionsCatalog.optionsFor(widget.category);
+    final options =
+        WorkerServiceOptionsCatalog.pricingOptionsFor(widget.category);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

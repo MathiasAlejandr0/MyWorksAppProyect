@@ -103,21 +103,29 @@ class JobBookingService {
     double? longitude,
     Map<String, dynamic>? serviceMetadata,
     String priceUnit = 'fixed',
+    int? squareMeters,
+    int? unitRateClp,
   }) async {
+    final unit = priceUnit == 'perSqm'
+        ? WorkerPriceUnit.perSqm
+        : WorkerPriceUnit.fixed;
     final quote = PricingService.instance.calculateWorkerTierPrice(
       optionId: tierOptionId,
       optionLabel: tierLabel,
       amountClp: amountClp,
       comunaKey: comunaKey,
-      unit: priceUnit == 'perSqm'
-          ? WorkerPriceUnit.perSqm
-          : WorkerPriceUnit.fixed,
+      unit: unit,
+      squareMeters: squareMeters,
+      unitRateClp: unitRateClp,
     );
     final metadata = {
       ...?serviceMetadata,
       'worker_tier_id': tierOptionId,
       'worker_tier_label': tierLabel,
-      'worker_tier_price_clp': amountClp,
+      'worker_tier_price_clp': quote.subtotalClp,
+      if (unitRateClp != null) 'worker_tier_unit_rate_clp': unitRateClp,
+      if (squareMeters != null && squareMeters > 0)
+        'worker_tier_square_meters': squareMeters,
       'worker_tier_unit': priceUnit,
     };
     return _createEscrowJob(
@@ -191,22 +199,30 @@ class JobBookingService {
     double? longitude,
     Map<String, dynamic>? serviceMetadata,
     String priceUnit = 'fixed',
+    int? squareMeters,
+    int? unitRateClp,
   }) async {
+    final unit = priceUnit == 'perSqm'
+        ? WorkerPriceUnit.perSqm
+        : WorkerPriceUnit.fixed;
     final quote = PricingService.instance.calculateWorkerTierPrice(
       optionId: tierOptionId,
       optionLabel: tierLabel,
       amountClp: amountClp,
       comunaKey: comunaKey,
-      unit: priceUnit == 'perSqm'
-          ? WorkerPriceUnit.perSqm
-          : WorkerPriceUnit.fixed,
+      unit: unit,
+      squareMeters: squareMeters,
+      unitRateClp: unitRateClp,
     );
     final meta = <String, dynamic>{
       if (serviceMetadata != null) ...serviceMetadata,
       'invited_worker_id': workerId,
       'worker_tier_id': tierOptionId,
       'worker_tier_label': tierLabel,
-      'worker_tier_price_clp': amountClp,
+      'worker_tier_price_clp': quote.subtotalClp,
+      if (unitRateClp != null) 'worker_tier_unit_rate_clp': unitRateClp,
+      if (squareMeters != null && squareMeters > 0)
+        'worker_tier_square_meters': squareMeters,
       'worker_tier_unit': priceUnit,
       'request_type': 'worker_tier_invitation',
     };

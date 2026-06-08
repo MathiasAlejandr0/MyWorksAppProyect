@@ -96,14 +96,6 @@ class WorkerServiceOptionsCatalog {
             icon: Icons.park_outlined,
             defaultPriceClp: 95000,
           ),
-          WorkerServiceOptionDef(
-            id: 'garden_per_sqm',
-            title: 'Mantención por metro cuadrado',
-            subtitle: 'Cobro según los m² del terreno',
-            icon: Icons.square_foot_outlined,
-            defaultPriceClp: 2500,
-            unit: WorkerPriceUnit.perSqm,
-          ),
         ];
       case ServiceCategories.cleaning:
         return const [
@@ -176,6 +168,14 @@ class WorkerServiceOptionsCatalog {
             icon: Icons.bolt_outlined,
             defaultPriceClp: 85000,
           ),
+          WorkerServiceOptionDef(
+            id: 'electrical_per_sqm',
+            title: 'Cobro por metro cuadrado',
+            subtitle: 'Tarifa para proyectos grandes eléctricos',
+            icon: Icons.square_foot_outlined,
+            defaultPriceClp: 18000,
+            unit: WorkerPriceUnit.perSqm,
+          ),
         ];
       case ServiceCategories.construction:
         return const [
@@ -199,6 +199,14 @@ class WorkerServiceOptionsCatalog {
             subtitle: 'Ampliación, remodelación u obra gruesa',
             icon: Icons.architecture_outlined,
             defaultPriceClp: 120000,
+          ),
+          WorkerServiceOptionDef(
+            id: 'construction_per_sqm',
+            title: 'Cobro por metro cuadrado',
+            subtitle: 'Tarifa para proyectos grandes de construcción',
+            icon: Icons.square_foot_outlined,
+            defaultPriceClp: 45000,
+            unit: WorkerPriceUnit.perSqm,
           ),
         ];
       case ServiceCategories.techSupport:
@@ -285,12 +293,75 @@ class WorkerServiceOptionsCatalog {
   static int priceFor({
     required Map<String, int> workerTiers,
     required WorkerServiceOptionDef option,
-  }) {
-    return workerTiers[option.id] ?? option.defaultPriceClp;
+  }) =>
+      workerTiers[option.id] ?? option.defaultPriceClp;
+
+  /// Opciones visibles al cliente (sin la tarifa interna por m²).
+  static List<WorkerServiceOptionDef> catalogOptionsFor(String? category) {
+    return optionsFor(category)
+        .where((o) => !_workerOnlyPerSqmTierIds.contains(o.id))
+        .toList();
   }
 
-  static List<WorkerServiceOptionDef> catalogOptionsFor(String? category) =>
+  /// Tarifas que edita el trabajador (incluye cobro por m²).
+  static List<WorkerServiceOptionDef> pricingOptionsFor(String? category) =>
       optionsFor(category);
+
+  static const _workerOnlyPerSqmTierIds = {
+    'construction_per_sqm',
+    'electrical_per_sqm',
+  };
+
+  static const _largeProjectClientOptionIds = {
+    'construction_large_project',
+    'electrical_large_project',
+  };
+
+  /// Opción «Proyecto grande» que ve el cliente (usa tarifa per_sqm del trabajador).
+  static WorkerServiceOptionDef? largeProjectClientOption(String? category) {
+    switch (category) {
+      case ServiceCategories.construction:
+        return const WorkerServiceOptionDef(
+          id: 'construction_large_project',
+          title: 'Proyecto grande',
+          subtitle: 'Indica los m² a construir; se calcula según la tarifa del maestro',
+          icon: Icons.domain_outlined,
+          defaultPriceClp: 45000,
+          unit: WorkerPriceUnit.perSqm,
+        );
+      case ServiceCategories.electrical:
+        return const WorkerServiceOptionDef(
+          id: 'electrical_large_project',
+          title: 'Proyecto grande',
+          subtitle: 'Indica los m² del proyecto; se calcula según la tarifa del electricista',
+          icon: Icons.domain_outlined,
+          defaultPriceClp: 18000,
+          unit: WorkerPriceUnit.perSqm,
+        );
+      default:
+        return null;
+    }
+  }
+
+  static String? perSqmTierIdForCategory(String? category) {
+    switch (category) {
+      case ServiceCategories.construction:
+        return 'construction_per_sqm';
+      case ServiceCategories.electrical:
+        return 'electrical_per_sqm';
+      default:
+        return null;
+    }
+  }
+
+  static List<WorkerServiceOptionDef> clientOptionsFor(WorkerModel worker) {
+    final items = <WorkerServiceOptionDef>[
+      ...catalogOptionsFor(worker.serviceCategory),
+    ];
+    final large = largeProjectClientOption(worker.serviceCategory);
+    if (large != null) items.add(large);
+    return items;
+  }
 
   static List<WorkerServiceOptionDef> customOptionsFor(WorkerModel worker) =>
       worker.customServices.map((s) => s.toOptionDef()).toList();
@@ -305,12 +376,53 @@ class WorkerServiceOptionsCatalog {
       }
       return option.defaultPriceClp;
     }
+    if (_largeProjectClientOptionIds.contains(option.id)) {
+      final tierId = perSqmTierIdForCategory(worker.serviceCategory);
+      final tierDef = tierId != null
+          ? findOption(worker.serviceCategory, tierId)
+          : null;
+      if (tierId != null && tierDef != null) {
+        return worker.pricingTiers[tierId] ?? tierDef.defaultPriceClp;
+      }
+    }
     return priceFor(workerTiers: worker.pricingTiers, option: option);
   }
+
+  /// Tarifa unitaria (fija o CLP/m²).
+  static int unitPriceForWorker({
+    required WorkerModel worker,
+    required WorkerServiceOptionDef option,
+  }) =>
+      priceForWorker(worker: worker, option: option);
+
+  /// Total a cobrar; para opciones por m² multiplica por [squareMeters].
+  static int totalPriceForWorker({
+    required WorkerModel worker,
+    required WorkerServiceOptionDef option,
+    int? squareMeters,
+  }) {
+    final unitPrice = unitPriceForWorker(worker: worker, option: option);
+    if (requiresSquareMeters(option)) {
+      final m2 = squareMeters ?? 0;
+      if (m2 <= 0) return unitPrice;
+      return unitPrice * m2;
+    }
+    return unitPrice;
+  }
+
+  static bool requiresSquareMeters(WorkerServiceOptionDef option) =>
+      _largeProjectClientOptionIds.contains(option.id);
+
+  static bool categorySupportsLargeProjects(String? category) =>
+      category == ServiceCategories.construction ||
+      category == ServiceCategories.electrical;
 
   static WorkerServiceOptionDef? findOption(String? category, String optionId) {
     for (final o in optionsFor(category)) {
       if (o.id == optionId) return o;
+    }
+    if (_largeProjectClientOptionIds.contains(optionId)) {
+      return largeProjectClientOption(category);
     }
     return null;
   }
@@ -319,6 +431,9 @@ class WorkerServiceOptionsCatalog {
     WorkerModel worker,
     String optionId,
   ) {
+    if (_largeProjectClientOptionIds.contains(optionId)) {
+      return largeProjectClientOption(worker.serviceCategory);
+    }
     final catalog = findOption(worker.serviceCategory, optionId);
     if (catalog != null) return catalog;
     for (final custom in worker.customServices) {

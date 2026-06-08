@@ -159,11 +159,21 @@ class PricingService {
     required int amountClp,
     String? comunaKey,
     WorkerPriceUnit unit = WorkerPriceUnit.fixed,
+    int? squareMeters,
+    int? unitRateClp,
   }) {
     final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
-    final subtotal = (amountClp * factor).round();
+    final rate = unitRateClp ?? amountClp;
+    final baseTotal = unit == WorkerPriceUnit.perSqm && (squareMeters ?? 0) > 0
+        ? rate * squareMeters!
+        : amountClp;
+    final subtotal = (baseTotal * factor).round();
     final fee = serviceFeeFor(subtotal);
     final unitLabel = unit == WorkerPriceUnit.perSqm ? 'por m²' : 'precio fijo';
+    final m2 = squareMeters ?? 0;
+    final message = unit == WorkerPriceUnit.perSqm && m2 > 0
+        ? 'Proyecto de $m2 m² × ${_formatClp(rate)}/m². La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.'
+        : 'Tarifa del profesional ($unitLabel). La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.';
     return PriceQuote(
       pricingMode: PricingConstants.modeFixedPrice,
       subtotalClp: subtotal,
@@ -173,16 +183,28 @@ class PricingService {
       breakdown: {
         'worker_tier_id': optionId,
         'worker_tier_label': optionLabel,
-        'base_clp': amountClp,
+        'base_clp': baseTotal,
+        'unit_rate_clp': rate,
+        if (m2 > 0) 'square_meters': m2,
         'price_unit': unit.name,
         'comuna_factor': factor,
         'service_fee_rate': serviceFeeRate,
         'service_fee_clp': fee,
         'worker_payout_clp': subtotal - fee,
       },
-      message:
-          'Tarifa del profesional ($unitLabel). La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.',
+      message: message,
     );
+  }
+
+  static String _formatClp(int value) {
+    final s = value.toString();
+    if (s.length <= 3) return '\$$s';
+    final buf = StringBuffer('\$');
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return buf.toString();
   }
 
   /// Modalidad 1: precio fijo (SKU + comuna).

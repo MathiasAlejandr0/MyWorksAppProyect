@@ -19,6 +19,7 @@ import '../../../../core/domain/pricing_mode_recommendation.dart';
 import '../../../../core/domain/worker_service_options_catalog.dart';
 import '../widgets/pricing_mode_questionnaire.dart';
 import '../widgets/worker_service_option_picker.dart';
+import '../widgets/worker_square_meters_field.dart';
 import '../widgets/open_quote_submitted_dialog.dart';
 import '../widgets/service_request_submitted_dialog.dart';
 import '../../../../core/widgets/pricing_quote_card.dart';
@@ -51,6 +52,7 @@ class ServiceRequestPage extends ConsumerStatefulWidget {
 class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
+  final _squareMetersController = TextEditingController();
   final ServiceRepository _serviceRepository = ServiceRepository();
   final ServiceConfigRepository _configRepository = ServiceConfigRepository();
   final JobService _jobService = JobService.instance;
@@ -143,6 +145,25 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
 
   bool get _usesWorkerTierPricing => _selectedWorker != null;
 
+  bool get _needsSquareMeters =>
+      _selectedWorkerOption != null &&
+      WorkerServiceOptionsCatalog.requiresSquareMeters(_selectedWorkerOption!);
+
+  int? get _parsedSquareMeters {
+    final parsed = int.tryParse(_squareMetersController.text.trim());
+    if (parsed == null || parsed <= 0) return null;
+    return parsed;
+  }
+
+  int? _workerTierTotalClp() {
+    if (_selectedWorker == null || _selectedWorkerOption == null) return null;
+    return WorkerServiceOptionsCatalog.totalPriceForWorker(
+      worker: _selectedWorker!,
+      option: _selectedWorkerOption!,
+      squareMeters: _parsedSquareMeters,
+    );
+  }
+
   Future<void> _refreshPricePreview() async {
     if (_selectedAddress.length < 5) return;
     final comuna = inferComunaKey(_selectedAddress);
@@ -152,16 +173,23 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       if (_usesWorkerTierPricing &&
           _selectedWorkerTierId != null &&
           _selectedWorkerOption != null) {
-        final price = WorkerServiceOptionsCatalog.priceForWorker(
+        final unitRate = WorkerServiceOptionsCatalog.unitPriceForWorker(
           worker: _selectedWorker!,
           option: _selectedWorkerOption!,
+        );
+        final total = WorkerServiceOptionsCatalog.totalPriceForWorker(
+          worker: _selectedWorker!,
+          option: _selectedWorkerOption!,
+          squareMeters: _parsedSquareMeters,
         );
         preview = PricingService.instance.calculateWorkerTierPrice(
           optionId: _selectedWorkerOption!.id,
           optionLabel: _selectedWorkerOption!.title,
-          amountClp: price,
+          amountClp: total,
           comunaKey: comuna,
           unit: _selectedWorkerOption!.unit,
+          squareMeters: _parsedSquareMeters,
+          unitRateClp: unitRate,
         );
       } else if (_pricingMode == PricingConstants.modeFixedPrice) {
         final sku = _pricingRecommendation?.skuCode ??
@@ -224,6 +252,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   @override
   void dispose() {
     _descriptionController.dispose();
+    _squareMetersController.dispose();
     super.dispose();
   }
 
@@ -351,9 +380,24 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       if (_usesWorkerTierPricing &&
           _selectedWorkerTierId != null &&
           _selectedWorkerOption != null) {
-        final price = WorkerServiceOptionsCatalog.priceForWorker(
+        if (_needsSquareMeters && _parsedSquareMeters == null) {
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Indica los metros cuadrados del proyecto grande'),
+            ),
+          );
+          return;
+        }
+        final unitRate = WorkerServiceOptionsCatalog.unitPriceForWorker(
           worker: _selectedWorker!,
           option: _selectedWorkerOption!,
+        );
+        final total = WorkerServiceOptionsCatalog.totalPriceForWorker(
+          worker: _selectedWorker!,
+          option: _selectedWorkerOption!,
+          squareMeters: _parsedSquareMeters,
         );
         final job = await JobBookingService.instance.createWorkerTierInvitation(
           userId: user.id,
@@ -362,7 +406,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           address: _selectedAddress,
           tierOptionId: _selectedWorkerOption!.id,
           tierLabel: _selectedWorkerOption!.title,
-          amountClp: price,
+          amountClp: total,
           description: description.isEmpty ? null : description,
           scheduledDate: scheduledDate,
           comunaKey: comuna,
@@ -370,6 +414,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           longitude: _selectedLongitude,
           serviceMetadata: metadata,
           priceUnit: _selectedWorkerOption!.unit.name,
+          squareMeters: _parsedSquareMeters,
+          unitRateClp: unitRate,
         );
 
         try {
@@ -683,14 +729,28 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  if (_usesWorkerTierPricing)
+                  if (_usesWorkerTierPricing) ...[
                     WorkerServiceOptionPicker(
                       worker: _selectedWorker!,
                       category: _selectedWorker!.serviceCategory,
                       initialOptionId: _selectedWorkerTierId,
                       onSelected: _applyWorkerServiceOption,
-                    )
-                  else
+                    ),
+                    if (_needsSquareMeters && _questionnaireComplete) ...[
+                      const SizedBox(height: 12),
+                      WorkerSquareMetersField(
+                        controller: _squareMetersController,
+                        unitRateClp: WorkerServiceOptionsCatalog.unitPriceForWorker(
+                          worker: _selectedWorker!,
+                          option: _selectedWorkerOption!,
+                        ),
+                        serviceCategory: _selectedWorker!.serviceCategory,
+                        squareMeters: _parsedSquareMeters,
+                        totalClp: _workerTierTotalClp(),
+                        onChanged: _refreshPricePreview,
+                      ),
+                    ],
+                  ] else
                     PricingModeQuestionnaire(
                       workerPreselected: _selectedWorkerId != null,
                       category: _categoryForSelectedService(),
@@ -698,9 +758,13 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                       onRecommendation: _applyPricingRecommendation,
                     ),
                   if (_questionnaireComplete) ...[
-                    if (!_usesWorkerTierPricing && _pricePreview != null) ...[
+                    if (_pricePreview != null &&
+                        (!_needsSquareMeters || _parsedSquareMeters != null)) ...[
                       const SizedBox(height: 12),
-                      PricingQuoteCard(quote: _pricePreview!),
+                      PricingQuoteCard(
+                        quote: _pricePreview!,
+                        workerName: _selectedWorkerUser?.name,
+                      ),
                     ],
                     if (!_usesWorkerTierPricing &&
                         _serviceVariants.isNotEmpty &&
@@ -864,10 +928,13 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   }
 
   void _applyWorkerServiceOption(WorkerServiceOptionDef option) {
-    final price = WorkerServiceOptionsCatalog.priceForWorker(
+    final unitRate = WorkerServiceOptionsCatalog.unitPriceForWorker(
       worker: _selectedWorker!,
       option: option,
     );
+    if (!WorkerServiceOptionsCatalog.requiresSquareMeters(option)) {
+      _squareMetersController.clear();
+    }
     setState(() {
       _selectedWorkerTierId = option.id;
       _selectedWorkerOption = option;
@@ -875,8 +942,10 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       _questionnaireComplete = true;
       _serviceMetadata['worker_tier_id'] = option.id;
       _serviceMetadata['worker_tier_label'] = option.title;
-      _serviceMetadata['worker_tier_price_clp'] = price;
+      _serviceMetadata['worker_tier_unit_rate_clp'] = unitRate;
       _serviceMetadata['worker_tier_unit'] = option.unit.name;
+      _serviceMetadata.remove('worker_tier_square_meters');
+      _serviceMetadata.remove('worker_tier_price_clp');
     });
     _refreshPricePreview();
   }

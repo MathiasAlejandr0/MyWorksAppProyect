@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/database/models/service_model.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/domain/worker_custom_service.dart';
@@ -140,7 +141,21 @@ class _WorkerPricingSetupPageState extends ConsumerState<WorkerPricingSetupPage>
                   'Como ${_worker!.profession}, estas opciones corresponden a trabajos de '
                   '$categoryLabel. Puedes mantener los valores sugeridos o cambiarlos.',
             ),
-            const SizedBox(height: 20),
+            if (WorkerServiceOptionsCatalog.categorySupportsLargeProjects(
+              _worker!.serviceCategory,
+            )) ...[
+              _GuideCard(
+                icon: Icons.square_foot_outlined,
+                title: 'Cobro por metro cuadrado',
+                body: _worker!.serviceCategory == ServiceCategories.construction
+                    ? 'El campo «Cobro por metro cuadrado» es aparte de «Proyecto por etapas». '
+                        'Cuando el cliente elija «Proyecto grande», usará esta tarifa × los m² que indique.'
+                    : 'El campo «Cobro por metro cuadrado» es aparte de las instalaciones fijas. '
+                        'Cuando el cliente elija «Proyecto grande», usará esta tarifa × los m² del proyecto.',
+              ),
+              const SizedBox(height: 12),
+            ],
+            const SizedBox(height: 8),
             WorkerPricingTiersEditor(
               category: _worker!.serviceCategory,
               initialTiers: _pricingTiers,
