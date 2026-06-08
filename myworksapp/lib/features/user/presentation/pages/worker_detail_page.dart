@@ -20,6 +20,7 @@ import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/portfolio_media_tile.dart';
+import '../../../../core/widgets/portfolio_media_viewer.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../widgets/worker_reviews_section.dart';
 class WorkerDetailPage extends ConsumerStatefulWidget {
@@ -153,10 +154,22 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
               ),
               child: Column(
                 children: [
-                  ProfileAvatarView(
-                    displayName: _user!.name,
-                    photoPath: _user!.profilePhotoPath,
-                    radius: 40,
+                  GestureDetector(
+                    onTap: () {
+                      final path = _user!.profilePhotoPath;
+                      if (path == null || path.isEmpty) return;
+                      PortfolioMediaViewer.openImagePath(
+                        context,
+                        imagePath: path,
+                        title: _user!.name,
+                        description: _worker!.profession,
+                      );
+                    },
+                    child: ProfileAvatarView(
+                      displayName: _user!.name,
+                      photoPath: _user!.profilePhotoPath,
+                      radius: 40,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(

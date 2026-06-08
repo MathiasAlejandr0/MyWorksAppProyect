@@ -95,6 +95,29 @@ class DemoFreeMedia {
   static String portfolioForKey(String imageKey) =>
       'https://picsum.photos/seed/mwa_$imageKey/600/450';
 
+  static String portfolioThumbnailForKey(String imageKey) =>
+      portfolioForKey(imageKey);
+
+  /// Videos demo empaquetados en la app (funcionan sin red y en Windows).
+  static const String _portfolioVideoA = 'assets/videos/demo_portfolio_1.mp4';
+  static const String _portfolioVideoB = 'assets/videos/demo_portfolio_2.mp4';
+
+  static const Map<String, String> _portfolioVideos = {
+    'electrical_kitchen_video': _portfolioVideoA,
+    'electrical_conduit_video': _portfolioVideoB,
+    'plumbing_leak_video': _portfolioVideoA,
+    'cleaning_move_video': _portfolioVideoB,
+    'cleaning_windows_video': _portfolioVideoA,
+    'construction_wall_video': _portfolioVideoA,
+    'assembly_desk_video': _portfolioVideoB,
+    'tech_printer_video': _portfolioVideoA,
+    'garden_hedge_video': _portfolioVideoB,
+    'moving_packing_video': _portfolioVideoA,
+  };
+
+  static String portfolioVideoForKey(String imageKey) =>
+      _portfolioVideos[imageKey] ?? _portfolioVideoA;
+
   /// Reemplazar rutas demo antiguas o URLs de Unsplash rotas en portafolio.
   static bool shouldReplaceDemoPortfolioPath(String? path) {
     if (path == null || path.isEmpty) return true;
