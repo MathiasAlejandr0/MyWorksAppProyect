@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
-import '../../../../core/widgets/design_system/wave_bottom_clipper.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -13,100 +13,70 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 16),
-              const AppBrandLogo(size: 52, textSize: 24),
-              const SizedBox(height: 6),
-              Text(
-                'Soluciones Profesionales para tu Hogar',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.grayMedium,
-                  height: 1.3,
+      body: AuthSoftBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppBreakpoints.screenPadding(context) + 8,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 24),
+                const Center(child: AppBrandLogo(size: 56, textSize: 24)),
+                const SizedBox(height: 8),
+                Text(
+                  'Soluciones profesionales para tu hogar',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.grayMedium.withValues(alpha: 0.95),
+                    height: 1.35,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              _HeroImage(),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Column(
-                  children: [
-                    Text(
-                      '¡Bienvenido a ${AppConstants.appBrandDisplayName}!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.grayDark,
-                        height: 1.25,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Encuentra y contrata a los mejores profesionales para tu hogar de forma rápida y segura.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.grayMedium,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _ServiceCategoriesRow(),
-                    const SizedBox(height: 28),
-                    BrandPrimaryButton(
-                      label: 'Comenzar Ahora',
-                      onPressed: () => context.push(
-                        AppConstants.routeLogin,
-                        extra: {'role': AppConstants.roleUser},
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _LoginLink(
-                      onTap: () => context.push(AppConstants.routeLogin),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                const SizedBox(height: 28),
+                Text(
+                  '¡Bienvenido a ${AppConstants.appBrandDisplayName}!',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.grayDark,
+                    height: 1.25,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HeroImage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    return SizedBox(
-      height: width * 0.52,
-      width: width,
-      child: ClipPath(
-        clipper: WaveBottomClipper(),
-        child: Image.asset(
-          'assets/images/welcome_hero.jpg',
-          fit: BoxFit.cover,
-          width: width,
-          errorBuilder: (_, __, ___) => Container(
-            color: AppColors.brandBlueSoft,
-            child: const Center(
-              child: Icon(
-                Icons.people_alt_rounded,
-                size: 64,
-                color: AppColors.brandNavy,
-              ),
+                const SizedBox(height: 12),
+                Text(
+                  'Encuentra y contrata a los mejores profesionales para tu hogar de forma rápida y segura.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.grayMedium.withValues(alpha: 0.95),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                const _WelcomeHeroCard(),
+                const SizedBox(height: 28),
+                const _ServiceCategoriesRow(),
+                const SizedBox(height: 32),
+                BrandPrimaryButton(
+                  label: 'Comenzar Ahora',
+                  onPressed: () => context.push(
+                    AppConstants.routeLogin,
+                    extra: {'role': AppConstants.roleUser},
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _LoginLink(
+                  onTap: () => context.push(AppConstants.routeLogin),
+                ),
+                const SizedBox(height: 28),
+                const AppBrandFooter(),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
         ),
@@ -115,7 +85,86 @@ class _HeroImage extends StatelessWidget {
   }
 }
 
+/// Ilustración principal con paleta blanco + naranjo (como login).
+class _WelcomeHeroCard extends StatelessWidget {
+  const _WelcomeHeroCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final height = AppBreakpoints.heroImageHeight(context).clamp(200.0, 340.0);
+
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.brandOrange.withValues(alpha: 0.18),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.brandOrange.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/welcome_hero.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFFFF8F3),
+                      Color(0xFFFFF0E8),
+                    ],
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.people_alt_rounded,
+                    size: 72,
+                    color: AppColors.brandOrange,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: 0),
+                      Colors.white.withValues(alpha: 0.92),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ServiceCategoriesRow extends StatelessWidget {
+  const _ServiceCategoriesRow();
+
   static const _items = [
     _ServiceItem(Icons.cleaning_services_outlined, 'Limpieza'),
     _ServiceItem(Icons.plumbing_outlined, 'Plomería'),
@@ -157,10 +206,10 @@ class _ServiceItem extends StatelessWidget {
             color: AppColors.brandOrangeSoft,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.brandOrange.withValues(alpha: 0.12),
+              color: AppColors.brandOrange.withValues(alpha: 0.22),
             ),
           ),
-          child: Icon(icon, color: AppColors.brandNavy, size: 26),
+          child: Icon(icon, color: AppColors.brandOrange, size: 26),
         ),
         const SizedBox(height: 8),
         Text(
@@ -188,14 +237,14 @@ class _LoginLink extends StatelessWidget {
       onTap: onTap,
       child: RichText(
         textAlign: TextAlign.center,
-        text: TextSpan(
+        text: const TextSpan(
           style: TextStyle(
             fontSize: 14,
             color: AppColors.grayMedium,
             fontWeight: FontWeight.w500,
           ),
           children: [
-            const TextSpan(text: '¿Ya tienes cuenta? '),
+            TextSpan(text: '¿Ya tienes cuenta? '),
             TextSpan(
               text: 'Inicia Sesión',
               style: TextStyle(

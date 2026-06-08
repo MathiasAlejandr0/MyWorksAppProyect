@@ -8,6 +8,7 @@ import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/notification_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
+import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
@@ -194,7 +195,12 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
             ],
             Expanded(
               child: Container(
-                margin: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                margin: EdgeInsets.fromLTRB(
+                  AppBreakpoints.screenPadding(context) - 4,
+                  6,
+                  AppBreakpoints.screenPadding(context) - 4,
+                  0,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),

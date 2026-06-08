@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/utils/platform_support.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
@@ -15,6 +17,17 @@ import 'app.dart';
 /// 4. MyWorksApp (Widget principal)
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (AppPlatform.isMobileNative) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
   await initializeDateFormatting('es_CL', null);
 
   AppLogger.i('🚀 Iniciando MyWorksApp...');

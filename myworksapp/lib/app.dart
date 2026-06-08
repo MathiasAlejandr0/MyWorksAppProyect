@@ -44,7 +44,7 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
   /// Inicializa la aplicación completa
   /// 
   /// Usa AppInitializer para:
-  /// - Inicializar SQLite + migraciones
+  /// - Inicializar Supabase + servicios
   /// - Cargar preferencias
   /// - Inicializar servicios
   /// - Restaurar sesión

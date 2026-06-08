@@ -30,7 +30,7 @@ import '../../../../core/widgets/pricing_quote_card.dart';
 import '../../../../core/utils/app_error.dart';
 import '../../../../core/database/repositories/job_photo_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../../../core/widgets/job_location_map.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class JobDetailPage extends ConsumerStatefulWidget {
@@ -1057,31 +1057,9 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
-              // Mapa integrado (requiere Maps SDK)
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: GoogleMap(
-                    initialCameraPosition: CameraPosition(
-                      target: LatLng(_job!.latitude!, _job!.longitude!),
-                      zoom: 15,
-                    ),
-                    markers: {
-                      Marker(
-                        markerId: const MarkerId('job_location'),
-                        position: LatLng(_job!.latitude!, _job!.longitude!),
-                      ),
-                    },
-                    myLocationButtonEnabled: true,
-                    myLocationEnabled: true,
-                    mapType: MapType.normal,
-                  ),
-                ),
+              JobLocationMap(
+                latitude: _job!.latitude!,
+                longitude: _job!.longitude!,
               ),
               const SizedBox(height: 8),
               // Botón para abrir en Google Maps externo (siempre disponible)

@@ -94,7 +94,12 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                       );
 
                       return SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+                        padding: EdgeInsets.fromLTRB(
+                          AppBreakpoints.screenPadding(context) + 4,
+                          2,
+                          AppBreakpoints.screenPadding(context) + 4,
+                          20,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [

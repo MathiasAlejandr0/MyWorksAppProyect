@@ -14,6 +14,14 @@
     <!-- Notificaciones locales (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     
+    <supports-screens
+        android:smallScreens="true"
+        android:normalScreens="true"
+        android:largeScreens="true"
+        android:xlargeScreens="true"
+        android:anyDensity="true"
+        android:resizeable="true" />
+
     <application
         android:label="My Works App"
         android:name="${applicationName}"
@@ -26,6 +34,7 @@
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:enableOnBackInvokedCallback="true"
+            android:resizeableActivity="true"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
