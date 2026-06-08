@@ -5,6 +5,7 @@ class AppConstants {
   // Roles
   static const String roleUser = 'user';
   static const String roleWorker = 'worker';
+  static const String roleAdmin = 'admin';
 
   // Estados de trabajo
   static const String jobStatusPending = 'pending';
@@ -53,5 +54,10 @@ class AppConstants {
   // Rutas nuevas
   static const String routeMaintenance = '/maintenance';
   static const String routeHelpCenter = '/help-center';
+
+  // Admin
+  static const String routeAdminDashboard = '/admin';
+  static const String routeAdminUsers = '/admin/users';
+  static const String routeAdminDisputes = '/admin/disputes';
 }
 

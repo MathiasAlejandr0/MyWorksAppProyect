@@ -11,6 +11,7 @@ class WorkerModel {
   final Map<String, int> pricingTiers;
   final List<WorkerCustomService> customServices;
   final bool pricingConfigured;
+  final String? workZone;
   /// Rechazos de invitaciones; penaliza el orden en búsquedas (no se muestra en UI).
   final int rejectionCount;
 
@@ -25,6 +26,7 @@ class WorkerModel {
     Map<String, int>? pricingTiers,
     List<WorkerCustomService>? customServices,
     this.pricingConfigured = false,
+    this.workZone,
     this.rejectionCount = 0,
   })  : pricingTiers = pricingTiers ?? const {},
         customServices = customServices ?? const [];
@@ -41,6 +43,7 @@ class WorkerModel {
       'pricingTiers': pricingTiers,
       'customServices': customServices.map((s) => s.toMap()).toList(),
       'pricingConfigured': pricingConfigured ? 1 : 0,
+      'workZone': workZone,
       'rejectionCount': rejectionCount,
     };
   }
@@ -68,6 +71,7 @@ class WorkerModel {
       pricingTiers: _parsePricingTiers(map['pricingTiers']),
       customServices: WorkerCustomService.listFromJson(map['customServices']),
       pricingConfigured: (map['pricingConfigured'] as int? ?? 0) == 1,
+      workZone: map['workZone'] as String?,
       rejectionCount: (map['rejectionCount'] as num?)?.toInt() ?? 0,
     );
   }
@@ -83,6 +87,7 @@ class WorkerModel {
     Map<String, int>? pricingTiers,
     List<WorkerCustomService>? customServices,
     bool? pricingConfigured,
+    String? workZone,
     int? rejectionCount,
   }) {
     return WorkerModel(
@@ -96,6 +101,7 @@ class WorkerModel {
       pricingTiers: pricingTiers ?? this.pricingTiers,
       customServices: customServices ?? this.customServices,
       pricingConfigured: pricingConfigured ?? this.pricingConfigured,
+      workZone: workZone ?? this.workZone,
       rejectionCount: rejectionCount ?? this.rejectionCount,
     );
   }

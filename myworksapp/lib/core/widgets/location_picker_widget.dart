@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
+import '../services/user_location_service.dart';
 import '../theme/app_colors.dart';
 import 'job_location_map.dart';
 
@@ -123,6 +124,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           _hasError = false;
         });
         _emitLocation(address, latitude, longitude);
+        await _cacheLocation(latitude, longitude);
       } else {
         if (!mounted) return;
         setState(() {
@@ -137,6 +139,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           latitude,
           longitude,
         );
+        await _cacheLocation(latitude, longitude);
       }
     } catch (e) {
       if (!mounted) return;
@@ -152,6 +155,17 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         latitude,
         longitude,
       );
+      await _cacheLocation(latitude, longitude);
+    }
+  }
+
+  Future<void> _cacheLocation(double latitude, double longitude) async {
+    final ctx = await UserLocationService.instance.fromCoordinates(
+      latitude,
+      longitude,
+    );
+    if (ctx != null) {
+      await UserLocationService.instance.persist(ctx);
     }
   }
 

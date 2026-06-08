@@ -1,32 +1,30 @@
 import '../database/repositories/user_repository.dart';
 import '../database/repositories/worker_repository.dart';
 import '../database/repositories/portfolio_repository.dart';
-import '../database/repositories/service_repository.dart';
 import '../utils/app_logger.dart';
 
-/// Checklist de onboarding para trabajadores
-/// 
-/// Requisitos mínimos para que un trabajador esté activo y reciba trabajos:
+/// Checklist de onboarding para trabajadores.
+///
+/// Requisitos para aparecer en búsquedas y recibir trabajos:
 /// - Foto de perfil
 /// - Descripción profesional (mín. 150 caracteres)
 /// - Al menos 1 foto en portafolio
-/// - Servicio seleccionado
+/// - Categoría de servicio configurada
 /// - Zona de trabajo definida
+/// - Tarifas configuradas
 class WorkerOnboardingChecklistService {
-  static final WorkerOnboardingChecklistService instance = 
+  static final WorkerOnboardingChecklistService instance =
       WorkerOnboardingChecklistService._();
   WorkerOnboardingChecklistService._();
 
   final UserRepository _userRepository = UserRepository();
   final WorkerRepository _workerRepository = WorkerRepository();
   final PortfolioRepository _portfolioRepository = PortfolioRepository();
-  final ServiceRepository _serviceRepository = ServiceRepository();
 
-  /// Requisitos del checklist
   static const int minDescriptionLength = 150;
   static const int minPortfolioPhotos = 1;
+  static const int totalItems = 6;
 
-  /// Verifica si un trabajador cumple con todos los requisitos
   Future<WorkerOnboardingStatus> checkStatus(String workerId) async {
     try {
       final user = await _userRepository.getUserById(workerId);
@@ -47,19 +45,23 @@ class WorkerOnboardingChecklistService {
         );
       }
 
-      final portfolio = await _portfolioRepository.getPortfolioByWorkerId(workerId);
-      
+      final portfolio =
+          await _portfolioRepository.getPortfolioByWorkerId(workerId);
+
       final missingItems = <String>[];
-      int completedItems = 0;
-      const totalItems = 5;
+      var completedItems = 0;
 
       // 1. Foto de perfil
-      // TODO: Implementar cuando UserModel tenga profilePhoto
-      // Por ahora, asumimos que no es requerido para MVP
-      completedItems++;
+      final hasPhoto = user.profilePhotoPath != null &&
+          user.profilePhotoPath!.trim().isNotEmpty;
+      if (!hasPhoto) {
+        missingItems.add('Foto de perfil');
+      } else {
+        completedItems++;
+      }
 
-      // 2. Descripción profesional (mín. 150 caracteres)
-      if (worker.description == null || 
+      // 2. Descripción profesional
+      if (worker.description == null ||
           worker.description!.trim().length < minDescriptionLength) {
         missingItems.add(
           'Descripción profesional (mín. $minDescriptionLength caracteres)',
@@ -68,41 +70,40 @@ class WorkerOnboardingChecklistService {
         completedItems++;
       }
 
-      // 3. Al menos 1 foto en portafolio
+      // 3. Portafolio
       if (portfolio.length < minPortfolioPhotos) {
         missingItems.add('Al menos $minPortfolioPhotos foto en portafolio');
       } else {
         completedItems++;
       }
 
-      // 4. Servicio seleccionado (profession debe estar en servicios activos)
-      if (worker.profession.isEmpty) {
+      // 4. Servicio / categoría
+      if (worker.serviceCategory.isEmpty ||
+          worker.serviceCategory == 'general') {
         missingItems.add('Servicio seleccionado');
       } else {
-        // Verificar que el servicio existe y está activo
-        final services = await _serviceRepository.getAllServices();
-        final serviceExists = services.any(
-          (s) => s.name.toLowerCase() == worker.profession.toLowerCase() ||
-                 s.category.toLowerCase() == worker.profession.toLowerCase(),
-        );
-        
-        if (!serviceExists) {
-          missingItems.add('Servicio válido seleccionado');
-        } else {
-          completedItems++;
-        }
+        completedItems++;
       }
 
-      // 5. Zona de trabajo definida
-      // Por ahora, asumimos que si el trabajador está registrado, tiene zona
-      // En el futuro, esto puede requerir una tabla de zonas de trabajo
-      completedItems++; // TODO: Implementar verificación real de zona
+      // 5. Zona de trabajo
+      if (worker.workZone == null || worker.workZone!.trim().length < 3) {
+        missingItems.add('Zona de trabajo definida');
+      } else {
+        completedItems++;
+      }
 
-      final completionPercentage = (completedItems / totalItems * 100).round();
-      final isComplete = missingItems.isEmpty;
+      // 6. Tarifas configuradas
+      if (!worker.pricingConfigured) {
+        missingItems.add('Tarifas y precios configurados');
+      } else {
+        completedItems++;
+      }
+
+      final completionPercentage =
+          (completedItems / totalItems * 100).round();
 
       return WorkerOnboardingStatus(
-        isComplete: isComplete,
+        isComplete: missingItems.isEmpty,
         completionPercentage: completionPercentage,
         missingItems: missingItems,
         completedItems: completedItems,
@@ -118,13 +119,19 @@ class WorkerOnboardingChecklistService {
     }
   }
 
-  /// Verifica si un trabajador puede recibir trabajos
   Future<bool> canReceiveJobs(String workerId) async {
     final status = await checkStatus(workerId);
     return status.isComplete;
   }
 
-  /// Obtiene el siguiente paso pendiente para completar el onboarding
+  Future<bool> isListedInSearch(String workerId) async {
+    final worker = await _workerRepository.getWorkerByUserId(workerId);
+    if (worker == null || !worker.pricingConfigured || !worker.isAvailable) {
+      return false;
+    }
+    return canReceiveJobs(workerId);
+  }
+
   Future<String?> getNextPendingStep(String workerId) async {
     final status = await checkStatus(workerId);
     if (status.missingItems.isNotEmpty) {
@@ -134,7 +141,6 @@ class WorkerOnboardingChecklistService {
   }
 }
 
-/// Estado del onboarding de un trabajador
 class WorkerOnboardingStatus {
   final bool isComplete;
   final int completionPercentage;
@@ -160,4 +166,3 @@ class WorkerOnboardingStatus {
     };
   }
 }
-

@@ -10,6 +10,7 @@ import 'core/utils/app_logger.dart';
 import 'core/utils/constants.dart';
 import 'core/utils/app_text_scaling.dart';
 import 'core/widgets/design_system/responsive_shell.dart';
+import 'core/widgets/notification_listener_scope.dart';
 
 /// Widget principal de la aplicación
 /// 
@@ -112,8 +113,10 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
         final mediaQuery = AppTextScaling.apply(MediaQuery.of(context));
         return MediaQuery(
           data: mediaQuery,
-          child: ResponsiveShell(
-            child: child ?? const SizedBox.shrink(),
+          child: NotificationListenerScope(
+            child: ResponsiveShell(
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },

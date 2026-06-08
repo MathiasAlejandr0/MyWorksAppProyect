@@ -68,7 +68,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (success) {
       final user = ref.read(authProvider).user;
       if (user != null) {
-        if (user.role == AppConstants.roleUser) {
+        if (user.role == AppConstants.roleAdmin) {
+          context.go(AppConstants.routeAdminDashboard);
+        } else if (user.role == AppConstants.roleUser) {
           context.go(AppConstants.routeUserHome);
         } else {
           await goToWorkerEntryRoute(context, user.id);

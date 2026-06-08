@@ -34,6 +34,9 @@ import '../../features/gdpr/presentation/pages/terms_page.dart';
 import '../../features/gdpr/presentation/pages/user_rights_page.dart';
 import '../../core/presentation/pages/maintenance_page.dart';
 import '../../core/presentation/pages/help_center_page.dart';
+import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../../features/admin/presentation/pages/admin_users_page.dart';
+import '../../features/admin/presentation/pages/admin_disputes_page.dart';
 import '../../core/utils/constants.dart';
 import '../../core/database/repositories/worker_repository.dart';
 
@@ -76,17 +79,19 @@ final routerProvider = Provider<GoRouter>((ref) {
 
         // Si está logueado y está en welcome/auth/onboarding, redirigir según rol
         if (isLoggedIn && (isOnWelcome || isOnAuth)) {
+          if (authUser.role == AppConstants.roleAdmin) {
+            return AppConstants.routeAdminDashboard;
+          }
           if (authUser.role == AppConstants.roleUser) {
             return AppConstants.routeUserHome;
-          } else {
-            final workerRepo = WorkerRepository();
-            final worker = await workerRepo.getWorkerByUserId(authUser.id);
-            if (worker == null) return AppConstants.routeWorkerRegister;
-            if (!worker.pricingConfigured) {
-              return AppConstants.routeWorkerPricingSetup;
-            }
-            return AppConstants.routeWorkerHome;
           }
+          final workerRepo = WorkerRepository();
+          final worker = await workerRepo.getWorkerByUserId(authUser.id);
+          if (worker == null) return AppConstants.routeWorkerRegister;
+          if (!worker.pricingConfigured) {
+            return AppConstants.routeWorkerPricingSetup;
+          }
+          return AppConstants.routeWorkerHome;
         }
 
         // Trabajador sin precios configurados no debe entrar al inicio aún
@@ -98,6 +103,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             return AppConstants.routeWorkerPricingSetup;
           }
         }
+
+        final isAdminRoute = state.matchedLocation.startsWith('/admin');
+        if (isLoggedIn && isAdminRoute && authUser.role != AppConstants.roleAdmin) {
+          return authUser.role == AppConstants.roleWorker
+              ? AppConstants.routeWorkerHome
+              : AppConstants.routeUserHome;
+        }
+
       } catch (e) {
         // Si hay error, continuar sin redirección
         // Error silenciado para evitar crashes en producción
@@ -291,6 +304,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           final role = state.extra as String?;
           return HelpCenterPage(userRole: role);
         },
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminDashboard,
+        builder: (context, state) => const AdminDashboardPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminUsers,
+        builder: (context, state) => const AdminUsersPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminDisputes,
+        builder: (context, state) => const AdminDisputesPage(),
       ),
     ],
   );

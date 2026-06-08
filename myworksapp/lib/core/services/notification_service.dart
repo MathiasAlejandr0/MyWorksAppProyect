@@ -1,10 +1,11 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:uuid/uuid.dart';
+
 import '../database/repositories/notification_repository.dart';
 import '../database/models/notification_model.dart';
-import '../utils/platform_support.dart';
-import 'package:uuid/uuid.dart';
+import '../utils/app_logger.dart';
 
 class NotificationService {
   static final NotificationService instance = NotificationService._init();
@@ -52,7 +53,7 @@ class NotificationService {
       }
     } catch (e) {
       _isInitialized = false;
-      print('Error inicializando notificaciones: $e');
+      AppLogger.e('Error inicializando notificaciones', e);
     }
   }
 
@@ -86,10 +87,19 @@ class NotificationService {
     try {
       await _notificationRepository.createNotification(notification);
     } catch (e) {
-      print('Error guardando notificación en Supabase: $e');
+      AppLogger.e('Error guardando notificación en Supabase', e);
     }
 
     await _showLocalBanner(title: title, body: body, id: notification.id.hashCode);
+  }
+
+  /// Muestra banner local para una notificación recibida por Realtime (sin reinsertar).
+  Future<void> showIncomingNotification(NotificationModel notification) async {
+    await _showLocalBanner(
+      title: notification.title,
+      body: notification.body,
+      id: notification.id.hashCode,
+    );
   }
 
   Future<void> _showLocalBanner({
@@ -99,9 +109,6 @@ class NotificationService {
   }) async {
     if (!_isInitialized) return;
 
-    // En escritorio el plugin no siempre está disponible; las notificaciones in-app bastan.
-    if (AppPlatform.isDesktopNative) return;
-
     try {
       const androidDetails = AndroidNotificationDetails(
         'myworksapp_channel',
@@ -109,16 +116,27 @@ class NotificationService {
         channelDescription: 'Notificaciones de trabajos y mensajes',
         importance: Importance.high,
         priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
       );
+
+      const darwinDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const linuxDetails = LinuxNotificationDetails();
 
       const details = NotificationDetails(
         android: androidDetails,
-        iOS: DarwinNotificationDetails(),
+        iOS: darwinDetails,
+        macOS: darwinDetails,
+        linux: linuxDetails,
       );
 
       await _notifications.show(id, title, body, details);
     } catch (e) {
-      print('Error mostrando notificación local: $e');
+      AppLogger.w('No se pudo mostrar notificación local', e);
     }
   }
 
@@ -142,10 +160,10 @@ class NotificationService {
     try {
       await _notificationRepository.createNotification(notification);
     } catch (e) {
-      print('Error guardando notificación programada: $e');
+      AppLogger.e('Error guardando notificación programada', e);
     }
 
-    if (!_isInitialized || AppPlatform.isDesktopNative) return;
+    if (!_isInitialized) return;
 
     try {
       const androidDetails = AndroidNotificationDetails(
@@ -172,7 +190,7 @@ class NotificationService {
             UILocalNotificationDateInterpretation.absoluteTime,
       );
     } catch (e) {
-      print('Error programando notificación local: $e');
+      AppLogger.w('Error programando notificación local', e);
     }
   }
 

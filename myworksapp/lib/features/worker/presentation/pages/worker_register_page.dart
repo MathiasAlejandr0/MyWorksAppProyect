@@ -9,6 +9,7 @@ import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/domain/worker_service_options_catalog.dart';
 import '../../../../core/utils/service_worker_mapper.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../widgets/worker_work_zone_field.dart';
 
 class WorkerRegisterPage extends ConsumerStatefulWidget {
   const WorkerRegisterPage({super.key});
@@ -27,6 +28,7 @@ class _WorkerRegisterPageState extends ConsumerState<WorkerRegisterPage> {
   final List<String> _professions = ServiceWorkerMapper.registrationProfessions;
 
   String? _selectedProfession;
+  String? _selectedWorkZone;
 
   @override
   void dispose() {
@@ -37,9 +39,11 @@ class _WorkerRegisterPageState extends ConsumerState<WorkerRegisterPage> {
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedProfession == null) {
+    if (_selectedProfession == null || _selectedWorkZone == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor selecciona una profesión')),
+        const SnackBar(
+          content: Text('Selecciona profesión y zona de trabajo'),
+        ),
       );
       return;
     }
@@ -65,6 +69,7 @@ class _WorkerRegisterPageState extends ConsumerState<WorkerRegisterPage> {
         description: _descriptionController.text.trim(),
         isAvailable: true,
         serviceCategory: category,
+        workZone: _selectedWorkZone,
         pricingTiers: WorkerServiceOptionsCatalog.defaultTiersFor(category),
       );
 
@@ -135,6 +140,11 @@ class _WorkerRegisterPageState extends ConsumerState<WorkerRegisterPage> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+              WorkerWorkZoneField(
+                value: _selectedWorkZone,
+                onChanged: (value) => setState(() => _selectedWorkZone = value),
               ),
               const SizedBox(height: 16),
               TextFormField(

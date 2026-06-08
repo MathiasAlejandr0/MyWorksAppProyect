@@ -4,6 +4,7 @@ import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/models/user_model.dart';
 import '../../../../core/database/supabase_db.dart';
 import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/notification_realtime_service.dart';
 
 class AuthState {
   final UserModel? user;
@@ -119,6 +120,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       await _sessionManager.saveSession(authUser.id, user?.role ?? 'user');
       state = state.copyWith(user: user, isLoading: false);
+      await NotificationRealtimeService.instance.subscribe(authUser.id);
       return true;
     } on AuthException catch (e) {
       state = state.copyWith(
@@ -138,6 +140,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    await NotificationRealtimeService.instance.unsubscribe();
     await _sessionManager.clearSession();
     state = AuthState();
   }
@@ -161,6 +164,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
 
       state = state.copyWith(user: user, isLoading: false);
+      await NotificationRealtimeService.instance.subscribe(userId);
       return true;
     } catch (e) {
       state = state.copyWith(

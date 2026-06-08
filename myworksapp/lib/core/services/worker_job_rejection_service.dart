@@ -1,3 +1,4 @@
+import '../domain/user_location_context.dart';
 import '../database/models/job_model.dart';
 import '../database/models/worker_model.dart';
 import '../database/repositories/job_repository.dart';
@@ -7,6 +8,7 @@ import '../database/repositories/service_repository.dart';
 import '../utils/app_error.dart';
 import '../utils/constants.dart';
 import 'notification_service.dart';
+import 'user_location_service.dart';
 import 'worker_reputation_service.dart';
 
 /// Maneja el rechazo de un trabajo por el profesional e informa al cliente.
@@ -31,7 +33,7 @@ class WorkerJobRejectionService {
     if (job.status == AppConstants.jobStatusCancelled &&
         job.serviceMetadata?['rejection_reason'] == 'worker_unavailable') {
       return _loadAlternatives(
-        serviceId: job.serviceId,
+        job: job,
         excludeWorkerId: workerId,
       );
     }
@@ -79,20 +81,30 @@ class WorkerJobRejectionService {
     } catch (_) {}
 
     return _loadAlternatives(
-      serviceId: job.serviceId,
+      job: job,
       excludeWorkerId: workerId,
     );
   }
 
   Future<List<WorkerModel>> _loadAlternatives({
-    required String serviceId,
+    required JobModel job,
     required String excludeWorkerId,
   }) async {
-    final service = await _services.getServiceById(serviceId);
+    final service = await _services.getServiceById(job.serviceId);
     if (service == null) return [];
 
-    final workers =
-        await _workers.getWorkersByServiceCategory(service.category);
+    UserLocationContext? near;
+    if (job.latitude != null && job.longitude != null) {
+      near = await UserLocationService.instance.fromCoordinates(
+        job.latitude!,
+        job.longitude!,
+      );
+    }
+
+    final workers = await _workers.getWorkersByServiceCategory(
+      service.category,
+      near: near,
+    );
     final jobRepository = JobRepository();
     final available = <WorkerModel>[];
 
@@ -118,7 +130,7 @@ class WorkerJobRejectionService {
     final rejectedId = job.serviceMetadata?['rejected_by_worker_id'] as String?;
     if (rejectedId == null) return [];
     return _loadAlternatives(
-      serviceId: job.serviceId,
+      job: job,
       excludeWorkerId: rejectedId,
     );
   }

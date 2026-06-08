@@ -67,6 +67,7 @@ flutter analyze
 | Rol | Email | Contraseña |
 |-----|-------|------------|
 | Usuario | `usuario@demo.com` | `demo123` |
+| Administrador | `admin@demo.com` | `demo123` |
 | Trabajador | `trabajador@demo.com` | `demo123` |
 
 ## Claves Google Maps (local)

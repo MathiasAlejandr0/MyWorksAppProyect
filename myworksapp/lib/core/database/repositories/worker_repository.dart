@@ -1,5 +1,8 @@
+import '../../domain/user_location_context.dart';
 import '../../domain/worker_login_item.dart';
+import '../../services/worker_onboarding_checklist_service.dart';
 import '../../services/worker_reputation_service.dart';
+import '../../utils/worker_zone_matcher.dart';
 import '../models/worker_model.dart';
 import '../supabase_db.dart';
 import 'job_repository.dart';
@@ -25,16 +28,45 @@ class WorkerRepository {
     return getWorkerByUserId(userId);
   }
 
-  Future<List<WorkerModel>> getWorkersByServiceCategory(String category) async {
+  Future<List<WorkerModel>> getWorkersByServiceCategory(
+    String category, {
+    UserLocationContext? near,
+  }) async {
     final rows = await supabase
         .from(_table)
         .select()
         .eq('isAvailable', 1)
         .eq('serviceCategory', category)
+        .eq('pricingConfigured', 1)
         .order('rating', ascending: false);
-    final workers = rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
-    WorkerReputationService.instance.sortForListing(workers);
-    return workers;
+    final workers =
+        rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
+    return _filterListedWorkers(workers, near: near);
+  }
+
+  /// Solo trabajadores con onboarding completo y en la ciudad del cliente.
+  Future<List<WorkerModel>> _filterListedWorkers(
+    List<WorkerModel> workers, {
+    UserLocationContext? near,
+  }) async {
+    if (near == null) return [];
+
+    final listed = <WorkerModel>[];
+    for (final worker in workers) {
+      if (!await WorkerOnboardingChecklistService.instance
+          .canReceiveJobs(worker.userId)) {
+        continue;
+      }
+      if (!WorkerZoneMatcher.serves(
+        workZone: worker.workZone,
+        userLocation: near,
+      )) {
+        continue;
+      }
+      listed.add(worker);
+    }
+    WorkerReputationService.instance.sortForListing(listed);
+    return listed;
   }
 
   Future<List<WorkerModel>> getWorkersByProfession(String profession) async {
@@ -129,24 +161,23 @@ class WorkerRepository {
   }
 
   // Obtener trabajadores disponibles que no tienen trabajos activos
-  Future<List<WorkerModel>> getAvailableWorkersWithoutActiveJobs() async {
+  Future<List<WorkerModel>> getAvailableWorkersWithoutActiveJobs({
+    UserLocationContext? near,
+  }) async {
     final rows = await supabase
         .from(_table)
         .select()
         .eq('isAvailable', 1)
+        .eq('pricingConfigured', 1)
         .order('rating', ascending: false);
     final allWorkers =
         rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
+    return _filterListedWorkers(allWorkers, near: near);
+  }
 
+  /// Indica si el trabajador tiene trabajos activos (para badge «ocupado»).
+  Future<bool> hasActiveJobs(String userId) async {
     final jobRepository = JobRepository();
-    final availableWorkers = <WorkerModel>[];
-    for (final worker in allWorkers) {
-      final hasActiveJobs = await jobRepository.hasActiveJobs(worker.userId);
-      if (!hasActiveJobs) {
-        availableWorkers.add(worker);
-      }
-    }
-    WorkerReputationService.instance.sortForListing(availableWorkers);
-    return availableWorkers;
+    return jobRepository.hasActiveJobs(userId);
   }
 }

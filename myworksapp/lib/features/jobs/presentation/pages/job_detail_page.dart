@@ -8,6 +8,7 @@ import '../../../../core/utils/constants.dart';
 import '../../../../core/domain/price_quote.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/database/models/change_order_model.dart';
+import '../../../../core/database/models/dispute_model.dart';
 import '../../../../core/database/models/quote_proposal_model.dart';
 import '../../../../core/database/repositories/change_order_repository.dart';
 import '../../../../core/database/repositories/job_repository.dart';
@@ -20,6 +21,7 @@ import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/job_state_machine.dart';
 import '../../../../core/services/job_booking_service.dart';
 import '../../../../core/services/change_order_service.dart';
+import '../../../../core/services/dispute_service.dart';
 import '../../../../core/services/quote_proposal_service.dart';
 import '../../../../core/services/pricing_service.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
@@ -38,6 +40,8 @@ import '../../../worker/presentation/providers/worker_home_refresh_provider.dart
 import '../../../../core/services/worker_job_rejection_service.dart';
 import '../../../user/presentation/widgets/worker_unavailable_dialog.dart';
 import '../widgets/job_accepted_location_card.dart';
+import '../widgets/change_orders_section.dart';
+import '../widgets/dispute_section.dart';
 
 class JobDetailPage extends ConsumerStatefulWidget {
   final String jobId;
@@ -57,6 +61,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
 
   JobModel? _job;
   List<ChangeOrderModel> _changeOrders = [];
+  DisputeModel? _dispute;
   List<QuoteProposalModel> _quoteProposals = [];
   final WorkerRepository _workerRepository = WorkerRepository();
   String? _invitedWorkerName;
@@ -92,6 +97,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         _loadAddress(job);
         _loadValidTransitions(job);
         await _loadChangeOrders(job.id);
+        await _loadDispute(job.id);
         if (job.pricingMode == PricingConstants.modeOpenQuote) {
           await _loadQuoteProposals(job.id);
           await _loadInvitedWorkerName(job);
@@ -142,6 +148,60 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   Future<void> _loadChangeOrders(String jobId) async {
     final orders = await _changeOrderRepository.getByJobId(jobId);
     if (mounted) setState(() => _changeOrders = orders);
+  }
+
+  Future<void> _loadDispute(String jobId) async {
+    final dispute = await DisputeService.instance.getDisputeByJobId(jobId);
+    if (mounted) setState(() => _dispute = dispute);
+  }
+
+  bool _canOpenDispute(JobModel job) {
+    if (_dispute != null &&
+        (_dispute!.status == 'open' || _dispute!.status == 'under_review')) {
+      return false;
+    }
+    return job.status == AppConstants.jobStatusAccepted ||
+        job.status == AppConstants.jobStatusInProgress ||
+        job.status == PricingConstants.jobAwaitingClientApproval ||
+        job.status == AppConstants.jobStatusCompleted;
+  }
+
+  Future<void> _openDispute(String reason, String? description) async {
+    final user = ref.read(authProvider).user;
+    final job = _job;
+    if (user == null || job == null) return;
+
+    try {
+      await DisputeService.instance.openDispute(
+        jobId: job.id,
+        openedBy: user.id,
+        reason: reason,
+        description: description,
+      );
+
+      final notifyUserId =
+          user.id == job.userId ? job.workerId : job.userId;
+      if (notifyUserId != null) {
+        await NotificationService.instance.showNotification(
+          title: 'Disputa abierta',
+          body: 'Se abrió una disputa en el trabajo. Revisa los detalles.',
+          userId: notifyUserId,
+          type: 'dispute_opened',
+          relatedId: job.id,
+        );
+      }
+
+      await _loadJobDetails();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Disputa registrada')),
+      );
+    } on AppError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Future<void> _loadQuoteProposals(String jobId) async {
@@ -1454,25 +1514,22 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                     : null,
               ),
             ],
-            if (_changeOrders.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              Text('Cobros adicionales', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              ..._changeOrders.map((o) => Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Text(o.titulo),
-                      subtitle: Text('${o.descripcion}\n\$${o.montoClp} · ${o.estado}'),
-                      isThreeLine: true,
-                      trailing: o.isPendingClient && !isWorker
-                          ? TextButton(
-                              onPressed: () => _approveChangeOrder(o),
-                              child: const Text('Revisar'),
-                            )
-                          : null,
-                    ),
-                  )),
-            ],
+            const SizedBox(height: 24),
+            ChangeOrdersSection(
+              orders: _changeOrders,
+              isWorker: isWorker,
+              canRequest: isWorker &&
+                  _job!.status == AppConstants.jobStatusInProgress,
+              onRequest: _requestChangeOrder,
+              onReview: !isWorker ? _approveChangeOrder : null,
+            ),
+            const SizedBox(height: 24),
+            DisputeSection(
+              dispute: _dispute,
+              isParticipant: isOwner,
+              canOpenDispute: _canOpenDispute(_job!),
+              onOpenDispute: _openDispute,
+            ),
             const SizedBox(height: 24),
             // Acciones según el rol y estado (validadas con JobStateMachine)
             if (isOwner) ...[
@@ -1515,11 +1572,6 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
               ],
               if (isWorker &&
                   _job!.status == AppConstants.jobStatusInProgress) ...[
-                OutlinedButton.icon(
-                  onPressed: _requestChangeOrder,
-                  icon: const Icon(Icons.add_card_outlined),
-                  label: const Text('Solicitar cobro extra'),
-                ),
                 if (_job!.pricingMode == PricingConstants.modeHourlyBlock) ...[
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
@@ -1560,11 +1612,23 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 ),
               ],
               if (!isWorker && _job!.status == AppConstants.jobStatusCompleted) ...[
-                ElevatedButton(
-                  onPressed: () {
-                    context.push('${AppConstants.routeRating}/${widget.jobId}');
+                FutureBuilder<bool>(
+                  future: DisputeService.instance.canRateJob(widget.jobId),
+                  builder: (context, snapshot) {
+                    final canRate = snapshot.data ?? true;
+                    if (!canRate) {
+                      return const Text(
+                        'Calificación bloqueada por disputa abierta.',
+                        style: TextStyle(color: Colors.orange),
+                      );
+                    }
+                    return ElevatedButton(
+                      onPressed: () {
+                        context.push('${AppConstants.routeRating}/${widget.jobId}');
+                      },
+                      child: const Text('Calificar Trabajo'),
+                    );
                   },
-                  child: const Text('Calificar Trabajo'),
                 ),
               ],
               // Botón de chat (si el trabajo está aceptado o en progreso)

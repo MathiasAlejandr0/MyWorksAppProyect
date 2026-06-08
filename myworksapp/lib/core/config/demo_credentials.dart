@@ -5,6 +5,9 @@ class DemoCredentials {
   static const userEmail = 'usuario@demo.com';
   static const userName = 'Carlos Usuario';
 
+  static const adminEmail = 'admin@demo.com';
+  static const adminName = 'Admin Demo';
+
   static const workerEmail = 'trabajador@demo.com';
   static const workerName = 'Juan Electricista';
 

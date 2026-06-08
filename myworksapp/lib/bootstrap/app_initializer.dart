@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/services/notification_service.dart';
+import '../core/services/notification_realtime_service.dart';
 import '../core/services/session_manager.dart';
 import '../core/services/app_lifecycle_service.dart';
 import '../core/services/app_health_service.dart';
@@ -91,6 +92,7 @@ class AppInitializer {
             final authNotifier = ref.read(authProvider.notifier);
             await authNotifier.restoreSession();
             await authNotifier.loadCurrentUser(userId, silent: true);
+            await NotificationRealtimeService.instance.subscribe(userId);
             AppLogger.i('✅ Sesión restaurada para usuario: $userId');
           }
         } else {

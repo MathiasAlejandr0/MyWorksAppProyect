@@ -9,8 +9,13 @@ import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/models/user_model.dart';
+import '../../../../core/domain/user_location_context.dart';
 import '../../../../core/services/matching_service.dart';
+import '../../../../core/services/user_location_service.dart';
 import '../../../../core/services/worker_reputation_service.dart';
+import '../../../../core/utils/chile_comunas.dart';
+import '../../../../core/utils/platform_support.dart';
+import '../../../../core/utils/worker_zone_matcher.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
@@ -44,6 +49,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   List<WorkerModel> _filteredWorkers = [];
   Map<String, UserModel> _users = {};
   Map<String, double> _matchScores = {}; // Para mostrar scores en modo automático
+  Set<String> _busyWorkerIds = {};
+  UserLocationContext? _userLocation;
   bool _isLoading = true;
   bool _isAutomaticMode = false; // false = Manual, true = Inteligente
   String _sortBy = 'rating';
@@ -115,11 +122,68 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     });
   }
 
+  Future<void> _resolveUserLocation() async {
+    if (widget.jobId != null) {
+      final job = await JobRepository().getJobById(widget.jobId!);
+      if (job?.latitude != null && job?.longitude != null) {
+        _userLocation = await UserLocationService.instance.fromCoordinates(
+          job!.latitude!,
+          job.longitude!,
+        );
+        if (_userLocation != null) {
+          await UserLocationService.instance.persist(_userLocation!);
+          return;
+        }
+      }
+    }
+    _userLocation = await UserLocationService.instance.resolve();
+  }
+
+  Future<void> _selectCityManually() async {
+    String? selected = 'Puerto Montt';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Selecciona tu ciudad'),
+          content: DropdownButtonFormField<String>(
+            initialValue: selected,
+            decoration: const InputDecoration(
+              labelText: 'Ciudad',
+              prefixIcon: Icon(Icons.location_city),
+            ),
+            items: ChileComunas.allZones
+                .where((z) => !z.contains('(todas)'))
+                .map((city) => DropdownMenuItem(value: city, child: Text(city)))
+                .toList(),
+            onChanged: (v) => setDialogState(() => selected = v),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Usar esta ciudad'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (ok != true || selected == null || !mounted) return;
+
+    _userLocation = await UserLocationService.instance.setManualCity(selected!);
+    await _loadWorkers();
+  }
+
   Future<void> _loadWorkers() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
+      await _resolveUserLocation();
       if (_isAutomaticMode && widget.jobId != null && widget.serviceId != null) {
         // Modo automático: usar MatchingService
         await _loadAutomaticMatching();
@@ -169,6 +233,13 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       final scores = <String, double>{};
 
       for (final match in matches) {
+        if (_userLocation == null) break;
+        if (!WorkerZoneMatcher.serves(
+          workZone: match.worker.workZone,
+          userLocation: _userLocation!,
+        )) {
+          continue;
+        }
         workers.add(match.worker);
         users[match.worker.userId] = match.user;
         scores[match.worker.userId] = match.score;
@@ -196,22 +267,28 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       _serviceName = service?.name;
 
       if (service != null) {
-        workers = await _workerRepository.getWorkersByServiceCategory(service.category);
+        workers = await _workerRepository.getWorkersByServiceCategory(
+          service.category,
+          near: _userLocation,
+        );
       } else {
-        workers = await _workerRepository.getAvailableWorkersWithoutActiveJobs();
+        workers = await _workerRepository.getAvailableWorkersWithoutActiveJobs(
+          near: _userLocation,
+        );
       }
     } else {
-      workers = await _workerRepository.getAvailableWorkersWithoutActiveJobs();
+      workers = await _workerRepository.getAvailableWorkersWithoutActiveJobs(
+        near: _userLocation,
+      );
     }
 
-    final jobRepository = JobRepository();
-    final available = <WorkerModel>[];
+    final busyIds = <String>{};
     for (final worker in workers) {
-      if (worker.isAvailable && !await jobRepository.hasActiveJobs(worker.userId)) {
-        available.add(worker);
+      if (await _workerRepository.hasActiveJobs(worker.userId)) {
+        busyIds.add(worker.userId);
       }
     }
-    workers = available;
+    _busyWorkerIds = busyIds;
 
     // Cargar información de usuarios
     final users = <String, UserModel>{};
@@ -242,15 +319,49 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       body: _isLoading
           ? const LoadingWidget()
           : _workers.isEmpty
-              ? EmptyStateWidget(
-                  icon: Icons.person_off,
-                  title: 'No hay trabajadores disponibles',
-                  message: 'Prueba otro servicio o vuelve al inicio para explorar categorías.',
-                  actionLabel: 'Ver otros servicios',
-                  onAction: () => context.go(AppConstants.routeUserHome),
-                )
+              ? _userLocation == null
+                  ? _LocationRequiredState(
+                      onRetry: _loadWorkers,
+                      onSelectCity: _selectCityManually,
+                      isDesktop: AppPlatform.isDesktopNative,
+                    )
+                  : EmptyStateWidget(
+                      icon: Icons.person_off,
+                      title: 'No hay trabajadores en tu ciudad',
+                      message:
+                          'Solo mostramos profesionales en ${_userLocation!.city}. No hay disponibles para este servicio aquí.',
+                      actionLabel: 'Ver otros servicios',
+                      onAction: () => context.go(AppConstants.routeUserHome),
+                    )
               : Column(
                   children: [
+                    if (_userLocation != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        color: AppColors.brandOrangeSoft,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              color: AppColors.brandOrange,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Profesionales en ${_userLocation!.displayLabel}',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     // Toggle Modo Manual / Inteligente
                     if (widget.jobId != null && widget.serviceId != null)
                       Container(
@@ -379,6 +490,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                     final card = _WorkerCard(
                                       worker: worker,
                                       user: user,
+                                      isBusy: _busyWorkerIds.contains(worker.userId),
                                       isRecommended: _isAutomaticMode && score != null,
                                       matchScore: score,
                                       onTap: () {
@@ -416,9 +528,72 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   }
 }
 
+class _LocationRequiredState extends StatelessWidget {
+  const _LocationRequiredState({
+    required this.onRetry,
+    required this.onSelectCity,
+    required this.isDesktop,
+  });
+
+  final VoidCallback onRetry;
+  final VoidCallback onSelectCity;
+  final bool isDesktop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.location_off, size: 64, color: AppColors.brandOrange),
+            const SizedBox(height: 24),
+            Text(
+              'Ubicación requerida',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isDesktop
+                  ? 'En Windows el GPS a veces no responde. Reintenta o selecciona tu ciudad manualmente.'
+                  : 'Activa el GPS y permite ubicación para ver profesionales solo de tu ciudad.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.grayMedium,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: 280,
+              child: ElevatedButton(
+                onPressed: onRetry,
+                child: const Text('Reintentar'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: 280,
+              child: OutlinedButton.icon(
+                onPressed: onSelectCity,
+                icon: const Icon(Icons.location_city),
+                label: const Text('Seleccionar mi ciudad'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _WorkerCard extends StatelessWidget {
   final WorkerModel worker;
   final UserModel? user;
+  final bool isBusy;
   final bool isRecommended;
   final double? matchScore;
   final VoidCallback onTap;
@@ -426,6 +601,7 @@ class _WorkerCard extends StatelessWidget {
   const _WorkerCard({
     required this.worker,
     this.user,
+    this.isBusy = false,
     this.isRecommended = false,
     this.matchScore,
     required this.onTap,
@@ -492,6 +668,18 @@ class _WorkerCard extends StatelessWidget {
                             label: worker.rating.toStringAsFixed(1),
                             color: AppColors.warning,
                           ),
+                          if (worker.workZone != null)
+                            _ChipBadge(
+                              icon: Icons.location_on_outlined,
+                              label: worker.workZone!,
+                              color: AppColors.grayMedium,
+                            ),
+                          if (isBusy)
+                            _ChipBadge(
+                              icon: Icons.schedule,
+                              label: 'Ocupado',
+                              color: AppColors.brandOrange,
+                            ),
                         ],
                       ),
                     ],

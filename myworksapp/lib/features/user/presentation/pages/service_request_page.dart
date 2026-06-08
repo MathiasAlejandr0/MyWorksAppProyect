@@ -12,6 +12,7 @@ import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/domain/price_quote.dart';
 import '../../../../core/services/job_booking_service.dart';
 import '../../../../core/services/open_quote_notification_service.dart';
+import '../../../../core/services/user_location_service.dart';
 import '../../../../core/services/pricing_service.dart';
 import '../../../../core/utils/comuna_utils.dart';
 import '../../../../core/utils/sku_utils.dart';
@@ -562,7 +563,16 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       }
 
       final jobRepository = JobRepository();
-      final workers = await _workerRepository.getWorkersByServiceCategory(service.category);
+      final near = _selectedLatitude != null && _selectedLongitude != null
+          ? await UserLocationService.instance.fromCoordinates(
+              _selectedLatitude!,
+              _selectedLongitude!,
+            )
+          : null;
+      final workers = await _workerRepository.getWorkersByServiceCategory(
+        service.category,
+        near: near,
+      );
       for (final worker in workers) {
         if (worker.isAvailable && !await jobRepository.hasActiveJobs(worker.userId)) {
           await NotificationService.instance.showNotification(

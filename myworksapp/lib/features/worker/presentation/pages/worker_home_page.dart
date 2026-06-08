@@ -19,6 +19,7 @@ import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/worker_home_refresh_provider.dart';
+import '../widgets/worker_onboarding_card.dart';
 
 class WorkerHomePage extends ConsumerStatefulWidget {
   const WorkerHomePage({super.key});
@@ -204,6 +205,10 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                 hasActiveJobs: _hasActiveJobs,
                 loading: _loadingDashboard,
                 onToggleAvailability: _toggleAvailability,
+              ),
+              WorkerOnboardingCard(
+                workerId: user.id,
+                onCompleted: _refresh,
               ),
             if (_loadingDashboard)
               Padding(

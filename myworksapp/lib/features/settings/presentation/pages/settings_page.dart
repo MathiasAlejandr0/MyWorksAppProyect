@@ -80,8 +80,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text('Rol'),
-              subtitle: Text(user.role == AppConstants.roleUser ? 'Usuario' : 'Trabajador'),
+              subtitle: Text(
+                user.role == AppConstants.roleAdmin
+                    ? 'Administrador'
+                    : user.role == AppConstants.roleUser
+                        ? 'Usuario'
+                        : 'Trabajador',
+              ),
             ),
+            if (user.role == AppConstants.roleAdmin) ...[
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings),
+                title: const Text('Panel administrador'),
+                subtitle: const Text('Usuarios, disputas y métricas'),
+                onTap: () => context.push(AppConstants.routeAdminDashboard),
+              ),
+            ],
             const Divider(),
           ],
           // Acerca de

@@ -23,6 +23,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/domain/worker_custom_service.dart';
 import '../../../../core/domain/worker_service_options_catalog.dart';
 import '../widgets/worker_custom_services_editor.dart';
+import '../widgets/worker_work_zone_field.dart';
 import '../widgets/worker_pricing_tiers_editor.dart';
 
 class WorkerProfilePage extends ConsumerStatefulWidget {
@@ -53,6 +54,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
   List<WorkerCustomService> _customServices = [];
   List<PortfolioModel> _portfolio = [];
   double _averageRating = 0.0;
+  String? _workZone;
 
   @override
   void initState() {
@@ -95,6 +97,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
               ? Map<String, int>.from(worker.pricingTiers)
               : WorkerServiceOptionsCatalog.defaultTiersFor(worker.serviceCategory);
           _customServices = List<WorkerCustomService>.from(worker.customServices);
+          _workZone = worker.workZone;
         }
         _isLoading = false;
       });
@@ -190,6 +193,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
         final updatedWorker = _worker!.copyWith(
           profession: _professionController.text.trim(),
           description: _descriptionController.text.trim(),
+          workZone: _workZone,
           pricingTiers: _pricingTiers,
           customServices: _customServices,
           pricingConfigured: true,
@@ -457,6 +461,19 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                 ),
                 maxLines: 4,
               ),
+              const SizedBox(height: 16),
+              if (_isEditing)
+                WorkerWorkZoneField(
+                  value: _workZone,
+                  onChanged: (v) => setState(() => _workZone = v),
+                )
+              else if (_workZone != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.location_on_outlined),
+                  title: const Text('Zona de trabajo'),
+                  subtitle: Text(_workZone!),
+                ),
               if (_worker != null) ...[
                 const SizedBox(height: 24),
                 WorkerPricingTiersEditor(
