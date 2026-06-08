@@ -8,6 +8,7 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/models/rating_model.dart';
 import '../../../../core/database/models/job_model.dart';
+import '../../../../core/database/supabase_db.dart';
 
 class RatingPage extends ConsumerStatefulWidget {
   final String jobId;
@@ -66,6 +67,7 @@ class _RatingPageState extends ConsumerState<RatingPage> {
       final rating = RatingModel(
         id: const Uuid().v4(),
         jobId: widget.jobId,
+        userId: supabase.auth.currentUser?.id,
         score: _selectedRating,
         comment: _commentController.text.trim().isEmpty
             ? null

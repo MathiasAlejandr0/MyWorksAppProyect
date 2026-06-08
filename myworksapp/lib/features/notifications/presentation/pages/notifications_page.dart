@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -156,9 +157,9 @@ class _NotificationItem extends StatelessWidget {
       case 'job_cancelled':
         return Colors.red;
       case 'new_job':
-        return Colors.blue;
+        return AppColors.brandOrange;
       case 'new_message':
-        return Colors.purple;
+        return AppColors.brandOrangeDark;
       default:
         return Colors.grey;
     }

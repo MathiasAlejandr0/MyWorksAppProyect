@@ -18,9 +18,15 @@ class JobTransitionMatrix {
     ],
     AppConstants.jobStatusInProgress: [
       AppConstants.jobStatusCompleted,
+      PricingConstants.jobAwaitingClientApproval,
       AppConstants.jobStatusCancelled,
       AppConstants.jobStatusNoShow,
       PricingConstants.jobPausedChangeOrder,
+    ],
+    PricingConstants.jobAwaitingClientApproval: [
+      AppConstants.jobStatusCompleted,
+      AppConstants.jobStatusInProgress,
+      AppConstants.jobStatusCancelled,
     ],
     AppConstants.jobStatusCompleted: <String>[],
     AppConstants.jobStatusCancelled: <String>[],

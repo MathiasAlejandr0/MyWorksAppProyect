@@ -6,34 +6,33 @@ import 'app_colors.dart';
 class AppDecorations {
   AppDecorations._();
 
-  static const Color screenBackground = Color(0xFFF0F4F8);
+  static const Color screenBackground = AppColors.white;
 
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF061525),
-      Color(0xFF0A2540),
-      Color(0xFF0F3460),
+      AppColors.brandOrangeDark,
+      AppColors.brandOrange,
+      Color(0xFFF5934A),
     ],
     stops: [0.0, 0.55, 1.0],
   );
 
   static const LinearGradient welcomeGradient = LinearGradient(
-    begin: Alignment(-0.8, -1),
-    end: Alignment(0.9, 1),
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
     colors: [
-      Color(0xFF061525),
-      Color(0xFF040E18),
-      Color(0xFF071E33),
-      Color(0xFF050F1A),
+      AppColors.white,
+      AppColors.brandOrangeSoft,
+      Color(0xFFFFFAF7),
     ],
-    stops: [0.0, 0.38, 0.72, 1.0],
+    stops: [0.0, 0.5, 1.0],
   );
 
   static List<BoxShadow> get headerShadow => [
         BoxShadow(
-          color: AppColors.primaryDark.withValues(alpha: 0.28),
+          color: AppColors.brandOrange.withValues(alpha: 0.28),
           blurRadius: 16,
           offset: const Offset(0, 6),
         ),
@@ -47,7 +46,7 @@ class AppDecorations {
             offset: const Offset(0, 5),
           ),
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 10,
           offset: const Offset(0, 3),
         ),
@@ -58,10 +57,10 @@ class AppDecorations {
     double radius = 18,
   }) {
     return BoxDecoration(
-      color: Colors.white,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: (accent ?? AppColors.primaryLight).withValues(alpha: 0.16),
+        color: (accent ?? AppColors.brandOrange).withValues(alpha: 0.16),
       ),
       boxShadow: cardShadow(accent),
     );
@@ -73,12 +72,12 @@ class AppDecorations {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withValues(alpha: 0.14),
-          Colors.white.withValues(alpha: 0.05),
+          Colors.white.withValues(alpha: 0.92),
+          Colors.white.withValues(alpha: 0.72),
         ],
       ),
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      border: Border.all(color: AppColors.brandOrange.withValues(alpha: 0.12)),
     );
   }
 }

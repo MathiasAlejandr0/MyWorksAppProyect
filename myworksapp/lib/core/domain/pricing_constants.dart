@@ -21,6 +21,8 @@ class PricingConstants {
   static const String jobAwaitingQuotes = 'awaiting_quotes';
   static const String jobQuoteSelected = 'quote_selected';
   static const String jobPausedChangeOrder = 'paused_change_order';
+  /// Trabajador envió evidencia; el cliente debe aprobar para cobrar.
+  static const String jobAwaitingClientApproval = 'awaiting_client_approval';
 
   // —— payment_status denormalizado en jobs ——
   static const String paymentNone = 'none';

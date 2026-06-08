@@ -88,10 +88,10 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          backgroundColor: AppColors.backgroundLight,
+          backgroundColor: AppColors.white,
           body: Center(
             child: CircularProgressIndicator(
-              color: AppColors.primaryLight,
+              color: AppColors.brandOrange,
             ),
           ),
         ),

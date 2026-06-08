@@ -69,6 +69,8 @@ dependencies:
   # Info de app
   package_info_plus: ^5.0.1
   supabase_flutter: ^2.8.4
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:

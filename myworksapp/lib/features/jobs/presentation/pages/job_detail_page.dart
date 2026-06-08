@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/domain/price_quote.dart';
 import '../../../../core/domain/pricing_constants.dart';
@@ -32,6 +34,10 @@ import '../../../../core/database/repositories/job_photo_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/widgets/job_location_map.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../worker/presentation/providers/worker_home_refresh_provider.dart';
+import '../../../../core/services/worker_job_rejection_service.dart';
+import '../../../user/presentation/widgets/worker_unavailable_dialog.dart';
+import '../widgets/job_accepted_location_card.dart';
 
 class JobDetailPage extends ConsumerStatefulWidget {
   final String jobId;
@@ -61,6 +67,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   
   // Estados de transiciones válidas (cache)
   Map<String, bool> _canTransition = {};
+  bool _rejectionDialogShown = false;
 
   @override
   void initState() {
@@ -89,6 +96,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
           await _loadQuoteProposals(job.id);
           await _loadInvitedWorkerName(job);
         }
+        await _maybeShowRejectionDialog(job);
       }
     } catch (e) {
       setState(() {
@@ -109,6 +117,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     // Verificar cada transición posible
     final possibleStatuses = [
       PricingConstants.jobAwaitingPayment,
+      PricingConstants.jobAwaitingClientApproval,
       AppConstants.jobStatusAccepted,
       AppConstants.jobStatusInProgress,
       AppConstants.jobStatusCompleted,
@@ -138,6 +147,32 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   Future<void> _loadQuoteProposals(String jobId) async {
     final list = await QuoteProposalService.instance.listForJob(jobId);
     if (mounted) setState(() => _quoteProposals = list);
+  }
+
+  Future<void> _maybeShowRejectionDialog(JobModel job) async {
+    if (_rejectionDialogShown || !mounted) return;
+
+    final authState = ref.read(authProvider);
+    final user = authState.user;
+    if (user == null || user.id != job.userId) return;
+    if (job.status != AppConstants.jobStatusCancelled) return;
+    if (job.serviceMetadata?['rejection_reason'] != 'worker_unavailable') return;
+
+    _rejectionDialogShown = true;
+    final rejectedWorkerId = job.serviceMetadata?['rejected_by_worker_id'] as String?;
+    final rejectedUser = rejectedWorkerId != null
+        ? await _userRepository.getUserById(rejectedWorkerId)
+        : null;
+    final alternatives =
+        await WorkerJobRejectionService.instance.alternativesForJob(job);
+
+    if (!mounted) return;
+    await WorkerUnavailableDialog.show(
+      context,
+      workerName: rejectedUser?.name ?? 'El profesional',
+      alternatives: alternatives,
+      serviceId: job.serviceId,
+    );
   }
 
   Future<void> _loadInvitedWorkerName(JobModel job) async {
@@ -303,6 +338,28 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     return PriceQuote.fromJson(snap);
   }
 
+  bool _isWorkerTierInvitation(JobModel job) {
+    return job.serviceMetadata?['request_type'] == 'worker_tier_invitation';
+  }
+
+  void _goToDashboard() {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+    if (user.role == AppConstants.roleWorker) {
+      requestWorkerHomeRefresh(ref);
+      context.go(AppConstants.routeWorkerHome);
+      return;
+    }
+    context.go(AppConstants.routeUserHome);
+  }
+
+  String _completionTargetStatus(JobModel job) {
+    if (_isWorkerTierInvitation(job)) {
+      return PricingConstants.jobAwaitingClientApproval;
+    }
+    return AppConstants.jobStatusCompleted;
+  }
+
   Future<void> _payEscrow() async {
     final job = _job;
     final auth = ref.read(authProvider).user;
@@ -334,6 +391,137 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pago confirmado y en garantía.')),
+      );
+    } on AppError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _approveCompletion() async {
+    final job = _job;
+    final auth = ref.read(authProvider).user;
+    if (job == null || auth == null) return;
+
+    final quote = _quoteFromJob(job);
+    if (quote == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay monto definido para este trabajo')),
+      );
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Aprobar finalización'),
+        content: const Text(
+          'Al aprobar confirmas que el trabajo fue realizado correctamente y procederás al pago.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Continuar al pago'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    final paid = await EscrowCheckoutSheet.show(
+      context,
+      jobId: job.id,
+      quote: quote,
+    );
+    if (!paid || !mounted) return;
+
+    try {
+      await JobBookingService.instance.confirmCompletionAndPay(
+        jobId: job.id,
+        userId: auth.id,
+      );
+
+      if (job.workerId != null) {
+        requestWorkerHomeRefresh(ref);
+        await NotificationService.instance.showNotification(
+          title: 'Pago confirmado',
+          body:
+              'El cliente aprobó tu trabajo. Activa tu disponibilidad cuando quieras recibir nuevos trabajos.',
+          userId: job.workerId!,
+          type: 'job_completion_approved',
+          relatedId: job.id,
+        );
+      }
+
+      await _loadJobDetails();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Trabajo aprobado y pago realizado.')),
+      );
+      context.push('${AppConstants.routeRating}/${widget.jobId}');
+    } on AppError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _rejectCompletion() async {
+    final job = _job;
+    final auth = ref.read(authProvider).user;
+    if (job == null || auth == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rechazar finalización'),
+        content: const Text(
+          'El trabajo volverá a estado "En curso" para que el profesional pueda corregir o subir nueva evidencia.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Rechazar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await _stateMachine.transitionTo(
+        jobId: widget.jobId,
+        newStatus: AppConstants.jobStatusInProgress,
+        userId: auth.id,
+      );
+
+      if (job.workerId != null) {
+        await NotificationService.instance.showNotification(
+          title: 'Finalización rechazada',
+          body: 'El cliente solicitó revisar el trabajo. Sube nueva evidencia cuando esté listo.',
+          userId: job.workerId!,
+          type: 'job_completion_rejected',
+          relatedId: job.id,
+        );
+      }
+
+      await _loadJobDetails();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Finalización rechazada. El trabajo sigue en curso.')),
       );
     } on AppError catch (e) {
       if (!mounted) return;
@@ -633,9 +821,9 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       // Asignar trabajador
       await _jobRepository.assignWorker(_job!.id, user.id);
       
-      // Actualizar disponibilidad del trabajador a false
-      final WorkerRepository _workerRepository = WorkerRepository();
-      await _workerRepository.updateAvailability(user.id, false);
+      final WorkerRepository workerRepository = WorkerRepository();
+      await workerRepository.updateAvailability(user.id, false);
+      await workerRepository.enforceUnavailableWhileBusy(user.id);
       
       await _loadJobDetails();
       
@@ -653,12 +841,15 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         relatedId: widget.jobId,
       );
 
+      requestWorkerHomeRefresh(ref, openTabIndex: 1);
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Trabajo aceptado. Ahora puedes ver la ubicación exacta. No podrás recibir más trabajos hasta completar este.'),
+          content: Text('Trabajo aceptado. Revisa los detalles en la pestaña En curso.'),
         ),
       );
+      context.go(AppConstants.routeWorkerHome);
     } on AppError catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -681,33 +872,34 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   Future<void> _completeJob() async {
     if (_job == null) return;
 
-    // Validar transición usando JobStateMachine
+    final targetStatus = _completionTargetStatus(_job!);
+
     if (!_stateMachine.isValidTransition(
       _job!.status,
-      AppConstants.jobStatusCompleted,
+      targetStatus,
       pricingMode: _job!.pricingMode,
     )) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se puede completar un trabajo en estado: ${_job!.status}'),
+          content: Text('No se puede finalizar un trabajo en estado: ${_job!.status}'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    // Verificar que el trabajador haya subido fotos
-    final photoCount = await _jobPhotoRepository.getPhotoCountByJobId(widget.jobId);
-    
-    if (photoCount == 0) {
+    final evidenceCount =
+        await _jobPhotoRepository.getEvidenceCountByJobId(widget.jobId);
+
+    if (evidenceCount == 0) {
       if (!mounted) return;
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Fotos Requeridas'),
+          title: const Text('Evidencia requerida'),
           content: const Text(
-            'Debes subir al menos una foto del trabajo antes de completarlo. ¿Quieres subir fotos ahora?',
+            'Debes subir al menos una foto o un video del trabajo antes de finalizarlo. ¿Quieres subir evidencia ahora?',
           ),
           actions: [
             TextButton(
@@ -719,16 +911,14 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 Navigator.pop(context, true);
                 context.push('${AppConstants.routeJobPhotos}/${widget.jobId}');
               },
-              child: const Text('Subir Fotos'),
+              child: const Text('Subir evidencia'),
             ),
           ],
         ),
       );
-      
-      if (confirm != true) {
-        return;
-      }
-      return; // El usuario irá a subir fotos
+
+      if (confirm != true) return;
+      return;
     }
 
     try {
@@ -736,25 +926,51 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       final user = authState.user;
       if (user == null) return;
 
-      // Usar JobStateMachine para la transición
       await _stateMachine.transitionTo(
         jobId: widget.jobId,
-        newStatus: AppConstants.jobStatusCompleted,
+        newStatus: targetStatus,
         userId: user.id,
       );
 
-      await _loadJobDetails();
-      
-      // Restaurar disponibilidad del trabajador
-      if (user.role == AppConstants.roleWorker) {
-        final WorkerRepository _workerRepository = WorkerRepository();
-        await _workerRepository.updateAvailability(user.id, true);
+      if (targetStatus == PricingConstants.jobAwaitingClientApproval) {
+        await NotificationService.instance.showNotification(
+          title: 'Trabajo finalizado',
+          body: 'El profesional subió evidencia. Revisa y aprueba para completar el pago.',
+          userId: _job!.userId,
+          type: 'job_completion_review',
+          relatedId: widget.jobId,
+        );
       }
-      
-      // Si es usuario, mostrar opción de calificar
-      if (user.role == AppConstants.roleUser) {
-        if (!mounted) return;
-        context.push('${AppConstants.routeRating}/${widget.jobId}');
+
+      await _loadJobDetails();
+
+      if (targetStatus == AppConstants.jobStatusCompleted) {
+        if (user.role == AppConstants.roleWorker) {
+          requestWorkerHomeRefresh(ref);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Trabajo finalizado. Activa tu disponibilidad cuando quieras recibir nuevos trabajos.',
+              ),
+            ),
+          );
+        }
+        if (user.role == AppConstants.roleUser) {
+          if (!mounted) return;
+          context.push('${AppConstants.routeRating}/${widget.jobId}');
+        }
+      } else if (!mounted) {
+        return;
+      } else {
+        requestWorkerHomeRefresh(ref);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Evidencia enviada. Cuando el cliente apruebe podrás activar tu disponibilidad.',
+            ),
+          ),
+        );
       }
     } on AppError catch (e) {
       if (!mounted) return;
@@ -870,7 +1086,36 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     );
 
     if (confirm == true) {
+      final authState = ref.read(authProvider);
+      final user = authState.user;
+      if (user == null || _job == null) return;
+
+      final isTierInvitation =
+          _job!.serviceMetadata?['request_type'] == 'worker_tier_invitation';
+
+      if (isTierInvitation) {
+        try {
+          await WorkerJobRejectionService.instance.rejectAndSuggestAlternatives(
+            jobId: widget.jobId,
+            workerId: user.id,
+          );
+          requestWorkerHomeRefresh(ref);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Solicitud rechazada correctamente')),
+          );
+          context.go(AppConstants.routeWorkerHome);
+        } on AppError catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+          );
+        }
+        return;
+      }
+
       await _updateJobStatus(AppConstants.jobStatusCancelled);
+      requestWorkerHomeRefresh(ref);
       if (!mounted) return;
       Navigator.pop(context);
     }
@@ -903,6 +1148,13 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     return Scaffold(
       appBar: AppGradientAppBar(
         title: const Text('Detalles del Trabajo'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_outlined),
+            tooltip: isWorker ? 'Volver al panel' : 'Volver al inicio',
+            onPressed: _goToDashboard,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -934,6 +1186,37 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 ],
               ),
             ),
+            if (_job!.scheduledDate != null) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(Icons.event, color: AppColors.brandOrange),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Solicitado: ${DateFormat('EEEE d MMM yyyy · HH:mm', 'es_CL').format(_job!.scheduledDate!)}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (isWorker &&
+                currentUser?.id == _job!.workerId &&
+                _job!.status != AppConstants.jobStatusPending &&
+                _job!.latitude != null &&
+                _job!.longitude != null) ...[
+              const SizedBox(height: 20),
+              JobAcceptedLocationCard(
+                address: _isLoadingAddress ? 'Obteniendo dirección...' : _displayAddress,
+                latitude: _job!.latitude!,
+                longitude: _job!.longitude!,
+                scheduledDate: _job!.scheduledDate,
+                isLoadingAddress: _isLoadingAddress,
+              ),
+            ],
             if (_job!.pricingMode != PricingConstants.modeLegacy &&
                 _job!.paymentStatus != PricingConstants.paymentNone) ...[
               const SizedBox(height: 12),
@@ -972,6 +1255,80 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 child: Padding(
                   padding: EdgeInsets.all(12),
                   child: Text('El cliente debe completar el pago en garantía para confirmar el trabajo.'),
+                ),
+              ),
+            ],
+            if (_job!.status == PricingConstants.jobAwaitingClientApproval &&
+                !isWorker &&
+                currentUser?.id == _job!.userId) ...[
+              const SizedBox(height: 16),
+              Card(
+                color: Colors.green.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.fact_check, color: Colors.green.shade800),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Revisar finalización del trabajo',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'El profesional subió evidencia del trabajo. Revísala y, si todo está correcto, aprueba para realizar el pago.',
+                      ),
+                      if (_quoteFromJob(_job!) != null) ...[
+                        const SizedBox(height: 12),
+                        PricingQuoteCard(quote: _quoteFromJob(_job!)!),
+                      ],
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push(
+                            '${AppConstants.routeJobPhotos}/${widget.jobId}',
+                            extra: false,
+                          );
+                        },
+                        icon: const Icon(Icons.perm_media),
+                        label: const Text('Ver evidencia (fotos y videos)'),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _approveCompletion,
+                        icon: const Icon(Icons.check_circle),
+                        label: const Text('Aprobar y pagar'),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: _rejectCompletion,
+                        style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                        child: const Text('Rechazar finalización'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            if (_job!.status == PricingConstants.jobAwaitingClientApproval &&
+                isWorker &&
+                currentUser?.id == _job!.workerId) ...[
+              const SizedBox(height: 16),
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    'Evidencia enviada. Esperando que el cliente apruebe la finalización para liberar el pago.',
+                  ),
                 ),
               ),
             ],
@@ -1047,8 +1404,9 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 ),
               ],
             ),
-            // Mapa (solo si el trabajo está aceptado o en progreso)
-            if (_job!.status != AppConstants.jobStatusPending &&
+            // Mapa (cliente u otros roles; el trabajador ya ve JobAcceptedLocationCard)
+            if (!isWorker &&
+                _job!.status != AppConstants.jobStatusPending &&
                 _job!.latitude != null &&
                 _job!.longitude != null) ...[
               const SizedBox(height: 24),
@@ -1172,12 +1530,26 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 ],
                 const SizedBox(height: 8),
               ],
-              if (isWorker && 
+              if (isWorker &&
                   _job!.status == AppConstants.jobStatusInProgress &&
-                  _canTransition[AppConstants.jobStatusCompleted] == true) ...[
+                  (_canTransition[AppConstants.jobStatusCompleted] == true ||
+                      _canTransition[PricingConstants.jobAwaitingClientApproval] ==
+                          true)) ...[
                 ElevatedButton(
                   onPressed: _completeJob,
-                  child: const Text('Finalizar Trabajo'),
+                  child: Text(
+                    _isWorkerTierInvitation(_job!)
+                        ? 'Finalizar y enviar evidencia'
+                        : 'Finalizar Trabajo',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    context.push('${AppConstants.routeJobPhotos}/${widget.jobId}');
+                  },
+                  icon: const Icon(Icons.add_a_photo),
+                  label: const Text('Subir evidencia'),
                 ),
               ],
               if (isWorker &&
@@ -1208,18 +1580,28 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                   label: const Text('Abrir Chat'),
                 ),
               ],
-              // Botón de fotos
-              if (isOwner && _job!.status != AppConstants.jobStatusPending) ...[
+              if (isOwner &&
+                  _job!.status != AppConstants.jobStatusPending &&
+                  _job!.status != AppConstants.jobStatusInProgress) ...[
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
                   onPressed: () {
                     context.push('${AppConstants.routeJobPhotos}/${widget.jobId}');
                   },
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Ver Fotos'),
+                  icon: const Icon(Icons.perm_media),
+                  label: const Text('Ver evidencia'),
                 ),
               ],
             ],
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: _goToDashboard,
+              icon: const Icon(Icons.home_outlined),
+              label: Text(isWorker ? 'Volver al panel' : 'Volver al inicio'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
           ],
         ),
       ),
@@ -1231,9 +1613,9 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       case AppConstants.jobStatusPending:
         return Colors.orange;
       case AppConstants.jobStatusAccepted:
-        return Colors.blue;
+        return AppColors.brandOrange;
       case AppConstants.jobStatusInProgress:
-        return Colors.purple;
+        return AppColors.brandOrangeDark;
       case AppConstants.jobStatusCompleted:
         return Colors.green;
       case AppConstants.jobStatusCancelled:
@@ -1243,9 +1625,11 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       case PricingConstants.jobAwaitingQuotes:
         return Colors.amber;
       case PricingConstants.jobQuoteSelected:
-        return Colors.teal;
+        return AppColors.brandOrange;
       case PricingConstants.jobPausedChangeOrder:
-        return Colors.amber.shade800;
+        return AppColors.brandOrangeDark;
+      case PricingConstants.jobAwaitingClientApproval:
+        return AppColors.brandOrange;
       default:
         return Colors.grey;
     }
@@ -1286,6 +1670,8 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         return Icons.fact_check;
       case PricingConstants.jobPausedChangeOrder:
         return Icons.pause_circle;
+      case PricingConstants.jobAwaitingClientApproval:
+        return Icons.rate_review;
       default:
         return Icons.help_outline;
     }
@@ -1311,6 +1697,8 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         return 'Cotización seleccionada';
       case PricingConstants.jobPausedChangeOrder:
         return 'Cobro extra pendiente';
+      case PricingConstants.jobAwaitingClientApproval:
+        return 'Pendiente de aprobación';
       default:
         return status;
     }

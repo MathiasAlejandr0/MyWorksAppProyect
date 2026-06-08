@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'app_logger.dart';
+
+import '../theme/app_colors.dart';
 import 'app_error.dart';
+import 'app_logger.dart';
 
 /// Manejo centralizado de errores
 class ErrorHandler {
@@ -157,13 +159,13 @@ class ErrorHandler {
       case ErrorType.permission:
         return Colors.amber.shade700;
       case ErrorType.network:
-        return Colors.blue.shade700;
+        return AppColors.brandOrange;
       case ErrorType.validation:
         return Colors.orange.shade600;
       case ErrorType.database:
         return Colors.red.shade700;
       case ErrorType.recoverable:
-        return Colors.blue.shade600;
+        return AppColors.brandOrangeDark;
       default:
         return Colors.red;
     }

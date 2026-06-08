@@ -18,6 +18,7 @@ class PaymentGuard {
     final mode = job.pricingMode;
 
     if (mode == PricingConstants.modeLegacy) {
+      await _validateTierCompletionPayment(job, targetStatus);
       await _validateChangeOrdersOnComplete(job, targetStatus);
       return;
     }
@@ -75,6 +76,27 @@ class PaymentGuard {
   static bool fromAwaitingPaymentToAccepted(JobModel job, String target) {
     return job.status == PricingConstants.jobAwaitingPayment &&
         target == AppConstants.jobStatusAccepted;
+  }
+
+  static bool _isWorkerTierInvitation(JobModel job) {
+    return job.serviceMetadata?['request_type'] == 'worker_tier_invitation';
+  }
+
+  static Future<void> _validateTierCompletionPayment(
+    JobModel job,
+    String targetStatus,
+  ) async {
+    if (targetStatus != AppConstants.jobStatusCompleted) return;
+    if (!_isWorkerTierInvitation(job)) return;
+    if (job.status != PricingConstants.jobAwaitingClientApproval) return;
+
+    final hasPayment =
+        await PaymentService.instance.hasAuthorizedPrimaryPayment(job.id);
+    if (!hasPayment) {
+      throw AppError.validation(
+        'Debes completar el pago antes de aprobar la finalización',
+      );
+    }
   }
 
   static Future<void> _validateChangeOrdersOnComplete(

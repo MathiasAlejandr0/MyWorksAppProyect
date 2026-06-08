@@ -3,52 +3,55 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import '../database/repositories/notification_repository.dart';
 import '../database/models/notification_model.dart';
+import '../utils/platform_support.dart';
 import 'package:uuid/uuid.dart';
 
 class NotificationService {
   static final NotificationService instance = NotificationService._init();
-  final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
   final NotificationRepository _notificationRepository = NotificationRepository();
+  bool _isInitialized = false;
 
   NotificationService._init();
 
   Future<void> initialize() async {
+    if (_isInitialized) return;
+
     try {
-      // Inicializar timezone
       tz.initializeTimeZones();
 
-      // Configuración para Android
       const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-      
-      // Configuración para iOS
-      const iosSettings = DarwinInitializationSettings(
+
+      const darwinSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
       );
 
-      // Configuración para macOS
-      const macosSettings = DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
+      const linuxSettings = LinuxInitializationSettings(
+        defaultActionName: 'Abrir',
       );
 
-      final initSettings = InitializationSettings(
+      const initSettings = InitializationSettings(
         android: androidSettings,
-        iOS: iosSettings,
-        macOS: macosSettings,
+        iOS: darwinSettings,
+        macOS: darwinSettings,
+        linux: linuxSettings,
       );
 
-      await _notifications.initialize(
+      final ok = await _notifications.initialize(
         initSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
       );
 
-      // Solicitar permisos
-      await _requestPermissions();
+      _isInitialized = ok == true;
+
+      if (_isInitialized) {
+        await _requestPermissions();
+      }
     } catch (e) {
-      // Si hay error en la inicialización (especialmente en macOS), continuar sin notificaciones
+      _isInitialized = false;
       print('Error inicializando notificaciones: $e');
     }
   }
@@ -62,7 +65,6 @@ class NotificationService {
 
   void _onNotificationTapped(NotificationResponse response) {
     // Manejar cuando se toca una notificación
-    // Puedes navegar a la pantalla correspondiente
   }
 
   Future<void> showNotification({
@@ -72,7 +74,6 @@ class NotificationService {
     required String type,
     String? relatedId,
   }) async {
-    // Guardar en base de datos
     final notification = NotificationModel(
       id: const Uuid().v4(),
       userId: userId,
@@ -82,30 +83,43 @@ class NotificationService {
       relatedId: relatedId,
       createdAt: DateTime.now(),
     );
-    await _notificationRepository.createNotification(notification);
+    try {
+      await _notificationRepository.createNotification(notification);
+    } catch (e) {
+      print('Error guardando notificación en Supabase: $e');
+    }
 
-    // Mostrar notificación local
-    const androidDetails = AndroidNotificationDetails(
-      'myworksapp_channel',
-      'My Works App Notifications',
-      channelDescription: 'Notificaciones de trabajos y mensajes',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+    await _showLocalBanner(title: title, body: body, id: notification.id.hashCode);
+  }
 
-    const iosDetails = DarwinNotificationDetails();
+  Future<void> _showLocalBanner({
+    required String title,
+    required String body,
+    required int id,
+  }) async {
+    if (!_isInitialized) return;
 
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+    // En escritorio el plugin no siempre está disponible; las notificaciones in-app bastan.
+    if (AppPlatform.isDesktopNative) return;
 
-    await _notifications.show(
-      notification.id.hashCode,
-      title,
-      body,
-      details,
-    );
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'myworksapp_channel',
+        'My Works App Notifications',
+        channelDescription: 'Notificaciones de trabajos y mensajes',
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+
+      const details = NotificationDetails(
+        android: androidDetails,
+        iOS: DarwinNotificationDetails(),
+      );
+
+      await _notifications.show(id, title, body, details);
+    } catch (e) {
+      print('Error mostrando notificación local: $e');
+    }
   }
 
   Future<void> scheduleNotification({
@@ -116,7 +130,6 @@ class NotificationService {
     required String type,
     String? relatedId,
   }) async {
-    // Guardar en base de datos
     final notification = NotificationModel(
       id: const Uuid().v4(),
       userId: userId,
@@ -126,41 +139,54 @@ class NotificationService {
       relatedId: relatedId,
       createdAt: DateTime.now(),
     );
-    await _notificationRepository.createNotification(notification);
+    try {
+      await _notificationRepository.createNotification(notification);
+    } catch (e) {
+      print('Error guardando notificación programada: $e');
+    }
 
-    const androidDetails = AndroidNotificationDetails(
-      'myworksapp_channel',
-      'My Works App Notifications',
-      channelDescription: 'Notificaciones programadas',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+    if (!_isInitialized || AppPlatform.isDesktopNative) return;
 
-    const iosDetails = DarwinNotificationDetails();
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'myworksapp_channel',
+        'My Works App Notifications',
+        channelDescription: 'Notificaciones programadas',
+        importance: Importance.high,
+        priority: Priority.high,
+      );
 
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+      const details = NotificationDetails(
+        android: androidDetails,
+        iOS: DarwinNotificationDetails(),
+      );
 
-    await _notifications.zonedSchedule(
-      notification.id.hashCode,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledDate, tz.local),
-      details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+      await _notifications.zonedSchedule(
+        notification.id.hashCode,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledDate, tz.local),
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (e) {
+      print('Error programando notificación local: $e');
+    }
   }
 
   Future<void> cancelNotification(int id) async {
-    await _notifications.cancel(id);
+    if (!_isInitialized) return;
+    try {
+      await _notifications.cancel(id);
+    } catch (_) {}
   }
 
   Future<void> cancelAllNotifications() async {
-    await _notifications.cancelAll();
+    if (!_isInitialized) return;
+    try {
+      await _notifications.cancelAll();
+    } catch (_) {}
   }
 }
-

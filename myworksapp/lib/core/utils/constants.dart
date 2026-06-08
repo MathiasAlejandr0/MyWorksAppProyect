@@ -26,6 +26,7 @@ class AppConstants {
   static const String routeUserProfile = '/user/profile';
   static const String routeWorkerProfile = '/worker/profile';
   static const String routeWorkerRegister = '/worker/register';
+  static const String routeWorkerPricingSetup = '/worker/pricing-setup';
   static const String routeServiceRequest = '/user/service-request';
   static const String routeWorkerList = '/user/worker-list';
   static const String routeWorkerDetail = '/user/worker-detail';

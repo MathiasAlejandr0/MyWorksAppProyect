@@ -1,6 +1,7 @@
 import '../database/models/service_pricing_model.dart';
 import '../domain/price_quote.dart';
 import '../domain/pricing_constants.dart';
+import '../domain/worker_service_options_catalog.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 
@@ -150,6 +151,39 @@ class PricingService {
     'WATER_HEATER_INSTALL': 120000,
     'FAUCET_REPLACE': 35000,
   };
+
+  /// Precio fijo según tarifa publicada por el trabajador.
+  PriceQuote calculateWorkerTierPrice({
+    required String optionId,
+    required String optionLabel,
+    required int amountClp,
+    String? comunaKey,
+    WorkerPriceUnit unit = WorkerPriceUnit.fixed,
+  }) {
+    final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
+    final subtotal = (amountClp * factor).round();
+    final fee = serviceFeeFor(subtotal);
+    final unitLabel = unit == WorkerPriceUnit.perSqm ? 'por m²' : 'precio fijo';
+    return PriceQuote(
+      pricingMode: PricingConstants.modeFixedPrice,
+      subtotalClp: subtotal,
+      platformFeeClp: fee,
+      totalClp: subtotal,
+      workerPayoutClp: subtotal - fee,
+      breakdown: {
+        'worker_tier_id': optionId,
+        'worker_tier_label': optionLabel,
+        'base_clp': amountClp,
+        'price_unit': unit.name,
+        'comuna_factor': factor,
+        'service_fee_rate': serviceFeeRate,
+        'service_fee_clp': fee,
+        'worker_payout_clp': subtotal - fee,
+      },
+      message:
+          'Tarifa del profesional ($unitLabel). La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.',
+    );
+  }
 
   /// Modalidad 1: precio fijo (SKU + comuna).
   Future<PriceQuote> calculateFixedPrice({

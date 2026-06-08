@@ -31,8 +31,8 @@ class SecondaryButton extends StatelessWidget {
         child: OutlinedButton(
           onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryLight,
-          side: const BorderSide(color: AppColors.primaryLight, width: 2),
+          foregroundColor: AppColors.brandOrange,
+          side: const BorderSide(color: AppColors.brandOrange, width: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -47,7 +47,7 @@ class SecondaryButton extends StatelessWidget {
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryLight),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandOrange),
                 ),
               )
             : Row(
@@ -61,7 +61,7 @@ class SecondaryButton extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: AppColors.primaryLight,
+                          color: AppColors.brandOrange,
                           fontWeight: FontWeight.w600,
                         ),
                   ),

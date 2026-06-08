@@ -20,6 +20,10 @@ import '../../../../core/database/models/user_model.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/models/portfolio_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../core/domain/worker_custom_service.dart';
+import '../../../../core/domain/worker_service_options_catalog.dart';
+import '../widgets/worker_custom_services_editor.dart';
+import '../widgets/worker_pricing_tiers_editor.dart';
 
 class WorkerProfilePage extends ConsumerStatefulWidget {
   const WorkerProfilePage({super.key});
@@ -45,6 +49,8 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
   bool _photoLoading = false;
   bool _isEditing = false;
   WorkerModel? _worker;
+  Map<String, int> _pricingTiers = {};
+  List<WorkerCustomService> _customServices = [];
   List<PortfolioModel> _portfolio = [];
   double _averageRating = 0.0;
 
@@ -85,6 +91,10 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
         if (worker != null) {
           _professionController.text = worker.profession;
           _descriptionController.text = worker.description ?? '';
+          _pricingTiers = worker.pricingTiers.isNotEmpty
+              ? Map<String, int>.from(worker.pricingTiers)
+              : WorkerServiceOptionsCatalog.defaultTiersFor(worker.serviceCategory);
+          _customServices = List<WorkerCustomService>.from(worker.customServices);
         }
         _isLoading = false;
       });
@@ -180,6 +190,9 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
         final updatedWorker = _worker!.copyWith(
           profession: _professionController.text.trim(),
           description: _descriptionController.text.trim(),
+          pricingTiers: _pricingTiers,
+          customServices: _customServices,
+          pricingConfigured: true,
         );
         await _workerRepository.updateWorker(updatedWorker);
       }
@@ -444,6 +457,21 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                 ),
                 maxLines: 4,
               ),
+              if (_worker != null) ...[
+                const SizedBox(height: 24),
+                WorkerPricingTiersEditor(
+                  category: _worker!.serviceCategory,
+                  initialTiers: _pricingTiers,
+                  enabled: _isEditing,
+                  onChanged: (tiers) => setState(() => _pricingTiers = tiers),
+                ),
+                const SizedBox(height: 24),
+                WorkerCustomServicesEditor(
+                  services: _customServices,
+                  enabled: _isEditing,
+                  onChanged: (services) => setState(() => _customServices = services),
+                ),
+              ],
               const SizedBox(height: 24),
               if (_isEditing)
                 ElevatedButton(

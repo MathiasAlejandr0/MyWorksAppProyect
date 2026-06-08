@@ -99,6 +99,7 @@ class JobStateMachine {
         AppConstants.jobStatusAccepted,
         AppConstants.jobStatusInProgress,
         AppConstants.jobStatusCompleted,
+        PricingConstants.jobAwaitingClientApproval,
         AppConstants.jobStatusNoShow,
         PricingConstants.jobPausedChangeOrder,
       ];
@@ -110,6 +111,8 @@ class JobStateMachine {
         PricingConstants.jobQuoteSelected,
         PricingConstants.jobAwaitingPayment,
         AppConstants.jobStatusAccepted,
+        AppConstants.jobStatusCompleted,
+        AppConstants.jobStatusInProgress,
         AppConstants.jobStatusCancelled,
       ];
       return clientActions.contains(newStatus);

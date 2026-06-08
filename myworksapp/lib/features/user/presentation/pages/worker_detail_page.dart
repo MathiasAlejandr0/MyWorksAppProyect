@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/database/models/portfolio_model.dart';
 import '../../../../core/database/models/user_model.dart';
 import '../../../../core/database/models/worker_model.dart';
+import '../../../../core/database/models/worker_review_model.dart';
 import '../../../../core/database/repositories/portfolio_repository.dart';
+import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
@@ -19,6 +21,7 @@ import '../../../../core/widgets/design_system/error_state_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/portfolio_media_tile.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
+import '../widgets/worker_reviews_section.dart';
 class WorkerDetailPage extends ConsumerStatefulWidget {
   final String workerId;
   final String? serviceId;
@@ -38,12 +41,15 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
   final UserRepository _userRepository = UserRepository();
   final PortfolioRepository _portfolioRepository = PortfolioRepository();
   final ServiceRepository _serviceRepository = ServiceRepository();
+  final RatingRepository _ratingRepository = RatingRepository();
 
   WorkerModel? _worker;
   UserModel? _user;
   List<PortfolioModel> _portfolio = [];
+  List<WorkerReviewModel> _reviews = [];
   String? _resolvedServiceId;
   bool _isLoading = true;
+  bool _isAcceptingJobs = false;
   String? _error;
 
   @override
@@ -60,8 +66,14 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
 
     try {
       final worker = await _workerRepository.getWorkerByUserId(widget.workerId);
+      await _workerRepository.enforceUnavailableWhileBusy(widget.workerId);
+      final acceptingJobs =
+          await _workerRepository.isWorkerAcceptingJobs(widget.workerId);
       final user = await _userRepository.getUserById(widget.workerId);
-      final portfolio = await _portfolioRepository.getPortfolioByWorkerId(widget.workerId);
+      final portfolio =
+          await _portfolioRepository.getPortfolioByWorkerId(widget.workerId);
+      final reviews =
+          await _ratingRepository.getWorkerReviewsForProfile(widget.workerId);
 
       String? serviceId = widget.serviceId;
       if (serviceId == null && worker != null) {
@@ -73,7 +85,9 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
         _worker = worker;
         _user = user;
         _portfolio = portfolio;
+        _reviews = reviews;
         _resolvedServiceId = serviceId;
+        _isAcceptingJobs = acceptingJobs;
         _isLoading = false;
       });
     } catch (e) {
@@ -174,13 +188,13 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
                       ),
                       const SizedBox(width: 16),
                       Icon(
-                        _worker!.isAvailable ? Icons.check_circle : Icons.cancel,
-                        color: _worker!.isAvailable ? AppColors.success : Colors.white54,
+                        _isAcceptingJobs ? Icons.check_circle : Icons.cancel,
+                        color: _isAcceptingJobs ? AppColors.success : Colors.white54,
                         size: 20,
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        _worker!.isAvailable ? 'Disponible' : 'Ocupado',
+                        _isAcceptingJobs ? 'Disponible' : 'Ocupado',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withValues(alpha: 0.9),
                             ),
@@ -221,14 +235,19 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
                     },
                   ),
             const SizedBox(height: 20),
+            WorkerReviewsSection(
+              reviews: _reviews,
+              averageRating: _worker!.rating,
+            ),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _worker!.isAvailable ? _openServiceRequest : null,
+              onPressed: _isAcceptingJobs ? _openServiceRequest : null,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Text('Crear solicitud de servicio'),
             ),
-            if (!_worker!.isAvailable) ...[
+            if (!_isAcceptingJobs) ...[
               const SizedBox(height: 8),
               Text(
                 'Este profesional no está disponible en este momento.',
@@ -297,6 +316,12 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
                 Icons.star_rounded,
                 '${_worker!.rating.toStringAsFixed(1)} de calificación',
               ),
+              if (_reviews.isNotEmpty)
+                _infoChip(
+                  context,
+                  Icons.chat_bubble_outline,
+                  '${_reviews.length} ${_reviews.length == 1 ? 'opinión' : 'opiniones'}',
+                ),
               _infoChip(
                 context,
                 Icons.photo_library_outlined,
@@ -306,8 +331,8 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
               ),
               _infoChip(
                 context,
-                _worker!.isAvailable ? Icons.event_available_outlined : Icons.schedule_outlined,
-                _worker!.isAvailable ? 'Disponible ahora' : 'Agenda ocupada',
+                _isAcceptingJobs ? Icons.event_available_outlined : Icons.schedule_outlined,
+                _isAcceptingJobs ? 'Disponible ahora' : 'Agenda ocupada',
               ),
             ],
           ),

@@ -6,7 +6,9 @@ import '../../../../core/database/models/service_model.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/service_card_palettes.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/widgets/app_guided_tour.dart';
 import '../../../../core/widgets/demo_tour_overlay.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
@@ -25,8 +27,50 @@ class UserHomePage extends ConsumerStatefulWidget {
 class _UserHomePageState extends ConsumerState<UserHomePage> {
   final ServiceRepository _serviceRepository = ServiceRepository();
   final _searchController = TextEditingController();
+  final _profileKey = GlobalKey();
+  final _settingsKey = GlobalKey();
+  final _searchKey = GlobalKey();
+  final _servicesKey = GlobalKey();
+  final _firstServiceKey = GlobalKey();
   List<ServiceModel> _allServices = [];
   String _query = '';
+
+  List<GuidedTourStep> get _homeTourSteps => [
+        const GuidedTourStep(
+          title: 'Bienvenido a MyWorks',
+          description:
+              'Te mostraremos cómo pedir un servicio paso a paso. Puedes omitir la guía en cualquier momento.',
+          align: TourTooltipAlign.center,
+        ),
+        GuidedTourStep(
+          targetKey: _filteredServices.isNotEmpty ? _firstServiceKey : _servicesKey,
+          title: 'Servicios disponibles',
+          description:
+              'Aquí tienes los trabajos que puedes solicitar: limpieza, electricidad, plomería y más. Toca una tarjeta para ver profesionales.',
+          align: TourTooltipAlign.below,
+        ),
+        GuidedTourStep(
+          targetKey: _searchKey,
+          title: 'Búsqueda rápida',
+          description:
+              'Si ya sabes qué necesitas, escribe aquí (por ejemplo "llave" o "luz") para filtrar los servicios.',
+          align: TourTooltipAlign.below,
+        ),
+        GuidedTourStep(
+          targetKey: _profileKey,
+          title: 'Tu perfil',
+          description:
+              'Desde tu avatar revisas tus datos, foto y el historial de solicitudes que has hecho.',
+          align: TourTooltipAlign.below,
+        ),
+        GuidedTourStep(
+          targetKey: _settingsKey,
+          title: 'Configuración',
+          description:
+              'Acá tienes las configuraciones: notificaciones, cuenta y preferencias de la app.',
+          align: TourTooltipAlign.below,
+        ),
+      ];
 
   @override
   void dispose() {
@@ -52,6 +96,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
     final userName = user?.name.split(' ').first ?? 'Usuario';
 
     return DemoTourOverlay(
+      steps: _homeTourSteps,
       child: Scaffold(
         body: AuthSoftBackground(
           showDecorations: false,
@@ -62,6 +107,8 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                 _TopBar(
                   userName: user?.name ?? 'Usuario',
                   photoPath: user?.profilePhotoPath,
+                  profileKey: _profileKey,
+                  settingsKey: _settingsKey,
                   onProfile: () => context.push(AppConstants.routeUserProfile),
                   onSettings: () => context.push(AppConstants.routeSettings),
                 ),
@@ -125,17 +172,25 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            _SearchBar(
-                              controller: _searchController,
-                              onChanged: (value) => setState(() => _query = value),
+                            TourTarget(
+                              tourKey: _searchKey,
+                              width: double.infinity,
+                              child: _SearchBar(
+                                controller: _searchController,
+                                onChanged: (value) => setState(() => _query = value),
+                              ),
                             ),
                             const SizedBox(height: 10),
-                            const Text(
-                              'Servicios Disponibles',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.grayDark,
+                            TourTarget(
+                              tourKey: _servicesKey,
+                              width: double.infinity,
+                              child: const Text(
+                                'Servicios Disponibles',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.grayDark,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -168,7 +223,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                                 itemCount: services.length,
                                 itemBuilder: (context, index) {
                                   final service = services[index];
-                                  return _ServiceCard(
+                                  final card = _ServiceCard(
                                     service: service,
                                     compact: true,
                                     onRequest: () => context.push(
@@ -176,6 +231,13 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                                       extra: {'serviceId': service.id},
                                     ),
                                   );
+                                  if (index == 0) {
+                                    return TourTarget(
+                                      tourKey: _firstServiceKey,
+                                      child: card,
+                                    );
+                                  }
+                                  return card;
                                 },
                               ),
                           ],
@@ -197,12 +259,16 @@ class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.userName,
     required this.photoPath,
+    required this.profileKey,
+    required this.settingsKey,
     required this.onProfile,
     required this.onSettings,
   });
 
   final String userName;
   final String? photoPath;
+  final GlobalKey profileKey;
+  final GlobalKey settingsKey;
   final VoidCallback onProfile;
   final VoidCallback onSettings;
 
@@ -220,32 +286,38 @@ class _TopBar extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                GestureDetector(
-                  onTap: onProfile,
-                  child: ProfileAvatarView(
-                    displayName: userName,
-                    photoPath: photoPath,
-                    radius: 20,
-                    onDarkBackground: false,
+                TourTarget(
+                  tourKey: profileKey,
+                  child: GestureDetector(
+                    onTap: onProfile,
+                    child: ProfileAvatarView(
+                      displayName: userName,
+                      photoPath: photoPath,
+                      radius: 20,
+                      onDarkBackground: false,
+                    ),
                   ),
                 ),
                 Positioned(
                   right: -2,
                   bottom: -2,
-                  child: GestureDetector(
-                    onTap: onSettings,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: AppColors.brandOrange,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.settings_rounded,
-                        size: 12,
-                        color: Colors.white,
+                  child: TourTarget(
+                    tourKey: settingsKey,
+                    child: GestureDetector(
+                      onTap: onSettings,
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: AppColors.brandOrange,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.settings_rounded,
+                          size: 12,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -350,10 +422,9 @@ class _ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = _paletteFor(service.category);
+    final palette = ServiceCardPalette.forCategory(service.category);
     final label = displayName(service);
     final tagline = _taglineFor(service.category);
-    final accent = palette.secondary ?? palette.primary;
 
     return Material(
       color: Colors.white,
@@ -369,15 +440,15 @@ class _ServiceCard extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.white,
-                palette.background.withValues(alpha: 0.45),
+                palette.background,
               ],
             ),
-            border: Border.all(color: palette.primary.withValues(alpha: 0.12)),
+            border: Border.all(color: palette.accent.withValues(alpha: 0.14)),
             boxShadow: [
               BoxShadow(
-                color: palette.primary.withValues(alpha: 0.10),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+                color: palette.accent.withValues(alpha: 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -391,21 +462,14 @@ class _ServiceCard extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      palette.background,
-                      palette.background.withValues(alpha: 0.45),
-                    ],
-                  ),
+                  color: palette.iconBackground,
                   border:
-                      Border.all(color: palette.primary.withValues(alpha: 0.18)),
+                      Border.all(color: palette.accent.withValues(alpha: 0.16)),
                 ),
                 child: Icon(
                   _iconFor(service.category),
                   size: compact ? 22 : 26,
-                  color: palette.primary,
+                  color: palette.accent,
                 ),
               ),
               const Spacer(),
@@ -441,7 +505,7 @@ class _ServiceCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: compact ? 12 : 13,
                       fontWeight: FontWeight.w700,
-                      color: accent,
+                      color: palette.accent,
                       letterSpacing: 0.1,
                     ),
                   ),
@@ -452,12 +516,12 @@ class _ServiceCard extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: accent.withValues(alpha: 0.12),
+                      color: palette.accent.withValues(alpha: 0.12),
                     ),
                     child: Icon(
                       Icons.arrow_forward_rounded,
                       size: compact ? 12 : 13,
-                      color: accent,
+                      color: palette.accent,
                     ),
                   ),
                 ],
@@ -515,74 +579,4 @@ class _ServiceCard extends StatelessWidget {
     }
   }
 
-  static _ServicePalette _paletteFor(String category) {
-    switch (category) {
-      case ServiceCategories.construction:
-        return const _ServicePalette(
-          background: Color(0xFFFEF3E2),
-          primary: Color(0xFFD97706),
-          secondary: Color(0xFF92400E),
-        );
-      case ServiceCategories.plumbing:
-        return const _ServicePalette(
-          background: Color(0xFFE6F4FB),
-          primary: Color(0xFF0284C7),
-          secondary: Color(0xFF075985),
-        );
-      case ServiceCategories.electrical:
-        return const _ServicePalette(
-          background: Color(0xFFFEF6E0),
-          primary: Color(0xFFD9A406),
-          secondary: Color(0xFF92660B),
-        );
-      case ServiceCategories.gardening:
-        return const _ServicePalette(
-          background: Color(0xFFE7F6EC),
-          primary: Color(0xFF16A34A),
-          secondary: Color(0xFF15803D),
-        );
-      case ServiceCategories.cleaning:
-        return const _ServicePalette(
-          background: Color(0xFFE7F3FA),
-          primary: Color(0xFF0EA5E9),
-          secondary: Color(0xFF0369A1),
-        );
-      case ServiceCategories.assembly:
-        return const _ServicePalette(
-          background: Color(0xFFF2EDE6),
-          primary: Color(0xFF92704E),
-          secondary: Color(0xFF5C4733),
-        );
-      case ServiceCategories.techSupport:
-        return const _ServicePalette(
-          background: Color(0xFFEDF1F4),
-          primary: Color(0xFF52707E),
-          secondary: Color(0xFF37474F),
-        );
-      case ServiceCategories.moving:
-        return const _ServicePalette(
-          background: Color(0xFFEDEEFB),
-          primary: Color(0xFF5B5FD6),
-          secondary: Color(0xFF3F3FAE),
-        );
-      default:
-        return const _ServicePalette(
-          background: Color(0xFFEEF2F6),
-          primary: AppColors.brandNavy,
-          secondary: AppColors.brandNavy,
-        );
-    }
-  }
-}
-
-class _ServicePalette {
-  const _ServicePalette({
-    required this.background,
-    required this.primary,
-    this.secondary,
-  });
-
-  final Color background;
-  final Color primary;
-  final Color? secondary;
 }

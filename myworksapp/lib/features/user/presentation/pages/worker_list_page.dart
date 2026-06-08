@@ -10,6 +10,7 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/models/user_model.dart';
 import '../../../../core/services/matching_service.dart';
+import '../../../../core/services/worker_reputation_service.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
@@ -17,6 +18,8 @@ import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/widgets/app_guided_tour.dart' show AppGuidedTour, GuidedTourStep, TourTarget, TourTooltipAlign;
+import '../../../../core/services/demo_tour_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,6 +49,25 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   String _sortBy = 'rating';
   double _minRating = 0.0;
   String? _serviceName;
+  final _workerListKey = GlobalKey();
+  final _firstWorkerKey = GlobalKey();
+
+  List<GuidedTourStep> get _workersTourSteps => [
+        GuidedTourStep(
+          targetKey: _workerListKey,
+          title: 'Profesionales disponibles',
+          description:
+              'Estos son los trabajadores que ofrecen este servicio. Revisa calificación, experiencia y reseñas antes de elegir.',
+          align: TourTooltipAlign.above,
+        ),
+        GuidedTourStep(
+          targetKey: _firstWorkerKey,
+          title: 'Elige un profesional',
+          description:
+              'Toca una tarjeta para ver el perfil completo y continuar con tu solicitud de trabajo.',
+          align: TourTooltipAlign.below,
+        ),
+      ];
 
   @override
   void initState() {
@@ -64,11 +86,13 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   void _onSearchChanged() {
     // Usar debounce para evitar búsquedas en cada tecla
     _debouncer.run(() {
+      if (!mounted) return;
       _filterWorkers();
     });
   }
 
   void _filterWorkers() {
+    if (!mounted) return;
     setState(() {
       _filteredWorkers = _workers.where((worker) {
         final user = _users[worker.userId];
@@ -79,20 +103,20 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         return matchesSearch && matchesRating;
       }).toList();
 
-      // Ordenar
-      _filteredWorkers.sort((a, b) {
-        if (_sortBy == 'rating') {
-          return b.rating.compareTo(a.rating);
-        } else {
+      if (_sortBy == 'rating') {
+        WorkerReputationService.instance.sortForListing(_filteredWorkers);
+      } else {
+        _filteredWorkers.sort((a, b) {
           final nameA = _users[a.userId]?.name ?? '';
           final nameB = _users[b.userId]?.name ?? '';
           return nameA.compareTo(nameB);
-        }
-      });
+        });
+      }
     });
   }
 
   Future<void> _loadWorkers() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
@@ -104,10 +128,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         await _loadManualWorkers();
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      if (mounted) {
-        ErrorHandler.showError(context, e);
-      }
+      ErrorHandler.showError(context, e);
     }
   }
 
@@ -151,6 +174,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         scores[match.worker.userId] = match.score;
       }
 
+      if (!mounted) return;
       setState(() {
         _workers = workers;
         _filteredWorkers = workers;
@@ -198,6 +222,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       }
     }
 
+    if (!mounted) return;
     setState(() {
       _workers = workers;
       _users = users;
@@ -209,7 +234,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final page = Scaffold(
       backgroundColor: AppDecorations.screenBackground,
       appBar: AppGradientAppBar(
         title: Text(_serviceName ?? 'Trabajadores disponibles'),
@@ -339,33 +364,54 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                               title: 'No se encontraron trabajadores',
                               message: 'Intenta con otros filtros o busca otro servicio',
                             )
-                          : RefreshIndicator(
-                              onRefresh: _loadWorkers,
-                              child: ListView.builder(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                itemCount: _filteredWorkers.length,
-                                itemBuilder: (context, index) {
-                                  final worker = _filteredWorkers[index];
-                                  final user = _users[worker.userId];
-                                  final score = _matchScores[worker.userId];
-                                  return _WorkerCard(
-                                    worker: worker,
-                                    user: user,
-                                    isRecommended: _isAutomaticMode && score != null,
-                                    matchScore: score,
-                                    onTap: () {
-                                      context.push(
-                                        '${AppConstants.routeWorkerDetail}/${worker.userId}',
-                                        extra: {'serviceId': widget.serviceId},
+                          : TourTarget(
+                              tourKey: _workerListKey,
+                              width: double.infinity,
+                              child: RefreshIndicator(
+                                onRefresh: _loadWorkers,
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  itemCount: _filteredWorkers.length,
+                                  itemBuilder: (context, index) {
+                                    final worker = _filteredWorkers[index];
+                                    final user = _users[worker.userId];
+                                    final score = _matchScores[worker.userId];
+                                    final card = _WorkerCard(
+                                      worker: worker,
+                                      user: user,
+                                      isRecommended: _isAutomaticMode && score != null,
+                                      matchScore: score,
+                                      onTap: () {
+                                        context.push(
+                                          '${AppConstants.routeWorkerDetail}/${worker.userId}',
+                                          extra: {'serviceId': widget.serviceId},
+                                        );
+                                      },
+                                    );
+                                    if (index == 0) {
+                                      return TourTarget(
+                                        tourKey: _firstWorkerKey,
+                                        width: double.infinity,
+                                        child: card,
                                       );
-                                    },
-                                  );
-                                },
+                                    }
+                                    return card;
+                                  },
+                                ),
                               ),
                             ),
                     ),
                   ],
                 ),
+    );
+
+    if (_isLoading || _filteredWorkers.isEmpty) return page;
+
+    return AppGuidedTour(
+      steps: _workersTourSteps,
+      shouldShow: DemoTourService.shouldShowWorkersTour,
+      onComplete: DemoTourService.completeWorkersTour,
+      child: page,
     );
   }
 }

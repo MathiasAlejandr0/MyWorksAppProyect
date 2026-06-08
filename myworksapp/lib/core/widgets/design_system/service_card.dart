@@ -23,7 +23,7 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = color ?? AppColors.primaryLight;
+    final accent = color ?? AppColors.brandOrange;
 
     return Material(
       color: Colors.transparent,

@@ -16,12 +16,17 @@ import '../../../../core/services/pricing_service.dart';
 import '../../../../core/utils/comuna_utils.dart';
 import '../../../../core/utils/sku_utils.dart';
 import '../../../../core/domain/pricing_mode_recommendation.dart';
+import '../../../../core/domain/worker_service_options_catalog.dart';
 import '../widgets/pricing_mode_questionnaire.dart';
+import '../widgets/worker_service_option_picker.dart';
 import '../widgets/open_quote_submitted_dialog.dart';
+import '../widgets/service_request_submitted_dialog.dart';
 import '../../../../core/widgets/pricing_quote_card.dart';
 import '../../../../core/widgets/escrow_checkout_sheet.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/location_picker_widget.dart';
+import '../../../../core/widgets/app_guided_tour.dart' show AppGuidedTour, GuidedTourStep, TourTarget, TourTooltipAlign;
+import '../../../../core/services/demo_tour_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/job_service.dart';
 import '../../../../core/database/models/user_model.dart';
@@ -69,9 +74,30 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   PriceQuote? _pricePreview;
   PricingModeRecommendation? _pricingRecommendation;
   bool _questionnaireComplete = false;
+  String? _selectedWorkerTierId;
+  WorkerServiceOptionDef? _selectedWorkerOption;
   late final Future<List<ServiceModel>> _servicesFuture;
   List<ServiceModel> _services = [];
   bool _servicesReady = false;
+  final _locationKey = GlobalKey();
+  final _submitKey = GlobalKey();
+
+  List<GuidedTourStep> get _requestTourSteps => [
+        GuidedTourStep(
+          targetKey: _locationKey,
+          title: 'Tu ubicación en el mapa',
+          description:
+              'Detectamos automáticamente dónde estás y lo mostramos en un mapa cuadrado. Así el profesional sabe exactamente a dónde ir.',
+          align: TourTooltipAlign.below,
+        ),
+        GuidedTourStep(
+          targetKey: _submitKey,
+          title: 'Enviar tu solicitud',
+          description:
+              'Cuando completes la descripción y la fecha, pulsa este botón. El profesional recibirá tu pedido y te responderá con una cotización.',
+          align: TourTooltipAlign.above,
+        ),
+      ];
 
   @override
   void initState() {
@@ -115,13 +141,29 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     return null;
   }
 
+  bool get _usesWorkerTierPricing => _selectedWorker != null;
+
   Future<void> _refreshPricePreview() async {
     if (_selectedAddress.length < 5) return;
     final comuna = inferComunaKey(_selectedAddress);
     PriceQuote? preview;
 
     try {
-      if (_pricingMode == PricingConstants.modeFixedPrice) {
+      if (_usesWorkerTierPricing &&
+          _selectedWorkerTierId != null &&
+          _selectedWorkerOption != null) {
+        final price = WorkerServiceOptionsCatalog.priceForWorker(
+          worker: _selectedWorker!,
+          option: _selectedWorkerOption!,
+        );
+        preview = PricingService.instance.calculateWorkerTierPrice(
+          optionId: _selectedWorkerOption!.id,
+          optionLabel: _selectedWorkerOption!.title,
+          amountClp: price,
+          comunaKey: comuna,
+          unit: _selectedWorkerOption!.unit,
+        );
+      } else if (_pricingMode == PricingConstants.modeFixedPrice) {
         final sku = _pricingRecommendation?.skuCode ??
             variantToSkuCode(_selectedVariant);
         if (sku != null) {
@@ -185,8 +227,24 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     super.dispose();
   }
 
+  /// Reemplaza la pila de navegación para no volver paso a paso por el flujo de solicitud.
+  void _navigateAfterJobCreated(
+    String jobId, {
+    ServiceRequestSubmittedAction action = ServiceRequestSubmittedAction.viewJob,
+  }) {
+    if (action == ServiceRequestSubmittedAction.goHome) {
+      context.go(AppConstants.routeUserHome);
+      return;
+    }
+    context.go('${AppConstants.routeJobDetail}/$jobId');
+  }
+
   Future<void> _handleSubmit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_usesWorkerTierPricing) {
+      if (_formKey.currentState?.validate() == false) return;
+    } else if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     if (_selectedServiceId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -256,6 +314,24 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         return;
       }
 
+      if (_selectedWorkerId != null) {
+        final accepting =
+            await _workerRepository.isWorkerAcceptingJobs(_selectedWorkerId!);
+        if (!accepting) {
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Este profesional no está disponible. Elige otro o intenta más tarde.',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+      }
+
       DateTime? scheduledDate;
       if (_selectedDate != null && _selectedTime != null) {
         scheduledDate = DateTime(
@@ -271,6 +347,53 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       final metadata =
           _serviceMetadata.isNotEmpty ? Map<String, dynamic>.from(_serviceMetadata) : null;
       final description = _descriptionController.text.trim();
+
+      if (_usesWorkerTierPricing &&
+          _selectedWorkerTierId != null &&
+          _selectedWorkerOption != null) {
+        final price = WorkerServiceOptionsCatalog.priceForWorker(
+          worker: _selectedWorker!,
+          option: _selectedWorkerOption!,
+        );
+        final job = await JobBookingService.instance.createWorkerTierInvitation(
+          userId: user.id,
+          workerId: _selectedWorkerId!,
+          serviceId: _selectedServiceId!,
+          address: _selectedAddress,
+          tierOptionId: _selectedWorkerOption!.id,
+          tierLabel: _selectedWorkerOption!.title,
+          amountClp: price,
+          description: description.isEmpty ? null : description,
+          scheduledDate: scheduledDate,
+          comunaKey: comuna,
+          latitude: _selectedLatitude,
+          longitude: _selectedLongitude,
+          serviceMetadata: metadata,
+          priceUnit: _selectedWorkerOption!.unit.name,
+        );
+
+        try {
+          await OpenQuoteNotificationService.instance.notifyInvitedWorker(
+            jobId: job.id,
+            workerId: _selectedWorkerId!,
+            jobLabel: _selectedWorkerOption!.title,
+            isTierInvitation: true,
+          );
+        } catch (_) {
+          // La solicitud ya fue creada; la notificación no debe bloquear al usuario.
+        }
+
+        if (!mounted) return;
+        final workerName = _selectedWorkerUser?.name ?? 'el profesional';
+        final action = await ServiceRequestSubmittedDialog.show(
+          context,
+          workerName: workerName,
+          jobLabel: _selectedWorkerOption!.title,
+        );
+        if (!mounted) return;
+        _navigateAfterJobCreated(job.id, action: action);
+        return;
+      }
 
       if (_pricingMode == PricingConstants.modeFixedPrice) {
         final sku = _pricingRecommendation?.skuCode ??
@@ -302,7 +425,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           );
         }
         if (!mounted) return;
-        context.push('${AppConstants.routeJobDetail}/${booking.job.id}');
+        _navigateAfterJobCreated(booking.job.id);
         return;
       }
 
@@ -336,7 +459,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           );
         }
         if (!mounted) return;
-        context.push('${AppConstants.routeJobDetail}/${booking.job.id}');
+        _navigateAfterJobCreated(booking.job.id);
         return;
       }
 
@@ -416,7 +539,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       );
 
       if (_selectedWorkerId != null) {
-        context.push('${AppConstants.routeJobDetail}/${job.id}');
+        _navigateAfterJobCreated(job.id);
       } else {
         context.push(
           AppConstants.routeWorkerList,
@@ -440,7 +563,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final page = Scaffold(
       appBar: AppGradientAppBar(
         title: const Text('Solicitar Servicio'),
       ),
@@ -540,167 +663,222 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                         ),
                   ),
                   const SizedBox(height: 8),
-                  LocationPickerWidget(
-                    onLocationSelected: (address, latitude, longitude) {
-                      if (_selectedAddress == address &&
-                          _selectedLatitude == latitude &&
-                          _selectedLongitude == longitude) {
-                        return;
-                      }
-                      setState(() {
-                        _selectedAddress = address;
-                        _selectedLatitude = latitude;
-                        _selectedLongitude = longitude;
-                      });
-                      _refreshPricePreview();
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  PricingModeQuestionnaire(
-                    workerPreselected: _selectedWorkerId != null,
-                    category: _categoryForSelectedService(),
-                    initialRecommendation: _pricingRecommendation,
-                    onRecommendation: _applyPricingRecommendation,
-                  ),
-                  if (_pricePreview != null) ...[
-                    const SizedBox(height: 12),
-                    PricingQuoteCard(quote: _pricePreview!),
-                  ],
-                  const SizedBox(height: 16),
-                  // Variantes del catálogo (solo si el cuestionario no fijó ítem)
-                  if (_serviceVariants.isNotEmpty &&
-                      _pricingRecommendation?.variantKey == null) ...[
-                    Text(
-                      'Tipo de servicio',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    RadioGroup<String>(
-                      groupValue: _selectedVariant,
-                      onChanged: (value) {
-                        if (value == null) return;
-                        final variant = _serviceVariants
-                            .firstWhere((v) => v['id'] == value);
+                  TourTarget(
+                    tourKey: _locationKey,
+                    width: double.infinity,
+                    child: LocationPickerWidget(
+                      onLocationSelected: (address, latitude, longitude) {
+                        if (_selectedAddress == address &&
+                            _selectedLatitude == latitude &&
+                            _selectedLongitude == longitude) {
+                          return;
+                        }
                         setState(() {
-                          _selectedVariant = value;
-                          _serviceMetadata['variant'] = value;
-                          _serviceMetadata['variantName'] = variant['name'];
-                          _serviceMetadata['variantDescription'] =
-                              variant['description'];
+                          _selectedAddress = address;
+                          _selectedLatitude = latitude;
+                          _selectedLongitude = longitude;
                         });
                         _refreshPricePreview();
                       },
-                      child: Column(
-                        children: _serviceVariants.map((variant) {
-                          final variantId = variant['id'] as String;
-                          final variantName = variant['name'] as String;
-                          final variantDesc = variant['description'] as String?;
-                          final isSelected = _selectedVariant == variantId;
-
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            color: isSelected
-                                ? AppColors.primaryLight.withValues(alpha: 0.1)
-                                : null,
-                            child: RadioListTile<String>(
-                              title: Text(
-                                variantName,
-                                style: TextStyle(
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                              subtitle:
-                                  variantDesc != null ? Text(variantDesc) : null,
-                              value: variantId,
-                            ),
-                          );
-                        }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  if (_usesWorkerTierPricing)
+                    WorkerServiceOptionPicker(
+                      worker: _selectedWorker!,
+                      category: _selectedWorker!.serviceCategory,
+                      initialOptionId: _selectedWorkerTierId,
+                      onSelected: _applyWorkerServiceOption,
+                    )
+                  else
+                    PricingModeQuestionnaire(
+                      workerPreselected: _selectedWorkerId != null,
+                      category: _categoryForSelectedService(),
+                      initialRecommendation: _pricingRecommendation,
+                      onRecommendation: _applyPricingRecommendation,
+                    ),
+                  if (_questionnaireComplete) ...[
+                    if (!_usesWorkerTierPricing && _pricePreview != null) ...[
+                      const SizedBox(height: 12),
+                      PricingQuoteCard(quote: _pricePreview!),
+                    ],
+                    if (!_usesWorkerTierPricing &&
+                        _serviceVariants.isNotEmpty &&
+                        _pricingRecommendation?.variantKey == null) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Tipo de servicio',
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
+                      const SizedBox(height: 8),
+                      RadioGroup<String>(
+                        groupValue: _selectedVariant,
+                        onChanged: (value) {
+                          if (value == null) return;
+                          final variant = _serviceVariants
+                              .firstWhere((v) => v['id'] == value);
+                          setState(() {
+                            _selectedVariant = value;
+                            _serviceMetadata['variant'] = value;
+                            _serviceMetadata['variantName'] = variant['name'];
+                            _serviceMetadata['variantDescription'] =
+                                variant['description'];
+                          });
+                          _refreshPricePreview();
+                        },
+                        child: Column(
+                          children: _serviceVariants.map((variant) {
+                            final variantId = variant['id'] as String;
+                            final variantName = variant['name'] as String;
+                            final variantDesc = variant['description'] as String?;
+                            final isSelected = _selectedVariant == variantId;
+
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              color: isSelected
+                                  ? AppColors.primaryLight.withValues(alpha: 0.1)
+                                  : null,
+                              child: RadioListTile<String>(
+                                title: Text(
+                                  variantName,
+                                  style: TextStyle(
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                                subtitle:
+                                    variantDesc != null ? Text(variantDesc) : null,
+                                value: variantId,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration: InputDecoration(
+                        labelText: _usesWorkerTierPricing
+                            ? 'Detalles adicionales (opcional)'
+                            : 'Descripción del problema',
+                        prefixIcon: const Icon(Icons.description),
+                        hintText: _usesWorkerTierPricing
+                            ? 'Agrega información extra si lo necesitas'
+                            : 'Describe el problema o trabajo a realizar',
+                      ),
+                      maxLines: 5,
+                      validator: _usesWorkerTierPricing
+                          ? null
+                          : Validators.validateDescription,
                     ),
                     const SizedBox(height: 16),
-                  ],
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Descripción del problema',
-                      prefixIcon: Icon(Icons.description),
-                      hintText: 'Describe el problema o trabajo a realizar',
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ListTile(
+                            leading: const Icon(Icons.calendar_today),
+                            title: Text(
+                              _selectedDate == null
+                                  ? 'Seleccionar fecha'
+                                  : DateFormat('dd/MM/yyyy')
+                                      .format(_selectedDate!),
+                            ),
+                            onTap: () async {
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now()
+                                    .add(const Duration(days: 365)),
+                              );
+                              if (date != null) {
+                                setState(() => _selectedDate = date);
+                              }
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: ListTile(
+                            leading: const Icon(Icons.access_time),
+                            title: Text(
+                              _selectedTime == null
+                                  ? 'Seleccionar hora'
+                                  : _selectedTime!.format(context),
+                            ),
+                            onTap: () async {
+                              final time = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.now(),
+                              );
+                              if (time != null) {
+                                setState(() => _selectedTime = time);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                    maxLines: 5,
-                    validator: Validators.validateDescription,
-                  ),
-                  const SizedBox(height: 16),
-                  // Fecha y hora
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ListTile(
-                          leading: const Icon(Icons.calendar_today),
-                          title: Text(
-                            _selectedDate == null
-                                ? 'Seleccionar fecha'
-                                : DateFormat('dd/MM/yyyy').format(_selectedDate!),
-                          ),
-                          onTap: () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(const Duration(days: 365)),
-                            );
-                            if (date != null) {
-                              setState(() => _selectedDate = date);
-                            }
-                          },
-                        ),
+                    const SizedBox(height: 24),
+                    TourTarget(
+                      tourKey: _submitKey,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleSubmit,
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Text(
+                                _usesWorkerTierPricing
+                                    ? 'Solicitar el servicio'
+                                    : _pricingMode ==
+                                            PricingConstants.modeOpenQuote
+                                        ? 'Enviar solicitud al profesional'
+                                        : _pricingMode ==
+                                                PricingConstants.modeLegacy
+                                            ? 'Continuar'
+                                            : 'Continuar al pago',
+                              ),
                       ),
-                      Expanded(
-                        child: ListTile(
-                          leading: const Icon(Icons.access_time),
-                          title: Text(
-                            _selectedTime == null
-                                ? 'Seleccionar hora'
-                                : _selectedTime!.format(context),
-                          ),
-                          onTap: () async {
-                            final time = await showTimePicker(
-                              context: context,
-                              initialTime: TimeOfDay.now(),
-                            );
-                            if (time != null) {
-                              setState(() => _selectedTime = time);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _handleSubmit,
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(
-                            !_questionnaireComplete
-                                ? 'Solicitar al profesional'
-                                : _pricingMode == PricingConstants.modeOpenQuote
-                                    ? 'Enviar solicitud al profesional'
-                                    : _pricingMode == PricingConstants.modeLegacy
-                                        ? 'Continuar'
-                                        : 'Continuar al pago',
-                          ),
-                  ),
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
     );
+
+    if (!_servicesReady) return page;
+
+    return AppGuidedTour(
+      steps: _requestTourSteps,
+      shouldShow: DemoTourService.shouldShowRequestTour,
+      onComplete: DemoTourService.completeRequestTour,
+      child: page,
+    );
+  }
+
+  void _applyWorkerServiceOption(WorkerServiceOptionDef option) {
+    final price = WorkerServiceOptionsCatalog.priceForWorker(
+      worker: _selectedWorker!,
+      option: option,
+    );
+    setState(() {
+      _selectedWorkerTierId = option.id;
+      _selectedWorkerOption = option;
+      _pricingMode = PricingConstants.modeFixedPrice;
+      _questionnaireComplete = true;
+      _serviceMetadata['worker_tier_id'] = option.id;
+      _serviceMetadata['worker_tier_label'] = option.title;
+      _serviceMetadata['worker_tier_price_clp'] = price;
+      _serviceMetadata['worker_tier_unit'] = option.unit.name;
+    });
+    _refreshPricePreview();
   }
 
   void _applyPricingRecommendation(PricingModeRecommendation rec) {

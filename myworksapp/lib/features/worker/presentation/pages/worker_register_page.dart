@@ -6,6 +6,8 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/models/worker_model.dart';
+import '../../../../core/domain/worker_service_options_catalog.dart';
+import '../../../../core/utils/service_worker_mapper.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class WorkerRegisterPage extends ConsumerStatefulWidget {
@@ -22,14 +24,7 @@ class _WorkerRegisterPageState extends ConsumerState<WorkerRegisterPage> {
   final WorkerRepository _workerRepository = WorkerRepository();
   bool _isLoading = false;
 
-  final List<String> _professions = [
-    'Maestro Constructor',
-    'Gasfiter',
-    'Electricista',
-    'Cerrajero',
-    'Pintor',
-    'Técnico en General',
-  ];
+  final List<String> _professions = ServiceWorkerMapper.registrationProfessions;
 
   String? _selectedProfession;
 
@@ -63,11 +58,14 @@ class _WorkerRegisterPageState extends ConsumerState<WorkerRegisterPage> {
         return;
       }
 
+      final category = ServiceWorkerMapper.categoryForProfession(_selectedProfession!);
       final worker = WorkerModel(
         userId: user.id,
         profession: _selectedProfession!,
         description: _descriptionController.text.trim(),
         isAvailable: true,
+        serviceCategory: category,
+        pricingTiers: WorkerServiceOptionsCatalog.defaultTiersFor(category),
       );
 
       await _workerRepository.createWorker(worker);
@@ -78,7 +76,7 @@ class _WorkerRegisterPageState extends ConsumerState<WorkerRegisterPage> {
         const SnackBar(content: Text('Perfil creado exitosamente')),
       );
 
-      context.go(AppConstants.routeWorkerHome);
+      context.go(AppConstants.routeWorkerPricingSetup);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

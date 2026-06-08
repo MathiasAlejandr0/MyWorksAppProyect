@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
@@ -145,9 +146,9 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
       case AppConstants.jobStatusPending:
         return Colors.orange;
       case AppConstants.jobStatusAccepted:
-        return Colors.blue;
+        return AppColors.brandOrange;
       case AppConstants.jobStatusInProgress:
-        return Colors.purple;
+        return AppColors.brandOrangeDark;
       case AppConstants.jobStatusCompleted:
         return Colors.green;
       default:

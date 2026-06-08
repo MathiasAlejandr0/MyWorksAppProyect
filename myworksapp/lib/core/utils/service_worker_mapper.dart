@@ -15,6 +15,29 @@ class ServiceWorkerMapper {
     ServiceCategories.moving: 'Mudanzas',
   };
 
+  /// Profesiones disponibles al registrarse (una por categoría de servicio).
+  static List<String> get registrationProfessions => [
+        professionForCategory(ServiceCategories.construction),
+        professionForCategory(ServiceCategories.plumbing),
+        professionForCategory(ServiceCategories.electrical),
+        professionForCategory(ServiceCategories.cleaning),
+        professionForCategory(ServiceCategories.assembly),
+        professionForCategory(ServiceCategories.techSupport),
+        professionForCategory(ServiceCategories.gardening),
+        professionForCategory(ServiceCategories.moving),
+      ];
+
+  static String? labelForCategory(String? category) => categoryLabels[category];
+
+  static String categoryForProfession(String profession) {
+    for (final entry in categoryLabels.entries) {
+      if (professionForCategory(entry.key) == profession) {
+        return entry.key;
+      }
+    }
+    return 'general';
+  }
+
   static String professionForCategory(String category) {
     switch (category) {
       case ServiceCategories.construction:

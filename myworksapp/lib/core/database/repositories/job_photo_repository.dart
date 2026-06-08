@@ -25,9 +25,12 @@ class JobPhotoRepository {
     await supabase.from(_table).delete().eq('jobId', jobId);
   }
 
-  // Contar fotos de un trabajo
   Future<int> getPhotoCountByJobId(String jobId) async {
     final rows = await supabase.from(_table).select('id').eq('jobId', jobId);
     return rows.length;
+  }
+
+  Future<int> getEvidenceCountByJobId(String jobId) async {
+    return getPhotoCountByJobId(jobId);
   }
 }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/repositories/job_repository.dart';
@@ -14,11 +12,13 @@ import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/open_quote_utils.dart';
 import '../../../../core/utils/location_utils.dart';
+import '../../../../core/utils/job_display_utils.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../providers/worker_home_refresh_provider.dart';
 
 class WorkerHomePage extends ConsumerStatefulWidget {
   const WorkerHomePage({super.key});
@@ -28,29 +28,50 @@ class WorkerHomePage extends ConsumerStatefulWidget {
 }
 
 class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   final JobRepository _jobRepository = JobRepository();
   final WorkerRepository _workerRepository = WorkerRepository();
   final NotificationRepository _notificationRepository = NotificationRepository();
   bool _isAvailable = true;
+  bool _hasActiveJobs = false;
   _WorkerDashboard? _dashboard;
   bool _loadingDashboard = true;
+  int _jobsListGeneration = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) setState(() {});
     });
     _refresh();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _applyOpenTabFromProvider());
+  }
+
+  void _applyOpenTabFromProvider() {
+    final tabIndex = ref.read(workerHomeRefreshProvider).openTabIndex;
+    if (tabIndex == null || !mounted) return;
+    if (tabIndex >= 0 && tabIndex < _tabController.length) {
+      _tabController.animateTo(tabIndex);
+    }
+    clearWorkerHomeOpenTab(ref);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refresh();
+    }
   }
 
   Future<void> _refresh() async {
@@ -61,6 +82,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     setState(() => _loadingDashboard = true);
 
     try {
+      await _workerRepository.enforceUnavailableWhileBusy(user.id);
       final worker = await _workerRepository.getWorkerByUserId(user.id);
       final hasActiveJobs = await _jobRepository.hasActiveJobs(user.id);
       final pending = await _fetchPendingJobs(user.id);
@@ -76,7 +98,9 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
 
       if (mounted) {
         setState(() {
-          _isAvailable = worker?.isAvailable == true && !hasActiveJobs;
+          _jobsListGeneration++;
+          _hasActiveJobs = hasActiveJobs;
+          _isAvailable = worker?.isAvailable == true;
           _dashboard = _WorkerDashboard(
             worker: worker,
             userName: user.name,
@@ -98,13 +122,12 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     final user = ref.read(authProvider).user;
     if (user == null) return;
 
-    final hasActiveJobs = await _jobRepository.hasActiveJobs(user.id);
-    if (hasActiveJobs) {
+    if (_hasActiveJobs) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Completa tus trabajos activos antes de cambiar disponibilidad.',
+            'Tienes un trabajo en curso. Finalízalo antes de activar disponibilidad.',
           ),
           backgroundColor: Colors.orange,
         ),
@@ -114,6 +137,22 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
 
     try {
       final newAvailability = !_isAvailable;
+      if (newAvailability) {
+        final stillBusy = await _jobRepository.hasActiveJobs(user.id);
+        if (stillBusy) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Aún tienes un trabajo activo. Finalízalo antes de activar disponibilidad.',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          await _refresh();
+          return;
+        }
+      }
       await _workerRepository.updateAvailability(user.id, newAvailability);
       setState(() => _isAvailable = newAvailability);
       if (!mounted) return;
@@ -130,6 +169,12 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<WorkerHomeRefreshState>(workerHomeRefreshProvider, (previous, next) {
+      if (previous != null && previous.token != next.token) {
+        _refresh().then((_) => _applyOpenTabFromProvider());
+      }
+    });
+
     final user = ref.watch(authProvider).user;
     if (user == null) {
       return const Scaffold(body: Center(child: Text('Usuario no encontrado')));
@@ -156,6 +201,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                 firstName: firstName,
                 dashboard: _dashboard,
                 isAvailable: _isAvailable,
+                hasActiveJobs: _hasActiveJobs,
                 loading: _loadingDashboard,
                 onToggleAvailability: _toggleAvailability,
               ),
@@ -181,6 +227,9 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                 onCalendar: () => context.push(AppConstants.routeJobSchedule),
                 onStats: () => context.push(AppConstants.routeStatistics),
                 onNotifications: () => context.push(AppConstants.routeNotifications),
+                onEditPricing: () => context.push(
+                  '${AppConstants.routeWorkerPricingSetup}?edit=1',
+                ),
               ),
               if (_dashboard!.highlightJob != null)
                 _ActiveJobBanner(
@@ -241,6 +290,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                         children: [
                           _JobsTab(
                             key: ValueKey('pending-$user.id'),
+                            reloadToken: _jobsListGeneration,
                             loader: () => _fetchPendingJobs(user.id),
                             emptyTitle: 'Sin solicitudes nuevas',
                             emptyMessage: 'Activa tu disponibilidad para recibir trabajos cerca de ti.',
@@ -251,6 +301,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                           ),
                           _JobsTab(
                             key: ValueKey('active-$user.id'),
+                            reloadToken: _jobsListGeneration,
                             loader: () => _fetchActiveJobs(user.id),
                             emptyTitle: 'Nada en curso',
                             emptyMessage: 'Acepta una solicitud pendiente o revisa tu calendario.',
@@ -261,6 +312,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                           ),
                           _JobsTab(
                             key: ValueKey('done-$user.id'),
+                            reloadToken: _jobsListGeneration,
                             loader: () => _fetchCompletedJobs(user.id),
                             emptyTitle: 'Sin historial aún',
                             emptyMessage: 'Tus trabajos completados aparecerán aquí con calificaciones.',
@@ -288,22 +340,27 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     return ' ($count)';
   }
 
-  void _openJob(JobModel job) {
-    context.push('${AppConstants.routeJobDetail}/${job.id}');
+  Future<void> _openJob(JobModel job) async {
+    await context.push('${AppConstants.routeJobDetail}/${job.id}');
+    if (mounted) await _refresh();
   }
 
   Future<List<JobModel>> _fetchPendingJobs(String workerId) async {
     final hasActiveJobs = await _jobRepository.hasActiveJobs(workerId);
     if (hasActiveJobs) return [];
-    final pending = await _jobRepository.getJobsByStatus(AppConstants.jobStatusPending);
+    final assigned = await _jobRepository.getPendingJobsForWorker(workerId);
     final openQuotes = await _jobRepository.getJobsByStatus(
       PricingConstants.jobAwaitingQuotes,
     );
     final openForWorker = openQuotes.where((j) {
       return OpenQuoteUtils.canWorkerSubmitQuote(j, workerId);
     });
-    final legacy = pending.where((j) => j.workerId == null).toList();
-    return [...legacy, ...openForWorker];
+    final legacy = (await _jobRepository.getJobsByStatus(
+      AppConstants.jobStatusPending,
+    ))
+        .where((j) => j.workerId == null)
+        .toList();
+    return [...assigned, ...legacy, ...openForWorker];
   }
 
   Future<List<JobModel>> _fetchActiveJobs(String workerId) async {
@@ -311,7 +368,8 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     return allJobs
         .where((j) =>
             j.status == AppConstants.jobStatusInProgress ||
-            j.status == AppConstants.jobStatusAccepted)
+            j.status == AppConstants.jobStatusAccepted ||
+            j.status == PricingConstants.jobAwaitingClientApproval)
         .toList();
   }
 
@@ -428,6 +486,7 @@ class _WorkerHeader extends StatelessWidget {
     required this.firstName,
     required this.dashboard,
     required this.isAvailable,
+    required this.hasActiveJobs,
     required this.loading,
     required this.onToggleAvailability,
   });
@@ -435,6 +494,7 @@ class _WorkerHeader extends StatelessWidget {
   final String firstName;
   final _WorkerDashboard? dashboard;
   final bool isAvailable;
+  final bool hasActiveJobs;
   final bool loading;
   final VoidCallback onToggleAvailability;
 
@@ -485,6 +545,7 @@ class _WorkerHeader extends StatelessWidget {
               if (!loading)
                 _AvailabilityPill(
                   isAvailable: isAvailable,
+                  hasActiveJobs: hasActiveJobs,
                   onTap: onToggleAvailability,
                 ),
             ],
@@ -542,15 +603,35 @@ class _HeaderChip extends StatelessWidget {
 }
 
 class _AvailabilityPill extends StatelessWidget {
-  const _AvailabilityPill({required this.isAvailable, required this.onTap});
+  const _AvailabilityPill({
+    required this.isAvailable,
+    required this.hasActiveJobs,
+    required this.onTap,
+  });
 
   final bool isAvailable;
+  final bool hasActiveJobs;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final color = isAvailable ? AppColors.success : AppColors.grayMedium;
-    final bg = isAvailable ? AppColors.brandOrangeSoft : AppColors.grayLight;
+    final busy = hasActiveJobs;
+    final available = !busy && isAvailable;
+    final color = busy
+        ? AppColors.warning
+        : available
+            ? AppColors.success
+            : AppColors.grayMedium;
+    final bg = busy
+        ? AppColors.warning.withValues(alpha: 0.12)
+        : available
+            ? AppColors.brandOrangeSoft
+            : AppColors.grayLight;
+    final label = busy
+        ? 'Ocupado'
+        : available
+            ? 'Disponible'
+            : 'No disp.';
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -567,13 +648,13 @@ class _AvailabilityPill extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isAvailable ? Icons.circle : Icons.circle_outlined,
+                available ? Icons.circle : Icons.circle_outlined,
                 size: 10,
                 color: color,
               ),
               const SizedBox(width: 6),
               Text(
-                isAvailable ? 'Disponible' : 'No disp.',
+                label,
                 style: TextStyle(
                   color: AppColors.brandNavy,
                   fontWeight: FontWeight.w700,
@@ -729,12 +810,14 @@ class _QuickActionsRow extends StatelessWidget {
     required this.onCalendar,
     required this.onStats,
     required this.onNotifications,
+    required this.onEditPricing,
   });
 
   final int unread;
   final VoidCallback onCalendar;
   final VoidCallback onStats;
   final VoidCallback onNotifications;
+  final VoidCallback onEditPricing;
 
   @override
   Widget build(BuildContext context) {
@@ -744,6 +827,12 @@ class _QuickActionsRow extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
+          _ActionChip(
+            icon: Icons.payments_outlined,
+            label: 'Mis tarifas',
+            onTap: onEditPricing,
+          ),
+          const SizedBox(width: 8),
           _ActionChip(icon: Icons.calendar_month, label: 'Calendario', onTap: onCalendar),
           const SizedBox(width: 8),
           _ActionChip(icon: Icons.bar_chart_rounded, label: 'Estadísticas', onTap: onStats),
@@ -848,7 +937,7 @@ class _ActiveJobBanner extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        job.description ?? 'Sin descripción',
+                        JobDisplayUtils.title(job),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -857,14 +946,22 @@ class _ActiveJobBanner extends StatelessWidget {
                           color: AppColors.grayDark,
                         ),
                       ),
-                      if (job.scheduledDate != null)
+                      if (JobDisplayUtils.priceLine(job) != null)
                         Text(
-                          'Agendado: ${DateFormat('d MMM', 'es_CL').format(job.scheduledDate!)}',
+                          JobDisplayUtils.priceLine(job)!,
                           style: TextStyle(
-                            color: AppColors.grayMedium,
+                            color: AppColors.brandOrange,
                             fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                      Text(
+                        JobDisplayUtils.dateLine(job),
+                        style: TextStyle(
+                          color: AppColors.grayMedium,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -886,6 +983,7 @@ class _ActiveJobBanner extends StatelessWidget {
 class _JobsTab extends StatefulWidget {
   const _JobsTab({
     super.key,
+    required this.reloadToken,
     required this.loader,
     required this.emptyTitle,
     required this.emptyMessage,
@@ -895,6 +993,7 @@ class _JobsTab extends StatefulWidget {
     this.onEmptyAction,
   });
 
+  final int reloadToken;
   final Future<List<JobModel>> Function() loader;
   final String emptyTitle;
   final String emptyMessage;
@@ -916,9 +1015,21 @@ class _JobsTabState extends State<_JobsTab> {
     _future = widget.loader();
   }
 
+  @override
+  void didUpdateWidget(covariant _JobsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.reloadToken != widget.reloadToken) {
+      setState(() {
+        _future = widget.loader();
+      });
+    }
+  }
+
   Future<void> _reload() async {
     await widget.onRefresh();
-    setState(() => _future = widget.loader());
+    setState(() {
+      _future = widget.loader();
+    });
   }
 
   @override
@@ -1062,7 +1173,7 @@ class _JobCardState extends State<_JobCard> {
                 children: [
                   Expanded(
                     child: Text(
-                      widget.job.description ?? 'Sin descripción',
+                      JobDisplayUtils.title(widget.job),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
@@ -1075,6 +1186,17 @@ class _JobCardState extends State<_JobCard> {
                   _StatusBadge(status: widget.job.status),
                 ],
               ),
+              if (JobDisplayUtils.priceLine(widget.job) != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  JobDisplayUtils.priceLine(widget.job)!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.brandOrange,
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -1103,7 +1225,7 @@ class _JobCardState extends State<_JobCard> {
                   Icon(Icons.access_time, size: 14, color: AppColors.grayMedium.withValues(alpha: 0.8)),
                   const SizedBox(width: 4),
                   Text(
-                    DateFormat('d MMM y', 'es_CL').format(widget.job.createdAt),
+                    JobDisplayUtils.dateLine(widget.job),
                     style: TextStyle(
                       color: AppColors.grayMedium,
                       fontSize: 12,
@@ -1135,6 +1257,8 @@ class _StatusBadge extends StatelessWidget {
       PricingConstants.jobAwaitingQuotes => (AppColors.brandOrange, 'Cotizar'),
       PricingConstants.jobAwaitingPayment => (AppColors.brandOrange, 'Pago cliente'),
       PricingConstants.jobPausedChangeOrder => (AppColors.warning, 'Cobro extra'),
+      PricingConstants.jobAwaitingClientApproval =>
+        (AppColors.brandTeal, 'Esperando cliente'),
       _ => (AppColors.grayMedium, status),
     };
 

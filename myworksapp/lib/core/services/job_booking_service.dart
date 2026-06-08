@@ -4,6 +4,7 @@ import '../database/models/job_model.dart';
 import '../database/repositories/job_repository.dart';
 import '../domain/price_quote.dart';
 import '../domain/pricing_constants.dart';
+import '../domain/worker_service_options_catalog.dart';
 import '../utils/app_error.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
@@ -86,6 +87,56 @@ class JobBookingService {
     return result;
   }
 
+  /// Precio fijo según tarifa publicada por el trabajador.
+  Future<({JobModel job, PriceQuote quote})> createWorkerTierBooking({
+    required String userId,
+    required String workerId,
+    required String serviceId,
+    required String address,
+    required String tierOptionId,
+    required String tierLabel,
+    required int amountClp,
+    String? description,
+    DateTime? scheduledDate,
+    String? comunaKey,
+    double? latitude,
+    double? longitude,
+    Map<String, dynamic>? serviceMetadata,
+    String priceUnit = 'fixed',
+  }) async {
+    final quote = PricingService.instance.calculateWorkerTierPrice(
+      optionId: tierOptionId,
+      optionLabel: tierLabel,
+      amountClp: amountClp,
+      comunaKey: comunaKey,
+      unit: priceUnit == 'perSqm'
+          ? WorkerPriceUnit.perSqm
+          : WorkerPriceUnit.fixed,
+    );
+    final metadata = {
+      ...?serviceMetadata,
+      'worker_tier_id': tierOptionId,
+      'worker_tier_label': tierLabel,
+      'worker_tier_price_clp': amountClp,
+      'worker_tier_unit': priceUnit,
+    };
+    return _createEscrowJob(
+      userId: userId,
+      workerId: workerId,
+      serviceId: serviceId,
+      address: address,
+      description: description,
+      scheduledDate: scheduledDate,
+      comunaKey: comunaKey,
+      latitude: latitude,
+      longitude: longitude,
+      pricingMode: PricingConstants.modeFixedPrice,
+      quote: quote,
+      serviceSkuId: 'tier_$tierOptionId',
+      serviceMetadata: metadata,
+    );
+  }
+
   /// Bloque de horas prepagado (2, 4 u 8 h).
   Future<({JobModel job, PriceQuote quote})> createHourlyBlockBooking({
     required String userId,
@@ -122,6 +173,69 @@ class JobBookingService {
       serviceMetadata: serviceMetadata,
     );
     return result;
+  }
+
+  /// Invitación al profesional con tarifa publicada (sin pago anticipado).
+  Future<JobModel> createWorkerTierInvitation({
+    required String userId,
+    required String workerId,
+    required String serviceId,
+    required String address,
+    required String tierOptionId,
+    required String tierLabel,
+    required int amountClp,
+    String? description,
+    DateTime? scheduledDate,
+    String? comunaKey,
+    double? latitude,
+    double? longitude,
+    Map<String, dynamic>? serviceMetadata,
+    String priceUnit = 'fixed',
+  }) async {
+    final quote = PricingService.instance.calculateWorkerTierPrice(
+      optionId: tierOptionId,
+      optionLabel: tierLabel,
+      amountClp: amountClp,
+      comunaKey: comunaKey,
+      unit: priceUnit == 'perSqm'
+          ? WorkerPriceUnit.perSqm
+          : WorkerPriceUnit.fixed,
+    );
+    final meta = <String, dynamic>{
+      if (serviceMetadata != null) ...serviceMetadata,
+      'invited_worker_id': workerId,
+      'worker_tier_id': tierOptionId,
+      'worker_tier_label': tierLabel,
+      'worker_tier_price_clp': amountClp,
+      'worker_tier_unit': priceUnit,
+      'request_type': 'worker_tier_invitation',
+    };
+    final now = DateTime.now();
+    final job = JobModel(
+      id: const Uuid().v4(),
+      userId: userId,
+      workerId: workerId,
+      serviceId: serviceId,
+      status: AppConstants.jobStatusPending,
+      address: address,
+      description: (description != null && description.trim().isNotEmpty)
+          ? description.trim()
+          : tierLabel,
+      latitude: latitude,
+      longitude: longitude,
+      scheduledDate: scheduledDate,
+      serviceMetadata: meta,
+      pricingMode: PricingConstants.modeLegacy,
+      paymentStatus: PricingConstants.paymentNone,
+      pricingSnapshot: quote.toJson(),
+      serviceSkuId: 'tier_$tierOptionId',
+      comunaId: comunaKey,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await _jobs.createJob(job);
+    AppLogger.i('Invitación worker_tier: ${job.id}');
+    return job;
   }
 
   /// Cotización abierta: el cliente elige un profesional y este envía su propuesta.
@@ -206,6 +320,26 @@ class JobBookingService {
     await _jobs.createJob(job);
     AppLogger.i('Job escrow $pricingMode: ${job.id}');
     return (job: job, quote: quote);
+  }
+
+  /// Tras aprobar evidencia: pago autorizado → trabajo completado.
+  Future<JobModel> confirmCompletionAndPay({
+    required String jobId,
+    required String userId,
+  }) async {
+    final job = await _jobs.getJobById(jobId);
+    if (job == null) throw AppError.notFound('Trabajo no encontrado');
+    if (job.userId != userId) throw AppError.permission('Sin permiso');
+
+    if (job.status != PricingConstants.jobAwaitingClientApproval) {
+      throw AppError.validation('El trabajo no está pendiente de tu aprobación');
+    }
+
+    return _stateMachine.transitionTo(
+      jobId: jobId,
+      newStatus: AppConstants.jobStatusCompleted,
+      userId: userId,
+    );
   }
 
   /// Tras checkout mock: escrow autorizado → trabajo aceptado.

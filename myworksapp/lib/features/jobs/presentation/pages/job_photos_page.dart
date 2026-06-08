@@ -45,28 +45,43 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
     }
   }
 
-  Future<void> _addPhoto() async {
+  Future<void> _saveEvidence({
+    required String path,
+    required String mediaType,
+  }) async {
+    final photo = JobPhotoModel(
+      id: const Uuid().v4(),
+      jobId: widget.jobId,
+      photoPath: path,
+      mediaType: mediaType,
+      createdAt: DateTime.now(),
+    );
+
+    await _photoRepository.createJobPhoto(photo);
+    await _loadPhotos();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          mediaType == JobPhotoModel.mediaVideo
+              ? 'Video agregado'
+              : 'Foto agregada',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
     try {
       final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 80,
       );
-
       if (image == null) return;
-
-      final photo = JobPhotoModel(
-        id: const Uuid().v4(),
-        jobId: widget.jobId,
-        photoPath: image.path,
-        createdAt: DateTime.now(),
-      );
-
-      await _photoRepository.createJobPhoto(photo);
-      await _loadPhotos();
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Foto agregada')),
+      await _saveEvidence(
+        path: image.path,
+        mediaType: JobPhotoModel.mediaPhoto,
       );
     } catch (e) {
       if (!mounted) return;
@@ -76,12 +91,68 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
     }
   }
 
+  Future<void> _pickVideo() async {
+    try {
+      final XFile? video = await _imagePicker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 3),
+      );
+      if (video == null) return;
+      await _saveEvidence(
+        path: video.path,
+        mediaType: JobPhotoModel.mediaVideo,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
+  void _showAddEvidenceSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('Tomar foto'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Elegir foto de galería'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam),
+              title: const Text('Elegir video'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickVideo();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _deletePhoto(String id) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar foto'),
-        content: const Text('¿Estás seguro de que quieres eliminar esta foto?'),
+        title: const Text('Eliminar evidencia'),
+        content: const Text('¿Estás seguro de que quieres eliminar este archivo?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -106,13 +177,13 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fotos del Trabajo'),
+        title: const Text('Evidencia del trabajo'),
         actions: [
           if (widget.canAddPhotos)
             IconButton(
-              icon: const Icon(Icons.add_photo_alternate),
-              onPressed: _addPhoto,
-              tooltip: 'Agregar foto',
+              icon: const Icon(Icons.add_a_photo),
+              onPressed: _showAddEvidenceSheet,
+              tooltip: 'Agregar evidencia',
             ),
         ],
       ),
@@ -121,8 +192,8 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
           : _photos.isEmpty
               ? const EmptyStateWidget(
                   icon: Icons.photo_library,
-                  title: 'No hay fotos',
-                  message: 'Agrega fotos del trabajo',
+                  title: 'Sin evidencia',
+                  message: 'Sube al menos una foto o un video del trabajo realizado',
                 )
               : GridView.builder(
                   padding: const EdgeInsets.all(16),
@@ -136,12 +207,11 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                     final photo = _photos[index];
                     return GestureDetector(
                       onTap: () {
-                        // Ver foto en pantalla completa
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => _PhotoViewer(
-                              photoPath: photo.photoPath,
+                            builder: (context) => _EvidenceViewer(
+                              photo: photo,
                               onDelete: widget.canAddPhotos
                                   ? () => _deletePhoto(photo.id)
                                   : null,
@@ -152,10 +222,51 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          Image.file(
-                            File(photo.photoPath),
-                            fit: BoxFit.cover,
-                          ),
+                          if (photo.isVideo)
+                            ColoredBox(
+                              color: Colors.grey.shade800,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.play_circle_fill,
+                                  color: Colors.white,
+                                  size: 48,
+                                ),
+                              ),
+                            )
+                          else
+                            Image.file(
+                              File(photo.photoPath),
+                              fit: BoxFit.cover,
+                            ),
+                          if (photo.isVideo)
+                            Positioned(
+                              left: 6,
+                              bottom: 6,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.videocam, color: Colors.white, size: 14),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Video',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           if (widget.canAddPhotos)
                             Positioned(
                               top: 4,
@@ -177,12 +288,12 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
   }
 }
 
-class _PhotoViewer extends StatelessWidget {
-  final String photoPath;
+class _EvidenceViewer extends StatelessWidget {
+  final JobPhotoModel photo;
   final VoidCallback? onDelete;
 
-  const _PhotoViewer({
-    required this.photoPath,
+  const _EvidenceViewer({
+    required this.photo,
     this.onDelete,
   });
 
@@ -193,6 +304,7 @@ class _PhotoViewer extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(photo.isVideo ? 'Video' : 'Foto'),
         actions: [
           if (onDelete != null)
             IconButton(
@@ -205,9 +317,34 @@ class _PhotoViewer extends StatelessWidget {
         ],
       ),
       body: Center(
-        child: Image.file(File(photoPath)),
+        child: photo.isVideo
+            ? Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.videocam, color: Colors.white, size: 72),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Video registrado como evidencia',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      photo.photoPath.split(Platform.pathSeparator).last,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.white70,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            : Image.file(File(photo.photoPath)),
       ),
     );
   }
 }
-

@@ -1,3 +1,5 @@
+import '../../domain/worker_custom_service.dart';
+
 class WorkerModel {
   final String userId;
   final String profession;
@@ -6,6 +8,11 @@ class WorkerModel {
   final bool isAvailable;
   final double visitFee;
   final String serviceCategory;
+  final Map<String, int> pricingTiers;
+  final List<WorkerCustomService> customServices;
+  final bool pricingConfigured;
+  /// Rechazos de invitaciones; penaliza el orden en búsquedas (no se muestra en UI).
+  final int rejectionCount;
 
   WorkerModel({
     required this.userId,
@@ -15,7 +22,12 @@ class WorkerModel {
     this.isAvailable = true,
     this.visitFee = 15000,
     this.serviceCategory = 'general',
-  });
+    Map<String, int>? pricingTiers,
+    List<WorkerCustomService>? customServices,
+    this.pricingConfigured = false,
+    this.rejectionCount = 0,
+  })  : pricingTiers = pricingTiers ?? const {},
+        customServices = customServices ?? const [];
 
   Map<String, dynamic> toMap() {
     return {
@@ -26,7 +38,22 @@ class WorkerModel {
       'isAvailable': isAvailable ? 1 : 0,
       'visitFee': visitFee,
       'serviceCategory': serviceCategory,
+      'pricingTiers': pricingTiers,
+      'customServices': customServices.map((s) => s.toMap()).toList(),
+      'pricingConfigured': pricingConfigured ? 1 : 0,
+      'rejectionCount': rejectionCount,
     };
+  }
+
+  static Map<String, int> _parsePricingTiers(dynamic raw) {
+    if (raw == null) return {};
+    if (raw is! Map) return {};
+    return raw.map(
+      (key, value) => MapEntry(
+        key.toString(),
+        (value as num).toInt(),
+      ),
+    );
   }
 
   factory WorkerModel.fromMap(Map<String, dynamic> map) {
@@ -38,6 +65,10 @@ class WorkerModel {
       isAvailable: (map['isAvailable'] as int? ?? 0) == 1,
       visitFee: (map['visitFee'] as num?)?.toDouble() ?? 15000,
       serviceCategory: map['serviceCategory'] as String? ?? 'general',
+      pricingTiers: _parsePricingTiers(map['pricingTiers']),
+      customServices: WorkerCustomService.listFromJson(map['customServices']),
+      pricingConfigured: (map['pricingConfigured'] as int? ?? 0) == 1,
+      rejectionCount: (map['rejectionCount'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -49,6 +80,10 @@ class WorkerModel {
     bool? isAvailable,
     double? visitFee,
     String? serviceCategory,
+    Map<String, int>? pricingTiers,
+    List<WorkerCustomService>? customServices,
+    bool? pricingConfigured,
+    int? rejectionCount,
   }) {
     return WorkerModel(
       userId: userId ?? this.userId,
@@ -58,6 +93,10 @@ class WorkerModel {
       isAvailable: isAvailable ?? this.isAvailable,
       visitFee: visitFee ?? this.visitFee,
       serviceCategory: serviceCategory ?? this.serviceCategory,
+      pricingTiers: pricingTiers ?? this.pricingTiers,
+      customServices: customServices ?? this.customServices,
+      pricingConfigured: pricingConfigured ?? this.pricingConfigured,
+      rejectionCount: rejectionCount ?? this.rejectionCount,
     );
   }
 }

@@ -7,6 +7,7 @@ import '../database/models/job_model.dart';
 import '../database/models/user_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
+import 'worker_reputation_service.dart';
 
 /// Resultado de matching con score y metadata
 class MatchResult {
@@ -211,8 +212,11 @@ class MatchingService {
       // 5. Calcular score
       double score = 0.0;
 
-      // Score por rating (0-5 estrellas → 0-1)
-      final ratingScore = (worker.rating / 5.0) * _weightRating;
+      // Score por rating ajustado por rechazos ocultos (0-5 → 0-1)
+      final adjustedRating = WorkerReputationService.instance
+          .listingScore(worker)
+          .clamp(0.0, 5.0);
+      final ratingScore = (adjustedRating / 5.0) * _weightRating;
       score += ratingScore;
 
       // Score por disponibilidad

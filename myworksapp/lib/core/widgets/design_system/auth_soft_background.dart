@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
 
-/// Fondo suave con gradiente para pantallas de autenticación.
+/// Fondo blanco con acentos naranjos suaves.
 class AuthSoftBackground extends StatelessWidget {
   const AuthSoftBackground({
     super.key,
@@ -21,9 +21,9 @@ class AuthSoftBackground extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFEAF6FC),
-            Color(0xFFF8FAFC),
-            Color(0xFFFFF8F3),
+            AppColors.white,
+            AppColors.brandOrangeSoft,
+            Color(0xFFFFFAF7),
           ],
           stops: [0.0, 0.55, 1.0],
         ),
@@ -34,14 +34,14 @@ class AuthSoftBackground extends StatelessWidget {
           if (showDecorations) ...[
             _DecorIcon(
               icon: Icons.auto_awesome,
-              color: const Color(0xFFFFD166),
+              color: AppColors.brandOrange,
               top: 48,
               left: 16,
               size: 28,
             ),
             _DecorIcon(
               icon: Icons.cleaning_services_outlined,
-              color: AppColors.brandTeal,
+              color: AppColors.brandOrange,
               top: 120,
               left: 8,
               size: 32,
@@ -62,7 +62,7 @@ class AuthSoftBackground extends StatelessWidget {
             ),
             _DecorIcon(
               icon: Icons.yard_outlined,
-              color: const Color(0xFF6BCB77),
+              color: AppColors.brandOrange,
               top: 100,
               right: 12,
               size: 32,
@@ -115,7 +115,7 @@ class _DecorIcon extends StatelessWidget {
       child: Icon(
         icon,
         size: size,
-        color: color.withValues(alpha: 0.55),
+        color: color.withValues(alpha: 0.4),
       ),
     );
   }

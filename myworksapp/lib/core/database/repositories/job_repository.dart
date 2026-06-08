@@ -1,6 +1,9 @@
+import 'dart:convert';
+
+import '../../domain/pricing_constants.dart';
+import '../../utils/constants.dart';
 import '../models/job_model.dart';
 import '../supabase_db.dart';
-
 class JobRepository {
   static const String _table = 'jobs';
 
@@ -50,7 +53,11 @@ class JobRepository {
         .from(_table)
         .select()
         .eq('workerId', workerId)
-        .inFilter('status', ['accepted', 'in_progress'])
+        .inFilter('status', [
+          'accepted',
+          'in_progress',
+          PricingConstants.jobAwaitingClientApproval,
+        ])
         .order('createdAt', ascending: false);
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
@@ -72,6 +79,26 @@ class JobRepository {
 
   Future<void> updateJob(JobModel job) async {
     await supabase.from(_table).update(job.toMap()).eq('id', job.id);
+  }
+
+  /// Rechazo del profesional: mantiene [workerId] para cumplir RLS en Supabase.
+  Future<bool> rejectPendingJobByWorker({
+    required String jobId,
+    required String workerId,
+    required Map<String, dynamic> metadata,
+  }) async {
+    final rows = await supabase
+        .from(_table)
+        .update({
+          'status': AppConstants.jobStatusCancelled,
+          'serviceMetadata': jsonEncode(metadata),
+          'updatedAt': DateTime.now().toIso8601String(),
+        })
+        .eq('id', jobId)
+        .eq('workerId', workerId)
+        .eq('status', AppConstants.jobStatusPending)
+        .select('id');
+    return rows.isNotEmpty;
   }
 
   Future<void> updateJobStatus(String id, String status) async {

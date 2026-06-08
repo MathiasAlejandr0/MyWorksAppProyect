@@ -33,7 +33,7 @@ class AppAuthScaffold extends StatelessWidget {
                 child: IconButton(
                   onPressed: () => Navigator.of(context).maybePop(),
                   icon: const Icon(Icons.arrow_back_rounded),
-                  color: AppColors.primaryDark,
+                  color: AppColors.brandNavy,
                 ),
               ),
             ),
@@ -52,16 +52,16 @@ class AppAuthScaffold extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryLight.withValues(alpha: 0.22),
+                        color: Colors.white.withValues(alpha: 0.22),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: AppColors.primaryLight.withValues(alpha: 0.45),
+                          color: Colors.white.withValues(alpha: 0.45),
                         ),
                       ),
                       child: Text(
                         badge!.toUpperCase(),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.primaryLight,
+                              color: Colors.white,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1.1,
                             ),

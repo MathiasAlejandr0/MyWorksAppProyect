@@ -11,6 +11,7 @@ import '../../features/user/presentation/pages/user_profile_page.dart';
 import '../../features/worker/presentation/pages/worker_home_page.dart';
 import '../../features/worker/presentation/pages/worker_profile_page.dart';
 import '../../features/worker/presentation/pages/worker_register_page.dart';
+import '../../features/worker/presentation/pages/worker_pricing_setup_page.dart';
 import '../../features/user/presentation/pages/service_request_page.dart';
 import '../../features/user/presentation/pages/worker_list_page.dart';
 import '../../features/user/presentation/pages/worker_detail_page.dart';
@@ -34,6 +35,7 @@ import '../../features/gdpr/presentation/pages/user_rights_page.dart';
 import '../../core/presentation/pages/maintenance_page.dart';
 import '../../core/presentation/pages/help_center_page.dart';
 import '../../core/utils/constants.dart';
+import '../../core/database/repositories/worker_repository.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Solo reaccionar a login/logout, no a isLoading (evita resetear la pila al abrir perfil).
@@ -77,7 +79,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (authUser.role == AppConstants.roleUser) {
             return AppConstants.routeUserHome;
           } else {
+            final workerRepo = WorkerRepository();
+            final worker = await workerRepo.getWorkerByUserId(authUser.id);
+            if (worker == null) return AppConstants.routeWorkerRegister;
+            if (!worker.pricingConfigured) {
+              return AppConstants.routeWorkerPricingSetup;
+            }
             return AppConstants.routeWorkerHome;
+          }
+        }
+
+        // Trabajador sin precios configurados no debe entrar al inicio aún
+        if (isLoggedIn &&
+            authUser.role == AppConstants.roleWorker &&
+            state.matchedLocation == AppConstants.routeWorkerHome) {
+          final worker = await WorkerRepository().getWorkerByUserId(authUser.id);
+          if (worker != null && !worker.pricingConfigured) {
+            return AppConstants.routeWorkerPricingSetup;
           }
         }
       } catch (e) {
@@ -153,6 +171,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WorkerRegisterPage(),
       ),
       GoRoute(
+        path: AppConstants.routeWorkerPricingSetup,
+        builder: (context, state) {
+          final editMode = state.uri.queryParameters['edit'] == '1';
+          return WorkerPricingSetupPage(editMode: editMode);
+        },
+      ),
+      GoRoute(
         path: AppConstants.routeServiceRequest,
         builder: (context, state) {
           final args = state.extra as Map<String, dynamic>?;
@@ -226,7 +251,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '${AppConstants.routeJobPhotos}/:jobId',
         builder: (context, state) {
           final jobId = state.pathParameters['jobId']!;
-          return JobPhotosPage(jobId: jobId);
+          final canAdd = state.extra as bool? ?? true;
+          return JobPhotosPage(jobId: jobId, canAddPhotos: canAdd);
         },
       ),
       GoRoute(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 class LoadingWidget extends StatelessWidget {
   final String? message;
 
@@ -11,7 +13,7 @@ class LoadingWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(),
+          const CircularProgressIndicator(color: AppColors.brandOrange),
           if (message != null) ...[
             const SizedBox(height: 16),
             Text(

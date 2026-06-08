@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
+import '../theme/app_colors.dart';
+import 'job_location_map.dart';
+
 class LocationPickerWidget extends StatefulWidget {
   final Function(String address, double latitude, double longitude) onLocationSelected;
   final String? initialAddress;
@@ -21,6 +24,8 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   bool _isLoading = true;
   bool _hasError = false;
   String? _lastEmittedAddress;
+  double? _latitude;
+  double? _longitude;
 
   void _emitLocation(String address, double latitude, double longitude) {
     if (_lastEmittedAddress == address) return;
@@ -40,10 +45,11 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       _isLoading = true;
       _hasError = false;
       _currentAddress = 'Detectando tu ubicación...';
+      _latitude = null;
+      _longitude = null;
     });
 
     try {
-      // Verificar si los servicios de ubicación están habilitados
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (!mounted) return;
@@ -55,7 +61,6 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         return;
       }
 
-      // Verificar y solicitar permisos
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -73,22 +78,20 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       if (permission == LocationPermission.deniedForever) {
         if (!mounted) return;
         setState(() {
-          _currentAddress = 'Los permisos de ubicación fueron denegados permanentemente. Por favor, habilítalos en la configuración';
+          _currentAddress =
+              'Los permisos de ubicación fueron denegados permanentemente. Por favor, habilítalos en la configuración';
           _isLoading = false;
           _hasError = true;
         });
         return;
       }
 
-      // Obtener ubicación actual con alta precisión
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10),
       );
 
       if (!mounted) return;
-
-      // Obtener dirección desde las coordenadas
       await _getAddressFromCoordinates(position.latitude, position.longitude);
     } catch (e) {
       if (!mounted) return;
@@ -114,6 +117,8 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         if (!mounted) return;
         setState(() {
           _currentAddress = address;
+          _latitude = latitude;
+          _longitude = longitude;
           _isLoading = false;
           _hasError = false;
         });
@@ -121,11 +126,12 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       } else {
         if (!mounted) return;
         setState(() {
-          _currentAddress = 'No se pudo obtener la dirección. Ubicación: $latitude, $longitude';
+          _currentAddress = _coordsLabel(latitude, longitude);
+          _latitude = latitude;
+          _longitude = longitude;
           _isLoading = false;
           _hasError = false;
         });
-        // Aún así, notificamos la ubicación con coordenadas
         _emitLocation(
           'Ubicación: $latitude, $longitude',
           latitude,
@@ -135,7 +141,9 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _currentAddress = 'Ubicación detectada: $latitude, $longitude';
+        _currentAddress = _coordsLabel(latitude, longitude);
+        _latitude = latitude;
+        _longitude = longitude;
         _isLoading = false;
         _hasError = false;
       });
@@ -147,10 +155,13 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     }
   }
 
+  String _coordsLabel(double latitude, double longitude) {
+    return 'Ubicación GPS: ${latitude.toStringAsFixed(5)}, ${longitude.toStringAsFixed(5)}';
+  }
+
   String _formatAddress(Placemark place) {
     final parts = <String>[];
-    
-    // Calle y número
+
     if (place.street != null && place.street!.isNotEmpty) {
       if (place.subThoroughfare != null && place.subThoroughfare!.isNotEmpty) {
         parts.add('${place.street!} #${place.subThoroughfare}');
@@ -160,63 +171,71 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     } else if (place.subThoroughfare != null && place.subThoroughfare!.isNotEmpty) {
       parts.add('#${place.subThoroughfare}');
     }
-    
-    // Localidad/Comuna
+
     if (place.locality != null && place.locality!.isNotEmpty) {
       parts.add(place.locality!);
     } else if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
       parts.add(place.subAdministrativeArea!);
     }
-    
-    // Región/Provincia
+
     if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
       parts.add(place.administrativeArea!);
     }
-    
-    // País (opcional, solo si no hay mucha información)
+
     if (parts.length < 2 && place.country != null && place.country!.isNotEmpty) {
       parts.add(place.country!);
     }
-    
+
     return parts.isNotEmpty ? parts.join(', ') : 'Ubicación detectada';
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasCoords = _latitude != null && _longitude != null;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _hasError 
-            ? Colors.red.shade50 
-            : _isLoading 
-                ? Colors.blue.shade50 
-                : Colors.green.shade50,
+        color: _hasError
+            ? Colors.red.shade50
+            : _isLoading
+                ? AppColors.brandBlueSoft
+                : AppColors.brandOrangeSoft,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _hasError 
-              ? Colors.red.shade300 
-              : _isLoading 
-                  ? Colors.blue.shade300 
-                  : Colors.green.shade300,
+          color: _hasError
+              ? Colors.red.shade300
+              : _isLoading
+                  ? AppColors.brandTeal.withValues(alpha: 0.35)
+                  : AppColors.brandOrange.withValues(alpha: 0.45),
           width: 1.5,
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (hasCoords && !_hasError) ...[
+            JobLocationMap(
+              latitude: _latitude!,
+              longitude: _longitude!,
+              square: true,
+            ),
+            const SizedBox(height: 12),
+          ],
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                _hasError 
-                    ? Icons.error_outline 
-                    : _isLoading 
-                        ? Icons.my_location 
+                _hasError
+                    ? Icons.error_outline
+                    : _isLoading
+                        ? Icons.my_location
                         : Icons.check_circle,
-                color: _hasError 
-                    ? Colors.red 
-                    : _isLoading 
-                        ? Colors.blue 
-                        : Colors.green,
+                color: _hasError
+                    ? Colors.red
+                    : _isLoading
+                        ? AppColors.brandTeal
+                        : AppColors.brandOrange,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -225,19 +244,19 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _hasError 
-                          ? 'Error de ubicación' 
-                          : _isLoading 
-                              ? 'Detectando ubicación' 
+                      _hasError
+                          ? 'Error de ubicación'
+                          : _isLoading
+                              ? 'Detectando ubicación'
                               : 'Ubicación detectada',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: _hasError 
-                            ? Colors.red.shade700 
-                            : _isLoading 
-                                ? Colors.blue.shade700 
-                                : Colors.green.shade700,
-                      ),
+                            fontWeight: FontWeight.bold,
+                            color: _hasError
+                                ? Colors.red.shade700
+                                : _isLoading
+                                    ? AppColors.brandNavy
+                                    : AppColors.brandOrange,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     _isLoading
@@ -249,14 +268,16 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               ),
                               SizedBox(width: 8),
-                              Text('Obteniendo tu ubicación GPS...'),
+                              Expanded(
+                                child: Text('Obteniendo tu ubicación GPS...'),
+                              ),
                             ],
                           )
                         : Text(
                             _currentAddress,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                   ],
                 ),
@@ -266,18 +287,20 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                   icon: const Icon(Icons.refresh),
                   onPressed: _getCurrentLocation,
                   tooltip: 'Actualizar ubicación',
-                  color: Theme.of(context).colorScheme.primary,
+                  color: AppColors.brandOrange,
                 ),
             ],
           ),
           if (!_isLoading && !_hasError) ...[
             const SizedBox(height: 8),
             Text(
-              '✓ Tu ubicación ha sido detectada automáticamente',
+              hasCoords
+                  ? 'El mapa muestra tu posición actual para que el profesional llegue sin problemas.'
+                  : 'Esperando coordenadas GPS...',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.green.shade700,
-                fontStyle: FontStyle.italic,
-              ),
+                    color: AppColors.grayMedium,
+                    fontStyle: FontStyle.italic,
+                  ),
             ),
           ],
         ],
@@ -285,4 +308,3 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     );
   }
 }
-

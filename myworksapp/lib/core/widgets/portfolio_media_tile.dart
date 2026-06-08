@@ -114,14 +114,14 @@ class PortfolioMediaTile extends StatelessWidget {
   }
 
   Color _accentForKey(String key) {
-    if (key.contains('construction')) return const Color(0xFFF97316);
-    if (key.contains('plumbing')) return const Color(0xFF14B8A6);
-    if (key.contains('electrical')) return const Color(0xFF6366F1);
-    if (key.contains('cleaning')) return const Color(0xFF0EA5E9);
-    if (key.contains('assembly')) return const Color(0xFF8B5CF6);
-    if (key.contains('tech')) return const Color(0xFF3B82F6);
-    if (key.contains('garden')) return const Color(0xFF22C55E);
-    if (key.contains('moving')) return const Color(0xFFEC4899);
-    return AppColors.primaryLight;
+    if (key.contains('construction')) return AppColors.brandOrangeDark;
+    if (key.contains('plumbing')) return AppColors.brandOrange;
+    if (key.contains('electrical')) return const Color(0xFFE86A1F);
+    if (key.contains('cleaning')) return const Color(0xFFF5934A);
+    if (key.contains('assembly')) return AppColors.brandOrangeDark;
+    if (key.contains('tech')) return AppColors.brandOrange;
+    if (key.contains('garden')) return const Color(0xFFF5934A);
+    if (key.contains('moving')) return AppColors.brandOrange;
+    return AppColors.brandOrange;
   }
 }

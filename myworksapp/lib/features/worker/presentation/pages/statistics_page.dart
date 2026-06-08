@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myworksapp/core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/repositories/job_repository.dart';
@@ -77,7 +78,7 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
                               icon: Icons.work,
                               label: 'Total',
                               value: jobs.length.toString(),
-                              color: Colors.blue,
+                              color: AppColors.brandOrange,
                             ),
                             _StatCard(
                               icon: Icons.check_circle,
@@ -89,7 +90,7 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
                               icon: Icons.star,
                               label: 'Calificación',
                               value: avgRating.toStringAsFixed(1),
-                              color: Colors.amber,
+                              color: AppColors.brandOrangeDark,
                             ),
                           ],
                         ),
@@ -120,13 +121,13 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
                           label: 'En Progreso',
                           count: inProgress,
                           total: jobs.length,
-                          color: Colors.purple,
+                          color: AppColors.brandOrangeDark,
                         ),
                         _StatusItem(
                           label: 'Pendientes',
                           count: pending,
                           total: jobs.length,
-                          color: Colors.orange,
+                          color: AppColors.brandOrange,
                         ),
                       ],
                     ),

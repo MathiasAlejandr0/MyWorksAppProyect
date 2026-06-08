@@ -114,7 +114,7 @@ class _CupertinoBar extends StatelessWidget implements PreferredSizeWidget {
       leading: leading ??
           (automaticallyImplyLeading && Navigator.canPop(context)
               ? CupertinoNavigationBarBackButton(
-                  color: AppColors.brandTeal,
+                  color: AppColors.brandOrange,
                   onPressed: () => Navigator.maybePop(context),
                 )
               : null),
