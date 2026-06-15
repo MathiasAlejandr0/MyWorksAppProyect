@@ -96,9 +96,9 @@ coverage/
 *.apk
 *.aab
 
-# Test files
-test/
-**/test/
+# Test coverage output (no ignorar myworksapp/test/ — tests unitarios Flutter)
+coverage/
+.test_coverage/
 
 # Backup files
 *.bak
