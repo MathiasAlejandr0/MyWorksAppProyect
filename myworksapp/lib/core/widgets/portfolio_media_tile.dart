@@ -16,12 +16,16 @@ class PortfolioMediaTile extends StatelessWidget {
     required this.mediaType,
     this.description,
     this.enableViewer = true,
+    this.showDescription = true,
+    this.compact = false,
   });
 
   final String photoPath;
   final String mediaType;
   final String? description;
   final bool enableViewer;
+  final bool showDescription;
+  final bool compact;
 
   bool get _isVideo => PortfolioMediaResolver.isVideo(mediaType);
 
@@ -48,9 +52,9 @@ class PortfolioMediaTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: enableViewer ? () => _openViewer(context) : null,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(compact ? 10 : 12),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(compact ? 10 : 12),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -72,15 +76,17 @@ class PortfolioMediaTile extends StatelessWidget {
               if (_isVideo)
                 Container(
                   color: Colors.black.withValues(alpha: 0.28),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.play_circle_fill_rounded,
                       color: Colors.white,
-                      size: 44,
+                      size: compact ? 28 : 44,
                     ),
                   ),
                 ),
-              if (description != null && description!.isNotEmpty)
+              if (showDescription &&
+                  description != null &&
+                  description!.isNotEmpty)
                 Positioned(
                   left: 0,
                   right: 0,
@@ -124,7 +130,7 @@ class PortfolioMediaTile extends StatelessWidget {
       child: Icon(
         _isVideo ? Icons.play_circle_fill_rounded : Icons.image_rounded,
         color: accent,
-        size: 36,
+        size: compact ? 24 : 36,
       ),
     );
   }

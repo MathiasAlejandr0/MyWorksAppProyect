@@ -109,7 +109,7 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
 
       child: Material(
 
-        color: selected ? AppColors.brandOrangeSoft : Colors.grey.shade50,
+        color: selected ? AppColors.brandOrangeSoft : AppColors.grayLight,
 
         borderRadius: BorderRadius.circular(12),
 

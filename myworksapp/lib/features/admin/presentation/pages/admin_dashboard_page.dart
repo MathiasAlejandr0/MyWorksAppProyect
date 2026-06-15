@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/database/repositories/admin_repository.dart';
+import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/design_system/app_spacing.dart';
+import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../widgets/admin_nav_tile.dart';
 
 class AdminDashboardPage extends ConsumerStatefulWidget {
   const AdminDashboardPage({super.key});
@@ -16,7 +20,7 @@ class AdminDashboardPage extends ConsumerStatefulWidget {
 }
 
 class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
-  final AdminRepository _repo = AdminRepository();
+  AdminRepository get _repo => ref.read(adminRepositoryProvider);
   AdminMetrics? _metrics;
   bool _loading = true;
 
@@ -63,30 +67,130 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
-                padding: const EdgeInsets.all(20),
+                padding: LayoutUtils.scrollPadding(context),
                 children: [
                   Text(
                     'Resumen de la plataforma',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(height: 16),
-                  _MetricsGrid(metrics: m!),
-                  const SizedBox(height: 24),
-                  _NavTile(
+                  if (m!.totalIncidents > 0) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _AlertBanner(count: m.totalIncidents),
+                  ],
+                  const SizedBox(height: AppSpacing.lg),
+                  _MetricsGrid(metrics: m),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _SectionTitle('Operación'),
+                  AdminNavTile(
                     icon: Icons.people_outline,
                     title: 'Usuarios',
                     subtitle: '${m.usersCount} cuentas registradas',
                     onTap: () => context.push(AppConstants.routeAdminUsers),
                   ),
-                  _NavTile(
+                  AdminNavTile(
+                    icon: Icons.engineering_outlined,
+                    title: 'Trabajadores',
+                    subtitle: '${m.workersCount} perfiles activos',
+                    onTap: () => context.push(AppConstants.routeAdminWorkers),
+                  ),
+                  AdminNavTile(
+                    icon: Icons.work_outline,
+                    title: 'Trabajos',
+                    subtitle: '${m.activeJobsCount} activos de ${m.jobsCount}',
+                    onTap: () => context.push(AppConstants.routeAdminJobs),
+                  ),
+                  AdminNavTile(
+                    icon: Icons.home_repair_service_outlined,
+                    title: 'Servicios',
+                    subtitle: 'Activar o desactivar catálogo',
+                    onTap: () => context.push(AppConstants.routeAdminServices),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  const _SectionTitle('Incidencias y reclamos'),
+                  AdminNavTile(
+                    icon: Icons.flag_outlined,
+                    title: 'Reclamos de usuarios',
+                    subtitle: 'Reportes entre clientes y trabajadores',
+                    badge: m.pendingReportsCount,
+                    onTap: () => context.push(AppConstants.routeAdminReports),
+                  ),
+                  AdminNavTile(
                     icon: Icons.gavel_outlined,
-                    title: 'Disputas',
-                    subtitle: '${m.openDisputesCount} abiertas',
+                    title: 'Disputas de trabajos',
+                    subtitle:
+                        '${m.openDisputesCount} abiertas · ${m.underReviewDisputesCount} en revisión',
+                    badge: m.openDisputesCount + m.underReviewDisputesCount,
                     onTap: () => context.push(AppConstants.routeAdminDisputes),
+                  ),
+                  AdminNavTile(
+                    icon: Icons.bug_report_outlined,
+                    title: 'Errores y sincronización',
+                    subtitle: 'Crashes, sync fallido y abuso',
+                    badge: m.newErrorsCount + m.failedSyncCount + m.unresolvedAbuseCount,
+                    onTap: () => context.push(AppConstants.routeAdminErrors),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  const _SectionTitle('Configuración'),
+                  AdminNavTile(
+                    icon: Icons.tune_outlined,
+                    title: 'Feature flags',
+                    subtitle: 'Activar funciones por rol o versión',
+                    onTap: () =>
+                        context.push(AppConstants.routeAdminFeatureFlags),
                   ),
                 ],
               ),
             ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.brandOrange,
+            ),
+      ),
+    );
+  }
+}
+
+class _AlertBanner extends StatelessWidget {
+  const _AlertBanner({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.brandOrangeSoft,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.brandOrange.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: AppColors.brandOrange),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '$count incidencia${count == 1 ? '' : 's'} requiere${count == 1 ? '' : 'n'} atención',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -102,8 +206,9 @@ class _MetricsGrid extends StatelessWidget {
       ('Usuarios', metrics.usersCount, Icons.person_outline),
       ('Trabajadores', metrics.workersCount, Icons.engineering_outlined),
       ('Trabajos', metrics.jobsCount, Icons.work_outline),
-      ('Disputas abiertas', metrics.openDisputesCount, Icons.gavel),
-      ('Reportes', metrics.reportsCount, Icons.flag_outlined),
+      ('Activos', metrics.activeJobsCount, Icons.play_circle_outline),
+      ('Reclamos', metrics.pendingReportsCount, Icons.flag_outlined),
+      ('Disputas', metrics.openDisputesCount, Icons.gavel),
     ];
 
     return GridView.count(
@@ -126,9 +231,10 @@ class _MetricsGrid extends StatelessWidget {
                     const Spacer(),
                     Text(
                       '${item.$2}',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                     Text(item.$1),
                   ],
@@ -137,34 +243,6 @@ class _MetricsGrid extends StatelessWidget {
             ),
           )
           .toList(),
-    );
-  }
-}
-
-class _NavTile extends StatelessWidget {
-  const _NavTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.brandOrange),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
-      ),
     );
   }
 }

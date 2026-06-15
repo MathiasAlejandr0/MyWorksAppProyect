@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/design_system/app_breakpoints.dart';
+import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
@@ -22,7 +23,7 @@ class WelcomePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
                 const Center(child: AppBrandLogo(size: 56, textSize: 24)),
                 const SizedBox(height: 8),
                 Text(
@@ -35,18 +36,18 @@ class WelcomePage extends StatelessWidget {
                     height: 1.35,
                   ),
                 ),
-                const SizedBox(height: 28),
-                Text(
+                const SizedBox(height: AppSpacing.xl + 4),
+                const Text(
                   '¡Bienvenido a ${AppConstants.appBrandDisplayName}!',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     color: AppColors.grayDark,
                     height: 1.25,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   'Encuentra y contrata a los mejores profesionales para tu hogar de forma rápida y segura.',
                   textAlign: TextAlign.center,
@@ -57,11 +58,11 @@ class WelcomePage extends StatelessWidget {
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: AppSpacing.xl + 4),
                 const _WelcomeHeroCard(),
-                const SizedBox(height: 28),
+                const SizedBox(height: AppSpacing.xl + 4),
                 const _ServiceCategoriesRow(),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xxl),
                 BrandPrimaryButton(
                   label: 'Comenzar Ahora',
                   onPressed: () => context.push(
@@ -73,7 +74,7 @@ class WelcomePage extends StatelessWidget {
                 _LoginLink(
                   onTap: () => context.push(AppConstants.routeLogin),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: AppSpacing.xl + 4),
                 const AppBrandFooter(),
                 const SizedBox(height: 16),
               ],

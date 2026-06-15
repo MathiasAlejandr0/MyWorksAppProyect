@@ -94,16 +94,12 @@ class _CupertinoBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final nav = CupertinoNavigationBar(
-      backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
-      border: Border(
-        bottom: BorderSide(
-          color: CupertinoColors.separator.resolveFrom(context),
-        ),
-      ),
+      backgroundColor: Colors.transparent,
+      border: null,
       middle: title != null
           ? DefaultTextStyle(
-              style: TextStyle(
-                color: AppColors.brandNavy,
+              style: const TextStyle(
+                color: AppColors.white,
                 fontWeight: FontWeight.w600,
                 fontSize: 17,
                 decoration: TextDecoration.none,
@@ -114,37 +110,43 @@ class _CupertinoBar extends StatelessWidget implements PreferredSizeWidget {
       leading: leading ??
           (automaticallyImplyLeading && Navigator.canPop(context)
               ? CupertinoNavigationBarBackButton(
-                  color: AppColors.brandOrange,
+                  color: AppColors.white,
                   onPressed: () => Navigator.maybePop(context),
                 )
               : null),
       trailing: actions != null && actions!.isNotEmpty
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: actions!,
+          ? IconTheme(
+              data: const IconThemeData(color: AppColors.white),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: actions!,
+              ),
             )
           : null,
     );
 
-    if (bottom == null) {
-      return Material(
-        color: Colors.transparent,
-        child: SafeArea(bottom: false, child: nav),
-      );
-    }
+    final bar = Container(
+      decoration: BoxDecoration(
+        gradient: AppDecorations.headerGradient,
+        boxShadow: AppDecorations.headerShadow,
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: bottom == null
+            ? nav
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  nav,
+                  bottom!,
+                ],
+              ),
+      ),
+    );
 
     return Material(
       color: Colors.transparent,
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            nav,
-            bottom!,
-          ],
-        ),
-      ),
+      child: bar,
     );
   }
 }

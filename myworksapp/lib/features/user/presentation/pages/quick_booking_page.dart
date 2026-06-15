@@ -11,6 +11,7 @@ import '../../../../core/services/job_booking_service.dart';
 import '../../../../core/services/pricing_service.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/comuna_utils.dart';
+import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/escrow_checkout_sheet.dart';
@@ -161,9 +162,9 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
     }
 
     if (_worker == null) {
-      return Scaffold(
-        appBar: AppGradientAppBar(title: const Text('Agendar visita')),
-        body: const Center(child: Text('Trabajador no encontrado')),
+      return const Scaffold(
+        appBar: AppGradientAppBar(title: Text('Agendar visita')),
+        body: Center(child: Text('Trabajador no encontrado')),
       );
     }
 
@@ -171,9 +172,9 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
 
     return Scaffold(
       backgroundColor: AppDecorations.screenBackground,
-      appBar: AppGradientAppBar(title: const Text('Agendar visita')),
+      appBar: const AppGradientAppBar(title: Text('Agendar visita')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: LayoutUtils.scrollPadding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

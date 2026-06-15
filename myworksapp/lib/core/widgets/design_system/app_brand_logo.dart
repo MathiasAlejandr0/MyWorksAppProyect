@@ -66,12 +66,12 @@ class AppBrandFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.home_work_outlined, size: 18, color: AppColors.grayMedium),
-        const SizedBox(width: 6),
+        SizedBox(width: 6),
         Text(
           AppConstants.appBrandDisplayName,
           style: TextStyle(

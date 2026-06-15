@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../core/design_system/app_spacing.dart';
+import '../../../../core/design_system/layout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +12,7 @@ import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/models/rating_model.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/supabase_db.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class RatingPage extends ConsumerStatefulWidget {
   final String jobId;
@@ -49,7 +53,8 @@ class _RatingPageState extends ConsumerState<RatingPage> {
         _job = job;
       });
     } catch (e) {
-      // Error al cargar trabajo
+      if (!mounted) return;
+      ErrorHandler.showError(context, e);
     }
   }
 
@@ -64,10 +69,17 @@ class _RatingPageState extends ConsumerState<RatingPage> {
     setState(() => _isLoading = true);
 
     try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) {
+        ErrorHandler.showError(context, 'Debes iniciar sesión para calificar');
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final rating = RatingModel(
         id: const Uuid().v4(),
         jobId: widget.jobId,
-        userId: supabase.auth.currentUser?.id,
+        userId: userId,
         score: _selectedRating,
         comment: _commentController.text.trim().isEmpty
             ? null
@@ -105,11 +117,11 @@ class _RatingPageState extends ConsumerState<RatingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Calificar Trabajo'),
+      appBar: const AppGradientAppBar(
+        title: Text('Calificar Trabajo'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: LayoutUtils.scrollPadding(context),
         child: Form(
           key: _formKey,
           child: Column(
@@ -133,8 +145,8 @@ class _RatingPageState extends ConsumerState<RatingPage> {
                             : Icons.star_border,
                         size: 48,
                         color: rating <= _selectedRating
-                            ? Colors.amber
-                            : Colors.grey,
+                            ? AppColors.warning
+                            : AppColors.grayMedium,
                       ),
                       onPressed: () {
                         setState(() {
@@ -145,7 +157,7 @@ class _RatingPageState extends ConsumerState<RatingPage> {
                   }),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
               TextFormField(
                 controller: _commentController,
                 decoration: const InputDecoration(

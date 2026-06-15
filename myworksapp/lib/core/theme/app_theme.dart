@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../design_system/app_elevation.dart';
+import '../design_system/app_radius.dart';
 import '../design_system/app_spacing.dart';
 import 'app_colors.dart';
 import 'app_decorations.dart';
@@ -32,7 +33,7 @@ class AppTheme {
   }
 
   static ThemeData get lightTheme {
-    final colorScheme = ColorScheme.light(
+    const colorScheme = ColorScheme.light(
       primary: AppColors.brandOrange,
       onPrimary: AppColors.white,
       secondary: AppColors.brandNavy,
@@ -66,13 +67,13 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(
             color: AppColors.brandOrange.withValues(alpha: 0.12),
           ),
         ),
         color: AppColors.white,
-        margin: EdgeInsets.symmetric(
+        margin: const EdgeInsets.symmetric(
           horizontal: AppSpacing.screenPadding,
           vertical: AppSpacing.sm,
         ),
@@ -86,7 +87,7 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 52),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           textStyle: AppTextStyles.buttonPrimary(),
         ),
@@ -97,7 +98,7 @@ class AppTheme {
           foregroundColor: AppColors.white,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
         ),
       ),
@@ -108,7 +109,7 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           side: const BorderSide(color: AppColors.brandOrange, width: 2),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           textStyle: AppTextStyles.buttonSecondary(),
         ),
@@ -123,24 +124,24 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.white,
-        contentPadding: EdgeInsets.symmetric(
+        contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg + AppSpacing.xs,
           vertical: AppSpacing.lg + AppSpacing.xs,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.3)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.brandOrange, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         labelStyle: AppTextStyles.inputLabel(),
@@ -151,7 +152,7 @@ class AppTheme {
         foregroundColor: AppColors.white,
         elevation: AppElevation.level2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -174,7 +175,7 @@ class AppTheme {
         selectedColor: AppColors.brandOrange,
         labelStyle: AppTextStyles.titleSmall(color: AppColors.grayDark),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       ),
       dividerTheme: DividerThemeData(
@@ -186,7 +187,9 @@ class AppTheme {
         backgroundColor: AppColors.brandNavy,
         contentTextStyle: AppTextStyles.bodyMedium(color: AppColors.white),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
@@ -216,14 +219,14 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
-    final colorScheme = ColorScheme.dark(
+    const colorScheme = ColorScheme.dark(
       primary: AppColors.brandOrange,
-      secondary: AppColors.brandOrange,
-      surface: AppColors.surfaceDark,
-      error: AppColors.error,
       onPrimary: AppColors.white,
+      secondary: AppColors.brandNavy,
       onSecondary: AppColors.white,
+      surface: AppColors.surfaceDark,
       onSurface: AppColors.white,
+      error: AppColors.error,
       onError: AppColors.white,
     );
 
@@ -248,39 +251,101 @@ class AppTheme {
         titleTextStyle: AppTextStyles.titleLarge(color: AppColors.white),
         iconTheme: const IconThemeData(color: AppColors.white),
       ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(
+            color: AppColors.brandOrange.withValues(alpha: 0.2),
+          ),
+        ),
+        color: AppColors.surfaceDark,
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenPadding,
+          vertical: AppSpacing.sm,
+        ),
+      ),
       elevatedButtonTheme: lightTheme.elevatedButtonTheme,
+      filledButtonTheme: lightTheme.filledButtonTheme,
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.brandOrange,
           minimumSize: const Size(double.infinity, 52),
           side: const BorderSide(color: AppColors.brandOrange, width: 2),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           textStyle: AppTextStyles.buttonSecondary(color: AppColors.white),
         ),
       ),
+      textButtonTheme: lightTheme.textButtonTheme,
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceDark,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg + AppSpacing.xs,
+          vertical: AppSpacing.lg + AppSpacing.xs,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.3)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: const BorderSide(color: AppColors.brandOrange, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         labelStyle: AppTextStyles.inputLabel(),
         hintStyle: AppTextStyles.inputHint(),
       ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.surfaceDark,
+        selectedItemColor: AppColors.brandOrange,
+        unselectedItemColor: AppColors.grayMedium,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: AppColors.brandOrange,
+        unselectedLabelColor: AppColors.grayMedium,
+        indicatorColor: AppColors.brandOrange,
+        dividerColor: AppColors.grayMedium.withValues(alpha: 0.15),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.brandOrange.withValues(alpha: 0.15),
+        selectedColor: AppColors.brandOrange,
+        labelStyle: AppTextStyles.titleSmall(color: AppColors.white),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: AppColors.grayMedium.withValues(alpha: 0.25),
+        thickness: 1,
+        space: 1,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.brandNavy,
+        contentTextStyle: AppTextStyles.bodyMedium(color: AppColors.white),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+      ),
+      switchTheme: lightTheme.switchTheme,
+      checkboxTheme: lightTheme.checkboxTheme,
+      radioTheme: lightTheme.radioTheme,
+      floatingActionButtonTheme: lightTheme.floatingActionButtonTheme,
     );
   }
 
-  static EdgeInsets get screenPadding => EdgeInsets.all(AppSpacing.screenPadding);
-  static EdgeInsets get cardPadding => EdgeInsets.all(AppSpacing.cardPadding);
+  static EdgeInsets get screenPadding => const EdgeInsets.all(AppSpacing.screenPadding);
+  static EdgeInsets get cardPadding => const EdgeInsets.all(AppSpacing.cardPadding);
 }

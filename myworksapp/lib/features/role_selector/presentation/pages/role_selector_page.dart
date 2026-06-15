@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/design_system/app_radius.dart';
+import '../../../../core/design_system/app_spacing.dart';
+import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 
@@ -28,7 +31,7 @@ class RoleSelectorPage extends StatelessWidget {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: LayoutUtils.scrollPadding(context),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -40,7 +43,7 @@ class RoleSelectorPage extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: AppSpacing.huge - 16),
               // Botón Usuario
               _RoleCard(
                 icon: Icons.person,
@@ -49,7 +52,7 @@ class RoleSelectorPage extends StatelessWidget {
                 color: AppColors.primaryLight,
                 onTap: () => _saveRoleAndNavigate(context, AppConstants.roleUser),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
               // Botón Trabajador
               _RoleCard(
                 icon: Icons.build,
@@ -86,13 +89,13 @@ class _RoleCard extends StatelessWidget {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           child: Row(
             children: [
               Container(
@@ -100,7 +103,7 @@ class _RoleCard extends StatelessWidget {
                 height: 64,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(
                   icon,
@@ -108,7 +111,7 @@ class _RoleCard extends StatelessWidget {
                   color: color,
                 ),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: AppSpacing.xl - 4),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +126,7 @@ class _RoleCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.grayMedium,
                       ),

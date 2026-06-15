@@ -27,7 +27,6 @@ import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/jobs/presentation/pages/job_schedule_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
-import '../../features/auth/presentation/pages/reset_password_code_page.dart';
 import '../../features/auth/presentation/pages/reset_password_new_page.dart';
 import '../../features/gdpr/presentation/pages/privacy_policy_page.dart';
 import '../../features/gdpr/presentation/pages/terms_page.dart';
@@ -36,8 +35,16 @@ import '../../core/presentation/pages/maintenance_page.dart';
 import '../../core/presentation/pages/help_center_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/admin/presentation/pages/admin_users_page.dart';
+import '../../features/admin/presentation/pages/admin_workers_page.dart';
+import '../../features/admin/presentation/pages/admin_jobs_page.dart';
+import '../../features/admin/presentation/pages/admin_job_detail_page.dart';
+import '../../features/admin/presentation/pages/admin_reports_page.dart';
 import '../../features/admin/presentation/pages/admin_disputes_page.dart';
+import '../../features/admin/presentation/pages/admin_errors_page.dart';
+import '../../features/admin/presentation/pages/admin_services_page.dart';
+import '../../features/admin/presentation/pages/admin_feature_flags_page.dart';
 import '../../core/utils/constants.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/database/repositories/worker_repository.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -65,7 +72,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             state.matchedLocation == AppConstants.routeOnboarding;
         final isOnAuth = state.matchedLocation == AppConstants.routeLogin ||
             state.matchedLocation == AppConstants.routeRegister ||
-            state.matchedLocation == AppConstants.routeForgotPassword;
+            state.matchedLocation == AppConstants.routeForgotPassword ||
+            state.matchedLocation == AppConstants.routeResetPassword;
 
         // Rutas legales accesibles sin login (GDPR compliance)
         final isLegalRoute = state.matchedLocation == AppConstants.routePrivacyPolicy ||
@@ -111,9 +119,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               : AppConstants.routeUserHome;
         }
 
-      } catch (e) {
-        // Si hay error, continuar sin redirección
-        // Error silenciado para evitar crashes en producción
+      } catch (e, st) {
+        AppLogger.e('Error en redirect del router', e, st);
       }
 
       return null;
@@ -150,18 +157,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ForgotPasswordPage(),
       ),
       GoRoute(
-        path: AppConstants.routeResetPasswordCode,
-        builder: (context, state) {
-          final args = state.extra as Map<String, dynamic>?;
-          return ResetPasswordCodePage(email: args?['email'] ?? '');
-        },
-      ),
-      GoRoute(
-        path: '${AppConstants.routeResetPassword}/:userId',
-        builder: (context, state) {
-          final userId = state.pathParameters['userId']!;
-          return ResetPasswordNewPage(userId: userId);
-        },
+        path: AppConstants.routeResetPassword,
+        builder: (context, state) => const ResetPasswordNewPage(),
       ),
       GoRoute(
         path: AppConstants.routeUserHome,
@@ -314,8 +311,38 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AdminUsersPage(),
       ),
       GoRoute(
+        path: AppConstants.routeAdminWorkers,
+        builder: (context, state) => const AdminWorkersPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminJobs,
+        builder: (context, state) => const AdminJobsPage(),
+      ),
+      GoRoute(
+        path: '${AppConstants.routeAdminJobDetail}/:jobId',
+        builder: (context, state) => AdminJobDetailPage(
+          jobId: state.pathParameters['jobId']!,
+        ),
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminReports,
+        builder: (context, state) => const AdminReportsPage(),
+      ),
+      GoRoute(
         path: AppConstants.routeAdminDisputes,
         builder: (context, state) => const AdminDisputesPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminErrors,
+        builder: (context, state) => const AdminErrorsPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminServices,
+        builder: (context, state) => const AdminServicesPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminFeatureFlags,
+        builder: (context, state) => const AdminFeatureFlagsPage(),
       ),
     ],
   );

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../core/database/repositories/password_reset_repository.dart';
-import '../../../../core/database/repositories/user_repository.dart';
-import '../../../../core/utils/constants.dart';
-import '../../../../core/utils/password_utils.dart';
+import '../../../../core/database/supabase_db.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_auth_scaffold.dart';
 
 class ForgotPasswordPage extends ConsumerStatefulWidget {
@@ -19,10 +17,8 @@ class ForgotPasswordPage extends ConsumerStatefulWidget {
 class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final UserRepository _userRepository = UserRepository();
-  final PasswordResetRepository _resetRepository = PasswordResetRepository();
   bool _isLoading = false;
-  bool _codeSent = false;
+  bool _emailSent = false;
 
   @override
   void dispose() {
@@ -36,78 +32,19 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     setState(() => _isLoading = true);
 
     try {
-      final user = await _userRepository.getUserByEmail(_emailController.text.trim());
-
-      if (user == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No existe una cuenta con este email'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      final code = PasswordUtils.generateResetCode();
-      await _resetRepository.invalidateUserCodes(user.id);
-      await _resetRepository.createResetCode(
-        userId: user.id,
-        email: user.email,
-        code: code,
+      await supabase.auth.resetPasswordForEmail(
+        _emailController.text.trim().toLowerCase(),
       );
 
       if (!mounted) return;
-
       setState(() {
         _isLoading = false;
-        _codeSent = true;
+        _emailSent = true;
       });
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Código de recuperación'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'En producción, este código se enviaría por email.\n\nCódigo para desarrollo:',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  code,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        letterSpacing: 8,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.push(
-                    AppConstants.routeResetPasswordCode,
-                    extra: {'email': user.email},
-                  );
-                },
-                child: const Text('Continuar'),
-              ),
-            ],
-          ),
-        );
-      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      ErrorHandler.showError(context, e);
     }
   }
 
@@ -115,13 +52,15 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return AppAuthScaffold(
       title: '¿Olvidaste tu contraseña?',
-      subtitle: 'Te enviaremos un código para recuperar el acceso',
+      subtitle: _emailSent
+          ? 'Revisa tu bandeja de entrada y sigue el enlace para crear una nueva contraseña.'
+          : 'Te enviaremos un enlace de recuperación a tu correo',
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (!_codeSent) ...[
+            if (!_emailSent) ...[
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -141,7 +80,18 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Enviar código'),
+                    : const Text('Enviar enlace'),
+              ),
+            ] else ...[
+              const Icon(
+                Icons.mark_email_read_outlined,
+                size: 64,
+                color: AppColors.success,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Si el correo está registrado, recibirás instrucciones en unos minutos.',
+                textAlign: TextAlign.center,
               ),
             ],
           ],

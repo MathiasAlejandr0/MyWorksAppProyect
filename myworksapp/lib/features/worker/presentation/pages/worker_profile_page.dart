@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:io';
+import '../../../../core/design_system/layout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/database/repositories/user_repository.dart';
@@ -361,7 +363,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: LayoutUtils.scrollPadding(context),
             child: Form(
               key: _formKey,
               child: Column(
@@ -408,7 +410,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 24),
+                        const Icon(Icons.star, color: AppColors.warning, size: 24),
                         const SizedBox(width: 8),
                         Text(
                           _averageRating.toStringAsFixed(1),
@@ -508,7 +510,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                 children: [
                   Text(
                     'Portafolio',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   IconButton(
                     icon: const Icon(Icons.add_photo_alternate),
@@ -517,57 +519,64 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               _portfolio.isEmpty
                   ? const Center(
                       child: Padding(
-                        padding: EdgeInsets.all(32.0),
+                        padding: EdgeInsets.all(20.0),
                         child: Text('No hay fotos en el portafolio'),
                       ),
                     )
-                  : GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: 1,
-                      ),
-                      itemCount: _portfolio.length,
-                      itemBuilder: (context, index) {
-                        final item = _portfolio[index];
-                        return Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            PortfolioMediaTile(
-                              photoPath: item.photoPath,
-                              mediaType: item.mediaType,
-                              description: item.description,
-                            ),
-                            if (_isEditing)
-                              Positioned(
-                                top: 4,
-                                right: 4,
-                                child: Material(
-                                  color: Colors.white,
-                                  shape: const CircleBorder(),
-                                  child: IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                                    onPressed: () => _deletePortfolioPhoto(item.id),
-                                    padding: const EdgeInsets.all(4),
-                                    constraints: const BoxConstraints(
-                                      minWidth: 32,
-                                      minHeight: 32,
+                  : SizedBox(
+                      height: 84,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _portfolio.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final item = _portfolio[index];
+                          return SizedBox(
+                            width: 84,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                PortfolioMediaTile(
+                                  photoPath: item.photoPath,
+                                  mediaType: item.mediaType,
+                                  description: item.description,
+                                  showDescription: false,
+                                  compact: true,
+                                ),
+                                if (_isEditing)
+                                  Positioned(
+                                    top: 2,
+                                    right: 2,
+                                    child: Material(
+                                      color: Colors.white,
+                                      shape: const CircleBorder(),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: AppColors.error,
+                                          size: 18,
+                                        ),
+                                        onPressed: () =>
+                                            _deletePortfolioPhoto(item.id),
+                                        padding: const EdgeInsets.all(2),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 28,
+                                          minHeight: 28,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
               // Estadísticas
               Card(
                 child: Padding(
@@ -628,7 +637,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                 icon: const Icon(Icons.logout),
                 label: const Text('Cerrar sesión'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
+                  foregroundColor: AppColors.error,
                 ),
               ),
       ],

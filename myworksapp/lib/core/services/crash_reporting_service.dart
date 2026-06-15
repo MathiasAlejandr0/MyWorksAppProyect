@@ -1,34 +1,31 @@
-// Firebase deshabilitado - descomentar si se necesita en el futuro
-// import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-// import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+import '../database/repositories/app_error_log_repository.dart';
+import '../database/supabase_db.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 
-/// Servicio de monitoreo de crashes y errores
-/// 
-/// NOTA: Firebase está deshabilitado por defecto.
-/// Este servicio solo loguea localmente.
-/// Para habilitar Firebase, agregar las dependencias en pubspec.yaml
-/// y descomentar el código de inicialización.
+/// Persiste errores en Supabase para revisión en el panel admin.
 class CrashReportingService {
   static final CrashReportingService instance = CrashReportingService._();
   CrashReportingService._();
 
+  final AppErrorLogRepository _errorLogRepo = AppErrorLogRepository();
   bool _isInitialized = false;
+  String? _appVersion;
 
-  /// Inicializa el servicio de crash reporting
-  /// 
-  /// NOTA: Firebase no está habilitado por defecto.
-  /// Este servicio está deshabilitado y no hace nada.
   Future<void> initialize() async {
-    // Firebase/Crashlytics deshabilitado completamente
-    AppLogger.i('CrashReportingService: Firebase deshabilitado, servicio no inicializado');
-    _isInitialized = false;
+    try {
+      final info = await PackageInfo.fromPlatform();
+      _appVersion = info.version;
+    } catch (_) {
+      _appVersion = null;
+    }
+    _isInitialized = true;
+    AppLogger.i('CrashReportingService: logging remoto activo');
   }
 
-  /// Reporta un error manualmente
-  /// 
-  /// Útil para errores capturados que no causan crash.
   void recordError(
     dynamic error,
     StackTrace? stackTrace, {
@@ -36,11 +33,26 @@ class CrashReportingService {
     bool fatal = false,
     Map<String, dynamic>? additionalData,
   }) {
-    // Firebase deshabilitado - solo loguear localmente
-    AppLogger.d('Crashlytics deshabilitado, error no reportado: $reason');
+    if (!_isInitialized) return;
+
+    final message = reason ?? error.toString();
+    final metadata = <String, dynamic>{
+      if (fatal) 'fatal': true,
+      if (additionalData != null) ...additionalData,
+      'error': error.toString(),
+    };
+
+    _errorLogRepo.logError(
+      message: message,
+      userId: supabase.auth.currentUser?.id,
+      errorType: fatal ? 'fatal' : 'error',
+      stackTrace: stackTrace?.toString(),
+      metadata: metadata,
+      appVersion: _appVersion,
+      platform: _platformLabel(),
+    );
   }
 
-  /// Reporta un AppError
   void recordAppError(AppError error, {StackTrace? stackTrace}) {
     recordError(
       error,
@@ -54,34 +66,40 @@ class CrashReportingService {
     );
   }
 
-  /// Establece el ID de usuario para tracking
   void setUserId(String userId) {
-    // Firebase deshabilitado
-    AppLogger.d('Crashlytics deshabilitado, setUserId ignorado: $userId');
+    AppLogger.d('CrashReporting userId: $userId');
   }
 
-  /// Establece información adicional del usuario
   void setUserInfo({
     String? email,
     String? name,
     String? role,
-  }) {
-    // Firebase deshabilitado
-    AppLogger.d('Crashlytics deshabilitado, setUserInfo ignorado');
-  }
+  }) {}
 
-  /// Agrega un log personalizado
   void log(String message) {
-    // Firebase deshabilitado - solo loguear localmente
-    AppLogger.d('Crashlytics log: $message');
+    AppLogger.d('CrashReporting log: $message');
   }
 
-  /// Fuerza un crash de prueba (solo en debug)
   void crash() {
-    // Firebase deshabilitado
-    AppLogger.w('Crashlytics deshabilitado, crash() ignorado');
+    AppLogger.w('crash() solo disponible en debug');
   }
 
-  /// Verifica si el servicio está inicializado
   bool get isInitialized => _isInitialized;
+
+  String _platformLabel() {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.macOS:
+        return 'macos';
+      case TargetPlatform.windows:
+        return 'windows';
+      case TargetPlatform.linux:
+        return 'linux';
+      case TargetPlatform.fuchsia:
+        return 'fuchsia';
+    }
+  }
 }

@@ -60,6 +60,8 @@ class StatusBadge extends StatelessWidget {
         return 'Cotización elegida';
       case PricingConstants.jobPausedChangeOrder:
         return 'Cobro extra pendiente';
+      case PricingConstants.jobAwaitingClientApproval:
+        return 'Esperando cliente';
       default:
         return status;
     }
@@ -113,7 +115,7 @@ class StatusBadge extends StatelessWidget {
             color: color,
           ),
           if (!compact) ...[
-            SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: AppSpacing.xs),
             Text(
               _getStatusLabel(),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(

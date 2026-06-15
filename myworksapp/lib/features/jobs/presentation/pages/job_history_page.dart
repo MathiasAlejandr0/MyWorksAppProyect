@@ -35,11 +35,13 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     }
 
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Historial de Trabajos'),
+      appBar: const AppGradientAppBar(
+        title: Text('Historial de Trabajos'),
       ),
       body: FutureBuilder<List<JobModel>>(
-        future: _jobRepository.getJobsByUserId(user.id),
+        future: user.role == AppConstants.roleWorker
+            ? _jobRepository.getJobsByWorkerId(user.id)
+            : _jobRepository.getJobsByUserId(user.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingWidget();
@@ -62,7 +64,9 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
             return EmptyStateWidget(
               icon: Icons.history,
               title: 'No hay trabajos',
-              message: 'Tu historial de trabajos aparecerá aquí cuando solicites servicios',
+              message: user.role == AppConstants.roleWorker
+                  ? 'Tus trabajos asignados aparecerán aquí cuando aceptes solicitudes.'
+                  : 'Tu historial de trabajos aparecerá aquí cuando solicites servicios',
             );
           }
 
@@ -109,17 +113,17 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
   Color _getStatusColor(String status) {
     switch (status) {
       case AppConstants.jobStatusPending:
-        return Colors.orange;
+        return AppColors.warning;
       case AppConstants.jobStatusAccepted:
         return AppColors.brandOrange;
       case AppConstants.jobStatusInProgress:
         return AppColors.brandOrangeDark;
       case AppConstants.jobStatusCompleted:
-        return Colors.green;
+        return AppColors.success;
       case AppConstants.jobStatusCancelled:
-        return Colors.red;
+        return AppColors.error;
       default:
-        return Colors.grey;
+        return AppColors.grayMedium;
     }
   }
 

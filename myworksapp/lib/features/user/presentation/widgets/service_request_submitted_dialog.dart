@@ -38,7 +38,7 @@ class ServiceRequestSubmittedDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      icon: Icon(Icons.send_rounded, color: AppColors.brandOrange, size: 40),
+      icon: const Icon(Icons.send_rounded, color: AppColors.brandOrange, size: 40),
       title: const Text('Solicitud enviada'),
       content: Text(
         'Enviamos tu pedido de $jobLabel a $workerName. '

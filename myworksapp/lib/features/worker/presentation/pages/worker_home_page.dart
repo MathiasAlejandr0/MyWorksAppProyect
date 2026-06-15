@@ -11,14 +11,19 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/open_quote_utils.dart';
+import '../../../../core/utils/worker_job_status.dart';
 import '../../../../core/utils/location_utils.dart';
 import '../../../../core/utils/job_display_utils.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
+import '../../../../core/widgets/design_system/status_badge.dart';
+import '../../../../core/widgets/app_guided_tour.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/worker_home_refresh_provider.dart';
+import '../widgets/worker_demo_tour_overlay.dart';
+import '../widgets/worker_earnings_summary.dart';
 import '../widgets/worker_onboarding_card.dart';
 
 class WorkerHomePage extends ConsumerStatefulWidget {
@@ -38,7 +43,15 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
   bool _hasActiveJobs = false;
   _WorkerDashboard? _dashboard;
   bool _loadingDashboard = true;
+  String? _dashboardError;
   int _jobsListGeneration = 0;
+
+  final _availabilityKey = GlobalKey();
+  final _statsKey = GlobalKey();
+  final _earningsKey = GlobalKey();
+  final _actionsKey = GlobalKey();
+  final _tabsKey = GlobalKey();
+  final _profileKey = GlobalKey();
 
   @override
   void initState() {
@@ -80,7 +93,10 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     final user = authState.user;
     if (user == null) return;
 
-    setState(() => _loadingDashboard = true);
+    setState(() {
+      _loadingDashboard = true;
+      _dashboardError = null;
+    });
 
     try {
       await _workerRepository.enforceUnavailableWhileBusy(user.id);
@@ -91,11 +107,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
       final completed = await _fetchCompletedJobs(user.id);
       final unread = await _notificationRepository.getUnreadCount(user.id);
 
-      JobModel? highlight;
-      for (final job in active) {
-        highlight = job;
-        break;
-      }
+      final highlight = WorkerJobStatus.pickHighlightJob(active);
 
       if (mounted) {
         setState(() {
@@ -114,8 +126,18 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
           _loadingDashboard = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _loadingDashboard = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingDashboard = false;
+        _dashboardError = e.toString();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo actualizar el panel: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -130,7 +152,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
           content: Text(
             'Tienes un trabajo en curso. Finalízalo antes de activar disponibilidad.',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.warning,
         ),
       );
       return;
@@ -147,7 +169,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
               content: Text(
                 'Aún tienes un trabajo activo. Finalízalo antes de activar disponibilidad.',
               ),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppColors.warning,
             ),
           );
           await _refresh();
@@ -168,6 +190,57 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     }
   }
 
+  List<GuidedTourStep> _workerTourSteps() => [
+        const GuidedTourStep(
+          title: 'Panel del profesional',
+          description:
+              'Desde aquí gestionas solicitudes, trabajos en curso y tu disponibilidad para nuevos clientes.',
+          align: TourTooltipAlign.center,
+        ),
+        GuidedTourStep(
+          targetKey: _availabilityKey,
+          title: 'Tu disponibilidad',
+          description:
+              'Activa o desactiva si puedes recibir nuevas solicitudes. Si tienes un trabajo activo, quedarás como ocupado.',
+          align: TourTooltipAlign.below,
+        ),
+        GuidedTourStep(
+          targetKey: _statsKey,
+          title: 'Resumen de trabajos',
+          description:
+              'Pendientes, en curso y finalizados. Toca cada tarjeta para ir a la pestaña correspondiente.',
+          align: TourTooltipAlign.below,
+        ),
+        GuidedTourStep(
+          targetKey: _earningsKey,
+          title: 'Mis cobros',
+          description:
+              'Vista demo de pagos en garantía y liberados. En producción se conectará a la pasarela real.',
+          align: TourTooltipAlign.below,
+        ),
+        GuidedTourStep(
+          targetKey: _actionsKey,
+          title: 'Accesos rápidos',
+          description:
+              'Tarifas, calendario, estadísticas, historial y alertas sin salir del panel.',
+          align: TourTooltipAlign.below,
+        ),
+        GuidedTourStep(
+          targetKey: _tabsKey,
+          title: 'Listas de trabajos',
+          description:
+              'Revisa solicitudes nuevas, trabajos activos (incluye espera de pago del cliente) y el historial completado.',
+          align: TourTooltipAlign.above,
+        ),
+        GuidedTourStep(
+          targetKey: _profileKey,
+          title: 'Perfil y ajustes',
+          description:
+              'Actualiza foto, portafolio y zona de trabajo. Las notificaciones están en la campana.',
+          align: TourTooltipAlign.below,
+        ),
+      ];
+
   @override
   Widget build(BuildContext context) {
     ref.listen<WorkerHomeRefreshState>(workerHomeRefreshProvider, (previous, next) {
@@ -183,7 +256,9 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
 
     final firstName = user.name.split(' ').first;
 
-    return Scaffold(
+    return WorkerDemoTourOverlay(
+      steps: _workerTourSteps(),
+      child: Scaffold(
       body: AuthSoftBackground(
         showDecorations: false,
         child: SafeArea(
@@ -193,6 +268,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
               _WorkerTopBar(
                 userName: user.name,
                 photoPath: user.profilePhotoPath,
+                profileTourKey: _profileKey,
                 unreadNotifications: _dashboard?.unreadNotifications ?? 0,
                 onNotifications: () => context.push(AppConstants.routeNotifications),
                 onProfile: () => context.push(AppConstants.routeWorkerProfile),
@@ -204,15 +280,48 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                 isAvailable: _isAvailable,
                 hasActiveJobs: _hasActiveJobs,
                 loading: _loadingDashboard,
+                availabilityTourKey: _availabilityKey,
                 onToggleAvailability: _toggleAvailability,
               ),
               WorkerOnboardingCard(
                 workerId: user.id,
                 onCompleted: _refresh,
               ),
-            if (_loadingDashboard)
+            if (_dashboardError != null)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                child: Material(
+                  color: AppColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    onTap: _refresh,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Error al cargar. Toca para reintentar.',
+                              style: TextStyle(
+                                color: AppColors.error,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Icon(Icons.refresh, color: AppColors.error.withValues(alpha: 0.8), size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (_loadingDashboard)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                 child: LinearProgressIndicator(
                   minHeight: 2,
                   color: AppColors.brandOrange,
@@ -220,20 +329,37 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                 ),
               )
             else if (_dashboard != null) ...[
-              _StatsRow(
-                pending: _dashboard!.pendingCount,
-                active: _dashboard!.activeCount,
-                completed: _dashboard!.completedCount,
-                selectedIndex: _tabController.index,
-                onTap: (i) => _tabController.animateTo(i),
+              TourTarget(
+                tourKey: _statsKey,
+                width: double.infinity,
+                child: _StatsRow(
+                  pending: _dashboard!.pendingCount,
+                  active: _dashboard!.activeCount,
+                  completed: _dashboard!.completedCount,
+                  selectedIndex: _tabController.index,
+                  onTap: (i) => _tabController.animateTo(i),
+                ),
               ),
-              _QuickActionsRow(
-                unread: _dashboard!.unreadNotifications,
-                onCalendar: () => context.push(AppConstants.routeJobSchedule),
-                onStats: () => context.push(AppConstants.routeStatistics),
-                onNotifications: () => context.push(AppConstants.routeNotifications),
-                onEditPricing: () => context.push(
-                  '${AppConstants.routeWorkerPricingSetup}?edit=1',
+              TourTarget(
+                tourKey: _earningsKey,
+                width: double.infinity,
+                child: WorkerEarningsSummary(
+                  key: ValueKey('earnings-$_jobsListGeneration'),
+                  workerId: user.id,
+                ),
+              ),
+              TourTarget(
+                tourKey: _actionsKey,
+                width: double.infinity,
+                child: _QuickActionsRow(
+                  unread: _dashboard!.unreadNotifications,
+                  onCalendar: () => context.push(AppConstants.routeJobSchedule),
+                  onStats: () => context.push(AppConstants.routeStatistics),
+                  onHistory: () => context.push(AppConstants.routeJobHistory),
+                  onNotifications: () => context.push(AppConstants.routeNotifications),
+                  onEditPricing: () => context.push(
+                    '${AppConstants.routeWorkerPricingSetup}?edit=1',
+                  ),
                 ),
               ),
               if (_dashboard!.highlightJob != null)
@@ -271,23 +397,27 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                 ),
                 child: Column(
                   children: [
-                    TabBar(
-                      controller: _tabController,
-                      labelColor: AppColors.brandOrange,
-                      unselectedLabelColor: AppColors.grayMedium,
-                      indicatorColor: AppColors.brandOrange,
-                      indicatorWeight: 3,
-                      indicatorSize: TabBarIndicatorSize.label,
-                      dividerColor: AppColors.grayMedium.withValues(alpha: 0.15),
-                      labelStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                      unselectedLabelStyle: Theme.of(context).textTheme.titleSmall,
-                      tabs: [
-                        Tab(text: 'Pendientes${_badge(_dashboard?.pendingCount)}'),
-                        Tab(text: 'En curso${_badge(_dashboard?.activeCount)}'),
-                        Tab(text: 'Finalizados${_badge(_dashboard?.completedCount)}'),
-                      ],
+                    TourTarget(
+                      tourKey: _tabsKey,
+                      width: double.infinity,
+                      child: TabBar(
+                        controller: _tabController,
+                        labelColor: AppColors.brandOrange,
+                        unselectedLabelColor: AppColors.grayMedium,
+                        indicatorColor: AppColors.brandOrange,
+                        indicatorWeight: 3,
+                        indicatorSize: TabBarIndicatorSize.label,
+                        dividerColor: AppColors.grayMedium.withValues(alpha: 0.15),
+                        labelStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                        unselectedLabelStyle: Theme.of(context).textTheme.titleSmall,
+                        tabs: [
+                          Tab(text: 'Pendientes${_badge(_dashboard?.pendingCount)}'),
+                          Tab(text: 'En curso${_badge(_dashboard?.activeCount)}'),
+                          Tab(text: 'Finalizados${_badge(_dashboard?.completedCount)}'),
+                        ],
+                      ),
                     ),
                     Expanded(
                       child: TabBarView(
@@ -337,6 +467,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
         ),
       ),
       ),
+      ),
     );
   }
 
@@ -369,13 +500,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
   }
 
   Future<List<JobModel>> _fetchActiveJobs(String workerId) async {
-    final allJobs = await _jobRepository.getJobsByWorkerId(workerId);
-    return allJobs
-        .where((j) =>
-            j.status == AppConstants.jobStatusInProgress ||
-            j.status == AppConstants.jobStatusAccepted ||
-            j.status == PricingConstants.jobAwaitingClientApproval)
-        .toList();
+    return _jobRepository.getActiveJobsByWorkerId(workerId);
   }
 
   Future<List<JobModel>> _fetchCompletedJobs(String workerId) async {
@@ -408,6 +533,7 @@ class _WorkerTopBar extends StatelessWidget {
   const _WorkerTopBar({
     required this.userName,
     required this.photoPath,
+    required this.profileTourKey,
     required this.unreadNotifications,
     required this.onNotifications,
     required this.onProfile,
@@ -416,6 +542,7 @@ class _WorkerTopBar extends StatelessWidget {
 
   final String userName;
   final String? photoPath;
+  final GlobalKey profileTourKey;
   final int unreadNotifications;
   final VoidCallback onNotifications;
   final VoidCallback onProfile;
@@ -441,43 +568,46 @@ class _WorkerTopBar extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(
-            width: 44,
-            height: 44,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                GestureDetector(
-                  onTap: onProfile,
-                  child: ProfileAvatarView(
-                    displayName: userName,
-                    photoPath: photoPath,
-                    radius: 20,
-                    onDarkBackground: false,
+          TourTarget(
+            tourKey: profileTourKey,
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  GestureDetector(
+                    onTap: onProfile,
+                    child: ProfileAvatarView(
+                      displayName: userName,
+                      photoPath: photoPath,
+                      radius: 20,
+                      onDarkBackground: false,
+                    ),
                   ),
-                ),
-                Positioned(
-                  right: -2,
-                  bottom: -2,
-                  child: GestureDetector(
-                    onTap: onSettings,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: AppColors.brandOrange,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.settings_rounded,
-                        size: 12,
-                        color: Colors.white,
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: GestureDetector(
+                      onTap: onSettings,
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: AppColors.brandOrange,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.settings_rounded,
+                          size: 12,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -493,6 +623,7 @@ class _WorkerHeader extends StatelessWidget {
     required this.isAvailable,
     required this.hasActiveJobs,
     required this.loading,
+    required this.availabilityTourKey,
     required this.onToggleAvailability,
   });
 
@@ -501,6 +632,7 @@ class _WorkerHeader extends StatelessWidget {
   final bool isAvailable;
   final bool hasActiveJobs;
   final bool loading;
+  final GlobalKey availabilityTourKey;
   final VoidCallback onToggleAvailability;
 
   @override
@@ -548,10 +680,13 @@ class _WorkerHeader extends StatelessWidget {
                 ),
               if (worker != null) const SizedBox(width: 8),
               if (!loading)
-                _AvailabilityPill(
-                  isAvailable: isAvailable,
-                  hasActiveJobs: hasActiveJobs,
-                  onTap: onToggleAvailability,
+                TourTarget(
+                  tourKey: availabilityTourKey,
+                  child: _AvailabilityPill(
+                    isAvailable: isAvailable,
+                    hasActiveJobs: hasActiveJobs,
+                    onTap: onToggleAvailability,
+                  ),
                 ),
             ],
           ),
@@ -660,7 +795,7 @@ class _AvailabilityPill extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.brandNavy,
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
@@ -794,7 +929,7 @@ class _StatCard extends StatelessWidget {
               ),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.grayMedium,
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
@@ -814,6 +949,7 @@ class _QuickActionsRow extends StatelessWidget {
     required this.unread,
     required this.onCalendar,
     required this.onStats,
+    required this.onHistory,
     required this.onNotifications,
     required this.onEditPricing,
   });
@@ -821,6 +957,7 @@ class _QuickActionsRow extends StatelessWidget {
   final int unread;
   final VoidCallback onCalendar;
   final VoidCallback onStats;
+  final VoidCallback onHistory;
   final VoidCallback onNotifications;
   final VoidCallback onEditPricing;
 
@@ -841,6 +978,8 @@ class _QuickActionsRow extends StatelessWidget {
           _ActionChip(icon: Icons.calendar_month, label: 'Calendario', onTap: onCalendar),
           const SizedBox(width: 8),
           _ActionChip(icon: Icons.bar_chart_rounded, label: 'Estadísticas', onTap: onStats),
+          const SizedBox(width: 8),
+          _ActionChip(icon: Icons.history, label: 'Historial', onTap: onHistory),
           const SizedBox(width: 8),
           _ActionChip(
             icon: Icons.notifications_active_outlined,
@@ -933,9 +1072,9 @@ class _ActiveJobBanner extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Trabajo en curso',
-                        style: TextStyle(
+                      Text(
+                        WorkerJobStatus.activeBannerTitle(job.status),
+                        style: const TextStyle(
                           color: AppColors.brandOrange,
                           fontWeight: FontWeight.w700,
                           fontSize: 12,
@@ -954,7 +1093,7 @@ class _ActiveJobBanner extends StatelessWidget {
                       if (JobDisplayUtils.priceLine(job) != null)
                         Text(
                           JobDisplayUtils.priceLine(job)!,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.brandOrange,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -962,7 +1101,7 @@ class _ActiveJobBanner extends StatelessWidget {
                         ),
                       Text(
                         JobDisplayUtils.dateLine(job),
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppColors.grayMedium,
                           fontSize: 12,
                         ),
@@ -1188,14 +1327,14 @@ class _JobCardState extends State<_JobCard> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  _StatusBadge(status: widget.job.status),
+                  StatusBadge(status: widget.job.status, compact: true),
                 ],
               ),
               if (JobDisplayUtils.priceLine(widget.job) != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   JobDisplayUtils.priceLine(widget.job)!,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.brandOrange,
@@ -1216,7 +1355,7 @@ class _JobCardState extends State<_JobCard> {
                   Expanded(
                     child: Text(
                       _isLoadingAddress ? 'Cargando ubicación...' : _displayAddress,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.grayMedium,
                       ),
@@ -1231,7 +1370,7 @@ class _JobCardState extends State<_JobCard> {
                   const SizedBox(width: 4),
                   Text(
                     JobDisplayUtils.dateLine(widget.job),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.grayMedium,
                       fontSize: 12,
                     ),
@@ -1246,37 +1385,3 @@ class _JobCardState extends State<_JobCard> {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (color, label) = switch (status) {
-      AppConstants.jobStatusPending => (AppColors.brandOrange, 'Pendiente'),
-      AppConstants.jobStatusAccepted => (AppColors.brandNavy, 'Aceptado'),
-      AppConstants.jobStatusInProgress => (AppColors.brandTeal, 'En curso'),
-      AppConstants.jobStatusCompleted => (AppColors.success, 'Completado'),
-      AppConstants.jobStatusCancelled => (AppColors.error, 'Cancelado'),
-      PricingConstants.jobAwaitingQuotes => (AppColors.brandOrange, 'Cotizar'),
-      PricingConstants.jobAwaitingPayment => (AppColors.brandOrange, 'Pago cliente'),
-      PricingConstants.jobPausedChangeOrder => (AppColors.warning, 'Cobro extra'),
-      PricingConstants.jobAwaitingClientApproval =>
-        (AppColors.brandTeal, 'Esperando cliente'),
-      _ => (AppColors.grayMedium, status),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}

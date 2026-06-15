@@ -5,12 +5,18 @@ class DemoTourService {
   DemoTourService._();
 
   static const _homeKey = 'demo_tour_v2_home_completed';
+  static const _workerHomeKey = 'demo_tour_v2_worker_home_completed';
   static const _workersKey = 'demo_tour_v2_workers_completed';
   static const _requestKey = 'demo_tour_v2_request_completed';
 
   static Future<bool> shouldShowHomeTour() async {
     final prefs = await SharedPreferences.getInstance();
     return !(prefs.getBool(_homeKey) ?? false);
+  }
+
+  static Future<bool> shouldShowWorkerHomeTour() async {
+    final prefs = await SharedPreferences.getInstance();
+    return !(prefs.getBool(_workerHomeKey) ?? false);
   }
 
   static Future<bool> shouldShowWorkersTour() async {
@@ -28,6 +34,11 @@ class DemoTourService {
     await prefs.setBool(_homeKey, true);
   }
 
+  static Future<void> completeWorkerHomeTour() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_workerHomeKey, true);
+  }
+
   static Future<void> completeWorkersTour() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_workersKey, true);
@@ -41,6 +52,7 @@ class DemoTourService {
   static Future<void> resetAllTours() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_homeKey);
+    await prefs.remove(_workerHomeKey);
     await prefs.remove(_workersKey);
     await prefs.remove(_requestKey);
   }

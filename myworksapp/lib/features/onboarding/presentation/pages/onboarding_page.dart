@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
@@ -66,7 +67,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  0,
+                ),
                 child: Align(
                   alignment: Alignment.topRight,
                   child: TextButton(
@@ -90,7 +96,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   itemBuilder: (context, index) {
                     final item = _pages[index];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxl - 4,
+                        vertical: AppSpacing.md,
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -127,14 +136,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
                     _pages.length,
                     (index) => AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                       width: _currentPage == index ? 24 : 8,
                       height: 8,
                       decoration: BoxDecoration(
@@ -148,7 +157,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl - 4,
+                  0,
+                  AppSpacing.xl - 4,
+                  AppSpacing.xl - 4,
+                ),
                 child: Row(
                   children: [
                     if (_currentPage > 0)

@@ -36,7 +36,7 @@ class ListItemSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(AppSpacing.cardPadding),
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
         child: Row(
           children: [
             LoadingSkeleton(
@@ -44,8 +44,8 @@ class ListItemSkeleton extends StatelessWidget {
               height: 56,
               borderRadius: BorderRadius.circular(28),
             ),
-            SizedBox(width: AppSpacing.lg),
-            Expanded(
+            const SizedBox(width: AppSpacing.lg),
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

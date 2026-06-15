@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 
+import '../../../../core/design_system/layout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/services/profile_photo_service.dart';
@@ -204,7 +206,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: LayoutUtils.scrollPadding(context),
         child: Form(
           key: _formKey,
           child: Column(
@@ -315,7 +317,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
                 icon: const Icon(Icons.logout),
                 label: const Text('Cerrar sesión'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
+                  foregroundColor: AppColors.error,
                 ),
               ),
             ],

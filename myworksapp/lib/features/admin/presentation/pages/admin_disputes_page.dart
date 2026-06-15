@@ -4,11 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/database/models/dispute_model.dart';
 import '../../../../core/database/repositories/admin_repository.dart';
+import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/services/admin_notification_service.dart';
 import '../../../../core/services/dispute_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../widgets/admin_search_field.dart';
 
 class AdminDisputesPage extends ConsumerStatefulWidget {
   const AdminDisputesPage({super.key});
@@ -18,10 +22,11 @@ class AdminDisputesPage extends ConsumerStatefulWidget {
 }
 
 class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
-  final AdminRepository _repo = AdminRepository();
+  AdminRepository get _repo => ref.read(adminRepositoryProvider);
   List<DisputeModel> _disputes = [];
   bool _loading = true;
   String _filter = 'open';
+  String _search = '';
 
   @override
   void initState() {
@@ -34,6 +39,7 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
     try {
       final list = await _repo.listDisputes(
         status: _filter == 'all' ? null : _filter,
+        search: _search.isEmpty ? null : _search,
       );
       if (!mounted) return;
       setState(() {
@@ -43,6 +49,31 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  Future<void> _markUnderReview(DisputeModel dispute) async {
+    try {
+      await _repo.markDisputeUnderReview(dispute.id);
+      final detail = await _repo.getJobDetail(dispute.jobId);
+      if (detail != null) {
+        await AdminNotificationService.instance.notifyDisputeUnderReview(
+          userId: detail.job.userId,
+          workerId: detail.job.workerId,
+          jobId: dispute.jobId,
+          disputeId: dispute.id,
+        );
+      }
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Disputa marcada en revisión')),
+      );
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
@@ -82,13 +113,23 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
     if (ok != true || !mounted) return;
 
     try {
+      final resolution = resolutionText.isEmpty
+          ? 'Resuelta por administrador'
+          : resolutionText;
       await DisputeService.instance.resolveDispute(
         disputeId: dispute.id,
         resolvedBy: admin.id,
-        resolution: resolutionText.isEmpty
-            ? 'Resuelta por administrador'
-            : resolutionText,
+        resolution: resolution,
       );
+      final detail = await _repo.getJobDetail(dispute.jobId);
+      if (detail != null) {
+        await AdminNotificationService.instance.notifyDisputeResolved(
+          userId: detail.job.userId,
+          workerId: detail.job.workerId,
+          disputeId: dispute.id,
+          resolution: resolution,
+        );
+      }
       await _load();
     } catch (e) {
       if (!mounted) return;
@@ -104,11 +145,22 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
       appBar: const AppGradientAppBar(title: Text('Disputas')),
       body: Column(
         children: [
+          AdminSearchField(
+            hint: 'Buscar por motivo, descripción o ID de trabajo…',
+            onSearch: (q) {
+              _search = q;
+              _load();
+            },
+          ),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: SegmentedButton<String>(
               segments: const [
                 ButtonSegment(value: 'open', label: Text('Abiertas')),
+                ButtonSegment(
+                  value: 'under_review',
+                  label: Text('En revisión'),
+                ),
                 ButtonSegment(value: 'resolved', label: Text('Resueltas')),
                 ButtonSegment(value: 'all', label: Text('Todas')),
               ],
@@ -127,7 +179,7 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
                     : RefreshIndicator(
                         onRefresh: _load,
                         child: ListView.builder(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(AppSpacing.md),
                           itemCount: _disputes.length,
                           itemBuilder: (context, index) {
                             final d = _disputes[index];
@@ -139,19 +191,36 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
                                 ),
                                 isThreeLine: true,
                                 onTap: () => context.push(
-                                  '${AppConstants.routeJobDetail}/${d.jobId}',
+                                  '${AppConstants.routeAdminJobDetail}/${d.jobId}',
                                 ),
-                                trailing: d.status == 'open'
-                                    ? TextButton(
-                                        onPressed: () => _resolve(d),
-                                        child: const Text('Resolver'),
+                                trailing: d.status == 'open' ||
+                                        d.status == 'under_review'
+                                    ? PopupMenuButton<String>(
+                                        onSelected: (v) {
+                                          if (v == 'review') {
+                                            _markUnderReview(d);
+                                          } else {
+                                            _resolve(d);
+                                          }
+                                        },
+                                        itemBuilder: (ctx) => [
+                                          if (d.status == 'open')
+                                            const PopupMenuItem(
+                                              value: 'review',
+                                              child: Text('Marcar en revisión'),
+                                            ),
+                                          const PopupMenuItem(
+                                            value: 'resolve',
+                                            child: Text('Resolver'),
+                                          ),
+                                        ],
                                       )
                                     : null,
                                 leading: Icon(
                                   Icons.gavel,
-                                  color: d.status == 'open'
-                                      ? AppColors.brandOrange
-                                      : AppColors.success,
+                                  color: d.status == 'resolved'
+                                      ? AppColors.success
+                                      : AppColors.brandOrange,
                                 ),
                               ),
                             );

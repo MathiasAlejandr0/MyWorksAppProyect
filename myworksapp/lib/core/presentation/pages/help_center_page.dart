@@ -30,8 +30,8 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Centro de Ayuda'),
+      appBar: const AppGradientAppBar(
+        title: Text('Centro de Ayuda'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -213,7 +213,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
             padding: const EdgeInsets.all(16),
             child: Text(
               answer,
-              style: TextStyle(color: AppColors.grayDark),
+              style: const TextStyle(color: AppColors.grayDark),
             ),
           ),
         ],
@@ -222,8 +222,8 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   }
 
   Future<void> _launchEmail() async {
-    final email = 'soporte@myworksapp.com';
-    final subject = 'Soporte My Works App';
+    const email = 'soporte@myworksapp.com';
+    const subject = 'Soporte My Works App';
     final uri = Uri.parse('mailto:$email?subject=${Uri.encodeComponent(subject)}');
     
     if (await canLaunchUrl(uri)) {
@@ -238,8 +238,8 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   }
 
   Future<void> _launchWhatsApp() async {
-    final phone = '56912345678'; // Sin + ni espacios
-    final message = 'Hola, necesito ayuda con My Works App';
+    const phone = '56912345678'; // Sin + ni espacios
+    const message = 'Hola, necesito ayuda con My Works App';
     final uri = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
     
     if (await canLaunchUrl(uri)) {

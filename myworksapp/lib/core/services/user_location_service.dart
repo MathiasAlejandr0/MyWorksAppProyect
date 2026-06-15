@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/user_location_context.dart';
 import '../utils/app_logger.dart';
+import '../utils/chile_comunas.dart';
 import '../utils/platform_support.dart';
 
 class UserLocationService {
@@ -17,6 +19,10 @@ class UserLocationService {
   static const _keyLng = 'user_location_lng';
   static const _keyCity = 'user_location_city';
   static const _keyRegion = 'user_location_region';
+  static const _demoFallbackCity = 'Puerto Montt';
+  static const _demoFallbackRegion = 'Los Lagos';
+  static const _demoFallbackLat = -41.4717;
+  static const _demoFallbackLng = -72.9366;
 
   /// Obtiene ubicación: caché → GPS → caché guardada previamente.
   Future<UserLocationContext?> resolve() async {
@@ -40,11 +46,13 @@ class UserLocationService {
     if (city == null || city.isEmpty || lat == null || lng == null) {
       return null;
     }
-    return UserLocationContext(
-      city: city,
-      region: prefs.getString(_keyRegion),
-      latitude: lat,
-      longitude: lng,
+    return _ensureServiceArea(
+      UserLocationContext(
+        city: city,
+        region: prefs.getString(_keyRegion),
+        latitude: lat,
+        longitude: lng,
+      ),
     );
   }
 
@@ -92,9 +100,7 @@ class UserLocationService {
 
       if (position == null) return null;
 
-      final ctx = await fromCoordinates(position.latitude, position.longitude);
-      if (ctx != null) await persist(ctx);
-      return ctx;
+      return fromCoordinates(position.latitude, position.longitude);
     } catch (e) {
       AppLogger.w('No se pudo obtener ubicación del usuario', e);
       return null;
@@ -106,19 +112,48 @@ class UserLocationService {
     double longitude,
   ) async {
     final fromPlugin = await _fromGeocodingPlugin(latitude, longitude);
-    if (fromPlugin != null) return fromPlugin;
+    if (fromPlugin != null) return _ensureServiceArea(fromPlugin);
 
     final fromOsm = await _fromOpenStreetMap(latitude, longitude);
-    if (fromOsm != null) return fromOsm;
+    if (fromOsm != null) return _ensureServiceArea(fromOsm);
 
     final inferred = _inferCityFromCoordinates(latitude, longitude);
     if (inferred != null) {
-      return UserLocationContext(
-        city: inferred.$1,
-        region: inferred.$2,
-        latitude: latitude,
-        longitude: longitude,
+      return _ensureServiceArea(
+        UserLocationContext(
+          city: inferred.$1,
+          region: inferred.$2,
+          latitude: latitude,
+          longitude: longitude,
+        ),
       );
+    }
+
+    return null;
+  }
+
+  /// GPS fuera de Chile (p. ej. emulador en Mountain View) → demo en Puerto Montt.
+  Future<UserLocationContext?> _ensureServiceArea(UserLocationContext? ctx) async {
+    if (ctx == null) return null;
+    if (ChileComunas.isServiceCity(ctx.city)) {
+      await persist(ctx);
+      return ctx;
+    }
+
+    AppLogger.w('Ciudad fuera de cobertura: ${ctx.city}');
+
+    if (kDebugMode) {
+      const fallback = UserLocationContext(
+        city: _demoFallbackCity,
+        region: _demoFallbackRegion,
+        latitude: _demoFallbackLat,
+        longitude: _demoFallbackLng,
+      );
+      await persist(fallback);
+      AppLogger.i(
+        'Modo debug: usando $_demoFallbackCity (GPS del emulador ignorado)',
+      );
+      return fallback;
     }
 
     return null;

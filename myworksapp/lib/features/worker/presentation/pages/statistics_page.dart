@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/worker_job_status.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class StatisticsPage extends ConsumerStatefulWidget {
@@ -30,8 +31,8 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
     }
 
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Estadísticas'),
+      appBar: const AppGradientAppBar(
+        title: Text('Estadísticas'),
       ),
       body: FutureBuilder(
         future: Future.wait([
@@ -51,9 +52,14 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
           final jobs = results[0] as List;
           final avgRating = results[1] as double;
 
-          final completed = jobs.where((j) => j.status == AppConstants.jobStatusCompleted).length;
-          final inProgress = jobs.where((j) => j.status == AppConstants.jobStatusInProgress).length;
+          final completed = jobs
+              .where((j) => j.status == AppConstants.jobStatusCompleted)
+              .length;
+          final inProgress =
+              jobs.where((j) => WorkerJobStatus.isActive(j.status)).length;
           final pending = jobs.where((j) => j.status == AppConstants.jobStatusPending).length;
+          final cancelled =
+              jobs.where((j) => j.status == AppConstants.jobStatusCancelled).length;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -84,7 +90,7 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
                               icon: Icons.check_circle,
                               label: 'Completados',
                               value: completed.toString(),
-                              color: Colors.green,
+                              color: AppColors.success,
                             ),
                             _StatCard(
                               icon: Icons.star,
@@ -115,10 +121,10 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
                           label: 'Completados',
                           count: completed,
                           total: jobs.length,
-                          color: Colors.green,
+                          color: AppColors.success,
                         ),
                         _StatusItem(
-                          label: 'En Progreso',
+                          label: 'Activos',
                           count: inProgress,
                           total: jobs.length,
                           color: AppColors.brandOrangeDark,
@@ -128,6 +134,12 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
                           count: pending,
                           total: jobs.length,
                           color: AppColors.brandOrange,
+                        ),
+                        _StatusItem(
+                          label: 'Cancelados',
+                          count: cancelled,
+                          total: jobs.length,
+                          color: AppColors.error,
                         ),
                       ],
                     ),
@@ -208,7 +220,7 @@ class _StatusItem extends StatelessWidget {
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: percentage,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: AppColors.grayLight,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ],

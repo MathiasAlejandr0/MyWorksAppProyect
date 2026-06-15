@@ -28,6 +28,8 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val googleMapsApiKey = loadGoogleMapsApiKey()
+
 android {
     namespace = "com.example.myworksapp"
     compileSdk = flutter.compileSdkVersion
@@ -52,7 +54,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = loadGoogleMapsApiKey()
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
     }
 
     signingConfigs {

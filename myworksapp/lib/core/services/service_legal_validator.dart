@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../database/models/service_model.dart';
 import '../database/repositories/service_repository.dart';
 import '../utils/app_logger.dart';
@@ -185,12 +187,96 @@ class ServiceLegalValidator {
     return regulatedKeywords.any((keyword) => problemLower.contains(keyword));
   }
 
+  /// Texto único para el diálogo de confirmación legal (sin repetir secciones).
+  Future<String> buildConfirmationText({
+    required String serviceId,
+    required String serviceName,
+  }) async {
+    try {
+      final service = await _serviceRepository.getServiceById(serviceId);
+      final customNote = service?.legalDisclaimer?.trim();
+      final categoryNote = service != null
+          ? _categoryLegalNote(service.category)
+          : null;
+
+      final lines = <String>[
+        'Al solicitar "$serviceName", declaras que comprendes y aceptas lo siguiente:',
+        '',
+        '• My Works App conecta usuarios con trabajadores independientes y actúa '
+        'únicamente como intermediario tecnológico. No ejecuta el servicio, no emite '
+        'certificaciones ni garantiza el resultado del trabajo.',
+        '',
+        '• El servicio será prestado por el profesional que seleccionaste, quien es '
+        'responsable de la calidad, plazos, materiales y del cumplimiento de la '
+        'normativa aplicable en su oficio.',
+      ];
+
+      if (customNote != null && customNote.isNotEmpty) {
+        lines.addAll(['', '• $customNote']);
+      } else if (categoryNote != null) {
+        lines.addAll(['', '• $categoryNote']);
+      }
+
+      lines.addAll([
+        '',
+        '• Autorizas a la plataforma a coordinar la solicitud y gestionar el cobro '
+        'conforme a los términos y políticas vigentes de My Works App.',
+      ]);
+
+      return lines.join('\n');
+    } catch (e) {
+      AppLogger.e('Error generando confirmación legal', e);
+      return '${platformDisclaimer}\n\nAl continuar, aceptas los términos descritos.';
+    }
+  }
+
+  static String formatClp(int amount) {
+    return NumberFormat.currency(
+      locale: 'es_CL',
+      symbol: r'$',
+      decimalDigits: 0,
+    ).format(amount);
+  }
+
+  static String paymentNotice({int? chargeAmountClp}) {
+    if (chargeAmountClp != null && chargeAmountClp > 0) {
+      final formatted = formatClp(chargeAmountClp);
+      return 'Al confirmar, se realizará un cobro de $formatted a la tarjeta de '
+          'crédito o débito registrada en tu cuenta.';
+    }
+    return 'Al confirmar, autorizas el cobro del monto del servicio a la tarjeta '
+        'de crédito o débito registrada en tu cuenta.';
+  }
+
+  String? _categoryLegalNote(String category) {
+    switch (category) {
+      case ServiceCategories.construction:
+        return 'En trabajos de construcción o reparación, permisos municipales o '
+            'exigencias técnicas —si corresponden— son responsabilidad del '
+            'profesional y del cliente; la plataforma no supervisa la obra.';
+      case ServiceCategories.plumbing:
+        return 'Las intervenciones de fontanería son realizadas por técnicos '
+            'independientes; daños preexistentes o instalaciones no conformes a '
+            'norma pueden afectar el resultado del trabajo.';
+      case ServiceCategories.electrical:
+        return 'Trabajos eléctricos deben cumplir normativa SEC/RIC vigente; el '
+            'profesional es responsable de la ejecución segura del servicio.';
+      case ServiceCategories.moving:
+        return 'Solo se contemplan mudanzas pequeñas dentro de la ciudad; objetos '
+            'de alto valor o transporte comercial pueden requerir condiciones '
+            'adicionales acordadas con el profesional.';
+      default:
+        return null;
+    }
+  }
+
   /// Obtiene el descargo de responsabilidad para un servicio
   Future<String> getServiceDisclaimer(String serviceId) async {
     try {
       final service = await _serviceRepository.getServiceById(serviceId);
-      if (service?.legalDisclaimer != null && service!.legalDisclaimer!.isNotEmpty) {
-        return '${service.legalDisclaimer}\n\n$platformDisclaimer';
+      if (service?.legalDisclaimer != null &&
+          service!.legalDisclaimer!.isNotEmpty) {
+        return service.legalDisclaimer!;
       }
       return platformDisclaimer;
     } catch (e) {

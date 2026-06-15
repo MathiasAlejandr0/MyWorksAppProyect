@@ -24,7 +24,7 @@ class ErrorStateWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(AppSpacing.xl),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -33,7 +33,7 @@ class ErrorStateWidget extends StatelessWidget {
               size: 64,
               color: AppColors.error,
             ),
-            SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -43,7 +43,7 @@ class ErrorStateWidget extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             if (message != null) ...[
-              SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 message!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -53,7 +53,7 @@ class ErrorStateWidget extends StatelessWidget {
               ),
             ],
             if (actionLabel != null && onRetry != null) ...[
-              SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.xl),
               PrimaryButton(
                 label: actionLabel!,
                 onPressed: onRetry,

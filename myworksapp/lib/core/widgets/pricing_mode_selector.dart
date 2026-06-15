@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../design_system/app_radius.dart';
+import '../design_system/app_spacing.dart';
 import '../domain/pricing_constants.dart';
 import '../theme/app_colors.dart';
 
@@ -82,17 +84,17 @@ class PricingModeSelector extends StatelessWidget {
   }) {
     final isSelected = selected == mode;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Material(
         color: isSelected
             ? AppColors.brandOrangeSoft
-            : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
+            : AppColors.grayLight,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           onTap: () => onChanged(mode),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Row(
               children: [
                 Icon(icon, color: isSelected ? AppColors.brandOrange : AppColors.grayMedium),

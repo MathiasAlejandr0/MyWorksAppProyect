@@ -9,7 +9,6 @@ import '../../../../core/database/repositories/service_config_repository.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/service_model.dart';
 import '../../../../core/domain/pricing_constants.dart';
-import '../../../../core/domain/price_quote.dart';
 import '../../../../core/services/job_booking_service.dart';
 import '../../../../core/services/open_quote_notification_service.dart';
 import '../../../../core/services/user_location_service.dart';
@@ -23,7 +22,6 @@ import '../widgets/worker_service_option_picker.dart';
 import '../widgets/worker_square_meters_field.dart';
 import '../widgets/open_quote_submitted_dialog.dart';
 import '../widgets/service_request_submitted_dialog.dart';
-import '../../../../core/widgets/pricing_quote_card.dart';
 import '../../../../core/widgets/escrow_checkout_sheet.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/location_picker_widget.dart';
@@ -37,6 +35,7 @@ import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/widgets/service_disclaimer_dialog.dart';
+import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 
@@ -74,7 +73,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   TimeOfDay? _selectedTime;
   String _pricingMode = '';
   int _blockHours = 4;
-  PriceQuote? _pricePreview;
   PricingModeRecommendation? _pricingRecommendation;
   bool _questionnaireComplete = false;
   String? _selectedWorkerTierId;
@@ -88,16 +86,16 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   List<GuidedTourStep> get _requestTourSteps => [
         GuidedTourStep(
           targetKey: _locationKey,
-          title: 'Tu ubicación en el mapa',
+          title: 'Tu ubicaci?n en el mapa',
           description:
-              'Detectamos automáticamente dónde estás y lo mostramos en un mapa cuadrado. Así el profesional sabe exactamente a dónde ir.',
+              'Detectamos autom?ticamente d?nde est?s y lo mostramos en un mapa cuadrado. As? el profesional sabe exactamente a d?nde ir.',
           align: TourTooltipAlign.below,
         ),
         GuidedTourStep(
           targetKey: _submitKey,
           title: 'Enviar tu solicitud',
           description:
-              'Cuando completes la descripción y la fecha, pulsa este botón. El profesional recibirá tu pedido y te responderá con una cotización.',
+              'Cuando completes la descripci?n y la fecha, pulsa este bot?n. El profesional recibir? tu pedido y te responder? con una cotizaci?n.',
           align: TourTooltipAlign.above,
         ),
       ];
@@ -132,7 +130,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         _selectedWorker = worker;
         _selectedWorkerUser = user;
       });
-      _refreshPricePreview();
     }
   }
 
@@ -165,57 +162,12 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     );
   }
 
-  Future<void> _refreshPricePreview() async {
-    if (_selectedAddress.length < 5) return;
-    final comuna = inferComunaKey(_selectedAddress);
-    PriceQuote? preview;
-
-    try {
-      if (_usesWorkerTierPricing &&
-          _selectedWorkerTierId != null &&
-          _selectedWorkerOption != null) {
-        final unitRate = WorkerServiceOptionsCatalog.unitPriceForWorker(
-          worker: _selectedWorker!,
-          option: _selectedWorkerOption!,
-        );
-        final total = WorkerServiceOptionsCatalog.totalPriceForWorker(
-          worker: _selectedWorker!,
-          option: _selectedWorkerOption!,
-          squareMeters: _parsedSquareMeters,
-        );
-        preview = PricingService.instance.calculateWorkerTierPrice(
-          optionId: _selectedWorkerOption!.id,
-          optionLabel: _selectedWorkerOption!.title,
-          amountClp: total,
-          comunaKey: comuna,
-          unit: _selectedWorkerOption!.unit,
-          squareMeters: _parsedSquareMeters,
-          unitRateClp: unitRate,
-        );
-      } else if (_pricingMode == PricingConstants.modeFixedPrice) {
-        final sku = _pricingRecommendation?.skuCode ??
-            variantToSkuCode(_selectedVariant);
-        if (sku != null) {
-          preview = await PricingService.instance.calculateFixedPrice(
-            skuCode: sku,
-            comunaKey: comuna,
-          );
-        }
-      } else if (_pricingMode == PricingConstants.modeHourlyBlock &&
-          _selectedWorker != null) {
-        final rate = PricingService.instance
-            .estimateHourlyRateFromVisitFee(_selectedWorker!.visitFee.round());
-        preview = await PricingService.instance.calculateHourlyBlock(
-          hourlyRateClp: rate,
-          blockHours: _blockHours,
-          comunaKey: comuna,
-        );
-      }
-    } catch (_) {
-      preview = null;
+  int? _chargeAmountClpForDisclaimer() {
+    if (_usesWorkerTierPricing && _selectedWorkerOption != null) {
+      if (_needsSquareMeters && _parsedSquareMeters == null) return null;
+      return _workerTierTotalClp();
     }
-
-    if (mounted) setState(() => _pricePreview = preview);
+    return null;
   }
 
   Future<void> _loadServiceConfig(String serviceId) async {
@@ -246,7 +198,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         }
       });
     } catch (e) {
-      // Ignorar errores, simplemente no mostrar campos dinámicos
+      // Ignorar errores, simplemente no mostrar campos din?micos
     }
   }
 
@@ -257,7 +209,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     super.dispose();
   }
 
-  /// Reemplaza la pila de navegación para no volver paso a paso por el flujo de solicitud.
+  /// Reemplaza la pila de navegaci?n para no volver paso a paso por el flujo de solicitud.
   void _navigateAfterJobCreated(
     String jobId, {
     ServiceRequestSubmittedAction action = ServiceRequestSubmittedAction.viewJob,
@@ -302,7 +254,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     }
     if (_selectedAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor selecciona una ubicación en el mapa')),
+        const SnackBar(content: Text('Por favor selecciona una ubicaci?n en el mapa')),
       );
       return;
     }
@@ -316,12 +268,12 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       if (user == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Debes iniciar sesión')),
+          const SnackBar(content: Text('Debes iniciar sesi?n')),
         );
         return;
       }
 
-      // Obtener información del servicio para el diálogo
+      // Obtener informaci?n del servicio para el di?logo
       final service = await _serviceRepository.getServiceById(_selectedServiceId!);
       if (service == null) {
         if (!mounted) return;
@@ -331,11 +283,13 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         return;
       }
 
-      // Mostrar confirmación legal explícita
+      if (!mounted) return;
+
       final accepted = await ServiceDisclaimerDialog.show(
         context,
         serviceId: _selectedServiceId!,
         serviceName: service.name,
+        chargeAmountClp: _chargeAmountClpForDisclaimer(),
       );
 
       if (!accepted) {
@@ -353,9 +307,9 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Este profesional no está disponible. Elige otro o intenta más tarde.',
+                'Este profesional no est? disponible. Elige otro o intenta m?s tarde.',
               ),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppColors.warning,
             ),
           );
           return;
@@ -408,7 +362,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           tierOptionId: _selectedWorkerOption!.id,
           tierLabel: _selectedWorkerOption!.title,
           amountClp: total,
-          description: description.isEmpty ? null : description,
+          description: description,
           scheduledDate: scheduledDate,
           comunaKey: comuna,
           latitude: _selectedLatitude,
@@ -427,7 +381,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
             isTierInvitation: true,
           );
         } catch (_) {
-          // La solicitud ya fue creada; la notificación no debe bloquear al usuario.
+          // La solicitud ya fue creada; la notificaci?n no debe bloquear al usuario.
         }
 
         if (!mounted) return;
@@ -620,13 +574,13 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   @override
   Widget build(BuildContext context) {
     final page = Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Solicitar Servicio'),
+      appBar: const AppGradientAppBar(
+        title: Text('Solicitar Servicio'),
       ),
       body: !_servicesReady
           ? const LoadingWidget(message: 'Cargando servicios...')
           : SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: LayoutUtils.scrollPadding(context),
             child: Form(
               key: _formKey,
               child: Column(
@@ -668,7 +622,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                           Text(
-                            'El profesional revisará tu solicitud y te enviará una cotización. Pagas el total aprobado; la comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
+                            'El profesional revisar? tu solicitud y te enviar? una cotizaci?n. Pagas el total aprobado; la comisi?n del servicio (5%, m?nimo \$1.000) se descuenta del profesional.',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -708,14 +662,14 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Ubicación',
+                    'Ubicaci?n',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tu ubicación se detectará automáticamente',
+                    'Tu ubicaci?n se detectar? autom?ticamente',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600,
+                          color: AppColors.grayMedium,
                         ),
                   ),
                   const SizedBox(height: 8),
@@ -734,7 +688,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                           _selectedLatitude = latitude;
                           _selectedLongitude = longitude;
                         });
-                        _refreshPricePreview();
                       },
                     ),
                   ),
@@ -757,7 +710,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                         serviceCategory: _selectedWorker!.serviceCategory,
                         squareMeters: _parsedSquareMeters,
                         totalClp: _workerTierTotalClp(),
-                        onChanged: _refreshPricePreview,
+                        onChanged: () => setState(() {}),
                       ),
                     ],
                   ] else
@@ -768,14 +721,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                       onRecommendation: _applyPricingRecommendation,
                     ),
                   if (_questionnaireComplete) ...[
-                    if (_pricePreview != null &&
-                        (!_needsSquareMeters || _parsedSquareMeters != null)) ...[
-                      const SizedBox(height: 12),
-                      PricingQuoteCard(
-                        quote: _pricePreview!,
-                        workerName: _selectedWorkerUser?.name,
-                      ),
-                    ],
                     if (!_usesWorkerTierPricing &&
                         _serviceVariants.isNotEmpty &&
                         _pricingRecommendation?.variantKey == null) ...[
@@ -798,7 +743,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                             _serviceMetadata['variantDescription'] =
                                 variant['description'];
                           });
-                          _refreshPricePreview();
                         },
                         child: Column(
                           children: _serviceVariants.map((variant) {
@@ -834,19 +778,14 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _descriptionController,
-                      decoration: InputDecoration(
-                        labelText: _usesWorkerTierPricing
-                            ? 'Detalles adicionales (opcional)'
-                            : 'Descripción del problema',
-                        prefixIcon: const Icon(Icons.description),
-                        hintText: _usesWorkerTierPricing
-                            ? 'Agrega información extra si lo necesitas'
-                            : 'Describe el problema o trabajo a realizar',
+                      decoration: const InputDecoration(
+                        labelText: 'Descripci?n del trabajo',
+                        prefixIcon: Icon(Icons.description),
+                        hintText:
+                            'Describe el problema o trabajo a realizar (m?n. 10 caracteres)',
                       ),
                       maxLines: 5,
-                      validator: _usesWorkerTierPricing
-                          ? null
-                          : Validators.validateDescription,
+                      validator: Validators.validateDescription,
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -957,7 +896,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       _serviceMetadata.remove('worker_tier_square_meters');
       _serviceMetadata.remove('worker_tier_price_clp');
     });
-    _refreshPricePreview();
   }
 
   void _applyPricingRecommendation(PricingModeRecommendation rec) {
@@ -974,7 +912,6 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       }
       _serviceMetadata['pricing_questionnaire'] = rec.questionnaireAnswers;
     });
-    _refreshPricePreview();
   }
 
 }

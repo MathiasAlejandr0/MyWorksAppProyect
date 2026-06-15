@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
 /// Página de Términos y Condiciones
@@ -12,11 +13,11 @@ class TermsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Términos y Condiciones'),
+      appBar: const AppGradientAppBar(
+        title: Text('Términos y Condiciones'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: LayoutUtils.scrollPadding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

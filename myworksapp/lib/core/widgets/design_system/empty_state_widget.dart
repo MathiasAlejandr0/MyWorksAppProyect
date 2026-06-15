@@ -9,6 +9,8 @@ class EmptyStateWidget extends StatelessWidget {
   final String? message;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
   final Color? iconColor;
 
   const EmptyStateWidget({
@@ -18,6 +20,8 @@ class EmptyStateWidget extends StatelessWidget {
     this.message,
     this.actionLabel,
     this.onAction,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
     this.iconColor,
   });
 
@@ -25,7 +29,7 @@ class EmptyStateWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(AppSpacing.xl),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -34,7 +38,7 @@ class EmptyStateWidget extends StatelessWidget {
               size: 64,
               color: iconColor ?? AppColors.grayMedium,
             ),
-            SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.xl),
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -43,7 +47,7 @@ class EmptyStateWidget extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             if (message != null) ...[
-              SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 message!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -53,10 +57,17 @@ class EmptyStateWidget extends StatelessWidget {
               ),
             ],
             if (actionLabel != null && onAction != null) ...[
-              SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.xl),
               ElevatedButton(
                 onPressed: onAction,
                 child: Text(actionLabel!),
+              ),
+            ],
+            if (secondaryActionLabel != null && onSecondaryAction != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton(
+                onPressed: onSecondaryAction,
+                child: Text(secondaryActionLabel!),
               ),
             ],
           ],

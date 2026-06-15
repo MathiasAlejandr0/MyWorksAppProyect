@@ -34,7 +34,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Icono de mantenimiento
-              Icon(
+              const Icon(
                 Icons.build_circle_outlined,
                 size: 80,
                 color: AppColors.warning,
@@ -77,7 +77,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                       if (failureType != null)
                         Text(
                           'Tipo: ${_formatFailureType(failureType)}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppColors.error,
                           ),
@@ -86,7 +86,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                         const SizedBox(height: 8),
                         Text(
                           failureMessage,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.grayDark,
                             fontSize: 12,
                           ),
@@ -107,7 +107,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                     if (_recoveryMessage != null)
                       Text(
                         _recoveryMessage!,
-                        style: TextStyle(color: AppColors.info),
+                        style: const TextStyle(color: AppColors.info),
                         textAlign: TextAlign.center,
                       ),
                   ],

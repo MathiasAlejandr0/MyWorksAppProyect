@@ -103,9 +103,9 @@ class _WorkerPricingSetupPageState extends ConsumerState<WorkerPricingSetupPage>
     }
 
     if (_worker == null) {
-      return Scaffold(
-        appBar: AppGradientAppBar(title: const Text('Configurar precios')),
-        body: const Center(child: Text('Primero completa tu perfil profesional')),
+      return const Scaffold(
+        appBar: AppGradientAppBar(title: Text('Configurar precios')),
+        body: Center(child: Text('Primero completa tu perfil profesional')),
       );
     }
 
@@ -123,7 +123,7 @@ class _WorkerPricingSetupPageState extends ConsumerState<WorkerPricingSetupPage>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (!widget.editMode) ...[
-              _GuideCard(
+              const _GuideCard(
                 icon: Icons.lightbulb_outline,
                 title: '¿Por qué configurar precios?',
                 body:

@@ -18,12 +18,12 @@ class LocationPermissionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Permiso de Ubicación'),
+      appBar: const AppGradientAppBar(
+        title: Text('Permiso de Ubicación'),
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(AppSpacing.xl),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           child: PermissionRequestWidget(
             permission: Permission.location,
             title: 'Necesitamos tu ubicación',

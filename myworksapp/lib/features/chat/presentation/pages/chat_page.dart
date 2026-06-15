@@ -9,6 +9,9 @@ import '../../../../core/database/models/message_model.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/user_model.dart';
 import '../../../../core/services/notification_service.dart';
+import '../../../../core/design_system/app_radius.dart';
+import '../../../../core/design_system/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -164,14 +167,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         children: [
           Expanded(
             child: _messages.isEmpty
-                ? EmptyStateWidget(
+                ? const EmptyStateWidget(
                     icon: Icons.chat_bubble_outline,
                     title: 'No hay mensajes aún',
                     message: '¡Envía el primer mensaje para comenzar la conversación!',
                   )
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
@@ -184,7 +187,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.sm,
+            ),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               boxShadow: [
@@ -204,18 +210,18 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       decoration: InputDecoration(
                         hintText: 'Escribe un mensaje...',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
                         ),
                       ),
                       maxLines: null,
                       textCapitalization: TextCapitalization.sentences,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   IconButton(
                     onPressed: _sendMessage,
                     icon: const Icon(Icons.send),
@@ -245,13 +251,16 @@ class _MessageBubble extends StatelessWidget {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm + 2,
+        ),
         decoration: BoxDecoration(
           color: isMe
               ? Theme.of(context).colorScheme.primary
               : Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.75,
@@ -263,7 +272,7 @@ class _MessageBubble extends StatelessWidget {
               message.content,
               style: TextStyle(
                 color: isMe
-                    ? Colors.white
+                    ? AppColors.white
                     : Theme.of(context).colorScheme.onSurface,
               ),
             ),
@@ -273,7 +282,7 @@ class _MessageBubble extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 color: isMe
-                    ? Colors.white70
+                    ? AppColors.white.withValues(alpha: 0.7)
                     : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),

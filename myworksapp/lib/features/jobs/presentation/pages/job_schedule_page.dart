@@ -69,8 +69,8 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
     final selectedJobs = _getJobsForDay(_selectedDay);
 
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Calendario de Trabajos'),
+      appBar: const AppGradientAppBar(
+        title: Text('Calendario de Trabajos'),
       ),
       body: Column(
         children: [
@@ -104,7 +104,7 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
                 shape: BoxShape.circle,
               ),
             ),
-            headerStyle: HeaderStyle(
+            headerStyle: const HeaderStyle(
               formatButtonVisible: true,
               titleCentered: true,
             ),
@@ -144,15 +144,15 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
   Color _getStatusColor(String status) {
     switch (status) {
       case AppConstants.jobStatusPending:
-        return Colors.orange;
+        return AppColors.warning;
       case AppConstants.jobStatusAccepted:
         return AppColors.brandOrange;
       case AppConstants.jobStatusInProgress:
         return AppColors.brandOrangeDark;
       case AppConstants.jobStatusCompleted:
-        return Colors.green;
+        return AppColors.success;
       default:
-        return Colors.grey;
+        return AppColors.grayMedium;
     }
   }
 

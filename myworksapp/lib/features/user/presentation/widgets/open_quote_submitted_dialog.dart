@@ -25,7 +25,7 @@ class OpenQuoteSubmittedDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      icon: Icon(Icons.hourglass_top_rounded, color: AppColors.brandTeal, size: 40),
+      icon: const Icon(Icons.hourglass_top_rounded, color: AppColors.brandTeal, size: 40),
       title: const Text('Solicitud enviada'),
       content: SingleChildScrollView(
         child: Column(
@@ -101,7 +101,7 @@ class _StepList extends StatelessWidget {
                   backgroundColor: AppColors.brandTeal.withValues(alpha: 0.15),
                   child: Text(
                     '${i + 1}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: AppColors.brandTeal,

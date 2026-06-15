@@ -61,7 +61,7 @@ class _WorkerUnavailableDialogState extends State<WorkerUnavailableDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      icon: Icon(Icons.person_off_outlined, color: AppColors.brandOrange, size: 40),
+      icon: const Icon(Icons.person_off_outlined, color: AppColors.brandOrange, size: 40),
       title: const Text('Profesional no disponible'),
       content: SizedBox(
         width: double.maxFinite,

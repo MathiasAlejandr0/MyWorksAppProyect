@@ -4,7 +4,11 @@ import 'package:uuid/uuid.dart';
 import 'dart:io';
 import '../../../../core/database/repositories/job_photo_repository.dart';
 import '../../../../core/database/models/job_photo_model.dart';
-import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/design_system/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_snackbar.dart';
+import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/widgets/design_system/empty_state_widget.dart';
 
 class JobPhotosPage extends StatefulWidget {
   final String jobId;
@@ -61,14 +65,10 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
     await _loadPhotos();
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          mediaType == JobPhotoModel.mediaVideo
-              ? 'Video agregado'
-              : 'Foto agregada',
-        ),
-      ),
+    showAppSnackBar(
+      context,
+      mediaType == JobPhotoModel.mediaVideo ? 'Video agregado' : 'Foto agregada',
+      type: AppSnackBarType.success,
     );
   }
 
@@ -85,9 +85,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      showAppSnackBar(context, 'Error: ${e.toString()}', type: AppSnackBarType.error);
     }
   }
 
@@ -104,9 +102,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      showAppSnackBar(context, 'Error: ${e.toString()}', type: AppSnackBarType.error);
     }
   }
 
@@ -160,7 +156,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Eliminar'),
           ),
         ],
@@ -176,7 +172,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppGradientAppBar(
         title: const Text('Evidencia del trabajo'),
         actions: [
           if (widget.canAddPhotos)
@@ -196,7 +192,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                   message: 'Sube al menos una foto o un video del trabajo realizado',
                 )
               : GridView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
                     crossAxisSpacing: 8,
@@ -223,9 +219,9 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                         fit: StackFit.expand,
                         children: [
                           if (photo.isVideo)
-                            ColoredBox(
-                              color: Colors.grey.shade800,
-                              child: const Center(
+                            const ColoredBox(
+                              color: AppColors.grayDark,
+                              child: Center(
                                 child: Icon(
                                   Icons.play_circle_fill,
                                   color: Colors.white,
@@ -272,7 +268,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                               top: 4,
                               right: 4,
                               child: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(Icons.delete, color: AppColors.error),
                                 onPressed: () => _deletePhoto(photo.id),
                                 iconSize: 20,
                                 padding: EdgeInsets.zero,
@@ -308,7 +304,7 @@ class _EvidenceViewer extends StatelessWidget {
         actions: [
           if (onDelete != null)
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: const Icon(Icons.delete, color: AppColors.error),
               onPressed: () {
                 onDelete!();
                 Navigator.pop(context);

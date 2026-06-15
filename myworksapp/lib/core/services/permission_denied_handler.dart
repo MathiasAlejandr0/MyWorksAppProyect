@@ -16,6 +16,7 @@ class PermissionDeniedHandler {
     VoidCallback? onFallback,
   }) async {
     final status = await permission.status;
+    if (!context.mounted) return;
 
     if (status.isGranted) {
       return; // Ya está concedido

@@ -69,7 +69,7 @@ class PricingQuoteCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Icon(Icons.lock_outline, size: 16, color: AppColors.brandTeal),
+              const Icon(Icons.lock_outline, size: 16, color: AppColors.brandTeal),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(

@@ -67,6 +67,14 @@ class ChileComunas {
     return r.contains('metropolitana') || r.contains('santiago');
   }
 
+  /// Ciudades donde la app opera (excluye coberturas regionales "(todas)").
+  static bool isServiceCity(String city) {
+    final normalized = _norm(city);
+    return allZones
+        .where((zone) => !zone.contains('(todas)'))
+        .any((zone) => _norm(zone) == normalized);
+  }
+
   static String _norm(String value) {
     return value
         .toLowerCase()

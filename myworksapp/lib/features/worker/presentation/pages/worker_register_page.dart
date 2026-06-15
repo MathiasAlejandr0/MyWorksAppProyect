@@ -3,6 +3,7 @@ import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/models/worker_model.dart';
@@ -97,11 +98,11 @@ class _WorkerRegisterPageState extends ConsumerState<WorkerRegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Completa tu perfil'),
+      appBar: const AppGradientAppBar(
+        title: Text('Completa tu perfil'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: LayoutUtils.scrollPadding(context),
         child: Form(
           key: _formKey,
           child: Column(

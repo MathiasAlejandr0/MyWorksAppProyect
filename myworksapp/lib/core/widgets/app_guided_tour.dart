@@ -36,7 +36,7 @@ class TourTarget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       key: tourKey,
       width: width,
       child: child,

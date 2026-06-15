@@ -41,4 +41,16 @@ class PaymentRepository {
   Future<void> updatePayment(PaymentModel payment) async {
     await supabase.from(_table).update(payment.toMap()).eq('id', payment.id);
   }
+
+  Future<List<PaymentModel>> listByJobIds(List<String> jobIds) async {
+    if (jobIds.isEmpty) return [];
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .inFilter('jobId', jobIds)
+        .order('createdAt', ascending: false);
+    return rows
+        .map<PaymentModel>((m) => PaymentModel.fromMap(m))
+        .toList();
+  }
 }

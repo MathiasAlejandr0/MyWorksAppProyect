@@ -1,3 +1,4 @@
+import '../utils/app_logger.dart';
 import '../database/repositories/job_repository.dart';
 import '../database/repositories/worker_repository.dart';
 import 'notification_service.dart';
@@ -43,7 +44,7 @@ class OpenQuoteNotificationService {
       );
     } catch (e) {
       // La solicitud ya fue creada; no bloquear al cliente por fallo de notificación.
-      print('Error notificando al trabajador: $e');
+      AppLogger.w('Error notificando al trabajador', e);
     }
     return true;
   }

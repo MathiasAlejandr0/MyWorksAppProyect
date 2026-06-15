@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+
+import '../design_system/app_radius.dart';
+import '../design_system/app_spacing.dart';
 import '../services/service_legal_validator.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
-/// Diálogo de confirmación legal antes de solicitar servicio
-/// 
-/// Muestra el descargo de responsabilidad y requiere aceptación explícita.
+/// Diálogo de confirmación legal antes de solicitar servicio.
 class ServiceDisclaimerDialog extends StatelessWidget {
   final String serviceId;
   final String serviceName;
+  final int? chargeAmountClp;
 
   const ServiceDisclaimerDialog({
     super.key,
     required this.serviceId,
     required this.serviceName,
+    this.chargeAmountClp,
   });
 
   @override
@@ -20,8 +24,8 @@ class ServiceDisclaimerDialog extends StatelessWidget {
     return AlertDialog(
       title: Row(
         children: [
-          const Icon(Icons.info_outline, color: Colors.orange),
-          const SizedBox(width: 8),
+          const Icon(Icons.info_outline, color: AppColors.brandOrange),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               'Confirmación Legal',
@@ -41,41 +45,51 @@ class ServiceDisclaimerDialog extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
-            _buildDisclaimerSection(
-              'Naturaleza de la Plataforma',
-              ServiceLegalValidator.platformDisclaimer,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             FutureBuilder<String>(
-              future: ServiceLegalValidator.instance.getServiceDisclaimer(serviceId),
+              future: ServiceLegalValidator.instance.buildConfirmationText(
+                serviceId: serviceId,
+                serviceName: serviceName,
+              ),
               builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  return _buildDisclaimerSection(
-                    'Descargo Específico - $serviceName',
-                    snapshot.data!,
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                    child: Center(child: CircularProgressIndicator()),
                   );
                 }
-                return const SizedBox.shrink();
+                return Text(
+                  snapshot.data ?? ServiceLegalValidator.platformDisclaimer,
+                  style: AppTextStyles.bodySmall(),
+                );
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
+                color: AppColors.warning.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(
+                  color: AppColors.warning.withValues(alpha: 0.35),
+                ),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700),
-                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.payment_outlined,
+                    color: AppColors.warning,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      'El pago se realiza directamente con el trabajador. My Works App no procesa pagos en esta etapa.',
+                      ServiceLegalValidator.paymentNotice(
+                        chargeAmountClp: chargeAmountClp,
+                      ),
                       style: AppTextStyles.bodySmall().copyWith(
-                        color: Colors.orange.shade900,
+                        color: AppColors.grayDark,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -92,39 +106,17 @@ class ServiceDisclaimerDialog extends StatelessWidget {
         ),
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
-            foregroundColor: Colors.white,
-          ),
           child: const Text('Acepto y Continuar'),
         ),
       ],
     );
   }
 
-  Widget _buildDisclaimerSection(String title, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: AppTextStyles.titleSmall().copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          content,
-          style: AppTextStyles.bodySmall(),
-        ),
-      ],
-    );
-  }
-
-  /// Muestra el diálogo y retorna true si el usuario acepta
-  static Future<bool> show(BuildContext context, {
+  static Future<bool> show(
+    BuildContext context, {
     required String serviceId,
     required String serviceName,
+    int? chargeAmountClp,
   }) async {
     final result = await showDialog<bool>(
       context: context,
@@ -132,9 +124,9 @@ class ServiceDisclaimerDialog extends StatelessWidget {
       builder: (context) => ServiceDisclaimerDialog(
         serviceId: serviceId,
         serviceName: serviceName,
+        chargeAmountClp: chargeAmountClp,
       ),
     );
     return result ?? false;
   }
 }
-

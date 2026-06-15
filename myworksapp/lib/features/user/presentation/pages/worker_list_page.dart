@@ -17,7 +17,9 @@ import '../../../../core/utils/chile_comunas.dart';
 import '../../../../core/utils/platform_support.dart';
 import '../../../../core/utils/worker_zone_matcher.dart';
 import '../../../../core/widgets/loading_widget.dart';
+import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
+import '../../../../core/widgets/design_system/worker_card.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/theme/app_decorations.dart';
@@ -209,8 +211,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       }
 
       // Obtener job para obtener coordenadas
-      final JobRepository _jobRepository = JobRepository();
-      final job = await _jobRepository.getJobById(widget.jobId!);
+      final JobRepository jobRepository = JobRepository();
+      final job = await jobRepository.getJobById(widget.jobId!);
       
       if (job == null || job.latitude == null || job.longitude == null) {
         // Si no hay coordenadas, usar modo manual
@@ -282,13 +284,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       );
     }
 
-    final busyIds = <String>{};
-    for (final worker in workers) {
-      if (await _workerRepository.hasActiveJobs(worker.userId)) {
-        busyIds.add(worker.userId);
-      }
-    }
-    _busyWorkerIds = busyIds;
+    _busyWorkerIds = {};
 
     // Cargar información de usuarios
     final users = <String, UserModel>{};
@@ -332,6 +328,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                           'Solo mostramos profesionales en ${_userLocation!.city}. No hay disponibles para este servicio aquí.',
                       actionLabel: 'Ver otros servicios',
                       onAction: () => context.go(AppConstants.routeUserHome),
+                      secondaryActionLabel: 'Cambiar ciudad',
+                      onSecondaryAction: _selectCityManually,
                     )
               : Column(
                   children: [
@@ -365,7 +363,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                     // Toggle Modo Manual / Inteligente
                     if (widget.jobId != null && widget.serviceId != null)
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(AppSpacing.lg),
                         color: AppColors.grayLight,
                         child: Row(
                           children: [
@@ -470,7 +468,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                     // Lista
                     Expanded(
                       child: _filteredWorkers.isEmpty
-                          ? EmptyStateWidget(
+                          ? const EmptyStateWidget(
                               icon: Icons.search_off,
                               title: 'No se encontraron trabajadores',
                               message: 'Intenta con otros filtros o busca otro servicio',
@@ -487,12 +485,43 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                     final worker = _filteredWorkers[index];
                                     final user = _users[worker.userId];
                                     final score = _matchScores[worker.userId];
-                                    final card = _WorkerCard(
-                                      worker: worker,
-                                      user: user,
-                                      isBusy: _busyWorkerIds.contains(worker.userId),
-                                      isRecommended: _isAutomaticMode && score != null,
-                                      matchScore: score,
+                                    final isBusy =
+                                        _busyWorkerIds.contains(worker.userId);
+                                    final isRecommended =
+                                        _isAutomaticMode && score != null;
+                                    final card = WorkerCard(
+                                      name: user?.name ?? 'Trabajador',
+                                      profession: worker.profession,
+                                      leading: ProfileAvatarView(
+                                        displayName: user?.name ?? 'Trabajador',
+                                        photoPath: user?.profilePhotoPath,
+                                        radius: 26,
+                                        onDarkBackground: false,
+                                      ),
+                                      headerBadge: isRecommended
+                                          ? 'Recomendado ${(score * 100).toStringAsFixed(0)}%'
+                                          : null,
+                                      badges: [
+                                        WorkerCardBadge(
+                                          icon: Icons.star_rounded,
+                                          label: worker.rating.toStringAsFixed(1),
+                                          color: AppColors.warning,
+                                        ),
+                                        if (worker.workZone != null)
+                                          WorkerCardBadge(
+                                            icon: Icons.location_on_outlined,
+                                            label: worker.workZone!,
+                                            color: AppColors.grayMedium,
+                                          ),
+                                        if (isBusy)
+                                          const WorkerCardBadge(
+                                            icon: Icons.schedule,
+                                            label: 'Ocupado',
+                                            color: AppColors.brandOrange,
+                                          ),
+                                      ],
+                                      showChevron: true,
+                                      margin: const EdgeInsets.only(bottom: AppSpacing.sm + 2),
                                       onTap: () {
                                         context.push(
                                           '${AppConstants.routeWorkerDetail}/${worker.userId}',
@@ -543,7 +572,7 @@ class _LocationRequiredState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -585,148 +614,6 @@ class _LocationRequiredState extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _WorkerCard extends StatelessWidget {
-  final WorkerModel worker;
-  final UserModel? user;
-  final bool isBusy;
-  final bool isRecommended;
-  final double? matchScore;
-  final VoidCallback onTap;
-
-  const _WorkerCard({
-    required this.worker,
-    this.user,
-    this.isBusy = false,
-    this.isRecommended = false,
-    this.matchScore,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: AppDecorations.surfaceCard(accent: AppColors.primaryLight),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                ProfileAvatarView(
-                  displayName: user?.name ?? 'Trabajador',
-                  photoPath: user?.profilePhotoPath,
-                  radius: 26,
-                  onDarkBackground: false,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (isRecommended)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            'Recomendado${matchScore != null ? ' ${(matchScore! * 100).toStringAsFixed(0)}%' : ''}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: AppColors.success,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                        ),
-                      Text(
-                        user?.name ?? 'Trabajador',
-                        style: Theme.of(context).textTheme.titleSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        worker.profession,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.grayMedium,
-                            ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          _ChipBadge(
-                            icon: Icons.star_rounded,
-                            label: worker.rating.toStringAsFixed(1),
-                            color: AppColors.warning,
-                          ),
-                          if (worker.workZone != null)
-                            _ChipBadge(
-                              icon: Icons.location_on_outlined,
-                              label: worker.workZone!,
-                              color: AppColors.grayMedium,
-                            ),
-                          if (isBusy)
-                            _ChipBadge(
-                              icon: Icons.schedule,
-                              label: 'Ocupado',
-                              color: AppColors.brandOrange,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded, color: AppColors.grayMedium),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChipBadge extends StatelessWidget {
-  const _ChipBadge({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-        ],
       ),
     );
   }

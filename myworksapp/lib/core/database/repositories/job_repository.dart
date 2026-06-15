@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import '../../domain/pricing_constants.dart';
 import '../../utils/constants.dart';
+import '../../utils/worker_job_status.dart';
 import '../models/job_model.dart';
 import '../supabase_db.dart';
 class JobRepository {
@@ -47,17 +47,13 @@ class JobRepository {
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
-  // Obtener trabajos activos (accepted o in_progress) de un trabajador
+  /// Trabajos asignados al profesional que aún no están completados ni cancelados.
   Future<List<JobModel>> getActiveJobsByWorkerId(String workerId) async {
     final rows = await supabase
         .from(_table)
         .select()
         .eq('workerId', workerId)
-        .inFilter('status', [
-          'accepted',
-          'in_progress',
-          PricingConstants.jobAwaitingClientApproval,
-        ])
+        .inFilter('status', WorkerJobStatus.activeStatuses)
         .order('createdAt', ascending: false);
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }

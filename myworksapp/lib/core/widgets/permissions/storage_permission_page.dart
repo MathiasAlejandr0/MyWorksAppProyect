@@ -18,12 +18,12 @@ class StoragePermissionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Permiso de Almacenamiento'),
+      appBar: const AppGradientAppBar(
+        title: Text('Permiso de Almacenamiento'),
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(AppSpacing.xl),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           child: PermissionRequestWidget(
             permission: AppMediaPermissions.galleryRead,
             title: 'Necesitamos acceso al almacenamiento',

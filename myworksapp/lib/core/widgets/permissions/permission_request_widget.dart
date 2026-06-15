@@ -25,11 +25,11 @@ class PermissionRequestWidget extends StatelessWidget {
 
   Future<void> _requestPermission(BuildContext context) async {
     final status = await permission.request();
-    
+    if (!context.mounted) return;
+
     if (status.isGranted) {
       onGranted?.call();
     } else if (status.isPermanentlyDenied) {
-      // Mostrar diálogo para ir a configuración
       _showSettingsDialog(context);
     } else {
       onDenied?.call();
@@ -65,7 +65,7 @@ class PermissionRequestWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
@@ -79,7 +79,7 @@ class PermissionRequestWidget extends StatelessWidget {
             size: 48,
             color: AppColors.primaryLight,
           ),
-          SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -87,7 +87,7 @@ class PermissionRequestWidget extends StatelessWidget {
                 ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             description,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -95,13 +95,13 @@ class PermissionRequestWidget extends StatelessWidget {
                 ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.xl),
           PrimaryButton(
             label: 'Permitir',
             onPressed: () => _requestPermission(context),
             icon: Icons.check_circle,
           ),
-          SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.sm),
           TextButton(
             onPressed: () {
               Navigator.pop(context);

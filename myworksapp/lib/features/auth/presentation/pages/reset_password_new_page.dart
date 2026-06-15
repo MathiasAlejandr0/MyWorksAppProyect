@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/utils/validators.dart';
+
+import '../../../../core/design_system/layout_utils.dart';
+import '../../../../core/providers/auth_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
-import '../providers/auth_provider.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 
+/// Pantalla para nueva contraseña tras enlace de recuperación de Supabase Auth.
 class ResetPasswordNewPage extends ConsumerStatefulWidget {
-  final String userId;
-
-  const ResetPasswordNewPage({super.key, required this.userId});
+  const ResetPasswordNewPage({super.key});
 
   @override
-  ConsumerState<ResetPasswordNewPage> createState() => _ResetPasswordNewPageState();
+  ConsumerState<ResetPasswordNewPage> createState() =>
+      _ResetPasswordNewPageState();
 }
 
 class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
@@ -46,11 +50,9 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
     setState(() => _isLoading = true);
 
     try {
-      final authNotifier = ref.read(authProvider.notifier);
-      final success = await authNotifier.changePassword(
-        userId: widget.userId,
-        newPassword: _passwordController.text,
-      );
+      final success = await ref.read(authProvider.notifier).changePassword(
+            newPassword: _passwordController.text,
+          );
 
       if (!mounted) return;
 
@@ -58,43 +60,31 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Contraseña cambiada exitosamente'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
-        // Navegar al login
         context.go(AppConstants.routeLogin);
       } else {
         final authState = ref.read(authProvider);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authState.error ?? 'Error al cambiar contraseña'),
-            backgroundColor: Colors.red,
-          ),
+        ErrorHandler.showError(
+          context,
+          authState.error ?? 'Error al cambiar contraseña',
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ErrorHandler.showError(context, e);
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Nueva Contraseña'),
-      ),
+      appBar: const AppGradientAppBar(title: Text('Nueva contraseña')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: LayoutUtils.scrollPadding(context),
         child: Form(
           key: _formKey,
           child: Column(
@@ -123,15 +113,16 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
-                  labelText: 'Nueva Contraseña',
+                  labelText: 'Nueva contraseña',
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
-                    onPressed: () {
-                      setState(() => _obscurePassword = !_obscurePassword);
-                    },
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
                 validator: Validators.validatePassword,
@@ -141,15 +132,17 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
                 controller: _confirmPasswordController,
                 obscureText: _obscureConfirmPassword,
                 decoration: InputDecoration(
-                  labelText: 'Confirmar Contraseña',
+                  labelText: 'Confirmar contraseña',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                      _obscureConfirmPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
-                    onPressed: () {
-                      setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
-                    },
+                    onPressed: () => setState(
+                      () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                    ),
                   ),
                 ),
                 validator: _validateConfirmPassword,
@@ -163,7 +156,7 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Cambiar Contraseña'),
+                    : const Text('Cambiar contraseña'),
               ),
             ],
           ),
@@ -172,4 +165,3 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
     );
   }
 }
-

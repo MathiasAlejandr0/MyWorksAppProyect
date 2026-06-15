@@ -47,8 +47,10 @@ class ErrorHandler {
       return AppError.permission('No tienes permisos para realizar esta acción');
     }
 
-    if (errorString.contains('database') || errorString.contains('sqlite')) {
-      return AppError.database('Error en la base de datos. Intenta nuevamente', error);
+    if (errorString.contains('database') ||
+        errorString.contains('postgres') ||
+        errorString.contains('supabase')) {
+      return AppError.database('Error al guardar datos. Intenta nuevamente', error);
     }
 
     // Error genérico

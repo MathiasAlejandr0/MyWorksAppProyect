@@ -28,7 +28,7 @@ class NoWorkersEmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.work_off_outlined,
               size: 80,
               color: AppColors.grayMedium,

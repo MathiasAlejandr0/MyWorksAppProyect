@@ -168,7 +168,7 @@ class GdprService {
   /// Útil para guardar en archivo o enviar por email.
   Future<String> exportUserDataAsJson(String userId) async {
     final data = await exportUserData(userId);
-    final encoder = JsonEncoder.withIndent('  ');
+    const encoder = JsonEncoder.withIndent('  ');
     return encoder.convert(data);
   }
 

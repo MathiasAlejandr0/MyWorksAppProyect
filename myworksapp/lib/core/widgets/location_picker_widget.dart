@@ -232,7 +232,8 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
             JobLocationMap(
               latitude: _latitude!,
               longitude: _longitude!,
-              square: true,
+              mode: JobMapDisplayMode.interactive,
+              height: 120,
             ),
             const SizedBox(height: 12),
           ],

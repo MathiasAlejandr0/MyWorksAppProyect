@@ -35,7 +35,10 @@ class UserRepository {
   }
 
   Future<void> updateUser(UserModel user) async {
-    final data = user.toMap()..remove('password');
+    final data = user.toMap()
+      ..remove('password')
+      ..remove('role')
+      ..remove('accountStatus');
     await supabase.from(_table).update(data).eq('id', user.id);
   }
 

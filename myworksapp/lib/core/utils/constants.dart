@@ -39,7 +39,6 @@ class AppConstants {
   static const String routeNotifications = '/notifications';
   static const String routeSettings = '/settings';
   static const String routeForgotPassword = '/forgot-password';
-  static const String routeResetPasswordCode = '/reset-password-code';
   static const String routeResetPassword = '/reset-password';
   static const String routeStatistics = '/statistics';
   static const String routeJobPhotos = '/job/photos';
@@ -58,6 +57,13 @@ class AppConstants {
   // Admin
   static const String routeAdminDashboard = '/admin';
   static const String routeAdminUsers = '/admin/users';
+  static const String routeAdminWorkers = '/admin/workers';
+  static const String routeAdminJobs = '/admin/jobs';
+  static const String routeAdminJobDetail = '/admin/jobs/detail';
+  static const String routeAdminReports = '/admin/reports';
   static const String routeAdminDisputes = '/admin/disputes';
+  static const String routeAdminErrors = '/admin/errors';
+  static const String routeAdminServices = '/admin/services';
+  static const String routeAdminFeatureFlags = '/admin/feature-flags';
 }
 

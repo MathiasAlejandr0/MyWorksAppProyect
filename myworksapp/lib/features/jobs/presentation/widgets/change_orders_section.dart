@@ -92,7 +92,7 @@ class _ChangeOrderTile extends StatelessWidget {
       case 'paid':
         return AppColors.success;
       case 'rejected':
-        return Colors.red;
+        return AppColors.error;
       default:
         return AppColors.grayMedium;
     }

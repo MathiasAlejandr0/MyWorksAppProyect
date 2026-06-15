@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/config/demo_credentials.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/domain/worker_login_item.dart';
+import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/worker_navigation.dart';
@@ -140,34 +142,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     await _loginWithCredentials(worker.email, DemoCredentials.demoPassword);
   }
 
-  InputDecoration _fieldDecoration({
-    required String hint,
-    required IconData icon,
-    Widget? suffix,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: AppColors.grayMedium.withValues(alpha: 0.8)),
-      prefixIcon: Icon(icon, color: AppColors.grayMedium, size: 22),
-      suffixIcon: suffix,
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.35)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.35)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.brandTeal, width: 1.5),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -176,13 +150,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       body: AuthSoftBackground(
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: IconButton(
@@ -193,44 +167,42 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       color: AppColors.brandNavy,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
                     'Inicia Sesión',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.grayDark,
-                    ),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.grayDark,
+                        ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: AppSpacing.xxl - 4),
                   BrandLabeledField(
                     label: 'Correo electrónico',
                     child: TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: _fieldDecoration(
-                        hint: 'Introduce tu correo',
-                        icon: Icons.person_outline_rounded,
+                      decoration: const InputDecoration(
+                        hintText: 'Introduce tu correo',
+                        prefixIcon: Icon(Icons.person_outline_rounded),
                       ),
                       validator: Validators.validateEmail,
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: AppSpacing.md + 6),
                   BrandLabeledField(
                     label: 'Contraseña',
                     child: TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      decoration: _fieldDecoration(
-                        hint: 'Introduce tu contraseña',
-                        icon: Icons.lock_outline_rounded,
-                        suffix: IconButton(
+                      decoration: InputDecoration(
+                        hintText: 'Introduce tu contraseña',
+                        prefixIcon: const Icon(Icons.lock_outline_rounded),
+                        suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: AppColors.grayMedium,
                           ),
                           onPressed: () =>
                               setState(() => _obscurePassword = !_obscurePassword),
@@ -239,7 +211,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       validator: Validators.validatePassword,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   BrandPrimaryButton(
                     label: 'Entrar',
                     isLoading: authState.isLoading,
@@ -257,49 +229,53 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'O entra como:',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.grayDark,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _RoleSelector(
-                    selectedRole: _selectedRole,
-                    onRoleChanged: _onRoleChanged,
-                  ),
-                  const SizedBox(height: 12),
-                  if (_selectedRole == AppConstants.roleUser)
-                    OutlinedButton.icon(
-                      onPressed: authState.isLoading ? null : _loginWithDemoUser,
-                      icon: const Icon(Icons.play_circle_outline, size: 20),
-                      label: const Text('Cuenta demo usuario'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.brandNavy,
-                        side: BorderSide(
-                          color: AppColors.brandNavy.withValues(alpha: 0.25),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                  if (kDebugMode) ...[
+                    const SizedBox(height: 20),
+                    const Text(
+                      'O entra como (solo demo):',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.grayDark,
                       ),
-                    )
-                  else
-                    _WorkerDemoSelector(
-                      workers: _demoWorkers,
-                      selected: _selectedWorker,
-                      isLoading: _loadingWorkers || authState.isLoading,
-                      error: _workersError,
-                      onRetry: _loadDemoWorkers,
-                      onSelect: (worker) => setState(() => _selectedWorker = worker),
-                      onLogin: _loginWithSelectedWorker,
                     ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 12),
+                    _RoleSelector(
+                      selectedRole: _selectedRole,
+                      onRoleChanged: _onRoleChanged,
+                    ),
+                    const SizedBox(height: 12),
+                    if (_selectedRole == AppConstants.roleUser)
+                      OutlinedButton.icon(
+                        onPressed:
+                            authState.isLoading ? null : _loginWithDemoUser,
+                        icon: const Icon(Icons.play_circle_outline, size: 20),
+                        label: const Text('Cuenta demo usuario'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.brandNavy,
+                          side: BorderSide(
+                            color: AppColors.brandNavy.withValues(alpha: 0.25),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      )
+                    else
+                      _WorkerDemoSelector(
+                        workers: _demoWorkers,
+                        selected: _selectedWorker,
+                        isLoading: _loadingWorkers || authState.isLoading,
+                        error: _workersError,
+                        onRetry: _loadDemoWorkers,
+                        onSelect: (worker) =>
+                            setState(() => _selectedWorker = worker),
+                        onLogin: _loginWithSelectedWorker,
+                      ),
+                    const SizedBox(height: 20),
+                  ],
                   GestureDetector(
                     onTap: () => context.push(
                       AppConstants.routeRegister,
@@ -476,7 +452,7 @@ class _WorkerDemoSelector extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         DropdownButtonFormField<String>(
-          value: selected?.userId,
+          initialValue: selected?.userId,
           isExpanded: true,
           decoration: InputDecoration(
             hintText: 'Elige un trabajador',

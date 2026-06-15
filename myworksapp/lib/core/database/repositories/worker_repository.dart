@@ -51,8 +51,11 @@ class WorkerRepository {
   }) async {
     if (near == null) return [];
 
+    final jobRepository = JobRepository();
     final listed = <WorkerModel>[];
     for (final worker in workers) {
+      if (!worker.isAvailable) continue;
+      if (await jobRepository.hasActiveJobs(worker.userId)) continue;
       if (!await WorkerOnboardingChecklistService.instance
           .canReceiveJobs(worker.userId)) {
         continue;

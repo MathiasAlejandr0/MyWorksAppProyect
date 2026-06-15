@@ -385,7 +385,7 @@ class _PricingModeQuestionnaireState extends State<PricingModeQuestionnaire> {
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: AppColors.brandTeal, size: 22),
+              const Icon(Icons.auto_awesome, color: AppColors.brandTeal, size: 22),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -423,7 +423,7 @@ class _PricingModeQuestionnaireState extends State<PricingModeQuestionnaire> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: Colors.grey.shade50,
+        color: AppColors.grayLight,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),

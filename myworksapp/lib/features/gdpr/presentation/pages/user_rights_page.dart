@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/gdpr_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/design_system/layout_utils.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -31,11 +33,11 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Mis Derechos'),
+      appBar: const AppGradientAppBar(
+        title: Text('Mis Derechos'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: LayoutUtils.scrollPadding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -113,7 +115,7 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
   }) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: LayoutUtils.scrollPadding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -121,14 +123,14 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
               children: [
                 Icon(
                   icon,
-                  color: isDanger ? Colors.red : null,
+                  color: isDanger ? AppColors.error : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     title,
                     style: AppTextStyles.titleMedium(
-                      color: isDanger ? Colors.red : null,
+                      color: isDanger ? AppColors.error : null,
                     ),
                   ),
                 ),
@@ -172,7 +174,7 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
       child: ElevatedButton.icon(
         onPressed: _isDeleting ? null : _requestDeletion,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
           foregroundColor: Colors.white,
         ),
         icon: _isDeleting
@@ -200,7 +202,7 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Debes iniciar sesión para exportar tus datos'),
-            backgroundColor: Colors.orange,
+            backgroundColor: AppColors.warning,
           ),
         );
       }
@@ -231,7 +233,7 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Datos exportados exitosamente'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
       }
@@ -272,7 +274,7 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
             ),
             child: const Text('Eliminar Permanentemente'),
@@ -282,8 +284,8 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
     );
 
     if (confirmed != true) return;
+    if (!mounted) return;
 
-    // Segunda confirmación
     final doubleConfirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -300,7 +302,7 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
             ),
             child: const Text('Sí, eliminar'),
@@ -322,7 +324,7 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Debes iniciar sesión para eliminar tu cuenta'),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppColors.warning,
             ),
           );
         }
@@ -336,7 +338,7 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Solicitud de eliminación procesada'),
-            backgroundColor: Colors.orange,
+            backgroundColor: AppColors.warning,
           ),
         );
         

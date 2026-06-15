@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/services/crash_reporting_service.dart';
 import '../core/services/notification_service.dart';
 import '../core/services/notification_realtime_service.dart';
 import '../core/services/session_manager.dart';
@@ -53,6 +54,12 @@ class AppInitializer {
         AppLogger.e('🚨 No se pudo conectar con Supabase');
       } else {
         AppLogger.i('✅ Supabase accesible');
+      }
+
+      try {
+        await CrashReportingService.instance.initialize();
+      } catch (e) {
+        AppLogger.w('⚠️ Crash reporting no inicializado', e);
       }
 
       // 2. Cargar preferencias
@@ -166,11 +173,6 @@ class AppInitializer {
         'https://myworksapp.demo/privacy',
       );
     }
-    if (!prefs.containsKey('terms_accepted')) {
-      await prefs.setBool('terms_accepted', true);
-    }
-    if (!prefs.containsKey('permissions_explained')) {
-      await prefs.setBool('permissions_explained', true);
-    }
+    // No auto-aceptar términos: el flujo de registro/onboarding lo gestiona.
   }
 }

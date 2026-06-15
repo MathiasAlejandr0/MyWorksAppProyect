@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/gdpr_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/validators.dart';
@@ -52,7 +53,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Debes aceptar los términos y condiciones para continuar'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.warning,
         ),
       );
       return;
@@ -80,9 +81,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             accepted: true,
           );
         } catch (e) {
+          if (!mounted) return;
           ErrorHandler.showError(context, e);
         }
 
+        if (!mounted) return;
         if (user.role == AppConstants.roleUser) {
           context.go(AppConstants.routeUserHome);
         } else {

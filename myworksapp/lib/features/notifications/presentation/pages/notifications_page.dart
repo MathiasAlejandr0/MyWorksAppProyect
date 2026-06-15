@@ -7,6 +7,8 @@ import '../../../../core/database/repositories/notification_repository.dart';
 import '../../../../core/database/models/notification_model.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/loading_skeleton.dart';
+import '../../../../core/design_system/app_spacing.dart';
+import '../../../../core/design_system/layout_utils.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/utils/constants.dart';
 
@@ -94,12 +96,12 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       ),
       body: _isLoading
           ? ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               itemCount: 5,
               itemBuilder: (context, index) => const ListItemSkeleton(),
             )
           : _notifications.isEmpty
-              ? EmptyStateWidget(
+              ? const EmptyStateWidget(
                   icon: Icons.notifications_none,
                   title: 'No hay notificaciones',
                   message: 'Las notificaciones aparecerán aquí cuando haya actualizaciones',
@@ -107,6 +109,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
           : RefreshIndicator(
               onRefresh: _loadNotifications,
               child: ListView.builder(
+                padding: LayoutUtils.scrollPadding(context, top: 0),
                 itemCount: _notifications.length,
                 itemBuilder: (context, index) {
                   final notification = _notifications[index];
@@ -152,16 +155,16 @@ class _NotificationItem extends StatelessWidget {
     switch (notification.type) {
       case 'job_accepted':
       case 'job_completed':
-        return Colors.green;
+        return AppColors.success;
       case 'job_rejected':
       case 'job_cancelled':
-        return Colors.red;
+        return AppColors.error;
       case 'new_job':
         return AppColors.brandOrange;
       case 'new_message':
         return AppColors.brandOrangeDark;
       default:
-        return Colors.grey;
+        return AppColors.grayMedium;
     }
   }
 

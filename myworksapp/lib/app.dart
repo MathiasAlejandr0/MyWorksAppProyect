@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'bootstrap/app_initializer.dart';
+import 'core/providers/theme_mode_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'core/router/app_router.dart';
@@ -27,7 +27,6 @@ class MyWorksApp extends ConsumerStatefulWidget {
 }
 
 class _MyWorksAppState extends ConsumerState<MyWorksApp> {
-  bool _isDarkMode = false;
   bool _isInitialized = false;
 
   @override
@@ -54,10 +53,7 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
   Future<void> _initialize() async {
     try {
       // 1. Cargar tema desde preferencias
-      final prefs = await SharedPreferences.getInstance();
-      setState(() {
-        _isDarkMode = prefs.getBool('dark_mode') ?? false;
-      });
+      await ref.read(themeModeProvider.notifier).loadFromPreferences();
 
       // 2. Inicializar app completa mediante AppInitializer
       AppLogger.i('🔄 Inicializando app mediante AppInitializer...');
@@ -86,7 +82,7 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
-      return MaterialApp(
+      return const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
           backgroundColor: AppColors.white,
@@ -100,13 +96,14 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
     }
 
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: AppConstants.appBrandDisplayName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode: themeMode,
       routerConfig: router,
       // Agregar error builder para capturar errores de renderizado
       builder: (context, child) {

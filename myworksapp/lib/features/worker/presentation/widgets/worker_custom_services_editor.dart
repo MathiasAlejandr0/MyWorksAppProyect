@@ -135,7 +135,7 @@ class WorkerCustomServicesEditor extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: AppColors.grayLight,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.grayMedium.withValues(alpha: 0.2)),
             ),
@@ -172,7 +172,7 @@ class WorkerCustomServicesEditor extends StatelessWidget {
                       const SizedBox(width: 4),
                       IconButton(
                         icon: const Icon(Icons.delete_outline, size: 20),
-                        color: Colors.red.shade400,
+                        color: AppColors.error,
                         onPressed: () {
                           onChanged(
                             services.where((s) => s.id != service.id).toList(),

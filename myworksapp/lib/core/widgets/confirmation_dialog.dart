@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 /// Dialog de confirmación claro y humano
 class ConfirmationDialog extends StatelessWidget {
   final String title;
@@ -36,8 +38,8 @@ class ConfirmationDialog extends StatelessWidget {
           },
           style: isDestructive
               ? ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.white,
                 )
               : null,
           child: Text(confirmLabel),

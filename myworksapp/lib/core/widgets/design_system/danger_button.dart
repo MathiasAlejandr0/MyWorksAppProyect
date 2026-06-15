@@ -38,7 +38,7 @@ class DangerButton extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.xl,
                   vertical: AppSpacing.lg,
                 ),
@@ -54,7 +54,7 @@ class DangerButton extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.xl,
                   vertical: AppSpacing.lg,
                 ),
@@ -81,7 +81,7 @@ class DangerButton extends StatelessWidget {
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 20),
-                SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: AppSpacing.sm),
               ],
               Text(
                 label,

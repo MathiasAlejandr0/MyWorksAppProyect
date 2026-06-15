@@ -1,31 +1,30 @@
 import '../database/models/job_model.dart';
-import '../database/repositories/change_order_repository.dart';
 import '../domain/pricing_constants.dart';
 import '../utils/app_error.dart';
 import '../utils/constants.dart';
-import 'payment_service.dart';
+import 'payment_guard_ports.dart';
 
 /// Valida que las transiciones cumplan requisitos de escrow según modalidad.
 class PaymentGuard {
   PaymentGuard._();
 
-  static final ChangeOrderRepository _changeOrders = ChangeOrderRepository();
-
   static Future<void> validate({
     required JobModel job,
     required String targetStatus,
+    PaymentGuardPorts? ports,
   }) async {
+    final p = ports ?? PaymentGuardPorts.production();
     final mode = job.pricingMode;
 
     if (mode == PricingConstants.modeLegacy) {
-      await _validateTierCompletionPayment(job, targetStatus);
-      await _validateChangeOrdersOnComplete(job, targetStatus);
+      await _validateTierCompletionPayment(job, targetStatus, p);
+      await _validateChangeOrdersOnComplete(job, targetStatus, p);
       return;
     }
 
-    final payment = await PaymentService.instance.getPrimaryPayment(job.id);
+    final payment = await p.getPrimaryPayment(job.id);
 
-    if (_requiresAuthorizedForAccepted(mode, targetStatus)) {
+    if (requiresAuthorizedForAccepted(mode, targetStatus)) {
       if (payment == null || payment.status != 'authorized') {
         throw AppError.validation(
           'El pago debe estar autorizado (en garantía) antes de continuar',
@@ -39,7 +38,7 @@ class PaymentGuard {
           'No se puede iniciar el trabajo sin pago en garantía',
         );
       }
-      final pending = await _changeOrders.countPendingClient(job.id);
+      final pending = await p.countPendingChangeOrders(job.id);
       if (pending > 0) {
         throw AppError.validation('Hay órdenes de cambio pendientes de aprobación');
       }
@@ -53,22 +52,19 @@ class PaymentGuard {
       }
     }
 
-    if (targetStatus == PricingConstants.jobPausedChangeOrder) {
-      // Permitido desde in_progress; el pago principal puede pasar a held en PaymentService.
-    }
-
     if (targetStatus == AppConstants.jobStatusInProgress &&
         job.status == PricingConstants.jobPausedChangeOrder) {
-      final unpaid = await _changeOrders.countApprovedUnpaid(job.id);
+      final unpaid = await p.countApprovedUnpaidChangeOrders(job.id);
       if (unpaid > 0) {
         throw AppError.validation('Aprueba y paga las órdenes de cambio pendientes');
       }
     }
 
-    await _validateChangeOrdersOnComplete(job, targetStatus);
+    await _validateChangeOrdersOnComplete(job, targetStatus, p);
   }
 
-  static bool _requiresAuthorizedForAccepted(String mode, String target) {
+  /// Indica si la modalidad exige pago autorizado antes de pasar a [accepted].
+  static bool requiresAuthorizedForAccepted(String mode, String target) {
     if (target != AppConstants.jobStatusAccepted) return false;
     return mode == PricingConstants.modeOpenQuote;
   }
@@ -85,13 +81,13 @@ class PaymentGuard {
   static Future<void> _validateTierCompletionPayment(
     JobModel job,
     String targetStatus,
+    PaymentGuardPorts ports,
   ) async {
     if (targetStatus != AppConstants.jobStatusCompleted) return;
     if (!_isWorkerTierInvitation(job)) return;
     if (job.status != PricingConstants.jobAwaitingClientApproval) return;
 
-    final hasPayment =
-        await PaymentService.instance.hasAuthorizedPrimaryPayment(job.id);
+    final hasPayment = await ports.hasAuthorizedPrimaryPayment(job.id);
     if (!hasPayment) {
       throw AppError.validation(
         'Debes completar el pago antes de aprobar la finalización',
@@ -102,17 +98,18 @@ class PaymentGuard {
   static Future<void> _validateChangeOrdersOnComplete(
     JobModel job,
     String targetStatus,
+    PaymentGuardPorts ports,
   ) async {
     if (targetStatus != AppConstants.jobStatusCompleted) return;
 
-    final pending = await _changeOrders.countPendingClient(job.id);
+    final pending = await ports.countPendingChangeOrders(job.id);
     if (pending > 0) {
       throw AppError.validation(
         'No puedes completar el trabajo con órdenes de cambio sin resolver',
       );
     }
 
-    final unpaid = await _changeOrders.countApprovedUnpaid(job.id);
+    final unpaid = await ports.countApprovedUnpaidChangeOrders(job.id);
     if (unpaid > 0) {
       throw AppError.validation(
         'Hay cobros adicionales aprobados pendientes de pago',
