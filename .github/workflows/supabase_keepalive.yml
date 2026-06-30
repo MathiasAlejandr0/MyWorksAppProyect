@@ -1,0 +1,49 @@
+name: Supabase Keep-Alive
+
+# Evita que el proyecto Supabase (plan gratuito) se pause por inactividad.
+# Hace una peticion ligera cada dia, lo que cuenta como actividad del proyecto.
+# Puedes sobreescribir la URL/clave con secretos del repo:
+#   SUPABASE_URL y SUPABASE_ANON_KEY (Settings -> Secrets and variables -> Actions)
+
+on:
+  schedule:
+    # Todos los dias a las 12:00 UTC (08:00 en Chile aprox).
+    - cron: "0 12 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST + Auth
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://wxqrfcqifkfgawrnqmnj.supabase.co' }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_WN_cTANRJ4nCuPw_6HWd7w_iDJjRA8O' }}
+        run: |
+          set -e
+
+          echo "== Auth health =="
+          auth_code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/auth/v1/health" \
+            -H "apikey: $SUPABASE_KEY")
+          echo "Auth health HTTP: $auth_code"
+
+          echo "== REST (tabla profiles) =="
+          rest_code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+          echo "REST HTTP: $rest_code"
+
+          # Consideramos exito cualquier respuesta del servidor que no sea
+          # un fallo de gateway (5xx) o ausencia de conexion (000).
+          if [ "$auth_code" = "000" ] || [ "$auth_code" -ge 500 ]; then
+            echo "::error ::Auth no respondio correctamente (HTTP $auth_code). El proyecto podria estar pausado o caido."
+            exit 1
+          fi
+          if [ "$rest_code" = "000" ] || [ "$rest_code" -ge 500 ]; then
+            echo "::error ::REST no respondio correctamente (HTTP $rest_code). El proyecto podria estar pausado o caido."
+            exit 1
+          fi
+
+          echo "Keep-alive OK: el proyecto Supabase esta activo."
