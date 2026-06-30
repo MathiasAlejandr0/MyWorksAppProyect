@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../database/models/user_model.dart';
 import '../../features/role_selector/presentation/pages/welcome_page.dart';
 import '../../features/role_selector/presentation/pages/role_selector_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -47,14 +49,41 @@ import '../../core/utils/constants.dart';
 import '../../core/utils/app_logger.dart';
 import '../../core/database/repositories/worker_repository.dart';
 
+/// Puente entre los cambios de [authProvider] y los redirects de GoRouter.
+///
+/// IMPORTANTE: solo notifica cuando cambia el estado de sesión (login/logout)
+/// o el rol del usuario. Recargar los datos del mismo usuario (por ejemplo al
+/// reanudar la app tras pedir permiso de ubicación) NO debe disparar nada,
+/// porque de lo contrario el router se reconstruiría y la pila de navegación
+/// se reiniciaría, sacando al usuario de la pantalla en la que estaba.
+class _AuthRouterRefresh extends ChangeNotifier {
+  _AuthRouterRefresh(Ref ref) {
+    ref.listen<UserModel?>(
+      authProvider.select((s) => s.user),
+      (previous, next) {
+        final wasLoggedIn = previous != null;
+        final isLoggedIn = next != null;
+        if (wasLoggedIn != isLoggedIn || previous?.role != next?.role) {
+          notifyListeners();
+        }
+      },
+    );
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  // Solo reaccionar a login/logout, no a isLoading (evita resetear la pila al abrir perfil).
-  final authUser = ref.watch(authProvider.select((s) => s.user));
+  // El router se crea UNA sola vez. No usamos ref.watch sobre el usuario aquí
+  // para evitar recrear el GoRouter (lo que reiniciaría la navegación). En su
+  // lugar, refreshListenable reevalúa los redirects ante cambios de sesión.
+  final refresh = _AuthRouterRefresh(ref);
+  ref.onDispose(refresh.dispose);
 
   return GoRouter(
     initialLocation: AppConstants.routeWelcome,
+    refreshListenable: refresh,
     redirect: (context, state) async {
       try {
+        final authUser = ref.read(authProvider).user;
         final isLoggedIn = authUser != null;
         
         // Verificar si es la primera vez (onboarding)
