@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  
+  /* Color Psychology 60-30-10 Rule */
+  --bg-dominant-light: #F2F2F7;
+  --bg-surface-light: #FFFFFF;
+  --bg-elevated-light: #F8F9FA;
+  
+  --bg-dominant-dark: #090D16;
+  --bg-surface-dark: #121826;
+  --bg-elevated-dark: #1A2234;
+
+  --navy-structure: #0B192C;
+  --navy-light: #1E2A3B;
+
+  --orange-accent: #F0782A;
+  --orange-vibrant: #FF6B00;
+  --orange-soft: #FFF4EE;
+  
+  --emerald-success: #34C759;
+  --emerald-soft: #E8F8EE;
+  
+  --crimson-error: #FF3B30;
+  --amber-warning: #FF9500;
+
+  --text-main-light: #1D1D1F;
+  --text-muted-light: #6E6E73;
+  --text-main-dark: #F5F5F7;
+  --text-muted-dark: #98989D;
+
+  --border-light: rgba(0, 0, 0, 0.08);
+  --border-dark: rgba(255, 255, 255, 0.1);
+  --glass-bg-light: rgba(255, 255, 255, 0.75);
+  --glass-bg-dark: rgba(18, 24, 38, 0.75);
+  
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+  
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 25px rgba(240, 120, 42, 0.25);
+  --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-dominant-light);
+  color: var(--text-main-light);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark {
+  background-color: var(--bg-dominant-dark);
+  color: var(--text-main-dark);
+}
+
+.glass-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background-color: var(--glass-bg-light);
+  border-bottom: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+
+body.dark .glass-nav {
+  background-color: var(--glass-bg-dark);
+  border-bottom: 1px solid var(--border-dark);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--orange-vibrant), var(--orange-accent));
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(240, 120, 42, 0.35);
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(240, 120, 42, 0.45);
+}
+
+.card-3d {
+  background-color: var(--bg-surface-light);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+body.dark .card-3d {
+  background-color: var(--bg-surface-dark);
+  border-color: var(--border-dark);
+}
+
+.card-3d:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: var(--shadow-md);
+}
+
+.badge-tag {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-emerald {
+  background-color: var(--emerald-soft);
+  color: var(--emerald-success);
+}
+
+body.dark .badge-emerald {
+  background-color: rgba(52, 199, 89, 0.15);
+}
+
+.badge-orange {
+  background-color: var(--orange-soft);
+  color: var(--orange-accent);
+}
+
+body.dark .badge-orange {
+  background-color: rgba(240, 120, 42, 0.15);
+}
+
+/* Animaciones Kinéticas Apple Spatial Mesh */
+@keyframes meshOrbit1 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(60px, -40px) scale(1.1); }
+  66% { transform: translate(-40px, 50px) scale(0.95); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@keyframes meshOrbit2 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(-70px, 50px) scale(0.9); }
+  66% { transform: translate(40px, -60px) scale(1.15); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@keyframes meshOrbit3 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(50px, -50px) scale(1.08); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
