@@ -2,7 +2,7 @@
 
 Documento de referencia para **memoria de título**, **presentaciones universitarias**, **financiamiento** y **planificación técnica**.
 
-**Última actualización:** junio 2026  
+**Última actualización:** agosto 2026  
 **Versión de producto:** 1.0.0 (MVP con backend Supabase)  
 **Repositorio:** https://github.com/MathiasAlejandr0/MyWorksAppProyect
 
@@ -12,11 +12,11 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 
 | Aspecto | Estado actual |
 |---------|---------------|
-| **Tipo de producto** | MVP móvil multiplataforma (Flutter) |
+| **Tipo de producto** | Monorepo: app móvil Flutter + web PWA + hub admin (React/Vite) + escritorio nativo (Tauri) |
 | **Backend** | Supabase (Auth + PostgreSQL + PostgREST + RLS) |
 | **Modo de operación** | Cliente-servidor: datos centralizados en la nube |
 | **Listo para demo en vivo** | Sí (usuario y trabajador en dispositivos distintos o mismo dispositivo) |
-| **Listo para producción / App Store** | Parcial — falta pasarela real, push remoto, CI/CD y tests automatizados |
+| **Listo para producción / App Store** | Parcial — falta pasarela real, push remoto y publicación en tiendas |
 | **Documentación técnica en repo** | Sí ([README.md](README.md), [DEMO.md](DEMO.md), [INSTALL.md](INSTALL.md), [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADES_COBRO.md)) |
 
 **Mensaje clave:** MyWorksApp demuestra un **marketplace de servicios del hogar** con roles duales (cliente y profesional), ciclo de vida de trabajos, modalidades de cobro, escrow simulado y arquitectura preparada para escalar a producción.
@@ -174,6 +174,10 @@ Detalle en [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADE
 ### Plataforma
 
 - Flutter multiplataforma (Android, iOS, Windows, macOS, Web parcial).
+- **Web PWA** (`myworksapp_web`): React + Vite, Supabase Auth, catálogo de trabajadores y creación de jobs reales.
+- **Hub admin web** (`myworksapp_desktop`): panel de soporte, métricas ejecutivas y DevSecOps conectado a Supabase.
+- **Escritorio nativo** (Tauri): empaqueta el hub admin como app Windows/macOS/Linux.
+- Módulo compartido TypeScript (`shared/`): auth, repositorios y tipos alineados con Flutter.
 - Supabase: autenticación, perfiles, trabajos, pagos, chat, notificaciones, ratings.
 - RLS (Row Level Security) en tablas expuestas.
 - Bootstrap centralizado y health check del backend.
@@ -213,9 +217,9 @@ Detalle en [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADE
 | Notificaciones push remotas (FCM / APNs) | Solo locales | Alta |
 | Chat en tiempo real (WebSockets / Realtime) | Polling / local | Media |
 | Supabase Storage para fotos y videos | Rutas locales del dispositivo | Media |
-| Tests automatizados (`test/` vacío) | Sin suite Dart | Media |
-| CI/CD (GitHub Actions) | Manual | Media |
-| Panel de administración web | No existe | Baja |
+| Tests automatizados Flutter | Suite en `myworksapp_app/test/` + CI | ✅ Parcial |
+| CI/CD (GitHub Actions) | Flutter CI + Web/Desktop CI + Gitleaks | ✅ Parcial |
+| Panel de administración web | `myworksapp_desktop` con Supabase Auth (rol admin) | ✅ MVP |
 | Publicación en tiendas | No publicada | Alta (al lanzar) |
 
 ---

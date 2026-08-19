@@ -28,6 +28,16 @@ import { PredictiveTrustMeter } from './components/PredictiveTrustMeter';
 import { AmbientShader } from './components/AmbientShader';
 import { AppleSpatialBackground } from './components/AppleSpatialBackground';
 import { LiveGpsTrackingMap } from './components/LiveGpsTrackingMap';
+import { AuthModal } from './components/AuthModal';
+import { useAuth } from './context/AuthContext';
+import { supabase } from './supabaseClient';
+import {
+  createPendingJob,
+  fetchServiceByCategory,
+  fetchWorkersByCategory,
+  toWebWorkerCard,
+} from '@myworksapp/shared';
+import { LogIn, LogOut } from 'lucide-react';
 
 interface Worker {
   id: string;
@@ -51,70 +61,31 @@ interface AiResult {
   workers: Worker[];
 }
 
-const DEMO_WORKERS: Worker[] = [
-  {
-    id: 'w1',
-    name: 'Carlos Muñoz',
-    profession: 'Gásfiter Certificado SEC',
-    category: 'plumbing',
-    rating: 4.9,
-    jobsDone: 142,
-    photoUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500',
-    pricePerVisit: 25000,
-  },
-  {
-    id: 'w2',
-    name: 'Juan Pérez',
-    profession: 'Electricista Autorizado SEC',
-    category: 'electrical',
-    rating: 4.95,
-    jobsDone: 198,
-    photoUrl: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=500',
-    pricePerVisit: 25000,
-  },
-  {
-    id: 'w3',
-    name: 'María José González',
-    profession: 'Especialista en Sanitización',
-    category: 'cleaning',
-    rating: 4.88,
-    jobsDone: 87,
-    photoUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500',
-    pricePerVisit: 30000,
-  },
-  {
-    id: 'w4',
-    name: 'Roberto Silva',
-    profession: 'Montajista de Muebles Pro',
-    category: 'assembly',
-    rating: 4.92,
-    jobsDone: 115,
-    photoUrl: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=500',
-    pricePerVisit: 20000,
-  },
-];
-
 const CATEGORIES = [
   { id: 'plumbing', title: 'Gásfiter / Plomería', icon: Wrench, photo: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600' },
   { id: 'electrical', title: 'Electricidad SEC', icon: Zap, photo: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600' },
   { id: 'cleaning', title: 'Limpieza e Higiene', icon: Sparkles, photo: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600' },
   { id: 'assembly', title: 'Armado Muebles', icon: PackageCheck, photo: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600' },
   { id: 'moving', title: 'Mudanzas y Fletes', icon: Truck, photo: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600' },
-  { id: 'tech', title: 'Soporte PC / WiFi', icon: Laptop, photo: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=600' },
+  { id: 'tech_support', title: 'Soporte PC / WiFi', icon: Laptop, photo: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=600' },
   { id: 'gardening', title: 'Jardines y Poda', icon: Flower2, photo: 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600' },
   { id: 'construction', title: 'Maestro Albañil', icon: Hammer, photo: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=600' },
 ];
 
 export function App() {
+  const { profile, logout } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
   const [query, setQuery] = useState('');
   const [aiResult, setAiResult] = useState<AiResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showEmergencyPulse, setShowEmergencyPulse] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -124,48 +95,53 @@ export function App() {
     }
   }, [darkMode]);
 
-  const analyzeQuery = (text: string) => {
+  const analyzeQuery = async (text: string) => {
     if (!text.trim()) return;
     setIsAnalyzing(true);
     setQuery(text);
 
-    setTimeout(() => {
-      const lower = text.toLowerCase();
-      let category = 'electrical';
-      let categoryName = 'Electricista Certificado';
-      let problem = 'Diagnóstico y reparación de falla eléctrica';
-      let minPrice = 25000;
-      let maxPrice = 60000;
-      let urgency = 'Media';
-      let tools = ['Tester digital', 'Alicate pelacables', 'Breaker sustituto'];
+    const lower = text.toLowerCase();
+    let category = 'electrical';
+    let categoryName = 'Electricista Certificado';
+    let problem = 'Diagnóstico y reparación de falla eléctrica';
+    let minPrice = 25000;
+    let maxPrice = 60000;
+    let urgency = 'Media';
+    let tools = ['Tester digital', 'Alicate pelacables', 'Breaker sustituto'];
 
-      if (lower.includes('fuga') || lower.includes('agua') || lower.includes('lavaplatos') || lower.includes('llave') || lower.includes('gasfiter')) {
-        category = 'plumbing';
-        categoryName = 'Gásfiter / Plomero SEC';
-        problem = 'Reparación de fuga de agua y cambio de llaves o grifería';
-        minPrice = 30000;
-        maxPrice = 75000;
-        urgency = 'Alta (Urgencia 24/7)';
-        tools = ['Soplete', 'Llave francesa', 'Sellante de teflón'];
-      } else if (lower.includes('mueble') || lower.includes('armar') || lower.includes('closet') || lower.includes('rack')) {
-        category = 'assembly';
-        categoryName = 'Armado de Muebles';
-        problem = 'Montaje e instalación de mueble listo para armar';
-        minPrice = 20000;
-        maxPrice = 45000;
-        urgency = 'Normal';
-        tools = ['Atornillador inalámbrico', 'Nivel de gota', 'Juego Allen'];
-      } else if (lower.includes('limpia') || lower.includes('aseo') || lower.includes('departamento')) {
-        category = 'cleaning';
-        categoryName = 'Limpieza de Hogar u Oficina';
-        problem = 'Aseo profundo y desinfección de superficies';
-        minPrice = 35000;
-        maxPrice = 80000;
-        urgency = 'Normal';
-        tools = ['Aspiradora industrial', 'Insumos sanitizantes'];
-      }
+    if (lower.includes('fuga') || lower.includes('agua') || lower.includes('lavaplatos') || lower.includes('llave') || lower.includes('gasfiter')) {
+      category = 'plumbing';
+      categoryName = 'Gásfiter / Plomero SEC';
+      problem = 'Reparación de fuga de agua y cambio de llaves o grifería';
+      minPrice = 30000;
+      maxPrice = 75000;
+      urgency = 'Alta (Urgencia 24/7)';
+      tools = ['Soplete', 'Llave francesa', 'Sellante de teflón'];
+    } else if (lower.includes('mueble') || lower.includes('armar') || lower.includes('closet') || lower.includes('rack')) {
+      category = 'assembly';
+      categoryName = 'Armado de Muebles';
+      problem = 'Montaje e instalación de mueble listo para armar';
+      minPrice = 20000;
+      maxPrice = 45000;
+      urgency = 'Normal';
+      tools = ['Atornillador inalámbrico', 'Nivel de gota', 'Juego Allen'];
+    } else if (lower.includes('limpia') || lower.includes('aseo') || lower.includes('departamento')) {
+      category = 'cleaning';
+      categoryName = 'Limpieza de Hogar u Oficina';
+      problem = 'Aseo profundo y desinfección de superficies';
+      minPrice = 35000;
+      maxPrice = 80000;
+      urgency = 'Normal';
+      tools = ['Aspiradora industrial', 'Insumos sanitizantes'];
+    }
 
-      const matchingWorkers = DEMO_WORKERS.filter(w => w.category === category || category === 'electrical');
+    try {
+      const [service, workersRaw] = await Promise.all([
+        fetchServiceByCategory(supabase, category),
+        fetchWorkersByCategory(supabase, category),
+      ]);
+      setSelectedServiceId(service?.id ?? null);
+      const workers = workersRaw.map((worker) => toWebWorkerCard(worker));
 
       setAiResult({
         category,
@@ -175,10 +151,54 @@ export function App() {
         maxPrice,
         urgency,
         tools,
-        workers: matchingWorkers.length > 0 ? matchingWorkers : [DEMO_WORKERS[0]],
+        workers,
       });
+    } catch {
+      setSelectedServiceId(null);
+      setAiResult({
+        category,
+        categoryName,
+        problem,
+        minPrice,
+        maxPrice,
+        urgency,
+        tools,
+        workers: [],
+      });
+    } finally {
       setIsAnalyzing(false);
-    }, 600);
+    }
+  };
+
+  const requestWorker = (worker: Worker) => {
+    if (!profile) {
+      setShowAuth(true);
+      return;
+    }
+    setSelectedWorker(worker);
+    setBookingConfirmed(false);
+    setBookingError(null);
+  };
+
+  const confirmBooking = async () => {
+    if (!profile || !selectedWorker) return;
+    if (!selectedServiceId) {
+      setBookingError('No hay un servicio activo en Supabase para esta categoría.');
+      return;
+    }
+
+    try {
+      await createPendingJob(supabase, {
+        userId: profile.id,
+        workerId: selectedWorker.id,
+        serviceId: selectedServiceId,
+        description: aiResult?.problem ?? query,
+      });
+      setBookingConfirmed(true);
+      setBookingError(null);
+    } catch {
+      setBookingError('No se pudo crear la solicitud en Supabase. Verifica tu sesión.');
+    }
   };
 
   return (
@@ -207,6 +227,27 @@ export function App() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {profile ? (
+              <>
+                <span style={{ fontSize: '13px', fontWeight: 700 }}>
+                  Hola, {profile.name.split(' ')[0]}
+                </span>
+                <button
+                  onClick={() => void logout()}
+                  style={{ background: 'transparent', border: '1px solid var(--border-light)', padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: 'inherit' }}
+                >
+                  <LogOut size={16} /> Salir
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                style={{ background: 'transparent', border: '1px solid var(--border-light)', padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: 'inherit' }}
+              >
+                <LogIn size={16} /> Entrar
+              </button>
+            )}
+
             <button 
               onClick={() => setShowEmergencyPulse(true)}
               style={{ backgroundColor: 'rgba(255, 59, 48, 0.15)', color: '#FF3B30', border: '1px solid #FF3B30', padding: '8px 16px', borderRadius: 'var(--radius-pill)', fontWeight: 800, fontSize: '12.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -306,6 +347,11 @@ export function App() {
                 </p>
 
                 <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '10px' }}>Profesionales Verificados Recomendados:</h4>
+                {aiResult.workers.length === 0 ? (
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted-light)' }}>
+                    No hay profesionales disponibles en Supabase para esta categoría en este momento.
+                  </p>
+                ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
                   {aiResult.workers.map(w => (
                     <div key={w.id} style={{ padding: '12px', borderRadius: 'var(--radius-md)', backgroundColor: darkMode ? 'var(--bg-surface-dark)' : 'white', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -317,7 +363,7 @@ export function App() {
                         </div>
                       </div>
                       <button 
-                        onClick={() => setSelectedWorker(w)}
+                        onClick={() => requestWorker(w)}
                         style={{ padding: '6px 12px', backgroundColor: '#F0782A', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
                       >
                         Pedir
@@ -325,6 +371,7 @@ export function App() {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
             )}
           </div>
@@ -402,6 +449,9 @@ export function App() {
                 >
                   <CreditCard size={18} /> Pagar vía Webpay / Mercado Pago
                 </button>
+                {bookingError && (
+                  <p style={{ color: '#FF3B30', fontSize: '13px', fontWeight: 600 }}>{bookingError}</p>
+                )}
               </>
             ) : (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
@@ -465,7 +515,7 @@ export function App() {
           onClose={() => setShowCheckout(false)}
           onSuccess={() => {
             setShowCheckout(false);
-            setBookingConfirmed(true);
+            void confirmBooking();
           }}
         />
       )}
@@ -485,10 +535,12 @@ export function App() {
           onClose={() => setShowEmergencyPulse(false)}
           onDispatch={() => {
             setShowEmergencyPulse(false);
-            analyzeQuery('Fuga de agua en lavaplatos');
+            void analyzeQuery('Fuga de agua en lavaplatos');
           }}
         />
       )}
+
+      <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
     </div>
   );
 }

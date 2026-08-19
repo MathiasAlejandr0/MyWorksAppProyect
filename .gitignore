@@ -136,3 +136,6 @@ GoogleService-Info.plist
 # API keys locales (no subir a Git)
 **/android/secrets.properties
 **/ios/Flutter/Secrets.xcconfig
+
+# Node.js (web, desktop, shared)
+**/node_modules/

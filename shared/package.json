@@ -1,0 +1,16 @@
+{
+  "name": "@myworksapp/shared",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.112.3"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.112.3"
+  }
+}

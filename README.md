@@ -123,5 +123,13 @@ Evalúa postura de seguridad del repo. Revisa resultados en la pestaña Actions.
 ### Commitlint (mensajes de commit en PR)
 Valida que los mensajes sigan convención (`feat:`, `fix:`...). Config: `./commitlint.config.mjs`
 
+### Web & Desktop CI
+Workflow: `.github/workflows/web_desktop_ci.yml`
+
+En cada push/PR corre:
+- `npm run lint` + `npm run build` en `myworksapp_web`
+- `npm run lint` + `npm run build` en `myworksapp_desktop`
+- `npm run tauri:build` en Windows (app nativa admin)
+
 ## 📜 Licencia & Propiedad
 **My Works App SpA** — Todos los derechos reservados.

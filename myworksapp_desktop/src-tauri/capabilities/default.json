@@ -1,0 +1,8 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "identifier": "cl.myworksapp.desktop",
+  "permissions": [
+    "core:default",
+    "shell:allow-open"
+  ]
+}

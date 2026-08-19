@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TrendingUp, Wallet, CheckCircle2, XCircle, DollarSign, Lock, AlertTriangle, LayoutDashboard, UserCheck, FileText, PieChart, Clock, Award } from 'lucide-react';
 import { AuditTrailViewer } from './AuditTrailViewer';
 import { FinancialSettlementModal } from './FinancialSettlementModal';
 import { DigitalContractModal } from './DigitalContractModal';
+import { fetchAdminMetrics, fetchWorkersForAdmin } from '@myworksapp/shared';
+import { supabase } from '../supabaseClient';
 
 interface WorkerApproval {
   id: string;
@@ -12,19 +14,53 @@ interface WorkerApproval {
   status: 'Verified' | 'Pending';
 }
 
-const INITIAL_WORKERS: WorkerApproval[] = [
-  { id: 'W-101', name: 'Carlos Silva', profession: 'Electricista Certificado', rut: '16.892.410-K', status: 'Verified' },
-  { id: 'W-102', name: 'Felipe Araya', profession: 'Gásfiter SEC', rut: '15.441.209-4', status: 'Verified' },
-  { id: 'W-103', name: 'Marcela Tapia', profession: 'Técnico en Climatización', rut: '18.120.301-8', status: 'Pending' },
-  { id: 'W-104', name: 'Gonzalo Pérez', profession: 'Pintor & Remodelador', rut: '17.339.112-1', status: 'Pending' },
-];
+const INITIAL_WORKERS: WorkerApproval[] = [];
 
 export function ExecutiveWorkspace() {
   const [workers, setWorkers] = useState<WorkerApproval[]>(INITIAL_WORKERS);
+  const [metrics, setMetrics] = useState({
+    usersCount: 0,
+    workersCount: 0,
+    jobsCount: 0,
+    openDisputesCount: 0,
+    activeJobsCount: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const [subActiveTab, setSubActiveTab] = useState<number>(0);
   const [showSettlement, setShowSettlement] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
   const [isFrozen, setIsFrozen] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [adminMetrics, workerRows] = await Promise.all([
+          fetchAdminMetrics(supabase),
+          fetchWorkersForAdmin(supabase),
+        ]);
+        setMetrics({
+          usersCount: adminMetrics.usersCount,
+          workersCount: adminMetrics.workersCount,
+          jobsCount: adminMetrics.jobsCount,
+          openDisputesCount: adminMetrics.openDisputesCount + adminMetrics.underReviewDisputesCount,
+          activeJobsCount: adminMetrics.activeJobsCount,
+        });
+        setWorkers(
+          workerRows.map((worker) => ({
+            id: worker.userId,
+            name: worker.name,
+            profession: worker.profession,
+            rut: worker.email ?? '—',
+            status: worker.pricingConfigured === 1 ? 'Verified' : 'Pending',
+          })),
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    void load();
+  }, []);
 
   const toggleVerification = (id: string) => {
     setWorkers(prev => prev.map(w => w.id === id ? { ...w, status: w.status === 'Verified' ? 'Pending' : 'Verified' } : w));
@@ -70,6 +106,10 @@ export function ExecutiveWorkspace() {
         </div>
       </div>
 
+      {loading && (
+        <p style={{ color: '#98989D', marginBottom: '16px' }}>Sincronizando métricas con Supabase...</p>
+      )}
+
       {/* Sub-Barra de Navegación Organizada */}
       <div className="sub-tabs-bar">
         <div className={`sub-tab-item ${subActiveTab === 0 ? 'active' : ''}`} onClick={() => setSubActiveTab(0)}>
@@ -93,8 +133,8 @@ export function ExecutiveWorkspace() {
                 <Wallet size={20} />
                 <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>GMV Custodiado Escrow</span>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>$14.850.000 CLP</div>
-              <span style={{ fontSize: '11.5px', color: '#34C759', fontWeight: 700 }}>+18.4% este mes</span>
+              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.jobsCount.toLocaleString('es-CL')} trabajos</div>
+              <span style={{ fontSize: '11.5px', color: '#34C759', fontWeight: 700 }}>{metrics.activeJobsCount} activos ahora</span>
             </div>
 
             <div className="card-3d">
@@ -102,8 +142,8 @@ export function ExecutiveWorkspace() {
                 <TrendingUp size={20} />
                 <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Comisiones Netas (10%)</span>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>$1.485.000 CLP</div>
-              <span style={{ fontSize: '11.5px', color: '#F0782A', fontWeight: 700 }}>Margen operaciones activo</span>
+              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.workersCount} profesionales</div>
+              <span style={{ fontSize: '11.5px', color: '#F0782A', fontWeight: 700 }}>{metrics.usersCount} usuarios registrados</span>
             </div>
 
             <div className="card-3d">
@@ -111,8 +151,8 @@ export function ExecutiveWorkspace() {
                 <Award size={20} />
                 <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Trust Score & Calidad</span>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>99.4% CSAT</div>
-              <span style={{ fontSize: '11.5px', color: '#007AFF', fontWeight: 700 }}>Peak-End Rule Trust Index</span>
+              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.openDisputesCount} disputas</div>
+              <span style={{ fontSize: '11.5px', color: '#007AFF', fontWeight: 700 }}>Datos en vivo desde Supabase</span>
             </div>
 
             <div className="card-3d">

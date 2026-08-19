@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TicketCheck, CheckCircle2, RefreshCw, ArrowUpRight, Image, MessageSquare, Send, Scale, ShieldAlert, Edit3 } from 'lucide-react';
 import { JobScopeAdjustmentModal } from './JobScopeAdjustmentModal';
+import { fetchOpenDisputes, updateDisputeStatus } from '@myworksapp/shared';
+import { supabase } from '../supabaseClient';
 
 interface Ticket {
   id: string;
@@ -19,42 +21,43 @@ interface ChatMessage {
   timestamp: string;
 }
 
-const INITIAL_TICKETS: Ticket[] = [
-  {
-    id: 'TCK-9081',
-    client: 'Carolina Mendoza',
-    worker: 'Carlos Silva (Electricista)',
-    issue: 'Trabajo incompleto en tablero eléctrico.',
-    escrowAmount: 65000,
-    date: '2026-08-16 18:40',
-    status: 'Pending',
-  },
-  {
-    id: 'TCK-9078',
-    client: 'Roberto Godoy',
-    worker: 'Felipe Araya (Gásfiter)',
-    issue: 'Filtración no resuelta en sifón de lavaplatos.',
-    escrowAmount: 45000,
-    date: '2026-08-16 15:10',
-    status: 'Pending',
-  },
-  {
-    id: 'TCK-8902',
-    client: 'Beatriz Silva',
-    worker: 'Ignacio Vega (Cerrajero)',
-    issue: 'Cobro duplicado por cambio de chapa.',
-    escrowAmount: 38000,
-    date: '2026-08-15 11:20',
-    status: 'Resolved',
-  },
-];
+interface SupportWorkspaceProps {
+  adminId: string;
+}
 
-export function SupportWorkspace() {
-  const [tickets, setTickets] = useState<Ticket[]>(INITIAL_TICKETS);
+export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [scopeModalTicket, setScopeModalTicket] = useState<Ticket | null>(null);
   const [modalTab, setModalTab] = useState<number>(0); // 0: Evidencias, 1: Mensajería Dual, 2: Veredicto
   const [notification, setNotification] = useState<string | null>(null);
+
+  const loadTickets = async () => {
+    setLoading(true);
+    try {
+      const disputes = await fetchOpenDisputes(supabase);
+      setTickets(
+        disputes.map((dispute) => ({
+          id: dispute.id,
+          client: dispute.clientName,
+          worker: dispute.workerName,
+          issue: dispute.description ?? dispute.reason,
+          escrowAmount: dispute.escrowAmount,
+          date: new Date(dispute.createdAt).toLocaleString('es-CL'),
+          status: dispute.status === 'resolved' ? 'Resolved' : 'Pending',
+        })),
+      );
+    } catch {
+      setTickets([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadTickets();
+  }, []);
 
   const handleUpdateScope = (updatedTicket: Ticket, newTariff: number, newReason: string) => {
     setTickets(prev => prev.map(t => t.id === updatedTicket.id ? { ...t, escrowAmount: newTariff, issue: newReason } : t));
@@ -85,16 +88,24 @@ export function SupportWorkspace() {
     setMessageInput('');
   };
 
-  const resolveTicket = (ticketId: string, action: 'refund' | 'payout' | 'split') => {
-    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: 'Resolved' } : t));
-    setSelectedTicket(null);
-    let msg = '';
-    if (action === 'refund') msg = 'Reembolso 100% procesado al cliente en Escrow.';
-    else if (action === 'payout') msg = 'Fondos 100% liberados exitosamente al profesional.';
-    else msg = 'Resolución de pago parcial 50%/50% ejecutada.';
-    
-    setNotification(msg);
-    setTimeout(() => setNotification(null), 4000);
+  const resolveTicket = async (ticketId: string, action: 'refund' | 'payout' | 'split') => {
+    const resolution =
+      action === 'refund'
+        ? 'Reembolso total al cliente'
+        : action === 'payout'
+          ? 'Pago liberado al profesional'
+          : 'Resolución parcial 50/50';
+
+    try {
+      await updateDisputeStatus(supabase, ticketId, 'resolved', resolution, adminId);
+      setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'Resolved' } : t)));
+      setSelectedTicket(null);
+      setNotification(`Disputa actualizada en Supabase: ${resolution}.`);
+      setTimeout(() => setNotification(null), 4000);
+    } catch {
+      setNotification('No se pudo resolver la disputa en Supabase.');
+      setTimeout(() => setNotification(null), 4000);
+    }
   };
 
   return (
@@ -104,10 +115,19 @@ export function SupportWorkspace() {
           <h1 style={{ fontSize: '24px', fontWeight: 900 }}>Centro de Soporte & Mediación Escrow</h1>
           <p style={{ fontSize: '13.5px', color: '#98989D' }}>Resolución de disputas con expediente de evidencias multimedia y mensajería dual.</p>
         </div>
-        <span className="badge-tag" style={{ backgroundColor: 'rgba(255, 149, 0, 0.15)', color: '#FF9500' }}>
-          <TicketCheck size={14} /> {tickets.filter(t => t.status === 'Pending').length} Disputas Activas
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="badge-tag" style={{ backgroundColor: 'rgba(255, 149, 0, 0.15)', color: '#FF9500' }}>
+            <TicketCheck size={14} /> {tickets.filter(t => t.status === 'Pending').length} Disputas Activas
+          </span>
+          <button onClick={() => void loadTickets()} className="btn-action-secondary">
+            <RefreshCw size={14} /> Actualizar
+          </button>
+        </div>
       </div>
+
+      {loading && (
+        <p style={{ color: '#98989D', marginBottom: '16px' }}>Cargando disputas desde Supabase...</p>
+      )}
 
       {notification && (
         <div style={{ backgroundColor: 'rgba(52, 199, 89, 0.15)', border: '1px solid #34C759', color: '#34C759', padding: '12px 18px', borderRadius: '12px', marginBottom: '20px', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>

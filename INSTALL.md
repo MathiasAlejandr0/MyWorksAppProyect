@@ -100,29 +100,55 @@ Para que un profesor o financista instale escaneando un QR:
 
 ## Web (PWA) — `myworksapp_web`
 
-Esta es la versión web (frontend) construida con Vite.
+Versión web para **clientes** (rol `user` en Supabase). Usa el módulo compartido `shared/` para auth y datos reales.
 
 ```bash
 cd myworksapp_web
+copy .env.example .env
 npm install
 npm run dev -- --port 3000
 ```
 
+Variables en `.env`:
+
+```env
+VITE_SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co
+VITE_SUPABASE_ANON_KEY=tu_anon_key
+```
+
 Acceso: `http://127.0.0.1:3000`
+
+Cuenta demo: `usuario@demo.com` / `demo123`
 
 ---
 
 ## Escritorio — `myworksapp_desktop`
 
-Esta es la versión desktop (hub) construida con Vite.
+Hub de **administración** (rol `admin` en Supabase). Soporte, métricas y DevSecOps leen datos reales.
+
+### Modo navegador (desarrollo)
 
 ```bash
 cd myworksapp_desktop
+copy .env.example .env
 npm install
 npm run dev -- --port 3001
 ```
 
 Acceso: `http://127.0.0.1:3001`
+
+Cuenta admin demo: `admin@demo.com` / `demo123`
+
+### App nativa con Tauri (Windows / macOS / Linux)
+
+Requisitos: [Rust](https://rustup.rs/) instalado.
+
+```bash
+cd myworksapp_desktop
+npm install
+npm run tauri:dev      # desarrollo con ventana nativa
+npm run tauri:build    # genera instalador en src-tauri/target/release/bundle/
+```
 
 ---
 
