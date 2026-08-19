@@ -23,7 +23,6 @@ import '../widgets/worker_square_meters_field.dart';
 import '../widgets/open_quote_submitted_dialog.dart';
 import '../widgets/service_request_submitted_dialog.dart';
 import '../../../../core/widgets/escrow_checkout_sheet.dart';
-import '../../../../core/services/app_feedback.dart';
 import '../../../../core/widgets/design_system/myworks_guarantee_badge.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/location_picker_widget.dart';

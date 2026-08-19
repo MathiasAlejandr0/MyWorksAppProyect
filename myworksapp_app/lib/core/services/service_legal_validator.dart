@@ -226,7 +226,7 @@ class ServiceLegalValidator {
       return lines.join('\n');
     } catch (e) {
       AppLogger.e('Error generando confirmación legal', e);
-      return '${platformDisclaimer}\n\nAl continuar, aceptas los términos descritos.';
+      return '$platformDisclaimer\n\nAl continuar, aceptas los términos descritos.';
     }
   }
 

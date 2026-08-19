@@ -107,7 +107,7 @@ class UserLocationService {
 
       if (position == null) return null;
 
-      return fromCoordinates(position.latitude, position.longitude);
+      return await fromCoordinates(position.latitude, position.longitude);
     } catch (e) {
       AppLogger.w('No se pudo obtener ubicación del usuario', e);
       return null;

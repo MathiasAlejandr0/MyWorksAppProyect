@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../config/demo_free_media.dart';
 import '../../database/models/service_model.dart';
 import '../../design_system/app_radius.dart';
-import '../../design_system/app_spacing.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/service_card_palettes.dart';
 

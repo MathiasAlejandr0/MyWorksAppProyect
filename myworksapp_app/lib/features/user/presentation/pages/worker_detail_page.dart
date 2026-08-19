@@ -20,7 +20,6 @@ import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/design_system/before_after_slider.dart';
 import '../../../../core/widgets/design_system/myworks_guarantee_badge.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
-import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../../../../core/widgets/portfolio_media_tile.dart';
 import '../../../../core/widgets/portfolio_media_viewer.dart';
@@ -122,12 +121,12 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: AppColors.backgroundLight,
-        appBar: const AppGradientAppBar(
+        appBar: AppGradientAppBar(
           title: Text('Perfil del trabajador'),
         ),
-        body: const Padding(
+        body: Padding(
           padding: EdgeInsets.symmetric(vertical: 12),
           child: Column(
             children: [

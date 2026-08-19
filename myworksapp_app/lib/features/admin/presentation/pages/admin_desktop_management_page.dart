@@ -5,8 +5,6 @@ import '../../../../core/design_system/app_radius.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
-import '../../../../core/widgets/design_system/primary_button.dart';
-import '../../../../core/widgets/design_system/service_pin_dialog.dart';
 import '../../../../core/widgets/design_system/status_badge.dart';
 
 /// Software de Gestión de Escritorio (Desktop Admin Management Hub) estilo Apple HIG.
@@ -436,7 +434,7 @@ class _AdminDesktopManagementPageState extends State<AdminDesktopManagementPage>
                 ),
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );

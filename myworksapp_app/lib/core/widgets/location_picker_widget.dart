@@ -96,7 +96,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       _isLoading = false;
       _hasError = false;
     });
-    widget.onLocationSelected?.call(fallbackAddr, lat, lng);
+    widget.onLocationSelected(fallbackAddr, lat, lng);
   }
 
   Future<void> _getAddressFromCoordinates(double latitude, double longitude) async {

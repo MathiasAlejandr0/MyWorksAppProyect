@@ -102,7 +102,7 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
                       ),
 
                       // Badge "DESPUÉS" (Esquina Derecha Superior)
-                      Positioned(
+                      const Positioned(
                         top: 12,
                         right: 12,
                         child: _BadgeChip(
@@ -140,7 +140,7 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
                       ),
 
                       // Badge "ANTES" (Esquina Izquierda Superior)
-                      Positioned(
+                      const Positioned(
                         top: 12,
                         left: 12,
                         child: _BadgeChip(

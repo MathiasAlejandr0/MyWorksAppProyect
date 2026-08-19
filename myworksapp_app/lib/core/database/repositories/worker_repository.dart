@@ -1,6 +1,5 @@
 import '../../domain/user_location_context.dart';
 import '../../domain/worker_login_item.dart';
-import '../../services/worker_onboarding_checklist_service.dart';
 import '../../services/worker_reputation_service.dart';
 import '../../utils/worker_zone_matcher.dart';
 import '../models/worker_model.dart';

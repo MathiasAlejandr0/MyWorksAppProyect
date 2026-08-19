@@ -25,7 +25,6 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _radarController;
   late Animation<double> _pulseAnimation;
-  WorkerModel? _selectedWorker;
 
   @override
   void initState() {
