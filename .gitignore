@@ -139,3 +139,6 @@ GoogleService-Info.plist
 
 # Node.js (web, desktop, shared)
 **/node_modules/
+
+# Rust (Tauri) — Cargo.lock debe versionarse para builds reproducibles
+!myworksapp_desktop/src-tauri/Cargo.lock
