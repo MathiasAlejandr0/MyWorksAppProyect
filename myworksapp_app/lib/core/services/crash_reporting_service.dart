@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../database/repositories/app_error_log_repository.dart';
 import '../database/supabase_db.dart';
@@ -14,6 +15,9 @@ class CrashReportingService {
   final AppErrorLogRepository _errorLogRepo = AppErrorLogRepository();
   bool _isInitialized = false;
   String? _appVersion;
+  bool _sentryEnabled = false;
+  final String _sentryDsn =
+      const String.fromEnvironment('SENTRY_DSN', defaultValue: '');
 
   Future<void> initialize() async {
     try {
@@ -24,6 +28,24 @@ class CrashReportingService {
     }
     _isInitialized = true;
     AppLogger.i('CrashReportingService: logging remoto activo');
+
+    // Sentry es opcional: si no se define DSN, no se inicializa.
+    _sentryEnabled = _sentryDsn.isNotEmpty;
+    if (_sentryEnabled) {
+      try {
+        await SentryFlutter.init(
+          (options) {
+            options.dsn = _sentryDsn;
+            // Para no impactar rendimiento en MVP: muestreo conservador.
+            options.tracesSampleRate = 0.0;
+          },
+        );
+        AppLogger.i('Sentry inicializado');
+      } catch (e) {
+        AppLogger.w('Sentry no pudo inicializarse', e);
+        _sentryEnabled = false;
+      }
+    }
   }
 
   void recordError(
@@ -51,6 +73,23 @@ class CrashReportingService {
       appVersion: _appVersion,
       platform: _platformLabel(),
     );
+
+    // Captura opcional en Sentry (no debe bloquear el flujo).
+    if (_sentryEnabled) {
+      try {
+        // ignore: unawaited_futures
+        Sentry.captureException(
+          error,
+          stackTrace: stackTrace,
+          withScope: (scope) {
+            // `setExtra` está deprecado: usar contexts para info estructurada.
+            scope.setContexts('reason', {'message': message});
+          },
+        );
+      } catch (_) {
+        // Nunca fallar por telemetría.
+      }
+    }
   }
 
   void recordAppError(AppError error, {StackTrace? stackTrace}) {

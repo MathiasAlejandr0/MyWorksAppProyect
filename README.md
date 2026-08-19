@@ -102,5 +102,26 @@ flutter run -d web-server --web-port 8080
 
 ---
 
+## 🛡️ Herramientas de calidad y seguridad (recomendadas)
+
+### Pre-commit (local)
+1. Instala: `pre-commit`
+2. Inicializa: `pre-commit install`
+3. Ejecuta manual: `pre-commit run --all-files`
+
+Esto corre:
+- `flutter format`
+- `flutter analyze --no-fatal-infos`
+
+### Gitleaks (CI)
+Detecta secretos (tokens/keys) expuestos en PRs y pushes.
+Config: `./.gitleaks.toml`
+
+### OSSF Scorecard (CI programado)
+Evalúa postura de seguridad del repo. Revisa resultados en la pestaña Actions.
+
+### Commitlint (mensajes de commit en PR)
+Valida que los mensajes sigan convención (`feat:`, `fix:`...). Config: `./commitlint.config.mjs`
+
 ## 📜 Licencia & Propiedad
 **My Works App SpA** — Todos los derechos reservados.

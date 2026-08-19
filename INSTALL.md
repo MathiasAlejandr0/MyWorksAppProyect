@@ -9,7 +9,7 @@ Guía para instalar la app en **Android** e **iPhone** sin depender del emulador
 ### Compilar la APK (Windows / macOS / Linux)
 
 ```bash
-cd myworksapp
+cd myworksapp_app
 flutter pub get
 flutter build apk --release
 ```
@@ -17,13 +17,13 @@ flutter build apk --release
 Salida:
 
 ```
-myworksapp/build/app/outputs/flutter-apk/app-release.apk
+myworksapp_app/build/app/outputs/flutter-apk/app-release.apk
 ```
 
 También en Windows:
 
 ```powershell
-cd myworksapp
+cd myworksapp_app
 .\scripts\build-apk.ps1
 ```
 
@@ -56,7 +56,7 @@ iOS **no** permite instalar con un QR + APK como Android. Opciones:
 
 ```bash
 git clone https://github.com/MathiasAlejandr0/MyWorksAppProyect.git
-cd MyWorksAppProyect/myworksapp
+cd MyWorksAppProyect/myworksapp_app
 flutter pub get
 chmod +x scripts/install_ios_device.sh
 ./scripts/install_ios_device.sh
@@ -79,7 +79,7 @@ chmod +x scripts/install_ios_device.sh
 ### Opción B — Simulador en Mac (sin iPhone)
 
 ```bash
-cd myworksapp
+cd myworksapp_app
 chmod +x scripts/run_ios.sh
 ./scripts/run_ios.sh
 ```
@@ -98,6 +98,34 @@ Para que un profesor o financista instale escaneando un QR:
 
 ---
 
+## Web (PWA) — `myworksapp_web`
+
+Esta es la versión web (frontend) construida con Vite.
+
+```bash
+cd myworksapp_web
+npm install
+npm run dev -- --port 3000
+```
+
+Acceso: `http://127.0.0.1:3000`
+
+---
+
+## Escritorio — `myworksapp_desktop`
+
+Esta es la versión desktop (hub) construida con Vite.
+
+```bash
+cd myworksapp_desktop
+npm install
+npm run dev -- --port 3001
+```
+
+Acceso: `http://127.0.0.1:3001`
+
+---
+
 ## Claves Google Maps (opcional)
 
 Sin clave, la app funciona pero **los mapas pueden no cargar**.
@@ -105,7 +133,7 @@ Sin clave, la app funciona pero **los mapas pueden no cargar**.
 **Android:**
 
 ```powershell
-cd myworksapp\android
+cd myworksapp_app\android
 copy secrets.properties.example secrets.properties
 # Editar: GOOGLE_MAPS_API_KEY=tu_clave
 ```
@@ -113,7 +141,7 @@ copy secrets.properties.example secrets.properties
 **iOS:**
 
 ```bash
-cd myworksapp/ios/Flutter
+cd myworksapp_app/ios/Flutter
 cp Secrets.xcconfig.example Secrets.xcconfig
 # Editar: GOOGLE_MAPS_API_KEY=tu_clave
 ```
@@ -127,14 +155,14 @@ Ver restricciones y rotación de claves en [README.md](README.md#seguridad-y-cla
 **Windows + Android:**
 
 ```powershell
-cd myworksapp
+cd myworksapp_app
 .\run.ps1 -LaunchEmulator
 ```
 
 **macOS + iOS simulador:**
 
 ```bash
-cd myworksapp
+cd myworksapp_app
 ./scripts/run_ios.sh
 ```
 
