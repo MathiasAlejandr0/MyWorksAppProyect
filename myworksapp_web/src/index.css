@@ -54,12 +54,17 @@
 
 body {
   font-family: var(--font-family);
-  background-color: var(--bg-dominant-light);
-  color: var(--text-main-light);
+  background-color: var(--bg-dominant-dark);
+  color: var(--text-main-dark);
   min-height: 100vh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body:not(.dark) {
+  background-color: var(--bg-dominant-light);
+  color: var(--text-main-light);
 }
 
 body.dark {

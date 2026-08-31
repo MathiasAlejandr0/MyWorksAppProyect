@@ -6,6 +6,8 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'core/router/app_router.dart';
 import 'core/services/app_lifecycle_service.dart';
+import 'core/services/oauth_deep_link_service.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
 import 'core/utils/app_logger.dart';
 import 'core/utils/constants.dart';
 import 'core/utils/app_text_scaling.dart';
@@ -65,6 +67,14 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
 
       // 3. Inicializar AppLifecycleService (después de tener ref)
       AppLifecycleService.instance.initialize(ref);
+
+      await OAuthDeepLinkService.instance.start(() async {
+        final success =
+            await ref.read(authProvider.notifier).completeOAuthSession();
+        if (!success) {
+          AppLogger.w('OAuth: sesión no completada');
+        }
+      });
       
       if (!result.success) {
         AppLogger.e('❌ Inicialización falló: ${result.error}');
@@ -85,7 +95,7 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          backgroundColor: AppColors.white,
+          backgroundColor: AppColors.backgroundDark,
           body: Center(
             child: CircularProgressIndicator(
               color: AppColors.brandOrange,

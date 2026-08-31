@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
@@ -95,6 +96,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   itemCount: _pages.length,
                   itemBuilder: (context, index) {
                     final item = _pages[index];
+                    final titleColor = AppColors.headlineOnScreen(context);
+                    final bodyColor = AppColors.onCanvasMuted(
+                      Theme.of(context).brightness,
+                    );
                     return Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.xxl - 4,
@@ -110,24 +115,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           const SizedBox(height: 36),
                           Text(
                             item.title,
-                            style: const TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.grayDark,
-                              height: 1.25,
-                            ),
                             textAlign: TextAlign.center,
+                            style: AppTextStyles.displayMedium(color: titleColor)
+                                .copyWith(fontSize: 26, height: 1.25),
                           ),
                           const SizedBox(height: 14),
                           Text(
                             item.description,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.grayMedium.withValues(alpha: 0.95),
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodyLarge(color: bodyColor)
+                                .copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
                               height: 1.5,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
@@ -165,22 +166,24 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
                 child: Row(
                   children: [
-                    if (_currentPage > 0)
-                      TextButton(
-                        onPressed: () => _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        ),
-                        child: const Text(
-                          'Anterior',
-                          style: TextStyle(
-                            color: AppColors.grayMedium,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
-                    else
-                      const SizedBox(width: 84),
+                    SizedBox(
+                      width: 88,
+                      child: _currentPage > 0
+                          ? TextButton(
+                              onPressed: () => _pageController.previousPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              ),
+                              child: const Text(
+                                'Anterior',
+                                style: TextStyle(
+                                  color: AppColors.grayMedium,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
                     Expanded(
                       child: BrandPrimaryButton(
                         label: _currentPage == _pages.length - 1
@@ -194,6 +197,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 ),
                       ),
                     ),
+                    const SizedBox(width: 88),
                   ],
                 ),
               ),
@@ -213,18 +217,21 @@ class _OnboardingIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: AppColors.brandOrangeSoft,
+        color: isDark
+            ? AppColors.brandOrange.withValues(alpha: 0.16)
+            : AppColors.brandOrangeSoft,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: AppColors.brandOrange.withValues(alpha: 0.22),
+          color: AppColors.brandOrange.withValues(alpha: isDark ? 0.45 : 0.22),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.brandOrange.withValues(alpha: 0.1),
+            color: AppColors.brandOrange.withValues(alpha: isDark ? 0.22 : 0.1),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),

@@ -74,7 +74,7 @@ const CATEGORIES = [
 
 export function App() {
   const { profile, logout } = useAuth();
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const [query, setQuery] = useState('');
   const [aiResult, setAiResult] = useState<AiResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);

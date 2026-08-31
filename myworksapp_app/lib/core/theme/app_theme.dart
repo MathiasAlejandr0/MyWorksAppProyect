@@ -49,7 +49,10 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.backgroundLight,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(textTheme),
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(textTheme).apply(
+        bodyColor: colorScheme.onSurface,
+        displayColor: colorScheme.onSurface,
+      ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.brandOrange,
       ),
@@ -239,7 +242,10 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.backgroundDark,
       brightness: Brightness.dark,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(textTheme),
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(textTheme).apply(
+        bodyColor: colorScheme.onSurface,
+        displayColor: colorScheme.onSurface,
+      ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppColors.brandOrange,
       ),
@@ -258,7 +264,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(
-            color: AppColors.grayBorder.withValues(alpha: 0.15),
+            color: AppColors.brandOrange.withValues(alpha: 0.18),
           ),
         ),
         color: AppColors.surfaceDark,

@@ -37,6 +37,9 @@ void main() async {
     await Supabase.initialize(
       url: SupabaseConfig.url,
       anonKey: SupabaseConfig.publishableKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+      ),
     );
     AppLogger.i('✅ Supabase inicializado');
   } catch (e) {

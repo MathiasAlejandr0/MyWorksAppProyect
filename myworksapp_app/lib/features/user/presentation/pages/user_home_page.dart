@@ -162,10 +162,10 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                               textAlign: TextAlign.center,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.grayDark,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -235,12 +235,12 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                             TourTarget(
                               tourKey: _servicesKey,
                               width: double.infinity,
-                              child: const Text(
+                              child: Text(
                                 'Servicios Disponibles',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.grayDark,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -353,7 +353,8 @@ class _TopBar extends StatelessWidget {
                       displayName: userName,
                       photoPath: photoPath,
                       radius: 20,
-                      onDarkBackground: false,
+                      onDarkBackground:
+                          Theme.of(context).brightness == Brightness.dark,
                     ),
                   ),
                 ),
@@ -401,16 +402,19 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: AppColors.grayMedium.withValues(alpha: 0.2),
+          color: isDark
+              ? AppColors.brandOrange.withValues(alpha: 0.22)
+              : AppColors.grayMedium.withValues(alpha: 0.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -419,9 +423,9 @@ class _SearchBar extends StatelessWidget {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
-          color: AppColors.grayDark,
+          color: isDark ? AppColors.white : AppColors.grayDark,
         ),
         decoration: InputDecoration(
           hintText: "Buscar servicios (ej. 'llave')",

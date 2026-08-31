@@ -6,11 +6,11 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   static const _prefKey = 'dark_mode';
 
   @override
-  ThemeMode build() => ThemeMode.light;
+  ThemeMode build() => ThemeMode.dark;
 
   Future<void> loadFromPreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    final isDark = prefs.getBool(_prefKey) ?? false;
+    final isDark = prefs.getBool(_prefKey) ?? true;
     state = isDark ? ThemeMode.dark : ThemeMode.light;
   }
 

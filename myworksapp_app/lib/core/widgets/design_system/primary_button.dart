@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../design_system/app_radius.dart';
 import '../../design_system/app_spacing.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
 
 /// Botón primario unificado estilo Apple HIG (Pill, gradiente sutil y respuesta táctil).
 class PrimaryButton extends StatefulWidget {
@@ -124,11 +125,10 @@ class _PrimaryButtonState extends State<PrimaryButton> with SingleTickerProvider
                           ],
                           Text(
                             widget.label,
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                  color: AppColors.white,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.3,
-                                ),
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.buttonPrimary(
+                              color: AppColors.white,
+                            ),
                           ),
                         ],
                       ),

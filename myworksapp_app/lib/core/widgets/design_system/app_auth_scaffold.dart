@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
 import '../../theme/app_decorations.dart';
 
 /// Layout para pantallas de autenticación (login, registro, recuperar clave).
@@ -33,7 +32,7 @@ class AppAuthScaffold extends StatelessWidget {
                 child: IconButton(
                   onPressed: () => Navigator.of(context).maybePop(),
                   icon: const Icon(Icons.arrow_back_rounded),
-                  color: AppColors.brandNavy,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),

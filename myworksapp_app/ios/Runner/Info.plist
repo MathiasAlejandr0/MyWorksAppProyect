@@ -61,5 +61,16 @@
 	<string>Necesitamos tu ubicación para mostrar el mapa y seleccionar la dirección del servicio</string>
 	<key>GMSApiKey</key>
 	<string>$(GOOGLE_MAPS_API_KEY)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>cl.myworksapp.auth</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

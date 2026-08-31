@@ -91,3 +91,22 @@ export function requireRole(profile: Profile, allowed: UserRole[]): void {
     throw new AuthError('No tienes permisos para acceder a esta aplicación.');
   }
 }
+
+export type OAuthProviderId = 'google' | 'apple';
+
+export async function signInWithOAuthProvider(
+  supabase: SupabaseClient,
+  provider: OAuthProviderId,
+  redirectTo: string,
+): Promise<void> {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo,
+      ...(provider === 'google'
+        ? { queryParams: { access_type: 'offline', prompt: 'consent' } }
+        : {}),
+    },
+  });
+  if (error) throw new AuthError(error.message);
+}

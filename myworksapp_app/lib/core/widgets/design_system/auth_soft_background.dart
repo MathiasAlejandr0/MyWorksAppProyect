@@ -16,17 +16,24 @@ class AuthSoftBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            AppColors.white,
-            AppColors.brandOrangeSoft,
-            Color(0xFFFFFAF7),
-          ],
-          stops: [0.0, 0.55, 1.0],
+          colors: isDark
+              ? const [
+                  AppColors.backgroundDark,
+                  Color(0xFF121E33),
+                  Color(0xFF1A140E),
+                ]
+              : const [
+                  AppColors.white,
+                  AppColors.brandOrangeSoft,
+                  Color(0xFFFFFAF7),
+                ],
+          stops: const [0.0, 0.55, 1.0],
         ),
       ),
       child: Stack(
@@ -35,49 +42,44 @@ class AuthSoftBackground extends StatelessWidget {
           if (showDecorations) ...[
             const _DecorIcon(
               icon: Icons.auto_awesome,
-              color: AppColors.brandOrange,
               top: 48,
               left: 16,
               size: 28,
             ),
             const _DecorIcon(
               icon: Icons.cleaning_services_outlined,
-              color: AppColors.brandOrange,
               top: 120,
               left: 8,
               size: 32,
             ),
             const _DecorIcon(
               icon: Icons.plumbing_outlined,
-              color: AppColors.brandNavy,
               top: 200,
               left: 20,
               size: 30,
+              structural: true,
             ),
             const _DecorIcon(
               icon: Icons.bolt_outlined,
-              color: AppColors.brandOrange,
               top: 280,
               left: 10,
               size: 28,
             ),
             const _DecorIcon(
               icon: Icons.yard_outlined,
-              color: AppColors.brandOrange,
               top: 100,
               right: 12,
               size: 32,
             ),
             const _DecorIcon(
               icon: Icons.handyman_outlined,
-              color: AppColors.brandNavy,
               top: 190,
               right: 18,
               size: 30,
+              structural: true,
             ),
             const _DecorIcon(
               icon: Icons.home_repair_service_outlined,
-              color: AppColors.brandOrange,
               top: 270,
               right: 8,
               size: 28,
@@ -93,22 +95,23 @@ class AuthSoftBackground extends StatelessWidget {
 class _DecorIcon extends StatelessWidget {
   const _DecorIcon({
     required this.icon,
-    required this.color,
     required this.top,
     this.left,
     this.right,
     required this.size,
+    this.structural = false,
   });
 
   final IconData icon;
-  final Color color;
   final double top;
   final double? left;
   final double? right;
   final double size;
+  final bool structural;
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return Positioned(
       top: top,
       left: left,
@@ -116,7 +119,7 @@ class _DecorIcon extends StatelessWidget {
       child: Icon(
         icon,
         size: size,
-        color: color.withValues(alpha: 0.4),
+        color: AppColors.decorOnCanvas(brightness, structural: structural),
       ),
     );
   }
@@ -163,10 +166,12 @@ class BrandLabeledField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AppColors.grayDark,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.white
+                : AppColors.grayDark,
           ),
         ),
         const SizedBox(height: 8),

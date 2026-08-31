@@ -9,7 +9,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ open, onClose }: AuthModalProps) {
-  const { login, register } = useAuth();
+  const { login, loginWithOAuth, register } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('usuario@demo.com');
@@ -18,6 +18,17 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   const [localError, setLocalError] = useState<string | null>(null);
 
   if (!open) return null;
+
+  const handleOAuth = async (provider: 'google' | 'apple') => {
+    setSubmitting(true);
+    setLocalError(null);
+    try {
+      await loginWithOAuth(provider);
+    } catch (e) {
+      setLocalError(e instanceof AuthError ? e.message : 'No se pudo iniciar sesión social.');
+      setSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -62,7 +73,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px' }}>
           {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
         </h2>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted-light)', marginBottom: '16px' }}>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted-dark)', marginBottom: '16px' }}>
           Conectado a Supabase Auth — usa tu cuenta de cliente MyWorksApp.
         </p>
 
@@ -73,7 +84,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Nombre completo"
               required
-              style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-light)' }}
+              style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-dark)', background: 'var(--bg-elevated-dark)', color: 'var(--text-main-dark)' }}
             />
           )}
           <input
@@ -82,7 +93,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             required
-            style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-light)' }}
+            style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-dark)', background: 'var(--bg-elevated-dark)', color: 'var(--text-main-dark)' }}
           />
           <input
             type="password"
@@ -90,7 +101,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Contraseña"
             required
-            style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-light)' }}
+            style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-dark)', background: 'var(--bg-elevated-dark)', color: 'var(--text-main-dark)' }}
           />
 
           {localError && (
@@ -102,6 +113,47 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             {submitting ? 'Procesando...' : mode === 'login' ? 'Entrar' : 'Registrarme'}
           </button>
         </form>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '16px 0' }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-dark)' }} />
+          <span style={{ fontSize: '12px', color: 'var(--text-muted-dark)', fontWeight: 600 }}>o continúa con</span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-dark)' }} />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={() => void handleOAuth('google')}
+            style={{
+              padding: '12px 14px',
+              borderRadius: '10px',
+              border: '1px solid var(--border-dark)',
+              background: 'var(--bg-elevated-dark)',
+              color: 'var(--text-main-dark)',
+              fontWeight: 700,
+              cursor: submitting ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Continuar con Google
+          </button>
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={() => void handleOAuth('apple')}
+            style={{
+              padding: '12px 14px',
+              borderRadius: '10px',
+              border: '1px solid var(--border-light)',
+              background: '#000',
+              color: '#fff',
+              fontWeight: 700,
+              cursor: submitting ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Continuar con Apple
+          </button>
+        </div>
 
         <button
           type="button"

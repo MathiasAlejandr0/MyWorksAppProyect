@@ -152,6 +152,64 @@ npm run tauri:build    # genera instalador en src-tauri/target/release/bundle/
 
 ---
 
+## Inicio de sesión con Google y Apple (OAuth)
+
+La **web** y la **app móvil** soportan inicio de sesión social vía **Supabase Auth**. Requiere configuración en el panel de Supabase y en Google / Apple (no basta con el código).
+
+### 1. Supabase Dashboard
+
+Proyecto: `https://supabase.com/dashboard/project/wxqrfcqifkfgawrnqmnj`
+
+1. **Authentication → Providers**
+   - Activar **Google** (Client ID + Client Secret de Google Cloud).
+   - Activar **Apple** (Services ID, Key, Team ID, etc.).
+
+2. **Authentication → URL Configuration** — añadir redirect URLs:
+   - `http://127.0.0.1:5173` (web en desarrollo con Vite)
+   - `http://localhost:5173`
+   - Tu dominio de producción web (ej. `https://tudominio.cl`)
+   - `cl.myworksapp.auth://login-callback` (app móvil Android + iOS)
+
+3. Aplicar migración de perfiles OAuth (si aún no está en remoto):
+
+```bash
+cd myworksapp_app
+supabase db push
+```
+
+### 2. Google Cloud Console
+
+1. Crear proyecto (o usar uno existente).
+2. **APIs & Services → Credentials → OAuth 2.0 Client ID**.
+3. Tipo **Web application** — Authorized redirect URI:
+   - `https://wxqrfcqifkfgawrnqmnj.supabase.co/auth/v1/callback`
+4. Copiar Client ID y Secret en Supabase → Google provider.
+
+### 3. Apple Developer (Sign in with Apple)
+
+1. **Identifiers → Services ID** con Sign in with Apple.
+2. Dominio y return URL: `https://wxqrfcqifkfgawrnqmnj.supabase.co/auth/v1/callback`
+3. Crear **Key** con Sign in with Apple.
+4. Completar Team ID, Key ID y `.p8` en Supabase → Apple provider.
+5. En Xcode (iOS): target **Runner → Signing & Capabilities → + Sign in with Apple**.
+
+> **Nota:** Apple Sign-In en la app solo aparece en **iPhone/iPad**. En Android solo Google está disponible como botón nativo; Apple funciona en la web.
+
+### 4. Probar
+
+**Web:**
+
+```bash
+cd myworksapp_web
+npm run dev
+```
+
+Abrir login → **Continuar con Google** / **Continuar con Apple**.
+
+**Móvil:** compilar e instalar la app; en login usar los mismos botones. Tras autenticarse en el navegador, la app vuelve sola al deep link `cl.myworksapp.auth://login-callback`.
+
+---
+
 ## Claves Google Maps (opcional)
 
 Sin clave, la app funciona pero **los mapas pueden no cargar**.

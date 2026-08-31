@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/services/crash_reporting_service.dart';
 import '../core/services/notification_service.dart';
@@ -66,6 +67,10 @@ class AppInitializer {
       AppLogger.i('⚙️ Cargando preferencias...');
       final prefs = await SharedPreferences.getInstance();
       await _ensureDemoPreferences(prefs);
+      // En debug siempre volvemos al onboarding para poder revisar el look.
+      if (kDebugMode) {
+        await prefs.remove('onboarding_completed');
+      }
       final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
       final isFirstLaunch = !prefs.containsKey('onboarding_completed');
       AppLogger.i('✅ Preferencias cargadas');

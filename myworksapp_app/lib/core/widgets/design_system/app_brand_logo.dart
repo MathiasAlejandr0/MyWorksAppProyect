@@ -18,6 +18,9 @@ class AppBrandLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final markColor = isDark ? AppColors.white : AppColors.brandNavy;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -30,7 +33,7 @@ class AppBrandLogo extends StatelessWidget {
               Icon(
                 Icons.home_rounded,
                 size: size * 0.92,
-                color: AppColors.brandNavy,
+                color: markColor,
               ),
               Positioned(
                 bottom: size * 0.08,
@@ -50,7 +53,7 @@ class AppBrandLogo extends StatelessWidget {
             style: TextStyle(
               fontSize: textSize,
               fontWeight: FontWeight.w800,
-              color: AppColors.brandNavy,
+              color: markColor,
               letterSpacing: 0.2,
             ),
           ),

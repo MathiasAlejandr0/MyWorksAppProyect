@@ -154,32 +154,32 @@ export function HumanResourcesWorkspace() {
       {/* Modal de Inscripción de Nuevo Colaborador */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(9, 13, 22, 0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' }}>
-          <div style={{ maxWidth: '480px', width: '100%', backgroundColor: 'white', borderRadius: '18px', padding: '28px', color: '#1D1D1F', boxShadow: '0 20px 50px rgba(0,0,0,0.4)', position: 'relative' }}>
+          <div style={{ maxWidth: '480px', width: '100%', backgroundColor: '#121E33', borderRadius: '18px', padding: '28px', color: '#F5F5F7', boxShadow: '0 20px 50px rgba(0,0,0,0.55)', border: '1px solid rgba(240,120,42,0.22)', position: 'relative' }}>
             <button onClick={() => setShowModal(false)} style={{ position: 'absolute', right: '20px', top: '20px', background: 'none', border: 'none', color: '#98989D', cursor: 'pointer', fontSize: '16px' }}>✕</button>
 
-            <h3 style={{ fontSize: '20px', fontWeight: 900, marginBottom: '6px', color: '#0B192C' }}>Inscribir Nuevo Colaborador</h3>
-            <p style={{ fontSize: '13px', color: '#6E6E73', marginBottom: '20px' }}>Registra un nuevo miembro del equipo interno para otorgarle accesos al Desktop Hub.</p>
+            <h3 style={{ fontSize: '20px', fontWeight: 900, marginBottom: '6px', color: '#FFFFFF' }}>Inscribir Nuevo Colaborador</h3>
+            <p style={{ fontSize: '13px', color: '#98989D', marginBottom: '20px' }}>Registra un nuevo miembro del equipo interno para otorgarle accesos al Desktop Hub.</p>
 
             <form onSubmit={addCollaborator} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 700, color: '#6E6E73', marginBottom: '4px', display: 'block' }}>Nombre Completo</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '13.5px', outline: 'none' }} placeholder="Ej: Ana María Torres" />
+                <input type="text" value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }} placeholder="Ej: Ana María Torres" />
               </div>
 
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 700, color: '#6E6E73', marginBottom: '4px', display: 'block' }}>Email Corporativo</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '13.5px', outline: 'none' }} placeholder="ana.torres@myworksapp.cl" />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }} placeholder="ana.torres@myworksapp.cl" />
               </div>
 
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 700, color: '#6E6E73', marginBottom: '4px', display: 'block' }}>RUT</label>
-                <input type="text" value={rut} onChange={e => setRut(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '13.5px', outline: 'none' }} placeholder="18.390.112-9" />
+                <input type="text" value={rut} onChange={e => setRut(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }} placeholder="18.390.112-9" />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 700, color: '#6E6E73', marginBottom: '4px', display: 'block' }}>Departamento</label>
-                  <select value={department} onChange={e => setDepartment(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '13px', outline: 'none', backgroundColor: 'white' }}>
+                  <select value={department} onChange={e => setDepartment(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', fontSize: '13px', outline: 'none', backgroundColor: '#090D16', color: 'white' }}>
                     <option value="Soporte & Mediación">Soporte & Mediación</option>
                     <option value="Operaciones & Finanzas">Operaciones & Finanzas</option>
                     <option value="Ingeniería & QA">Ingeniería & QA</option>
@@ -189,7 +189,7 @@ export function HumanResourcesWorkspace() {
 
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 700, color: '#6E6E73', marginBottom: '4px', display: 'block' }}>Rol de Acceso</label>
-                  <select value={role} onChange={e => setRole(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '13px', outline: 'none', backgroundColor: 'white' }}>
+                  <select value={role} onChange={e => setRole(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', fontSize: '13px', outline: 'none', backgroundColor: '#090D16', color: 'white' }}>
                     <option value="Especialista de Soporte">Soporte</option>
                     <option value="DevSecOps Specialist">DevSecOps / QA</option>
                     <option value="Administrador General">Admin</option>

@@ -30,7 +30,7 @@ class AppColors {
   // ========== ESTRUCTURA & CONFIANZA (30% - SLATE / NAVY) ==========
 
   /// Azul marino profundo — aporta seriedad, respaldo de escrow y seguridad
-  static const Color brandNavy = Color(0xFF1A2536);
+  static const Color brandNavy = Color(0xFF0B192C);
 
   /// Azul Slate intermedio para encabezados secundarios e iconografía estructural
   static const Color brandSlate = Color(0xFF2C3E50);
@@ -87,27 +87,57 @@ class AppColors {
   static const Color backgroundLight = Color(0xFFF2F2F7);
   static const Color grayBackground = backgroundLight;
 
-  /// Fondo de pantalla en Dark Mode (True Deep Black iOS)
-  static const Color backgroundDark = Color(0xFF000000);
+  /// Fondo de pantalla en Dark Mode (navy cinematográfico del mockup)
+  static const Color backgroundDark = Color(0xFF0B1424);
 
   /// Superficie de tarjetas elevadas (Light)
   static const Color surfaceLight = Color(0xFFFFFFFF);
 
   /// Superficie de tarjetas elevadas (Dark - Apple Grouped Cell)
-  static const Color surfaceDark = Color(0xFF1C1C1E);
+  static const Color surfaceDark = Color(0xFF121E33);
 
   /// Superficie secundaria para elevaciones superiores en Dark Mode
-  static const Color surfaceDarkElevated = Color(0xFF2C2C2E);
+  static const Color surfaceDarkElevated = Color(0xFF17263D);
 
   // ========== GLASSMORPHISM & TRANSLUCENCY ==========
 
   /// Fondo esmerilado translucido estilo iOS
   static Color glassBackgroundLight = const Color(0xFFFFFFFF).withValues(alpha: 0.75);
-  static Color glassBackgroundDark = const Color(0xFF1C1C1E).withValues(alpha: 0.75);
+  static Color glassBackgroundDark = const Color(0xFF121E33).withValues(alpha: 0.82);
   static Color glassBorderLight = const Color(0xFFFFFFFF).withValues(alpha: 0.4);
   static Color glassBorderDark = const Color(0xFFFFFFFF).withValues(alpha: 0.12);
 
   // ========== HELPER METHODS ==========
+
+  /// Texto principal sobre el canvas (fondo de pantalla). Nunca usa grayDark en dark.
+  static Color onCanvas(Brightness brightness) {
+    return brightness == Brightness.dark ? white : textPrimary;
+  }
+
+  /// Título de pantalla: blanco si el canvas es oscuro (tema o luminancia).
+  static Color headlineOnScreen(BuildContext context) {
+    final theme = Theme.of(context);
+    final canvasLuminance = theme.scaffoldBackgroundColor.computeLuminance();
+    if (theme.brightness == Brightness.dark || canvasLuminance < 0.4) {
+      return white;
+    }
+    return textPrimary;
+  }
+
+  /// Texto secundario con contraste WCAG-AA sobre navy `#0B1424`.
+  static Color onCanvasMuted(Brightness brightness) {
+    return brightness == Brightness.dark
+        ? const Color(0xFFD5DCE6)
+        : textSecondary;
+  }
+
+  /// Iconos decorativos: visibles en dark (naranja ~55%) sin tapar el contenido.
+  static Color decorOnCanvas(Brightness brightness, {bool structural = false}) {
+    if (brightness == Brightness.dark) {
+      return brandOrange.withValues(alpha: 0.55);
+    }
+    return (structural ? brandNavy : brandOrange).withValues(alpha: 0.38);
+  }
 
   static Color getTextColorForBackground(Color backgroundColor) {
     final luminance = backgroundColor.computeLuminance();

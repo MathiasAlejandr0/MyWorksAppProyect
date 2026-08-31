@@ -84,6 +84,7 @@ coverage/
 # API Keys and sensitive data
 **/lib/config/keys.dart
 **/lib/config/secrets.dart
+client_secret*.json
 
 # Supabase
 .supabase/

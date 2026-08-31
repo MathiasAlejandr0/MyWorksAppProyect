@@ -32,18 +32,18 @@ class WelcomePage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.grayMedium.withValues(alpha: 0.95),
+                    color: AppColors.onCanvasMuted(Theme.of(context).brightness),
                     height: 1.35,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl + 4),
-                const Text(
+                Text(
                   '¡Bienvenido a ${AppConstants.appBrandDisplayName}!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.grayDark,
+                    color: AppColors.onCanvas(Theme.of(context).brightness),
                     height: 1.25,
                   ),
                 ),
@@ -52,9 +52,9 @@ class WelcomePage extends StatelessWidget {
                   'Encuentra y contrata a los mejores profesionales para tu hogar de forma rápida y segura.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.grayMedium.withValues(alpha: 0.95),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.onCanvasMuted(Theme.of(context).brightness),
                     height: 1.5,
                   ),
                 ),
@@ -92,15 +92,16 @@ class _WelcomeHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final height = AppBreakpoints.heroImageHeight(context).clamp(200.0, 340.0);
 
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.brandOrange.withValues(alpha: 0.18),
+          color: AppColors.brandOrange.withValues(alpha: isDark ? 0.28 : 0.18),
         ),
         boxShadow: [
           BoxShadow(
@@ -149,8 +150,10 @@ class _WelcomeHeroCard extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.white.withValues(alpha: 0),
-                      Colors.white.withValues(alpha: 0.92),
+                      (isDark ? AppColors.surfaceDark : Colors.white)
+                          .withValues(alpha: 0),
+                      (isDark ? AppColors.surfaceDark : Colors.white)
+                          .withValues(alpha: 0.92),
                     ],
                   ),
                 ),
@@ -198,13 +201,16 @@ class _ServiceItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Container(
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppColors.brandOrangeSoft,
+            color: isDark
+                ? AppColors.brandOrange.withValues(alpha: 0.16)
+                : AppColors.brandOrangeSoft,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: AppColors.brandOrange.withValues(alpha: 0.22),
@@ -216,10 +222,10 @@ class _ServiceItem extends StatelessWidget {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: AppColors.grayDark,
+            color: isDark ? AppColors.white : AppColors.grayDark,
           ),
         ),
       ],

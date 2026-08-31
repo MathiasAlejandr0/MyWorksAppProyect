@@ -80,19 +80,20 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
-    initialLocation: AppConstants.routeWelcome,
+    initialLocation: AppConstants.routeOnboarding,
     refreshListenable: refresh,
     redirect: (context, state) async {
       try {
         final authUser = ref.read(authProvider).user;
         final isLoggedIn = authUser != null;
         
-        // Verificar si es la primera vez (onboarding)
-        if (!isLoggedIn && 
-            (state.matchedLocation == AppConstants.routeWelcome ||
-             state.matchedLocation == '/')) {
+        // Primera vez: el onboarding va antes que welcome o login
+        // (en web el navegador puede reabrir /login de una sesión anterior).
+        if (!isLoggedIn &&
+            state.matchedLocation != AppConstants.routeOnboarding) {
           final prefs = await SharedPreferences.getInstance();
-          final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+          final onboardingCompleted =
+              prefs.getBool('onboarding_completed') ?? false;
           if (!onboardingCompleted) {
             return AppConstants.routeOnboarding;
           }

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config/oauth_config.dart';
 import '../database/models/user_model.dart';
 import 'repository_providers.dart';
 import '../database/repositories/user_repository.dart';
@@ -109,22 +110,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       }
 
-      final user = await _userRepository.getUserById(authUser.id);
-      if (user != null && !user.isActive) {
-        await _sessionManager.clearSession();
-        state = state.copyWith(
-          isLoading: false,
-          error: user.isBlocked
-              ? 'Tu cuenta está bloqueada. Contacta con soporte'
-              : 'Tu cuenta está suspendida',
-        );
-        return false;
-      }
-
-      await _sessionManager.saveSession(authUser.id, user?.role ?? 'user');
-      state = state.copyWith(user: user, isLoading: false);
-      await NotificationRealtimeService.instance.subscribe(authUser.id);
-      return true;
+      return _finalizeAuthenticatedUser(authUser.id);
     } on AuthException catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -140,6 +126,72 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       return false;
     }
+  }
+
+  /// Abre el navegador del sistema para Google o Apple (Supabase OAuth).
+  Future<bool> loginWithOAuth(OAuthProvider provider) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await supabase.auth.signInWithOAuth(
+        provider,
+        redirectTo: OAuthConfig.redirectUrl,
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
+      return true;
+    } on AuthException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Error al iniciar sesión social: ${e.toString()}',
+      );
+      return false;
+    }
+  }
+
+  /// Completa el inicio de sesión tras el deep link OAuth.
+  Future<bool> completeOAuthSession() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final authUser = supabase.auth.currentUser;
+      if (authUser == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'No se pudo completar el inicio de sesión social',
+        );
+        return false;
+      }
+
+      return _finalizeAuthenticatedUser(authUser.id);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Error al completar inicio de sesión: ${e.toString()}',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> _finalizeAuthenticatedUser(String authUserId) async {
+    final user = await _userRepository.getUserById(authUserId);
+    if (user != null && !user.isActive) {
+      await _sessionManager.clearSession();
+      state = state.copyWith(
+        isLoading: false,
+        error: user.isBlocked
+            ? 'Tu cuenta está bloqueada. Contacta con soporte'
+            : 'Tu cuenta está suspendida',
+      );
+      return false;
+    }
+
+    await _sessionManager.saveSession(authUserId, user?.role ?? 'user');
+    state = state.copyWith(user: user, isLoading: false);
+    await NotificationRealtimeService.instance.subscribe(authUserId);
+    return true;
   }
 
   Future<void> logout() async {

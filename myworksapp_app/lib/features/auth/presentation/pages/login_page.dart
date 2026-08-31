@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import '../../../../core/config/demo_credentials.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
@@ -14,6 +18,7 @@ import '../../../../core/utils/service_worker_mapper.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
+import '../../../../core/widgets/design_system/social_auth_buttons.dart';
 import '../providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -68,24 +73,43 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (!mounted) return;
 
     if (success) {
-      final user = ref.read(authProvider).user;
-      if (user != null) {
-        if (user.role == AppConstants.roleAdmin) {
-          context.go(AppConstants.routeAdminDashboard);
-        } else if (user.role == AppConstants.roleUser) {
-          context.go(AppConstants.routeUserHome);
-        } else {
-          await goToWorkerEntryRoute(context, user.id);
-        }
-      }
+      _navigateAfterLogin();
     } else {
-      final error = ref.read(authProvider).error;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error ?? 'Error al iniciar sesión'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      _showAuthError();
+    }
+  }
+
+  void _navigateAfterLogin() {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+
+    if (user.role == AppConstants.roleAdmin) {
+      context.go(AppConstants.routeAdminDashboard);
+    } else if (user.role == AppConstants.roleUser) {
+      context.go(AppConstants.routeUserHome);
+    } else {
+      unawaited(goToWorkerEntryRoute(context, user.id));
+    }
+  }
+
+  void _showAuthError() {
+    final error = ref.read(authProvider).error;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error ?? 'Error al iniciar sesión'),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  Future<void> _loginWithOAuth(OAuthProvider provider) async {
+    final authNotifier = ref.read(authProvider.notifier);
+    final started = await authNotifier.loginWithOAuth(provider);
+
+    if (!mounted) return;
+
+    if (!started) {
+      _showAuthError();
     }
   }
 
@@ -146,6 +170,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (previous?.user == null && next.user != null && !next.isLoading) {
+        _navigateAfterLogin();
+      }
+    });
+
     return Scaffold(
       body: AuthSoftBackground(
         child: SafeArea(
@@ -164,7 +194,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ? context.pop()
                           : context.go(AppConstants.routeWelcome),
                       icon: const Icon(Icons.arrow_back_rounded),
-                      color: AppColors.brandNavy,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -173,7 +203,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: AppColors.grayDark,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                   ),
                   const SizedBox(height: AppSpacing.xxl - 4),
@@ -217,6 +247,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     isLoading: authState.isLoading,
                     onPressed: _handleLogin,
                   ),
+                  const SizedBox(height: 18),
+                  SocialAuthButtons(
+                    isLoading: authState.isLoading,
+                    onGoogle: () => _loginWithOAuth(OAuthProvider.google),
+                    onApple: () => _loginWithOAuth(OAuthProvider.apple),
+                  ),
                   const SizedBox(height: 14),
                   TextButton(
                     onPressed: () => context.push(AppConstants.routeForgotPassword),
@@ -237,7 +273,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.grayDark,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -327,13 +362,16 @@ class _RoleSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = selectedRole == AppConstants.roleUser;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.grayMedium.withValues(alpha: 0.3),
+          color: isDark
+              ? AppColors.brandOrange.withValues(alpha: 0.22)
+              : AppColors.grayMedium.withValues(alpha: 0.3),
         ),
       ),
       child: IntrinsicHeight(
@@ -439,7 +477,6 @@ class _WorkerDemoSelector extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AppColors.grayDark,
           ),
         ),
         const SizedBox(height: 4),
@@ -457,7 +494,9 @@ class _WorkerDemoSelector extends StatelessWidget {
           decoration: InputDecoration(
             hintText: 'Elige un trabajador',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.surfaceDark
+                : Colors.white,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
