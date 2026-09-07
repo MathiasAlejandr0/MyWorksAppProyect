@@ -19,7 +19,7 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
     {
       id: 'm1',
       sender: 'worker',
-      text: `¡Hola! Soy ${workerName}. Ya recibí la notificación de tu solicitud. ¿En qué lugar específico necesitas la atención?`,
+      text: `[Demo] Hola, soy ${workerName}. Este chat es una simulación en la web. ¿En qué lugar específico necesitas la atención?`,
       timestamp: '14:30',
     },
   ]);

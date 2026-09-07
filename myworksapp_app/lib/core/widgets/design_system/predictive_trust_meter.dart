@@ -3,22 +3,26 @@ import '../../theme/app_colors.dart';
 import '../../design_system/app_radius.dart';
 import '../../design_system/app_spacing.dart';
 
-/// Medidor de Confianza Transaccional basado en la Regla del Pico-Final de Kahneman.
+/// Indicadores de confianza basados en métricas medibles (cuando existen).
 class PredictiveTrustMeterWidget extends StatelessWidget {
-  final double score;
-  final String fairPriceIndex;
-  final int reviewsCount;
+  final double? score;
+  final String? fairPriceIndex;
+  final int? reviewsCount;
 
   const PredictiveTrustMeterWidget({
     super.key,
-    this.score = 99.4,
-    this.fairPriceIndex = 'Óptimo (420 cotizaciones)',
-    this.reviewsCount = 198,
+    this.score,
+    this.fairPriceIndex,
+    this.reviewsCount,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasScore = score != null;
+    final chipLabel = hasScore ? '${score!}% Fiabilidad' : 'Sin métrica';
+    final chipColor = hasScore ? AppColors.emerald : AppColors.grayMedium;
+    final priceLabel = fairPriceIndex ?? 'Sin datos medidos';
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -42,7 +46,7 @@ class PredictiveTrustMeterWidget extends StatelessWidget {
               const Icon(Icons.workspace_premium_rounded, color: AppColors.emerald, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Confianza Transaccional IA',
+                'Indicadores de confianza',
                 style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w800,
@@ -50,29 +54,61 @@ class PredictiveTrustMeterWidget extends StatelessWidget {
                 ),
               ),
               const Spacer(),
+              if (!hasScore) ...[
+                Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.brandOrange.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: const Text(
+                    'DEMO',
+                    style: TextStyle(
+                      color: AppColors.brandOrange,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.emerald.withValues(alpha: 0.15),
+                  color: chipColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
-                  '$score% Fiabilidad',
-                  style: const TextStyle(color: AppColors.emerald, fontSize: 10.5, fontWeight: FontWeight.w800),
+                  chipLabel,
+                  style: TextStyle(
+                    color: chipColor,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
           ),
+          if (!hasScore) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Sin datos medidos',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white70 : AppColors.grayMedium,
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
-
           Row(
             children: [
               Expanded(
                 child: _trustItem(
                   context,
                   Icons.scale_rounded,
-                  'Fair Price',
-                  fairPriceIndex,
+                  'Precio estimado',
+                  priceLabel,
                   AppColors.brandOrange,
                 ),
               ),
@@ -88,6 +124,16 @@ class PredictiveTrustMeterWidget extends StatelessWidget {
               ),
             ],
           ),
+          if (reviewsCount != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              '$reviewsCount reseñas',
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.white60 : AppColors.grayMedium,
+              ),
+            ),
+          ],
         ],
       ),
     );

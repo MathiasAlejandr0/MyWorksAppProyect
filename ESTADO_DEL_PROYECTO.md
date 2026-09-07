@@ -2,10 +2,11 @@
 
 Documento de referencia para **memoria de título**, **presentaciones universitarias**, **financiamiento** y **planificación técnica**.
 
-**Última actualización:** agosto 2026  
+**Última actualización:** septiembre 2026  
 **Versión de producto:** 1.0.0 (MVP con backend Supabase)  
 **Repositorio:** https://github.com/MathiasAlejandr0/MyWorksAppProyect
 
+> **Nota de remediación (sep 2026):** Sprints 1–3: honestidad/demos/secrets/UX; baseline schema + domain SoT + Vitest; job_detail refactor; drift check CI; Riverpod repos en 3 pantallas; Playwright smoke; PaymentGatewayPort mock. Ver [`docs/REMEDIACION_AUDITORIA.md`](docs/REMEDIACION_AUDITORIA.md).
 ---
 
 ## Resumen ejecutivo

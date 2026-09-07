@@ -2,12 +2,12 @@ class AppConstants {
   /// Nombre de marca en logos, launcher y textos de la UI.
   static const String appBrandDisplayName = 'My Works App';
 
-  // Roles
+  // Roles — sincronizar con shared/src/domain.ts (UserRoles)
   static const String roleUser = 'user';
   static const String roleWorker = 'worker';
   static const String roleAdmin = 'admin';
 
-  // Estados de trabajo
+  // Estados de trabajo — sincronizar con shared/src/domain.ts (JobStatuses)
   static const String jobStatusPending = 'pending';
   static const String jobStatusAccepted = 'accepted';
   static const String jobStatusInProgress = 'in_progress';

@@ -3,6 +3,9 @@ import '../database/repositories/change_order_repository.dart';
 import 'payment_service.dart';
 
 /// Puertos inyectables para validar pagos en transiciones de trabajo (tests / producción).
+///
+/// No confundir con [PaymentGatewayPort] (`payment_gateway_port.dart`), que
+/// modela la autorización/hold contra un PSP externo (Webpay/MP).
 class PaymentGuardPorts {
   final Future<PaymentModel?> Function(String jobId) getPrimaryPayment;
   final Future<bool> Function(String jobId) hasAuthorizedPrimaryPayment;

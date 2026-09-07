@@ -4,8 +4,8 @@ import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/job_model.dart';
+import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
@@ -20,12 +20,11 @@ class JobHistoryPage extends ConsumerStatefulWidget {
 }
 
 class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
-  final JobRepository _jobRepository = JobRepository();
-
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final user = authState.user;
+    final jobRepository = ref.read(jobRepositoryProvider);
 
     if (user == null) {
       return const Scaffold(
@@ -40,8 +39,8 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
       ),
       body: FutureBuilder<List<JobModel>>(
         future: user.role == AppConstants.roleWorker
-            ? _jobRepository.getJobsByWorkerId(user.id)
-            : _jobRepository.getJobsByUserId(user.id),
+            ? jobRepository.getJobsByWorkerId(user.id)
+            : jobRepository.getJobsByUserId(user.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingWidget();

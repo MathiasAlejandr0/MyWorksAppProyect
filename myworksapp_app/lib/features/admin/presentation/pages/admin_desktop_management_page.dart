@@ -250,7 +250,7 @@ class _AdminDesktopManagementPageState extends State<AdminDesktopManagementPage>
         // Tarjetas KPI Principales
         Row(
           children: [
-            _kpiCard('GMV Transaccionado Escrow', currencyFormatter.format(14850000), '+24.5% este mes', Icons.account_balance_wallet_rounded, AppColors.emerald),
+            _kpiCard('GMV Transaccionado Escrow', 'Demo: ${currencyFormatter.format(14850000)}', '+24.5% este mes (datos de ejemplo)', Icons.account_balance_wallet_rounded, AppColors.emerald),
             const SizedBox(width: 16),
             _kpiCard('Trabajos Activos en Curso', '48 solicitudes', '12 en espera de PIN', Icons.engineering_rounded, AppColors.brandOrange),
             const SizedBox(width: 16),
@@ -353,7 +353,7 @@ class _AdminDesktopManagementPageState extends State<AdminDesktopManagementPage>
                 Icon(Icons.bar_chart_rounded, size: 48, color: AppColors.brandOrange),
                 SizedBox(height: 12),
                 Text('Volumen Transaccionado Escrow Mensual', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                Text('\$14.850.000 CLP procesados en los últimos 30 días (+24.5%)', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                Text('Demo: \$14.850.000 CLP procesados en los últimos 30 días (+24.5%)', style: TextStyle(color: Colors.white70, fontSize: 13)),
               ],
             ),
           ),

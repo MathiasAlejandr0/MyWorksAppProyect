@@ -7,10 +7,16 @@
     ".": "./src/index.ts",
     "./*": "./src/*"
   },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:domain": "node ../scripts/check-domain-drift.mjs"
+  },
   "peerDependencies": {
     "@supabase/supabase-js": "^2.112.3"
   },
   "devDependencies": {
-    "@supabase/supabase-js": "^2.112.3"
+    "@supabase/supabase-js": "^2.112.3",
+    "vitest": "^3.2.4"
   }
 }

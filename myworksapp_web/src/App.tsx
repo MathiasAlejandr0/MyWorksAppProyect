@@ -24,7 +24,6 @@ import { PaymentCheckoutModal } from './components/PaymentCheckoutModal';
 import { LiveChatWidget } from './components/LiveChatWidget';
 import { generatePdfCertificate } from './utils/pdfCertificateGenerator';
 import { SpatialEmergencyPulse } from './components/SpatialEmergencyPulse';
-import { PredictiveTrustMeter } from './components/PredictiveTrustMeter';
 import { AmbientShader } from './components/AmbientShader';
 import { AppleSpatialBackground } from './components/AppleSpatialBackground';
 import { LiveGpsTrackingMap } from './components/LiveGpsTrackingMap';
@@ -250,9 +249,9 @@ export function App() {
 
             <button 
               onClick={() => setShowEmergencyPulse(true)}
-              style={{ backgroundColor: 'rgba(255, 59, 48, 0.15)', color: '#FF3B30', border: '1px solid #FF3B30', padding: '8px 16px', borderRadius: 'var(--radius-pill)', fontWeight: 800, fontSize: '12.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ backgroundColor: 'rgba(255, 59, 48, 0.15)', color: '#FF3B30', border: '1px solid #FF3B30', padding: '8px 16px', borderRadius: 'var(--radius-pill)', fontWeight: 700, fontSize: '12.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              <Sparkles size={16} /> Urgencia 24/7 (3s)
+              <Sparkles size={16} /> Urgencia
             </button>
 
             <button 
@@ -266,20 +265,15 @@ export function App() {
         </div>
       </nav>
 
-      {/* 2. Hero Section con Buscador Inteligente por Palabras Clave */}
-      <section style={{ padding: '60px 0 40px', position: 'relative', zIndex: 1 }}>
+      {/* 2. Hero: marca + una idea + buscador */}
+      <section style={{ padding: '56px 0 40px', position: 'relative', zIndex: 1 }}>
         <div className="container">
-          {/* Predictive Trust Meter (Fiabilidad & Transparencia) */}
-          <PredictiveTrustMeter />
-          <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 40px' }}>
-            <div className="badge-tag badge-orange" style={{ marginBottom: '16px' }}>
-              <Sparkles size={14} /> Buscador Inteligente por Palabras Claves (Web Exclusivo sin fotos)
-            </div>
-            <h1 style={{ fontSize: '42px', fontWeight: 900, lineHeight: 1.15, marginBottom: '16px', letterSpacing: '-1px' }}>
-              Encuentra el profesional verificado en segundos con el <span style={{ background: 'linear-gradient(135deg, #FF6B00, #F0782A)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Buscador Inteligente</span>
+          <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 32px' }}>
+            <h1 style={{ fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, lineHeight: 1.2, marginBottom: '12px', letterSpacing: '-0.5px', color: darkMode ? '#FFFFFF' : '#0B192C' }}>
+              My Works App
             </h1>
-            <p style={{ fontSize: '17px', color: darkMode ? 'var(--text-muted-dark)' : 'var(--text-muted-light)' }}>
-              Describe en lenguaje natural lo que necesitas reparar en tu hogar u oficina. El motor evaluará el costo estimado de mercado y te recomendará a los especialistas mejor calificados sin pedir fotos.
+            <p style={{ fontSize: '17px', color: darkMode ? 'var(--text-muted-dark)' : 'var(--text-muted-light)', maxWidth: '540px', margin: '0 auto' }}>
+              Describe lo que necesitas y te sugerimos un profesional verificado cerca de ti.
             </p>
           </div>
 

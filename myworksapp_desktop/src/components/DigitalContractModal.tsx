@@ -40,7 +40,7 @@ export function DigitalContractModal({
       `ALCANCE DEL SERVICIO: ${serviceDescription}\n` +
       `MONTO EN CUSTODIA ESCROW: $${totalAmount.toLocaleString('es-CL')} CLP\n` +
       `GARANTÍA EXTENDIDA: 30 Días MyWorks Protect\n\n` +
-      `FIRMA CRIPTOGRÁFICA SHA-256: ${shaHash}\n` +
+      `Identificador de demo: ${shaHash}\n` +
       `FECHA DE EMISIÓN: ${new Date().toLocaleString('es-CL')}\n` +
       `==========================================================`
     ], { type: 'text/plain;charset=utf-8' });
@@ -62,7 +62,7 @@ export function DigitalContractModal({
           <ShieldCheck size={26} color="#007AFF" />
           <div>
             <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#FFFFFF' }}>Contrato Digital de Prestación de Servicios</h3>
-            <span style={{ fontSize: '11.5px', color: '#94A3B8' }}>Validez Jurídica bajo Ley 19.799 sobre Firma Electrónica en Chile</span>
+            <span style={{ fontSize: '11.5px', color: '#94A3B8' }}>DEMO — no es firma electrónica legal (Ley 19.799)</span>
           </div>
         </div>
 
@@ -81,7 +81,7 @@ export function DigitalContractModal({
               <CheckCircle2 size={24} color="#34C759" />
               <div>
                 <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#34C759' }}>CONTRATO FIRMADO ELECTRÓNICAMENTE</div>
-                <div style={{ fontSize: '11px', color: '#CBD5E1', fontFamily: 'monospace' }}>Hash SHA-256: {shaHash}</div>
+                <div style={{ fontSize: '11px', color: '#CBD5E1', fontFamily: 'monospace' }}>Identificador de demo: {shaHash}</div>
               </div>
             </div>
             <button onClick={handleDownloadCopy} className="btn-action-success" style={{ fontSize: '11.5px', padding: '6px 12px' }}>

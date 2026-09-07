@@ -1,3 +1,4 @@
+export * from './domain';
 export * from './types';
 export * from './auth';
 export * from './repositories/services';

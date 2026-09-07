@@ -26,6 +26,13 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
   late AnimationController _radarController;
   late Animation<double> _pulseAnimation;
 
+  static const _pinSlots = <_PinSlot>[
+    _PinSlot(top: 25, left: 45),
+    _PinSlot(top: 90, right: 35),
+    _PinSlot(bottom: 30, left: 70),
+    _PinSlot(top: 40, right: 120),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -47,7 +54,8 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeCount = widget.workers.isEmpty ? 5 : widget.workers.length;
+    final activeCount = widget.workers.length;
+    final isEmpty = widget.workers.isEmpty;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -71,22 +79,23 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header del Radar
           Row(
             children: [
               Container(
                 width: 10,
                 height: 10,
-                decoration: const BoxDecoration(
-                  color: AppColors.emerald,
+                decoration: BoxDecoration(
+                  color: isEmpty ? AppColors.grayMedium : AppColors.emerald,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.emerald,
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    ),
-                  ],
+                  boxShadow: isEmpty
+                      ? null
+                      : const [
+                          BoxShadow(
+                            color: AppColors.emerald,
+                            blurRadius: 6,
+                            spreadRadius: 1,
+                          ),
+                        ],
                 ),
               ),
               const SizedBox(width: 8),
@@ -103,7 +112,9 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
                       ),
                     ),
                     Text(
-                      '$activeCount activos en ${widget.city}',
+                      isEmpty
+                          ? 'Sin profesionales en vivo ahora'
+                          : '$activeCount activos en ${widget.city}',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? AppColors.grayLight : AppColors.grayMedium,
@@ -136,8 +147,6 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
             ],
           ),
           const SizedBox(height: 14),
-
-          // Pantalla Radar Interactivas con Ondas Pulsantes
           Container(
             height: 180,
             decoration: BoxDecoration(
@@ -156,121 +165,123 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
                       ],
               ),
             ),
-            child: Stack(
-              children: [
-                // 1. Anillos de Ondas de Radar Animadas
-                Positioned.fill(
-                  child: AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      final scale = _pulseAnimation.value;
-                      final opacity = (1.0 - scale).clamp(0.0, 1.0);
-                      return Center(
+            child: isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      child: Text(
+                        'Sin profesionales en vivo ahora',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.75),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  )
+                : Stack(
+                    children: [
+                      Positioned.fill(
+                        child: AnimatedBuilder(
+                          animation: _pulseAnimation,
+                          builder: (context, child) {
+                            final scale = _pulseAnimation.value;
+                            final opacity = (1.0 - scale).clamp(0.0, 1.0);
+                            return Center(
+                              child: Container(
+                                width: 170 * scale,
+                                height: 170 * scale,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.brandOrange.withValues(alpha: opacity * 0.6),
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Center(
                         child: Container(
-                          width: 170 * scale,
-                          height: 170 * scale,
+                          width: 70,
+                          height: 70,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.brandOrange.withValues(alpha: opacity * 0.6),
-                              width: 1.5,
+                              color: Colors.white.withValues(alpha: 0.15),
+                              width: 1,
                             ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-
-                // Anillo Fijo Central
-                Center(
-                  child: Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        width: 1,
                       ),
-                    ),
-                  ),
-                ),
-
-                // 2. Pines de Profesionales Activos en Posiciones Clave
-                _RadarPin(
-                  top: 25,
-                  left: 45,
-                  label: 'Juan E.',
-                  profession: 'Electricista',
-                  rating: '4.9 ⭐',
-                  onTap: () => _showWorkerSheet(context, 'Juan E.', 'Electricista', '4.9 ⭐', 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400'),
-                ),
-                _RadarPin(
-                  top: 90,
-                  right: 35,
-                  label: 'Carlos M.',
-                  profession: 'Gásfiter',
-                  rating: '5.0 ⭐',
-                  onTap: () => _showWorkerSheet(context, 'Carlos M.', 'Gásfiter', '5.0 ⭐', 'https://images.unsplash.com/photo-1585703903930-0b8e341a0895?w=400'),
-                ),
-                _RadarPin(
-                  bottom: 30,
-                  left: 70,
-                  label: 'María P.',
-                  profession: 'Limpieza',
-                  rating: '4.8 ⭐',
-                  onTap: () => _showWorkerSheet(context, 'María P.', 'Limpieza', '4.8 ⭐', 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400'),
-                ),
-                _RadarPin(
-                  top: 40,
-                  right: 120,
-                  label: 'Pedro A.',
-                  profession: 'Constructor',
-                  rating: '4.9 ⭐',
-                  onTap: () => _showWorkerSheet(context, 'Pedro A.', 'Constructor', '4.9 ⭐', 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=400'),
-                ),
-
-                // Centro: Tu Ubicación
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.brandOrange,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.brandOrange.withValues(alpha: 0.5),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.my_location_rounded, size: 12, color: Colors.white),
-                        SizedBox(width: 4),
-                        Text(
-                          'Tú',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
+                      ..._buildWorkerPins(context),
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.brandOrange,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.brandOrange.withValues(alpha: 0.5),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.my_location_rounded, size: 12, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                'Tú',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
     );
   }
 
-  void _showWorkerSheet(BuildContext context, String name, String profession, String rating, String img) {
+  List<Widget> _buildWorkerPins(BuildContext context) {
+    final visible = widget.workers.take(_pinSlots.length).toList();
+    return [
+      for (var i = 0; i < visible.length; i++)
+        _RadarPin(
+          top: _pinSlots[i].top,
+          bottom: _pinSlots[i].bottom,
+          left: _pinSlots[i].left,
+          right: _pinSlots[i].right,
+          label: visible[i].profession,
+          profession: visible[i].profession,
+          rating: visible[i].rating.toStringAsFixed(1),
+          onTap: () => _showWorkerSheet(
+            context,
+            visible[i].profession,
+            '${visible[i].rating.toStringAsFixed(1)} ⭐',
+          ),
+        ),
+    ];
+  }
+
+  void _showWorkerSheet(
+    BuildContext context,
+    String profession,
+    String rating,
+  ) {
     AppFeedback.light();
     showModalBottomSheet(
       context: context,
@@ -285,10 +296,12 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
             ListTile(
               leading: CircleAvatar(
                 radius: 26,
-                backgroundImage: NetworkImage(img),
+                child: Text(
+                  profession.isNotEmpty ? profession[0].toUpperCase() : '?',
+                ),
               ),
-              title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-              subtitle: Text('$profession • $rating', style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.w600)),
+              title: Text(profession, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              subtitle: Text(rating, style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.w600)),
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -317,6 +330,15 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
       ),
     );
   }
+}
+
+class _PinSlot {
+  final double? top;
+  final double? bottom;
+  final double? left;
+  final double? right;
+
+  const _PinSlot({this.top, this.bottom, this.left, this.right});
 }
 
 class _RadarPin extends StatelessWidget {

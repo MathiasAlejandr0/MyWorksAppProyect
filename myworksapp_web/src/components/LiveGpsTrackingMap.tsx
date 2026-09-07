@@ -33,12 +33,12 @@ export function LiveGpsTrackingMap({ workerName, etaMinutes: initialEta }: LiveG
             <Navigation size={22} className="pulse" />
           </div>
           <div>
-            <h3 style={{ fontSize: '17px', fontWeight: 900, color: 'white' }}>Seguimiento GPS en Tiempo Real</h3>
+            <h3 style={{ fontSize: '17px', fontWeight: 900, color: 'white' }}>Seguimiento GPS (simulado)</h3>
             <span style={{ fontSize: '12px', color: '#34C759', fontWeight: 700 }}>● {workerName} va en camino a tu domicilio</span>
           </div>
         </div>
         <span className="badge badge-success" style={{ padding: '6px 12px', fontSize: '12px' }}>
-          GPS 100% ACTIVO
+          DEMO
         </span>
       </div>
 

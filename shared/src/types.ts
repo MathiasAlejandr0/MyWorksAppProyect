@@ -1,6 +1,20 @@
-export type UserRole = 'user' | 'worker' | 'admin';
+export type {
+  DisputeStatus,
+  JobStatus,
+  PaymentStatus,
+  PricingMode,
+  UserRole,
+} from './domain';
+
+import type {
+  DisputeStatus,
+  JobStatus,
+  PaymentStatus,
+  PricingMode,
+  UserRole,
+} from './domain';
+
 export type AccountStatus = 'active' | 'suspended' | 'blocked';
-export type DisputeStatus = 'open' | 'under_review' | 'resolved';
 
 export interface Profile {
   id: string;
@@ -44,9 +58,11 @@ export interface JobRow {
   userId: string;
   workerId?: string | null;
   serviceId?: string | null;
-  status: string;
+  status: JobStatus;
   address?: string | null;
   description?: string | null;
+  paymentStatus?: PaymentStatus;
+  pricingMode?: PricingMode;
   createdAt: string;
 }
 

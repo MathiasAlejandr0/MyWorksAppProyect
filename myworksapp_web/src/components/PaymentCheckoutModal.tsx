@@ -38,9 +38,13 @@ export function PaymentCheckoutModal({ workerName, profession, basePrice, onClos
 
         {!isDone ? (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <Lock size={20} color="#F0782A" />
               <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Pasarela de Pago Seguro Escrow</h3>
+            </div>
+
+            <div style={{ padding: '10px 14px', marginBottom: '16px', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(240, 120, 42, 0.12)', border: '1px solid rgba(240, 120, 42, 0.35)', color: '#F0782A', fontSize: '12.5px', fontWeight: 800, textAlign: 'center' }}>
+              Pago simulado — sin pasarela real
             </div>
 
             {/* Resumen del Servicio */}

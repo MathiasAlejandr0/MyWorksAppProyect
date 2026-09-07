@@ -116,7 +116,7 @@ class _WebAiAssistantWidgetState extends State<WebAiAssistantWidget> {
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                           child: const Text(
-                            'IA WEB 2.0',
+                            'Estimación',
                             style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -124,7 +124,7 @@ class _WebAiAssistantWidgetState extends State<WebAiAssistantWidget> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Describe en palabras sencillas lo que necesitas y el motor calculará el presupuesto y profesional ideal sin fotos.',
+                      'Describe lo que necesitas y te sugeriremos una categoría y un rango orientativo.',
                       style: TextStyle(
                         fontSize: 12.5,
                         color: isDark ? AppColors.grayLight : AppColors.grayMedium,

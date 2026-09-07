@@ -1,135 +1,109 @@
-# 🏠🔧 My Works App — Ecosistema Multiplataforma Empresarial
+# My Works App — Ecosistema multiplataforma (MVP)
 
-[![Licencia](https://img.shields.io/badge/Estado-100%25%20Listo%20para%20Producci%C3%B3n-brightgreen.svg)]()
-[![Tests](https://img.shields.io/badge/Tests-28%2F28%20Passing-success.svg)]()
-[![Build](https://img.shields.io/badge/Build-0%20TS%20Errors-blue.svg)]()
-[![Supabase](https://img.shields.io/badge/Database-Supabase%20PostgreSQL%20%2B%20RLS-orange.svg)]()
+[![Estado](https://img.shields.io/badge/Estado-MVP%20demo-yellow.svg)]()
+[![Tests Flutter](https://img.shields.io/badge/Tests%20Flutter-unit%2Fwidget-blue.svg)]()
+[![Backend](https://img.shields.io/badge/Backend-Supabase%20PostgreSQL-orange.svg)]()
 
-**My Works App** es una plataforma tecnológica integral de servicios para el hogar y emergencias operativas en Chile, diseñada bajo principios científicos de psicología cognitiva (Ley de Hick-Hyman, Regla del Pico-Final de Kahneman) y respaldada por arquitectura en la nube con custodia cautelar de fondos (**Escrow Protection**).
+Marketplace de servicios del hogar (cliente + profesional) para Chile, con hub web y escritorio admin.  
+**Estado:** MVP funcional para demos académicas. **No** está listo para producción comercial (falta pasarela de pago real, push remoto, schema versionado completo y publicación en tiendas).
+
+Documento técnico de referencia: [`ESTADO_DEL_PROYECTO.md`](ESTADO_DEL_PROYECTO.md).
 
 ---
 
-## 🏛️ Estructura del Ecosistema Multiplataforma
+## Estructura del monorepo
 
 ```mermaid
 graph TD
-    A["Ecosistema My Works App"] --> B["📱 App Móvil Flutter (myworksapp_app)"]
-    A --> C["🌐 App Web Vite PWA (myworksapp_web)"]
-    A --> D["💻 Desktop Hub Enterprise (myworksapp_desktop)"]
-    A --> E["⚡ Supabase PostgreSQL Backend & PgBouncer"]
+    A["My Works App"] --> B["Flutter app — myworksapp_app"]
+    A --> C["Web Vite PWA — myworksapp_web"]
+    A --> D["Desktop Tauri hub — myworksapp_desktop"]
+    A --> E["Shared TS — shared/"]
+    A --> F["Supabase Auth + PostgreSQL + RLS"]
+```
 
-    B --> B1["Despacho 3s Emergency Pulse"]
-    B --> B2["Predictive Trust Meter CSAT 99.4%"]
-
-    C --> C1["Apple Spatial Kinetic Mesh Background"]
-    C2 --> C2["📍 Live GPS Tracking ETA Map"]
-
-    D --> D1["🔑 Desktop Login & Perfiles de Acceso"]
-    D --> D2["🎧 Centro de Mediación Escrow & Expediente Multimedia"]
-    D --> D3["📊 Panel Ejecutivo C-Level & Gráficos SVG"]
-    D --> D4["🛡️ Suite DevSecOps & QA Test Runner 1-Click"]
-    D --> D5["👥 Módulo de Recursos Humanos (RRHH)"]
-  ```
+| Carpeta | Rol |
+|---------|-----|
+| `myworksapp_app/` | App principal Flutter (usuario, trabajador, admin) |
+| `myworksapp_web/` | Landing / flujo cliente web |
+| `myworksapp_desktop/` | Hub operativo admin (Tauri) |
+| `shared/` | Auth y repositorios TypeScript compartidos (web/desktop) |
+| `myworksapp_app/supabase/migrations/` | Migraciones de hardening (el schema base vive en el proyecto Supabase) |
 
 ---
 
-## 🌟 Características Destacadas & Módulos Clave
+## Qué es real vs demo
 
-### 1. 📱 App Móvil Flutter (`myworksapp_app`)
-- **Despacho de Emergencia 3s (Hick-Hyman Law):** Solicitud instantánea con 0 formularios para urgencias (fugas de agua, cortes eléctricos, cerrajería).
-- **Índice de Confianza Predictiva (Kahneman Peak-End Rule):** Algoritmo de fiabilidad 99.4% CSAT y precio justo transparente.
-- **Pruebas Automatizadas:** 28 de 28 pruebas unitarias y de widgets aprobadas al 100%.
-
-### 2. 🌐 App Web Vite & PWA (`myworksapp_web`)
-- **Fondo Cinético Apple Spatial Mesh:** Mallas de gradientes orbitales interactivas al movimiento del cursor.
-- **📍 Seguimiento GPS en Tiempo Real (ETA):** Mapa interactivo de llegada del profesional en tiempo real con geocerca activa y contador ETA.
-- **PWA Offline & SEO:** Instalable como single-page app offline (`sw.js`), meta-etiquetas OpenGraph y `sitemap.xml`.
-
-### 3. 💻 Software de Escritorio Hub (`myworksapp_desktop`)
-- **🔑 Login Principal Corporativo:** Autenticación por perfiles (`Admin`, `Soporte`, `Devs/QA`).
-- **🎧 Centro de Soporte & Expediente Multimedia:** Visor comparativo de fotografías de fallas vs trabajo entregado, mensajería dual (cliente/trabajador) y resolución Escrow.
-- **✏️ Re-Cotización & Ajuste Dinámico de Alcance:** Permite modificar tarifas y descripciones de trabajos en terreno con aprobación obligatoria del cliente.
-- **📊 Panel Ejecutivo C-Level:** Gráficos SVG interactivos de tendencia GMV ($14.85M CLP), desglose por categorías de oficio y liquidación SII (19% IVA).
-- **🛡️ DevSecOps & QA Test Runner:** Ejecutador de pruebas en 1 clic, generador de datos Mock y telemetría Supabase en vivo (24 ms).
-- **👥 Recursos Humanos (RRHH):** Inscripción de colaboradores corporativos internos y directorio con control de accesos.
-- **📜 Firma Digital de Contrato (Ley 19.799 Chile):** Generación automática y firma criptográfica SHA-256 de contratos de servicio con validez legal.
+| Capacidad | Realidad |
+|-----------|----------|
+| Auth Supabase + perfiles / roles | Real |
+| Jobs, matching, estado de trabajos (Flutter) | Real (con reglas de dominio) |
+| Escrow / pagos | **Simulado** (sin Webpay/MP/Khipu SDK) |
+| GPS en vivo (web) | **Simulado** (animación UI) |
+| Firma “SHA-256 / Ley 19.799” (desktop) | **Demo** (no es firma criptográfica legal) |
+| DevSecOps “test runner 1-click” | **Demo UI** (no ejecuta suites reales) |
+| CSAT 99.4% / GMV $14.85M | **Datos de ejemplo**, no métricas medidas |
+| Stress tests 15k VUs | **No hay scripts** de carga en este repo |
+| Tests automatizados | Flutter unit/widget; web/desktop sin suite aún |
 
 ---
 
-## ⚡ Auditoría de Base de Datos & Pruebas de Estrés (Load Testing)
+## Ejecución local
 
-Pruebas de carga simulando usuarios virtuales concurrentes (**VUs**) sobre Supabase PostgreSQL & PgBouncer:
+### Variables de entorno
 
-| Usuarios Simultáneos (VUs) | Peticiones / Seg (RPS) | Latencia Promedio (P50) | Latencia Máxima (P95) | Tasa de Error | Estado |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **100 VUs** | 1.250 RPS | **12 ms** | 28 ms | **0.00%** | 🟢 Impecable |
-| **500 VUs** | 4.800 RPS | **18 ms** | 42 ms | **0.00%** | 🟢 Impecable |
-| **1.000 VUs** | 8.200 RPS | **24 ms** | 58 ms | **0.00%** | 🟢 Impecable |
-| **5.000 VUs** | 14.500 RPS | **48 ms** | 115 ms | **0.02%** | 🟢 Alta Estabilidad |
-| **15.000 VUs** | 22.000 RPS | **85 ms** | 210 ms | **0.08%** | 🟢 Gran Capacidad |
+Copia los ejemplos y completa con tu proyecto Supabase:
 
-- **Capacidad Recomendada:** 15.000 a 20.000 usuarios simultáneos sin degradación.
-- **Throughput Máximo:** 22.000 peticiones por segundo.
+```bash
+cp myworksapp_web/.env.example myworksapp_web/.env
+cp myworksapp_desktop/.env.example myworksapp_desktop/.env
+```
 
----
+Flutter (opcional, recomendado en CI):
 
-## 🛠️ Instrucciones de Ejecución Local
+```bash
+flutter run --dart-define=SUPABASE_URL=https://xxx.supabase.co --dart-define=SUPABASE_ANON_KEY=sb_publishable_...
+```
 
-### 1. Aplicación Web (`myworksapp_web`)
+### Web
+
 ```bash
 cd myworksapp_web
 npm install
 npm run dev -- --port 3000
 ```
-👉 Acceso: `http://127.0.0.1:3000`
 
-### 2. Software de Escritorio Hub (`myworksapp_desktop`)
+### Desktop hub
+
 ```bash
 cd myworksapp_desktop
 npm install
-npm run dev -- --port 3001
+npm run tauri:dev
 ```
-👉 Acceso: `http://127.0.0.1:3001`
 
-### 3. Aplicación Móvil Flutter (`myworksapp_app`)
+### Flutter
+
 ```bash
 cd myworksapp_app
 flutter pub get
 flutter test
-flutter run -d web-server --web-port 8080
+flutter run
 ```
-👉 Acceso: `http://127.0.0.1:8080`
+
+Cuentas demo (si están sembradas): `usuario@demo.com`, `trabajador@demo.com`, `admin@demo.com` — contraseña `demo123`.
 
 ---
 
-## 🛡️ Herramientas de calidad y seguridad (recomendadas)
+## Calidad y CI
 
-### Pre-commit (local)
-1. Instala: `pre-commit`
-2. Inicializa: `pre-commit install`
-3. Ejecuta manual: `pre-commit run --all-files`
+- Flutter: `flutter analyze` + `flutter test` (`.github/workflows/flutter_ci.yml`)
+- Web/desktop: lint + build; Tauri build en Windows (`.github/workflows/web_desktop_ci.yml`)
+- Gitleaks, Scorecard, commitlint y keepalive de Supabase (requiere secrets `SUPABASE_URL` / `SUPABASE_ANON_KEY`)
 
-Esto corre:
-- `flutter format`
-- `flutter analyze --no-fatal-infos`
+Pre-commit local: ver `.pre-commit-config.yaml`.
 
-### Gitleaks (CI)
-Detecta secretos (tokens/keys) expuestos en PRs y pushes.
-Config: `./.gitleaks.toml`
+---
 
-### OSSF Scorecard (CI programado)
-Evalúa postura de seguridad del repo. Revisa resultados en la pestaña Actions.
+## Licencia
 
-### Commitlint (mensajes de commit en PR)
-Valida que los mensajes sigan convención (`feat:`, `fix:`...). Config: `./commitlint.config.mjs`
-
-### Web & Desktop CI
-Workflow: `.github/workflows/web_desktop_ci.yml`
-
-En cada push/PR corre:
-- `npm run lint` + `npm run build` en `myworksapp_web`
-- `npm run lint` + `npm run build` en `myworksapp_desktop`
-- `npm run tauri:build` en Windows (app nativa admin)
-
-## 📜 Licencia & Propiedad
-**My Works App SpA** — Todos los derechos reservados.
+Proyecto académico / demo. Todos los derechos reservados salvo acuerdo distinto.

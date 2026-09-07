@@ -19,7 +19,7 @@ interface TestCase {
 
 export function DevSecOpsWorkspace() {
   const [activeTab, setActiveTab] = useState<number>(1); // 0: Telemetría, 1: Test Runner, 2: Mock Generator, 3: RLS Audit
-  const [latency, setLatency] = useState<number>(24);
+  const [latency, setLatency] = useState<number | null>(null);
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandInput, setCommandInput] = useState('');
   const [isRunningAllTests, setIsRunningAllTests] = useState(false);
@@ -27,7 +27,7 @@ export function DevSecOpsWorkspace() {
   const [logs, setLogs] = useState<LogEntry[]>([
     { id: '1', timestamp: '00:15:02', type: 'INFO', message: 'Conexión a Supabase establecida (wxqrfcqifkfgawrnqmnj.supabase.co)' },
     { id: '2', timestamp: '00:15:18', type: 'SECURITY', message: 'RLS Check OK: Tabla `tickets` con políticas SELECT/UPDATE por rol' },
-    { id: '3', timestamp: '00:16:04', type: 'TEST', message: 'Flutter Unit Tests: 28/28 tests passing (100% OK)' },
+    { id: '3', timestamp: '00:16:04', type: 'TEST', message: 'Simulación UI — no ejecuta flutter test / CI real' },
   ]);
 
   const [testCases, setTestCases] = useState<TestCase[]>([
@@ -59,7 +59,7 @@ export function DevSecOpsWorkspace() {
       setTestCases(prev => prev.map(tc => ({ ...tc, status: 'PASSED' })));
       setIsRunningAllTests(false);
       setLogs(prev => [
-        { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), type: 'TEST', message: '🚀 SUITE DE PRUEBAS COMPLETADA: 5/5 Casos Aprobados al 100%' },
+        { id: Date.now().toString(), timestamp: new Date().toLocaleTimeString(), type: 'TEST', message: 'Simulación UI — no ejecuta flutter test / CI real' },
         ...prev
       ]);
     }, 1200);
@@ -94,7 +94,7 @@ export function DevSecOpsWorkspace() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 900 }}>DevSecOps & Consola de Testeo QA Completa</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 900 }}>DevSecOps & Consola de Testeo QA Completa (simulación UI)</h1>
           <p style={{ fontSize: '13.5px', color: '#98989D' }}>Suite profesional de pruebas automatizadas, generador mock y telemetría Supabase.</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -115,7 +115,9 @@ export function DevSecOpsWorkspace() {
             <Activity size={18} />
             <span style={{ fontSize: '12px', fontWeight: 800 }}>ESTADO SUPABASE DB</span>
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#34C759' }}>HEALTHY ({latency} ms)</div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#34C759' }}>
+            {latency === null ? 'HEALTHY (sin medir)' : `HEALTHY (${latency} ms)`}
+          </div>
           <span style={{ fontSize: '11px', color: '#98989D' }}>Conexión cifrada TLS v1.3</span>
         </div>
 
@@ -124,7 +126,7 @@ export function DevSecOpsWorkspace() {
             <Shield size={18} />
             <span style={{ fontSize: '12px', fontWeight: 800 }}>POLÍTICAS RLS SEGURIDAD</span>
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#007AFF' }}>100% AUDITADO</div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#007AFF' }}>RLS ACTIVO</div>
           <span style={{ fontSize: '11px', color: '#98989D' }}>Row Level Security activo</span>
         </div>
 
@@ -133,8 +135,8 @@ export function DevSecOpsWorkspace() {
             <Cpu size={18} />
             <span style={{ fontSize: '12px', fontWeight: 800 }}>SALUD QA AUTOMATED</span>
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#F0782A' }}>100% PASSING (5/5)</div>
-          <span style={{ fontSize: '11px', color: '#98989D' }}>28/28 Unit tests aprobados</span>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#F0782A' }}>SIMULACIÓN UI (5)</div>
+          <span style={{ fontSize: '11px', color: '#98989D' }}>No ejecuta flutter test / CI real</span>
         </div>
       </div>
 
@@ -252,7 +254,7 @@ export function DevSecOpsWorkspace() {
             </div>
             <div style={{ padding: '12px 16px', backgroundColor: '#F8FAFC', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
               <span style={{ fontWeight: 700 }}>Row Level Security (RLS)</span>
-              <span className="badge badge-success">Habilitado en 100% de tablas</span>
+              <span className="badge badge-success">Habilitado</span>
             </div>
           </div>
         </div>

@@ -90,7 +90,7 @@ export function ExecutiveWorkspace() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 900 }}>Panel Ejecutivo & Intelligence C-Level</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 800 }}>Panel ejecutivo</h1>
           <p style={{ fontSize: '13.5px', color: '#98989D' }}>Métricas GMV, gráficos de rendimiento, custodia Escrow y validación corporativa.</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -156,12 +156,12 @@ export function ExecutiveWorkspace() {
             </div>
 
             <div className="card-3d">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#AF52DE', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#F0782A', marginBottom: '8px' }}>
                 <Clock size={20} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Tiempo Asignación</span>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#A8B0BC' }}>Tiempo asignación</span>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>3.2 min</div>
-              <span style={{ fontSize: '11.5px', color: '#AF52DE', fontWeight: 700 }}>Despacho rápido 3s</span>
+              <div style={{ fontSize: '26px', fontWeight: 800 }}>—</div>
+              <span style={{ fontSize: '11.5px', color: '#A8B0BC', fontWeight: 700 }}>Demo: sin métrica de despacho aún</span>
             </div>
           </div>
 
@@ -240,7 +240,7 @@ export function ExecutiveWorkspace() {
                     <span>15% ($2.22M)</span>
                   </div>
                   <div style={{ height: '8px', backgroundColor: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: '15%', height: '100%', backgroundColor: '#AF52DE' }} />
+                    <div style={{ width: '15%', height: '100%', backgroundColor: '#F0782A' }} />
                   </div>
                 </div>
               </div>

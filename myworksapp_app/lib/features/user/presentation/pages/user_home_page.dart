@@ -12,7 +12,7 @@ import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/app_guided_tour.dart';
 import '../../../../core/widgets/demo_tour_overlay.dart';
 import '../../../../core/services/app_feedback.dart';
-import '../../../../core/widgets/design_system/live_worker_radar_widget.dart';
+// import '../../../../core/widgets/design_system/live_worker_radar_widget.dart';
 import '../../../../core/widgets/design_system/myworks_guarantee_badge.dart';
 import '../../../../core/widgets/design_system/web_ai_assistant_widget.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
@@ -295,8 +295,9 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                                 },
                               ),
                             const SizedBox(height: 16),
-                            const LiveWorkerRadarWidget(workers: []),
-                            const SizedBox(height: 12),
+                            // Declutter: no mostrar radar vacío con datos inventados en home.
+                            // const LiveWorkerRadarWidget(workers: []),
+                            // const SizedBox(height: 12),
                             const MyWorksGuaranteeBadge(),
                             const SizedBox(height: 24),
                           ],

@@ -19,6 +19,12 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
 
   if (!open) return null;
 
+  const isDark = typeof document !== 'undefined' && document.body.classList.contains('dark');
+  const textMuted = isDark ? 'var(--text-muted-dark)' : 'var(--text-muted-light)';
+  const textMain = isDark ? 'var(--text-main-dark)' : 'var(--text-main-light)';
+  const surface = isDark ? 'var(--bg-elevated-dark)' : 'var(--bg-elevated-light)';
+  const border = isDark ? 'var(--border-dark)' : 'var(--border-light)';
+
   const handleOAuth = async (provider: 'google' | 'apple') => {
     setSubmitting(true);
     setLocalError(null);
@@ -48,6 +54,14 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     }
   };
 
+  const inputStyle = {
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: `1px solid ${border}`,
+    background: surface,
+    color: textMain,
+  } as const;
+
   return (
     <div
       style={{
@@ -64,17 +78,17 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
       <div className="card-3d" style={{ width: '100%', maxWidth: '420px', padding: '24px', position: 'relative' }}>
         <button
           onClick={onClose}
-          style={{ position: 'absolute', top: '12px', right: '12px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ position: 'absolute', top: '12px', right: '12px', border: 'none', background: 'transparent', cursor: 'pointer', color: textMuted }}
           aria-label="Cerrar"
         >
           <X size={18} />
         </button>
 
-        <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px' }}>
+        <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px', color: textMain }}>
           {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
         </h2>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted-dark)', marginBottom: '16px' }}>
-          Conectado a Supabase Auth — usa tu cuenta de cliente MyWorksApp.
+        <p style={{ fontSize: '13px', color: textMuted, marginBottom: '16px' }}>
+          Usa tu cuenta de cliente MyWorksApp.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -84,7 +98,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Nombre completo"
               required
-              style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-dark)', background: 'var(--bg-elevated-dark)', color: 'var(--text-main-dark)' }}
+              style={inputStyle}
             />
           )}
           <input
@@ -93,7 +107,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             required
-            style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-dark)', background: 'var(--bg-elevated-dark)', color: 'var(--text-main-dark)' }}
+            style={inputStyle}
           />
           <input
             type="password"
@@ -101,7 +115,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Contraseña"
             required
-            style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-dark)', background: 'var(--bg-elevated-dark)', color: 'var(--text-main-dark)' }}
+            style={inputStyle}
           />
 
           {localError && (
@@ -115,9 +129,9 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         </form>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '16px 0' }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-dark)' }} />
-          <span style={{ fontSize: '12px', color: 'var(--text-muted-dark)', fontWeight: 600 }}>o continúa con</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-dark)' }} />
+          <div style={{ flex: 1, height: '1px', background: border }} />
+          <span style={{ fontSize: '12px', color: textMuted, fontWeight: 600 }}>o continúa con</span>
+          <div style={{ flex: 1, height: '1px', background: border }} />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -126,11 +140,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             disabled={submitting}
             onClick={() => void handleOAuth('google')}
             style={{
-              padding: '12px 14px',
-              borderRadius: '10px',
-              border: '1px solid var(--border-dark)',
-              background: 'var(--bg-elevated-dark)',
-              color: 'var(--text-main-dark)',
+              ...inputStyle,
               fontWeight: 700,
               cursor: submitting ? 'not-allowed' : 'pointer',
             }}
@@ -144,7 +154,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             style={{
               padding: '12px 14px',
               borderRadius: '10px',
-              border: '1px solid var(--border-light)',
+              border: `1px solid ${border}`,
               background: '#000',
               color: '#fff',
               fontWeight: 700,

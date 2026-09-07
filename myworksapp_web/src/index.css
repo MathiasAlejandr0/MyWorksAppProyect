@@ -28,16 +28,17 @@
   --text-main-light: #1D1D1F;
   --text-muted-light: #6E6E73;
   --text-main-dark: #F5F5F7;
-  --text-muted-dark: #98989D;
+  --text-muted-dark: #A8B0BC;
 
   --border-light: rgba(0, 0, 0, 0.08);
   --border-dark: rgba(255, 255, 255, 0.1);
   --glass-bg-light: rgba(255, 255, 255, 0.75);
   --glass-bg-dark: rgba(18, 24, 38, 0.75);
   
-  --radius-sm: 10px;
+  /* Alineado con app Flutter (AppRadius) y desktop hub */
+  --radius-sm: 12px;
   --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-lg: 18px;
   --radius-pill: 9999px;
   
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.04);
@@ -181,5 +182,15 @@ body.dark .badge-orange {
   0% { transform: translate(0px, 0px) scale(1); }
   50% { transform: translate(50px, -50px) scale(1.08); }
   100% { transform: translate(0px, 0px) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
 

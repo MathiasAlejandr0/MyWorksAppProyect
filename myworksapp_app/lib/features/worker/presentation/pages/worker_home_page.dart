@@ -7,6 +7,7 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/notification_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
+import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
@@ -36,9 +37,6 @@ class WorkerHomePage extends ConsumerStatefulWidget {
 class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
-  final JobRepository _jobRepository = JobRepository();
-  final WorkerRepository _workerRepository = WorkerRepository();
-  final NotificationRepository _notificationRepository = NotificationRepository();
   bool _isAvailable = true;
   bool _hasActiveJobs = false;
   _WorkerDashboard? _dashboard;
@@ -52,6 +50,11 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
   final _actionsKey = GlobalKey();
   final _tabsKey = GlobalKey();
   final _profileKey = GlobalKey();
+
+  JobRepository get _jobRepository => ref.read(jobRepositoryProvider);
+  WorkerRepository get _workerRepository => ref.read(workerRepositoryProvider);
+  NotificationRepository get _notificationRepository =>
+      ref.read(notificationRepositoryProvider);
 
   @override
   void initState() {
