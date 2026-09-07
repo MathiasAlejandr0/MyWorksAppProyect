@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/price_quote.dart';
+import '../providers/auth_provider.dart';
+import '../providers/payment_gateway_provider.dart';
+import '../services/payment_gateway_port.dart';
 import '../services/payment_service.dart';
 import '../theme/app_colors.dart';
 import 'pricing_quote_card.dart';
 
 /// Checkout mock: simula pasarela y autoriza escrow.
-class EscrowCheckoutSheet extends StatefulWidget {
+class EscrowCheckoutSheet extends ConsumerStatefulWidget {
   const EscrowCheckoutSheet({
     super.key,
     required this.jobId,
     required this.quote,
     this.workerName,
     this.serviceName,
+    this.gateway,
   });
 
   final String jobId;
@@ -20,12 +25,16 @@ class EscrowCheckoutSheet extends StatefulWidget {
   final String? workerName;
   final String? serviceName;
 
+  /// Override opcional (tests); si es null se usa [paymentGatewayProvider].
+  final PaymentGatewayPort? gateway;
+
   static Future<bool> show(
     BuildContext context, {
     required String jobId,
     required PriceQuote quote,
     String? workerName,
     String? serviceName,
+    PaymentGatewayPort? gateway,
   }) async {
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -40,6 +49,7 @@ class EscrowCheckoutSheet extends StatefulWidget {
           quote: quote,
           workerName: workerName,
           serviceName: serviceName,
+          gateway: gateway,
         ),
       ),
     );
@@ -47,16 +57,50 @@ class EscrowCheckoutSheet extends StatefulWidget {
   }
 
   @override
-  State<EscrowCheckoutSheet> createState() => _EscrowCheckoutSheetState();
+  ConsumerState<EscrowCheckoutSheet> createState() =>
+      _EscrowCheckoutSheetState();
 }
 
-class _EscrowCheckoutSheetState extends State<EscrowCheckoutSheet> {
+class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
   String _method = 'card';
   bool _processing = false;
 
   Future<void> _pay() async {
     setState(() => _processing = true);
     try {
+      final user = ref.read(authProvider).user;
+      if (user == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Debes iniciar sesión para completar el pago en garantía',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final PaymentGatewayPort gateway =
+          widget.gateway ?? ref.read(paymentGatewayProvider);
+      final hold = await gateway.authorizeHold(
+        jobId: widget.jobId,
+        amountClp: widget.quote.totalClp,
+        userId: user.id,
+      );
+
+      if (!hold.success) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              hold.message ?? 'No se pudo autorizar el hold de pago',
+            ),
+          ),
+        );
+        return;
+      }
+
       await PaymentService.instance.createPrimaryPayment(
         jobId: widget.jobId,
         quote: widget.quote,
@@ -101,6 +145,29 @@ class _EscrowCheckoutSheetState extends State<EscrowCheckoutSheet> {
                     fontWeight: FontWeight.w700,
                   ),
             ),
+            const SizedBox(height: 8),
+            Material(
+              color: AppColors.brandOrange.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: AppColors.brandOrange),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Pago simulado (MockPaymentGateway) — sin pasarela real',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.brandOrange,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 4),
             Text(
               'Simulación de pasarela — sin cargo real',
@@ -119,8 +186,16 @@ class _EscrowCheckoutSheetState extends State<EscrowCheckoutSheet> {
             const SizedBox(height: 8),
             SegmentedButton<String>(
               segments: const [
-                ButtonSegment(value: 'card', label: Text('Tarjeta'), icon: Icon(Icons.credit_card)),
-                ButtonSegment(value: 'transfer', label: Text('Transfer.'), icon: Icon(Icons.account_balance)),
+                ButtonSegment(
+                  value: 'card',
+                  label: Text('Tarjeta'),
+                  icon: Icon(Icons.credit_card),
+                ),
+                ButtonSegment(
+                  value: 'transfer',
+                  label: Text('Transfer.'),
+                  icon: Icon(Icons.account_balance),
+                ),
               ],
               selected: {_method},
               onSelectionChanged: _processing
@@ -138,12 +213,16 @@ class _EscrowCheckoutSheetState extends State<EscrowCheckoutSheet> {
                   ? const SizedBox(
                       height: 22,
                       width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Text('Pagar y reservar en garantía'),
             ),
             TextButton(
-              onPressed: _processing ? null : () => Navigator.of(context).pop(false),
+              onPressed:
+                  _processing ? null : () => Navigator.of(context).pop(false),
               child: const Text('Cancelar'),
             ),
           ],

@@ -12,6 +12,7 @@ import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/models/rating_model.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/supabase_db.dart';
+import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/utils/error_handler.dart';
 
 class RatingPage extends ConsumerStatefulWidget {
@@ -27,8 +28,9 @@ class _RatingPageState extends ConsumerState<RatingPage> {
   final _formKey = GlobalKey<FormState>();
   final _commentController = TextEditingController();
   final RatingRepository _ratingRepository = RatingRepository();
-  final JobRepository _jobRepository = JobRepository();
-  final WorkerRepository _workerRepository = WorkerRepository();
+
+  JobRepository get _jobRepository => ref.read(jobRepositoryProvider);
+  WorkerRepository get _workerRepository => ref.read(workerRepositoryProvider);
 
   int _selectedRating = 0;
   bool _isLoading = false;

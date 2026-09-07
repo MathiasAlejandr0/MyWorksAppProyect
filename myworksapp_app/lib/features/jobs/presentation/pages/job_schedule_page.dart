@@ -5,6 +5,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/job_model.dart';
+import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,7 @@ class JobSchedulePage extends ConsumerStatefulWidget {
 }
 
 class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
-  final JobRepository _jobRepository = JobRepository();
+  JobRepository get _jobRepository => ref.read(jobRepositoryProvider);
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.month;

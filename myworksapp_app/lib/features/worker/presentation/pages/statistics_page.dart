@@ -4,6 +4,7 @@ import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/rating_repository.dart';
+import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/worker_job_status.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -16,7 +17,7 @@ class StatisticsPage extends ConsumerStatefulWidget {
 }
 
 class _StatisticsPageState extends ConsumerState<StatisticsPage> {
-  final JobRepository _jobRepository = JobRepository();
+  JobRepository get _jobRepository => ref.read(jobRepositoryProvider);
   final RatingRepository _ratingRepository = RatingRepository();
 
   @override
