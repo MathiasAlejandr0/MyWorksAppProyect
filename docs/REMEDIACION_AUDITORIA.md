@@ -28,7 +28,13 @@
 - [x] `UnimplementedWebpayGateway` stub
 - [x] `quick_booking_page` / `service_request_page` → `jobBookingServiceProvider` (+ `jobRepositoryProvider`)
 - [ ] FCM real / Webpay real (stubs listos; sin integrar SDKs)
-- [ ] Completar db pull y commitear dump oficial
+
+## Sprint 6b — Supabase link + dump oficial
+- [x] Login CLI OK (`npx supabase login`)
+- [x] Link a `wxqrfcqifkfgawrnqmnj` (MyWorksApp Proyect)
+- [x] `migration list` → inventario en `supabase/MIGRATIONS_INVENTORY.md`
+- [x] Script pull actualizado (detecta falta de Docker; usa `powershell -File`)
+- [x] Dump SQL oficial: `myworksapp_app/supabase/schema_remote_dump.sql` (~45 KB, 28 tablas, ~75 policies)
 
 ## Pendiente (sprint 7+)
 - [ ] Migrar resto de singletons a DI

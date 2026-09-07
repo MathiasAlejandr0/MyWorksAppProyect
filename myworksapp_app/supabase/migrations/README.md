@@ -19,22 +19,15 @@ Este directorio documenta el schema y el hardening del proyecto Supabase.
 
 El **schema productivo** sigue viviendo en el proyecto Supabase remoto; el baseline es documentación ejecutable para onboarding y entornos nuevos.
 
-## Clonar schema remoto (`db pull`)
+## Schema remoto (fuente de verdad)
 
-En Windows (el paquete winget puede no existir; preferí npm):
+Dump oficial versionado: [`../schema_remote_dump.sql`](../schema_remote_dump.sql)  
+Inventario de migraciones: [`../MIGRATIONS_INVENTORY.md`](../MIGRATIONS_INVENTORY.md)
 
-```bash
-npx supabase login
-npx supabase link --project-ref <TU_PROJECT_REF>
-npx supabase db pull
-```
+Para regenerar (requiere Docker Desktop + login CLI):
 
-Alternativa si tenés el CLI global:
-
-```bash
-supabase login
-supabase link --project-ref <TU_PROJECT_REF>
-supabase db pull
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\supabase-db-pull.ps1
 ```
 
 Esto descarga el schema productivo al directorio de migraciones (o genera un dump según la versión del CLI). Útil cuando el remoto es la fuente de verdad y querés alinear el repo.
