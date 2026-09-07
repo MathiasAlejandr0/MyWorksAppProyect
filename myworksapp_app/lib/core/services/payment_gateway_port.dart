@@ -54,3 +54,16 @@ class MockPaymentGateway implements PaymentGatewayPort {
     );
   }
 }
+
+/// Stub Webpay: no integrado. Usar [MockPaymentGateway] o configurar PSP.
+class UnimplementedWebpayGateway implements PaymentGatewayPort {
+  @override
+  Future<PaymentGatewayResult> authorizeHold({
+    required String jobId,
+    required int amountClp,
+    required String userId,
+  }) async =>
+      PaymentGatewayResult.fail(
+        'Webpay no integrado. Usa MockPaymentGateway o configura PSP.',
+      );
+}

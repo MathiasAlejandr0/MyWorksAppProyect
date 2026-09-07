@@ -53,3 +53,22 @@ class LocalOnlyPushNotifications implements PushNotificationPort {
     );
   }
 }
+
+/// Activar cuando se agregue firebase_messaging al pubspec.
+class UnimplementedFcmPushNotifications implements PushNotificationPort {
+  static const _hint =
+      'Agrega firebase_messaging y reemplaza pushNotificationProvider.';
+
+  @override
+  Future<void> initialize() => throw UnimplementedError(_hint);
+
+  @override
+  Future<String?> getDeviceToken() => throw UnimplementedError(_hint);
+
+  @override
+  Future<void> showLocal({
+    required String title,
+    required String body,
+  }) =>
+      throw UnimplementedError(_hint);
+}

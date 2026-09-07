@@ -20,9 +20,17 @@
 - [x] Escrow y job_detail usan services vía Riverpod
 - [ ] `db pull` autenticado (usuario debe pegar código en `npx supabase login`)
 
-## Pendiente (sprint 6+)
+## Sprint 6 — Colors codegen + stubs FCM/Webpay + DI call sites
+- [x] `scripts/generate-app-colors.mjs` → `generated_brand_colors.dart`
+- [x] `AppColors.brandOrange` / `brandNavy` / `emerald`/`success` desde tokens
+- [x] `npm run generate:colors` (+ integrado en `sync:tokens`)
+- [x] `UnimplementedFcmPushNotifications` + pasos FCM en provider
+- [x] `UnimplementedWebpayGateway` stub
+- [x] `quick_booking_page` / `service_request_page` → `jobBookingServiceProvider` (+ `jobRepositoryProvider`)
+- [ ] FCM real / Webpay real (stubs listos; sin integrar SDKs)
 - [ ] Completar db pull y commitear dump oficial
-- [ ] FCM real detrás de PushNotificationPort
-- [ ] Webpay/MP real detrás de PaymentGatewayPort
+
+## Pendiente (sprint 7+)
 - [ ] Migrar resto de singletons a DI
-- [ ] AppColors Dart generado desde design-tokens.json
+- [ ] Integrar firebase_messaging detrás de PushNotificationPort
+- [ ] Integrar Webpay/MP detrás de PaymentGatewayPort

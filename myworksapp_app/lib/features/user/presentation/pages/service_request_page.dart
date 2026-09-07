@@ -6,10 +6,10 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/repositories/service_config_repository.dart';
-import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/service_model.dart';
 import '../../../../core/domain/pricing_constants.dart';
-import '../../../../core/services/job_booking_service.dart';
+import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/providers/service_providers.dart';
 import '../../../../core/services/open_quote_notification_service.dart';
 import '../../../../core/services/user_location_service.dart';
 import '../../../../core/services/pricing_service.dart';
@@ -355,7 +355,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           option: _selectedWorkerOption!,
           squareMeters: _parsedSquareMeters,
         );
-        final job = await JobBookingService.instance.createWorkerTierInvitation(
+        final bookingService = ref.read(jobBookingServiceProvider);
+        final job = await bookingService.createWorkerTierInvitation(
           userId: user.id,
           workerId: _selectedWorkerId!,
           serviceId: _selectedServiceId!,
@@ -401,7 +402,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         final sku = _pricingRecommendation?.skuCode ??
             variantToSkuCode(_selectedVariant) ??
             'FAUCET_REPLACE';
-        final booking = await JobBookingService.instance.createFixedSkuBooking(
+        final bookingService = ref.read(jobBookingServiceProvider);
+        final booking = await bookingService.createFixedSkuBooking(
           userId: user.id,
           workerId: _selectedWorkerId!,
           serviceId: _selectedServiceId!,
@@ -421,7 +423,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           quote: booking.quote,
         );
         if (paid) {
-          await JobBookingService.instance.confirmEscrowAndAccept(
+          await bookingService.confirmEscrowAndAccept(
             jobId: booking.job.id,
             userId: user.id,
           );
@@ -434,7 +436,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       if (_pricingMode == PricingConstants.modeHourlyBlock) {
         final rate = PricingService.instance
             .estimateHourlyRateFromVisitFee(_selectedWorker!.visitFee.round());
-        final booking = await JobBookingService.instance.createHourlyBlockBooking(
+        final bookingService = ref.read(jobBookingServiceProvider);
+        final booking = await bookingService.createHourlyBlockBooking(
           userId: user.id,
           workerId: _selectedWorkerId!,
           serviceId: _selectedServiceId!,
@@ -455,7 +458,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           quote: booking.quote,
         );
         if (paid) {
-          await JobBookingService.instance.confirmEscrowAndAccept(
+          await bookingService.confirmEscrowAndAccept(
             jobId: booking.job.id,
             userId: user.id,
           );
@@ -469,7 +472,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         final workerId = _selectedWorkerId!;
         final workerName = _selectedWorkerUser?.name ?? 'el profesional';
 
-        final job = await JobBookingService.instance.createOpenQuoteJob(
+        final bookingService = ref.read(jobBookingServiceProvider);
+        final job = await bookingService.createOpenQuoteJob(
           userId: user.id,
           invitedWorkerId: workerId,
           serviceId: _selectedServiceId!,
@@ -517,7 +521,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         return;
       }
 
-      final jobRepository = JobRepository();
+      final jobRepository = ref.read(jobRepositoryProvider);
       final near = _selectedLatitude != null && _selectedLongitude != null
           ? await UserLocationService.instance.fromCoordinates(
               _selectedLatitude!,

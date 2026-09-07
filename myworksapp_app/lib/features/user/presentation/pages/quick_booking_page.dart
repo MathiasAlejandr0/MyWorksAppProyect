@@ -7,7 +7,7 @@ import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
-import '../../../../core/services/job_booking_service.dart';
+import '../../../../core/providers/service_providers.dart';
 import '../../../../core/services/pricing_service.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/comuna_utils.dart';
@@ -105,7 +105,8 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
           ? notes
           : 'Visita programada con ${_workerUser?.name ?? 'trabajador'}';
 
-      final booking = await JobBookingService.instance.createVisitBooking(
+      final bookingService = ref.read(jobBookingServiceProvider);
+      final booking = await bookingService.createVisitBooking(
         userId: auth.id,
         workerId: widget.workerId,
         serviceId: widget.serviceId,
@@ -127,7 +128,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
       );
 
       if (paid) {
-        await JobBookingService.instance.confirmEscrowAndAccept(
+        await bookingService.confirmEscrowAndAccept(
           jobId: booking.job.id,
           userId: auth.id,
         );

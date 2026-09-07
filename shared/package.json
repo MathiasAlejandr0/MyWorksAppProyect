@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "check:domain": "node ../scripts/check-domain-drift.mjs",
     "generate:domain": "node ../scripts/generate-domain-dart.mjs",
-    "sync:tokens": "node ../scripts/sync-design-tokens.mjs"
+    "generate:colors": "node ../scripts/generate-app-colors.mjs",
+    "sync:tokens": "node ../scripts/sync-design-tokens.mjs && node ../scripts/generate-app-colors.mjs"
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^2.112.3"

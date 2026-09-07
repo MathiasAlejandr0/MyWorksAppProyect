@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 
+import 'generated_brand_colors.dart';
+
 /// Sistema de colores del Design System — Inspirado en Apple HIG & Psicología del Color.
 ///
 /// Implementa la regla 60-30-10:
 /// - 60% Dominante (Canal neutro y superficies en capas)
 /// - 30% Estructura y Confianza (Navy / Slate & Grises Tintados)
 /// - 10% Acento (Naranja Energético exclusivo para CTAs y focos activos)
+///
+/// `brandOrange`, `brandNavy` y `emerald`/`success` salen de
+/// [GeneratedBrandColors] (`npm run generate:colors` en shared).
 class AppColors {
   AppColors._();
 
   // ========== BRAND & ACCENT (10% - FOCO DE ACCIÓN) ==========
 
   /// Naranjo principal vibrante — Exclusivo para CTAs primarios y focos estratégicos
-  static const Color brandOrange = Color(0xFFF0782A);
+  static const Color brandOrange = GeneratedBrandColors.brandOrange;
 
   /// Naranjo neón / caliente para gradientes y estados destacados de alta visibilidad
   static const Color brandOrangeVibrant = Color(0xFFFF6B00);
@@ -30,7 +35,7 @@ class AppColors {
   // ========== ESTRUCTURA & CONFIANZA (30% - SLATE / NAVY) ==========
 
   /// Azul marino profundo — aporta seriedad, respaldo de escrow y seguridad
-  static const Color brandNavy = Color(0xFF0B192C);
+  static const Color brandNavy = GeneratedBrandColors.brandNavy;
 
   /// Azul Slate intermedio para encabezados secundarios e iconografía estructural
   static const Color brandSlate = Color(0xFF2C3E50);
@@ -44,9 +49,9 @@ class AppColors {
   // ========== APPLE SEMANTIC STATUS (TINTED) ==========
 
   /// Completado / Verificado — Verde Esmeralda Suave
-  static const Color success = Color(0xFF34C759);
+  static const Color success = GeneratedBrandColors.emerald;
   static const Color successSoft = Color(0xFFE8F8EE);
-  static const Color emerald = success;
+  static const Color emerald = GeneratedBrandColors.emerald;
 
   /// Urgente / Error / Cancelado — Coral Carmesí
   static const Color error = Color(0xFFFF3B30);
