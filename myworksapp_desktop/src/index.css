@@ -1,3 +1,4 @@
+@import '../../shared/design-tokens.css';
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -7,22 +8,15 @@
   --bg-card: #121E33;
   --bg-elevated: #17263D;
   
-  --orange-accent: #F0782A;
   --orange-vibrant: #FF6B00;
   --navy-dark: #090D16;
   
-  --emerald: #34C759;
   --crimson: #FF3B30;
   --amber: #FF9500;
   
   --text-primary: #F5F5F7;
-  --text-muted: #A8B0BC;
+  --text-muted: var(--text-muted-dark);
   --border: rgba(240, 120, 42, 0.16);
-  
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 18px;
-  --radius-pill: 9999px;
 }
 
 * {

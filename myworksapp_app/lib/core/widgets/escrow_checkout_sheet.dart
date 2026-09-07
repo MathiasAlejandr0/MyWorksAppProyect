@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/price_quote.dart';
 import '../providers/auth_provider.dart';
 import '../providers/payment_gateway_provider.dart';
+import '../providers/service_providers.dart';
 import '../services/payment_gateway_port.dart';
-import '../services/payment_service.dart';
 import '../theme/app_colors.dart';
 import 'pricing_quote_card.dart';
 
@@ -101,12 +101,13 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
         return;
       }
 
-      await PaymentService.instance.createPrimaryPayment(
+      final payments = ref.read(paymentServiceProvider);
+      await payments.createPrimaryPayment(
         jobId: widget.jobId,
         quote: widget.quote,
         paymentMethod: _method,
       );
-      await PaymentService.instance.authorizePrimaryForJob(widget.jobId);
+      await payments.authorizePrimaryForJob(widget.jobId);
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {

@@ -10,15 +10,19 @@
 - [x] check-domain-drift; providers; Playwright; PaymentGatewayPort
 
 ## Sprint 4 — Gateway wired + más Riverpod + push port
-- [x] EscrowCheckoutSheet → authorizeHold (MockPaymentGateway) + banner simulado
-- [x] Riverpod en rating / statistics / job_schedule
-- [x] PushNotificationPort + LocalOnlyPushNotifications (sin FCM aún)
-- [x] Script `scripts/supabase-db-pull.ps1` (requiere `npx supabase login` del usuario)
-- [ ] Ejecutar db pull autenticado y commitear dump oficial
+- [x] EscrowCheckoutSheet → MockPaymentGateway; Riverpod screens; push port; script db-pull
 
-## Pendiente (sprint 5+)
-- [ ] Integrar FCM real detrás de PushNotificationPort
-- [ ] Implementar Webpay/MP detrás de PaymentGatewayPort
-- [ ] Migrar services singletons restantes a DI
-- [ ] Codegen Dart desde domain.ts
-- [ ] Design tokens package único
+## Sprint 5 — Codegen + tokens package + DI services
+- [x] `scripts/generate-domain-dart.mjs` → `generated_domain.dart`
+- [x] `WorkerJobStatus` usa lista generada desde TS
+- [x] `shared/design-tokens.json` + `design-tokens.css` + sync en web/desktop
+- [x] DI constructores + `jobBookingServiceProvider` / `paymentServiceProvider`
+- [x] Escrow y job_detail usan services vía Riverpod
+- [ ] `db pull` autenticado (usuario debe pegar código en `npx supabase login`)
+
+## Pendiente (sprint 6+)
+- [ ] Completar db pull y commitear dump oficial
+- [ ] FCM real detrás de PushNotificationPort
+- [ ] Webpay/MP real detrás de PaymentGatewayPort
+- [ ] Migrar resto de singletons a DI
+- [ ] AppColors Dart generado desde design-tokens.json

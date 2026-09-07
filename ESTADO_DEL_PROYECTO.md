@@ -6,7 +6,7 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 **Versión de producto:** 1.0.0 (MVP con backend Supabase)  
 **Repositorio:** https://github.com/MathiasAlejandr0/MyWorksAppProyect
 
-> **Nota de remediación (sep 2026):** Sprints 1–4: honestidad/demos/secrets/UX; baseline + domain SoT; job_detail refactor; drift CI; Riverpod; Playwright; Escrow↔MockPaymentGateway; push port local; script db-pull (login pendiente). Ver [`docs/REMEDIACION_AUDITORIA.md`](docs/REMEDIACION_AUDITORIA.md).
+> **Nota de remediación (sep 2026):** Sprints 1–5: honestidad/demos; SoT + codegen Dart; tokens compartidos; job_detail refactor; Riverpod/DI; Playwright; escrow mock gateway; push port. db pull: completa el código en la terminal de `npx supabase login`. Ver [`docs/REMEDIACION_AUDITORIA.md`](docs/REMEDIACION_AUDITORIA.md).
 ---
 
 ## Resumen ejecutivo

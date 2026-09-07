@@ -51,11 +51,13 @@ class JobDetailController {
     JobPhotoRepository? jobPhotoRepository,
     WorkerRepository? workerRepository,
     JobStateMachine? stateMachine,
+    JobBookingService? jobBookingService,
   })  : _jobRepository = jobRepository ?? JobRepository(),
         _userRepository = userRepository ?? UserRepository(),
         _jobPhotoRepository = jobPhotoRepository ?? JobPhotoRepository(),
         _workerRepository = workerRepository ?? WorkerRepository(),
-        _stateMachine = stateMachine ?? JobStateMachine.instance;
+        _stateMachine = stateMachine ?? JobStateMachine.instance,
+        _jobBookingService = jobBookingService ?? JobBookingService.instance;
 
   final String jobId;
   final JobModel? Function() getJob;
@@ -73,6 +75,7 @@ class JobDetailController {
   final JobPhotoRepository _jobPhotoRepository;
   final WorkerRepository _workerRepository;
   final JobStateMachine _stateMachine;
+  final JobBookingService _jobBookingService;
 
   BuildContext get _context => getContext();
 
@@ -320,7 +323,7 @@ class JobDetailController {
     if (!paid || !isMounted()) return;
 
     try {
-      await JobBookingService.instance.confirmEscrowAndAccept(
+      await _jobBookingService.confirmEscrowAndAccept(
         jobId: job.id,
         userId: auth.id,
       );
@@ -371,7 +374,7 @@ class JobDetailController {
     if (!paid || !isMounted()) return;
 
     try {
-      await JobBookingService.instance.confirmCompletionAndPay(
+      await _jobBookingService.confirmCompletionAndPay(
         jobId: job.id,
         userId: auth.id,
       );

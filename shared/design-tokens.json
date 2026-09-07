@@ -1,0 +1,17 @@
+{
+  "color": {
+    "brandOrange": "#F0782A",
+    "brandNavy": "#0B192C",
+    "emerald": "#34C759",
+    "textMutedDark": "#A8B0BC",
+    "bgDominantDark": "#090D16",
+    "bgSurfaceDark": "#121826"
+  },
+  "radius": {
+    "sm": 12,
+    "md": 16,
+    "lg": 18,
+    "xl": 22,
+    "pill": 28
+  }
+}

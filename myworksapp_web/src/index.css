@@ -1,3 +1,4 @@
+@import '../../shared/design-tokens.css';
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -8,18 +9,13 @@
   --bg-surface-light: #FFFFFF;
   --bg-elevated-light: #F8F9FA;
   
-  --bg-dominant-dark: #090D16;
-  --bg-surface-dark: #121826;
   --bg-elevated-dark: #1A2234;
 
-  --navy-structure: #0B192C;
   --navy-light: #1E2A3B;
 
-  --orange-accent: #F0782A;
   --orange-vibrant: #FF6B00;
   --orange-soft: #FFF4EE;
   
-  --emerald-success: #34C759;
   --emerald-soft: #E8F8EE;
   
   --crimson-error: #FF3B30;
@@ -28,18 +24,11 @@
   --text-main-light: #1D1D1F;
   --text-muted-light: #6E6E73;
   --text-main-dark: #F5F5F7;
-  --text-muted-dark: #A8B0BC;
 
   --border-light: rgba(0, 0, 0, 0.08);
   --border-dark: rgba(255, 255, 255, 0.1);
   --glass-bg-light: rgba(255, 255, 255, 0.75);
   --glass-bg-dark: rgba(18, 24, 38, 0.75);
-  
-  /* Alineado con app Flutter (AppRadius) y desktop hub */
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 18px;
-  --radius-pill: 9999px;
   
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);

@@ -175,6 +175,15 @@ const constants = read(constantsPath);
 const pricing = read(pricingPath);
 const workerStatus = read(workerStatusPath);
 const disputeModel = read(disputeModelPath);
+const generatedPath = path.join(
+  root,
+  'myworksapp_app',
+  'lib',
+  'core',
+  'domain',
+  'generated_domain.dart',
+);
+const generated = fs.existsSync(generatedPath) ? read(generatedPath) : '';
 
 const userRolesTs = extractTsObjectValues(domain, 'UserRoles');
 const jobStatusesTs = extractTsObjectValues(domain, 'JobStatuses');
@@ -241,8 +250,14 @@ for (const src of [constants, pricing, disputeModel]) {
 }
 
 const constMap = buildDartConstMap(constants, pricing);
-const activeListBody = extractDartListLiterals(workerStatus, 'activeStatuses');
-const dartWorkerActive = resolveDartRefs(activeListBody, constMap);
+let dartWorkerActive;
+if (generated.includes('GeneratedWorkerActiveJobStatuses')) {
+  const body = extractDartListLiterals(generated, 'values');
+  dartWorkerActive = resolveDartRefs(body, constMap);
+} else {
+  const activeListBody = extractDartListLiterals(workerStatus, 'activeStatuses');
+  dartWorkerActive = resolveDartRefs(activeListBody, constMap);
+}
 
 let failed = false;
 console.log('Domain drift check (domain.ts ↔ Dart)\n');

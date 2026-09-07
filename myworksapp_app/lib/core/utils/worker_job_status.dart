@@ -1,4 +1,5 @@
 import '../database/models/job_model.dart';
+import '../domain/generated_domain.dart';
 import '../domain/pricing_constants.dart';
 import 'constants.dart';
 
@@ -6,16 +7,12 @@ import 'constants.dart';
 class WorkerJobStatus {
   WorkerJobStatus._();
 
-  static const List<String> activeStatuses = [
-    AppConstants.jobStatusAccepted,
-    AppConstants.jobStatusInProgress,
-    PricingConstants.jobAwaitingClientApproval,
-    PricingConstants.jobAwaitingPayment,
-    PricingConstants.jobPausedChangeOrder,
-    PricingConstants.jobQuoteSelected,
-  ];
+  /// Fuente generada desde shared/src/domain.ts (regenerar con generate-domain-dart.mjs).
+  static const List<String> activeStatuses =
+      GeneratedWorkerActiveJobStatuses.values;
 
-  static bool isActive(String status) => activeStatuses.contains(status);
+  static bool isActive(String status) =>
+      GeneratedWorkerActiveJobStatuses.contains(status);
 
   /// Prioriza el trabajo que requiere acción inmediata del profesional.
   static JobModel? pickHighlightJob(List<JobModel> activeJobs) {

@@ -13,11 +13,16 @@ import 'pricing_service.dart';
 
 /// Creación de trabajos con modalidades de cobro + escrow mock (sin pasarela real).
 class JobBookingService {
-  JobBookingService._();
-  static final JobBookingService instance = JobBookingService._();
+  JobBookingService({
+    JobRepository? jobs,
+    JobStateMachine? stateMachine,
+  })  : _jobs = jobs ?? JobRepository(),
+        _stateMachine = stateMachine ?? JobStateMachine.instance;
 
-  final JobRepository _jobs = JobRepository();
-  final JobStateMachine _stateMachine = JobStateMachine.instance;
+  static final JobBookingService instance = JobBookingService();
+
+  final JobRepository _jobs;
+  final JobStateMachine _stateMachine;
 
   /// Reserva visita (precio fijo por tarifa de visita).
   Future<({JobModel job, PriceQuote quote})> createVisitBooking({

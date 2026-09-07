@@ -16,11 +16,16 @@ import '../utils/app_error.dart';
 /// - Reembolsos
 /// - Estados de pago
 class PaymentService {
-  static final PaymentService instance = PaymentService._();
-  PaymentService._();
+  PaymentService({
+    PaymentRepository? paymentRepository,
+    JobRepository? jobRepository,
+  })  : _paymentRepository = paymentRepository ?? PaymentRepository(),
+        _jobRepository = jobRepository ?? JobRepository();
 
-  final PaymentRepository _paymentRepository = PaymentRepository();
-  final JobRepository _jobRepository = JobRepository();
+  static final PaymentService instance = PaymentService();
+
+  final PaymentRepository _paymentRepository;
+  final JobRepository _jobRepository;
 
   /// Crea un pago para un job (MOCK)
   /// 

@@ -10,7 +10,9 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:domain": "node ../scripts/check-domain-drift.mjs"
+    "check:domain": "node ../scripts/check-domain-drift.mjs",
+    "generate:domain": "node ../scripts/generate-domain-dart.mjs",
+    "sync:tokens": "node ../scripts/sync-design-tokens.mjs"
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^2.112.3"

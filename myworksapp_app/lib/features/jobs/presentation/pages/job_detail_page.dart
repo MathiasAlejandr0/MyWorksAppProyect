@@ -11,6 +11,7 @@ import '../../../../core/database/models/quote_proposal_model.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/providers/repository_providers.dart';
+import '../../../../core/providers/service_providers.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
@@ -80,6 +81,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       jobRepository: _jobRepository,
       userRepository: ref.read(userRepositoryProvider),
       workerRepository: ref.read(workerRepositoryProvider),
+      jobBookingService: ref.read(jobBookingServiceProvider),
     );
     _loadJobDetails();
   }

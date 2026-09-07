@@ -32,6 +32,10 @@ jobs:
         run: npm run check:domain
         working-directory: shared
 
+      - name: Generate Dart domain from TS
+        run: npm run generate:domain
+        working-directory: shared
+
       - name: Test shared domain
         run: npm test
         working-directory: shared
