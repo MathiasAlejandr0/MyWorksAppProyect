@@ -2,7 +2,7 @@ import '../models/report_model.dart';
 import '../supabase_db.dart';
 
 class ReportRepository {
-  static const String _table = 'reports';
+  static const String _table = 'reportes';
 
   Future<void> createReport(ReportModel report) async {
     await supabase.from(_table).insert(report.toMap());
@@ -12,8 +12,8 @@ class ReportRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('reporterId', reporterId)
-        .order('createdAt', ascending: false);
+        .eq('id_reportante', reporterId)
+        .order('creado_en', ascending: false);
     return rows.map<ReportModel>((m) => ReportModel.fromMap(m)).toList();
   }
 
@@ -22,12 +22,12 @@ class ReportRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('reportedUserId', reportedUserId)
-        .order('createdAt', ascending: false);
+        .eq('id_usuario_reportado', reportedUserId)
+        .order('creado_en', ascending: false);
     return rows.map<ReportModel>((m) => ReportModel.fromMap(m)).toList();
   }
 
   Future<void> updateReportStatus(String id, String status) async {
-    await supabase.from(_table).update({'status': status}).eq('id', id);
+    await supabase.from(_table).update({'estado': status}).eq('id', id);
   }
 }

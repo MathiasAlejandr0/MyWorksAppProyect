@@ -2,7 +2,7 @@ import '../models/job_cancellation_model.dart';
 import '../supabase_db.dart';
 
 class JobCancellationRepository {
-  static const String _table = 'job_cancellations';
+  static const String _table = 'cancelaciones_trabajo';
 
   Future<void> createCancellation(JobCancellationModel cancellation) async {
     await supabase.from(_table).insert(cancellation.toMap());
@@ -12,7 +12,7 @@ class JobCancellationRepository {
     final row = await supabase
         .from(_table)
         .select()
-        .eq('jobId', jobId)
+        .eq('id_trabajo', jobId)
         .maybeSingle();
     if (row == null) return null;
     return JobCancellationModel.fromMap(row);

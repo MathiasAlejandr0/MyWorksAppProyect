@@ -12,13 +12,12 @@ import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/app_guided_tour.dart';
 import '../../../../core/widgets/demo_tour_overlay.dart';
 import '../../../../core/services/app_feedback.dart';
-// import '../../../../core/widgets/design_system/live_worker_radar_widget.dart';
+import '../../../../core/widgets/design_system/empty_state_widget.dart';
+import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../../../../core/widgets/design_system/myworks_guarantee_badge.dart';
-import '../../../../core/widgets/design_system/web_ai_assistant_widget.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
-import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -123,7 +122,17 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting &&
                           _allServices.isEmpty) {
-                        return const LoadingWidget();
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Column(
+                            children: [
+                              ListItemSkeleton(),
+                              ListItemSkeleton(),
+                              ListItemSkeleton(),
+                              ListItemSkeleton(),
+                            ],
+                          ),
+                        );
                       }
 
                       if (snapshot.hasError) {
@@ -188,9 +197,9 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            const WebAiAssistantWidget(),
-                            const SizedBox(height: 12),
-                            // Banner de Acceso al Software de Gestión de Escritorio (Desktop Admin Hub)
+                            const HowItWorksCard(),
+                            const SizedBox(height: 16),
+                            // Acceso a consola admin (solo útil si el usuario es admin)
                             InkWell(
                               onTap: () => context.push(AppConstants.routeAdminDesktopHub),
                               borderRadius: BorderRadius.circular(16),
@@ -199,28 +208,21 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                                 decoration: BoxDecoration(
                                   color: AppColors.brandNavy,
                                   borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.brandNavy.withValues(alpha: 0.3),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
                                 ),
                                 child: const Row(
                                   children: [
-                                    Icon(Icons.desktop_windows_rounded, color: AppColors.brandOrange, size: 24),
+                                    Icon(Icons.desktop_windows_rounded, color: AppColors.brandOrange, size: 22),
                                     SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Software de Gestión de Escritorio',
+                                            'Consola de administración',
                                             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                                           ),
                                           Text(
-                                            'Panel integral para administrar la app, presupuestos y resolver tickets',
+                                            'Gestión de trabajos, usuarios y soporte',
                                             style: TextStyle(color: Colors.white70, fontSize: 11),
                                           ),
                                         ],
@@ -236,7 +238,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                               tourKey: _servicesKey,
                               width: double.infinity,
                               child: Text(
-                                'Servicios Disponibles',
+                                'Servicios disponibles',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
@@ -247,16 +249,15 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                             const SizedBox(height: 8),
                             if (services.isEmpty)
                               Padding(
-                                padding: const EdgeInsets.only(top: 48, bottom: 24),
-                                child: Text(
-                                  _query.isEmpty
-                                      ? 'No hay servicios disponibles'
-                                      : 'Sin resultados para "$_query"',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: AppColors.grayMedium,
-                                    fontSize: 14,
-                                  ),
+                                padding: const EdgeInsets.only(top: 32, bottom: 24),
+                                child: EmptyStateWidget(
+                                  icon: Icons.search_off_rounded,
+                                  title: _query.isEmpty
+                                      ? 'Aún no hay servicios'
+                                      : 'Sin resultados',
+                                  message: _query.isEmpty
+                                      ? 'Vuelve a intentar en un momento.'
+                                      : 'Prueba con otra palabra o elige una categoría.',
                                 ),
                               )
                             else
@@ -295,9 +296,6 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                                 },
                               ),
                             const SizedBox(height: 16),
-                            // Declutter: no mostrar radar vacío con datos inventados en home.
-                            // const LiveWorkerRadarWidget(workers: []),
-                            // const SizedBox(height: 12),
                             const MyWorksGuaranteeBadge(),
                             const SizedBox(height: 24),
                           ],

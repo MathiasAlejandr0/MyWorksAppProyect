@@ -8,18 +8,13 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "check:domain": "node ../scripts/check-domain-drift.mjs",
-    "generate:domain": "node ../scripts/generate-domain-dart.mjs",
-    "generate:colors": "node ../scripts/generate-app-colors.mjs",
-    "sync:tokens": "node ../scripts/sync-design-tokens.mjs && node ../scripts/generate-app-colors.mjs"
+    "test": "node --import tsx --test src/repositories/metrics.test.ts"
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^2.112.3"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.112.3",
-    "vitest": "^3.2.4"
+    "tsx": "^4.23.13"
   }
 }

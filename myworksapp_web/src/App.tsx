@@ -1,31 +1,30 @@
 import { useState, useEffect } from 'react';
-import { 
-  Wrench, 
-  Zap, 
-  Sparkles, 
-  Truck, 
-  Laptop, 
-  Flower2, 
-  Hammer, 
-  PackageCheck, 
-  ShieldCheck, 
-  CheckCircle2, 
-  Search, 
-  Sun, 
-  Moon, 
-  ArrowRight, 
-  Star, 
+import {
+  Wrench,
+  Zap,
+  Sparkles,
+  Truck,
+  Laptop,
+  Flower2,
+  Hammer,
+  PackageCheck,
+  ShieldCheck,
+  CheckCircle2,
+  Search,
+  Sun,
+  Moon,
+  ArrowRight,
+  Star,
   X,
   FileText,
   CreditCard,
-  Home
+  Home,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import { PaymentCheckoutModal } from './components/PaymentCheckoutModal';
 import { LiveChatWidget } from './components/LiveChatWidget';
 import { generatePdfCertificate } from './utils/pdfCertificateGenerator';
-import { SpatialEmergencyPulse } from './components/SpatialEmergencyPulse';
-import { AmbientShader } from './components/AmbientShader';
-import { AppleSpatialBackground } from './components/AppleSpatialBackground';
 import { LiveGpsTrackingMap } from './components/LiveGpsTrackingMap';
 import { AuthModal } from './components/AuthModal';
 import { useAuth } from './context/AuthContext';
@@ -36,7 +35,6 @@ import {
   fetchWorkersByCategory,
   toWebWorkerCard,
 } from '@myworksapp/shared';
-import { LogIn, LogOut } from 'lucide-react';
 
 interface Worker {
   id: string;
@@ -49,7 +47,7 @@ interface Worker {
   pricePerVisit: number;
 }
 
-interface AiResult {
+interface ServiceMatch {
   category: string;
   categoryName: string;
   problem: string;
@@ -61,28 +59,49 @@ interface AiResult {
 }
 
 const CATEGORIES = [
-  { id: 'plumbing', title: 'Gásfiter / Plomería', icon: Wrench, photo: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600' },
-  { id: 'electrical', title: 'Electricidad SEC', icon: Zap, photo: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600' },
-  { id: 'cleaning', title: 'Limpieza e Higiene', icon: Sparkles, photo: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600' },
-  { id: 'assembly', title: 'Armado Muebles', icon: PackageCheck, photo: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600' },
-  { id: 'moving', title: 'Mudanzas y Fletes', icon: Truck, photo: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600' },
-  { id: 'tech_support', title: 'Soporte PC / WiFi', icon: Laptop, photo: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=600' },
-  { id: 'gardening', title: 'Jardines y Poda', icon: Flower2, photo: 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600' },
-  { id: 'construction', title: 'Maestro Albañil', icon: Hammer, photo: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=600' },
+  { id: 'plomeria', title: 'Gásfiter / Plomería', icon: Wrench, photo: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600' },
+  { id: 'electricidad', title: 'Electricidad SEC', icon: Zap, photo: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600' },
+  { id: 'limpieza', title: 'Limpieza e Higiene', icon: Sparkles, photo: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600' },
+  { id: 'ensamblaje', title: 'Armado Muebles', icon: PackageCheck, photo: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600' },
+  { id: 'mudanza', title: 'Mudanzas y Fletes', icon: Truck, photo: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600' },
+  { id: 'soporte_tecnico', title: 'Soporte PC / WiFi', icon: Laptop, photo: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=600' },
+  { id: 'jardinera', title: 'Jardines y Poda', icon: Flower2, photo: 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600' },
+  { id: 'construccion', title: 'Maestro Albañil', icon: Hammer, photo: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=600' },
 ];
 
+function WorkersSkeleton() {
+  return (
+    <div className="page-fade-in" aria-busy="true" aria-label="Buscando profesionales">
+      <div className="skeleton-block skeleton-title" />
+      <div className="skeleton-block skeleton-line" />
+      <div className="skeleton-block skeleton-line short" />
+      <div className="workers-grid skeleton-workers">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="skeleton-worker-card">
+            <div className="skeleton-block skeleton-avatar" />
+            <div className="skeleton-worker-meta">
+              <div className="skeleton-block skeleton-line" />
+              <div className="skeleton-block skeleton-line short" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="skeleton-caption">Cargando profesionales disponibles…</p>
+    </div>
+  );
+}
+
 export function App() {
-  const { profile, logout } = useAuth();
-  const [darkMode, setDarkMode] = useState(true);
+  const { profile, logout, error: authError, clearError } = useAuth();
+  const [darkMode, setDarkMode] = useState(false);
   const [query, setQuery] = useState('');
-  const [aiResult, setAiResult] = useState<AiResult | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [serviceMatch, setServiceMatch] = useState<ServiceMatch | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [showEmergencyPulse, setShowEmergencyPulse] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
 
@@ -94,13 +113,14 @@ export function App() {
     }
   }, [darkMode]);
 
-  const analyzeQuery = async (text: string) => {
+  const searchService = async (text: string) => {
     if (!text.trim()) return;
-    setIsAnalyzing(true);
+    setIsSearching(true);
+    setServiceMatch(null);
     setQuery(text);
 
     const lower = text.toLowerCase();
-    let category = 'electrical';
+    let category = 'electricidad';
     let categoryName = 'Electricista Certificado';
     let problem = 'Diagnóstico y reparación de falla eléctrica';
     let minPrice = 25000;
@@ -109,29 +129,67 @@ export function App() {
     let tools = ['Tester digital', 'Alicate pelacables', 'Breaker sustituto'];
 
     if (lower.includes('fuga') || lower.includes('agua') || lower.includes('lavaplatos') || lower.includes('llave') || lower.includes('gasfiter')) {
-      category = 'plumbing';
+      category = 'plomeria';
       categoryName = 'Gásfiter / Plomero SEC';
       problem = 'Reparación de fuga de agua y cambio de llaves o grifería';
       minPrice = 30000;
       maxPrice = 75000;
-      urgency = 'Alta (Urgencia 24/7)';
+      urgency = 'Alta';
       tools = ['Soplete', 'Llave francesa', 'Sellante de teflón'];
     } else if (lower.includes('mueble') || lower.includes('armar') || lower.includes('closet') || lower.includes('rack')) {
-      category = 'assembly';
+      category = 'ensamblaje';
       categoryName = 'Armado de Muebles';
       problem = 'Montaje e instalación de mueble listo para armar';
       minPrice = 20000;
       maxPrice = 45000;
       urgency = 'Normal';
       tools = ['Atornillador inalámbrico', 'Nivel de gota', 'Juego Allen'];
-    } else if (lower.includes('limpia') || lower.includes('aseo') || lower.includes('departamento')) {
-      category = 'cleaning';
-      categoryName = 'Limpieza de Hogar u Oficina';
-      problem = 'Aseo profundo y desinfección de superficies';
-      minPrice = 35000;
-      maxPrice = 80000;
+    } else if (
+      lower.includes('limpieza') ||
+      lower.includes('limpia') ||
+      lower.includes('aseo') ||
+      lower.includes('higien') ||
+      lower.includes('departamento')
+    ) {
+      category = 'limpieza';
+      categoryName = 'Limpieza e Higiene';
+      problem = 'Servicio de limpieza residencial u oficina';
+      minPrice = 25000;
+      maxPrice = 55000;
       urgency = 'Normal';
-      tools = ['Aspiradora industrial', 'Insumos sanitizantes'];
+      tools = ['Aspiradora industrial', 'Químicos certificados'];
+    } else if (lower.includes('mudanza') || lower.includes('flete')) {
+      category = 'mudanza';
+      categoryName = 'Mudanzas y Fletes';
+      problem = 'Traslado de enseres y mobiliario';
+      minPrice = 40000;
+      maxPrice = 120000;
+      urgency = 'Media';
+      tools = ['Camión', 'Cintas', 'Frazadas'];
+    } else if (lower.includes('jardín') || lower.includes('jardin') || lower.includes('poda')) {
+      category = 'jardinera';
+      categoryName = 'Jardines y Poda';
+      problem = 'Mantención de áreas verdes';
+      minPrice = 20000;
+      maxPrice = 50000;
+      urgency = 'Normal';
+      tools = ['Tijera de poda', 'Cortacésped'];
+    } else if (lower.includes('pc') || lower.includes('wifi') || lower.includes('computador')) {
+      category = 'soporte_tecnico';
+      categoryName = 'Soporte PC / WiFi';
+      problem = 'Diagnóstico de red o equipo';
+      minPrice = 20000;
+      maxPrice = 45000;
+      urgency = 'Media';
+      tools = ['Laptop diagnóstico', 'Cable tester'];
+    } else if (lower.includes('albañ') || lower.includes('muro') || lower.includes('cemento')) {
+      category = 'construccion';
+      categoryName = 'Maestro Albañil';
+      problem = 'Trabajo de albañilería y terminaciones';
+      minPrice = 35000;
+      maxPrice = 90000;
+      urgency = 'Media';
+      tools = ['Nivel', 'Paleta', 'Mezcladora'];
     }
 
     try {
@@ -142,7 +200,7 @@ export function App() {
       setSelectedServiceId(service?.id ?? null);
       const workers = workersRaw.map((worker) => toWebWorkerCard(worker));
 
-      setAiResult({
+      setServiceMatch({
         category,
         categoryName,
         problem,
@@ -154,7 +212,7 @@ export function App() {
       });
     } catch {
       setSelectedServiceId(null);
-      setAiResult({
+      setServiceMatch({
         category,
         categoryName,
         problem,
@@ -165,7 +223,7 @@ export function App() {
         workers: [],
       });
     } finally {
-      setIsAnalyzing(false);
+      setIsSearching(false);
     }
   };
 
@@ -191,7 +249,7 @@ export function App() {
         userId: profile.id,
         workerId: selectedWorker.id,
         serviceId: selectedServiceId,
-        description: aiResult?.problem ?? query,
+        description: serviceMatch?.problem ?? query,
       });
       setBookingConfirmed(true);
       setBookingError(null);
@@ -201,170 +259,175 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Fondo de Malla Kinética Apple Spatial */}
-      <AppleSpatialBackground />
-
-      {/* Ambient Shader por Categoría */}
-      <AmbientShader category={aiResult?.category || 'general'} />
-
-      {/* 1. Translucent Apple Nav */}
+    <div className="min-h-screen app-shell">
       <nav className="glass-nav" style={{ position: 'relative', zIndex: 10 }}>
-        <div className="container" style={{ height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Logo Idéntico a App Móvil: Casa + Herramienta */}
-            <div style={{ position: 'relative', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Home size={38} color={darkMode ? '#FFFFFF' : '#0B192C'} />
-              <div style={{ position: 'absolute', bottom: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Wrench size={16} color="#F0782A" />
-              </div>
+        <div className="container nav-inner">
+          <div className="nav-brand">
+            <div className="nav-logo" aria-hidden>
+              <Home size={32} color={darkMode ? '#FFFFFF' : '#0B192C'} />
+              <Wrench size={14} color="#F0782A" className="nav-logo-wrench" />
             </div>
             <div>
-              <span style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '0.2px', color: darkMode ? '#FFFFFF' : '#0B192C' }}>My Works App</span>
-              <span style={{ fontSize: '11px', fontWeight: 800, color: '#F0782A', marginLeft: '6px', backgroundColor: 'rgba(240,120,42,0.12)', padding: '2px 8px', borderRadius: '12px' }}>WEB</span>
+              <span className="nav-title">My Works App</span>
+              <span className="nav-chip">Cliente</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="nav-actions">
             {profile ? (
               <>
-                <span style={{ fontSize: '13px', fontWeight: 700 }}>
-                  Hola, {profile.name.split(' ')[0]}
-                </span>
-                <button
-                  onClick={() => void logout()}
-                  style={{ background: 'transparent', border: '1px solid var(--border-light)', padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: 'inherit' }}
-                >
+                <span className="nav-hello">Hola, {profile.name.split(' ')[0]}</span>
+                <button type="button" className="btn-ghost" onClick={() => void logout()}>
                   <LogOut size={16} /> Salir
                 </button>
               </>
             ) : (
-              <button
-                onClick={() => setShowAuth(true)}
-                style={{ background: 'transparent', border: '1px solid var(--border-light)', padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: 'inherit' }}
-              >
+              <button type="button" className="btn-ghost" onClick={() => setShowAuth(true)}>
                 <LogIn size={16} /> Entrar
               </button>
             )}
 
-            <button 
-              onClick={() => setShowEmergencyPulse(true)}
-              style={{ backgroundColor: 'rgba(255, 59, 48, 0.15)', color: '#FF3B30', border: '1px solid #FF3B30', padding: '8px 16px', borderRadius: 'var(--radius-pill)', fontWeight: 700, fontSize: '12.5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <Sparkles size={16} /> Urgencia
-            </button>
-
-            <button 
-              onClick={() => setDarkMode(!darkMode)}
-              style={{ background: 'transparent', border: '1px solid var(--border-light)', padding: '8px 14px', borderRadius: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: 'inherit' }}
-            >
+            <button type="button" className="btn-ghost" onClick={() => setDarkMode(!darkMode)} aria-label="Cambiar tema">
               {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-              <span style={{ fontSize: '13px', fontWeight: 600 }}>{darkMode ? 'Claro' : 'Oscuro'}</span>
+              <span className="nav-theme-label">{darkMode ? 'Claro' : 'Oscuro'}</span>
             </button>
           </div>
         </div>
       </nav>
 
-      {/* 2. Hero: marca + una idea + buscador */}
-      <section style={{ padding: '56px 0 40px', position: 'relative', zIndex: 1 }}>
+      {authError && (
+        <div className="auth-banner container page-fade-in" role="alert">
+          <p>{authError}</p>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => {
+              clearError();
+              setShowAuth(true);
+            }}
+          >
+            Entendido
+          </button>
+        </div>
+      )}
+
+      <section className="hero-section page-fade-in">
         <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 32px' }}>
-            <h1 style={{ fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, lineHeight: 1.2, marginBottom: '12px', letterSpacing: '-0.5px', color: darkMode ? '#FFFFFF' : '#0B192C' }}>
-              My Works App
-            </h1>
-            <p style={{ fontSize: '17px', color: darkMode ? 'var(--text-muted-dark)' : 'var(--text-muted-light)', maxWidth: '540px', margin: '0 auto' }}>
-              Describe lo que necesitas y te sugerimos un profesional verificado cerca de ti.
+          <div className="hero-rise hero-copy">
+            <p className="badge-tag badge-orange">Marketplace de oficios · Chile</p>
+            <h1 className="brand-display hero-brand">My Works App</h1>
+            <p className="hero-lead">
+              Encuentra profesionales verificados cerca de ti y reserva en minutos.
             </p>
+            <div className="hero-cta-row">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => document.getElementById('search-box')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+              >
+                Buscar un servicio
+              </button>
+              {!profile && (
+                <button type="button" className="btn-ghost" onClick={() => setShowAuth(true)}>
+                  Crear cuenta
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Caja de Consulta Buscador Inteligente */}
-          <div className="card-3d" style={{ maxWidth: '860px', margin: '0 auto', border: '2px solid rgba(240, 120, 42, 0.3)', boxShadow: 'var(--shadow-glow)' }}>
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <input 
-                  type="text" 
+          <div id="search-box" className="card-3d search-card section-fade-in">
+            <div className="search-row">
+              <div className="search-input-wrap">
+                <input
+                  type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && analyzeQuery(query)}
-                  placeholder='Ej: "Tengo una fuga de agua en el lavaplatos y gotea el sifón..."'
-                  style={{ width: '100%', padding: '16px 20px 16px 48px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-light)', fontSize: '15px', outline: 'none', background: darkMode ? 'var(--bg-elevated-dark)' : 'var(--bg-elevated-light)', color: 'inherit' }}
+                  onKeyDown={(e) => e.key === 'Enter' && void searchService(query)}
+                  placeholder='Ej: "Fuga de agua en el lavaplatos"'
+                  className="search-input"
+                  style={{ background: darkMode ? 'var(--bg-elevated-dark)' : 'var(--bg-elevated-light)', color: 'inherit' }}
                 />
-                <Search size={20} style={{ position: 'absolute', left: '16px', top: '16px', color: '#F0782A' }} />
+                <Search size={20} className="search-icon" />
               </div>
 
-              <button 
-                onClick={() => analyzeQuery(query)}
-                disabled={isAnalyzing}
-                className="btn-primary"
-                style={{ padding: '16px 32px' }}
+              <button
+                type="button"
+                onClick={() => void searchService(query)}
+                disabled={isSearching}
+                className="btn-primary search-submit"
               >
-                {isAnalyzing ? 'Diagnosticando...' : 'Diagnosticar Servicio'}
+                {isSearching ? 'Buscando…' : 'Buscar servicio'}
               </button>
             </div>
 
-            {/* Chips Rápidos */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted-light)' }}>Sugerencias rápidas:</span>
+            <div className="chip-row">
+              <span className="chip-label">Sugerencias:</span>
               {[
-                '🔧 Fuga de agua en lavaplatos',
-                '⚡ Enchufe quemado en la cocina',
-                '🪛 Armado de clóset 3 puertas',
-                '🧹 Limpieza profunda departamento',
-              ].map((prompt, idx) => (
+                'Fuga de agua en lavaplatos',
+                'Enchufe quemado en la cocina',
+                'Armado de clóset 3 puertas',
+                'Limpieza profunda departamento',
+              ].map((prompt) => (
                 <button
-                  key={idx}
-                  onClick={() => analyzeQuery(prompt.substring(3))}
-                  style={{ background: darkMode ? 'var(--bg-elevated-dark)' : 'var(--orange-soft)', color: '#F0782A', border: 'none', padding: '6px 14px', borderRadius: 'var(--radius-pill)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                  key={prompt}
+                  type="button"
+                  onClick={() => void searchService(prompt)}
+                  className="chip-btn"
+                  style={{ background: darkMode ? 'var(--bg-elevated-dark)' : 'var(--orange-soft)' }}
                 >
                   {prompt}
                 </button>
               ))}
             </div>
 
-            {/* Resultado del Diagnóstico de Servicio */}
-            {aiResult && (
-              <div style={{ marginTop: '24px', padding: '20px', borderRadius: 'var(--radius-md)', backgroundColor: darkMode ? 'rgba(52, 199, 89, 0.1)' : '#E8F8EE', border: '1px solid #34C759' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <CheckCircle2 color="#34C759" size={22} />
-                    <h3 style={{ fontSize: '18px', fontWeight: 800 }}>Diagnóstico de Servicio: {aiResult.categoryName}</h3>
+            {isSearching && (
+              <div className="result-panel result-panel-loading">
+                <WorkersSkeleton />
+              </div>
+            )}
+
+            {!isSearching && serviceMatch && (
+              <div className="result-panel page-fade-in" key={serviceMatch.category + query}>
+                <div className="result-header">
+                  <div className="result-title-row">
+                    <CheckCircle2 color="#2F9E64" size={22} />
+                    <h3>{serviceMatch.categoryName}</h3>
                   </div>
-                  <span className="badge-tag badge-orange">{aiResult.urgency}</span>
+                  <span className="badge-tag badge-orange">{serviceMatch.urgency}</span>
                 </div>
 
-                <p style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>
-                  <strong>Problema Detectado:</strong> {aiResult.problem}
+                <p className="result-problem">
+                  <strong>Servicio:</strong> {serviceMatch.problem}
+                </p>
+                <p className="result-price">
+                  Estimado: ${serviceMatch.minPrice.toLocaleString('es-CL')} – ${serviceMatch.maxPrice.toLocaleString('es-CL')} CLP
                 </p>
 
-                <p style={{ fontSize: '16px', fontWeight: 800, color: '#34C759', marginBottom: '16px' }}>
-                  Presupuesto Estimado: ${aiResult.minPrice.toLocaleString('es-CL')} - ${aiResult.maxPrice.toLocaleString('es-CL')} CLP
-                </p>
-
-                <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '10px' }}>Profesionales Verificados Recomendados:</h4>
-                {aiResult.workers.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: 'var(--text-muted-light)' }}>
-                    No hay profesionales disponibles en Supabase para esta categoría en este momento.
-                  </p>
+                <h4 className="result-workers-label">Profesionales disponibles</h4>
+                {serviceMatch.workers.length === 0 ? (
+                  <div className="empty-state">
+                    <p className="empty-state-title">Sin profesionales por ahora</p>
+                    <p className="empty-state-copy">
+                      Todavía no hay alguien disponible en esta categoría. Prueba otra búsqueda o vuelve en unos minutos.
+                    </p>
+                  </div>
                 ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
-                  {aiResult.workers.map(w => (
-                    <div key={w.id} style={{ padding: '12px', borderRadius: 'var(--radius-md)', backgroundColor: darkMode ? 'var(--bg-surface-dark)' : 'white', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <img src={w.photoUrl} alt={w.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
-                      <div style={{ flex: 1 }}>
-                        <h5 style={{ fontSize: '14px', fontWeight: 700 }}>{w.name}</h5>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#F0782A' }}>
-                          <Star size={12} fill="#F0782A" /> {w.rating} ({w.jobsDone} trabajos)
+                  <div className="workers-grid">
+                    {serviceMatch.workers.map((w) => (
+                      <div key={w.id} className="worker-card" style={{ backgroundColor: darkMode ? 'var(--bg-surface-dark)' : 'white' }}>
+                        <img src={w.photoUrl} alt={w.name} className="worker-photo" />
+                        <div className="worker-meta">
+                          <h5>{w.name}</h5>
+                          <div className="worker-rating">
+                            <Star size={12} fill="#F0782A" /> {w.rating} ({w.jobsDone} trabajos)
+                          </div>
                         </div>
+                        <button type="button" className="btn-ask" onClick={() => requestWorker(w)}>
+                          Pedir
+                        </button>
                       </div>
-                      <button 
-                        onClick={() => requestWorker(w)}
-                        style={{ padding: '6px 12px', backgroundColor: '#F0782A', color: 'white', border: 'none', borderRadius: 'var(--radius-pill)', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
-                      >
-                        Pedir
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
@@ -372,125 +435,141 @@ export function App() {
         </div>
       </section>
 
-      {/* 3. Categorías de Servicio en 3D */}
-      <section style={{ padding: '40px 0 60px' }}>
+      <section className="categories-section section-fade-in">
         <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
-            <div>
-              <h2 style={{ fontSize: '28px', fontWeight: 800 }}>Oficios Disponibles</h2>
-              <p style={{ fontSize: '14px', color: 'var(--text-muted-light)' }}>Explora los profesionales verificados listos para tu servicio</p>
-            </div>
+          <div className="section-head">
+            <h2>Oficios disponibles</h2>
+            <p>Explora categorías y conecta con profesionales verificados</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
-            {CATEGORIES.map(cat => {
+          <div className="categories-grid">
+            {CATEGORIES.map((cat) => {
               const IconComp = cat.icon;
               return (
-                <div key={cat.id} className="card-3d" style={{ overflow: 'hidden', padding: 0, cursor: 'pointer' }} onClick={() => analyzeQuery(`Necesito un ${cat.title}`)}>
-                  <div style={{ height: '140px', position: 'relative', overflow: 'hidden' }}>
-                    <img src={cat.photo} alt={cat.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
-                    <div style={{ position: 'absolute', bottom: '12px', left: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#F0782A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button
+                  key={cat.id}
+                  type="button"
+                  className="card-3d category-card"
+                  onClick={() => void searchService(`Necesito un ${cat.title}`)}
+                >
+                  <div className="category-media">
+                    <img src={cat.photo} alt={cat.title} />
+                    <div className="category-media-fade" />
+                    <div className="category-media-label">
+                      <span className="category-icon">
                         <IconComp size={18} />
-                      </div>
-                      <span style={{ fontWeight: 800, fontSize: '16px' }}>{cat.title}</span>
+                      </span>
+                      <span>{cat.title}</span>
                     </div>
                   </div>
-                  <div style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted-light)' }}>Atención Inmediata</span>
+                  <div className="category-footer">
+                    <span>Ver profesionales</span>
                     <ArrowRight size={16} color="#F0782A" />
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* Modal de Reserva Rápida */}
       {selectedWorker && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="card-3d" style={{ maxWidth: '500px', width: '100%', position: 'relative' }}>
-            <button onClick={() => { setSelectedWorker(null); setBookingConfirmed(false); }} style={{ position: 'absolute', right: '16px', top: '16px', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}>
+        <div className="modal-backdrop modal-fade-in">
+          <div className="card-3d modal-card modal-rise">
+            <button
+              type="button"
+              className="modal-close"
+              onClick={() => {
+                setSelectedWorker(null);
+                setBookingConfirmed(false);
+              }}
+              aria-label="Cerrar"
+            >
               <X size={20} />
             </button>
 
             {!bookingConfirmed ? (
               <>
-                <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '16px' }}>Solicitar Servicio Web</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', padding: '12px', backgroundColor: darkMode ? 'var(--bg-elevated-dark)' : 'var(--bg-elevated-light)', borderRadius: 'var(--radius-md)' }}>
-                  <img src={selectedWorker.photoUrl} alt={selectedWorker.name} style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover' }} />
+                <h3 className="modal-title">Solicitar servicio</h3>
+                <div className="booking-worker" style={{ backgroundColor: darkMode ? 'var(--bg-elevated-dark)' : 'var(--bg-elevated-light)' }}>
+                  <img src={selectedWorker.photoUrl} alt={selectedWorker.name} />
                   <div>
-                    <h4 style={{ fontSize: '16px', fontWeight: 800 }}>{selectedWorker.name}</h4>
-                    <p style={{ fontSize: '13px', color: '#F0782A', fontWeight: 600 }}>{selectedWorker.profession}</p>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted-light)' }}>Visita inicial: ${selectedWorker.pricePerVisit.toLocaleString('es-CL')} CLP</span>
+                    <h4>{selectedWorker.name}</h4>
+                    <p>{selectedWorker.profession}</p>
+                    <span>Visita inicial: ${selectedWorker.pricePerVisit.toLocaleString('es-CL')} CLP</span>
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '20px', padding: '14px', backgroundColor: 'rgba(52, 199, 89, 0.12)', border: '1px solid #34C759', borderRadius: 'var(--radius-md)', display: 'flex', gap: '10px' }}>
-                  <ShieldCheck color="#34C759" size={24} />
+                <div className="demo-note">
+                  <ShieldCheck color="#F0782A" size={22} />
                   <div>
-                    <h5 style={{ fontSize: '13px', fontWeight: 800, color: '#34C759' }}>Garantía 100% Escrow MyWorks Protect</h5>
-                    <p style={{ fontSize: '11px', color: 'var(--text-muted-light)' }}>El pago queda retenido de forma segura hasta que confirmes la entrega conforme.</p>
+                    <h5>Pago en escrow (próximamente)</h5>
+                    <p>
+                      El checkout actual es una <strong>simulación / demo</strong>: no hay cobro real ni retención de fondos.
+                    </p>
                   </div>
                 </div>
 
-                <button 
+                <button
+                  type="button"
                   onClick={() => setShowCheckout(true)}
-                  className="btn-primary" 
+                  className="btn-primary"
                   style={{ width: '100%', justifyContent: 'center', marginBottom: '10px' }}
                 >
-                  <CreditCard size={18} /> Pagar vía Webpay / Mercado Pago
+                  <CreditCard size={18} /> Continuar al checkout demo
                 </button>
-                {bookingError && (
-                  <p style={{ color: '#FF3B30', fontSize: '13px', fontWeight: 600 }}>{bookingError}</p>
-                )}
+                {bookingError && <p className="error-text">{bookingError}</p>}
               </>
             ) : (
-              <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                <CheckCircle2 color="#34C759" size={56} style={{ margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '22px', fontWeight: 900, marginBottom: '8px' }}>¡Solicitud y Pago Confirmados!</h3>
-                <p style={{ fontSize: '14px', color: 'var(--text-muted-light)', marginBottom: '20px' }}>
-                  {selectedWorker.name} ha sido notificado y tus fondos de ${selectedWorker.pricePerVisit.toLocaleString('es-CL')} CLP están resguardados en Escrow.
+              <div className="booking-done page-fade-in">
+                <CheckCircle2 color="#2F9E64" size={56} />
+                <h3>Solicitud creada</h3>
+                <p>
+                  Tu solicitud quedó registrada. Referencia de pago simulado: ${selectedWorker.pricePerVisit.toLocaleString('es-CL')} CLP
+                  (sin cobro real).
                 </p>
 
-                {/* Mapa de Seguimiento GPS en Tiempo Real ETA */}
-                <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-                  <LiveGpsTrackingMap 
+                <div className="tracking-wrap">
+                  <LiveGpsTrackingMap
                     workerName={selectedWorker.name}
                     workerProfession={selectedWorker.profession}
                     etaMinutes={7}
                   />
                 </div>
 
-                <div style={{ display: 'flex', gap: '12px', marginTop: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <button 
-                    onClick={() => generatePdfCertificate({
-                      certificateId: 'CERT-2026-9901',
-                      clientName: 'Cliente MyWorks',
-                      workerName: selectedWorker.name,
-                      profession: selectedWorker.profession,
-                      serviceDate: new Date().toLocaleDateString('es-CL'),
-                      totalAmount: selectedWorker.pricePerVisit,
-                      pinCode: '7482',
-                      transactionHash: '0x9021a88b1f22e89',
-                    })}
+                <div className="booking-actions">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      generatePdfCertificate({
+                        certificateId: 'CERT-DEMO-9901',
+                        clientName: profile?.name ?? 'Cliente MyWorks',
+                        workerName: selectedWorker.name,
+                        profession: selectedWorker.profession,
+                        serviceDate: new Date().toLocaleDateString('es-CL'),
+                        totalAmount: selectedWorker.pricePerVisit,
+                        pinCode: '7482',
+                        transactionHash: 'demo-tx-9021a88b',
+                      })
+                    }
                     className="btn-primary"
                     style={{ backgroundColor: 'var(--navy-structure)' }}
                   >
-                    <FileText size={16} /> Certificado PDF
+                    <FileText size={16} /> Comprobante PDF
                   </button>
 
-                  <button 
-                    onClick={() => setShowChat(true)}
+                  <button type="button" onClick={() => setShowChat(true)} className="btn-primary" style={{ backgroundColor: '#1A2740' }}>
+                    Abrir chat
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedWorker(null);
+                      setBookingConfirmed(false);
+                    }}
                     className="btn-primary"
-                    style={{ backgroundColor: '#007AFF' }}
                   >
-                    Abrir Chat en Vivo
-                  </button>
-
-                  <button onClick={() => { setSelectedWorker(null); setBookingConfirmed(false); }} className="btn-primary">
                     Finalizar
                   </button>
                 </div>
@@ -500,7 +579,6 @@ export function App() {
         </div>
       )}
 
-      {/* Modal Checkout Webpay */}
       {showCheckout && selectedWorker && (
         <PaymentCheckoutModal
           workerName={selectedWorker.name}
@@ -514,23 +592,11 @@ export function App() {
         />
       )}
 
-      {/* Widget Chat en Vivo */}
       {showChat && selectedWorker && (
         <LiveChatWidget
           workerName={selectedWorker.name}
           workerPhoto={selectedWorker.photoUrl}
           onClose={() => setShowChat(false)}
-        />
-      )}
-
-      {/* Spatial Emergency Pulse 3s */}
-      {showEmergencyPulse && (
-        <SpatialEmergencyPulse
-          onClose={() => setShowEmergencyPulse(false)}
-          onDispatch={() => {
-            setShowEmergencyPulse(false);
-            void analyzeQuery('Fuga de agua en lavaplatos');
-          }}
         />
       )}
 

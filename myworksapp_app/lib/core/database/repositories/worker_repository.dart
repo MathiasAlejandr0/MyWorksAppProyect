@@ -6,7 +6,7 @@ import '../models/worker_model.dart';
 import '../supabase_db.dart';
 import 'job_repository.dart';
 class WorkerRepository {
-  static const String _table = 'workers';
+  static const String _table = 'trabajadores';
 
   Future<void> createWorker(WorkerModel worker) async {
     await supabase.from(_table).upsert(worker.toMap());
@@ -16,7 +16,7 @@ class WorkerRepository {
     final row = await supabase
         .from(_table)
         .select()
-        .eq('userId', userId)
+        .eq('id_usuario', userId)
         .maybeSingle();
     if (row == null) return null;
     return WorkerModel.fromMap(row);
@@ -34,14 +34,14 @@ class WorkerRepository {
     var rows = await supabase
         .from(_table)
         .select()
-        .eq('serviceCategory', category)
-        .order('rating', ascending: false);
+        .eq('categoria_servicio', category)
+        .order('calificacion', ascending: false);
 
     if (rows.isEmpty) {
       // Búsqueda flexible por subcadena o coincidencia aproximada de categoría
       final allRows = await supabase.from(_table).select();
       rows = allRows.where((r) {
-        final cat = (r['serviceCategory'] as String? ?? '').toLowerCase();
+        final cat = (r['categoria_servicio'] as String? ?? '').toLowerCase();
         return cat.contains(category.toLowerCase()) || category.toLowerCase().contains(cat);
       }).toList();
     }
@@ -90,15 +90,15 @@ class WorkerRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('profession', profession)
-        .eq('isAvailable', 1);
+        .eq('profesion', profession)
+        .eq('disponible', 1);
     final workers = rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
     WorkerReputationService.instance.sortForListing(workers);
     return workers;
   }
 
   Future<List<WorkerModel>> getAllAvailableWorkers() async {
-    final rows = await supabase.from(_table).select().eq('isAvailable', 1);
+    final rows = await supabase.from(_table).select().eq('disponible', 1);
     final workers = rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
     WorkerReputationService.instance.sortForListing(workers);
     return workers;
@@ -108,12 +108,12 @@ class WorkerRepository {
   Future<List<WorkerLoginItem>> getWorkersForLogin() async {
     final workerRows = await supabase
         .from(_table)
-        .select('userId, profession, serviceCategory');
+        .select('id_usuario, profesion, categoria_servicio');
 
     final profileRows = await supabase
-        .from('profiles')
-        .select('id, name, email, role')
-        .eq('role', 'worker');
+        .from('perfiles')
+        .select('id, nombre, correo, rol')
+        .eq('rol', 'trabajador');
 
     final profilesById = <String, Map<String, dynamic>>{
       for (final row in profileRows)
@@ -122,17 +122,17 @@ class WorkerRepository {
 
     final items = <WorkerLoginItem>[];
     for (final row in workerRows) {
-      final userId = row['userId'] as String;
+      final userId = row['id_usuario'] as String;
       final profile = profilesById[userId];
       if (profile == null) continue;
 
       items.add(
         WorkerLoginItem(
           userId: userId,
-          name: profile['name'] as String? ?? 'Trabajador',
-          email: profile['email'] as String? ?? '',
-          profession: row['profession'] as String? ?? '',
-          serviceCategory: row['serviceCategory'] as String? ?? 'general',
+          name: profile['nombre'] as String? ?? 'Trabajador',
+          email: profile['correo'] as String? ?? '',
+          profession: row['profesion'] as String? ?? '',
+          serviceCategory: row['categoria_servicio'] as String? ?? 'general',
         ),
       );
     }
@@ -145,13 +145,13 @@ class WorkerRepository {
     await supabase
         .from(_table)
         .update(worker.toMap())
-        .eq('userId', worker.userId);
+        .eq('id_usuario', worker.userId);
   }
 
   Future<void> updateAvailability(String userId, bool isAvailable) async {
     await supabase
         .from(_table)
-        .update({'isAvailable': isAvailable ? 1 : 0}).eq('userId', userId);
+        .update({'disponible': isAvailable ? 1 : 0}).eq('id_usuario', userId);
   }
 
   /// Disponible para nuevos trabajos: flag activo y sin trabajos en curso.
@@ -174,7 +174,9 @@ class WorkerRepository {
   }
 
   Future<void> updateRating(String userId, double rating) async {
-    await supabase.from(_table).update({'rating': rating}).eq('userId', userId);
+    await supabase
+        .from(_table)
+        .update({'calificacion': rating}).eq('id_usuario', userId);
   }
 
   // Obtener trabajadores disponibles que no tienen trabajos activos
@@ -184,9 +186,9 @@ class WorkerRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('isAvailable', 1)
-        .eq('pricingConfigured', 1)
-        .order('rating', ascending: false);
+        .eq('disponible', 1)
+        .eq('precios_configurados', 1)
+        .order('calificacion', ascending: false);
     final allWorkers =
         rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
     return _filterListedWorkers(allWorkers, near: near);

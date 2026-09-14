@@ -36,7 +36,7 @@ class AppHealthService {
   /// Verifica conectividad con Supabase (lectura mínima al catálogo).
   Future<bool> checkHealth() async {
     try {
-      await supabase.from('services').select('id').limit(1);
+      await supabase.from('servicios').select('id').limit(1);
 
       _status = AppHealthStatus.healthy;
       _isMaintenanceMode = false;
@@ -63,7 +63,8 @@ class AppHealthService {
     AppLogger.e('🚨 FALLO CRÍTICO DETECTADO: $type - $message');
 
     if (kReleaseMode) {
-      AppLogger.w('Modo producción: activando modo seguro en lugar de crashear');
+      AppLogger.w(
+          'Modo producción: activando modo seguro en lugar de crashear');
     }
   }
 

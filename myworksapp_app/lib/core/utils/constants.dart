@@ -2,20 +2,52 @@ class AppConstants {
   /// Nombre de marca en logos, launcher y textos de la UI.
   static const String appBrandDisplayName = 'My Works App';
 
-  // Roles — sincronizar con shared/src/domain.ts (UserRoles)
-  static const String roleUser = 'user';
-  static const String roleWorker = 'worker';
-  static const String roleAdmin = 'admin';
+  // Roles (códigos BD en español)
+  static const String roleUser = 'usuario';
+  static const String roleWorker = 'trabajador';
+  static const String roleAdmin = 'administrador';
 
-  // Estados de trabajo — sincronizar con shared/src/domain.ts (JobStatuses)
-  static const String jobStatusPending = 'pending';
-  static const String jobStatusAccepted = 'accepted';
-  static const String jobStatusInProgress = 'in_progress';
-  static const String jobStatusCompleted = 'completed';
-  static const String jobStatusCancelled = 'cancelled';
-  // Estados avanzados (preparación futura)
-  static const String jobStatusExpired = 'expired'; // No aceptado en X tiempo
-  static const String jobStatusNoShow = 'no_show'; // Una parte no se presentó
+  // Estados de trabajo
+  static const String jobStatusPending = 'pendiente';
+  static const String jobStatusAccepted = 'aceptado';
+  static const String jobStatusInProgress = 'en_curso';
+  static const String jobStatusCompleted = 'completado';
+  static const String jobStatusCancelled = 'cancelado';
+  static const String jobStatusExpired = 'expirado';
+  static const String jobStatusNoShow = 'no_asistio';
+
+  // Estados de disputa
+  static const String disputeStatusOpen = 'abierta';
+  static const String disputeStatusUnderReview = 'en_revision';
+  static const String disputeStatusResolved = 'resuelta';
+
+  // Estados de reporte / reclamo
+  static const String reportStatusPending = 'pendiente';
+  static const String reportStatusReviewed = 'revisado';
+  static const String reportStatusResolved = 'resuelto';
+  static const String reportStatusDismissed = 'descartado';
+
+  // Estados de registro de error de app
+  static const String errorStatusNew = 'nuevo';
+  static const String errorStatusAcknowledged = 'reconocido';
+  static const String errorStatusResolved = 'resuelto';
+  static const String errorStatusIgnored = 'ignorado';
+
+  // Estados de cuenta
+  static const String accountStatusActive = 'activo';
+  static const String accountStatusSuspended = 'suspendido';
+  static const String accountStatusBlocked = 'bloqueado';
+  static const String accountStatusDeleted = 'eliminado';
+
+  // Estados de sync offline
+  static const String syncStatusPending = 'pendiente_sync';
+  static const String syncStatusFailed = 'fallido';
+
+  // Motivos de disputa
+  static const String disputeReasonQuality = 'calidad';
+  static const String disputeReasonPayment = 'pago';
+  static const String disputeReasonBehavior = 'conducta';
+  static const String disputeReasonOther = 'otro';
 
   // Rutas
   static const String routeWelcome = '/welcome';
@@ -67,4 +99,3 @@ class AppConstants {
   static const String routeAdminFeatureFlags = '/admin/feature-flags';
   static const String routeAdminDesktopHub = '/admin/desktop-hub';
 }
-

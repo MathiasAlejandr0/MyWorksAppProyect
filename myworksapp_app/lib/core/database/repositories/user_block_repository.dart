@@ -2,7 +2,7 @@ import '../models/user_block_model.dart';
 import '../supabase_db.dart';
 
 class UserBlockRepository {
-  static const String _table = 'user_blocks';
+  static const String _table = 'bloqueos_usuario';
 
   Future<void> createBlock(UserBlockModel block) async {
     try {
@@ -16,24 +16,24 @@ class UserBlockRepository {
     final rows = await supabase
         .from(_table)
         .select('id')
-        .eq('blockerId', blockerId)
-        .eq('blockedUserId', blockedUserId);
+        .eq('id_bloqueador', blockerId)
+        .eq('id_bloqueado', blockedUserId);
     return rows.isNotEmpty;
   }
 
   Future<List<String>> getBlockedUserIds(String blockerId) async {
     final rows = await supabase
         .from(_table)
-        .select('blockedUserId')
-        .eq('blockerId', blockerId);
-    return rows.map<String>((m) => m['blockedUserId'] as String).toList();
+        .select('id_bloqueado')
+        .eq('id_bloqueador', blockerId);
+    return rows.map<String>((m) => m['id_bloqueado'] as String).toList();
   }
 
   Future<void> removeBlock(String blockerId, String blockedUserId) async {
     await supabase
         .from(_table)
         .delete()
-        .eq('blockerId', blockerId)
-        .eq('blockedUserId', blockedUserId);
+        .eq('id_bloqueador', blockerId)
+        .eq('id_bloqueado', blockedUserId);
   }
 }

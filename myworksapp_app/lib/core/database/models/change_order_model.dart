@@ -27,36 +27,36 @@ class ChangeOrderModel {
 
   Map<String, dynamic> toMap() => {
         'id': id,
-        'jobId': jobId,
-        'workerId': workerId,
+        'id_trabajo': jobId,
+        'id_trabajador': workerId,
         'tipo': tipo,
         'titulo': titulo,
         'descripcion': descripcion,
-        'montoClp': montoClp,
+        'monto_clp': montoClp,
         'estado': estado,
-        'paymentId': paymentId,
-        'createdAt': createdAt.toIso8601String(),
-        'respondedAt': respondedAt?.toIso8601String(),
+        'id_pago': paymentId,
+        'creado_en': createdAt.toIso8601String(),
+        'respondido_en': respondedAt?.toIso8601String(),
       };
 
   factory ChangeOrderModel.fromMap(Map<String, dynamic> map) {
     return ChangeOrderModel(
       id: map['id'] as String,
-      jobId: map['jobId'] as String,
-      workerId: map['workerId'] as String,
+      jobId: map['id_trabajo'] as String,
+      workerId: map['id_trabajador'] as String,
       tipo: map['tipo'] as String,
       titulo: map['titulo'] as String,
       descripcion: map['descripcion'] as String,
-      montoClp: (map['montoClp'] as num).toInt(),
+      montoClp: (map['monto_clp'] as num).toInt(),
       estado: map['estado'] as String,
-      paymentId: map['paymentId'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      respondedAt: map['respondedAt'] != null
-          ? DateTime.parse(map['respondedAt'] as String)
+      paymentId: map['id_pago'] as String?,
+      createdAt: DateTime.parse(map['creado_en'] as String),
+      respondedAt: map['respondido_en'] != null
+          ? DateTime.parse(map['respondido_en'] as String)
           : null,
     );
   }
 
-  bool get isPendingClient => estado == 'pending_client';
-  bool get isPaid => estado == 'paid';
+  bool get isPendingClient => estado == 'pendiente_cliente';
+  bool get isPaid => estado == 'pagada';
 }

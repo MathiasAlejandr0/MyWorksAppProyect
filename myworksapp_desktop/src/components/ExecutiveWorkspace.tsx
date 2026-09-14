@@ -3,6 +3,7 @@ import { TrendingUp, Wallet, CheckCircle2, XCircle, DollarSign, Lock, AlertTrian
 import { AuditTrailViewer } from './AuditTrailViewer';
 import { FinancialSettlementModal } from './FinancialSettlementModal';
 import { DigitalContractModal } from './DigitalContractModal';
+import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
 import { fetchAdminMetrics, fetchWorkersForAdmin } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 
@@ -75,12 +76,11 @@ export function ExecutiveWorkspace() {
 
   return (
     <div>
-      {/* Alerta de Freeze Switch Activo */}
       {isFrozen && (
-        <div style={{ backgroundColor: 'rgba(255,59,48,0.2)', border: '2px solid #FF3B30', color: '#FF3B30', padding: '14px 20px', borderRadius: '12px', marginBottom: '20px', fontWeight: 800, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ backgroundColor: 'rgba(255,59,48,0.2)', border: '2px solid #FF3B30', color: '#FF3B30', padding: '14px 20px', borderRadius: '12px', marginBottom: '20px', fontWeight: 800, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangle size={20} />
-            <span>MODO CONGELAMIENTO DE EMERGENCIA ACTIVO: Custodia de pagos bloqueada preventivamente.</span>
+            <span>Congelamiento de emergencia (UI demo — no bloquea pagos reales).</span>
           </div>
           <button onClick={() => setIsFrozen(false)} className="btn-action-danger">
             Desactivar
@@ -88,93 +88,98 @@ export function ExecutiveWorkspace() {
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800 }}>Panel ejecutivo</h1>
-          <p style={{ fontSize: '13.5px', color: '#98989D' }}>Métricas GMV, gráficos de rendimiento, custodia Escrow y validación corporativa.</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 900 }}>Panel ejecutivo</h1>
+          <p style={{ fontSize: '13.5px', color: '#98989D', marginTop: '4px' }}>
+            Contadores desde Supabase. Gráficos GMV y audit trail son demostración académica.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button onClick={() => setShowContractModal(true)} className="btn-action-primary">
-            <FileText size={14} /> Contrato Digital (Ley 19.799)
+            <FileText size={14} /> Contrato (demo)
           </button>
           <button onClick={() => setShowSettlement(true)} className="btn-action-success">
-            <DollarSign size={14} /> Liquidación SII (19%)
+            <DollarSign size={14} /> Liquidación (demo)
           </button>
           <button onClick={() => setIsFrozen(!isFrozen)} className={isFrozen ? "btn-action-success" : "btn-action-danger"}>
-            <Lock size={14} /> {isFrozen ? 'Descongelar Sistema' : 'Freeze Switch'}
+            <Lock size={14} /> {isFrozen ? 'Descongelar' : 'Freeze (demo)'}
           </button>
         </div>
       </div>
 
-      {loading && (
-        <p style={{ color: '#98989D', marginBottom: '16px' }}>Sincronizando métricas con Supabase...</p>
-      )}
-
-      {/* Sub-Barra de Navegación Organizada */}
       <div className="sub-tabs-bar">
         <div className={`sub-tab-item ${subActiveTab === 0 ? 'active' : ''}`} onClick={() => setSubActiveTab(0)}>
-          <LayoutDashboard size={16} /> 1. Analytics & Gráficos KPI
+          <LayoutDashboard size={16} /> Métricas
         </div>
         <div className={`sub-tab-item ${subActiveTab === 1 ? 'active' : ''}`} onClick={() => setSubActiveTab(1)}>
-          <UserCheck size={16} /> 2. Verificación de Trabajadores ({workers.filter(w => w.status === 'Pending').length} pend.)
+          <UserCheck size={16} /> Trabajadores ({workers.filter(w => w.status === 'Pending').length} pend.)
         </div>
         <div className={`sub-tab-item ${subActiveTab === 2 ? 'active' : ''}`} onClick={() => setSubActiveTab(2)}>
-          <FileText size={16} /> 3. Audit Trail Legal & Logs
+          <FileText size={16} /> Audit trail (demo)
         </div>
       </div>
 
-      {/* 1. Sub-Pestaña: Analytics & Gráficos KPI */}
       {subActiveTab === 0 && (
         <div>
-          {/* Tarjetas de Métricas Top C-Level */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+          {loading ? (
+            <KpiCardsSkeleton count={4} />
+          ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
             <div className="card-3d">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#34C759', marginBottom: '8px' }}>
                 <Wallet size={20} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>GMV Custodiado Escrow</span>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Trabajos (Supabase)</span>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.jobsCount.toLocaleString('es-CL')} trabajos</div>
-              <span style={{ fontSize: '11.5px', color: '#34C759', fontWeight: 700 }}>{metrics.activeJobsCount} activos ahora</span>
+              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.jobsCount.toLocaleString('es-CL')}</div>
+              <span style={{ fontSize: '11.5px', color: '#34C759', fontWeight: 700 }}>{metrics.activeJobsCount} activos</span>
             </div>
 
             <div className="card-3d">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#F0782A', marginBottom: '8px' }}>
                 <TrendingUp size={20} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Comisiones Netas (10%)</span>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Profesionales</span>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.workersCount} profesionales</div>
-              <span style={{ fontSize: '11.5px', color: '#F0782A', fontWeight: 700 }}>{metrics.usersCount} usuarios registrados</span>
+              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.workersCount}</div>
+              <span style={{ fontSize: '11.5px', color: '#F0782A', fontWeight: 700 }}>{metrics.usersCount} usuarios</span>
             </div>
 
             <div className="card-3d">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#007AFF', marginBottom: '8px' }}>
                 <Award size={20} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Trust Score & Calidad</span>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Disputas abiertas</span>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.openDisputesCount} disputas</div>
-              <span style={{ fontSize: '11.5px', color: '#007AFF', fontWeight: 700 }}>Datos en vivo desde Supabase</span>
+              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.openDisputesCount}</div>
+              <span style={{ fontSize: '11.5px', color: '#007AFF', fontWeight: 700 }}>Datos en vivo</span>
             </div>
 
             <div className="card-3d">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#F0782A', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#AF52DE', marginBottom: '8px' }}>
                 <Clock size={20} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#A8B0BC' }}>Tiempo asignación</span>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Tiempo asignación</span>
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800 }}>—</div>
-              <span style={{ fontSize: '11.5px', color: '#A8B0BC', fontWeight: 700 }}>Demo: sin métrica de despacho aún</span>
+              <div style={{ fontSize: '26px', fontWeight: 900 }}>—</div>
+              <span style={{ fontSize: '11.5px', color: '#AF52DE', fontWeight: 700 }}>Sin métrica real aún</span>
             </div>
           </div>
+          )}
 
-          {/* Sección de Gráficos Financieros & Mercado */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '20px', marginBottom: '24px' }}>
-            {/* Gráfico 1: Tendencia GMV Semanal SVG */}
+          {!loading && (
+          <>
+          <div className="demo-banner" style={{ marginBottom: '16px' }}>
+            Gráficos GMV / categorías: DEMO (no calculados desde pagos reales).
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
             <div className="card-3d" style={{ padding: '22px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', gap: '8px', flexWrap: 'wrap' }}>
                 <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 900 }}>Tendencia de Crecimiento GMV & Comisiones</h3>
-                  <span style={{ fontSize: '12px', color: '#98989D' }}>Evolución mensual de volumen custodiado en CLP</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 900 }}>Tendencia GMV (ejemplo)</h3>
+                    <span className="demo-badge">DEMO</span>
+                  </div>
+                  <span style={{ fontSize: '12px', color: '#98989D' }}>Serie ficticia para presentación académica</span>
                 </div>
-                <span className="badge badge-success" style={{ fontSize: '11px' }}>En alza +18.4%</span>
               </div>
 
               {/* Gráfico de Barras SVG Interactivo */}
@@ -196,125 +201,141 @@ export function ExecutiveWorkspace() {
               </div>
             </div>
 
-            {/* Gráfico 2: Distribución por Categorías de Oficio */}
             <div className="card-3d" style={{ padding: '22px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
                 <PieChart size={18} color="#007AFF" />
-                <h3 style={{ fontSize: '16px', fontWeight: 900 }}>Demanda por Categoría</h3>
+                <h3 style={{ fontSize: '16px', fontWeight: 900 }}>Demanda por categoría</h3>
+                <span className="demo-badge">DEMO</span>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', fontWeight: 700, marginBottom: '4px' }}>
-                    <span>⚡ Electricidad SEC</span>
-                    <span>38% ($5.64M)</span>
+                    <span>Electricidad SEC</span>
+                    <span>38%</span>
                   </div>
-                  <div style={{ height: '8px', backgroundColor: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ width: '38%', height: '100%', backgroundColor: '#F0782A' }} />
                   </div>
                 </div>
 
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', fontWeight: 700, marginBottom: '4px' }}>
-                    <span>🚰 Gasfitería & Calefón</span>
-                    <span>27% ($4.00M)</span>
+                    <span>Gasfitería</span>
+                    <span>27%</span>
                   </div>
-                  <div style={{ height: '8px', backgroundColor: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ width: '27%', height: '100%', backgroundColor: '#007AFF' }} />
                   </div>
                 </div>
 
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', fontWeight: 700, marginBottom: '4px' }}>
-                    <span>🔑 Cerrajería 24/7</span>
-                    <span>20% ($2.97M)</span>
+                    <span>Cerrajería</span>
+                    <span>20%</span>
                   </div>
-                  <div style={{ height: '8px', backgroundColor: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ width: '20%', height: '100%', backgroundColor: '#34C759' }} />
                   </div>
                 </div>
 
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', fontWeight: 700, marginBottom: '4px' }}>
-                    <span>🎨 Pintura & Reformas</span>
-                    <span>15% ($2.22M)</span>
+                    <span>Pintura & reformas</span>
+                    <span>15%</span>
                   </div>
-                  <div style={{ height: '8px', backgroundColor: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: '15%', height: '100%', backgroundColor: '#F0782A' }} />
+                  <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: '15%', height: '100%', backgroundColor: '#AF52DE' }} />
                   </div>
                 </div>
               </div>
             </div>
           </div>
+          </>
+          )}
         </div>
       )}
 
-      {/* 2. Sub-Pestaña: Verificación de Trabajadores */}
       {subActiveTab === 1 && (
         <div className="card-3d" style={{ overflow: 'hidden', padding: 0 }}>
           <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 800 }}>Aprobación y Verificación de Trabajadores</h3>
-            <p style={{ fontSize: '12.5px', color: '#98989D' }}>Validación legal de RUT, certificados SEC y antecedentes.</p>
+            <h3 style={{ fontSize: '16px', fontWeight: 800 }}>Profesionales (Supabase)</h3>
+            <p style={{ fontSize: '12.5px', color: '#98989D' }}>Listado real. Aprobar/revocar es solo estado local en esta sesión (no escribe verificación SEC).</p>
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ID</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>NOMBRE</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESPECIALIDAD</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>RUT</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESTADO SEC</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ACCIÓN</th>
-              </tr>
-            </thead>
-            <tbody>
-              {workers.map(w => (
-                <tr key={w.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '16px 20px', fontWeight: 800, color: '#F0782A' }}>{w.id}</td>
-                  <td style={{ padding: '16px 20px', fontWeight: 600 }}>{w.name}</td>
-                  <td style={{ padding: '16px 20px', color: '#98989D' }}>{w.profession}</td>
-                  <td style={{ padding: '16px 20px', fontFamily: 'monospace' }}>{w.rut}</td>
-                  <td style={{ padding: '16px 20px' }}>
-                    <span className={w.status === 'Verified' ? "badge badge-success" : "badge badge-error"}>
-                      {w.status === 'Verified' ? 'Verificado SEC' : 'Pendiente Rev.'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px 20px' }}>
-                    <button 
-                      onClick={() => toggleVerification(w.id)} 
-                      className={w.status === 'Verified' ? "btn-action-danger" : "btn-action-success"}
-                      style={{ padding: '6px 12px', fontSize: '12px' }}
-                    >
-                      {w.status === 'Verified' ? <XCircle size={14} /> : <CheckCircle2 size={14} />}
-                      {w.status === 'Verified' ? 'Revocar' : 'Aprobar'}
-                    </button>
-                  </td>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ID</th>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>NOMBRE</th>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESPECIALIDAD</th>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>CONTACTO</th>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>PRICING</th>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ACCIÓN (local)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {loading && (
+                  <tr>
+                    <td colSpan={6} style={{ padding: 0 }}>
+                      <div className="table-skeleton-wrap">
+                        <TableRowsSkeleton rows={4} columns={6} />
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {!loading && workers.length === 0 && (
+                  <tr>
+                    <td colSpan={6} style={{ padding: '24px 20px', color: '#98989D', textAlign: 'center' }}>
+                      Sin trabajadores visibles o sin permisos.
+                    </td>
+                  </tr>
+                )}
+                {!loading && workers.map(w => (
+                  <tr key={w.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '16px 20px', fontWeight: 800, color: '#F0782A' }}>{w.id.slice(0, 8)}…</td>
+                    <td style={{ padding: '16px 20px', fontWeight: 600 }}>{w.name}</td>
+                    <td style={{ padding: '16px 20px', color: '#98989D' }}>{w.profession}</td>
+                    <td style={{ padding: '16px 20px', fontFamily: 'monospace', fontSize: '12px' }}>{w.rut}</td>
+                    <td style={{ padding: '16px 20px' }}>
+                      <span className={w.status === 'Verified' ? "badge badge-success" : "badge badge-error"}>
+                        {w.status === 'Verified' ? 'Configurado' : 'Pendiente'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      <button
+                        onClick={() => toggleVerification(w.id)}
+                        className={w.status === 'Verified' ? "btn-action-danger" : "btn-action-success"}
+                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                      >
+                        {w.status === 'Verified' ? <XCircle size={14} /> : <CheckCircle2 size={14} />}
+                        {w.status === 'Verified' ? 'Marcar pend.' : 'Marcar OK'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      {/* 3. Sub-Pestaña: Audit Trail Legal & Logs */}
       {subActiveTab === 2 && (
         <AuditTrailViewer />
       )}
 
-      {/* Modal de Liquidación Financiera SII */}
       {showSettlement && (
         <FinancialSettlementModal onClose={() => setShowSettlement(false)} />
       )}
 
-      {/* Modal de Contrato Digital Ley 19.799 */}
       {showContractModal && (
-        <DigitalContractModal 
-          clientName="Carolina Mendoza"
-          clientRut="17.892.401-K"
-          workerName="Carlos Silva"
-          workerRut="16.892.410-K"
-          serviceDescription="Instalación y normalización de tablero eléctrico trifásico bajo norma SEC"
+        <DigitalContractModal
+          clientName="Cliente Demo"
+          clientRut="DEMO-CL-001"
+          workerName="Profesional Demo"
+          workerRut="DEMO-WK-001"
+          serviceDescription="Servicio de ejemplo para demostración académica (sin PII real)"
           totalAmount={65000}
           onClose={() => setShowContractModal(false)}
         />

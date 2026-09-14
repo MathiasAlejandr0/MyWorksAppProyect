@@ -21,20 +21,20 @@ class ServiceConfigModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'serviceId': serviceId,
-      'configSchema': _encodeSchema(configSchema),
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'id_servicio': serviceId,
+      'esquema_config': _encodeSchema(configSchema),
+      'creado_en': createdAt.toIso8601String(),
+      'actualizado_en': updatedAt.toIso8601String(),
     };
   }
 
   factory ServiceConfigModel.fromMap(Map<String, dynamic> map) {
     return ServiceConfigModel(
       id: map['id'] as String,
-      serviceId: map['serviceId'] as String,
-      configSchema: _decodeSchema(map['configSchema'] as String?),
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: DateTime.parse(map['updatedAt'] as String),
+      serviceId: map['id_servicio'] as String,
+      configSchema: _decodeSchema(map['esquema_config'] as String?),
+      createdAt: DateTime.parse(map['creado_en'] as String),
+      updatedAt: DateTime.parse(map['actualizado_en'] as String),
     );
   }
 
@@ -67,7 +67,7 @@ class ServiceConfigModel {
           if (field is Map<String, dynamic>) {
             final isRequired = field['required'] as bool? ?? false;
             if (isRequired) {
-              fields.add(field['name'] as String? ?? '');
+              fields.add(field['nombre'] as String? ?? '');
             }
           }
         }

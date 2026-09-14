@@ -23,26 +23,26 @@ class FeatureFlagModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'flagName': flagName,
-      'isEnabled': isEnabled ? 1 : 0,
-      'appVersion': appVersion,
-      'role': role,
-      'userId': userId,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'nombre_bandera': flagName,
+      'habilitada': isEnabled ? 1 : 0,
+      'version_app': appVersion,
+      'rol': role,
+      'id_usuario': userId,
+      'creado_en': createdAt.toIso8601String(),
+      'actualizado_en': updatedAt.toIso8601String(),
     };
   }
 
   factory FeatureFlagModel.fromMap(Map<String, dynamic> map) {
     return FeatureFlagModel(
       id: map['id'] as String,
-      flagName: map['flagName'] as String,
-      isEnabled: (map['isEnabled'] as int? ?? 0) == 1,
-      appVersion: map['appVersion'] as String?,
-      role: map['role'] as String?,
-      userId: map['userId'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: DateTime.parse(map['updatedAt'] as String),
+      flagName: map['nombre_bandera'] as String,
+      isEnabled: (map['habilitada'] as int? ?? 0) == 1,
+      appVersion: map['version_app'] as String?,
+      role: map['rol'] as String?,
+      userId: map['id_usuario'] as String?,
+      createdAt: DateTime.parse(map['creado_en'] as String),
+      updatedAt: DateTime.parse(map['actualizado_en'] as String),
     );
   }
 

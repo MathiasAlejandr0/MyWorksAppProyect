@@ -21,22 +21,22 @@ class AnalyticsEventModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'eventName': eventName,
-      'userId': userId,
-      'role': role,
-      'timestamp': timestamp.toIso8601String(),
-      'metadata': _encodeMetadata(metadata),
+      'nombre_evento': eventName,
+      'id_usuario': userId,
+      'rol': role,
+      'marca_tiempo': timestamp.toIso8601String(),
+      'metadatos': _encodeMetadata(metadata),
     };
   }
 
   factory AnalyticsEventModel.fromMap(Map<String, dynamic> map) {
     return AnalyticsEventModel(
       id: map['id'] as String,
-      eventName: map['eventName'] as String,
-      userId: map['userId'] as String?,
-      role: map['role'] as String?,
-      timestamp: DateTime.parse(map['timestamp'] as String),
-      metadata: _decodeMetadata(map['metadata'] as String),
+      eventName: map['nombre_evento'] as String,
+      userId: map['id_usuario'] as String?,
+      role: map['rol'] as String?,
+      timestamp: DateTime.parse(map['marca_tiempo'] as String),
+      metadata: _decodeMetadata(map['metadatos'] as String),
     );
   }
 

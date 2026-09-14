@@ -23,26 +23,26 @@ class ServicePricingModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'serviceId': serviceId,
+      'id_servicio': serviceId,
       'basePrice': basePrice,
       'minimumFee': minimumFee,
       'hourlyRate': hourlyRate,
-      'currency': currency ?? 'USD',
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'moneda': currency ?? 'USD',
+      'creado_en': createdAt.toIso8601String(),
+      'actualizado_en': updatedAt.toIso8601String(),
     };
   }
 
   factory ServicePricingModel.fromMap(Map<String, dynamic> map) {
     return ServicePricingModel(
       id: map['id'] as String,
-      serviceId: map['serviceId'] as String,
+      serviceId: map['id_servicio'] as String,
       basePrice: (map['basePrice'] as num).toDouble(),
       minimumFee: (map['minimumFee'] as num).toDouble(),
       hourlyRate: (map['hourlyRate'] as num).toDouble(),
-      currency: map['currency'] as String? ?? 'USD',
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: DateTime.parse(map['updatedAt'] as String),
+      currency: map['moneda'] as String? ?? 'USD',
+      createdAt: DateTime.parse(map['creado_en'] as String),
+      updatedAt: DateTime.parse(map['actualizado_en'] as String),
     );
   }
 

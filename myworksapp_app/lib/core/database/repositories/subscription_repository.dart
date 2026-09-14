@@ -2,7 +2,7 @@ import '../models/subscription_model.dart';
 import '../supabase_db.dart';
 
 class SubscriptionRepository {
-  static const String _table = 'subscriptions';
+  static const String _table = 'suscripciones';
 
   Future<void> createSubscription(SubscriptionModel subscription) async {
     await supabase.from(_table).insert(subscription.toMap());
@@ -19,9 +19,9 @@ class SubscriptionRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('userId', userId)
-        .eq('status', 'active')
-        .order('startDate', ascending: false)
+        .eq('id_usuario', userId)
+        .eq('estado', 'activa')
+        .order('fecha_inicio', ascending: false)
         .limit(1);
     if (rows.isEmpty) return null;
     return SubscriptionModel.fromMap(rows.first);
@@ -29,7 +29,7 @@ class SubscriptionRepository {
 
   Future<List<SubscriptionModel>> getActiveSubscriptions() async {
     final rows =
-        await supabase.from(_table).select().eq('status', 'active');
+        await supabase.from(_table).select().eq('estado', 'activa');
     return rows
         .map<SubscriptionModel>((m) => SubscriptionModel.fromMap(m))
         .toList();

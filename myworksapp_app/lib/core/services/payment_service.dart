@@ -33,7 +33,7 @@ class PaymentService {
   Future<PaymentModel> createPayment({
     required String jobId,
     required double amount,
-    String currency = 'USD',
+    String currency = 'CLP',
     String? paymentMethod,
   }) async {
     try {
@@ -45,7 +45,7 @@ class PaymentService {
         jobId: jobId,
         amount: amount,
         currency: currency,
-        status: 'pending', // En producción, esto sería 'authorized' después de autorizar
+        status: PricingConstants.paymentPending, // En producción: autorizado tras autorizar
         paymentMethod: paymentMethod ?? 'card',
         createdAt: now,
         updatedAt: now,
@@ -71,12 +71,12 @@ class PaymentService {
         throw AppError.notFound('Pago no encontrado');
       }
 
-      if (payment.status != 'pending') {
+      if (payment.status != PricingConstants.paymentPending) {
         throw AppError.validation('El pago ya fue procesado');
       }
 
       final updated = payment.copyWith(
-        status: 'authorized',
+        status: PricingConstants.paymentAuthorized,
         authorizedAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -100,12 +100,12 @@ class PaymentService {
         throw AppError.notFound('Pago no encontrado');
       }
 
-      if (payment.status != 'authorized') {
+      if (payment.status != PricingConstants.paymentAuthorized) {
         throw AppError.validation('Solo se pueden retener pagos autorizados');
       }
 
       final updated = payment.copyWith(
-        status: 'held',
+        status: PricingConstants.paymentHeld,
         updatedAt: DateTime.now(),
       );
 
@@ -128,12 +128,13 @@ class PaymentService {
         throw AppError.notFound('Pago no encontrado');
       }
 
-      if (!['authorized', 'held'].contains(payment.status)) {
+      if (![PricingConstants.paymentAuthorized, PricingConstants.paymentHeld]
+          .contains(payment.status)) {
         throw AppError.validation('El pago no puede ser liberado desde este estado');
       }
 
       final updated = payment.copyWith(
-        status: 'released',
+        status: PricingConstants.paymentReleased,
         releasedAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -157,12 +158,13 @@ class PaymentService {
         throw AppError.notFound('Pago no encontrado');
       }
 
-      if (!['authorized', 'held'].contains(payment.status)) {
+      if (![PricingConstants.paymentAuthorized, PricingConstants.paymentHeld]
+          .contains(payment.status)) {
         throw AppError.validation('El pago no puede ser reembolsado desde este estado');
       }
 
       final updated = payment.copyWith(
-        status: 'refunded',
+        status: PricingConstants.paymentRefunded,
         refundedAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -206,7 +208,7 @@ class PaymentService {
       paymentType: paymentType,
       amount: quote.totalClp.toDouble(),
       currency: quote.currency,
-      status: 'pending',
+      status: PricingConstants.paymentPending,
       paymentMethod: paymentMethod ?? 'card',
       createdAt: now,
       updatedAt: now,
@@ -222,7 +224,8 @@ class PaymentService {
     String? paymentMethod,
   }) async {
     final existing = await getPrimaryPayment(jobId);
-    if (existing != null && existing.status != 'refunded') {
+    if (existing != null &&
+        existing.status != PricingConstants.paymentRefunded) {
       throw AppError.validation('Este trabajo ya tiene un pago registrado');
     }
 
@@ -233,7 +236,7 @@ class PaymentService {
       paymentType: PricingConstants.paymentTypePrimary,
       amount: quote.totalClp.toDouble(),
       currency: quote.currency,
-      status: 'pending',
+      status: PricingConstants.paymentPending,
       paymentMethod: paymentMethod ?? 'card',
       createdAt: now,
       updatedAt: now,
@@ -244,7 +247,7 @@ class PaymentService {
     return payment;
   }
 
-  /// Autoriza escrow (mock pasarela) y habilita transición a accepted / in_progress.
+  /// Autoriza escrow (mock pasarela) y habilita transición a aceptado / en_curso.
   Future<PaymentModel> authorizePrimaryForJob(String jobId) async {
     final payment = await getPrimaryPayment(jobId);
     if (payment == null) {
@@ -259,7 +262,7 @@ class PaymentService {
   Future<PaymentModel?> releasePrimaryOnJobCompleted(String jobId) async {
     final payment = await getPrimaryPayment(jobId);
     if (payment == null) return null;
-    if (payment.status == 'released') return payment;
+    if (payment.status == PricingConstants.paymentReleased) return payment;
     final released = await releasePayment(payment.id);
     await _syncJobPaymentStatus(jobId, PricingConstants.paymentReleased);
     return released;
@@ -268,7 +271,8 @@ class PaymentService {
   Future<void> refundPrimaryOnCancellation(String jobId) async {
     final payment = await getPrimaryPayment(jobId);
     if (payment == null) return;
-    if (['authorized', 'held'].contains(payment.status)) {
+    if ([PricingConstants.paymentAuthorized, PricingConstants.paymentHeld]
+        .contains(payment.status)) {
       await refundPayment(payment.id);
       await _syncJobPaymentStatus(jobId, PricingConstants.paymentRefunded);
     }
@@ -285,7 +289,8 @@ class PaymentService {
   /// Verifica si un job tiene pago principal autorizado (garantía).
   Future<bool> hasAuthorizedPrimaryPayment(String jobId) async {
     final payment = await getPrimaryPayment(jobId);
-    return payment != null && payment.status == 'authorized';
+    return payment != null &&
+        payment.status == PricingConstants.paymentAuthorized;
   }
 
   Future<bool> hasPayment(String jobId) async {

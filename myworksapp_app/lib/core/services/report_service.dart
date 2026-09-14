@@ -30,17 +30,17 @@ class ReportService {
         reportedUserId: reportedUserId,
         reason: reason.trim(),
         description: description?.trim(),
-        status: 'pending',
+        status: 'pendiente',
         createdAt: DateTime.now(),
       );
 
       await _reportRepository.createReport(report);
 
-      // Si hay múltiples reportes, cambiar estado a suspended
+      // Si hay múltiples reportes, cambiar estado a suspendido
       final reports = await _reportRepository.getReportsByReportedUserId(reportedUserId);
       if (reports.length >= 3) {
         // 3 o más reportes: suspender cuenta
-        await _userRepository.updateAccountStatus(reportedUserId, 'suspended');
+        await _userRepository.updateAccountStatus(reportedUserId, 'suspendido');
         AppLogger.i('Cuenta suspendida por múltiples reportes: $reportedUserId');
       }
 

@@ -2,7 +2,7 @@ import '../models/notification_model.dart';
 import '../supabase_db.dart';
 
 class NotificationRepository {
-  static const String _table = 'notifications';
+  static const String _table = 'notificaciones';
 
   Future<void> createNotification(NotificationModel notification) async {
     await supabase.from(_table).insert(notification.toMap());
@@ -12,8 +12,8 @@ class NotificationRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('userId', userId)
-        .order('createdAt', ascending: false);
+        .eq('id_usuario', userId)
+        .order('creado_en', ascending: false);
     return rows
         .map<NotificationModel>((m) => NotificationModel.fromMap(m))
         .toList();
@@ -23,9 +23,9 @@ class NotificationRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('userId', userId)
-        .eq('isRead', 0)
-        .order('createdAt', ascending: false);
+        .eq('id_usuario', userId)
+        .eq('leido', 0)
+        .order('creado_en', ascending: false);
     return rows
         .map<NotificationModel>((m) => NotificationModel.fromMap(m))
         .toList();
@@ -34,19 +34,19 @@ class NotificationRepository {
   Future<void> markAsRead(String notificationId) async {
     await supabase
         .from(_table)
-        .update({'isRead': 1}).eq('id', notificationId);
+        .update({'leido': 1}).eq('id', notificationId);
   }
 
   Future<void> markAllAsRead(String userId) async {
-    await supabase.from(_table).update({'isRead': 1}).eq('userId', userId);
+    await supabase.from(_table).update({'leido': 1}).eq('id_usuario', userId);
   }
 
   Future<int> getUnreadCount(String userId) async {
     final rows = await supabase
         .from(_table)
         .select('id')
-        .eq('userId', userId)
-        .eq('isRead', 0);
+        .eq('id_usuario', userId)
+        .eq('leido', 0);
     return rows.length;
   }
 

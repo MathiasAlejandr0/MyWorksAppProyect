@@ -5,6 +5,7 @@ import '../../../../core/design_system/app_radius.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
+import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/status_badge.dart';
 
 /// Software de Gestión de Escritorio (Desktop Admin Management Hub) estilo Apple HIG.
@@ -414,10 +415,10 @@ class _AdminDesktopManagementPageState extends State<AdminDesktopManagementPage>
                   padding: const EdgeInsets.all(12.0),
                   child: StatusBadge(
                     status: t.status == 'Resuelto'
-                        ? 'completed'
+                        ? AppConstants.jobStatusCompleted
                         : t.status == 'En Revisión'
-                            ? 'in_progress'
-                            : 'pending',
+                            ? AppConstants.jobStatusInProgress
+                            : AppConstants.jobStatusPending,
                   ),
                 ),
                 Padding(

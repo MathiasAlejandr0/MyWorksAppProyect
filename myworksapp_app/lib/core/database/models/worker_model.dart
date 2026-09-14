@@ -33,18 +33,18 @@ class WorkerModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'userId': userId,
-      'profession': profession,
-      'description': description,
-      'rating': rating,
-      'isAvailable': isAvailable ? 1 : 0,
-      'visitFee': visitFee,
-      'serviceCategory': serviceCategory,
-      'pricingTiers': pricingTiers,
-      'customServices': customServices.map((s) => s.toMap()).toList(),
-      'pricingConfigured': pricingConfigured ? 1 : 0,
-      'workZone': workZone,
-      'rejectionCount': rejectionCount,
+      'id_usuario': userId,
+      'profesion': profession,
+      'descripcion': description,
+      'calificacion': rating,
+      'disponible': isAvailable ? 1 : 0,
+      'tarifa_visita': visitFee,
+      'categoria_servicio': serviceCategory,
+      'niveles_precio': pricingTiers,
+      'servicios_personalizados': customServices.map((s) => s.toMap()).toList(),
+      'precios_configurados': pricingConfigured ? 1 : 0,
+      'zona_trabajo': workZone,
+      'conteo_rechazos': rejectionCount,
     };
   }
 
@@ -61,18 +61,20 @@ class WorkerModel {
 
   factory WorkerModel.fromMap(Map<String, dynamic> map) {
     return WorkerModel(
-      userId: map['userId'] as String,
-      profession: map['profession'] as String,
-      description: map['description'] as String?,
-      rating: (map['rating'] as num?)?.toDouble() ?? 0.0,
-      isAvailable: (map['isAvailable'] as int? ?? 0) == 1,
-      visitFee: (map['visitFee'] as num?)?.toDouble() ?? 15000,
-      serviceCategory: map['serviceCategory'] as String? ?? 'general',
-      pricingTiers: _parsePricingTiers(map['pricingTiers']),
-      customServices: WorkerCustomService.listFromJson(map['customServices']),
-      pricingConfigured: (map['pricingConfigured'] as int? ?? 0) == 1,
-      workZone: map['workZone'] as String?,
-      rejectionCount: (map['rejectionCount'] as num?)?.toInt() ?? 0,
+      userId: map['id_usuario'] as String,
+      profession: map['profesion'] as String,
+      description: map['descripcion'] as String?,
+      rating: (map['calificacion'] as num?)?.toDouble() ??
+          (map['rating'] as num?)?.toDouble() ??
+          0.0,
+      isAvailable: (map['disponible'] as int? ?? 0) == 1,
+      visitFee: (map['tarifa_visita'] as num?)?.toDouble() ?? 15000,
+      serviceCategory: map['categoria_servicio'] as String? ?? 'general',
+      pricingTiers: _parsePricingTiers(map['niveles_precio']),
+      customServices: WorkerCustomService.listFromJson(map['servicios_personalizados']),
+      pricingConfigured: (map['precios_configurados'] as int? ?? 0) == 1,
+      workZone: map['zona_trabajo'] as String?,
+      rejectionCount: (map['conteo_rechazos'] as num?)?.toInt() ?? 0,
     );
   }
 

@@ -25,14 +25,14 @@ class QuoteProposalModel {
 
   Map<String, dynamic> toMap() => {
         'id': id,
-        'jobId': jobId,
-        'workerId': workerId,
-        'montoTotalClp': montoTotalClp,
+        'id_trabajo': jobId,
+        'id_trabajador': workerId,
+        'monto_total_clp': montoTotalClp,
         'descripcion': descripcion,
-        'validezHasta': validezHasta?.toIso8601String(),
+        'validez_hasta': validezHasta?.toIso8601String(),
         'desglose': desglose != null ? jsonEncode(desglose) : null,
         'estado': estado,
-        'createdAt': createdAt.toIso8601String(),
+        'creado_en': createdAt.toIso8601String(),
       };
 
   factory QuoteProposalModel.fromMap(Map<String, dynamic> map) {
@@ -46,16 +46,16 @@ class QuoteProposalModel {
     }
     return QuoteProposalModel(
       id: map['id'] as String,
-      jobId: map['jobId'] as String,
-      workerId: map['workerId'] as String,
-      montoTotalClp: (map['montoTotalClp'] as num).toInt(),
+      jobId: map['id_trabajo'] as String,
+      workerId: map['id_trabajador'] as String,
+      montoTotalClp: (map['monto_total_clp'] as num).toInt(),
       descripcion: map['descripcion'] as String,
-      validezHasta: map['validezHasta'] != null
-          ? DateTime.parse(map['validezHasta'] as String)
+      validezHasta: map['validez_hasta'] != null
+          ? DateTime.parse(map['validez_hasta'] as String)
           : null,
       desglose: desglose,
       estado: map['estado'] as String,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      createdAt: DateTime.parse(map['creado_en'] as String),
     );
   }
 }

@@ -11,6 +11,7 @@ import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/services/admin_notification_service.dart';
 import '../../../../core/services/dispute_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -149,8 +150,8 @@ class _AdminJobDetailPageState extends ConsumerState<AdminJobDetailPage>
 
     final d = _detail!;
     final job = d.job;
-    final canCancel =
-        job.status != 'completed' && job.status != 'cancelled';
+    final canCancel = job.status != AppConstants.jobStatusCompleted &&
+        job.status != AppConstants.jobStatusCancelled;
 
     return Scaffold(
       appBar: AppGradientAppBar(
@@ -324,7 +325,7 @@ class _PaymentsTab extends StatelessWidget {
           child: ListTile(
             leading: Icon(
               Icons.payments_outlined,
-              color: p.status == 'released'
+              color: p.status == PricingConstants.paymentReleased
                   ? AppColors.success
                   : AppColors.brandOrange,
             ),
@@ -384,7 +385,8 @@ class _HistoryTab extends StatelessWidget {
               _InfoRow('Descripción', disp.description!),
             if (disp.resolution != null)
               _InfoRow('Resolución', disp.resolution!),
-            if (disp.status == 'open' || disp.status == 'under_review')
+            if (disp.status == AppConstants.disputeStatusOpen ||
+                disp.status == AppConstants.disputeStatusUnderReview)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.sm),
                 child: FilledButton(

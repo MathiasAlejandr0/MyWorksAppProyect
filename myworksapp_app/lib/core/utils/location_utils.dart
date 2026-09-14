@@ -4,6 +4,8 @@ import 'dart:math';
 
 import 'package:geocoding/geocoding.dart';
 
+import 'constants.dart';
+
 class LocationUtils {
   static final RegExp _coordinatePairPattern = RegExp(
     r'^-?\d+\.?\d*\s*,\s*-?\d+\.?\d*$',
@@ -88,7 +90,9 @@ class LocationUtils {
     double? latitude,
     double? longitude,
   }) async {
-    if (status == 'pending' && latitude != null && longitude != null) {
+    if (status == AppConstants.jobStatusPending &&
+        latitude != null &&
+        longitude != null) {
       try {
         return await getApproximateAddress(latitude, longitude);
       } catch (_) {

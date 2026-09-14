@@ -32,7 +32,7 @@ PaymentModel _authorizedPayment() {
     id: 'pay-1',
     jobId: 'job-1',
     amount: 10000,
-    status: 'authorized',
+    status: PricingConstants.paymentAuthorized,
     createdAt: now,
     updatedAt: now,
   );
@@ -139,7 +139,8 @@ void main() {
       );
     });
 
-    test('tier invitation exige pago al completar desde awaiting_client_approval',
+    test(
+        'tier invitation exige pago al completar desde awaiting_client_approval',
         () async {
       final job = _job(
         status: PricingConstants.jobAwaitingClientApproval,

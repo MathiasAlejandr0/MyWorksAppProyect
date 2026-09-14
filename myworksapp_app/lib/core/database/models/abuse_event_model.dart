@@ -23,28 +23,28 @@ class AbuseEventModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'userId': userId,
-      'abuseType': abuseType,
-      'count': count,
-      'detectedAt': detectedAt.toIso8601String(),
-      'actionTaken': actionTaken,
-      'actionTakenAt': actionTakenAt?.toIso8601String(),
-      'isResolved': isResolved ? 1 : 0,
+      'id_usuario': userId,
+      'tipo_abuso': abuseType,
+      'conteo': count,
+      'detectado_en': detectedAt.toIso8601String(),
+      'accion_tomada': actionTaken,
+      'accion_tomada_en': actionTakenAt?.toIso8601String(),
+      'resuelto': isResolved ? 1 : 0,
     };
   }
 
   factory AbuseEventModel.fromMap(Map<String, dynamic> map) {
     return AbuseEventModel(
       id: map['id'] as String,
-      userId: map['userId'] as String,
-      abuseType: map['abuseType'] as String,
-      count: map['count'] as int,
-      detectedAt: DateTime.parse(map['detectedAt'] as String),
-      actionTaken: map['actionTaken'] as String?,
-      actionTakenAt: map['actionTakenAt'] != null
-          ? DateTime.parse(map['actionTakenAt'] as String)
+      userId: map['id_usuario'] as String,
+      abuseType: map['tipo_abuso'] as String,
+      count: map['conteo'] as int,
+      detectedAt: DateTime.parse(map['detectado_en'] as String),
+      actionTaken: map['accion_tomada'] as String?,
+      actionTakenAt: map['accion_tomada_en'] != null
+          ? DateTime.parse(map['accion_tomada_en'] as String)
           : null,
-      isResolved: (map['isResolved'] as int? ?? 0) == 1,
+      isResolved: (map['resuelto'] as int? ?? 0) == 1,
     );
   }
 

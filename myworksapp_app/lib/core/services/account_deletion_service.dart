@@ -3,6 +3,7 @@ import '../database/repositories/user_consent_repository.dart';
 import '../database/models/user_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
+import '../utils/constants.dart';
 
 /// Servicio para eliminación de cuenta (GDPR - Derecho al Olvido)
 /// 
@@ -24,7 +25,7 @@ class AccountDeletionService {
   /// 1. Anonimizar datos personales del usuario
   /// 2. Eliminar consentimientos
   /// 3. Anonimizar referencias en datos relacionados
-  /// 4. Cambiar accountStatus a 'deleted'
+  /// 4. Cambiar accountStatus a eliminado
   /// 5. Eliminar bloqueos y reportes del usuario
   /// 
   /// Requiere confirmación doble antes de llamar.
@@ -45,7 +46,7 @@ class AccountDeletionService {
         email: 'deleted_${user.id.substring(0, 8)}@deleted.local',
         password: null, // Eliminar hash de contraseña
         role: user.role,
-        accountStatus: 'deleted',
+        accountStatus: AppConstants.accountStatusDeleted,
         createdAt: user.createdAt,
       );
       await _userRepository.updateUser(anonymizedUser);
@@ -114,7 +115,7 @@ class AccountDeletionService {
   Future<bool> isAccountDeleted(String userId) async {
     try {
       final user = await _userRepository.getUserById(userId);
-      return user?.accountStatus == 'deleted';
+      return user?.accountStatus == AppConstants.accountStatusDeleted;
     } catch (e) {
       AppLogger.e('Error al verificar si cuenta está eliminada', e);
       return false;

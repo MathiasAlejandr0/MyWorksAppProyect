@@ -117,4 +117,98 @@ class ListItemSkeleton extends StatelessWidget {
   }
 }
 
+/// Lista de skeletons para pestañas de trabajos / notificaciones.
+class JobListSkeleton extends StatelessWidget {
+  const JobListSkeleton({super.key, this.itemCount = 5});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xl),
+      itemCount: itemCount,
+      itemBuilder: (context, index) => const ListItemSkeleton(),
+    );
+  }
+}
+
+/// Bloque calmado de “cómo funciona” (reemplazo de widgets teatrales).
+class HowItWorksCard extends StatelessWidget {
+  const HowItWorksCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDarkElevated : AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.grayBorder.withValues(alpha: isDark ? 0.2 : 0.55),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Cómo funciona',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: onSurface,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _step(onSurface, '1', 'Elige un oficio'),
+          _step(onSurface, '2', 'Compara profesionales cercanos'),
+          _step(onSurface, '3', 'Agenda y sigue el trabajo en la app'),
+        ],
+      ),
+    );
+  }
+
+  Widget _step(Color color, String n, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.brandOrange.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              n,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: AppColors.brandOrange,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: color.withValues(alpha: 0.85),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 

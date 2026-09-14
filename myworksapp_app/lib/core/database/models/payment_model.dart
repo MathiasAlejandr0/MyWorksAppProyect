@@ -1,21 +1,21 @@
-/// Modelo para pagos (preparado para futuro)
-/// 
-/// Estados:
-/// - pending: Pago pendiente
-/// - authorized: Pago autorizado (en escrow)
-/// - held: Pago retenido (disputa)
-/// - released: Pago liberado al trabajador
-/// - refunded: Pago reembolsado
+import '../../domain/pricing_constants.dart';
+
+/// Modelo de pagos (estados ES en BD).
+///
+/// Estados: pendiente | autorizado | retenido | liberado | reembolsado
+/// Tipos: principal | orden_cambio | horas_extra
+///
+/// Nota: la pasarela real aún no está integrada; el flujo es simulación de escrow.
 class PaymentModel {
   final String id;
   final String jobId;
   final String? changeOrderId;
-  final String paymentType; // primary | change_order | overtime
+  final String paymentType;
   final double amount;
   final String currency;
-  final String status; // 'pending', 'authorized', 'held', 'released', 'refunded'
-  final String? paymentMethod; // 'card', 'cash', 'transfer', etc.
-  final String? transactionId; // ID de transacción externa
+  final String status;
+  final String? paymentMethod;
+  final String? transactionId;
   final DateTime? authorizedAt;
   final DateTime? releasedAt;
   final DateTime? refundedAt;
@@ -26,7 +26,7 @@ class PaymentModel {
     required this.id,
     required this.jobId,
     this.changeOrderId,
-    this.paymentType = 'primary',
+    this.paymentType = PricingConstants.paymentTypePrimary,
     required this.amount,
     this.currency = 'CLP',
     required this.status,
@@ -42,44 +42,45 @@ class PaymentModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'jobId': jobId,
-      'changeOrderId': changeOrderId,
-      'paymentType': paymentType,
-      'amount': amount,
-      'currency': currency,
-      'status': status,
-      'paymentMethod': paymentMethod,
-      'transactionId': transactionId,
-      'authorizedAt': authorizedAt?.toIso8601String(),
-      'releasedAt': releasedAt?.toIso8601String(),
-      'refundedAt': refundedAt?.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'id_trabajo': jobId,
+      'id_orden_cambio': changeOrderId,
+      'tipo_pago': paymentType,
+      'monto': amount,
+      'moneda': currency,
+      'estado': status,
+      'metodo_pago': paymentMethod,
+      'id_transaccion': transactionId,
+      'autorizado_en': authorizedAt?.toIso8601String(),
+      'liberado_en': releasedAt?.toIso8601String(),
+      'reembolsado_en': refundedAt?.toIso8601String(),
+      'creado_en': createdAt.toIso8601String(),
+      'actualizado_en': updatedAt.toIso8601String(),
     };
   }
 
   factory PaymentModel.fromMap(Map<String, dynamic> map) {
     return PaymentModel(
       id: map['id'] as String,
-      jobId: map['jobId'] as String,
-      changeOrderId: map['changeOrderId'] as String?,
-      paymentType: map['paymentType'] as String? ?? 'primary',
-      amount: (map['amount'] as num).toDouble(),
-      currency: map['currency'] as String? ?? 'CLP',
-      status: map['status'] as String,
-      paymentMethod: map['paymentMethod'] as String?,
-      transactionId: map['transactionId'] as String?,
-      authorizedAt: map['authorizedAt'] != null
-          ? DateTime.parse(map['authorizedAt'] as String)
+      jobId: map['id_trabajo'] as String,
+      changeOrderId: map['id_orden_cambio'] as String?,
+      paymentType: map['tipo_pago'] as String? ??
+          PricingConstants.paymentTypePrimary,
+      amount: (map['monto'] as num).toDouble(),
+      currency: map['moneda'] as String? ?? 'CLP',
+      status: map['estado'] as String,
+      paymentMethod: map['metodo_pago'] as String?,
+      transactionId: map['id_transaccion'] as String?,
+      authorizedAt: map['autorizado_en'] != null
+          ? DateTime.parse(map['autorizado_en'] as String)
           : null,
-      releasedAt: map['releasedAt'] != null
-          ? DateTime.parse(map['releasedAt'] as String)
+      releasedAt: map['liberado_en'] != null
+          ? DateTime.parse(map['liberado_en'] as String)
           : null,
-      refundedAt: map['refundedAt'] != null
-          ? DateTime.parse(map['refundedAt'] as String)
+      refundedAt: map['reembolsado_en'] != null
+          ? DateTime.parse(map['reembolsado_en'] as String)
           : null,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: DateTime.parse(map['updatedAt'] as String),
+      createdAt: DateTime.parse(map['creado_en'] as String),
+      updatedAt: DateTime.parse(map['actualizado_en'] as String),
     );
   }
 

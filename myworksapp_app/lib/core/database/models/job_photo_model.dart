@@ -1,5 +1,5 @@
 class JobPhotoModel {
-  static const String mediaPhoto = 'photo';
+  static const String mediaPhoto = 'foto';
   static const String mediaVideo = 'video';
 
   final String id;
@@ -21,20 +21,20 @@ class JobPhotoModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'jobId': jobId,
-      'photoPath': photoPath,
-      'mediaType': mediaType,
-      'createdAt': createdAt.toIso8601String(),
+      'id_trabajo': jobId,
+      'ruta_foto': photoPath,
+      'tipo_medio': mediaType,
+      'creado_en': createdAt.toIso8601String(),
     };
   }
 
   factory JobPhotoModel.fromMap(Map<String, dynamic> map) {
     return JobPhotoModel(
       id: map['id'] as String,
-      jobId: map['jobId'] as String,
-      photoPath: map['photoPath'] as String,
-      mediaType: (map['mediaType'] as String?) ?? mediaPhoto,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      jobId: map['id_trabajo'] as String,
+      photoPath: map['ruta_foto'] as String,
+      mediaType: (map['tipo_medio'] as String?) ?? mediaPhoto,
+      createdAt: DateTime.parse(map['creado_en'] as String),
     );
   }
 }

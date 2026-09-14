@@ -14,18 +14,18 @@ class UserBlockModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'blockerId': blockerId,
-      'blockedUserId': blockedUserId,
-      'createdAt': createdAt.toIso8601String(),
+      'id_bloqueador': blockerId,
+      'id_bloqueado': blockedUserId,
+      'creado_en': createdAt.toIso8601String(),
     };
   }
 
   factory UserBlockModel.fromMap(Map<String, dynamic> map) {
     return UserBlockModel(
       id: map['id'] as String,
-      blockerId: map['blockerId'] as String,
-      blockedUserId: map['blockedUserId'] as String,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      blockerId: map['id_bloqueador'] as String,
+      blockedUserId: map['id_bloqueado'] as String,
+      createdAt: DateTime.parse(map['creado_en'] as String),
     );
   }
 }

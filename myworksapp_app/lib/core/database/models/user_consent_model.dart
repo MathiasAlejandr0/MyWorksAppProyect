@@ -21,24 +21,24 @@ class UserConsentModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'userId': userId,
-      'consentVersion': consentVersion,
-      'accepted': accepted ? 1 : 0,
-      'acceptedAt': acceptedAt.toIso8601String(),
-      'ipAddress': ipAddress,
-      'userAgent': userAgent,
+      'id_usuario': userId,
+      'version_consentimiento': consentVersion,
+      'aceptado': accepted ? 1 : 0,
+      'aceptado_en': acceptedAt.toIso8601String(),
+      'direccion_ip': ipAddress,
+      'agente_usuario': userAgent,
     };
   }
 
   factory UserConsentModel.fromMap(Map<String, dynamic> map) {
     return UserConsentModel(
       id: map['id'] as String,
-      userId: map['userId'] as String,
-      consentVersion: map['consentVersion'] as String,
-      accepted: (map['accepted'] as int) == 1,
-      acceptedAt: DateTime.parse(map['acceptedAt'] as String),
-      ipAddress: map['ipAddress'] as String?,
-      userAgent: map['userAgent'] as String?,
+      userId: map['id_usuario'] as String,
+      consentVersion: map['version_consentimiento'] as String,
+      accepted: (map['aceptado'] as int) == 1,
+      acceptedAt: DateTime.parse(map['aceptado_en'] as String),
+      ipAddress: map['direccion_ip'] as String?,
+      userAgent: map['agente_usuario'] as String?,
     );
   }
 

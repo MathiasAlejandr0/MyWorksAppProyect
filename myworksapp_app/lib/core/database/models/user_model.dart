@@ -3,8 +3,8 @@ class UserModel {
   final String name;
   final String email;
   final String? password; // Hash de contraseña (nullable para usuarios existentes)
-  final String role; // 'user' or 'worker'
-  final String accountStatus; // 'active', 'suspended', 'blocked'
+  final String role; // usuario | trabajador | administrador
+  final String accountStatus; // activo | suspendido | bloqueado
   final String? profilePhotoPath;
   final DateTime createdAt;
 
@@ -14,7 +14,7 @@ class UserModel {
     required this.email,
     this.password,
     required this.role,
-    this.accountStatus = 'active',
+    this.accountStatus = 'activo',
     this.profilePhotoPath,
     required this.createdAt,
   });
@@ -22,26 +22,26 @@ class UserModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'name': name,
-      'email': email,
+      'nombre': name,
+      'correo': email,
       'password': password,
-      'role': role,
-      'accountStatus': accountStatus,
-      'profilePhotoPath': profilePhotoPath,
-      'createdAt': createdAt.toIso8601String(),
+      'rol': role,
+      'estado_cuenta': accountStatus,
+      'ruta_foto_perfil': profilePhotoPath,
+      'creado_en': createdAt.toIso8601String(),
     };
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       id: map['id'] as String,
-      name: map['name'] as String,
-      email: map['email'] as String,
+      name: map['nombre'] as String,
+      email: map['correo'] as String,
       password: map['password'] as String?,
-      role: map['role'] as String,
-      accountStatus: (map['accountStatus'] as String?) ?? 'active',
-      profilePhotoPath: map['profilePhotoPath'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      role: map['rol'] as String,
+      accountStatus: (map['estado_cuenta'] as String?) ?? 'activo',
+      profilePhotoPath: map['ruta_foto_perfil'] as String?,
+      createdAt: DateTime.parse(map['creado_en'] as String),
     );
   }
 
@@ -68,8 +68,8 @@ class UserModel {
     );
   }
 
-  bool get isActive => accountStatus == 'active';
-  bool get isSuspended => accountStatus == 'suspended';
-  bool get isBlocked => accountStatus == 'blocked';
+  bool get isActive => accountStatus == 'activo';
+  bool get isSuspended => accountStatus == 'suspendido';
+  bool get isBlocked => accountStatus == 'bloqueado';
 }
 

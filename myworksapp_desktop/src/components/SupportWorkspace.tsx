@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TicketCheck, CheckCircle2, RefreshCw, ArrowUpRight, Image, MessageSquare, Send, Scale, ShieldAlert, Edit3 } from 'lucide-react';
 import { JobScopeAdjustmentModal } from './JobScopeAdjustmentModal';
+import { TableRowsSkeleton } from './LoadingState';
 import { fetchOpenDisputes, updateDisputeStatus } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 
@@ -45,7 +46,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
           issue: dispute.description ?? dispute.reason,
           escrowAmount: dispute.escrowAmount,
           date: new Date(dispute.createdAt).toLocaleString('es-CL'),
-          status: dispute.status === 'resolved' ? 'Resolved' : 'Pending',
+          status: dispute.status === 'resuelta' ? 'Resolved' : 'Pending',
         })),
       );
     } catch {
@@ -62,7 +63,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
   const handleUpdateScope = (updatedTicket: Ticket, newTariff: number, newReason: string) => {
     setTickets(prev => prev.map(t => t.id === updatedTicket.id ? { ...t, escrowAmount: newTariff, issue: newReason } : t));
     setScopeModalTicket(null);
-    setNotification(`🔴 Notificación enviada a ${updatedTicket.client}: Propuesta de re-cotización a $${newTariff.toLocaleString('es-CL')} CLP pendiente de aceptación.`);
+    setNotification(`Propuesta de re-cotización a $${newTariff.toLocaleString('es-CL')} CLP (solo UI local — no notifica aún).`);
     setTimeout(() => setNotification(null), 5000);
   };
 
@@ -81,7 +82,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
     const newMsg: ChatMessage = {
       id: Date.now().toString(),
       sender: 'ADMIN',
-      text: `🔴 Mensaje Oficial Admin ${recipientText}: ${text}`,
+      text: `Admin ${recipientText}: ${text}`,
       timestamp: new Date().toLocaleTimeString().slice(0, 5),
     };
     setMessages(prev => [...prev, newMsg]);
@@ -97,7 +98,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
           : 'Resolución parcial 50/50';
 
     try {
-      await updateDisputeStatus(supabase, ticketId, 'resolved', resolution, adminId);
+      await updateDisputeStatus(supabase, ticketId, 'resuelta', resolution, adminId);
       setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'Resolved' } : t)));
       setSelectedTicket(null);
       setNotification(`Disputa actualizada en Supabase: ${resolution}.`);
@@ -110,14 +111,16 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 900 }}>Centro de Soporte & Mediación Escrow</h1>
-          <p style={{ fontSize: '13.5px', color: '#98989D' }}>Resolución de disputas con expediente de evidencias multimedia y mensajería dual.</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 900 }}>Soporte y mediación</h1>
+          <p style={{ fontSize: '13.5px', color: '#98989D', marginTop: '4px' }}>
+            Listado y resolución de disputas desde Supabase. Evidencias y chat del expediente son UI de demostración.
+          </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span className="badge-tag" style={{ backgroundColor: 'rgba(255, 149, 0, 0.15)', color: '#FF9500' }}>
-            <TicketCheck size={14} /> {tickets.filter(t => t.status === 'Pending').length} Disputas Activas
+            <TicketCheck size={14} /> {tickets.filter(t => t.status === 'Pending').length} abiertas
           </span>
           <button onClick={() => void loadTickets()} className="btn-action-secondary">
             <RefreshCw size={14} /> Actualizar
@@ -125,63 +128,76 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
         </div>
       </div>
 
-      {loading && (
-        <p style={{ color: '#98989D', marginBottom: '16px' }}>Cargando disputas desde Supabase...</p>
-      )}
-
       {notification && (
         <div style={{ backgroundColor: 'rgba(52, 199, 89, 0.15)', border: '1px solid #34C759', color: '#34C759', padding: '12px 18px', borderRadius: '12px', marginBottom: '20px', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <CheckCircle2 size={18} /> {notification}
         </div>
       )}
 
-      {/* Tabla de Tickets de Soporte */}
       <div className="card-3d" style={{ overflow: 'hidden', padding: 0 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-              <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>TICKET ID</th>
-              <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>CLIENTE</th>
-              <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>PROFESIONAL</th>
-              <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>MOTIVO DE DISPUTA</th>
-              <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESCROW</th>
-              <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESTADO</th>
-              <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>EXPEDIENTE</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.map(ticket => (
-              <tr key={ticket.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <td style={{ padding: '16px 20px', fontWeight: 800, color: '#F0782A' }}>{ticket.id}</td>
-                <td style={{ padding: '16px 20px', fontWeight: 600 }}>{ticket.client}</td>
-                <td style={{ padding: '16px 20px', color: '#98989D' }}>{ticket.worker}</td>
-                <td style={{ padding: '16px 20px', maxWidth: '240px' }}>{ticket.issue}</td>
-                <td style={{ padding: '16px 20px', fontWeight: 800, color: '#34C759' }}>
-                  ${ticket.escrowAmount.toLocaleString('es-CL')} CLP
-                </td>
-                <td style={{ padding: '16px 20px' }}>
-                  <span className="badge-tag" style={{ backgroundColor: ticket.status === 'Pending' ? 'rgba(255, 59, 48, 0.15)' : 'rgba(52, 199, 89, 0.15)', color: ticket.status === 'Pending' ? '#FF3B30' : '#34C759' }}>
-                    {ticket.status === 'Pending' ? 'Pendiente' : 'Resuelto'}
-                  </span>
-                </td>
-                <td style={{ padding: '16px 20px' }}>
-                  {ticket.status === 'Pending' ? (
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button onClick={() => { setSelectedTicket(ticket); setModalTab(0); }} className="btn-action-primary" style={{ padding: '6px 12px', fontSize: '11.5px' }}>
-                        Abrir Expediente
-                      </button>
-                      <button onClick={() => setScopeModalTicket(ticket)} className="btn-action-secondary" style={{ padding: '6px 12px', fontSize: '11.5px', color: '#F0782A', borderColor: '#F0782A' }}>
-                        <Edit3 size={12} /> Modificar Alcance
-                      </button>
-                    </div>
-                  ) : (
-                    <span style={{ fontSize: '12px', color: '#98989D' }}>Cerrado</span>
-                  )}
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ID</th>
+                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>CLIENTE</th>
+                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>PROFESIONAL</th>
+                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>MOTIVO</th>
+                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESCROW</th>
+                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESTADO</th>
+                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ACCIONES</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading && (
+                <tr>
+                  <td colSpan={7} style={{ padding: 0 }}>
+                    <div className="table-skeleton-wrap">
+                      <TableRowsSkeleton rows={5} columns={7} />
+                    </div>
+                  </td>
+                </tr>
+              )}
+              {!loading && tickets.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ padding: '28px 20px', color: '#98989D', textAlign: 'center' }}>
+                    No hay disputas abiertas en Supabase (o faltan permisos RLS).
+                  </td>
+                </tr>
+              )}
+              {!loading && tickets.map(ticket => (
+                <tr key={ticket.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ padding: '16px 20px', fontWeight: 800, color: '#F0782A' }}>{ticket.id}</td>
+                  <td style={{ padding: '16px 20px', fontWeight: 600 }}>{ticket.client}</td>
+                  <td style={{ padding: '16px 20px', color: '#98989D' }}>{ticket.worker}</td>
+                  <td style={{ padding: '16px 20px', maxWidth: '240px' }}>{ticket.issue}</td>
+                  <td style={{ padding: '16px 20px', fontWeight: 800, color: '#34C759' }}>
+                    ${ticket.escrowAmount.toLocaleString('es-CL')} CLP
+                  </td>
+                  <td style={{ padding: '16px 20px' }}>
+                    <span className="badge-tag" style={{ backgroundColor: ticket.status === 'Pending' ? 'rgba(255, 59, 48, 0.15)' : 'rgba(52, 199, 89, 0.15)', color: ticket.status === 'Pending' ? '#FF3B30' : '#34C759' }}>
+                      {ticket.status === 'Pending' ? 'Pendiente' : 'Resuelto'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '16px 20px' }}>
+                    {ticket.status === 'Pending' ? (
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <button onClick={() => { setSelectedTicket(ticket); setModalTab(0); }} className="btn-action-primary" style={{ padding: '6px 12px', fontSize: '11.5px' }}>
+                          Abrir expediente
+                        </button>
+                        <button onClick={() => setScopeModalTicket(ticket)} className="btn-action-secondary" style={{ padding: '6px 12px', fontSize: '11.5px', color: '#F0782A', borderColor: '#F0782A' }}>
+                          <Edit3 size={12} /> Alcance
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: '12px', color: '#98989D' }}>Cerrado</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal del Expediente de Mediación Admin */}
@@ -195,32 +211,33 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#FF3B30', marginBottom: '14px' }}>
               <ShieldAlert size={26} color="#FF3B30" />
               <div>
-                <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#FFFFFF' }}>Expediente de Mediación: {selectedTicket.id}</h3>
+                <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#FFFFFF' }}>Expediente: {selectedTicket.id}</h3>
                 <span style={{ fontSize: '12px', color: '#94A3B8' }}>Cliente: {selectedTicket.client} vs Profesional: {selectedTicket.worker}</span>
               </div>
             </div>
 
-            {/* Pestañas del Expediente Admin */}
+            <div className="demo-banner" style={{ marginBottom: '14px' }}>
+              Evidencias y mensajería son DEMO. El veredicto sí actualiza la disputa en Supabase.
+            </div>
+
             <div className="sub-tabs-bar" style={{ marginBottom: '18px' }}>
               <div className={`sub-tab-item ${modalTab === 0 ? 'active' : ''}`} onClick={() => setModalTab(0)}>
-                <Image size={15} /> 1. Evidencias Fotografías & Video
+                <Image size={15} /> Evidencias (demo)
               </div>
               <div className={`sub-tab-item ${modalTab === 1 ? 'active' : ''}`} onClick={() => setModalTab(1)}>
-                <MessageSquare size={15} /> 2. Mensajería Dual ({messages.length})
+                <MessageSquare size={15} /> Mensajería (demo)
               </div>
               <div className={`sub-tab-item ${modalTab === 2 ? 'active' : ''}`} onClick={() => setModalTab(2)}>
-                <Scale size={15} /> 3. Veredicto & Custodia Escrow
+                <Scale size={15} /> Veredicto (Supabase)
               </div>
             </div>
 
-            {/* PESTAÑA 1: Evidencias Multimedia Comparativas */}
             {modalTab === 0 && (
               <div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '18px' }}>
-                  {/* Evidencias del Cliente */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '18px' }}>
                   <div style={{ backgroundColor: '#0F172A', border: '1px solid #334155', borderRadius: '12px', padding: '14px' }}>
                     <div style={{ fontSize: '12px', fontWeight: 800, color: '#EF4444', textTransform: 'uppercase', marginBottom: '8px' }}>
-                      📸 Evidencia Subida por Cliente
+                      Evidencia cliente (demo)
                     </div>
                     <img 
                       src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=400&q=80" 
@@ -233,7 +250,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
                   {/* Evidencias del Trabajador */}
                   <div style={{ backgroundColor: '#0F172A', border: '1px solid #334155', borderRadius: '12px', padding: '14px' }}>
                     <div style={{ fontSize: '12px', fontWeight: 800, color: '#10B981', textTransform: 'uppercase', marginBottom: '8px' }}>
-                      📸 Prueba Entregada por Trabajador
+                      Evidencia profesional (demo)
                     </div>
                     <img 
                       src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=400&q=80" 
@@ -259,7 +276,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
                   {messages.map(m => (
                     <div key={m.id} style={{ padding: '8px 12px', borderRadius: '8px', backgroundColor: m.sender === 'ADMIN' ? 'rgba(239,68,68,0.2)' : m.sender === 'CLIENT' ? 'rgba(0,122,255,0.15)' : 'rgba(52,199,89,0.15)', border: `1px solid ${m.sender === 'ADMIN' ? '#EF4444' : m.sender === 'CLIENT' ? '#007AFF' : '#34C759'}` }}>
                       <div style={{ fontSize: '10.5px', fontWeight: 800, color: m.sender === 'ADMIN' ? '#EF4444' : m.sender === 'CLIENT' ? '#007AFF' : '#34C759', marginBottom: '2px' }}>
-                        {m.sender === 'ADMIN' ? '🔴 ADMIN (Oficial)' : m.sender === 'CLIENT' ? '👤 CLIENTE' : '🧰 TRABAJADOR'} - {m.timestamp}
+                        {m.sender === 'ADMIN' ? 'ADMIN' : m.sender === 'CLIENT' ? 'CLIENTE' : 'PROFESIONAL'} — {m.timestamp}
                       </div>
                       <div style={{ fontSize: '12.5px', color: '#F8FAFC' }}>{m.text}</div>
                     </div>
@@ -292,10 +309,10 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
                 {/* Action Chips Rápidos */}
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   <button onClick={() => sendMessage('Por favor adjuntar foto del tablero con la tapa cerrada antes de 24h.')} style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid #334155', color: '#CBD5E1', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', cursor: 'pointer' }}>
-                    📍 Pedir foto final en 24h
+                    Pedir foto final en 24h
                   </button>
                   <button onClick={() => sendMessage('Se otorga un plazo final de 12h para descargos antes de liberar o reembolsar.')} style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid #334155', color: '#CBD5E1', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', cursor: 'pointer' }}>
-                    ⏰ Dar plazo final 12h
+                    Dar plazo final 12h
                   </button>
                 </div>
               </div>
@@ -305,8 +322,8 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
             {modalTab === 2 && (
               <div>
                 <div style={{ backgroundColor: '#0F172A', border: '1px solid #334155', padding: '16px', borderRadius: '12px', marginBottom: '18px', fontSize: '13px' }}>
-                  <div style={{ fontWeight: 800, color: '#F0782A', marginBottom: '6px' }}>dictamen de Custodia Escrow MyWorks Protect</div>
-                  <p style={{ color: '#CBD5E1', marginBottom: '10px' }}>Tras evaluar las evidencias multimedia y las respuestas del canal de mediación, selecciona la decisión definitiva:</p>
+                  <div style={{ fontWeight: 800, color: '#F0782A', marginBottom: '6px' }}>Resolución en Supabase</div>
+                  <p style={{ color: '#CBD5E1', marginBottom: '10px' }}>Marca la disputa como resuelta. Las evidencias/chat de arriba son demo; este paso sí persiste el estado.</p>
                   <div style={{ color: '#34C759', fontWeight: 900, fontSize: '16px' }}>Total a Disposición: ${selectedTicket.escrowAmount.toLocaleString('es-CL')} CLP</div>
                 </div>
 

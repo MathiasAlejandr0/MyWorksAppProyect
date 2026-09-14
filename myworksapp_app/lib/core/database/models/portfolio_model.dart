@@ -12,7 +12,7 @@ class PortfolioModel {
     required this.photoPath,
     this.description,
     required this.createdAt,
-    this.mediaType = 'photo',
+    this.mediaType = 'foto',
   });
 
   bool get isDemoAsset => photoPath.startsWith('demo:');
@@ -21,22 +21,22 @@ class PortfolioModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'workerId': workerId,
-      'photoPath': photoPath,
-      'description': description,
-      'createdAt': createdAt.toIso8601String(),
-      'mediaType': mediaType,
+      'id_trabajador': workerId,
+      'ruta_foto': photoPath,
+      'descripcion': description,
+      'creado_en': createdAt.toIso8601String(),
+      'tipo_medio': mediaType,
     };
   }
 
   factory PortfolioModel.fromMap(Map<String, dynamic> map) {
     return PortfolioModel(
       id: map['id'] as String,
-      workerId: map['workerId'] as String,
-      photoPath: map['photoPath'] as String,
-      description: map['description'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      mediaType: map['mediaType'] as String? ?? 'photo',
+      workerId: map['id_trabajador'] as String,
+      photoPath: map['ruta_foto'] as String,
+      description: map['descripcion'] as String?,
+      createdAt: DateTime.parse(map['creado_en'] as String),
+      mediaType: map['tipo_medio'] as String? ?? 'foto',
     );
   }
 }

@@ -1,5 +1,6 @@
 import '../database/repositories/job_repository.dart';
 import '../database/repositories/payment_repository.dart';
+import '../domain/pricing_constants.dart';
 import '../domain/worker_earnings_snapshot.dart';
 
 class WorkerEarningsService {
@@ -23,12 +24,12 @@ class WorkerEarningsService {
     for (final payment in payments) {
       final amount = payment.amount.round();
       switch (payment.status) {
-        case 'pending':
+        case PricingConstants.paymentPending:
           pending += amount;
-        case 'authorized':
-        case 'held':
+        case PricingConstants.paymentAuthorized:
+        case PricingConstants.paymentHeld:
           escrow += amount;
-        case 'released':
+        case PricingConstants.paymentReleased:
           released += amount;
       }
     }

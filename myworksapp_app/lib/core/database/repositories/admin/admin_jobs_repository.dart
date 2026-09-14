@@ -12,33 +12,32 @@ class AdminJobsRepository {
     String? search,
     int limit = 100,
   }) async {
-    var query = supabase.from('jobs').select();
+    var query = supabase.from('trabajos').select();
     if (status != null) {
-      query = query.eq('status', status);
+      query = query.eq('estado', status);
     }
     if (search != null && search.isNotEmpty) {
       final q = '%$search%';
       query = query.or(
-        'address.ilike.$q,id.ilike.$q,description.ilike.$q,comunaId.ilike.$q',
+        'direccion.ilike.$q,id.ilike.$q,descripcion.ilike.$q,id_comuna.ilike.$q',
       );
     }
-    final rows =
-        await query.order('createdAt', ascending: false).limit(limit);
+    final rows = await query.order('creado_en', ascending: false).limit(limit);
     return rows
         .map<JobModel>((m) => JobModel.fromMap(Map<String, dynamic>.from(m)))
         .toList();
   }
 
   Future<void> updateJobStatus(String jobId, String status) async {
-    await supabase.from('jobs').update({
-      'status': status,
-      'updatedAt': DateTime.now().toIso8601String(),
+    await supabase.from('trabajos').update({
+      'estado': status,
+      'actualizado_en': DateTime.now().toIso8601String(),
     }).eq('id', jobId);
   }
 
   Future<AdminJobDetail?> getJobDetail(String jobId) async {
     final jobRow =
-        await supabase.from('jobs').select().eq('id', jobId).maybeSingle();
+        await supabase.from('trabajos').select().eq('id', jobId).maybeSingle();
     if (jobRow == null) return null;
     final job = JobModel.fromMap(Map<String, dynamic>.from(jobRow));
 
@@ -46,29 +45,28 @@ class AdminJobsRepository {
     if (job.workerId != null) profileIds.add(job.workerId!);
 
     final profiles = await supabase
-        .from('profiles')
-        .select('id, name, email')
+        .from('perfiles')
+        .select('id, nombre, correo')
         .inFilter('id', profileIds.toList());
     final profileMap = {
-      for (final p in profiles)
-        p['id'] as String: Map<String, dynamic>.from(p),
+      for (final p in profiles) p['id'] as String: Map<String, dynamic>.from(p),
     };
 
     String? serviceName;
     if (job.serviceId.isNotEmpty) {
       final svc = await supabase
-          .from('services')
-          .select('name')
+          .from('servicios')
+          .select('nombre')
           .eq('id', job.serviceId)
           .maybeSingle();
-      serviceName = svc?['name'] as String?;
+      serviceName = svc?['nombre'] as String?;
     }
 
     final messageRows = await supabase
-        .from('messages')
+        .from('mensajes')
         .select()
-        .eq('jobId', jobId)
-        .order('createdAt', ascending: true);
+        .eq('id_trabajo', jobId)
+        .order('creado_en', ascending: true);
     final messages = messageRows
         .map<MessageModel>(
           (m) => MessageModel.fromMap(Map<String, dynamic>.from(m)),
@@ -76,7 +74,7 @@ class AdminJobsRepository {
         .toList();
 
     final paymentRows =
-        await supabase.from('payments').select().eq('jobId', jobId);
+        await supabase.from('pagos').select().eq('id_trabajo', jobId);
     final payments = paymentRows
         .map<PaymentModel>(
           (m) => PaymentModel.fromMap(Map<String, dynamic>.from(m)),
@@ -84,10 +82,10 @@ class AdminJobsRepository {
         .toList();
 
     final disputeRows = await supabase
-        .from('disputes')
+        .from('disputas')
         .select()
-        .eq('jobId', jobId)
-        .order('createdAt', ascending: false)
+        .eq('id_trabajo', jobId)
+        .order('creado_en', ascending: false)
         .limit(1);
     final dispute = disputeRows.isNotEmpty
         ? DisputeModel.fromMap(
@@ -96,38 +94,37 @@ class AdminJobsRepository {
         : null;
 
     final ratingRow = await supabase
-        .from('ratings')
+        .from('calificaciones')
         .select()
-        .eq('jobId', jobId)
+        .eq('id_trabajo', jobId)
         .maybeSingle();
     final rating = ratingRow != null
         ? RatingModel.fromMap(Map<String, dynamic>.from(ratingRow))
         : null;
 
     final cancelRow = await supabase
-        .from('job_cancellations')
+        .from('cancelaciones_trabajo')
         .select()
-        .eq('jobId', jobId)
+        .eq('id_trabajo', jobId)
         .maybeSingle();
     AdminJobCancellation? cancellation;
     if (cancelRow != null) {
       cancellation = AdminJobCancellation(
-        reason: cancelRow['reason'] as String,
-        cancelledBy: cancelRow['cancelledBy'] as String,
-        cancelledAt: DateTime.parse(cancelRow['cancelledAt'] as String),
+        reason: cancelRow['motivo'] as String,
+        cancelledBy: cancelRow['cancelado_por'] as String,
+        cancelledAt: DateTime.parse(cancelRow['cancelado_en'] as String),
       );
     }
 
     final client = profileMap[job.userId];
-    final worker =
-        job.workerId != null ? profileMap[job.workerId!] : null;
+    final worker = job.workerId != null ? profileMap[job.workerId!] : null;
 
     return AdminJobDetail(
       job: job,
-      clientName: client?['name'] as String?,
-      clientEmail: client?['email'] as String?,
-      workerName: worker?['name'] as String?,
-      workerEmail: worker?['email'] as String?,
+      clientName: client?['nombre'] as String?,
+      clientEmail: client?['correo'] as String?,
+      workerName: worker?['nombre'] as String?,
+      workerEmail: worker?['correo'] as String?,
       serviceName: serviceName,
       messages: messages,
       payments: payments,

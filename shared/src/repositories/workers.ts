@@ -5,38 +5,38 @@ const DEFAULT_AVATAR =
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200';
 
 type WorkerQueryRow = {
-  userId: string;
-  profession: string;
-  description?: string | null;
-  rating?: number | null;
-  isAvailable?: number | null;
-  visitFee?: number | null;
-  serviceCategory: string;
-  pricingConfigured?: number | null;
-  workZone?: string | null;
-  profiles?:
-    | { name?: string; email?: string; profilePhotoPath?: string | null }
-    | { name?: string; email?: string; profilePhotoPath?: string | null }[]
+  id_usuario: string;
+  profesion: string;
+  descripcion?: string | null;
+  calificacion?: number | null;
+  disponible?: number | null;
+  tarifa_visita?: number | null;
+  categoria_servicio: string;
+  precios_configurados?: number | null;
+  zona_trabajo?: string | null;
+  perfiles?:
+    | { nombre?: string; correo?: string; ruta_foto_perfil?: string | null }
+    | { nombre?: string; correo?: string; ruta_foto_perfil?: string | null }[]
     | null;
 };
 
 function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
-  const profile = row.profiles;
+  const profile = row.perfiles;
   const profileRow = Array.isArray(profile) ? profile[0] : profile;
 
   return {
-    userId: row.userId,
-    profession: row.profession,
-    description: row.description,
-    rating: Number(row.rating ?? 0),
-    isAvailable: Number(row.isAvailable ?? 0),
-    visitFee: Number(row.visitFee ?? 0),
-    serviceCategory: row.serviceCategory,
-    pricingConfigured: Number(row.pricingConfigured ?? 0),
-    workZone: row.workZone,
-    name: profileRow?.name ?? 'Profesional',
-    email: profileRow?.email,
-    profilePhotoPath: profileRow?.profilePhotoPath,
+    userId: row.id_usuario,
+    profession: row.profesion,
+    description: row.descripcion,
+    rating: Number(row.calificacion ?? 0),
+    isAvailable: Number(row.disponible ?? 0),
+    visitFee: Number(row.tarifa_visita ?? 0),
+    serviceCategory: row.categoria_servicio,
+    pricingConfigured: Number(row.precios_configurados ?? 0),
+    workZone: row.zona_trabajo,
+    name: profileRow?.nombre ?? 'Profesional',
+    email: profileRow?.correo,
+    profilePhotoPath: profileRow?.ruta_foto_perfil,
   };
 }
 
@@ -45,14 +45,14 @@ export async function fetchWorkersByCategory(
   category: string,
 ): Promise<WorkerWithProfile[]> {
   const { data, error } = await supabase
-    .from('workers')
+    .from('trabajadores')
     .select(
-      'userId, profession, description, rating, isAvailable, visitFee, serviceCategory, pricingConfigured, workZone, profiles!workers_userId_fkey(name, email, profilePhotoPath)',
+      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, perfiles!trabajadores_id_usuario_fkey(nombre, correo, ruta_foto_perfil)',
     )
-    .eq('serviceCategory', category)
-    .eq('isAvailable', 1)
-    .eq('pricingConfigured', 1)
-    .order('rating', { ascending: false });
+    .eq('categoria_servicio', category)
+    .eq('disponible', 1)
+    .eq('precios_configurados', 1)
+    .order('calificacion', { ascending: false });
 
   if (error) throw error;
   return ((data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);
@@ -62,11 +62,11 @@ export async function fetchWorkersForAdmin(
   supabase: SupabaseClient,
 ): Promise<WorkerWithProfile[]> {
   const { data, error } = await supabase
-    .from('workers')
+    .from('trabajadores')
     .select(
-      'userId, profession, description, rating, isAvailable, visitFee, serviceCategory, pricingConfigured, workZone, profiles!workers_userId_fkey(name, email, profilePhotoPath)',
+      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, perfiles!trabajadores_id_usuario_fkey(nombre, correo, ruta_foto_perfil)',
     )
-    .order('rating', { ascending: false });
+    .order('calificacion', { ascending: false });
 
   if (error) throw error;
   return ((data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);

@@ -2,7 +2,7 @@ import '../models/dispute_model.dart';
 import '../supabase_db.dart';
 
 class DisputeRepository {
-  static const String _table = 'disputes';
+  static const String _table = 'disputas';
 
   Future<void> createDispute(DisputeModel dispute) async {
     await supabase.from(_table).insert(dispute.toMap());
@@ -19,8 +19,8 @@ class DisputeRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('jobId', jobId)
-        .order('createdAt', ascending: false)
+        .eq('id_trabajo', jobId)
+        .order('creado_en', ascending: false)
         .limit(1);
     if (rows.isEmpty) return null;
     return DisputeModel.fromMap(rows.first);
@@ -34,8 +34,8 @@ class DisputeRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('status', 'open')
-        .order('createdAt', ascending: false);
+        .eq('estado', 'abierta')
+        .order('creado_en', ascending: false);
     return rows.map<DisputeModel>((m) => DisputeModel.fromMap(m)).toList();
   }
 }

@@ -295,8 +295,8 @@ class AbuseProtectionService {
   Future<void> _applyTemporaryBan(String userId) async {
     try {
       final user = await _userRepository.getUserById(userId);
-      if (user != null && user.accountStatus == 'active') {
-        await _userRepository.updateAccountStatus(userId, 'suspended');
+      if (user != null && user.accountStatus == 'activo') {
+        await _userRepository.updateAccountStatus(userId, 'suspendido');
         AppLogger.w('Bloqueo temporal aplicado a usuario: $userId');
       }
     } catch (e) {

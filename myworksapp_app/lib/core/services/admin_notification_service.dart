@@ -46,7 +46,7 @@ class AdminNotificationService {
     final reasonLabel = reason ?? 'reclamo';
 
     switch (status) {
-      case 'reviewed':
+      case 'revisado':
         await _send(
           userId: reporterId,
           type: 'admin_report_reviewed',
@@ -55,7 +55,7 @@ class AdminNotificationService {
           relatedId: reportId,
         );
         break;
-      case 'resolved':
+      case 'resuelto':
         await _send(
           userId: reporterId,
           type: 'admin_report_resolved',
@@ -71,7 +71,7 @@ class AdminNotificationService {
           relatedId: reportId,
         );
         break;
-      case 'dismissed':
+      case 'descartado':
         await _send(
           userId: reporterId,
           type: 'admin_report_dismissed',

@@ -15,16 +15,16 @@ class AdminIncidentsRepository {
     String? search,
     int limit = 100,
   }) async {
-    var query = supabase.from('disputes').select();
+    var query = supabase.from('disputas').select();
     if (status != null) {
-      query = query.eq('status', status);
+      query = query.eq('estado', status);
     }
     if (search != null && search.isNotEmpty) {
       final q = '%$search%';
-      query = query.or('reason.ilike.$q,description.ilike.$q,jobId.ilike.$q');
+      query =
+          query.or('motivo.ilike.$q,descripcion.ilike.$q,id_trabajo.ilike.$q');
     }
-    final rows =
-        await query.order('createdAt', ascending: false).limit(limit);
+    final rows = await query.order('creado_en', ascending: false).limit(limit);
     return rows
         .map<DisputeModel>(
           (m) => DisputeModel.fromMap(Map<String, dynamic>.from(m)),
@@ -33,9 +33,9 @@ class AdminIncidentsRepository {
   }
 
   Future<void> markDisputeUnderReview(String disputeId) async {
-    await supabase.from('disputes').update({
-      'status': 'under_review',
-      'updatedAt': DateTime.now().toIso8601String(),
+    await supabase.from('disputas').update({
+      'estado': 'en_revision',
+      'actualizado_en': DateTime.now().toIso8601String(),
     }).eq('id', disputeId);
   }
 
@@ -44,16 +44,15 @@ class AdminIncidentsRepository {
     String? search,
     int limit = 100,
   }) async {
-    var query = supabase.from('reports').select();
+    var query = supabase.from('reportes').select();
     if (status != null) {
-      query = query.eq('status', status);
+      query = query.eq('estado', status);
     }
     if (search != null && search.isNotEmpty) {
       final q = '%$search%';
-      query = query.or('reason.ilike.$q,description.ilike.$q');
+      query = query.or('motivo.ilike.$q,descripcion.ilike.$q');
     }
-    final rows =
-        await query.order('createdAt', ascending: false).limit(limit);
+    final rows = await query.order('creado_en', ascending: false).limit(limit);
     final reports = rows
         .map<ReportModel>(
           (m) => ReportModel.fromMap(Map<String, dynamic>.from(m)),
@@ -79,7 +78,9 @@ class AdminIncidentsRepository {
   }
 
   Future<void> updateReportStatus(String reportId, String status) async {
-    await supabase.from('reports').update({'status': status}).eq('id', reportId);
+    await supabase
+        .from('reportes')
+        .update({'estado': status}).eq('id', reportId);
   }
 
   Future<List<AppErrorLogModel>> listErrorLogs({
@@ -107,18 +108,17 @@ class AdminIncidentsRepository {
     String? search,
     int limit = 100,
   }) async {
-    var query = supabase.from('pending_actions').select();
+    var query = supabase.from('acciones_pendientes').select();
     if (status != null) {
-      query = query.eq('status', status);
+      query = query.eq('estado', status);
     }
     if (search != null && search.isNotEmpty) {
       final q = '%$search%';
       query = query.or(
-        'actionType.ilike.$q,entityType.ilike.$q,errorMessage.ilike.$q',
+        'tipo_accion.ilike.$q,tipo_entidad.ilike.$q,mensaje_error.ilike.$q',
       );
     }
-    final rows =
-        await query.order('createdAt', ascending: false).limit(limit);
+    final rows = await query.order('creado_en', ascending: false).limit(limit);
     return rows
         .map<PendingActionModel>(
           (m) => PendingActionModel.fromMap(Map<String, dynamic>.from(m)),
@@ -131,12 +131,12 @@ class AdminIncidentsRepository {
     String? search,
     int limit = 100,
   }) async {
-    var query = supabase.from('abuse_events').select();
+    var query = supabase.from('eventos_abuso').select();
     if (unresolvedOnly) {
-      query = query.eq('isResolved', 0);
+      query = query.eq('resuelto', 0);
     }
     final rows =
-        await query.order('detectedAt', ascending: false).limit(limit);
+        await query.order('detectado_en', ascending: false).limit(limit);
     var events = rows
         .map<AbuseEventModel>(
           (m) => AbuseEventModel.fromMap(Map<String, dynamic>.from(m)),
@@ -157,21 +157,21 @@ class AdminIncidentsRepository {
   }
 
   Future<void> resolveAbuseEvent(String eventId) async {
-    await supabase.from('abuse_events').update({
-      'isResolved': 1,
-      'actionTakenAt': DateTime.now().toIso8601String(),
+    await supabase.from('eventos_abuso').update({
+      'resuelto': 1,
+      'accion_tomada_en': DateTime.now().toIso8601String(),
     }).eq('id', eventId);
   }
 
   Future<Map<String, String>> _profileNamesByIds(Set<String> ids) async {
     if (ids.isEmpty) return {};
     final rows = await supabase
-        .from('profiles')
-        .select('id, name')
+        .from('perfiles')
+        .select('id, nombre')
         .inFilter('id', ids.toList());
     return {
       for (final row in rows)
-        row['id'] as String: row['name'] as String? ?? 'Usuario',
+        row['id'] as String: row['nombre'] as String? ?? 'Usuario',
     };
   }
 }

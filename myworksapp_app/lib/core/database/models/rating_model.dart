@@ -18,22 +18,22 @@ class RatingModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'jobId': jobId,
-      if (userId != null) 'userId': userId,
-      'score': score,
-      'comment': comment,
-      'createdAt': createdAt.toIso8601String(),
+      'id_trabajo': jobId,
+      if (userId != null) 'id_usuario': userId,
+      'puntaje': score,
+      'comentario': comment,
+      'creado_en': createdAt.toIso8601String(),
     };
   }
 
   factory RatingModel.fromMap(Map<String, dynamic> map) {
     return RatingModel(
       id: map['id'] as String,
-      jobId: map['jobId'] as String,
-      userId: map['userId'] as String?,
-      score: map['score'] as int,
-      comment: map['comment'] as String?,
-      createdAt: _parseDate(map['createdAt'] as String),
+      jobId: map['id_trabajo'] as String,
+      userId: map['id_usuario'] as String?,
+      score: map['puntaje'] as int,
+      comment: map['comentario'] as String?,
+      createdAt: _parseDate(map['creado_en'] as String),
     );
   }
 

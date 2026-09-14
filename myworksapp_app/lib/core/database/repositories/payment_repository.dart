@@ -3,7 +3,7 @@ import '../supabase_db.dart';
 import '../../domain/pricing_constants.dart';
 
 class PaymentRepository {
-  static const String _table = 'payments';
+  static const String _table = 'pagos';
 
   Future<void> createPayment(PaymentModel payment) async {
     await supabase.from(_table).insert(payment.toMap());
@@ -25,15 +25,15 @@ class PaymentRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('jobId', jobId)
-        .eq('paymentType', PricingConstants.paymentTypePrimary)
+        .eq('id_trabajo', jobId)
+        .eq('tipo_pago', PricingConstants.paymentTypePrimary)
         .limit(1);
     if (rows.isNotEmpty) {
       return PaymentModel.fromMap(rows.first);
     }
     // Fallback registros antiguos sin paymentType
     final legacy =
-        await supabase.from(_table).select().eq('jobId', jobId).limit(1);
+        await supabase.from(_table).select().eq('id_trabajo', jobId).limit(1);
     if (legacy.isEmpty) return null;
     return PaymentModel.fromMap(legacy.first);
   }
@@ -47,8 +47,8 @@ class PaymentRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .inFilter('jobId', jobIds)
-        .order('createdAt', ascending: false);
+        .inFilter('id_trabajo', jobIds)
+        .order('creado_en', ascending: false);
     return rows
         .map<PaymentModel>((m) => PaymentModel.fromMap(m))
         .toList();

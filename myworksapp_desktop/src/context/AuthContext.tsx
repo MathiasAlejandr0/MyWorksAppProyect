@@ -33,9 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async () => {
     try {
       const current = await getSessionProfile(supabase);
-      if (current) {
-        requireRole(current, ['admin']);
+      if (!current) {
+        setProfile(null);
+        return;
       }
+      requireRole(current, ['administrador']);
       setProfile(current);
     } catch {
       setProfile(null);
@@ -55,8 +57,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const nextProfile = await signIn(supabase, email, password);
-    requireRole(nextProfile, ['admin']);
-    setProfile(nextProfile);
+    try {
+      requireRole(nextProfile, ['administrador']);
+      setProfile(nextProfile);
+    } catch (err) {
+      await signOut(supabase);
+      setProfile(null);
+      throw err instanceof AuthError
+        ? err
+        : new AuthError('Solo el rol administrador puede usar la consola ops.');
+    }
   }, []);
 
   const logout = useCallback(async () => {

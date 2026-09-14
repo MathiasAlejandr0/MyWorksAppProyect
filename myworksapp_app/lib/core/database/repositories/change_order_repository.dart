@@ -3,7 +3,7 @@ import '../supabase_db.dart';
 import '../../domain/pricing_constants.dart';
 
 class ChangeOrderRepository {
-  static const String _table = 'change_orders';
+  static const String _table = 'ordenes_cambio';
 
   Future<void> create(ChangeOrderModel order) async {
     await supabase.from(_table).insert(order.toMap());
@@ -13,8 +13,8 @@ class ChangeOrderRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('jobId', jobId)
-        .order('createdAt', ascending: false);
+        .eq('id_trabajo', jobId)
+        .order('creado_en', ascending: false);
     return rows.map<ChangeOrderModel>((m) => ChangeOrderModel.fromMap(m)).toList();
   }
 
@@ -22,7 +22,7 @@ class ChangeOrderRepository {
     final rows = await supabase
         .from(_table)
         .select('id')
-        .eq('jobId', jobId)
+        .eq('id_trabajo', jobId)
         .eq('estado', PricingConstants.changeOrderPending);
     return rows.length;
   }
@@ -31,7 +31,7 @@ class ChangeOrderRepository {
     final rows = await supabase
         .from(_table)
         .select('id')
-        .eq('jobId', jobId)
+        .eq('id_trabajo', jobId)
         .eq('estado', PricingConstants.changeOrderApproved);
     return rows.length;
   }

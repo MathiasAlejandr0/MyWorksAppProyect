@@ -19,7 +19,7 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
     {
       id: 'm1',
       sender: 'worker',
-      text: `[Demo] Hola, soy ${workerName}. Este chat es una simulación en la web. ¿En qué lugar específico necesitas la atención?`,
+      text: `Hola, soy ${workerName}. Recibí tu solicitud (demo). ¿En qué parte del domicilio necesitas la atención?`,
       timestamp: '14:30',
     },
   ]);
@@ -49,7 +49,7 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
       const replyMsg: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'worker',
-        text: 'Entendido. Voy saliendo hacia tu dirección ahora mismo con todo mi equipo técnico.',
+        text: 'Gracias. En la app real el profesional confirmaría horario y detalles por aquí.',
         timestamp: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages(prev => [...prev, replyMsg]);
@@ -66,7 +66,7 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
             <div style={{ fontSize: '14px', fontWeight: 800 }}>{workerName}</div>
             <div style={{ fontSize: '11px', color: '#34C759', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span style={{ width: '6px', height: '6px', backgroundColor: '#34C759', borderRadius: '50%' }} />
-              En línea ahora
+              Demo · respuesta automática
             </div>
           </div>
         </div>
@@ -90,7 +90,7 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
         ))}
       </div>
 
-      {/* Respuestas Rápidas IA */}
+      {/* Respuestas rápidas */}
       <div style={{ padding: '8px 12px', backgroundColor: 'white', borderTop: '1px solid var(--border-light)', display: 'flex', gap: '6px', overflowX: 'auto' }}>
         {quickReplies.map((qr, idx) => (
           <button 

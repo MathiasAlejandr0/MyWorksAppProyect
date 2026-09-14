@@ -4,7 +4,7 @@ import '../../utils/app_logger.dart';
 
 /// Repositorio para eventos de abuso
 class AbuseRepository {
-  static const String _table = 'abuse_events';
+  static const String _table = 'eventos_abuso';
 
   Future<void> createAbuseEvent(AbuseEventModel event) async {
     try {
@@ -21,8 +21,8 @@ class AbuseRepository {
       final rows = await supabase
           .from(_table)
           .select()
-          .eq('userId', userId)
-          .order('detectedAt', ascending: false);
+          .eq('id_usuario', userId)
+          .order('detectado_en', ascending: false);
       return rows
           .map<AbuseEventModel>((m) => AbuseEventModel.fromMap(m))
           .toList();
@@ -37,8 +37,8 @@ class AbuseRepository {
       final rows = await supabase
           .from(_table)
           .select()
-          .eq('isResolved', 0)
-          .order('detectedAt', ascending: false);
+          .eq('resuelto', 0)
+          .order('detectado_en', ascending: false);
       return rows
           .map<AbuseEventModel>((m) => AbuseEventModel.fromMap(m))
           .toList();
@@ -60,7 +60,7 @@ class AbuseRepository {
 
   Future<void> resolveAbuseEvent(String eventId) async {
     try {
-      await supabase.from(_table).update({'isResolved': 1}).eq('id', eventId);
+      await supabase.from(_table).update({'resuelto': 1}).eq('id', eventId);
       AppLogger.d('Abuse event resolved: $eventId');
     } catch (e) {
       AppLogger.e('Error resolving abuse event', e);

@@ -4,8 +4,8 @@ import { AuthError, useAuth } from '../context/AuthContext';
 
 export function DesktopLoginScreen() {
   const { login } = useAuth();
-  const [email, setEmail] = useState('admin@demo.com');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,17 +33,24 @@ export function DesktopLoginScreen() {
             </div>
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 900, color: 'white', letterSpacing: '0.2px' }}>My Works App</h1>
-          <span style={{ fontSize: '11px', color: '#F0782A', fontWeight: 800, backgroundColor: 'rgba(240,120,42,0.15)', padding: '3px 10px', borderRadius: '12px', marginTop: '4px' }}>ENTERPRISE MANAGEMENT HUB</span>
+          <span style={{ fontSize: '11px', color: '#F0782A', fontWeight: 800, backgroundColor: 'rgba(240,120,42,0.15)', padding: '3px 10px', borderRadius: '8px', marginTop: '6px' }}>
+            Consola administrativa
+          </span>
+          <span style={{ fontSize: '10px', color: '#98989D', fontWeight: 600, marginTop: '8px', textAlign: 'center' }}>
+            Solo demo académica — sin credenciales embebidas
+          </span>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: '#98989D', marginBottom: '6px', display: 'block' }}>Email corporativo (rol admin)</label>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: '#98989D', marginBottom: '6px', display: 'block' }}>Email (rol administrador)</label>
             <div style={{ position: 'relative' }}>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+                placeholder="admin@tu-proyecto.cl"
                 style={{ width: '100%', padding: '12px 14px 12px 40px', borderRadius: '10px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }}
                 required
               />
@@ -58,6 +65,8 @@ export function DesktopLoginScreen() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                placeholder="••••••••"
                 style={{ width: '100%', padding: '12px 14px 12px 40px', borderRadius: '10px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }}
                 required
               />
@@ -74,12 +83,12 @@ export function DesktopLoginScreen() {
             disabled={submitting}
             style={{ marginTop: '8px', padding: '14px', borderRadius: '9999px', border: 'none', background: 'linear-gradient(135deg, #FF6B00, #F0782A)', color: 'white', fontWeight: 800, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(240, 120, 42, 0.4)' }}
           >
-            <ShieldCheck size={18} /> {submitting ? 'Validando...' : 'Iniciar sesión con Supabase'}
+            <ShieldCheck size={18} /> {submitting ? 'Validando...' : 'Iniciar sesión'}
           </button>
         </form>
 
-        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '11.5px', color: '#98989D' }}>
-          Solo cuentas con rol <strong>admin</strong> en Supabase pueden acceder al hub.
+        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '12px', color: '#98989D', lineHeight: 1.5 }}>
+          Solo cuentas con rol <strong style={{ color: '#F5F5F7' }}>administrador</strong> en Supabase pueden acceder. Otros roles se rechazan al iniciar sesión.
         </div>
       </div>
     </div>

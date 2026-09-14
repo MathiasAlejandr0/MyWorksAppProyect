@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/database/models/dispute_model.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/constants.dart';
 
 typedef OpenDisputeCallback = Future<void> Function(
   String reason,
@@ -118,11 +119,11 @@ class _DisputeStatusCard extends StatelessWidget {
 
   String _reasonLabel(String reason) {
     switch (reason) {
-      case 'quality':
+      case AppConstants.disputeReasonQuality:
         return 'Calidad del trabajo';
-      case 'payment':
+      case AppConstants.disputeReasonPayment:
         return 'Pago';
-      case 'behavior':
+      case AppConstants.disputeReasonBehavior:
         return 'Conducta';
       default:
         return 'Otro';
@@ -131,7 +132,8 @@ class _DisputeStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isOpen = dispute.status == 'open' || dispute.status == 'under_review';
+    final isOpen = dispute.status == AppConstants.disputeStatusOpen ||
+        dispute.status == AppConstants.disputeStatusUnderReview;
 
     return Card(
       child: Padding(
@@ -184,10 +186,10 @@ class _DisputeReasonDialog extends StatelessWidget {
   const _DisputeReasonDialog();
 
   static const _reasons = [
-    ('quality', 'Calidad del trabajo'),
-    ('payment', 'Problema de pago'),
-    ('behavior', 'Conducta'),
-    ('other', 'Otro'),
+    (AppConstants.disputeReasonQuality, 'Calidad del trabajo'),
+    (AppConstants.disputeReasonPayment, 'Problema de pago'),
+    (AppConstants.disputeReasonBehavior, 'Conducta'),
+    (AppConstants.disputeReasonOther, 'Otro'),
   ];
 
   @override

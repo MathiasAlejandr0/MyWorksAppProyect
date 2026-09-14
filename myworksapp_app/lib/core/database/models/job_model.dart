@@ -55,42 +55,42 @@ class JobModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'userId': userId,
-      'workerId': workerId,
-      'serviceId': serviceId,
-      'status': status,
-      'address': address,
-      'latitude': latitude,
-      'longitude': longitude,
-      'description': description,
-      'scheduledDate': scheduledDate?.toIso8601String(),
-      'serviceMetadata': serviceMetadata != null ? jsonEncode(serviceMetadata) : null,
-      'pricingMode': pricingMode,
-      'paymentStatus': paymentStatus,
-      'comunaId': comunaId,
-      'pricingSnapshot': pricingSnapshot != null ? jsonEncode(pricingSnapshot) : null,
-      'serviceSkuId': serviceSkuId,
-      'hourlyBlockHours': hourlyBlockHours,
-      'selectedQuoteId': selectedQuoteId,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'id_usuario': userId,
+      'id_trabajador': workerId,
+      'id_servicio': serviceId,
+      'estado': status,
+      'direccion': address,
+      'latitud': latitude,
+      'longitud': longitude,
+      'descripcion': description,
+      'fecha_programada': scheduledDate?.toIso8601String(),
+      'metadatos_servicio': serviceMetadata != null ? jsonEncode(serviceMetadata) : null,
+      'modalidad_cobro': pricingMode,
+      'estado_pago': paymentStatus,
+      'id_comuna': comunaId,
+      'instantanea_precio': pricingSnapshot != null ? jsonEncode(pricingSnapshot) : null,
+      'id_sku_servicio': serviceSkuId,
+      'horas_bloque': hourlyBlockHours,
+      'id_cotizacion_seleccionada': selectedQuoteId,
+      'creado_en': createdAt.toIso8601String(),
+      'actualizado_en': updatedAt.toIso8601String(),
     };
   }
 
   factory JobModel.fromMap(Map<String, dynamic> map) {
     Map<String, dynamic>? metadata;
-    if (map['serviceMetadata'] != null) {
+    if (map['metadatos_servicio'] != null) {
       try {
-        metadata = jsonDecode(map['serviceMetadata'] as String) as Map<String, dynamic>;
+        metadata = jsonDecode(map['metadatos_servicio'] as String) as Map<String, dynamic>;
       } catch (_) {
         metadata = null;
       }
     }
 
     Map<String, dynamic>? snapshot;
-    if (map['pricingSnapshot'] != null) {
+    if (map['instantanea_precio'] != null) {
       try {
-        snapshot = jsonDecode(map['pricingSnapshot'] as String) as Map<String, dynamic>;
+        snapshot = jsonDecode(map['instantanea_precio'] as String) as Map<String, dynamic>;
       } catch (_) {
         snapshot = null;
       }
@@ -98,27 +98,27 @@ class JobModel {
 
     return JobModel(
       id: map['id'] as String,
-      userId: map['userId'] as String,
-      workerId: map['workerId'] as String?,
-      serviceId: map['serviceId'] as String,
-      status: map['status'] as String,
-      address: map['address'] as String,
-      latitude: map['latitude'] != null ? (map['latitude'] as num).toDouble() : null,
-      longitude: map['longitude'] != null ? (map['longitude'] as num).toDouble() : null,
-      description: map['description'] as String?,
-      scheduledDate: map['scheduledDate'] != null
-          ? DateTime.parse(map['scheduledDate'] as String)
+      userId: map['id_usuario'] as String,
+      workerId: map['id_trabajador'] as String?,
+      serviceId: map['id_servicio'] as String,
+      status: map['estado'] as String,
+      address: map['direccion'] as String,
+      latitude: map['latitud'] != null ? (map['latitud'] as num).toDouble() : null,
+      longitude: map['longitud'] != null ? (map['longitud'] as num).toDouble() : null,
+      description: map['descripcion'] as String?,
+      scheduledDate: map['fecha_programada'] != null
+          ? DateTime.parse(map['fecha_programada'] as String)
           : null,
       serviceMetadata: metadata,
-      pricingMode: map['pricingMode'] as String? ?? PricingConstants.modeLegacy,
-      paymentStatus: map['paymentStatus'] as String? ?? PricingConstants.paymentNone,
-      comunaId: map['comunaId'] as String?,
+      pricingMode: map['modalidad_cobro'] as String? ?? PricingConstants.modeLegacy,
+      paymentStatus: map['estado_pago'] as String? ?? PricingConstants.paymentNone,
+      comunaId: map['id_comuna'] as String?,
       pricingSnapshot: snapshot,
-      serviceSkuId: map['serviceSkuId'] as String?,
-      hourlyBlockHours: map['hourlyBlockHours'] as int?,
-      selectedQuoteId: map['selectedQuoteId'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: DateTime.parse(map['updatedAt'] as String),
+      serviceSkuId: map['id_sku_servicio'] as String?,
+      hourlyBlockHours: map['horas_bloque'] as int?,
+      selectedQuoteId: map['id_cotizacion_seleccionada'] as String?,
+      createdAt: DateTime.parse(map['creado_en'] as String),
+      updatedAt: DateTime.parse(map['actualizado_en'] as String),
     );
   }
 
