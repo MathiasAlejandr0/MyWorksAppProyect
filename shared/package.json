@@ -7,10 +7,14 @@
     ".": "./src/index.ts",
     "./*": "./src/*"
   },
+  "scripts": {
+    "test": "node --import tsx --test src/repositories/metrics.test.ts"
+  },
   "peerDependencies": {
     "@supabase/supabase-js": "^2.112.3"
   },
   "devDependencies": {
-    "@supabase/supabase-js": "^2.112.3"
+    "@supabase/supabase-js": "^2.112.3",
+    "tsx": "^4.23.13"
   }
 }

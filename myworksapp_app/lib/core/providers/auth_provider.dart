@@ -110,7 +110,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       }
 
-      return _finalizeAuthenticatedUser(authUser.id);
+      return await _finalizeAuthenticatedUser(authUser.id);
     } on AuthException catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -165,7 +165,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       }
 
-      return _finalizeAuthenticatedUser(authUser.id);
+      return await _finalizeAuthenticatedUser(authUser.id);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,

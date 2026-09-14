@@ -47,7 +47,7 @@ interface Worker {
   pricePerVisit: number;
 }
 
-interface AiResult {
+interface ServiceMatch {
   category: string;
   categoryName: string;
   problem: string;
@@ -69,12 +69,34 @@ const CATEGORIES = [
   { id: 'construccion', title: 'Maestro Albañil', icon: Hammer, photo: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=600' },
 ];
 
+function WorkersSkeleton() {
+  return (
+    <div className="page-fade-in" aria-busy="true" aria-label="Buscando profesionales">
+      <div className="skeleton-block skeleton-title" />
+      <div className="skeleton-block skeleton-line" />
+      <div className="skeleton-block skeleton-line short" />
+      <div className="workers-grid skeleton-workers">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="skeleton-worker-card">
+            <div className="skeleton-block skeleton-avatar" />
+            <div className="skeleton-worker-meta">
+              <div className="skeleton-block skeleton-line" />
+              <div className="skeleton-block skeleton-line short" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="skeleton-caption">Cargando profesionales disponibles…</p>
+    </div>
+  );
+}
+
 export function App() {
   const { profile, logout, error: authError, clearError } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
   const [query, setQuery] = useState('');
-  const [aiResult, setAiResult] = useState<AiResult | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [serviceMatch, setServiceMatch] = useState<ServiceMatch | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
@@ -91,9 +113,10 @@ export function App() {
     }
   }, [darkMode]);
 
-  const analyzeQuery = async (text: string) => {
+  const searchService = async (text: string) => {
     if (!text.trim()) return;
-    setIsAnalyzing(true);
+    setIsSearching(true);
+    setServiceMatch(null);
     setQuery(text);
 
     const lower = text.toLowerCase();
@@ -177,7 +200,7 @@ export function App() {
       setSelectedServiceId(service?.id ?? null);
       const workers = workersRaw.map((worker) => toWebWorkerCard(worker));
 
-      setAiResult({
+      setServiceMatch({
         category,
         categoryName,
         problem,
@@ -189,7 +212,7 @@ export function App() {
       });
     } catch {
       setSelectedServiceId(null);
-      setAiResult({
+      setServiceMatch({
         category,
         categoryName,
         problem,
@@ -200,7 +223,7 @@ export function App() {
         workers: [],
       });
     } finally {
-      setIsAnalyzing(false);
+      setIsSearching(false);
     }
   };
 
@@ -226,7 +249,7 @@ export function App() {
         userId: profile.id,
         workerId: selectedWorker.id,
         serviceId: selectedServiceId,
-        description: aiResult?.problem ?? query,
+        description: serviceMatch?.problem ?? query,
       });
       setBookingConfirmed(true);
       setBookingError(null);
@@ -273,7 +296,7 @@ export function App() {
       </nav>
 
       {authError && (
-        <div className="auth-banner container" role="alert">
+        <div className="auth-banner container page-fade-in" role="alert">
           <p>{authError}</p>
           <button
             type="button"
@@ -288,7 +311,7 @@ export function App() {
         </div>
       )}
 
-      <section className="hero-section">
+      <section className="hero-section page-fade-in">
         <div className="container">
           <div className="hero-rise hero-copy">
             <p className="badge-tag badge-orange">Marketplace de oficios · Chile</p>
@@ -302,7 +325,7 @@ export function App() {
                 className="btn-primary"
                 onClick={() => document.getElementById('search-box')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
               >
-                Buscar un oficio
+                Buscar un servicio
               </button>
               {!profile && (
                 <button type="button" className="btn-ghost" onClick={() => setShowAuth(true)}>
@@ -312,14 +335,14 @@ export function App() {
             </div>
           </div>
 
-          <div id="search-box" className="card-3d search-card">
+          <div id="search-box" className="card-3d search-card section-fade-in">
             <div className="search-row">
               <div className="search-input-wrap">
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && void analyzeQuery(query)}
+                  onKeyDown={(e) => e.key === 'Enter' && void searchService(query)}
                   placeholder='Ej: "Fuga de agua en el lavaplatos"'
                   className="search-input"
                   style={{ background: darkMode ? 'var(--bg-elevated-dark)' : 'var(--bg-elevated-light)', color: 'inherit' }}
@@ -329,11 +352,11 @@ export function App() {
 
               <button
                 type="button"
-                onClick={() => void analyzeQuery(query)}
-                disabled={isAnalyzing}
+                onClick={() => void searchService(query)}
+                disabled={isSearching}
                 className="btn-primary search-submit"
               >
-                {isAnalyzing ? 'Buscando…' : 'Buscar'}
+                {isSearching ? 'Buscando…' : 'Buscar servicio'}
               </button>
             </div>
 
@@ -348,7 +371,7 @@ export function App() {
                 <button
                   key={prompt}
                   type="button"
-                  onClick={() => void analyzeQuery(prompt)}
+                  onClick={() => void searchService(prompt)}
                   className="chip-btn"
                   style={{ background: darkMode ? 'var(--bg-elevated-dark)' : 'var(--orange-soft)' }}
                 >
@@ -357,29 +380,40 @@ export function App() {
               ))}
             </div>
 
-            {aiResult && (
-              <div className="result-panel">
+            {isSearching && (
+              <div className="result-panel result-panel-loading">
+                <WorkersSkeleton />
+              </div>
+            )}
+
+            {!isSearching && serviceMatch && (
+              <div className="result-panel page-fade-in" key={serviceMatch.category + query}>
                 <div className="result-header">
                   <div className="result-title-row">
                     <CheckCircle2 color="#2F9E64" size={22} />
-                    <h3>{aiResult.categoryName}</h3>
+                    <h3>{serviceMatch.categoryName}</h3>
                   </div>
-                  <span className="badge-tag badge-orange">{aiResult.urgency}</span>
+                  <span className="badge-tag badge-orange">{serviceMatch.urgency}</span>
                 </div>
 
                 <p className="result-problem">
-                  <strong>Problema:</strong> {aiResult.problem}
+                  <strong>Servicio:</strong> {serviceMatch.problem}
                 </p>
                 <p className="result-price">
-                  Estimado: ${aiResult.minPrice.toLocaleString('es-CL')} – ${aiResult.maxPrice.toLocaleString('es-CL')} CLP
+                  Estimado: ${serviceMatch.minPrice.toLocaleString('es-CL')} – ${serviceMatch.maxPrice.toLocaleString('es-CL')} CLP
                 </p>
 
                 <h4 className="result-workers-label">Profesionales disponibles</h4>
-                {aiResult.workers.length === 0 ? (
-                  <p className="muted-note">No hay profesionales disponibles para esta categoría por ahora.</p>
+                {serviceMatch.workers.length === 0 ? (
+                  <div className="empty-state">
+                    <p className="empty-state-title">Sin profesionales por ahora</p>
+                    <p className="empty-state-copy">
+                      Todavía no hay alguien disponible en esta categoría. Prueba otra búsqueda o vuelve en unos minutos.
+                    </p>
+                  </div>
                 ) : (
                   <div className="workers-grid">
-                    {aiResult.workers.map((w) => (
+                    {serviceMatch.workers.map((w) => (
                       <div key={w.id} className="worker-card" style={{ backgroundColor: darkMode ? 'var(--bg-surface-dark)' : 'white' }}>
                         <img src={w.photoUrl} alt={w.name} className="worker-photo" />
                         <div className="worker-meta">
@@ -401,7 +435,7 @@ export function App() {
         </div>
       </section>
 
-      <section className="categories-section">
+      <section className="categories-section section-fade-in">
         <div className="container">
           <div className="section-head">
             <h2>Oficios disponibles</h2>
@@ -416,7 +450,7 @@ export function App() {
                   key={cat.id}
                   type="button"
                   className="card-3d category-card"
-                  onClick={() => void analyzeQuery(`Necesito un ${cat.title}`)}
+                  onClick={() => void searchService(`Necesito un ${cat.title}`)}
                 >
                   <div className="category-media">
                     <img src={cat.photo} alt={cat.title} />
@@ -440,8 +474,8 @@ export function App() {
       </section>
 
       {selectedWorker && (
-        <div className="modal-backdrop">
-          <div className="card-3d modal-card">
+        <div className="modal-backdrop modal-fade-in">
+          <div className="card-3d modal-card modal-rise">
             <button
               type="button"
               className="modal-close"
@@ -487,11 +521,11 @@ export function App() {
                 {bookingError && <p className="error-text">{bookingError}</p>}
               </>
             ) : (
-              <div className="booking-done">
+              <div className="booking-done page-fade-in">
                 <CheckCircle2 color="#2F9E64" size={56} />
                 <h3>Solicitud creada</h3>
                 <p>
-                  {selectedWorker.name} fue notificado. El pago simulado fue de ${selectedWorker.pricePerVisit.toLocaleString('es-CL')} CLP
+                  Tu solicitud quedó registrada. Referencia de pago simulado: ${selectedWorker.pricePerVisit.toLocaleString('es-CL')} CLP
                   (sin cobro real).
                 </p>
 

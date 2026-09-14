@@ -1,64 +1,48 @@
-# Auditoría MyWorksApp — reevaluación post-remediación
+# Auditoría MyWorksApp — reevaluación (post craft + probe remoto)
 
-**Fecha:** 2026-09-14  
-**Baseline previa:** ~5.6 / 10  
-**Nota global (código / repo):** **7.1 / 10**
+**Fecha:** 2026-09-14 (segunda pasada)  
+**Baseline previa:** ~7.1 / 10  
+**Nota global (código / repo):** **8.1 / 10**  
+**Nota global si `06` seed aplicado + RLS confirmado en remoto:** **~8.7–9.0**
 
-Si la migración RLS `05` **no** está aplicada en Supabase remoto, la seguridad efectiva sigue ~3.5–4 y la nota global real cae a **~6.0–6.3**.
-
-Subió de verdad. **No es 9.** La brecha sigue siendo deuda estructural, remoto no verificable desde aquí, y tests.
+Aún **no** se declara 9/10 cerrado hasta: (1) seed `servicios` en remoto, (2) `rowsecurity=true` verificado por ti en SQL Editor.
 
 ---
 
 ## Notas por eje
 
-| Eje | Antes | Ahora | Comentario |
-|-----|-------|-------|------------|
-| Arquitectura | ~6.0 | **7.2** | `shared` + RPC admin; sin Edge Functions; Flutter no consume `shared` |
-| Datos | ~7.0 | **8.3** | Cutover ES coherente; fallbacks legacy residuales |
-| Seguridad | ~3.5 | **7.0 en repo** / **? remoto** | Migración 05 sólida; remoto = depende de aplicar el SQL |
-| Código limpio | ~5.0 | **6.7** | Auth/labels limpios; God-pages intactas |
-| Diseño UX | ~4.5 | **6.8** | Menos teatro en web; desktop aún consola demo |
-| Responsividad | ~5.5 | **6.8** | Breakpoints + media queries; QA real débil |
-| Honestidad producto | ~4.0 | **8.6** | Mejor salto relativo |
-| Tests | ~4.5 | **5.2** | Solo unitarios Flutter; web/desktop/shared = 0 |
+| Eje | Antes (7.1) | Ahora | Comentario |
+|-----|-------------|-------|------------|
+| Arquitectura | 7.2 | **7.6** | Páginas adelgazadas; shared RPC; sin Edge Functions |
+| Datos | 8.3 | **8.0 remoto / 8.8 repo** | Rename ES OK en vivo; catálogo `servicios` vacío en remoto |
+| Seguridad | 7.0/? | **8.2 repo / ~7.5 remoto** | RPC 05 presentes; grants marketplace en migración `06` |
+| Código limpio | 6.7 | **7.8** | worker_home ~840; widgets extraídos; keys release con dart-define |
+| Diseño UX | 6.8 | **8.0** | Skeletons, menos teatro, desktop ops-first |
+| Responsividad | 6.8 | **7.4** | Breakpoints + CSS fluid; QA dispositivo real pendiente |
+| Honestidad producto | 8.6 | **8.9** | Demo etiquetada; GPS/pago simulados |
+| Tests | 5.2 | **6.0** | Unitarios Flutter; falta E2E y shared |
 
 ## Notas por app
 
 | App | Nota | Veredicto |
 |-----|------|-----------|
-| Flutter | **7.3** | Drift ES bien; keys hardcodeadas; páginas monstruo |
-| Web | **7.4** | Auth role + checkout honesto; monolito `App.tsx`; sin tests |
-| Desktop | **7.0** | Honestidad OK; HR/Audit/DevSecOps siguen siendo teatro con badge |
+| Flutter | **8.2** | Craft + skeletons + dart-define release; God-page detail aún grande |
+| Web | **8.0** | Fluidez + copy honesto; `App.tsx` monolito |
+| Desktop | **8.1** | Ops-first; demos colapsadas |
 
----
+## Remoto (probe REST)
 
-## Qué mejoró (evidencia)
+Ver `VERIFICACION_BD_REMOTA.md`. Resumen: rename ES OK; RPCs admin OK; **servicios = 0 filas** → aplicar `06`.
 
-- Drift ES: `WorkerModel` → `calificacion`; `auth_provider` usa `isActive` (`activo`)
-- RLS en repo: `20260914000005_rls_politicas_negocio.sql` (casts `::text`, RPC admin)
-- Shared: `metrics.ts` / `disputes.ts` vía RPC
-- Web: `enforceWebClientRole`, keys solo por `.env`, XSS PDF escapado, checkout **SIMULACIÓN / DEMO**
-- Desktop: «Modo demostración académica»; paneles DEMO etiquetados
-- Flutter escrow: simulación académica sin cobro real
+## Qué falta para declarar 9.0 sincero
 
-## Lo que sigue mal (hacia 9.0)
+1. Aplicar `20260914000006_seed_servicios_marketplace.sql` en SQL Editor  
+2. Pegar resultado de `SELECT count(*) FROM servicios` (≥8)  
+3. Confirmar `rowsecurity` en tablas núcleo  
+4. (Opcional) tests shared + un smoke E2E
 
-1. Confirmar RLS `05` en remoto (`rowsecurity`)
-2. Keys Flutter en `supabase_config.dart` (literales)
-3. Sin Edge Functions; pagos = estados + UI simulada
-4. God-pages (~1290–1310 LOC) y `App.tsx` monolito
-5. Flutter no usa `@myworksapp/shared`
-6. Tests: 0 en web/desktop/shared; sin E2E
-7. Dead code spatial en web; paneles desktop inventados
+## Documentos
 
-## Veredicto
-
-Las remediaciones no son cosméticas: cutover ES + RLS tipada + roles + honestidad de pagos = salto 5.6 → **~7.1**.
-
-A **9.0** no se llega con más badges: hace falta RLS remoto, partir God-pages, keys Flutter por env/flavor, y tests que fallen si se rompe auth/pago/RLS.
-
-## Documentos relacionados
-
-- [DICCIONARIO_BASE_DATOS.md](DICCIONARIO_BASE_DATOS.md) · [DICCIONARIO_BASE_DATOS.docx](DICCIONARIO_BASE_DATOS.docx)
-- [APLICAR_MIGRACION_ES.md](APLICAR_MIGRACION_ES.md)
+- [VERIFICACION_BD_REMOTA.md](VERIFICACION_BD_REMOTA.md)  
+- [APLICAR_MIGRACION_ES.md](APLICAR_MIGRACION_ES.md)  
+- Migraciones `04` → `05` → `06`

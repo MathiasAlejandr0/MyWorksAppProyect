@@ -19,11 +19,10 @@ class AdminJobsRepository {
     if (search != null && search.isNotEmpty) {
       final q = '%$search%';
       query = query.or(
-        'address.ilike.$q,id.ilike.$q,description.ilike.$q,comunaId.ilike.$q',
+        'direccion.ilike.$q,id.ilike.$q,descripcion.ilike.$q,id_comuna.ilike.$q',
       );
     }
-    final rows =
-        await query.order('creado_en', ascending: false).limit(limit);
+    final rows = await query.order('creado_en', ascending: false).limit(limit);
     return rows
         .map<JobModel>((m) => JobModel.fromMap(Map<String, dynamic>.from(m)))
         .toList();
@@ -50,8 +49,7 @@ class AdminJobsRepository {
         .select('id, nombre, correo')
         .inFilter('id', profileIds.toList());
     final profileMap = {
-      for (final p in profiles)
-        p['id'] as String: Map<String, dynamic>.from(p),
+      for (final p in profiles) p['id'] as String: Map<String, dynamic>.from(p),
     };
 
     String? serviceName;
@@ -119,8 +117,7 @@ class AdminJobsRepository {
     }
 
     final client = profileMap[job.userId];
-    final worker =
-        job.workerId != null ? profileMap[job.workerId!] : null;
+    final worker = job.workerId != null ? profileMap[job.workerId!] : null;
 
     return AdminJobDetail(
       job: job,

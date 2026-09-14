@@ -3,6 +3,7 @@ import { TrendingUp, Wallet, CheckCircle2, XCircle, DollarSign, Lock, AlertTrian
 import { AuditTrailViewer } from './AuditTrailViewer';
 import { FinancialSettlementModal } from './FinancialSettlementModal';
 import { DigitalContractModal } from './DigitalContractModal';
+import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
 import { fetchAdminMetrics, fetchWorkersForAdmin } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 
@@ -107,10 +108,6 @@ export function ExecutiveWorkspace() {
         </div>
       </div>
 
-      {loading && (
-        <p style={{ color: '#98989D', marginBottom: '16px' }}>Sincronizando métricas con Supabase...</p>
-      )}
-
       <div className="sub-tabs-bar">
         <div className={`sub-tab-item ${subActiveTab === 0 ? 'active' : ''}`} onClick={() => setSubActiveTab(0)}>
           <LayoutDashboard size={16} /> Métricas
@@ -125,6 +122,9 @@ export function ExecutiveWorkspace() {
 
       {subActiveTab === 0 && (
         <div>
+          {loading ? (
+            <KpiCardsSkeleton count={4} />
+          ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
             <div className="card-3d">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#34C759', marginBottom: '8px' }}>
@@ -162,7 +162,10 @@ export function ExecutiveWorkspace() {
               <span style={{ fontSize: '11.5px', color: '#AF52DE', fontWeight: 700 }}>Sin métrica real aún</span>
             </div>
           </div>
+          )}
 
+          {!loading && (
+          <>
           <div className="demo-banner" style={{ marginBottom: '16px' }}>
             Gráficos GMV / categorías: DEMO (no calculados desde pagos reales).
           </div>
@@ -248,6 +251,8 @@ export function ExecutiveWorkspace() {
               </div>
             </div>
           </div>
+          </>
+          )}
         </div>
       )}
 
@@ -271,14 +276,23 @@ export function ExecutiveWorkspace() {
                 </tr>
               </thead>
               <tbody>
-                {workers.length === 0 && !loading && (
+                {loading && (
+                  <tr>
+                    <td colSpan={6} style={{ padding: 0 }}>
+                      <div className="table-skeleton-wrap">
+                        <TableRowsSkeleton rows={4} columns={6} />
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {!loading && workers.length === 0 && (
                   <tr>
                     <td colSpan={6} style={{ padding: '24px 20px', color: '#98989D', textAlign: 'center' }}>
                       Sin trabajadores visibles o sin permisos.
                     </td>
                   </tr>
                 )}
-                {workers.map(w => (
+                {!loading && workers.map(w => (
                   <tr key={w.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <td style={{ padding: '16px 20px', fontWeight: 800, color: '#F0782A' }}>{w.id.slice(0, 8)}…</td>
                     <td style={{ padding: '16px 20px', fontWeight: 600 }}>{w.name}</td>

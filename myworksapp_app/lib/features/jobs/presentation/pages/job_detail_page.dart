@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,11 +26,9 @@ import '../../../../core/services/quote_proposal_service.dart';
 import '../../../../core/services/pricing_service.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../widgets/quote_proposals_section.dart';
-import '../widgets/open_quote_status_banner.dart';
 import '../widgets/worker_quote_form_dialog.dart';
 import '../../../../core/utils/open_quote_utils.dart';
 import '../../../../core/widgets/escrow_checkout_sheet.dart';
-import '../../../../core/widgets/pricing_quote_card.dart';
 import '../../../../core/utils/app_error.dart';
 import '../../../../core/database/repositories/job_photo_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -44,8 +41,10 @@ import '../widgets/change_orders_section.dart';
 import '../widgets/dispute_section.dart';
 import '../utils/job_detail_helpers.dart';
 import '../widgets/job_detail_status_header.dart';
-import '../widgets/job_detail_client_approval_card.dart';
 import '../widgets/job_detail_actions_section.dart';
+import '../widgets/job_detail_payment_escrow_section.dart';
+import '../widgets/job_detail_scheduled_date_row.dart';
+import '../widgets/job_detail_description_section.dart';
 
 class JobDetailPage extends ConsumerStatefulWidget {
   final String jobId;
@@ -1219,20 +1218,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
             JobDetailStatusHeader(job: _job!),
             if (_job!.scheduledDate != null && !workerShowsLocationCard) ...[
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(Icons.event, color: AppColors.brandOrange, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Solicitado: ${DateFormat('EEE d MMM · HH:mm', 'es_CL').format(_job!.scheduledDate!)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
+              JobDetailScheduledDateRow(scheduledDate: _job!.scheduledDate!),
             ],
             if (workerShowsLocationCard) ...[
               const SizedBox(height: 12),
@@ -1244,83 +1230,20 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
                 isLoadingAddress: _isLoadingAddress,
               ),
             ],
-            if (_job!.pricingMode != PricingConstants.modeLegacy &&
-                _job!.paymentStatus != PricingConstants.paymentNone) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Pago: ${JobDetailHelpers.paymentStatusLabel(_job!.paymentStatus)}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-            if (_job!.pricingMode == PricingConstants.modeOpenQuote) ...[
-              const SizedBox(height: 12),
-              OpenQuoteStatusBanner(
-                jobStatus: _job!.status,
-                isClient: !isWorker && currentUser?.id == _job!.userId,
-                workerName: _invitedWorkerName,
-                proposalsCount: _quoteProposals
-                    .where((p) => p.estado == PricingConstants.quoteSubmitted)
-                    .length,
-              ),
-            ],
-            if (_job!.status == PricingConstants.jobAwaitingPayment &&
-                !isWorker &&
-                currentUser?.id == _job!.userId) ...[
-              const SizedBox(height: 16),
-              if (JobDetailHelpers.quoteFromJob(_job!) != null)
-                PricingQuoteCard(quote: JobDetailHelpers.quoteFromJob(_job!)!),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: _payEscrow,
-                icon: const Icon(Icons.lock_outline),
-                label: const Text('Pagar y confirmar reserva'),
-              ),
-            ],
-            if (_job!.status == PricingConstants.jobAwaitingPayment && isWorker) ...[
-              const SizedBox(height: 16),
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text('El cliente debe completar el pago en garantía para confirmar el trabajo.'),
-                ),
-              ),
-            ],
-            if (_job!.status == PricingConstants.jobAwaitingClientApproval &&
-                !isWorker &&
-                currentUser?.id == _job!.userId) ...[
-              const SizedBox(height: 16),
-              JobDetailClientApprovalCard(
-                jobId: widget.jobId,
-                quote: JobDetailHelpers.quoteFromJob(_job!),
-                onApprove: _approveCompletion,
-                onReject: _rejectCompletion,
-              ),
-            ],
-            if (_job!.status == PricingConstants.jobAwaitingClientApproval &&
-                isWorker &&
-                currentUser?.id == _job!.workerId) ...[
-              const SizedBox(height: 16),
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text(
-                    'Evidencia enviada. Esperando que el cliente apruebe la finalización para liberar el pago.',
-                  ),
-                ),
-              ),
-            ],
+            JobDetailPaymentEscrowSection(
+              job: _job!,
+              jobId: widget.jobId,
+              isWorker: isWorker,
+              isClientOwner: currentUser?.id == _job!.userId,
+              isAssignedWorker: currentUser?.id == _job!.workerId,
+              invitedWorkerName: _invitedWorkerName,
+              quoteProposals: _quoteProposals,
+              onPayEscrow: _payEscrow,
+              onApproveCompletion: _approveCompletion,
+              onRejectCompletion: _rejectCompletion,
+            ),
             const SizedBox(height: 16),
-            Text(
-              'Descripción',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _job!.description ?? 'Sin descripción',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            JobDetailDescriptionSection(job: _job!),
             const SizedBox(height: 16),
             if (clientShowsLocationPreview) ...[
               JobLocationPreviewSection(

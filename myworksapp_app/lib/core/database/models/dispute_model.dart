@@ -1,16 +1,16 @@
 /// Modelo para disputas
-/// 
+///
 /// Estados:
-/// - open: Disputa abierta
-/// - under_review: En revisión
-/// - resolved: Resuelta
+/// - abierta: Disputa abierta
+/// - en_revision: En revisión
+/// - resuelta: Resuelta
 class DisputeModel {
   final String id;
   final String jobId;
   final String openedBy; // userId del que abre la disputa
   final String reason; // 'quality', 'payment', 'behavior', 'other'
   final String? description;
-  final String status; // 'open', 'under_review', 'resolved'
+  final String status; // 'abierta', 'en_revision', 'resuelta'
   final String? resolution; // Resolución de la disputa
   final String? resolvedBy; // Admin que resolvió
   final DateTime? resolvedAt;
@@ -93,4 +93,3 @@ class DisputeModel {
     );
   }
 }
-

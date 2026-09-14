@@ -17,10 +17,9 @@ class AdminUsersRepository {
     }
     if (search != null && search.isNotEmpty) {
       final q = '%$search%';
-      query = query.or('name.ilike.$q,email.ilike.$q');
+      query = query.or('nombre.ilike.$q,correo.ilike.$q');
     }
-    final rows =
-        await query.order('creado_en', ascending: false).limit(limit);
+    final rows = await query.order('creado_en', ascending: false).limit(limit);
     return rows
         .map<UserModel>((m) => UserModel.fromMap(Map<String, dynamic>.from(m)))
         .toList();

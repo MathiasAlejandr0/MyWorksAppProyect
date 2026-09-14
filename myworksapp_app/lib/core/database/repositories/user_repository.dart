@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
 import '../models/user_model.dart';
 import '../supabase_db.dart';
 
-/// Repositorio de usuarios sobre la tabla `profiles` de Supabase.
+/// Repositorio de usuarios sobre la tabla `perfiles` de Supabase.
 ///
 /// La autenticación (email/contraseña) la maneja Supabase Auth; aquí solo se
 /// gestiona el perfil público asociado a cada `auth.users.id`.
@@ -18,8 +18,7 @@ class UserRepository {
   }
 
   Future<UserModel?> getUserById(String id) async {
-    final row =
-        await supabase.from(_table).select().eq('id', id).maybeSingle();
+    final row = await supabase.from(_table).select().eq('id', id).maybeSingle();
     if (row == null) return null;
     return UserModel.fromMap(row);
   }

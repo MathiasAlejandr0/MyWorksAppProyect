@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TicketCheck, CheckCircle2, RefreshCw, ArrowUpRight, Image, MessageSquare, Send, Scale, ShieldAlert, Edit3 } from 'lucide-react';
 import { JobScopeAdjustmentModal } from './JobScopeAdjustmentModal';
+import { TableRowsSkeleton } from './LoadingState';
 import { fetchOpenDisputes, updateDisputeStatus } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 
@@ -127,10 +128,6 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
         </div>
       </div>
 
-      {loading && (
-        <p style={{ color: '#98989D', marginBottom: '16px' }}>Cargando disputas desde Supabase...</p>
-      )}
-
       {notification && (
         <div style={{ backgroundColor: 'rgba(52, 199, 89, 0.15)', border: '1px solid #34C759', color: '#34C759', padding: '12px 18px', borderRadius: '12px', marginBottom: '20px', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <CheckCircle2 size={18} /> {notification}
@@ -152,6 +149,15 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
               </tr>
             </thead>
             <tbody>
+              {loading && (
+                <tr>
+                  <td colSpan={7} style={{ padding: 0 }}>
+                    <div className="table-skeleton-wrap">
+                      <TableRowsSkeleton rows={5} columns={7} />
+                    </div>
+                  </td>
+                </tr>
+              )}
               {!loading && tickets.length === 0 && (
                 <tr>
                   <td colSpan={7} style={{ padding: '28px 20px', color: '#98989D', textAlign: 'center' }}>
@@ -159,7 +165,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
                   </td>
                 </tr>
               )}
-              {tickets.map(ticket => (
+              {!loading && tickets.map(ticket => (
                 <tr key={ticket.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <td style={{ padding: '16px 20px', fontWeight: 800, color: '#F0782A' }}>{ticket.id}</td>
                   <td style={{ padding: '16px 20px', fontWeight: 600 }}>{ticket.client}</td>

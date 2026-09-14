@@ -9,6 +9,8 @@ import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/widgets/design_system/empty_state_widget.dart';
+import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../widgets/admin_search_field.dart';
 
 class AdminUsersPage extends ConsumerStatefulWidget {
@@ -148,13 +150,18 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
           ),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const JobListSkeleton(itemCount: 7)
                 : RefreshIndicator(
                     onRefresh: _load,
                     child: _users.isEmpty
                         ? ListView(
                             children: const [
-                              Center(child: Text('Sin usuarios')),
+                              SizedBox(height: 48),
+                              EmptyStateWidget(
+                                icon: Icons.people_outline,
+                                title: 'Sin usuarios',
+                                message: 'No hay resultados con este filtro.',
+                              ),
                             ],
                           )
                         : ListView.builder(

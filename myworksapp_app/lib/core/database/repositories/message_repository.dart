@@ -53,7 +53,7 @@ class MessageRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .or('senderId.eq.$userId,receiverId.eq.$userId')
+        .or('id_remitente.eq.$userId,id_destinatario.eq.$userId')
         .order('creado_en', ascending: false);
     return rows.map<MessageModel>((m) => MessageModel.fromMap(m)).toList();
   }

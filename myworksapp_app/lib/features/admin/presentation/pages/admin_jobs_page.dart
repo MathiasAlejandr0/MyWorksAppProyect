@@ -10,6 +10,8 @@ import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/widgets/design_system/empty_state_widget.dart';
+import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../widgets/admin_search_field.dart';
 
 class AdminJobsPage extends ConsumerStatefulWidget {
@@ -148,9 +150,13 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
           ),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const JobListSkeleton(itemCount: 7)
                 : _jobs.isEmpty
-                    ? const Center(child: Text('Sin trabajos'))
+                    ? const EmptyStateWidget(
+                        icon: Icons.work_off_outlined,
+                        title: 'Sin trabajos',
+                        message: 'No hay trabajos con este filtro.',
+                      )
                     : RefreshIndicator(
                         onRefresh: _load,
                         child: ListView.builder(

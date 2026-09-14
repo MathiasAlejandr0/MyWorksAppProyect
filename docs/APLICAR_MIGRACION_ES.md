@@ -85,3 +85,21 @@ WHERE pronamespace = 'public'::regnamespace
 Esperado: `rowsecurity = true` y las tres funciones presentes.
 
 Desktop/shared ya usa `rpc('admin_actualizar_estado_disputa')` y `rpc('admin_metricas_resumen')` (ver `shared/src/repositories/disputes.ts` y `metrics.ts`). Sin esta migración esos RPC fallan.
+
+## 6) Seed catálogo + grants marketplace
+
+Tras `05`, aplica:
+
+`myworksapp_app/supabase/migrations/20260914000006_seed_servicios_marketplace.sql`
+
+Inserta los 8 oficios si `servicios` está vacío y permite lectura `anon` del catálogo/trabajadores (landing web).
+
+Verificación rápida:
+
+```sql
+SELECT categoria, nombre, activo FROM public.servicios ORDER BY categoria;
+```
+
+Esperado: 8 filas (`plomeria` … `construccion`).
+
+Detalle de auditoría remota: `docs/VERIFICACION_BD_REMOTA.md`.

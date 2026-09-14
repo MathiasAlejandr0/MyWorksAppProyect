@@ -4,7 +4,7 @@ class ReportModel {
   final String reportedUserId;
   final String reason;
   final String? description;
-  final String status; // 'pending', 'reviewed', 'resolved', 'dismissed'
+  final String status; // 'pendiente', 'revisado', 'resuelto', 'descartado'
   final DateTime createdAt;
 
   ReportModel({
@@ -41,4 +41,3 @@ class ReportModel {
     );
   }
 }
-

@@ -49,45 +49,28 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.55)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '20px',
-      }}
-    >
-      <div className="card-3d" style={{ width: '100%', maxWidth: '420px', padding: '24px', position: 'relative' }}>
-        <button
-          onClick={onClose}
-          style={{ position: 'absolute', top: '12px', right: '12px', border: 'none', background: 'transparent', cursor: 'pointer' }}
-          aria-label="Cerrar"
-        >
+    <div className="auth-modal-backdrop modal-fade-in" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+      <div className="card-3d auth-modal-card modal-rise">
+        <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">
           <X size={18} />
         </button>
 
-        <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px' }}>
+        <p className="auth-modal-kicker">Acceso clientes</p>
+        <h2 id="auth-modal-title" className="auth-modal-title">
           {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
         </h2>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted-dark)', marginBottom: '8px' }}>
-          Solo cuentas de cliente (<strong>usuario</strong>). Trabajadores usan la app móvil; administradores, el panel desktop.
-        </p>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted-dark)', marginBottom: '16px', opacity: 0.9 }}>
-          Autenticación con Supabase Auth.
+        <p className="auth-modal-lead">
+          Esta web es solo para <strong>clientes</strong> que buscan un oficio. Los trabajadores usan la app móvil; el equipo interno, el panel de escritorio.
         </p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <form onSubmit={handleSubmit} className="auth-modal-form">
           {mode === 'register' && (
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nombre completo"
               required
-              style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-dark)', background: 'var(--bg-elevated-dark)', color: 'var(--text-main-dark)' }}
+              className="auth-modal-input"
             />
           )}
           <input
@@ -96,7 +79,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             required
-            style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-dark)', background: 'var(--bg-elevated-dark)', color: 'var(--text-main-dark)' }}
+            className="auth-modal-input"
           />
           <input
             type="password"
@@ -104,64 +87,37 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Contraseña"
             required
-            style={{ padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border-dark)', background: 'var(--bg-elevated-dark)', color: 'var(--text-main-dark)' }}
+            className="auth-modal-input"
           />
 
-          {localError && (
-            <div style={{ color: '#FF3B30', fontSize: '13px', fontWeight: 600 }}>{localError}</div>
-          )}
+          {localError && <div className="auth-modal-error">{localError}</div>}
 
-          <button type="submit" className="btn-primary" disabled={submitting} style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+          <button type="submit" className="btn-primary auth-modal-submit" disabled={submitting}>
             {mode === 'login' ? <LogIn size={16} /> : <UserPlus size={16} />}
-            {submitting ? 'Procesando...' : mode === 'login' ? 'Entrar' : 'Registrarme'}
+            {submitting ? 'Un momento…' : mode === 'login' ? 'Entrar' : 'Registrarme'}
           </button>
         </form>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '16px 0' }}>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-dark)' }} />
-          <span style={{ fontSize: '12px', color: 'var(--text-muted-dark)', fontWeight: 600 }}>o continúa con</span>
-          <div style={{ flex: 1, height: '1px', background: 'var(--border-dark)' }} />
+        <div className="auth-modal-divider">
+          <span>o continúa con</span>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={() => void handleOAuth('google')}
-            style={{
-              padding: '12px 14px',
-              borderRadius: '10px',
-              border: '1px solid var(--border-dark)',
-              background: 'var(--bg-elevated-dark)',
-              color: 'var(--text-main-dark)',
-              fontWeight: 700,
-              cursor: submitting ? 'not-allowed' : 'pointer',
-            }}
-          >
+        <div className="auth-modal-oauth">
+          <button type="button" className="auth-oauth-btn" disabled={submitting} onClick={() => void handleOAuth('google')}>
             Continuar con Google
           </button>
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={() => void handleOAuth('apple')}
-            style={{
-              padding: '12px 14px',
-              borderRadius: '10px',
-              border: '1px solid var(--border-light)',
-              background: '#000',
-              color: '#fff',
-              fontWeight: 700,
-              cursor: submitting ? 'not-allowed' : 'pointer',
-            }}
-          >
+          <button type="button" className="auth-oauth-btn auth-oauth-apple" disabled={submitting} onClick={() => void handleOAuth('apple')}>
             Continuar con Apple
           </button>
         </div>
 
         <button
           type="button"
-          onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-          style={{ marginTop: '12px', background: 'transparent', border: 'none', color: '#F0782A', fontWeight: 700, cursor: 'pointer', width: '100%' }}
+          className="auth-modal-switch"
+          onClick={() => {
+            setMode(mode === 'login' ? 'register' : 'login');
+            setLocalError(null);
+          }}
         >
           {mode === 'login' ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
         </button>

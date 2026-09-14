@@ -21,10 +21,10 @@ class AdminIncidentsRepository {
     }
     if (search != null && search.isNotEmpty) {
       final q = '%$search%';
-      query = query.or('reason.ilike.$q,description.ilike.$q,jobId.ilike.$q');
+      query =
+          query.or('motivo.ilike.$q,descripcion.ilike.$q,id_trabajo.ilike.$q');
     }
-    final rows =
-        await query.order('creado_en', ascending: false).limit(limit);
+    final rows = await query.order('creado_en', ascending: false).limit(limit);
     return rows
         .map<DisputeModel>(
           (m) => DisputeModel.fromMap(Map<String, dynamic>.from(m)),
@@ -34,7 +34,7 @@ class AdminIncidentsRepository {
 
   Future<void> markDisputeUnderReview(String disputeId) async {
     await supabase.from('disputas').update({
-      'estado': 'under_review',
+      'estado': 'en_revision',
       'actualizado_en': DateTime.now().toIso8601String(),
     }).eq('id', disputeId);
   }
@@ -50,10 +50,9 @@ class AdminIncidentsRepository {
     }
     if (search != null && search.isNotEmpty) {
       final q = '%$search%';
-      query = query.or('reason.ilike.$q,description.ilike.$q');
+      query = query.or('motivo.ilike.$q,descripcion.ilike.$q');
     }
-    final rows =
-        await query.order('creado_en', ascending: false).limit(limit);
+    final rows = await query.order('creado_en', ascending: false).limit(limit);
     final reports = rows
         .map<ReportModel>(
           (m) => ReportModel.fromMap(Map<String, dynamic>.from(m)),
@@ -79,7 +78,9 @@ class AdminIncidentsRepository {
   }
 
   Future<void> updateReportStatus(String reportId, String status) async {
-    await supabase.from('reportes').update({'estado': status}).eq('id', reportId);
+    await supabase
+        .from('reportes')
+        .update({'estado': status}).eq('id', reportId);
   }
 
   Future<List<AppErrorLogModel>> listErrorLogs({
@@ -114,11 +115,10 @@ class AdminIncidentsRepository {
     if (search != null && search.isNotEmpty) {
       final q = '%$search%';
       query = query.or(
-        'actionType.ilike.$q,entityType.ilike.$q,errorMessage.ilike.$q',
+        'tipo_accion.ilike.$q,tipo_entidad.ilike.$q,mensaje_error.ilike.$q',
       );
     }
-    final rows =
-        await query.order('creado_en', ascending: false).limit(limit);
+    final rows = await query.order('creado_en', ascending: false).limit(limit);
     return rows
         .map<PendingActionModel>(
           (m) => PendingActionModel.fromMap(Map<String, dynamic>.from(m)),

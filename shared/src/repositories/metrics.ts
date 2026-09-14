@@ -9,7 +9,7 @@ function asInt(value: unknown, fallback = 0): number {
 /**
  * Mapea el JSON de `admin_metricas_resumen` (claves ES o camelCase legacy).
  */
-function mapMetricsPayload(data: unknown): AdminMetrics {
+export function mapMetricsPayload(data: unknown): AdminMetrics {
   const row = (data ?? {}) as Record<string, unknown>;
   return {
     usersCount: asInt(row.usuarios ?? row.usersCount),
