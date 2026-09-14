@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import 'primary_button.dart';
 
-/// Fondo blanco con acentos naranjos suaves.
+/// Fondo premium de autenticación: atmósfera sutil, sin iconografía infantil.
 class AuthSoftBackground extends StatelessWidget {
   const AuthSoftBackground({
     super.key,
@@ -16,73 +16,38 @@ class AuthSoftBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? const [
-                  AppColors.backgroundDark,
-                  Color(0xFF121E33),
-                  Color(0xFF1A140E),
-                ]
-              : const [
-                  AppColors.white,
-                  AppColors.brandOrangeSoft,
-                  Color(0xFFFFFAF7),
-                ],
-          stops: const [0.0, 0.55, 1.0],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFFBF8),
+            Color(0xFFF7F5F2),
+            Color(0xFFEEF2F7),
+          ],
+          stops: [0.0, 0.55, 1.0],
         ),
       ),
       child: Stack(
         fit: StackFit.expand,
         children: [
           if (showDecorations) ...[
-            const _DecorIcon(
-              icon: Icons.auto_awesome,
-              top: 48,
-              left: 16,
-              size: 28,
+            Positioned(
+              top: -80,
+              right: -40,
+              child: _GlowOrb(
+                size: 220,
+                color: AppColors.brandOrange.withValues(alpha: 0.14),
+              ),
             ),
-            const _DecorIcon(
-              icon: Icons.cleaning_services_outlined,
-              top: 120,
-              left: 8,
-              size: 32,
-            ),
-            const _DecorIcon(
-              icon: Icons.plumbing_outlined,
-              top: 200,
-              left: 20,
-              size: 30,
-              structural: true,
-            ),
-            const _DecorIcon(
-              icon: Icons.bolt_outlined,
-              top: 280,
-              left: 10,
-              size: 28,
-            ),
-            const _DecorIcon(
-              icon: Icons.yard_outlined,
-              top: 100,
-              right: 12,
-              size: 32,
-            ),
-            const _DecorIcon(
-              icon: Icons.handyman_outlined,
-              top: 190,
-              right: 18,
-              size: 30,
-              structural: true,
-            ),
-            const _DecorIcon(
-              icon: Icons.home_repair_service_outlined,
-              top: 270,
-              right: 8,
-              size: 28,
+            Positioned(
+              bottom: -60,
+              left: -50,
+              child: _GlowOrb(
+                size: 260,
+                color: AppColors.brandNavy.withValues(alpha: 0.08),
+              ),
             ),
           ],
           child,
@@ -92,40 +57,29 @@ class AuthSoftBackground extends StatelessWidget {
   }
 }
 
-class _DecorIcon extends StatelessWidget {
-  const _DecorIcon({
-    required this.icon,
-    required this.top,
-    this.left,
-    this.right,
-    required this.size,
-    this.structural = false,
-  });
+class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.size, required this.color});
 
-  final IconData icon;
-  final double top;
-  final double? left;
-  final double? right;
   final double size;
-  final bool structural;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return Positioned(
-      top: top,
-      left: left,
-      right: right,
-      child: Icon(
-        icon,
-        size: size,
-        color: AppColors.decorOnCanvas(brightness, structural: structural),
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [color, color.withValues(alpha: 0)],
+          ),
+        ),
       ),
     );
   }
 }
 
-/// Botón CTA de marca — delega en [PrimaryButton] unificado.
 class BrandPrimaryButton extends StatelessWidget {
   const BrandPrimaryButton({
     super.key,
@@ -148,7 +102,6 @@ class BrandPrimaryButton extends StatelessWidget {
   }
 }
 
-/// Campo de texto con etiqueta encima (estilo mockup login).
 class BrandLabeledField extends StatelessWidget {
   const BrandLabeledField({
     super.key,
@@ -166,12 +119,11 @@ class BrandLabeledField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
+          style: const TextStyle(
+            fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.white
-                : AppColors.grayDark,
+            letterSpacing: 0.2,
+            color: AppColors.grayDark,
           ),
         ),
         const SizedBox(height: 8),

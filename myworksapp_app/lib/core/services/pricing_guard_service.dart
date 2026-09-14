@@ -1,6 +1,7 @@
 import '../database/repositories/job_repository.dart';
 import '../database/repositories/service_repository.dart';
 import '../utils/app_logger.dart';
+import '../utils/constants.dart';
 
 /// Servicio de protección de precios
 /// 
@@ -90,7 +91,7 @@ class PricingGuardService {
   Future<PriceRange> _getPriceRangeForService(String serviceId) async {
     try {
       // Intentar obtener datos históricos de trabajos completados
-      final allJobs = await _jobRepository.getJobsByStatus('completed');
+      final allJobs = await _jobRepository.getJobsByStatus(AppConstants.jobStatusCompleted);
       final completedJobs = allJobs.where((j) => j.serviceId == serviceId).toList();
       
       if (completedJobs.length >= 5) {

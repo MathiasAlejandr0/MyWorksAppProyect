@@ -2,7 +2,7 @@ import '../models/boost_model.dart';
 import '../supabase_db.dart';
 
 class BoostRepository {
-  static const String _table = 'boosts';
+  static const String _table = 'impulsos';
 
   Future<void> createBoost(BoostModel boost) async {
     await supabase.from(_table).insert(boost.toMap());
@@ -13,9 +13,9 @@ class BoostRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('workerId', workerId)
-        .lte('startDate', now)
-        .gte('endDate', now);
+        .eq('id_trabajador', workerId)
+        .lte('fecha_inicio', now)
+        .gte('fecha_fin', now);
     return rows.map<BoostModel>((m) => BoostModel.fromMap(m)).toList();
   }
 

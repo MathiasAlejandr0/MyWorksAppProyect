@@ -13,31 +13,31 @@ class ReportModel {
     required this.reportedUserId,
     required this.reason,
     this.description,
-    this.status = 'pending',
+    this.status = 'pendiente',
     required this.createdAt,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'reporterId': reporterId,
-      'reportedUserId': reportedUserId,
-      'reason': reason,
-      'description': description,
-      'status': status,
-      'createdAt': createdAt.toIso8601String(),
+      'id_reportante': reporterId,
+      'id_usuario_reportado': reportedUserId,
+      'motivo': reason,
+      'descripcion': description,
+      'estado': status,
+      'creado_en': createdAt.toIso8601String(),
     };
   }
 
   factory ReportModel.fromMap(Map<String, dynamic> map) {
     return ReportModel(
       id: map['id'] as String,
-      reporterId: map['reporterId'] as String,
-      reportedUserId: map['reportedUserId'] as String,
-      reason: map['reason'] as String,
-      description: map['description'] as String?,
-      status: map['status'] as String? ?? 'pending',
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      reporterId: map['id_reportante'] as String,
+      reportedUserId: map['id_usuario_reportado'] as String,
+      reason: map['motivo'] as String,
+      description: map['descripcion'] as String?,
+      status: map['estado'] as String? ?? 'pendiente',
+      createdAt: DateTime.parse(map['creado_en'] as String),
     );
   }
 }

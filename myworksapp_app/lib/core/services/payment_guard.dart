@@ -25,7 +25,8 @@ class PaymentGuard {
     final payment = await p.getPrimaryPayment(job.id);
 
     if (requiresAuthorizedForAccepted(mode, targetStatus)) {
-      if (payment == null || payment.status != 'authorized') {
+      if (payment == null ||
+          payment.status != PricingConstants.paymentAuthorized) {
         throw AppError.validation(
           'El pago debe estar autorizado (en garantía) antes de continuar',
         );
@@ -33,7 +34,8 @@ class PaymentGuard {
     }
 
     if (targetStatus == AppConstants.jobStatusInProgress) {
-      if (payment == null || payment.status != 'authorized') {
+      if (payment == null ||
+          payment.status != PricingConstants.paymentAuthorized) {
         throw AppError.validation(
           'No se puede iniciar el trabajo sin pago en garantía',
         );
@@ -45,7 +47,8 @@ class PaymentGuard {
     }
 
     if (fromAwaitingPaymentToAccepted(job, targetStatus)) {
-      if (payment == null || payment.status != 'authorized') {
+      if (payment == null ||
+          payment.status != PricingConstants.paymentAuthorized) {
         throw AppError.validation(
           'Confirma el pago antes de aceptar el trabajo',
         );

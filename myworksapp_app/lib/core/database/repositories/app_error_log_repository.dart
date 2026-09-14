@@ -5,7 +5,7 @@ import '../supabase_db.dart';
 import '../../utils/app_logger.dart';
 
 class AppErrorLogRepository {
-  static const String _table = 'app_error_logs';
+  static const String _table = 'registros_error_app';
 
   Future<void> logError({
     required String message,
@@ -28,8 +28,8 @@ class AppErrorLogRepository {
       );
       await supabase.from(_table).insert({
         ...entry.toMap(),
-        'appVersion': appVersion,
-        'platform': platform,
+        'version_app': appVersion,
+        'plataforma': platform,
       });
     } catch (e) {
       AppLogger.d('No se pudo persistir error log: $e');
@@ -43,10 +43,10 @@ class AppErrorLogRepository {
     try {
       var query = supabase.from(_table).select();
       if (status != null) {
-        query = query.eq('status', status);
+        query = query.eq('estado', status);
       }
       final rows = await query
-          .order('createdAt', ascending: false)
+          .order('creado_en', ascending: false)
           .limit(limit);
       return rows
           .map<AppErrorLogModel>(
@@ -60,6 +60,6 @@ class AppErrorLogRepository {
   }
 
   Future<void> updateStatus(String id, String status) async {
-    await supabase.from(_table).update({'status': status}).eq('id', id);
+    await supabase.from(_table).update({'estado': status}).eq('id', id);
   }
 }

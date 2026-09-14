@@ -16,20 +16,20 @@ class JobCancellationModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'jobId': jobId,
-      'cancelledBy': cancelledBy,
-      'reason': reason,
-      'cancelledAt': cancelledAt.toIso8601String(),
+      'id_trabajo': jobId,
+      'cancelado_por': cancelledBy,
+      'motivo': reason,
+      'cancelado_en': cancelledAt.toIso8601String(),
     };
   }
 
   factory JobCancellationModel.fromMap(Map<String, dynamic> map) {
     return JobCancellationModel(
       id: map['id'] as String,
-      jobId: map['jobId'] as String,
-      cancelledBy: map['cancelledBy'] as String,
-      reason: map['reason'] as String,
-      cancelledAt: DateTime.parse(map['cancelledAt'] as String),
+      jobId: map['id_trabajo'] as String,
+      cancelledBy: map['cancelado_por'] as String,
+      reason: map['motivo'] as String,
+      cancelledAt: DateTime.parse(map['cancelado_en'] as String),
     );
   }
 }

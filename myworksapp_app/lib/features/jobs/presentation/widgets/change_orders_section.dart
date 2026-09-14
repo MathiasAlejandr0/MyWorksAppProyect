@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/models/change_order_model.dart';
+import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class ChangeOrdersSection extends StatelessWidget {
@@ -74,11 +75,11 @@ class _ChangeOrderTile extends StatelessWidget {
 
   String _statusLabel(String estado) {
     switch (estado) {
-      case 'pending_client':
+      case PricingConstants.changeOrderPending:
         return 'Pendiente de tu aprobación';
-      case 'paid':
+      case PricingConstants.changeOrderPaid:
         return 'Pagado';
-      case 'rejected':
+      case PricingConstants.changeOrderRejected:
         return 'Rechazado';
       default:
         return estado;
@@ -87,11 +88,11 @@ class _ChangeOrderTile extends StatelessWidget {
 
   Color _statusColor(String estado) {
     switch (estado) {
-      case 'pending_client':
+      case PricingConstants.changeOrderPending:
         return AppColors.brandOrange;
-      case 'paid':
+      case PricingConstants.changeOrderPaid:
         return AppColors.success;
-      case 'rejected':
+      case PricingConstants.changeOrderRejected:
         return AppColors.error;
       default:
         return AppColors.grayMedium;

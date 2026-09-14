@@ -3,7 +3,7 @@ import '../supabase_db.dart';
 
 /// Repositorio para gestionar consentimientos GDPR
 class UserConsentRepository {
-  static const String _table = 'user_consents';
+  static const String _table = 'consentimientos_usuario';
 
   Future<void> createConsent(UserConsentModel consent) async {
     await supabase.from(_table).insert(consent.toMap());
@@ -13,8 +13,8 @@ class UserConsentRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('userId', userId)
-        .order('acceptedAt', ascending: false)
+        .eq('id_usuario', userId)
+        .order('aceptado_en', ascending: false)
         .limit(1);
     if (rows.isEmpty) return null;
     return UserConsentModel.fromMap(rows.first);
@@ -31,14 +31,14 @@ class UserConsentRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('userId', userId)
-        .order('acceptedAt', ascending: false);
+        .eq('id_usuario', userId)
+        .order('aceptado_en', ascending: false);
     return rows
         .map<UserConsentModel>((m) => UserConsentModel.fromMap(m))
         .toList();
   }
 
   Future<void> deleteUserConsents(String userId) async {
-    await supabase.from(_table).delete().eq('userId', userId);
+    await supabase.from(_table).delete().eq('id_usuario', userId);
   }
 }

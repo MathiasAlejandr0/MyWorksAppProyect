@@ -4,19 +4,19 @@ import 'admin_models.dart';
 class AdminMetricsRepository {
   Future<AdminMetrics> getMetrics() async {
     final results = await Future.wait([
-      supabase.from('profiles').select('id'),
-      supabase.from('workers').select('userId'),
-      supabase.from('jobs').select('id'),
-      supabase.from('disputes').select('id').eq('status', 'open'),
-      supabase.from('disputes').select('id').eq('status', 'under_review'),
-      supabase.from('reports').select('id').eq('status', 'pending'),
+      supabase.from('perfiles').select('id'),
+      supabase.from('trabajadores').select('id_usuario'),
+      supabase.from('trabajos').select('id'),
+      supabase.from('disputas').select('id').eq('estado', 'abierta'),
+      supabase.from('disputas').select('id').eq('estado', 'en_revision'),
+      supabase.from('reportes').select('id').eq('estado', 'pendiente'),
       supabase
-          .from('jobs')
+          .from('trabajos')
           .select('id')
-          .inFilter('status', ['pending', 'accepted', 'in_progress']),
-      supabase.from('app_error_logs').select('id').eq('status', 'new'),
-      supabase.from('abuse_events').select('id').eq('isResolved', 0),
-      supabase.from('pending_actions').select('id').eq('status', 'failed'),
+          .inFilter('estado', ['pendiente', 'aceptado', 'en_curso']),
+      supabase.from('registros_error_app').select('id').eq('estado', 'nuevo'),
+      supabase.from('eventos_abuso').select('id').eq('resuelto', 0),
+      supabase.from('acciones_pendientes').select('id').eq('estado', 'fallido'),
     ]);
 
     return AdminMetrics(

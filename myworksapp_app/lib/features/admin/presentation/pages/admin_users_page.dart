@@ -7,6 +7,7 @@ import '../../../../core/database/models/user_model.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../widgets/admin_search_field.dart';
 
@@ -92,47 +93,53 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                 const SizedBox(width: 8),
                 FilterChip(
                   label: const Text('Clientes'),
-                  selected: _roleFilter == 'user',
+                  selected: _roleFilter == AppConstants.roleUser,
                   onSelected: (_) {
-                    setState(() => _roleFilter = 'user');
+                    setState(() => _roleFilter = AppConstants.roleUser);
                     _load();
                   },
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
                   label: const Text('Trabajadores'),
-                  selected: _roleFilter == 'worker',
+                  selected: _roleFilter == AppConstants.roleWorker,
                   onSelected: (_) {
-                    setState(() => _roleFilter = 'worker');
+                    setState(() => _roleFilter = AppConstants.roleWorker);
                     _load();
                   },
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
                   label: const Text('Admin'),
-                  selected: _roleFilter == 'admin',
+                  selected: _roleFilter == AppConstants.roleAdmin,
                   onSelected: (_) {
-                    setState(() => _roleFilter = 'admin');
+                    setState(() => _roleFilter = AppConstants.roleAdmin);
                     _load();
                   },
                 ),
                 const SizedBox(width: 16),
                 FilterChip(
                   label: const Text('Activos'),
-                  selected: _statusFilter == 'active',
+                  selected:
+                      _statusFilter == AppConstants.accountStatusActive,
                   onSelected: (_) {
-                    setState(() =>
-                        _statusFilter = _statusFilter == 'active' ? null : 'active');
+                    setState(() => _statusFilter =
+                        _statusFilter == AppConstants.accountStatusActive
+                            ? null
+                            : AppConstants.accountStatusActive);
                     _load();
                   },
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
                   label: const Text('Suspendidos'),
-                  selected: _statusFilter == 'suspended',
+                  selected:
+                      _statusFilter == AppConstants.accountStatusSuspended,
                   onSelected: (_) {
-                    setState(() => _statusFilter =
-                        _statusFilter == 'suspended' ? null : 'suspended');
+                    setState(() => _statusFilter = _statusFilter ==
+                            AppConstants.accountStatusSuspended
+                        ? null
+                        : AppConstants.accountStatusSuspended);
                     _load();
                   },
                 ),
@@ -168,15 +175,17 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                                     onSelected: (v) => _setStatus(user, v),
                                     itemBuilder: (ctx) => const [
                                       PopupMenuItem(
-                                        value: 'active',
+                                        value: AppConstants.accountStatusActive,
                                         child: Text('Activar'),
                                       ),
                                       PopupMenuItem(
-                                        value: 'suspended',
+                                        value:
+                                            AppConstants.accountStatusSuspended,
                                         child: Text('Suspender'),
                                       ),
                                       PopupMenuItem(
-                                        value: 'blocked',
+                                        value:
+                                            AppConstants.accountStatusBlocked,
                                         child: Text('Bloquear'),
                                       ),
                                     ],

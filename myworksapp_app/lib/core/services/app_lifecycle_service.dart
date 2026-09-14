@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/app_logger.dart';
+import '../utils/constants.dart';
 import '../services/session_manager.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../database/repositories/job_repository.dart';
@@ -211,23 +212,23 @@ class AppLifecycleService extends WidgetsBindingObserver {
       final jobRepository = JobRepository();
       
       // Obtener jobs activos según rol
-      if (user.role == 'user') {
+      if (user.role == AppConstants.roleUser) {
         final activeJobs = await jobRepository.getJobsByUserId(user.id);
         final pendingOrInProgress = activeJobs.where((job) => 
-          job.status == 'pending' || 
-          job.status == 'accepted' || 
-          job.status == 'in_progress'
+          job.status == AppConstants.jobStatusPending || 
+          job.status == AppConstants.jobStatusAccepted || 
+          job.status == AppConstants.jobStatusInProgress
         ).toList();
         
         if (pendingOrInProgress.isNotEmpty) {
           AppLogger.i('${pendingOrInProgress.length} trabajos activos encontrados');
         }
-      } else if (user.role == 'worker') {
+      } else if (user.role == AppConstants.roleWorker) {
         final activeJobs = await jobRepository.getJobsByWorkerId(user.id);
         final pendingOrInProgress = activeJobs.where((job) => 
-          job.status == 'pending' || 
-          job.status == 'accepted' || 
-          job.status == 'in_progress'
+          job.status == AppConstants.jobStatusPending || 
+          job.status == AppConstants.jobStatusAccepted || 
+          job.status == AppConstants.jobStatusInProgress
         ).toList();
         
         if (pendingOrInProgress.isNotEmpty) {

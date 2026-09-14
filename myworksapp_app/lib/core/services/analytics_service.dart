@@ -3,6 +3,7 @@ import '../database/models/analytics_event_model.dart';
 import '../interfaces/analytics_repository_interface.dart';
 import '../database/repositories/analytics_repository.dart';
 import '../utils/app_logger.dart';
+import '../utils/constants.dart';
 import 'package:flutter/foundation.dart';
 
 /// Eventos de analytics obligatorios
@@ -165,7 +166,7 @@ class AnalyticsService {
     await trackEvent(
       eventName: AnalyticsEvents.jobCreated,
       userId: userId,
-      role: 'user',
+      role: AppConstants.roleUser,
       metadata: {
         'jobId': jobId,
         'serviceId': serviceId,
@@ -183,7 +184,7 @@ class AnalyticsService {
     await trackEvent(
       eventName: AnalyticsEvents.jobAccepted,
       userId: workerId,
-      role: 'worker',
+      role: AppConstants.roleWorker,
       metadata: {
         'jobId': jobId,
         ...?metadata,
@@ -200,7 +201,7 @@ class AnalyticsService {
     await trackEvent(
       eventName: AnalyticsEvents.jobExpired,
       userId: userId,
-      role: 'user',
+      role: AppConstants.roleUser,
       metadata: {
         'jobId': jobId,
         ...?metadata,
@@ -237,7 +238,7 @@ class AnalyticsService {
     await trackEvent(
       eventName: AnalyticsEvents.jobCompleted,
       userId: workerId,
-      role: 'worker',
+      role: AppConstants.roleWorker,
       metadata: {
         'jobId': jobId,
         ...?metadata,
@@ -253,7 +254,7 @@ class AnalyticsService {
     await trackEvent(
       eventName: AnalyticsEvents.workerNoResponse,
       userId: userId,
-      role: 'user',
+      role: AppConstants.roleUser,
       metadata: {
         'jobId': jobId,
       },
@@ -288,7 +289,7 @@ class AnalyticsService {
     await trackEvent(
       eventName: AnalyticsEvents.ratingSubmitted,
       userId: workerId,
-      role: 'worker',
+      role: AppConstants.roleWorker,
       metadata: {
         'jobId': jobId,
         'score': score,

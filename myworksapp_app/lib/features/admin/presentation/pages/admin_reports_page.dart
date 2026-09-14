@@ -7,6 +7,7 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/services/admin_notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/utils/constants.dart';
 import '../widgets/admin_search_field.dart';
 
 class AdminReportsPage extends ConsumerStatefulWidget {
@@ -20,7 +21,7 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
   AdminRepository get _repo => ref.read(adminRepositoryProvider);
   List<AdminReportEntry> _reports = [];
   bool _loading = true;
-  String _filter = 'pending';
+  String _filter = AppConstants.reportStatusPending;
   String _search = '';
 
   @override
@@ -77,13 +78,13 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
 
   String _statusLabel(String status) {
     switch (status) {
-      case 'pending':
+      case AppConstants.reportStatusPending:
         return 'Pendiente';
-      case 'reviewed':
+      case AppConstants.reportStatusReviewed:
         return 'En revisión';
-      case 'resolved':
+      case AppConstants.reportStatusResolved:
         return 'Resuelto';
-      case 'dismissed':
+      case AppConstants.reportStatusDismissed:
         return 'Descartado';
       default:
         return status;
@@ -92,11 +93,11 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'pending':
+      case AppConstants.reportStatusPending:
         return AppColors.brandOrange;
-      case 'reviewed':
+      case AppConstants.reportStatusReviewed:
         return AppColors.warning;
-      case 'resolved':
+      case AppConstants.reportStatusResolved:
         return AppColors.success;
       default:
         return Colors.grey;
@@ -120,9 +121,18 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: SegmentedButton<String>(
               segments: const [
-                ButtonSegment(value: 'pending', label: Text('Pendientes')),
-                ButtonSegment(value: 'reviewed', label: Text('En revisión')),
-                ButtonSegment(value: 'resolved', label: Text('Resueltos')),
+                ButtonSegment(
+                  value: AppConstants.reportStatusPending,
+                  label: Text('Pendientes'),
+                ),
+                ButtonSegment(
+                  value: AppConstants.reportStatusReviewed,
+                  label: Text('En revisión'),
+                ),
+                ButtonSegment(
+                  value: AppConstants.reportStatusResolved,
+                  label: Text('Resueltos'),
+                ),
                 ButtonSegment(value: 'all', label: Text('Todos')),
               ],
               selected: {_filter},
@@ -171,22 +181,31 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
                                   Wrap(
                                     spacing: 8,
                                     children: [
-                                      if (r.status == 'pending')
+                                      if (r.status ==
+                                          AppConstants.reportStatusPending)
                                         TextButton(
-                                          onPressed: () =>
-                                              _updateStatus(entry, 'reviewed'),
+                                          onPressed: () => _updateStatus(
+                                            entry,
+                                            AppConstants.reportStatusReviewed,
+                                          ),
                                           child: const Text('Marcar en revisión'),
                                         ),
-                                      if (r.status != 'resolved')
+                                      if (r.status !=
+                                          AppConstants.reportStatusResolved)
                                         TextButton(
-                                          onPressed: () =>
-                                              _updateStatus(entry, 'resolved'),
+                                          onPressed: () => _updateStatus(
+                                            entry,
+                                            AppConstants.reportStatusResolved,
+                                          ),
                                           child: const Text('Resolver'),
                                         ),
-                                      if (r.status != 'dismissed')
+                                      if (r.status !=
+                                          AppConstants.reportStatusDismissed)
                                         TextButton(
-                                          onPressed: () =>
-                                              _updateStatus(entry, 'dismissed'),
+                                          onPressed: () => _updateStatus(
+                                            entry,
+                                            AppConstants.reportStatusDismissed,
+                                          ),
                                           child: const Text('Descartar'),
                                         ),
                                     ],

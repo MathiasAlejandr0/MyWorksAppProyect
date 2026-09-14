@@ -103,10 +103,26 @@ class _EscrowCheckoutSheetState extends State<EscrowCheckoutSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Simulación de pasarela — sin cargo real',
+              'Simulación académica — no hay cobro real ni pasarela',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.grayMedium,
                   ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.brandOrange.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.brandOrange.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Text(
+                'Esto autoriza un estado de escrow en la base de datos para la demo. '
+                'No se conecta a WebPay, Mercado Pago ni bancos.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
             const SizedBox(height: 16),
             PricingQuoteCard(
@@ -140,7 +156,7 @@ class _EscrowCheckoutSheetState extends State<EscrowCheckoutSheet> {
                       width: 22,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Pagar y reservar en garantía'),
+                  : const Text('Simular pago y reservar'),
             ),
             TextButton(
               onPressed: _processing ? null : () => Navigator.of(context).pop(false),

@@ -2,7 +2,7 @@ import '../models/message_model.dart';
 import '../supabase_db.dart';
 
 class MessageRepository {
-  static const String _table = 'messages';
+  static const String _table = 'mensajes';
 
   Future<void> createMessage(MessageModel message) async {
     await supabase.from(_table).insert(message.toMap());
@@ -12,8 +12,8 @@ class MessageRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('jobId', jobId)
-        .order('createdAt', ascending: true);
+        .eq('id_trabajo', jobId)
+        .order('creado_en', ascending: true);
     return rows.map<MessageModel>((m) => MessageModel.fromMap(m)).toList();
   }
 
@@ -21,30 +21,30 @@ class MessageRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('receiverId', userId)
-        .eq('isRead', 0)
-        .order('createdAt', ascending: false);
+        .eq('id_destinatario', userId)
+        .eq('leido', 0)
+        .order('creado_en', ascending: false);
     return rows.map<MessageModel>((m) => MessageModel.fromMap(m)).toList();
   }
 
   Future<void> markAsRead(String messageId) async {
-    await supabase.from(_table).update({'isRead': 1}).eq('id', messageId);
+    await supabase.from(_table).update({'leido': 1}).eq('id', messageId);
   }
 
   Future<void> markAllAsRead(String jobId, String userId) async {
     await supabase
         .from(_table)
-        .update({'isRead': 1})
-        .eq('jobId', jobId)
-        .eq('receiverId', userId);
+        .update({'leido': 1})
+        .eq('id_trabajo', jobId)
+        .eq('id_destinatario', userId);
   }
 
   Future<int> getUnreadCount(String userId) async {
     final rows = await supabase
         .from(_table)
         .select('id')
-        .eq('receiverId', userId)
-        .eq('isRead', 0);
+        .eq('id_destinatario', userId)
+        .eq('leido', 0);
     return rows.length;
   }
 
@@ -54,7 +54,7 @@ class MessageRepository {
         .from(_table)
         .select()
         .or('senderId.eq.$userId,receiverId.eq.$userId')
-        .order('createdAt', ascending: false);
+        .order('creado_en', ascending: false);
     return rows.map<MessageModel>((m) => MessageModel.fromMap(m)).toList();
   }
 }

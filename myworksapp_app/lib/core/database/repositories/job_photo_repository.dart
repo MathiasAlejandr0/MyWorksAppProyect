@@ -2,7 +2,7 @@ import '../models/job_photo_model.dart';
 import '../supabase_db.dart';
 
 class JobPhotoRepository {
-  static const String _table = 'job_photos';
+  static const String _table = 'fotos_trabajo';
 
   Future<void> createJobPhoto(JobPhotoModel photo) async {
     await supabase.from(_table).insert(photo.toMap());
@@ -12,8 +12,8 @@ class JobPhotoRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('jobId', jobId)
-        .order('createdAt', ascending: false);
+        .eq('id_trabajo', jobId)
+        .order('creado_en', ascending: false);
     return rows.map<JobPhotoModel>((m) => JobPhotoModel.fromMap(m)).toList();
   }
 
@@ -22,11 +22,11 @@ class JobPhotoRepository {
   }
 
   Future<void> deletePhotosByJobId(String jobId) async {
-    await supabase.from(_table).delete().eq('jobId', jobId);
+    await supabase.from(_table).delete().eq('id_trabajo', jobId);
   }
 
   Future<int> getPhotoCountByJobId(String jobId) async {
-    final rows = await supabase.from(_table).select('id').eq('jobId', jobId);
+    final rows = await supabase.from(_table).select('id').eq('id_trabajo', jobId);
     return rows.length;
   }
 

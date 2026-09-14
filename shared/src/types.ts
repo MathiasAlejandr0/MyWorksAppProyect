@@ -1,6 +1,6 @@
-export type UserRole = 'user' | 'worker' | 'admin';
-export type AccountStatus = 'active' | 'suspended' | 'blocked';
-export type DisputeStatus = 'open' | 'under_review' | 'resolved';
+export type UserRole = 'usuario' | 'trabajador' | 'administrador';
+export type AccountStatus = 'activo' | 'suspendido' | 'bloqueado';
+export type DisputeStatus = 'abierta' | 'en_revision' | 'resuelta';
 
 export interface Profile {
   id: string;

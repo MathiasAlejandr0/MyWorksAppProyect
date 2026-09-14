@@ -6,6 +6,7 @@ import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../widgets/admin_search_field.dart';
 
@@ -184,15 +185,17 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
                                         ),
                                       ),
                                       const PopupMenuItem(
-                                        value: 'active',
+                                        value: AppConstants.accountStatusActive,
                                         child: Text('Activar cuenta'),
                                       ),
                                       const PopupMenuItem(
-                                        value: 'suspended',
+                                        value:
+                                            AppConstants.accountStatusSuspended,
                                         child: Text('Suspender cuenta'),
                                       ),
                                       const PopupMenuItem(
-                                        value: 'blocked',
+                                        value:
+                                            AppConstants.accountStatusBlocked,
                                         child: Text('Bloquear cuenta'),
                                       ),
                                     ],

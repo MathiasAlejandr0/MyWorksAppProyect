@@ -2,7 +2,7 @@ import '../models/quote_proposal_model.dart';
 import '../supabase_db.dart';
 
 class QuoteProposalRepository {
-  static const String _table = 'quote_proposals';
+  static const String _table = 'propuestas_cotizacion';
 
   Future<void> create(QuoteProposalModel proposal) async {
     await supabase.from(_table).insert(proposal.toMap());
@@ -12,8 +12,8 @@ class QuoteProposalRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('jobId', jobId)
-        .order('createdAt', ascending: false);
+        .eq('id_trabajo', jobId)
+        .order('creado_en', ascending: false);
     return rows
         .map<QuoteProposalModel>((m) => QuoteProposalModel.fromMap(m))
         .toList();

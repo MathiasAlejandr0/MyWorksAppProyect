@@ -188,7 +188,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return false;
     }
 
-    await _sessionManager.saveSession(authUserId, user?.role ?? 'user');
+    await _sessionManager.saveSession(authUserId, user?.role ?? 'usuario');
     state = state.copyWith(user: user, isLoading: false);
     await NotificationRealtimeService.instance.subscribe(authUserId);
     return true;
@@ -211,7 +211,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
 
       final user = await _userRepository.getUserById(userId);
-      if (user == null || user.accountStatus != 'active') {
+      if (user == null || !user.isActive) {
         await _sessionManager.clearSession();
         state = state.copyWith(isLoading: false);
         return false;

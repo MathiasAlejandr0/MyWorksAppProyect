@@ -2,14 +2,14 @@ import '../models/service_model.dart';
 import '../supabase_db.dart';
 
 class ServiceRepository {
-  static const String _table = 'services';
+  static const String _table = 'servicios';
 
   Future<List<ServiceModel>> getAllServices() async {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('isActive', 1)
-        .order('name', ascending: true);
+        .eq('activo', 1)
+        .order('nombre', ascending: true);
     return rows.map<ServiceModel>((m) => ServiceModel.fromMap(m)).toList();
   }
 
@@ -17,9 +17,9 @@ class ServiceRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('category', category)
-        .eq('isActive', 1)
-        .order('name', ascending: true);
+        .eq('categoria', category)
+        .eq('activo', 1)
+        .order('nombre', ascending: true);
     return rows.map<ServiceModel>((m) => ServiceModel.fromMap(m)).toList();
   }
 
@@ -44,9 +44,9 @@ class ServiceRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('isActive', 1)
-        .order('category', ascending: true)
-        .order('name', ascending: true);
+        .eq('activo', 1)
+        .order('categoria', ascending: true)
+        .order('nombre', ascending: true);
     final allServices =
         rows.map<ServiceModel>((m) => ServiceModel.fromMap(m)).toList();
 

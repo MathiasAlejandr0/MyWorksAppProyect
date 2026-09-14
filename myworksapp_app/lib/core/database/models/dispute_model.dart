@@ -34,34 +34,34 @@ class DisputeModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'jobId': jobId,
-      'openedBy': openedBy,
-      'reason': reason,
-      'description': description,
-      'status': status,
-      'resolution': resolution,
-      'resolvedBy': resolvedBy,
-      'resolvedAt': resolvedAt?.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'id_trabajo': jobId,
+      'abierta_por': openedBy,
+      'motivo': reason,
+      'descripcion': description,
+      'estado': status,
+      'resolucion': resolution,
+      'resuelta_por': resolvedBy,
+      'resuelta_en': resolvedAt?.toIso8601String(),
+      'creado_en': createdAt.toIso8601String(),
+      'actualizado_en': updatedAt.toIso8601String(),
     };
   }
 
   factory DisputeModel.fromMap(Map<String, dynamic> map) {
     return DisputeModel(
       id: map['id'] as String,
-      jobId: map['jobId'] as String,
-      openedBy: map['openedBy'] as String,
-      reason: map['reason'] as String,
-      description: map['description'] as String?,
-      status: map['status'] as String,
-      resolution: map['resolution'] as String?,
-      resolvedBy: map['resolvedBy'] as String?,
-      resolvedAt: map['resolvedAt'] != null
-          ? DateTime.parse(map['resolvedAt'] as String)
+      jobId: map['id_trabajo'] as String,
+      openedBy: map['abierta_por'] as String,
+      reason: map['motivo'] as String,
+      description: map['descripcion'] as String?,
+      status: map['estado'] as String,
+      resolution: map['resolucion'] as String?,
+      resolvedBy: map['resuelta_por'] as String?,
+      resolvedAt: map['resuelta_en'] != null
+          ? DateTime.parse(map['resuelta_en'] as String)
           : null,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: DateTime.parse(map['updatedAt'] as String),
+      createdAt: DateTime.parse(map['creado_en'] as String),
+      updatedAt: DateTime.parse(map['actualizado_en'] as String),
     );
   }
 

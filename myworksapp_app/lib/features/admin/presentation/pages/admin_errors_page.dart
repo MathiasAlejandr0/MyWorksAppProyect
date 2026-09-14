@@ -8,6 +8,7 @@ import '../../../../core/database/repositories/admin_repository.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../widgets/admin_search_field.dart';
 
@@ -177,7 +178,12 @@ class _ErrorLogsTab extends StatelessWidget {
         children: [
           _StatusChips(
             labels: const ['Todos', 'Nuevos', 'Reconocidos', 'Resueltos'],
-            values: const [null, 'new', 'acknowledged', 'resolved'],
+            values: const [
+              null,
+              AppConstants.errorStatusNew,
+              AppConstants.errorStatusAcknowledged,
+              AppConstants.errorStatusResolved,
+            ],
             selected: errorStatus,
             onSelected: onStatusFilter,
           ),
@@ -194,7 +200,12 @@ class _ErrorLogsTab extends StatelessWidget {
           if (index == 0) {
             return _StatusChips(
               labels: const ['Todos', 'Nuevos', 'Reconocidos', 'Resueltos'],
-              values: const [null, 'new', 'acknowledged', 'resolved'],
+              values: const [
+                null,
+                AppConstants.errorStatusNew,
+                AppConstants.errorStatusAcknowledged,
+                AppConstants.errorStatusResolved,
+              ],
               selected: errorStatus,
               onSelected: onStatusFilter,
             );
@@ -204,7 +215,7 @@ class _ErrorLogsTab extends StatelessWidget {
             child: ExpansionTile(
               leading: Icon(
                 Icons.bug_report_outlined,
-                color: log.status == 'new'
+                color: log.status == AppConstants.errorStatusNew
                     ? AppColors.brandOrange
                     : AppColors.success,
               ),
@@ -228,17 +239,26 @@ class _ErrorLogsTab extends StatelessWidget {
                 Wrap(
                   spacing: 8,
                   children: [
-                    if (log.status == 'new')
+                    if (log.status == AppConstants.errorStatusNew)
                       TextButton(
-                        onPressed: () => onUpdateStatus(log, 'acknowledged'),
+                        onPressed: () => onUpdateStatus(
+                          log,
+                          AppConstants.errorStatusAcknowledged,
+                        ),
                         child: const Text('Reconocer'),
                       ),
                     TextButton(
-                      onPressed: () => onUpdateStatus(log, 'resolved'),
+                      onPressed: () => onUpdateStatus(
+                        log,
+                        AppConstants.errorStatusResolved,
+                      ),
                       child: const Text('Resolver'),
                     ),
                     TextButton(
-                      onPressed: () => onUpdateStatus(log, 'ignored'),
+                      onPressed: () => onUpdateStatus(
+                        log,
+                        AppConstants.errorStatusIgnored,
+                      ),
                       child: const Text('Ignorar'),
                     ),
                   ],
@@ -272,7 +292,11 @@ class _PendingTab extends StatelessWidget {
         children: [
           _StatusChips(
             labels: const ['Todos', 'Fallidos', 'Pendientes'],
-            values: const [null, 'failed', 'pending_sync'],
+            values: const [
+              null,
+              AppConstants.syncStatusFailed,
+              AppConstants.syncStatusPending,
+            ],
             selected: syncStatus,
             onSelected: onStatusFilter,
           ),
@@ -289,7 +313,11 @@ class _PendingTab extends StatelessWidget {
           if (index == 0) {
             return _StatusChips(
               labels: const ['Todos', 'Fallidos', 'Pendientes'],
-              values: const [null, 'failed', 'pending_sync'],
+              values: const [
+                null,
+                AppConstants.syncStatusFailed,
+                AppConstants.syncStatusPending,
+              ],
               selected: syncStatus,
               onSelected: onStatusFilter,
             );
@@ -298,10 +326,10 @@ class _PendingTab extends StatelessWidget {
           return Card(
             child: ListTile(
               leading: Icon(
-                a.status == 'failed'
+                a.status == AppConstants.syncStatusFailed
                     ? Icons.sync_problem
                     : Icons.sync,
-                color: a.status == 'failed'
+                color: a.status == AppConstants.syncStatusFailed
                     ? AppColors.brandOrange
                     : AppColors.warning,
               ),

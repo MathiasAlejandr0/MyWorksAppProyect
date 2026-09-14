@@ -4,7 +4,7 @@ import '../../utils/app_logger.dart';
 
 /// Repositorio para feature flags
 class FeatureFlagRepository {
-  static const String _table = 'feature_flags';
+  static const String _table = 'banderas_funcionalidad';
 
   Future<void> upsertFlag(FeatureFlagModel flag) async {
     try {
@@ -24,7 +24,7 @@ class FeatureFlagRepository {
   }) async {
     try {
       final rows =
-          await supabase.from(_table).select().eq('flagName', flagName);
+          await supabase.from(_table).select().eq('nombre_bandera', flagName);
       var flags = rows
           .map<FeatureFlagModel>((m) => FeatureFlagModel.fromMap(m))
           .toList();
@@ -62,7 +62,7 @@ class FeatureFlagRepository {
   Future<List<FeatureFlagModel>> getAllFlags() async {
     try {
       final rows =
-          await supabase.from(_table).select().order('flagName', ascending: true);
+          await supabase.from(_table).select().order('nombre_bandera', ascending: true);
       return rows
           .map<FeatureFlagModel>((m) => FeatureFlagModel.fromMap(m))
           .toList();

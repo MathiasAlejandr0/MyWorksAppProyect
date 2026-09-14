@@ -7,8 +7,8 @@ import 'analytics_service.dart';
 /// Reconciliador de timeouts en background
 /// 
 /// Ejecuta validaciones y transiciones automáticas de estados:
-/// - pending → expired (si no se acepta en X minutos)
-/// - accepted → pending (si no inicia en X minutos)
+/// - pendiente → expirado (si no se acepta en X minutos)
+/// - aceptado → pendiente (si no inicia en X minutos)
 /// 
 /// Se ejecuta en:
 /// - Inicio de app
@@ -94,7 +94,7 @@ class BackgroundTimeoutReconciler {
             await _analytics.trackEvent(
               eventName: 'job_reverted_to_pending',
               userId: job.workerId,
-              role: 'worker',
+              role: AppConstants.roleWorker,
               metadata: {
                 'jobId': job.id,
                 'minutesSinceAccepted': minutesSinceAccepted,

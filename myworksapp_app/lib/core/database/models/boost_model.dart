@@ -19,22 +19,22 @@ class BoostModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'workerId': workerId,
-      'boostType': boostType,
-      'startDate': startDate.toIso8601String(),
-      'endDate': endDate.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
+      'id_trabajador': workerId,
+      'tipo_impulso': boostType,
+      'fecha_inicio': startDate.toIso8601String(),
+      'fecha_fin': endDate.toIso8601String(),
+      'creado_en': createdAt.toIso8601String(),
     };
   }
 
   factory BoostModel.fromMap(Map<String, dynamic> map) {
     return BoostModel(
       id: map['id'] as String,
-      workerId: map['workerId'] as String,
-      boostType: map['boostType'] as String,
-      startDate: DateTime.parse(map['startDate'] as String),
-      endDate: DateTime.parse(map['endDate'] as String),
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      workerId: map['id_trabajador'] as String,
+      boostType: map['tipo_impulso'] as String,
+      startDate: DateTime.parse(map['fecha_inicio'] as String),
+      endDate: DateTime.parse(map['fecha_fin'] as String),
+      createdAt: DateTime.parse(map['creado_en'] as String),
     );
   }
 

@@ -19,7 +19,7 @@ export async function signIn(
 
   const profile = await getProfile(supabase, data.user.id);
   if (!profile) throw new AuthError('Perfil no encontrado.');
-  if (profile.accountStatus !== 'active') {
+  if (profile.accountStatus !== 'activo') {
     await supabase.auth.signOut();
     throw new AuthError('Cuenta suspendida o bloqueada.');
   }
@@ -35,7 +35,7 @@ export async function signUpUser(
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { name, role: 'user' } },
+    options: { data: { name, role: 'usuario' } },
   });
   if (error) throw new AuthError(error.message);
   if (!data.user) throw new AuthError('No se pudo registrar la cuenta.');
@@ -47,8 +47,8 @@ export async function signUpUser(
     id: data.user.id,
     name,
     email,
-    role: 'user',
-    accountStatus: 'active',
+    role: 'usuario',
+    accountStatus: 'activo',
   };
 }
 
@@ -67,8 +67,8 @@ export async function getProfile(
   userId: string,
 ): Promise<Profile | null> {
   const { data, error } = await supabase
-    .from('profiles')
-    .select('id, name, email, role, accountStatus, profilePhotoPath, createdAt')
+    .from('perfiles')
+    .select('id, nombre, correo, rol, estado_cuenta, ruta_foto_perfil, creado_en')
     .eq('id', userId)
     .maybeSingle();
 
@@ -77,12 +77,12 @@ export async function getProfile(
 
   return {
     id: data.id as string,
-    name: data.name as string,
-    email: data.email as string,
-    role: data.role as UserRole,
-    accountStatus: data.accountStatus as Profile['accountStatus'],
-    profilePhotoPath: data.profilePhotoPath as string | null | undefined,
-    createdAt: data.createdAt as string | undefined,
+    name: data.nombre as string,
+    email: data.correo as string,
+    role: data.rol as UserRole,
+    accountStatus: data.estado_cuenta as Profile['accountStatus'],
+    profilePhotoPath: data.ruta_foto_perfil as string | null | undefined,
+    createdAt: data.creado_en as string | undefined,
   };
 }
 

@@ -15,7 +15,7 @@ class MessageModel {
     required this.senderId,
     required this.receiverId,
     required this.content,
-    this.type = 'text',
+    this.type = 'texto',
     this.imagePath,
     this.isRead = false,
     required this.createdAt,
@@ -24,28 +24,28 @@ class MessageModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'jobId': jobId,
-      'senderId': senderId,
-      'receiverId': receiverId,
-      'content': content,
-      'type': type,
-      'imagePath': imagePath,
-      'isRead': isRead ? 1 : 0,
-      'createdAt': createdAt.toIso8601String(),
+      'id_trabajo': jobId,
+      'id_remitente': senderId,
+      'id_destinatario': receiverId,
+      'contenido': content,
+      'tipo': type,
+      'ruta_imagen': imagePath,
+      'leido': isRead ? 1 : 0,
+      'creado_en': createdAt.toIso8601String(),
     };
   }
 
   factory MessageModel.fromMap(Map<String, dynamic> map) {
     return MessageModel(
       id: map['id'] as String,
-      jobId: map['jobId'] as String,
-      senderId: map['senderId'] as String,
-      receiverId: map['receiverId'] as String,
-      content: map['content'] as String,
-      type: map['type'] as String? ?? 'text',
-      imagePath: map['imagePath'] as String?,
-      isRead: (map['isRead'] as int? ?? 0) == 1,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      jobId: map['id_trabajo'] as String,
+      senderId: map['id_remitente'] as String,
+      receiverId: map['id_destinatario'] as String,
+      content: map['contenido'] as String,
+      type: map['tipo'] as String? ?? 'texto',
+      imagePath: map['ruta_imagen'] as String?,
+      isRead: (map['leido'] as int? ?? 0) == 1,
+      createdAt: DateTime.parse(map['creado_en'] as String),
     );
   }
 }

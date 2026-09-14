@@ -5,7 +5,7 @@ import '../../utils/app_logger.dart';
 
 /// Implementación de AnalyticsRepository sobre Supabase.
 class AnalyticsRepository implements IAnalyticsRepository {
-  static const String _table = 'analytics_events';
+  static const String _table = 'eventos_analitica';
 
   @override
   Future<void> trackEvent(AnalyticsEventModel event) async {
@@ -38,18 +38,18 @@ class AnalyticsRepository implements IAnalyticsRepository {
     try {
       var query = supabase.from(_table).select();
       if (startDate != null) {
-        query = query.gte('timestamp', startDate.toIso8601String());
+        query = query.gte('marca_tiempo', startDate.toIso8601String());
       }
       if (endDate != null) {
-        query = query.lte('timestamp', endDate.toIso8601String());
+        query = query.lte('marca_tiempo', endDate.toIso8601String());
       }
       if (eventName != null) {
-        query = query.eq('eventName', eventName);
+        query = query.eq('nombre_evento', eventName);
       }
       if (userId != null) {
-        query = query.eq('userId', userId);
+        query = query.eq('id_usuario', userId);
       }
-      final rows = await query.order('timestamp', ascending: false);
+      final rows = await query.order('marca_tiempo', ascending: false);
       return rows
           .map<AnalyticsEventModel>((m) => AnalyticsEventModel.fromMap(m))
           .toList();
@@ -66,7 +66,7 @@ class AnalyticsRepository implements IAnalyticsRepository {
       await supabase
           .from(_table)
           .delete()
-          .lt('timestamp', cutoffDate.toIso8601String());
+          .lt('marca_tiempo', cutoffDate.toIso8601String());
       AppLogger.i('Cleaned old analytics events (older than $daysToKeep days)');
     } catch (e) {
       AppLogger.e('Error cleaning old analytics events', e);

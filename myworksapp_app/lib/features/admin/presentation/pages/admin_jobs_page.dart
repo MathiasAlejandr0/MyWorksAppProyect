@@ -28,11 +28,11 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
 
   static const _filters = [
     ('all', 'Todos'),
-    ('pending', 'Pendientes'),
-    ('accepted', 'Aceptados'),
-    ('in_progress', 'En curso'),
-    ('completed', 'Completados'),
-    ('cancelled', 'Cancelados'),
+    (AppConstants.jobStatusPending, 'Pendientes'),
+    (AppConstants.jobStatusAccepted, 'Aceptados'),
+    (AppConstants.jobStatusInProgress, 'En curso'),
+    (AppConstants.jobStatusCompleted, 'Completados'),
+    (AppConstants.jobStatusCancelled, 'Cancelados'),
   ];
 
   @override
@@ -97,14 +97,14 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'pending':
+      case AppConstants.jobStatusPending:
         return AppColors.brandOrange;
-      case 'accepted':
-      case 'in_progress':
+      case AppConstants.jobStatusAccepted:
+      case AppConstants.jobStatusInProgress:
         return AppColors.warning;
-      case 'completed':
+      case AppConstants.jobStatusCompleted:
         return AppColors.success;
-      case 'cancelled':
+      case AppConstants.jobStatusCancelled:
         return Colors.grey;
       default:
         return AppColors.brandOrange;
@@ -161,8 +161,10 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
                           itemCount: _jobs.length,
                           itemBuilder: (context, index) {
                             final job = _jobs[index];
-                            final canCancel = job.status != 'completed' &&
-                                job.status != 'cancelled';
+                            final canCancel =
+                                job.status != AppConstants.jobStatusCompleted &&
+                                    job.status !=
+                                        AppConstants.jobStatusCancelled;
                             return Card(
                               child: ListTile(
                                 leading: Icon(

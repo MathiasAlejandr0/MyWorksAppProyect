@@ -2,6 +2,7 @@ import 'package:uuid/uuid.dart';
 import '../database/repositories/dispute_repository.dart';
 import '../database/repositories/job_repository.dart';
 import '../database/models/dispute_model.dart';
+import '../domain/pricing_constants.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 import 'payment_service.dart';
@@ -47,7 +48,7 @@ class DisputeService {
 
       // 3. Verificar que no hay disputa abierta
       final existingDispute = await _disputeRepository.getDisputeByJobId(jobId);
-      if (existingDispute != null && existingDispute.status == 'open') {
+      if (existingDispute != null && existingDispute.status == 'abierta') {
         throw AppError.validation('Ya existe una disputa abierta para este trabajo');
       }
 
@@ -59,7 +60,7 @@ class DisputeService {
         openedBy: openedBy,
         reason: reason,
         description: description,
-        status: 'open',
+        status: 'abierta',
         createdAt: now,
         updatedAt: now,
       );
@@ -68,7 +69,8 @@ class DisputeService {
 
       // 5. Congelar pago si existe
       final payment = await _paymentService.getPaymentByJobId(jobId);
-      if (payment != null && payment.status == 'authorized') {
+      if (payment != null &&
+          payment.status == PricingConstants.paymentAuthorized) {
         await _paymentService.holdPayment(payment.id);
         AppLogger.i('Pago retenido por disputa: ${payment.id}');
       }
@@ -96,12 +98,12 @@ class DisputeService {
         throw AppError.notFound('Disputa no encontrada');
       }
 
-      if (dispute.status != 'open' && dispute.status != 'under_review') {
+      if (dispute.status != 'abierta' && dispute.status != 'en_revision') {
         throw AppError.validation('La disputa ya fue resuelta');
       }
 
       final updated = dispute.copyWith(
-        status: 'resolved',
+        status: 'resuelta',
         resolution: resolution,
         resolvedBy: resolvedBy,
         resolvedAt: DateTime.now(),
@@ -112,7 +114,7 @@ class DisputeService {
 
       // Si el pago estaba retenido, decidir qué hacer
       final payment = await _paymentService.getPaymentByJobId(dispute.jobId);
-      if (payment != null && payment.status == 'held') {
+      if (payment != null && payment.status == PricingConstants.paymentHeld) {
         // Por defecto, liberar el pago (en producción, esto dependería de la resolución)
         await _paymentService.releasePayment(payment.id);
         AppLogger.i('Pago liberado después de resolución de disputa');
@@ -131,7 +133,7 @@ class DisputeService {
   Future<bool> hasOpenDispute(String jobId) async {
     try {
       final dispute = await _disputeRepository.getDisputeByJobId(jobId);
-      return dispute != null && dispute.status == 'open';
+      return dispute != null && dispute.status == 'abierta';
     } catch (e) {
       AppLogger.e('Error verificando disputa', e);
       return false;

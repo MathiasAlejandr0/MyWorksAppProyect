@@ -17,7 +17,7 @@ class JobCancellationService {
     required String jobId,
     required String cancelledBy,
     required String reason,
-    required String userRole, // 'user' o 'worker'
+    required String userRole, // 'usuario' o 'trabajador'
   }) async {
     try {
       // 1. Obtener el trabajo
@@ -29,13 +29,13 @@ class JobCancellationService {
 
       // 2. Validar reglas de cancelación
       if (userRole == AppConstants.roleUser) {
-        // Usuario solo puede cancelar si status == 'pending'
+        // Usuario solo puede cancelar si status == 'pendiente'
         if (job.status != AppConstants.jobStatusPending) {
           AppLogger.w('Usuario no puede cancelar trabajo con status: ${job.status}');
           return false;
         }
       } else if (userRole == AppConstants.roleWorker) {
-        // Trabajador solo puede cancelar si status == 'accepted'
+        // Trabajador solo puede cancelar si status == 'aceptado'
         if (job.status != AppConstants.jobStatusAccepted) {
           AppLogger.w('Trabajador no puede cancelar trabajo con status: ${job.status}');
           return false;
@@ -51,7 +51,7 @@ class JobCancellationService {
         return false;
       }
 
-      // 4. Actualizar estado del trabajo a 'cancelled'
+      // 4. Actualizar estado del trabajo a 'cancelado'
       await _jobRepository.updateJobStatus(jobId, AppConstants.jobStatusCancelled);
 
       // 5. Crear registro de cancelación

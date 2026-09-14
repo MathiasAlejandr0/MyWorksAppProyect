@@ -5,12 +5,18 @@ interface AmbientShaderProps {
 export function AmbientShader({ category }: AmbientShaderProps) {
   const getGlowColor = () => {
     switch (category) {
+      case 'plomeria':
+        return 'rgba(0, 122, 255, 0.15)';
+      case 'electricidad':
+        return 'rgba(255, 149, 0, 0.15)';
+      case 'limpieza':
+        return 'rgba(52, 199, 89, 0.15)';
       case 'plumbing':
-        return 'rgba(0, 122, 255, 0.15)'; // Blue Aqua
+        return 'rgba(0, 122, 255, 0.15)';
       case 'electrical':
-        return 'rgba(255, 149, 0, 0.15)'; // Gold Amber
+        return 'rgba(255, 149, 0, 0.15)';
       case 'cleaning':
-        return 'rgba(52, 199, 89, 0.15)'; // Emerald Green
+        return 'rgba(52, 199, 89, 0.15)';
       default:
         return 'rgba(240, 120, 42, 0.15)'; // Orange Accent
     }

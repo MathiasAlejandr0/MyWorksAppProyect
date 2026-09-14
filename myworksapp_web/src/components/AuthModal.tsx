@@ -73,8 +73,11 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px' }}>
           {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
         </h2>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted-dark)', marginBottom: '16px' }}>
-          Conectado a Supabase Auth — usa tu cuenta de cliente MyWorksApp.
+        <p style={{ fontSize: '13px', color: 'var(--text-muted-dark)', marginBottom: '8px' }}>
+          Solo cuentas de cliente (<strong>usuario</strong>). Trabajadores usan la app móvil; administradores, el panel desktop.
+        </p>
+        <p style={{ fontSize: '12px', color: 'var(--text-muted-dark)', marginBottom: '16px', opacity: 0.9 }}>
+          Autenticación con Supabase Auth.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

@@ -5,7 +5,7 @@ import '../../utils/worker_job_status.dart';
 import '../models/job_model.dart';
 import '../supabase_db.dart';
 class JobRepository {
-  static const String _table = 'jobs';
+  static const String _table = 'trabajos';
 
   Future<String> createJob(JobModel job) async {
     await supabase.from(_table).insert(job.toMap());
@@ -23,8 +23,8 @@ class JobRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('userId', userId)
-        .order('createdAt', ascending: false);
+        .eq('id_usuario', userId)
+        .order('creado_en', ascending: false);
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
@@ -32,8 +32,8 @@ class JobRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('workerId', workerId)
-        .order('createdAt', ascending: false);
+        .eq('id_trabajador', workerId)
+        .order('creado_en', ascending: false);
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
@@ -41,9 +41,9 @@ class JobRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('workerId', workerId)
-        .eq('status', 'pending')
-        .order('createdAt', ascending: false);
+        .eq('id_trabajador', workerId)
+        .eq('estado', 'pendiente')
+        .order('creado_en', ascending: false);
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
@@ -52,9 +52,9 @@ class JobRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('workerId', workerId)
-        .inFilter('status', WorkerJobStatus.activeStatuses)
-        .order('createdAt', ascending: false);
+        .eq('id_trabajador', workerId)
+        .inFilter('estado', WorkerJobStatus.activeStatuses)
+        .order('creado_en', ascending: false);
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
@@ -68,8 +68,8 @@ class JobRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('status', status)
-        .order('createdAt', ascending: false);
+        .eq('estado', status)
+        .order('creado_en', ascending: false);
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
@@ -86,25 +86,25 @@ class JobRepository {
     final rows = await supabase
         .from(_table)
         .update({
-          'status': AppConstants.jobStatusCancelled,
-          'serviceMetadata': jsonEncode(metadata),
-          'updatedAt': DateTime.now().toIso8601String(),
+          'estado': AppConstants.jobStatusCancelled,
+          'metadatos_servicio': jsonEncode(metadata),
+          'actualizado_en': DateTime.now().toIso8601String(),
         })
         .eq('id', jobId)
-        .eq('workerId', workerId)
-        .eq('status', AppConstants.jobStatusPending)
+        .eq('id_trabajador', workerId)
+        .eq('estado', AppConstants.jobStatusPending)
         .select('id');
     return rows.isNotEmpty;
   }
 
   Future<void> updateJobStatus(String id, String status) async {
-    await supabase.from(_table).update({'status': status}).eq('id', id);
+    await supabase.from(_table).update({'estado': status}).eq('id', id);
   }
 
   Future<void> assignWorker(String jobId, String workerId) async {
     await supabase
         .from(_table)
-        .update({'workerId': workerId, 'status': 'accepted'}).eq('id', jobId);
+        .update({'id_trabajador': workerId, 'estado': 'aceptado'}).eq('id', jobId);
   }
 
   Future<void> deleteJob(String id) async {

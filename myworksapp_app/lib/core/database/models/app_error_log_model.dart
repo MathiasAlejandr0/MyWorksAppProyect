@@ -17,7 +17,7 @@ class AppErrorLogModel {
     required this.message,
     this.stackTrace,
     this.metadata,
-    this.status = 'new',
+    this.status = 'nuevo',
     this.appVersion,
     this.platform,
     required this.createdAt,
@@ -26,32 +26,32 @@ class AppErrorLogModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'userId': userId,
-      'errorType': errorType,
-      'message': message,
-      'stackTrace': stackTrace,
-      'metadata': metadata,
-      'status': status,
-      'appVersion': appVersion,
-      'platform': platform,
-      'createdAt': createdAt.toIso8601String(),
+      'id_usuario': userId,
+      'tipo_error': errorType,
+      'mensaje': message,
+      'traza_pila': stackTrace,
+      'metadatos': metadata,
+      'estado': status,
+      'version_app': appVersion,
+      'plataforma': platform,
+      'creado_en': createdAt.toIso8601String(),
     };
   }
 
   factory AppErrorLogModel.fromMap(Map<String, dynamic> map) {
     return AppErrorLogModel(
       id: map['id'] as String,
-      userId: map['userId'] as String?,
-      errorType: map['errorType'] as String? ?? 'error',
-      message: map['message'] as String,
-      stackTrace: map['stackTrace'] as String?,
-      metadata: map['metadata'] is Map
-          ? Map<String, dynamic>.from(map['metadata'] as Map)
+      userId: map['id_usuario'] as String?,
+      errorType: map['tipo_error'] as String? ?? 'error',
+      message: map['mensaje'] as String,
+      stackTrace: map['traza_pila'] as String?,
+      metadata: map['metadatos'] is Map
+          ? Map<String, dynamic>.from(map['metadatos'] as Map)
           : null,
-      status: map['status'] as String? ?? 'new',
-      appVersion: map['appVersion'] as String?,
-      platform: map['platform'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      status: map['estado'] as String? ?? 'nuevo',
+      appVersion: map['version_app'] as String?,
+      platform: map['plataforma'] as String?,
+      createdAt: DateTime.parse(map['creado_en'] as String),
     );
   }
 

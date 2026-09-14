@@ -19,7 +19,7 @@ import { useAuth } from './context/AuthContext';
 
 export function App() {
   const { profile, loading, logout } = useAuth();
-  const [activeRoleWorkspace, setActiveRoleWorkspace] = useState<number>(1);
+  const [activeRoleWorkspace, setActiveRoleWorkspace] = useState<number>(0);
 
   if (loading) {
     return (
@@ -33,6 +33,13 @@ export function App() {
     return <DesktopLoginScreen />;
   }
 
+  const initials = profile.name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('') || 'AD';
+
   return (
     <div className="desktop-layout">
       <aside className="sidebar">
@@ -45,12 +52,14 @@ export function App() {
           </div>
           <div>
             <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.2px' }}>My Works App</h2>
-            <span style={{ fontSize: '10px', color: '#F0782A', fontWeight: 800, backgroundColor: 'rgba(240,120,42,0.15)', padding: '2px 6px', borderRadius: '4px' }}>DESKTOP HUB v2.5</span>
+            <span style={{ fontSize: '10px', color: '#F0782A', fontWeight: 800, backgroundColor: 'rgba(240,120,42,0.15)', padding: '2px 6px', borderRadius: '4px' }}>
+              Consola ops
+            </span>
           </div>
         </div>
 
         <div style={{ fontSize: '11px', fontWeight: 800, color: '#98989D', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.5px' }}>
-          Paneles Disponibles:
+          Paneles
         </div>
 
         <div>
@@ -61,7 +70,7 @@ export function App() {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <TicketCheck size={18} />
-              <span>1. Soporte & Tickets</span>
+              <span>Soporte y disputas</span>
             </div>
           </div>
 
@@ -70,7 +79,7 @@ export function App() {
             onClick={() => setActiveRoleWorkspace(1)}
           >
             <Users size={18} />
-            <span>2. Panel Ejecutivo</span>
+            <span>Panel ejecutivo</span>
           </div>
 
           <div
@@ -78,7 +87,7 @@ export function App() {
             onClick={() => setActiveRoleWorkspace(2)}
           >
             <Terminal size={18} />
-            <span>3. DevSecOps & QA</span>
+            <span>DevSecOps (demo)</span>
           </div>
 
           <div
@@ -86,26 +95,26 @@ export function App() {
             onClick={() => setActiveRoleWorkspace(3)}
           >
             <UserCheck size={18} />
-            <span>4. Recursos Humanos (RRHH)</span>
+            <span>RRHH (demo)</span>
           </div>
         </div>
 
         <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#F0782A', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '12px' }}>
-                ADM
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#F0782A', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '12px', flexShrink: 0 }}>
+                {initials}
               </div>
-              <div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: 'white' }}>{profile.name}</div>
-                <div style={{ fontSize: '10px', color: '#34C759', fontWeight: 700 }}>● Supabase Admin</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.name}</div>
+                <div style={{ fontSize: '10px', color: '#34C759', fontWeight: 700 }}>administrador</div>
               </div>
             </div>
 
             <button
               onClick={() => void logout()}
               title="Cerrar sesión"
-              style={{ background: 'rgba(255,59,48,0.15)', border: 'none', color: '#FF3B30', width: '30px', height: '30px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              style={{ background: 'rgba(255,59,48,0.15)', border: 'none', color: '#FF3B30', width: '30px', height: '30px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
             >
               <LogOut size={16} />
             </button>
@@ -115,27 +124,27 @@ export function App() {
 
       <main className="main-content">
         <header className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h1 style={{ fontSize: '18px', fontWeight: 800 }}>
-              {activeRoleWorkspace === 0 && '🎧 Centro de Soporte & Disputas (Supabase)'}
-              {activeRoleWorkspace === 1 && '👑 Panel Ejecutivo & Métricas en vivo'}
-              {activeRoleWorkspace === 2 && '🛡️ DevSecOps, Auditoría RLS & QA'}
-              {activeRoleWorkspace === 3 && '👥 Recursos Humanos & Colaboradores'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+            <h1 style={{ fontSize: '17px', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {activeRoleWorkspace === 0 && 'Centro de soporte y disputas'}
+              {activeRoleWorkspace === 1 && 'Panel ejecutivo'}
+              {activeRoleWorkspace === 2 && 'DevSecOps y estado técnico'}
+              {activeRoleWorkspace === 3 && 'Recursos humanos'}
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ position: 'relative', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            <div style={{ position: 'relative', cursor: 'default' }} title="Sin bandeja en vivo aún">
               <Bell size={20} color="#98989D" />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
-              <Shield size={14} color="#34C759" />
-              <span>Modo Enterprise Protegido</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'rgba(240,120,42,0.12)', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, color: '#F0782A' }}>
+              <Shield size={14} color="#F0782A" />
+              <span>Modo demostración académica</span>
             </div>
           </div>
         </header>
 
-        <div style={{ padding: '24px' }}>
+        <div className="workspace-pad">
           {activeRoleWorkspace === 0 && <SupportWorkspace adminId={profile.id} />}
           {activeRoleWorkspace === 1 && <ExecutiveWorkspace />}
           {activeRoleWorkspace === 2 && <DevSecOpsWorkspace />}

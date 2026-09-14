@@ -4,12 +4,27 @@ import '../database/models/subscription_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 
-/// Tipos de planes de suscripción
+/// Tipos de planes de suscripción (códigos BD: gratuito, basico, premium, empresarial)
 enum SubscriptionPlan {
   free,
   basic,
   premium,
   enterprise,
+}
+
+extension SubscriptionPlanDbCode on SubscriptionPlan {
+  String get dbCode {
+    switch (this) {
+      case SubscriptionPlan.free:
+        return 'gratuito';
+      case SubscriptionPlan.basic:
+        return 'basico';
+      case SubscriptionPlan.premium:
+        return 'premium';
+      case SubscriptionPlan.enterprise:
+        return 'empresarial';
+    }
+  }
 }
 
 /// Servicio de suscripciones (preparado para futuro)
@@ -42,8 +57,8 @@ class SubscriptionService {
       final subscription = SubscriptionModel(
         id: const Uuid().v4(),
         userId: userId,
-        planType: plan.name,
-        status: 'active',
+        planType: plan.dbCode,
+        status: 'activa',
         startDate: now,
         endDate: endDate,
         createdAt: now,
@@ -90,7 +105,7 @@ class SubscriptionService {
       }
 
       final updated = subscription.copyWith(
-        status: 'cancelled',
+        status: 'cancelada',
         updatedAt: DateTime.now(),
       );
 
@@ -113,7 +128,7 @@ class SubscriptionService {
       for (final subscription in subscriptions) {
         if (subscription.endDate != null && subscription.endDate!.isBefore(now)) {
           final updated = subscription.copyWith(
-            status: 'expired',
+            status: 'expirada',
             updatedAt: now,
           );
           await _subscriptionRepository.updateSubscription(updated);

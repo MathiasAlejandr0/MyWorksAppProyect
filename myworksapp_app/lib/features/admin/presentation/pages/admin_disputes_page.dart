@@ -25,7 +25,7 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
   AdminRepository get _repo => ref.read(adminRepositoryProvider);
   List<DisputeModel> _disputes = [];
   bool _loading = true;
-  String _filter = 'open';
+  String _filter = AppConstants.disputeStatusOpen;
   String _search = '';
 
   @override
@@ -156,12 +156,18 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: SegmentedButton<String>(
               segments: const [
-                ButtonSegment(value: 'open', label: Text('Abiertas')),
                 ButtonSegment(
-                  value: 'under_review',
+                  value: AppConstants.disputeStatusOpen,
+                  label: Text('Abiertas'),
+                ),
+                ButtonSegment(
+                  value: AppConstants.disputeStatusUnderReview,
                   label: Text('En revisión'),
                 ),
-                ButtonSegment(value: 'resolved', label: Text('Resueltas')),
+                ButtonSegment(
+                  value: AppConstants.disputeStatusResolved,
+                  label: Text('Resueltas'),
+                ),
                 ButtonSegment(value: 'all', label: Text('Todas')),
               ],
               selected: {_filter},
@@ -193,8 +199,11 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
                                 onTap: () => context.push(
                                   '${AppConstants.routeAdminJobDetail}/${d.jobId}',
                                 ),
-                                trailing: d.status == 'open' ||
-                                        d.status == 'under_review'
+                                trailing: d.status ==
+                                            AppConstants.disputeStatusOpen ||
+                                        d.status ==
+                                            AppConstants
+                                                .disputeStatusUnderReview
                                     ? PopupMenuButton<String>(
                                         onSelected: (v) {
                                           if (v == 'review') {
@@ -204,7 +213,8 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
                                           }
                                         },
                                         itemBuilder: (ctx) => [
-                                          if (d.status == 'open')
+                                          if (d.status ==
+                                              AppConstants.disputeStatusOpen)
                                             const PopupMenuItem(
                                               value: 'review',
                                               child: Text('Marcar en revisión'),
@@ -218,7 +228,8 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
                                     : null,
                                 leading: Icon(
                                   Icons.gavel,
-                                  color: d.status == 'resolved'
+                                  color: d.status ==
+                                          AppConstants.disputeStatusResolved
                                       ? AppColors.success
                                       : AppColors.brandOrange,
                                 ),

@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 
 /// Repositorio para acciones pendientes de sincronización.
 class PendingActionRepository {
-  static const String _table = 'pending_actions';
+  static const String _table = 'acciones_pendientes';
 
   Future<String> createPendingAction({
     required String userId,
@@ -37,9 +37,9 @@ class PendingActionRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .eq('userId', userId)
-        .inFilter('status', ['pending_sync', 'failed'])
-        .order('createdAt', ascending: true);
+        .eq('id_usuario', userId)
+        .inFilter('estado', ['pendiente_sync', 'fallido'])
+        .order('creado_en', ascending: true);
     return rows
         .map<PendingActionModel>((m) => PendingActionModel.fromMap(m))
         .toList();
@@ -51,9 +51,9 @@ class PendingActionRepository {
     String? errorMessage,
   }) async {
     await supabase.from(_table).update({
-      'status': status,
-      'errorMessage': errorMessage,
-      'updatedAt': DateTime.now().toIso8601String(),
+      'estado': status,
+      'mensaje_error': errorMessage,
+      'actualizado_en': DateTime.now().toIso8601String(),
     }).eq('id', actionId);
   }
 
@@ -61,30 +61,30 @@ class PendingActionRepository {
     final action = await getActionById(actionId);
     if (action != null) {
       await supabase.from(_table).update({
-        'retryCount': action.retryCount + 1,
-        'updatedAt': DateTime.now().toIso8601String(),
+        'conteo_reintentos': action.retryCount + 1,
+        'actualizado_en': DateTime.now().toIso8601String(),
       }).eq('id', actionId);
     }
   }
 
   Future<void> setRetryCount(String actionId, int newCount) async {
     await supabase.from(_table).update({
-      'retryCount': newCount,
-      'updatedAt': DateTime.now().toIso8601String(),
+      'conteo_reintentos': newCount,
+      'actualizado_en': DateTime.now().toIso8601String(),
     }).eq('id', actionId);
   }
 
   Future<void> updateStatus(String actionId, String status) async {
     await supabase.from(_table).update({
-      'status': status,
-      'updatedAt': DateTime.now().toIso8601String(),
+      'estado': status,
+      'actualizado_en': DateTime.now().toIso8601String(),
     }).eq('id', actionId);
   }
 
   Future<void> updateErrorMessage(String actionId, String? errorMessage) async {
     await supabase.from(_table).update({
-      'errorMessage': errorMessage,
-      'updatedAt': DateTime.now().toIso8601String(),
+      'mensaje_error': errorMessage,
+      'actualizado_en': DateTime.now().toIso8601String(),
     }).eq('id', actionId);
   }
 
@@ -108,8 +108,8 @@ class PendingActionRepository {
     await supabase
         .from(_table)
         .delete()
-        .eq('status', 'synced')
-        .lt('updatedAt', cutoffDate.toIso8601String());
+        .eq('estado', 'synced')
+        .lt('actualizado_en', cutoffDate.toIso8601String());
   }
 
   String _encodeData(Map<String, dynamic> data) {

@@ -139,7 +139,7 @@ class TrustScoreService {
       final isBanned = await isSoftBanned(userId);
       if (isBanned) {
         AppLogger.w('Usuario $userId está en soft-ban por bajo trust score');
-        // TODO: Actualizar accountStatus a 'suspended' si es necesario
+        // TODO: Actualizar accountStatus a 'suspendido' si es necesario
       }
     } catch (e) {
       AppLogger.e('Error registrando cancelación', e);

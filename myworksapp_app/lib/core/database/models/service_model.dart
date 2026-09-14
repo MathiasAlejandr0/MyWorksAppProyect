@@ -9,11 +9,11 @@ class ServiceModel {
   final String id;
   final String name;
   final String? description;
-  final String category; // 'construction', 'plumbing', 'cleaning', 'assembly', 'tech_support', 'gardening', 'moving'
+  final String category;
   final bool isActive;
-  final bool requiresCertification; // false para servicios no regulados
-  final String pricingModel; // 'hourly', 'fixed', 'per_item'
-  final String? legalDisclaimer; // Descargo de responsabilidad específico
+  final bool requiresCertification;
+  final String pricingModel; // por_hora | fijo | por_item
+  final String? legalDisclaimer;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -33,33 +33,33 @@ class ServiceModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'name': name,
-      'description': description,
-      'category': category,
-      'isActive': isActive ? 1 : 0,
-      'requiresCertification': requiresCertification ? 1 : 0,
-      'pricingModel': pricingModel,
-      'legalDisclaimer': legalDisclaimer,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'nombre': name,
+      'descripcion': description,
+      'categoria': category,
+      'activo': isActive ? 1 : 0,
+      'requiere_certificacion': requiresCertification ? 1 : 0,
+      'modelo_precio': pricingModel,
+      'aviso_legal': legalDisclaimer,
+      'creado_en': createdAt.toIso8601String(),
+      'actualizado_en': updatedAt.toIso8601String(),
     };
   }
 
   factory ServiceModel.fromMap(Map<String, dynamic> map) {
     return ServiceModel(
       id: map['id'] as String,
-      name: map['name'] as String,
-      description: map['description'] as String?,
-      category: map['category'] as String? ?? 'general',
-      isActive: (map['isActive'] as int? ?? 1) == 1,
-      requiresCertification: (map['requiresCertification'] as int? ?? 0) == 1,
-      pricingModel: map['pricingModel'] as String? ?? 'hourly',
-      legalDisclaimer: map['legalDisclaimer'] as String?,
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'] as String)
+      name: map['nombre'] as String,
+      description: map['descripcion'] as String?,
+      category: map['categoria'] as String? ?? 'general',
+      isActive: (map['activo'] as int? ?? 1) == 1,
+      requiresCertification: (map['requiere_certificacion'] as int? ?? 0) == 1,
+      pricingModel: map['modelo_precio'] as String? ?? 'por_hora',
+      legalDisclaimer: map['aviso_legal'] as String?,
+      createdAt: map['creado_en'] != null
+          ? DateTime.parse(map['creado_en'] as String)
           : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.parse(map['updatedAt'] as String)
+      updatedAt: map['actualizado_en'] != null
+          ? DateTime.parse(map['actualizado_en'] as String)
           : DateTime.now(),
     );
   }
@@ -93,19 +93,19 @@ class ServiceModel {
 
 /// Categorías de servicios
 class ServiceCategories {
-  static const String construction = 'construction';
-  static const String plumbing = 'plumbing';
-  static const String electrical = 'electrical';
-  static const String cleaning = 'cleaning';
-  static const String assembly = 'assembly';
-  static const String techSupport = 'tech_support';
-  static const String gardening = 'gardening';
-  static const String moving = 'moving';
+  static const String construction = 'construccion';
+  static const String plumbing = 'plomeria';
+  static const String electrical = 'electricidad';
+  static const String cleaning = 'limpieza';
+  static const String assembly = 'ensamblaje';
+  static const String techSupport = 'soporte_tecnico';
+  static const String gardening = 'jardinera';
+  static const String moving = 'mudanza';
 }
 
 /// Modelos de pricing
 class PricingModels {
-  static const String hourly = 'hourly';
-  static const String fixed = 'fixed';
-  static const String perItem = 'per_item';
+  static const String hourly = 'por_hora';
+  static const String fixed = 'fijo';
+  static const String perItem = 'por_item';
 }

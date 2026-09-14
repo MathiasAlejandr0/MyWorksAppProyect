@@ -27,14 +27,14 @@ class NotificationRealtimeService {
 
     _userId = userId;
     _channel = supabase
-        .channel('notifications:$userId')
+        .channel('notificaciones:$userId')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
-          table: 'notifications',
+          table: 'notificaciones',
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
-            column: 'userId',
+            column: 'id_usuario',
             value: userId,
           ),
           callback: (payload) {
