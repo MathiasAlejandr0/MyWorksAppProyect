@@ -4,79 +4,130 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
 
+/// Pantalla de bienvenida — layout premium alineado al mockup, theme-aware.
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final title = AppColors.onCanvas(brightness);
+    final muted = AppColors.onCanvasMuted(brightness);
+
     return Scaffold(
+      backgroundColor: AppDecorations.canvasOf(context),
       body: AuthSoftBackground(
+        showDecorations: true,
         child: SafeArea(
-          child: SingleChildScrollView(
+          child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: AppBreakpoints.screenPadding(context) + 8,
+              horizontal: AppBreakpoints.screenPadding(context) + 12,
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: AppSpacing.xl),
-                const Center(child: AppBrandLogo(size: 56, textSize: 24)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 28),
+                const _BrandMark(size: 64),
+                const SizedBox(height: 14),
                 Text(
-                  'Soluciones profesionales para tu hogar',
+                  AppConstants.appBrandDisplayName,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.onCanvasMuted(Theme.of(context).brightness),
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl + 4),
-                Text(
-                  '¡Bienvenido a ${AppConstants.appBrandDisplayName}!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 26,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.onCanvas(Theme.of(context).brightness),
-                    height: 1.25,
+                    color: title,
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 28),
                 Text(
-                  'Encuentra y contrata a los mejores profesionales para tu hogar de forma rápida y segura.',
+                  'Soluciones profesionales\npara tu hogar',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: title,
+                    height: 1.15,
+                    letterSpacing: -0.6,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Profesionales verificados, rápidos y de confianza para cada necesidad de tu hogar.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.5,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.onCanvasMuted(Theme.of(context).brightness),
-                    height: 1.5,
+                    height: 1.45,
+                    color: muted,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xl + 4),
-                const _WelcomeHeroCard(),
-                const SizedBox(height: AppSpacing.xl + 4),
-                const _ServiceCategoriesRow(),
-                const SizedBox(height: AppSpacing.xxl),
-                BrandPrimaryButton(
-                  label: 'Comenzar Ahora',
-                  onPressed: () => context.push(
-                    AppConstants.routeLogin,
-                    extra: {'role': AppConstants.roleUser},
+                const SizedBox(height: 28),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: AppColors.brandOrange,
+                        width: 1.6,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.brandOrange.withValues(alpha: 0.22),
+                          blurRadius: 28,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20.5),
+                      child: Image.asset(
+                        'assets/images/welcome_hero.jpg',
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => ColoredBox(
+                          color: AppColors.surfaceOf(context),
+                          child: const Center(
+                            child: Icon(
+                              Icons.handyman_rounded,
+                              size: 64,
+                              color: AppColors.brandOrange,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                _LoginLink(
-                  onTap: () => context.push(AppConstants.routeLogin),
+                const SizedBox(height: 18),
+                const _CategoryPills(),
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: FilledButton(
+                    onPressed: () => context.push(
+                      AppConstants.routeLogin,
+                      extra: {'role': AppConstants.roleUser},
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.brandOrange,
+                      foregroundColor: AppColors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    child: const Text('Comenzar Ahora'),
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.xl + 4),
-                const AppBrandFooter(),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
               ],
             ),
           ),
@@ -86,182 +137,83 @@ class WelcomePage extends StatelessWidget {
   }
 }
 
-/// Ilustración principal con paleta blanco + naranjo (como login).
-class _WelcomeHeroCard extends StatelessWidget {
-  const _WelcomeHeroCard();
+class _BrandMark extends StatelessWidget {
+  const _BrandMark({this.size = 56});
+
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final height = AppBreakpoints.heroImageHeight(context).clamp(200.0, 340.0);
-
     return Container(
-      height: height,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.brandOrange.withValues(alpha: isDark ? 0.28 : 0.18),
-        ),
+        shape: BoxShape.circle,
+        color: AppColors.brandOrange,
         boxShadow: [
           BoxShadow(
-            color: AppColors.brandOrange.withValues(alpha: 0.08),
+            color: AppColors.brandOrange.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              'assets/images/welcome_hero.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFFFF8F3),
-                      Color(0xFFFFF0E8),
-                    ],
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.people_alt_rounded,
-                    size: 72,
-                    color: AppColors.brandOrange,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      (isDark ? AppColors.surfaceDark : Colors.white)
-                          .withValues(alpha: 0),
-                      (isDark ? AppColors.surfaceDark : Colors.white)
-                          .withValues(alpha: 0.92),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+      child: Icon(
+        Icons.build_rounded,
+        color: AppColors.white,
+        size: size * 0.48,
       ),
     );
   }
 }
 
-class _ServiceCategoriesRow extends StatelessWidget {
-  const _ServiceCategoriesRow();
-
-  static const _items = [
-    _ServiceItem(Icons.cleaning_services_outlined, 'Limpieza'),
-    _ServiceItem(Icons.plumbing_outlined, 'Plomería'),
-    _ServiceItem(Icons.bolt_outlined, 'Electricidad'),
-    _ServiceItem(Icons.handyman_outlined, 'Hogar'),
-  ];
+class _CategoryPills extends StatelessWidget {
+  const _CategoryPills();
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    const items = [
+      (Icons.handyman_outlined, 'Armado'),
+      (Icons.bolt_outlined, 'Electricidad'),
+      (Icons.water_drop_outlined, 'Plomería'),
+    ];
+
     return Row(
-      children: _items
-          .map(
-            (item) => Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: item,
-              ),
-            ),
-          )
-          .toList(),
-    );
-  }
-}
-
-class _ServiceItem extends StatelessWidget {
-  const _ServiceItem(this.icon, this.label);
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.brandOrange.withValues(alpha: 0.16)
-                : AppColors.brandOrangeSoft,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppColors.brandOrange.withValues(alpha: 0.22),
-            ),
-          ),
-          child: Icon(icon, color: AppColors.brandOrange, size: 26),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.white : AppColors.grayDark,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LoginLink extends StatelessWidget {
-  const _LoginLink({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: RichText(
-        textAlign: TextAlign.center,
-        text: const TextSpan(
-          style: TextStyle(
-            fontSize: 14,
-            color: AppColors.grayMedium,
-            fontWeight: FontWeight.w500,
-          ),
-          children: [
-            TextSpan(text: '¿Ya tienes cuenta? '),
-            TextSpan(
-              text: 'Inicia Sesión',
-              style: TextStyle(
-                color: AppColors.brandTeal,
-                fontWeight: FontWeight.w700,
+        for (var i = 0; i < items.length; i++) ...[
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+              decoration: BoxDecoration(
+                color: AppColors.fieldFillOf(context),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.hairlineOf(context)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(items[i].$1, color: AppColors.brandOrange, size: 18),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      items[i].$2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.onCanvas(brightness),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+          if (i < items.length - 1) const SizedBox(width: 8),
+        ],
+      ],
     );
   }
 }

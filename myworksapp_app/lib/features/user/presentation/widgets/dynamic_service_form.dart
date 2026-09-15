@@ -116,7 +116,9 @@ class _DynamicServiceFormState extends State<DynamicServiceForm> {
             'Información adicional del servicio',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: AppColors.grayDark,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.white
+                  : AppColors.brandNavy,
             ),
           ),
           const SizedBox(height: 16),

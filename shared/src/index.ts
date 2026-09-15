@@ -1,4 +1,20 @@
-export * from './domain';
+/** Constantes de dominio (sin UserRole/DisputeStatus — viven en types). */
+export {
+  UserRoles,
+  USER_ROLES,
+  JobStatuses,
+  JOB_STATUSES,
+  WORKER_ACTIVE_JOB_STATUSES,
+  isWorkerActiveJobStatus,
+  PaymentStatuses,
+  PAYMENT_STATUSES,
+  PricingModes,
+  PRICING_MODES,
+  DisputeStatuses,
+  DISPUTE_STATUSES,
+} from './domain';
+export type { JobStatus, PaymentStatus, PricingMode } from './domain';
+
 export * from './types';
 export * from './auth';
 export * from './repositories/services';

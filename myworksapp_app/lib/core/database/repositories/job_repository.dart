@@ -74,7 +74,8 @@ class JobRepository {
   }
 
   Future<void> updateJob(JobModel job) async {
-    await supabase.from(_table).update(job.toMap()).eq('id', job.id);
+    // Metadatos/campos no-estado: solo admin vía policy; estado vía RPC.
+    await updateJobStatus(job.id, job.status);
   }
 
   /// Rechazo del profesional: mantiene [workerId] para cumplir RLS en Supabase.
@@ -83,28 +84,39 @@ class JobRepository {
     required String workerId,
     required Map<String, dynamic> metadata,
   }) async {
-    final rows = await supabase
-        .from(_table)
-        .update({
-          'estado': AppConstants.jobStatusCancelled,
-          'metadatos_servicio': jsonEncode(metadata),
-          'actualizado_en': DateTime.now().toIso8601String(),
-        })
-        .eq('id', jobId)
-        .eq('id_trabajador', workerId)
-        .eq('estado', AppConstants.jobStatusPending)
-        .select('id');
-    return rows.isNotEmpty;
+    try {
+      final row = await supabase.rpc(
+        'rechazar_trabajo_pendiente',
+        params: {
+          'p_trabajo_id': jobId,
+          'p_metadatos': jsonEncode(metadata),
+        },
+      );
+      return row != null;
+    } catch (_) {
+      return false;
+    }
   }
 
-  Future<void> updateJobStatus(String id, String status) async {
-    await supabase.from(_table).update({'estado': status}).eq('id', id);
+  Future<void> updateJobStatus(String id, String status, {String? pin}) async {
+    await supabase.rpc(
+      'transicionar_trabajo',
+      params: {
+        'p_trabajo_id': id,
+        'p_nuevo_estado': status,
+        if (pin != null) 'p_pin': pin,
+      },
+    );
   }
 
   Future<void> assignWorker(String jobId, String workerId) async {
-    await supabase
-        .from(_table)
-        .update({'id_trabajador': workerId, 'estado': 'aceptado'}).eq('id', jobId);
+    await supabase.rpc(
+      'asignar_trabajador_trabajo',
+      params: {
+        'p_trabajo_id': jobId,
+        'p_trabajador_id': workerId,
+      },
+    );
   }
 
   Future<void> deleteJob(String id) async {

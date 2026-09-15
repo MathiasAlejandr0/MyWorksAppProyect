@@ -1,608 +1,1048 @@
 import { useState, useEffect } from 'react';
+
 import {
-  Wrench,
-  Zap,
-  Sparkles,
-  Truck,
-  Laptop,
-  Flower2,
-  Hammer,
-  PackageCheck,
   ShieldCheck,
-  CheckCircle2,
-  Search,
-  Sun,
-  Moon,
-  ArrowRight,
-  Star,
-  X,
-  FileText,
-  CreditCard,
-  Home,
-  LogIn,
   LogOut,
+  Play,
+  UserPlus,
+  Search as SearchIcon,
+  Lock,
+  ArrowRight,
 } from 'lucide-react';
+
 import { PaymentCheckoutModal } from './components/PaymentCheckoutModal';
+
 import { LiveChatWidget } from './components/LiveChatWidget';
-import { generatePdfCertificate } from './utils/pdfCertificateGenerator';
-import { LiveGpsTrackingMap } from './components/LiveGpsTrackingMap';
+
 import { AuthModal } from './components/AuthModal';
+
+import { CategoryCard } from './components/CategoryCard';
+
+import { BrandLogo } from './components/BrandLogo';
+
+import { SearchResultsView, type SearchWorker } from './components/SearchResultsView';
+
+import { QuickBookingBar } from './components/QuickBookingBar';
+
+import { TrackingDashboard } from './components/TrackingDashboard';
+
 import { useAuth } from './context/AuthContext';
+
 import { supabase } from './supabaseClient';
+
 import {
+
   createPendingJob,
+
   fetchServiceByCategory,
+
   fetchWorkersByCategory,
+
   toWebWorkerCard,
+
 } from '@myworksapp/shared';
 
-interface Worker {
-  id: string;
-  name: string;
-  profession: string;
-  category: string;
-  rating: number;
-  jobsDone: number;
-  photoUrl: string;
-  pricePerVisit: number;
-}
 
-interface ServiceMatch {
-  category: string;
-  categoryName: string;
-  problem: string;
-  minPrice: number;
-  maxPrice: number;
-  urgency: string;
-  tools: string[];
-  workers: Worker[];
-}
+
+type AppView = 'landing' | 'search' | 'tracking';
+
+
+
+const U = 'https://images.unsplash.com';
+
+const img = (id: string) =>
+
+  `${U}/photo-${id}?auto=format&fit=crop&w=900&h=560&q=80`;
+
+
 
 const CATEGORIES = [
-  { id: 'plomeria', title: 'Gásfiter / Plomería', icon: Wrench, photo: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600' },
-  { id: 'electricidad', title: 'Electricidad SEC', icon: Zap, photo: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600' },
-  { id: 'limpieza', title: 'Limpieza e Higiene', icon: Sparkles, photo: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600' },
-  { id: 'ensamblaje', title: 'Armado Muebles', icon: PackageCheck, photo: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600' },
-  { id: 'mudanza', title: 'Mudanzas y Fletes', icon: Truck, photo: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600' },
-  { id: 'soporte_tecnico', title: 'Soporte PC / WiFi', icon: Laptop, photo: 'https://images.unsplash.com/photo-1588702547919-26089e690ecc?w=600' },
-  { id: 'jardinera', title: 'Jardines y Poda', icon: Flower2, photo: 'https://images.unsplash.com/photo-1558904541-efa843a96f01?w=600' },
-  { id: 'construccion', title: 'Maestro Albañil', icon: Hammer, photo: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=600' },
+
+  {
+
+    id: 'ensamblaje',
+
+    title: 'Armado',
+
+    subtitle: 'Muebles, estanterías y más',
+
+    photo: img('1555041469-a586c61e8bc7'),
+
+  },
+
+  {
+
+    id: 'electricidad',
+
+    title: 'Electricidad',
+
+    subtitle: 'Instalaciones, reparaciones y más',
+
+    photo: img('1621905251189-08b45d6a269e'),
+
+  },
+
+  {
+
+    id: 'plomeria',
+
+    title: 'Plomería',
+
+    subtitle: 'Fugas, instalaciones y más',
+
+    photo: img('1585703903930-0b8e341a0895'),
+
+  },
+
+  {
+
+    id: 'gasfiteria',
+
+    title: 'Gasfitería',
+
+    subtitle: 'Conexiones, revisiones y más',
+
+    photo: img('1581578731548-c64695cc6952'),
+
+  },
+
 ];
 
-function WorkersSkeleton() {
-  return (
-    <div className="page-fade-in" aria-busy="true" aria-label="Buscando profesionales">
-      <div className="skeleton-block skeleton-title" />
-      <div className="skeleton-block skeleton-line" />
-      <div className="skeleton-block skeleton-line short" />
-      <div className="workers-grid skeleton-workers">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="skeleton-worker-card">
-            <div className="skeleton-block skeleton-avatar" />
-            <div className="skeleton-worker-meta">
-              <div className="skeleton-block skeleton-line" />
-              <div className="skeleton-block skeleton-line short" />
-            </div>
-          </div>
-        ))}
-      </div>
-      <p className="skeleton-caption">Cargando profesionales disponibles…</p>
-    </div>
-  );
+
+
+interface ServiceMatch {
+
+  category: string;
+
+  categoryName: string;
+
+  problem: string;
+
+  minPrice: number;
+
+  maxPrice: number;
+
+  urgency: string;
+
+  workers: SearchWorker[];
+
 }
+
+
+
+function resolveCategory(text: string) {
+
+  const lower = text.toLowerCase();
+
+  let category = 'electricidad';
+
+  let categoryName = 'Electricista Certificado';
+
+  let problem = 'Diagnóstico y reparación de falla eléctrica';
+
+  let minPrice = 25000;
+
+  let maxPrice = 60000;
+
+
+
+  if (
+
+    lower.includes('fuga') ||
+
+    lower.includes('agua') ||
+
+    lower.includes('lavaplatos') ||
+
+    lower.includes('llave') ||
+
+    lower.includes('gasfiter') ||
+
+    lower.includes('plomer')
+
+  ) {
+
+    category = 'plomeria';
+
+    categoryName = 'Gásfiter / Plomero SEC';
+
+    problem = 'Reparación de fuga de agua y cambio de llaves o grifería';
+
+    minPrice = 30000;
+
+    maxPrice = 75000;
+
+  } else if (
+
+    lower.includes('mueble') ||
+
+    lower.includes('armar') ||
+
+    lower.includes('closet') ||
+
+    lower.includes('rack') ||
+
+    lower.includes('armado')
+
+  ) {
+
+    category = 'ensamblaje';
+
+    categoryName = 'Armado de Muebles';
+
+    problem = 'Montaje e instalación de mueble listo para armar';
+
+    minPrice = 20000;
+
+    maxPrice = 45000;
+
+  } else if (lower.includes('electric')) {
+
+    category = 'electricidad';
+
+    categoryName = 'Electricista Certificado';
+
+    problem = 'Instalaciones y reparaciones eléctricas';
+
+  }
+
+
+
+  return { category, categoryName, problem, minPrice, maxPrice, urgency: 'Media' as const };
+
+}
+
+
 
 export function App() {
+
   const { profile, logout, error: authError, clearError } = useAuth();
-  const [darkMode, setDarkMode] = useState(false);
+
+  const [view, setView] = useState<AppView>('landing');
+
   const [query, setQuery] = useState('');
+
   const [serviceMatch, setServiceMatch] = useState<ServiceMatch | null>(null);
+
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+
+  const [selectedWorker, setSelectedWorker] = useState<SearchWorker | null>(null);
+
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
-  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
   const [showCheckout, setShowCheckout] = useState(false);
+
   const [showChat, setShowChat] = useState(false);
+
   const [showAuth, setShowAuth] = useState(false);
+
   const [bookingError, setBookingError] = useState<string | null>(null);
 
+  const [activeNav, setActiveNav] = useState<'servicios' | 'como-funciona'>('servicios');
+
+
+
   useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-    }
-  }, [darkMode]);
+
+    document.body.classList.add('dark');
+
+    localStorage.setItem('mwa-dark-mode', '1');
+
+  }, []);
+
+
 
   const searchService = async (text: string) => {
+
     if (!text.trim()) return;
+
     setIsSearching(true);
+
     setServiceMatch(null);
+
     setQuery(text);
 
-    const lower = text.toLowerCase();
-    let category = 'electricidad';
-    let categoryName = 'Electricista Certificado';
-    let problem = 'Diagnóstico y reparación de falla eléctrica';
-    let minPrice = 25000;
-    let maxPrice = 60000;
-    let urgency = 'Media';
-    let tools = ['Tester digital', 'Alicate pelacables', 'Breaker sustituto'];
+    setView('search');
 
-    if (lower.includes('fuga') || lower.includes('agua') || lower.includes('lavaplatos') || lower.includes('llave') || lower.includes('gasfiter')) {
-      category = 'plomeria';
-      categoryName = 'Gásfiter / Plomero SEC';
-      problem = 'Reparación de fuga de agua y cambio de llaves o grifería';
-      minPrice = 30000;
-      maxPrice = 75000;
-      urgency = 'Alta';
-      tools = ['Soplete', 'Llave francesa', 'Sellante de teflón'];
-    } else if (lower.includes('mueble') || lower.includes('armar') || lower.includes('closet') || lower.includes('rack')) {
-      category = 'ensamblaje';
-      categoryName = 'Armado de Muebles';
-      problem = 'Montaje e instalación de mueble listo para armar';
-      minPrice = 20000;
-      maxPrice = 45000;
-      urgency = 'Normal';
-      tools = ['Atornillador inalámbrico', 'Nivel de gota', 'Juego Allen'];
-    } else if (
-      lower.includes('limpieza') ||
-      lower.includes('limpia') ||
-      lower.includes('aseo') ||
-      lower.includes('higien') ||
-      lower.includes('departamento')
-    ) {
-      category = 'limpieza';
-      categoryName = 'Limpieza e Higiene';
-      problem = 'Servicio de limpieza residencial u oficina';
-      minPrice = 25000;
-      maxPrice = 55000;
-      urgency = 'Normal';
-      tools = ['Aspiradora industrial', 'Químicos certificados'];
-    } else if (lower.includes('mudanza') || lower.includes('flete')) {
-      category = 'mudanza';
-      categoryName = 'Mudanzas y Fletes';
-      problem = 'Traslado de enseres y mobiliario';
-      minPrice = 40000;
-      maxPrice = 120000;
-      urgency = 'Media';
-      tools = ['Camión', 'Cintas', 'Frazadas'];
-    } else if (lower.includes('jardín') || lower.includes('jardin') || lower.includes('poda')) {
-      category = 'jardinera';
-      categoryName = 'Jardines y Poda';
-      problem = 'Mantención de áreas verdes';
-      minPrice = 20000;
-      maxPrice = 50000;
-      urgency = 'Normal';
-      tools = ['Tijera de poda', 'Cortacésped'];
-    } else if (lower.includes('pc') || lower.includes('wifi') || lower.includes('computador')) {
-      category = 'soporte_tecnico';
-      categoryName = 'Soporte PC / WiFi';
-      problem = 'Diagnóstico de red o equipo';
-      minPrice = 20000;
-      maxPrice = 45000;
-      urgency = 'Media';
-      tools = ['Laptop diagnóstico', 'Cable tester'];
-    } else if (lower.includes('albañ') || lower.includes('muro') || lower.includes('cemento')) {
-      category = 'construccion';
-      categoryName = 'Maestro Albañil';
-      problem = 'Trabajo de albañilería y terminaciones';
-      minPrice = 35000;
-      maxPrice = 90000;
-      urgency = 'Media';
-      tools = ['Nivel', 'Paleta', 'Mezcladora'];
-    }
+    setSelectedWorker(null);
+
+
+
+    const meta = resolveCategory(text);
+
+
 
     try {
+
       const [service, workersRaw] = await Promise.all([
-        fetchServiceByCategory(supabase, category),
-        fetchWorkersByCategory(supabase, category),
+
+        fetchServiceByCategory(supabase, meta.category),
+
+        fetchWorkersByCategory(supabase, meta.category),
+
       ]);
+
       setSelectedServiceId(service?.id ?? null);
-      const workers = workersRaw.map((worker) => toWebWorkerCard(worker));
 
-      setServiceMatch({
-        category,
-        categoryName,
-        problem,
-        minPrice,
-        maxPrice,
-        urgency,
-        tools,
-        workers,
-      });
+      const workers: SearchWorker[] = workersRaw.map((worker) => ({
+
+        ...toWebWorkerCard(worker),
+
+        availableNow: true,
+
+      }));
+
+
+
+      setServiceMatch({ ...meta, workers });
+
     } catch {
+
       setSelectedServiceId(null);
-      setServiceMatch({
-        category,
-        categoryName,
-        problem,
-        minPrice,
-        maxPrice,
-        urgency,
-        tools,
-        workers: [],
-      });
+
+      setServiceMatch({ ...meta, workers: [] });
+
     } finally {
+
       setIsSearching(false);
+
     }
+
   };
 
-  const requestWorker = (worker: Worker) => {
+
+
+  const requestWorker = (worker: SearchWorker) => {
+
     if (!profile) {
+
       setShowAuth(true);
+
       return;
+
     }
+
     setSelectedWorker(worker);
-    setBookingConfirmed(false);
+
     setBookingError(null);
+
   };
+
+
 
   const confirmBooking = async () => {
+
     if (!profile || !selectedWorker) return;
+
     if (!selectedServiceId) {
+
       setBookingError('No hay un servicio activo en Supabase para esta categoría.');
+
       return;
+
     }
+
+
 
     try {
+
       await createPendingJob(supabase, {
+
         userId: profile.id,
+
         workerId: selectedWorker.id,
+
         serviceId: selectedServiceId,
+
         description: serviceMatch?.problem ?? query,
+
       });
-      setBookingConfirmed(true);
+
       setBookingError(null);
+
+      setShowCheckout(false);
+
+      setView('tracking');
+
     } catch {
-      setBookingError('No se pudo crear la solicitud en Supabase. Verifica tu sesión.');
+
+      setBookingError('No se pudo crear la solicitud. Verifica tu sesión.');
+
     }
+
   };
 
-  return (
-    <div className="min-h-screen app-shell">
-      <nav className="glass-nav" style={{ position: 'relative', zIndex: 10 }}>
-        <div className="container nav-inner">
-          <div className="nav-brand">
-            <div className="nav-logo" aria-hidden>
-              <Home size={32} color={darkMode ? '#FFFFFF' : '#0B192C'} />
-              <Wrench size={14} color="#F0782A" className="nav-logo-wrench" />
-            </div>
-            <div>
-              <span className="nav-title">My Works App</span>
-              <span className="nav-chip">Cliente</span>
-            </div>
+
+
+  const goToSearch = () => {
+
+    setView('search');
+
+    if (!query) setQuery('electricistas');
+
+    if (!serviceMatch) void searchService(query || 'electricistas');
+
+  };
+
+
+
+  if (view === 'tracking' && selectedWorker) {
+
+    return (
+
+      <div className="min-h-screen app-shell">
+
+        <TrackingDashboard
+
+          workerName={selectedWorker.name}
+
+          workerProfession={selectedWorker.profession}
+
+          workerPhoto={selectedWorker.photoUrl}
+
+          workerRating={selectedWorker.rating}
+
+          workerJobs={selectedWorker.jobsDone}
+
+          serviceTitle={serviceMatch?.categoryName ?? 'Instalación Eléctrica'}
+
+          serviceLocation={`Casa Particular • Las Condes, Santiago`}
+
+          orderId="MW-7821"
+
+          etaMinutes={18}
+
+          distanceKm={4.2}
+
+          profileName={profile?.name}
+
+          onBack={() => setView('search')}
+
+          onOpenChat={() => setShowChat(true)}
+
+        />
+
+        {showChat && (
+
+          <LiveChatWidget
+
+            workerName={selectedWorker.name}
+
+            workerPhoto={selectedWorker.photoUrl}
+
+            onClose={() => setShowChat(false)}
+
+          />
+
+        )}
+
+      </div>
+
+    );
+
+  }
+
+
+
+  if (view === 'search') {
+
+    return (
+
+      <div className="min-h-screen app-shell app-shell--search">
+
+        <SearchResultsView
+
+          query={query}
+
+          workers={serviceMatch?.workers ?? []}
+
+          isLoading={isSearching}
+
+          profileName={profile?.name}
+
+          selectedWorkerId={selectedWorker?.id ?? null}
+
+          onQueryChange={setQuery}
+
+          onSearch={searchService}
+
+          onSelectWorker={requestWorker}
+
+          onBack={() => {
+
+            setView('landing');
+
+            setSelectedWorker(null);
+
+          }}
+
+          onShowAuth={() => setShowAuth(true)}
+
+        />
+
+
+
+        {selectedWorker && (
+
+          <QuickBookingBar
+
+            workerName={selectedWorker.name}
+
+            profession={selectedWorker.profession}
+
+            pricePerHour={Math.round(selectedWorker.pricePerVisit / 1000) * 1000 || 35000}
+
+            onContinue={() => setShowCheckout(true)}
+
+            onClose={() => setSelectedWorker(null)}
+
+          />
+
+        )}
+
+
+
+        {showCheckout && selectedWorker && (
+
+          <PaymentCheckoutModal
+
+            workerName={selectedWorker.name}
+
+            profession={selectedWorker.profession}
+
+            basePrice={selectedWorker.pricePerVisit}
+
+            serviceDescription={serviceMatch?.problem}
+
+            onClose={() => setShowCheckout(false)}
+
+            onSuccess={() => void confirmBooking()}
+
+          />
+
+        )}
+
+
+
+        {bookingError && (
+
+          <div className="toast-error" role="alert">
+
+            {bookingError}
+
           </div>
+
+        )}
+
+
+
+        <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+
+      </div>
+
+    );
+
+  }
+
+
+
+  return (
+
+    <div className="min-h-screen app-shell">
+
+      <nav className="glass-nav">
+
+        <div className="container nav-inner">
+
+          <BrandLogo size={36} />
+
+
+
+          <div className="nav-links-center">
+
+            <a
+
+              href="#categorias"
+
+              className={`nav-link${activeNav === 'servicios' ? ' is-active' : ''}`}
+
+              onClick={() => setActiveNav('servicios')}
+
+            >
+
+              Servicios
+
+            </a>
+
+            <a
+
+              href="#como-funciona"
+
+              className={`nav-link${activeNav === 'como-funciona' ? ' is-active' : ''}`}
+
+              onClick={() => setActiveNav('como-funciona')}
+
+            >
+
+              Cómo funciona
+
+            </a>
+
+            {!profile && (
+
+              <button type="button" className="nav-link nav-link-btn" onClick={() => setShowAuth(true)}>
+
+                Ingresar
+
+              </button>
+
+            )}
+
+          </div>
+
+
 
           <div className="nav-actions">
+
             {profile ? (
+
               <>
+
                 <span className="nav-hello">Hola, {profile.name.split(' ')[0]}</span>
+
                 <button type="button" className="btn-ghost" onClick={() => void logout()}>
+
                   <LogOut size={16} /> Salir
+
                 </button>
+
               </>
+
             ) : (
-              <button type="button" className="btn-ghost" onClick={() => setShowAuth(true)}>
-                <LogIn size={16} /> Entrar
+
+              <button type="button" className="btn-outline-orange" onClick={() => setShowAuth(true)}>
+
+                Registrarse
+
               </button>
+
             )}
 
-            <button type="button" className="btn-ghost" onClick={() => setDarkMode(!darkMode)} aria-label="Cambiar tema">
-              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-              <span className="nav-theme-label">{darkMode ? 'Claro' : 'Oscuro'}</span>
-            </button>
           </div>
+
         </div>
+
       </nav>
 
+
+
       {authError && (
+
         <div className="auth-banner container page-fade-in" role="alert">
+
           <p>{authError}</p>
+
           <button
+
             type="button"
+
             className="btn-ghost"
+
             onClick={() => {
+
               clearError();
+
               setShowAuth(true);
+
             }}
+
           >
+
             Entendido
+
           </button>
+
         </div>
+
       )}
+
+
 
       <section className="hero-section page-fade-in">
-        <div className="container">
+
+        <div className="container hero-split">
+
           <div className="hero-rise hero-copy">
-            <p className="badge-tag badge-orange">Marketplace de oficios · Chile</p>
-            <h1 className="brand-display hero-brand">My Works App</h1>
+
+            <h1 className="brand-display hero-brand">
+
+              My Works App
+
+              <br />
+
+              <span className="hero-accent">Profesionales de confianza</span>
+
+              <br />
+
+              para tu hogar
+
+            </h1>
+
             <p className="hero-lead">
-              Encuentra profesionales verificados cerca de ti y reserva en minutos.
+
+              Conectamos tu hogar con técnicos verificados, calificados y cercanos. Rápido, seguro y sin complicaciones.
+
             </p>
+
             <div className="hero-cta-row">
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => document.getElementById('search-box')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-              >
-                Buscar un servicio
+
+              <button type="button" className="btn-primary" onClick={goToSearch}>
+
+                Buscar servicio <ArrowRight size={18} />
+
               </button>
-              {!profile && (
-                <button type="button" className="btn-ghost" onClick={() => setShowAuth(true)}>
-                  Crear cuenta
-                </button>
-              )}
+
+              <a href="#como-funciona" className="btn-ghost hero-ghost">
+
+                <span className="hero-play" aria-hidden>
+
+                  <Play size={12} fill="currentColor" />
+
+                </span>
+
+                Cómo funciona
+
+              </a>
+
             </div>
+
           </div>
 
-          <div id="search-box" className="card-3d search-card section-fade-in">
-            <div className="search-row">
-              <div className="search-input-wrap">
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && void searchService(query)}
-                  placeholder='Ej: "Fuga de agua en el lavaplatos"'
-                  className="search-input"
-                  style={{ background: darkMode ? 'var(--bg-elevated-dark)' : 'var(--bg-elevated-light)', color: 'inherit' }}
-                />
-                <Search size={20} className="search-icon" />
+
+
+          <div className="hero-visual">
+
+            <img
+
+              className="hero-photo"
+
+              src={img('1621905251189-08b45d6a269e')}
+
+              alt="Técnico profesional en domicilio"
+
+            />
+
+            <div className="hero-float-card hero-float-trust">
+
+              <div className="hero-float-head">
+
+                <ShieldCheck size={16} color="var(--orange-accent)" />
+
+                <span>Confianza verificada</span>
+
               </div>
 
-              <button
-                type="button"
-                onClick={() => void searchService(query)}
-                disabled={isSearching}
-                className="btn-primary search-submit"
-              >
-                {isSearching ? 'Buscando…' : 'Buscar servicio'}
-              </button>
+              <strong className="hero-float-metric">99.4%</strong>
+
+              <p>Calificación promedio de profesionales</p>
+
+              <div className="hero-progress"><span /></div>
+
             </div>
 
-            <div className="chip-row">
-              <span className="chip-label">Sugerencias:</span>
-              {[
-                'Fuga de agua en lavaplatos',
-                'Enchufe quemado en la cocina',
-                'Armado de clóset 3 puertas',
-                'Limpieza profunda departamento',
-              ].map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  onClick={() => void searchService(prompt)}
-                  className="chip-btn"
-                  style={{ background: darkMode ? 'var(--bg-elevated-dark)' : 'var(--orange-soft)' }}
-                >
-                  {prompt}
-                </button>
-              ))}
+            <div className="hero-float-card hero-float-eta">
+
+              <div className="hero-float-head">
+
+                <span>Llegada estimada</span>
+
+              </div>
+
+              <strong className="hero-float-metric white">18 min</strong>
+
+              <p>Técnico en camino</p>
+
+              <div className="hero-mini-map" aria-hidden>
+
+                <div className="hero-mini-route" />
+
+                <div className="hero-mini-pin" />
+
+              </div>
+
             </div>
 
-            {isSearching && (
-              <div className="result-panel result-panel-loading">
-                <WorkersSkeleton />
-              </div>
-            )}
-
-            {!isSearching && serviceMatch && (
-              <div className="result-panel page-fade-in" key={serviceMatch.category + query}>
-                <div className="result-header">
-                  <div className="result-title-row">
-                    <CheckCircle2 color="#2F9E64" size={22} />
-                    <h3>{serviceMatch.categoryName}</h3>
-                  </div>
-                  <span className="badge-tag badge-orange">{serviceMatch.urgency}</span>
-                </div>
-
-                <p className="result-problem">
-                  <strong>Servicio:</strong> {serviceMatch.problem}
-                </p>
-                <p className="result-price">
-                  Estimado: ${serviceMatch.minPrice.toLocaleString('es-CL')} – ${serviceMatch.maxPrice.toLocaleString('es-CL')} CLP
-                </p>
-
-                <h4 className="result-workers-label">Profesionales disponibles</h4>
-                {serviceMatch.workers.length === 0 ? (
-                  <div className="empty-state">
-                    <p className="empty-state-title">Sin profesionales por ahora</p>
-                    <p className="empty-state-copy">
-                      Todavía no hay alguien disponible en esta categoría. Prueba otra búsqueda o vuelve en unos minutos.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="workers-grid">
-                    {serviceMatch.workers.map((w) => (
-                      <div key={w.id} className="worker-card" style={{ backgroundColor: darkMode ? 'var(--bg-surface-dark)' : 'white' }}>
-                        <img src={w.photoUrl} alt={w.name} className="worker-photo" />
-                        <div className="worker-meta">
-                          <h5>{w.name}</h5>
-                          <div className="worker-rating">
-                            <Star size={12} fill="#F0782A" /> {w.rating} ({w.jobsDone} trabajos)
-                          </div>
-                        </div>
-                        <button type="button" className="btn-ask" onClick={() => requestWorker(w)}>
-                          Pedir
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
+
         </div>
+
       </section>
 
-      <section className="categories-section section-fade-in">
+
+
+      <section id="categorias" className="categories-section section-fade-in">
+
         <div className="container">
-          <div className="section-head">
-            <h2>Oficios disponibles</h2>
-            <p>Explora categorías y conecta con profesionales verificados</p>
+
+          <div className="section-head section-head--center">
+
+            <p className="section-kicker">CATEGORÍAS POPULARES</p>
+
           </div>
+
+
 
           <div className="categories-grid">
-            {CATEGORIES.map((cat) => {
-              const IconComp = cat.icon;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className="card-3d category-card"
-                  onClick={() => void searchService(`Necesito un ${cat.title}`)}
-                >
-                  <div className="category-media">
-                    <img src={cat.photo} alt={cat.title} />
-                    <div className="category-media-fade" />
-                    <div className="category-media-label">
-                      <span className="category-icon">
-                        <IconComp size={18} />
-                      </span>
-                      <span>{cat.title}</span>
-                    </div>
-                  </div>
-                  <div className="category-footer">
-                    <span>Ver profesionales</span>
-                    <ArrowRight size={16} color="#F0782A" />
-                  </div>
-                </button>
-              );
-            })}
+
+            {CATEGORIES.map((cat) => (
+
+              <CategoryCard
+
+                key={cat.id}
+
+                title={cat.title}
+
+                subtitle={cat.subtitle}
+
+                photo={cat.photo}
+
+                onClick={() => void searchService(`Necesito ${cat.title.toLowerCase()}`)}
+
+              />
+
+            ))}
+
           </div>
+
         </div>
+
       </section>
 
-      {selectedWorker && (
-        <div className="modal-backdrop modal-fade-in">
-          <div className="card-3d modal-card modal-rise">
-            <button
-              type="button"
-              className="modal-close"
-              onClick={() => {
-                setSelectedWorker(null);
-                setBookingConfirmed(false);
-              }}
-              aria-label="Cerrar"
-            >
-              <X size={20} />
+
+
+      <section id="como-funciona" className="how-section-v2 section-fade-in">
+
+        <div className="container">
+
+          <div className="how-section-v2-head">
+
+            <div>
+
+              <p className="section-kicker">CÓMO FUNCIONA</p>
+
+              <h2>
+
+                Simple. Seguro. Confiable.
+
+                <br />
+
+                Consigue lo que necesitas.
+
+              </h2>
+
+              <p className="how-section-v2-lead">
+
+                My Works App conecta tu hogar con profesionales verificados, con pago protegido y seguimiento en tiempo real.
+
+              </p>
+
+              <div className="how-trust-row">
+
+                <ShieldCheck size={16} color="var(--orange-accent)" />
+
+                <span>Profesionales verificados • Pago en escrow • Tú tienes el control</span>
+
+              </div>
+
+            </div>
+
+
+
+            <div className="how-steps-row">
+
+              {[
+
+                {
+
+                  num: '01',
+
+                  icon: UserPlus,
+
+                  title: 'CREA TU CUENTA',
+
+                  text: 'Regístrate en segundos y accede a profesionales verificados cerca de ti.',
+
+                },
+
+                {
+
+                  num: '02',
+
+                  icon: SearchIcon,
+
+                  title: 'BUSCA Y COMPARA',
+
+                  text: 'Explora técnicos calificados. Revisa ratings, precios y disponibilidad.',
+
+                },
+
+                {
+
+                  num: '03',
+
+                  icon: Lock,
+
+                  title: 'RESERVA Y RECIBE',
+
+                  text: 'Paga con escrow protegido. Sigue el servicio hasta la entrega.',
+
+                },
+
+              ].map((step, i) => {
+
+                const Icon = step.icon;
+
+                return (
+
+                  <div key={step.num} className="how-step-card">
+
+                    {i > 0 && <span className="how-step-arrow" aria-hidden>→</span>}
+
+                    <span className="how-step-num">{step.num}</span>
+
+                    <div className="how-step-icon">
+
+                      <Icon size={22} />
+
+                    </div>
+
+                    <h3>{step.title}</h3>
+
+                    <p>{step.text}</p>
+
+                  </div>
+
+                );
+
+              })}
+
+            </div>
+
+          </div>
+
+
+
+          <div className="categories-v2-header">
+
+            <div>
+
+              <p className="section-kicker">CATEGORÍAS</p>
+
+              <h2>Premium Services. Curated for You.</h2>
+
+            </div>
+
+            <button type="button" className="categories-v2-link" onClick={goToSearch}>
+
+              VER TODAS LAS CATEGORÍAS <ArrowRight size={14} />
+
             </button>
 
-            {!bookingConfirmed ? (
-              <>
-                <h3 className="modal-title">Solicitar servicio</h3>
-                <div className="booking-worker" style={{ backgroundColor: darkMode ? 'var(--bg-elevated-dark)' : 'var(--bg-elevated-light)' }}>
-                  <img src={selectedWorker.photoUrl} alt={selectedWorker.name} />
-                  <div>
-                    <h4>{selectedWorker.name}</h4>
-                    <p>{selectedWorker.profession}</p>
-                    <span>Visita inicial: ${selectedWorker.pricePerVisit.toLocaleString('es-CL')} CLP</span>
-                  </div>
-                </div>
-
-                <div className="demo-note">
-                  <ShieldCheck color="#F0782A" size={22} />
-                  <div>
-                    <h5>Pago en escrow (próximamente)</h5>
-                    <p>
-                      El checkout actual es una <strong>simulación / demo</strong>: no hay cobro real ni retención de fondos.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowCheckout(true)}
-                  className="btn-primary"
-                  style={{ width: '100%', justifyContent: 'center', marginBottom: '10px' }}
-                >
-                  <CreditCard size={18} /> Continuar al checkout demo
-                </button>
-                {bookingError && <p className="error-text">{bookingError}</p>}
-              </>
-            ) : (
-              <div className="booking-done page-fade-in">
-                <CheckCircle2 color="#2F9E64" size={56} />
-                <h3>Solicitud creada</h3>
-                <p>
-                  Tu solicitud quedó registrada. Referencia de pago simulado: ${selectedWorker.pricePerVisit.toLocaleString('es-CL')} CLP
-                  (sin cobro real).
-                </p>
-
-                <div className="tracking-wrap">
-                  <LiveGpsTrackingMap
-                    workerName={selectedWorker.name}
-                    workerProfession={selectedWorker.profession}
-                    etaMinutes={7}
-                  />
-                </div>
-
-                <div className="booking-actions">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      generatePdfCertificate({
-                        certificateId: 'CERT-DEMO-9901',
-                        clientName: profile?.name ?? 'Cliente MyWorks',
-                        workerName: selectedWorker.name,
-                        profession: selectedWorker.profession,
-                        serviceDate: new Date().toLocaleDateString('es-CL'),
-                        totalAmount: selectedWorker.pricePerVisit,
-                        pinCode: '7482',
-                        transactionHash: 'demo-tx-9021a88b',
-                      })
-                    }
-                    className="btn-primary"
-                    style={{ backgroundColor: 'var(--navy-structure)' }}
-                  >
-                    <FileText size={16} /> Comprobante PDF
-                  </button>
-
-                  <button type="button" onClick={() => setShowChat(true)} className="btn-primary" style={{ backgroundColor: '#1A2740' }}>
-                    Abrir chat
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedWorker(null);
-                      setBookingConfirmed(false);
-                    }}
-                    className="btn-primary"
-                  >
-                    Finalizar
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
+
+
+
+          <div className="categories-grid categories-grid--8">
+
+            {[
+
+              ...CATEGORIES,
+
+              {
+
+                id: 'limpieza',
+
+                title: 'Limpieza',
+
+                subtitle: 'Hogar, oficina y profunda',
+
+                photo: img('1581578749516-86a3a74134a8'),
+
+              },
+
+              {
+
+                id: 'pintura',
+
+                title: 'Pintura',
+
+                subtitle: 'Interiores y exteriores',
+
+                photo: img('1562259949-e8e7689d7828'),
+
+              },
+
+              {
+
+                id: 'jardineria',
+
+                title: 'Jardinería',
+
+                subtitle: 'Poda, riego y mantención',
+
+                photo: img('1416879595882-3373a0480b5b'),
+
+              },
+
+              {
+
+                id: 'cerrajeria',
+
+                title: 'Cerrajería',
+
+                subtitle: 'Aperturas y cambio de chapas',
+
+                photo: img('1558002032-589707903656'),
+
+              },
+
+            ].map((cat) => (
+
+              <CategoryCard
+
+                key={cat.id}
+
+                title={cat.title}
+
+                subtitle={cat.subtitle}
+
+                photo={cat.photo}
+
+                variant="grid"
+
+                onClick={() => void searchService(`Necesito ${cat.title.toLowerCase()}`)}
+
+              />
+
+            ))}
+
+          </div>
+
         </div>
-      )}
 
-      {showCheckout && selectedWorker && (
-        <PaymentCheckoutModal
-          workerName={selectedWorker.name}
-          profession={selectedWorker.profession}
-          basePrice={selectedWorker.pricePerVisit}
-          onClose={() => setShowCheckout(false)}
-          onSuccess={() => {
-            setShowCheckout(false);
-            void confirmBooking();
-          }}
-        />
-      )}
+      </section>
 
-      {showChat && selectedWorker && (
-        <LiveChatWidget
-          workerName={selectedWorker.name}
-          workerPhoto={selectedWorker.photoUrl}
-          onClose={() => setShowChat(false)}
-        />
-      )}
+
 
       <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+
     </div>
+
   );
+
 }
 
+
+
 export default App;
+

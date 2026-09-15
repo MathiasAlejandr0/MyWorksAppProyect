@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_decorations.dart';
 import 'primary_button.dart';
 
-/// Fondo premium de autenticación: atmósfera sutil, sin iconografía infantil.
+/// Fondo atmosférico del design system. Respeta [ThemeData.brightness].
 class AuthSoftBackground extends StatelessWidget {
   const AuthSoftBackground({
     super.key,
@@ -16,42 +17,53 @@ class AuthSoftBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFFFBF8),
-            Color(0xFFF7F5F2),
-            Color(0xFFEEF2F7),
-          ],
-          stops: [0.0, 0.55, 1.0],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return ColoredBox(
+      color: AppDecorations.canvasOf(context),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: AppDecorations.welcomeGradientOf(context),
         ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (showDecorations) ...[
-            Positioned(
-              top: -80,
-              right: -40,
-              child: _GlowOrb(
-                size: 220,
-                color: AppColors.brandOrange.withValues(alpha: 0.14),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (showDecorations) ...[
+              Positioned(
+                top: -110,
+                right: -40,
+                child: _GlowOrb(
+                  size: 280,
+                  color: AppColors.brandOrange.withValues(
+                    alpha: isDark ? 0.18 : 0.10,
+                  ),
+                ),
               ),
-            ),
-            Positioned(
-              bottom: -60,
-              left: -50,
-              child: _GlowOrb(
-                size: 260,
-                color: AppColors.brandNavy.withValues(alpha: 0.08),
+              Positioned(
+                top: 180,
+                left: -90,
+                child: _GlowOrb(
+                  size: 220,
+                  color: (isDark
+                          ? const Color(0xFF1B4F72)
+                          : AppColors.brandNavy)
+                      .withValues(alpha: isDark ? 0.28 : 0.06),
+                ),
               ),
-            ),
+              Positioned(
+                bottom: -80,
+                right: -30,
+                child: _GlowOrb(
+                  size: 260,
+                  color: AppColors.brandOrange.withValues(
+                    alpha: isDark ? 0.08 : 0.06,
+                  ),
+                ),
+              ),
+            ],
+            child,
           ],
-          child,
-        ],
+        ),
       ),
     );
   }
@@ -119,11 +131,11 @@ class BrandLabeledField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
-            color: AppColors.grayDark,
+            color: AppColors.headlineOnScreen(context),
           ),
         ),
         const SizedBox(height: 8),

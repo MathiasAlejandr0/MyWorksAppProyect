@@ -3,6 +3,7 @@ import '../../design_system/app_radius.dart';
 import '../../design_system/app_spacing.dart';
 import '../../services/app_feedback.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/service_pin.dart';
 import 'primary_button.dart';
 
 /// Diálogo interactivo de Verificación por PIN de 4 dígitos para inicio/término de trabajo.
@@ -15,14 +16,14 @@ class ServicePinDialog extends StatefulWidget {
     super.key,
     this.title = 'Verificación por PIN',
     this.subtitle = 'Ingresa el PIN de 4 dígitos proporcionado por el cliente para confirmar la acción.',
-    this.expectedPin = '1234',
+    this.expectedPin = '',
   });
 
   static Future<bool?> show(
     BuildContext context, {
     String? title,
     String? subtitle,
-    String expectedPin = '1234',
+    String expectedPin = '',
   }) {
     return showDialog<bool>(
       context: context,
@@ -65,7 +66,7 @@ class _ServicePinDialogState extends State<ServicePinDialog> {
 
   void _onVerify() {
     final enteredPin = _pin.join();
-    if (enteredPin == widget.expectedPin || enteredPin == '1234' || enteredPin == '0000') {
+    if (verifyServicePin(enteredPin, widget.expectedPin)) {
       AppFeedback.heavy();
       Navigator.pop(context, true);
     } else {
@@ -163,7 +164,7 @@ class _ServicePinDialogState extends State<ServicePinDialog> {
             if (_hasError) ...[
               const SizedBox(height: 10),
               const Text(
-                'PIN incorrecto. Intenta nuevamente (Demo PIN: 1234)',
+                'PIN incorrecto. Intenta nuevamente.',
                 style: TextStyle(
                   color: AppColors.crimson,
                   fontSize: 12,

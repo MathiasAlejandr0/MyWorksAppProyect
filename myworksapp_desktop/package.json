@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "test": "node --import tsx --test src/authAccess.test.ts",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },
@@ -26,6 +27,7 @@
     "@vitejs/plugin-react": "^6.0.4",
     "esbuild": "^0.28.2",
     "oxlint": "^1.75.0",
+    "tsx": "^4.23.13",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
   }

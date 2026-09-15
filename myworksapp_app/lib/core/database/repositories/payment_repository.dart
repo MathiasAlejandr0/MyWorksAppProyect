@@ -38,8 +38,38 @@ class PaymentRepository {
     return PaymentModel.fromMap(legacy.first);
   }
 
+  /// Mock escrow: transición de estado vía RPC (no UPDATE directo de clientes).
+  /// Sustituir por webhook PSP cuando exista pasarela real.
+  Future<PaymentModel> transitionPaymentStatus({
+    required String paymentId,
+    required String newStatus,
+  }) async {
+    final row = await supabase.rpc(
+      'simular_transicion_pago',
+      params: {
+        'p_pago_id': paymentId,
+        'p_nuevo_estado': newStatus,
+      },
+    );
+    if (row is Map<String, dynamic>) {
+      return PaymentModel.fromMap(row);
+    }
+    if (row is List && row.isNotEmpty) {
+      return PaymentModel.fromMap(Map<String, dynamic>.from(row.first as Map));
+    }
+    final refreshed = await getPaymentById(paymentId);
+    if (refreshed == null) {
+      throw StateError('Pago no encontrado tras transición');
+    }
+    return refreshed;
+  }
+
+  @Deprecated('Usar transitionPaymentStatus — RLS bloquea UPDATE directo')
   Future<void> updatePayment(PaymentModel payment) async {
-    await supabase.from(_table).update(payment.toMap()).eq('id', payment.id);
+    await transitionPaymentStatus(
+      paymentId: payment.id,
+      newStatus: payment.status,
+    );
   }
 
   Future<List<PaymentModel>> listByJobIds(List<String> jobIds) async {

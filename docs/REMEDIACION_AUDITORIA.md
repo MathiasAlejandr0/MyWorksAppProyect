@@ -36,7 +36,20 @@
 - [x] Script pull actualizado (detecta falta de Docker; usa `powershell -File`)
 - [x] Dump SQL oficial: `myworksapp_app/supabase/schema_remote_dump.sql` (~45 KB, 28 tablas, ~75 policies)
 
-## Pendiente (sprint 7+)
-- [ ] Migrar resto de singletons a DI
+## Sprint 7 — Hardening seguridad sin PSP
+- [x] `shared/src/domain.ts` → valores BD en español (roles, jobs, payments, pricing, disputes)
+- [x] `shared` index sin conflicto UserRole/DisputeStatus; tests node:test + scripts check/generate
+- [x] Migración `20260915000001_hardening_seguridad_sin_psp.sql`: drop políticas EN legacy, anon solo marketplace, pagos/mensajes/trabajos endurecidos
+- [x] RPC `transicionar_trabajo`, `simular_transicion_pago` (mock escrow), `registrar_evento_abuso`
+- [x] PIN servicio sin backdoors 1234/0000 + tests Flutter
+- [x] Desktop: CSP Tauri estricta, supabaseClient fail-fast, `canAccessDesktopHub`
+- [x] Web e2e: CTA/AuthModal resiliente
+- [x] Clientes Flutter: `PaymentRepository` / `JobRepository` → RPC (sin UPDATE directo de estado)
+- [x] Eliminado `job_detail_controller.dart` muerto; tokens CSS en web; lints Flutter más estrictos
+- [ ] **PSP diferido** (Webpay/MercadoPago): empresa no formada — mock server-enforced vía `simular_transicion_pago` hasta integrar PaymentGatewayPort real
+- [ ] Aplicar migración en remoto (ver `docs/APLICAR_HARDENING_20260915.md`)
+
+## Pendiente (post constitución / sprint 8+)
+- [ ] Integrar Webpay/MP detrás de PaymentGatewayPort (cuando exista entidad legal + cuentas PSP)
+- [ ] Migrar resto de singletons a DI (incremental)
 - [ ] Integrar firebase_messaging detrás de PushNotificationPort
-- [ ] Integrar Webpay/MP detrás de PaymentGatewayPort

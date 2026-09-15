@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -11,7 +13,7 @@ class GuidedTourStep {
     required this.title,
     required this.description,
     this.align = TourTooltipAlign.auto,
-    this.targetPadding = const EdgeInsets.all(4),
+    this.targetPadding = const EdgeInsets.all(6),
   });
 
   final GlobalKey? targetKey;
@@ -36,15 +38,16 @@ class TourTarget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return KeyedSubtree(
       key: tourKey,
-      width: width,
-      child: child,
+      child: width == null
+          ? child
+          : SizedBox(width: width, child: child),
     );
   }
 }
 
-/// Overlay con spotlight y tooltip cerca del elemento explicado.
+/// Overlay con spotlight y tooltip. El hueco se mide ANTES de mostrar el card.
 class AppGuidedTour extends StatefulWidget {
   const AppGuidedTour({
     super.key,
@@ -71,6 +74,8 @@ class _AppGuidedTourState extends State<AppGuidedTour>
   bool _visible = false;
   int _step = 0;
   Rect? _targetRect;
+  /// Evita mostrar el tooltip centrado antes de tener el spotlight del target.
+  bool _anchorReady = false;
   late final AnimationController _pulseController;
 
   @override
@@ -100,56 +105,104 @@ class _AppGuidedTourState extends State<AppGuidedTour>
   Future<void> _init() async {
     final show = await widget.shouldShow();
     if (!mounted) return;
-    setState(() => _visible = show);
-    if (show) _scheduleMeasure();
+    if (!show) return;
+    setState(() {
+      _visible = true;
+      _anchorReady = false;
+      _targetRect = null;
+    });
+    // Espera un frame para que el árbol (TourTarget) esté montado.
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    if (!mounted) return;
+    await _prepareStep(_step);
   }
 
   Future<void> _finish() async {
     await widget.onComplete();
-    if (mounted) setState(() => _visible = false);
+    if (mounted) {
+      setState(() {
+        _visible = false;
+        _anchorReady = false;
+        _targetRect = null;
+      });
+    }
   }
 
-  void _next() {
+  Future<void> _next() async {
     if (_step < widget.steps.length - 1) {
-      setState(() => _step++);
-      _scheduleMeasure();
+      final next = _step + 1;
+      setState(() {
+        _step = next;
+        _anchorReady = false;
+        _targetRect = null;
+      });
+      await _prepareStep(next);
     } else {
-      _finish();
+      await _finish();
     }
   }
 
   void _scheduleMeasure() {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateTargetRect());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_visible) {
+        unawaited(_prepareStep(_step));
+      }
+    });
   }
 
-  Future<void> _updateTargetRect() async {
-    if (!_visible || _step >= widget.steps.length) return;
+  Future<void> _prepareStep(int index) async {
+    if (!_visible || index >= widget.steps.length || !mounted) return;
 
-    final key = widget.steps[_step].targetKey;
+    final step = widget.steps[index];
+    final key = step.targetKey;
+
+    // 1) Scroll al target si existe.
     if (key != null) {
       final ctx = key.currentContext;
       if (ctx != null) {
         await Scrollable.ensureVisible(
           ctx,
-          duration: const Duration(milliseconds: 320),
+          duration: const Duration(milliseconds: 280),
           curve: Curves.easeOutCubic,
-          alignment: 0.5,
+          alignment: 0.45,
         );
-        await Future<void>.delayed(const Duration(milliseconds: 340));
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      } else {
+        // Target aún no en árbol: reintento breve.
+        await Future<void>.delayed(const Duration(milliseconds: 120));
       }
     }
 
-    if (!mounted) return;
-    await Future<void>.delayed(const Duration(milliseconds: 16));
-    if (!mounted) return;
-    setState(() => _targetRect = _measureTarget(_step));
+    if (!mounted || _step != index) return;
+
+    // 2) Medir hole.
+    Rect? hole;
+    for (var attempt = 0; attempt < 6; attempt++) {
+      await Future<void>.delayed(Duration(milliseconds: attempt == 0 ? 16 : 50));
+      if (!mounted || _step != index) return;
+      hole = _measureTarget(index);
+      if (hole != null || key == null) break;
+    }
+
+    if (!mounted || _step != index) return;
+
+    // 3) Primero pintar spotlight; un frame después el tooltip (fluidez).
+    setState(() {
+      _targetRect = hole;
+      _anchorReady = false;
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 90));
+    if (!mounted || _step != index) return;
+    setState(() => _anchorReady = true);
   }
 
   Rect? _measureTarget(int index) {
     if (index >= widget.steps.length) return null;
 
     final step = widget.steps[index];
-    final targetCtx = step.targetKey?.currentContext;
+    if (step.targetKey == null) return null;
+
+    final targetCtx = step.targetKey!.currentContext;
     final layerCtx = _layerKey.currentContext;
     if (targetCtx == null || layerCtx == null) return null;
 
@@ -201,7 +254,8 @@ class _AppGuidedTourState extends State<AppGuidedTour>
                   final size = Size(constraints.maxWidth, constraints.maxHeight);
                   final step = widget.steps[_step];
                   final hole = _targetRect;
-                  final tooltipRect = _tooltipPosition(size, hole, step.align);
+                  final showTooltip = _anchorReady &&
+                      (step.targetKey == null || hole != null);
 
                   return Stack(
                     clipBehavior: Clip.none,
@@ -209,9 +263,13 @@ class _AppGuidedTourState extends State<AppGuidedTour>
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () {},
-                        child: CustomPaint(
-                          size: size,
-                          painter: _SpotlightPainter(hole: hole),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          child: CustomPaint(
+                            key: ValueKey('hole-$_step-${hole?.shortHash}'),
+                            size: size,
+                            painter: _SpotlightPainter(hole: hole),
+                          ),
                         ),
                       ),
                       if (hole != null) ...[
@@ -228,11 +286,11 @@ class _AppGuidedTourState extends State<AppGuidedTour>
                               child: IgnorePointer(
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
                                       color: AppColors.brandOrange
-                                          .withValues(alpha: 0.7),
-                                      width: 2,
+                                          .withValues(alpha: 0.75),
+                                      width: 2.2,
                                     ),
                                   ),
                                 ),
@@ -241,26 +299,76 @@ class _AppGuidedTourState extends State<AppGuidedTour>
                           },
                         ),
                       ],
-                      Positioned(
-                        left: tooltipRect.left,
-                        top: tooltipRect.top,
-                        width: tooltipRect.width,
-                        child: _TourTooltipCard(
-                          badge: widget.badgeLabel,
-                          step: step,
-                          current: _step,
-                          total: widget.steps.length,
-                          onSkip: _finish,
-                          onNext: _next,
-                          isLast: _step >= widget.steps.length - 1,
+                      if (showTooltip)
+                        _AnimatedTourTooltip(
+                          key: ValueKey('tip-$_step'),
+                          layerSize: size,
+                          hole: hole,
+                          align: step.align,
+                          child: _TourTooltipCard(
+                            badge: widget.badgeLabel,
+                            step: step,
+                            current: _step,
+                            total: widget.steps.length,
+                            onSkip: () => unawaited(_finish()),
+                            onNext: () => unawaited(_next()),
+                            isLast: _step >= widget.steps.length - 1,
+                          ),
                         ),
-                      ),
                     ],
                   );
                 },
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+extension on Rect {
+  int get shortHash =>
+      (left * 10).round() ^
+      (top * 10).round() ^
+      (width * 10).round() ^
+      (height * 10).round();
+}
+
+class _AnimatedTourTooltip extends StatelessWidget {
+  const _AnimatedTourTooltip({
+    super.key,
+    required this.layerSize,
+    required this.hole,
+    required this.align,
+    required this.child,
+  });
+
+  final Size layerSize;
+  final Rect? hole;
+  final TourTooltipAlign align;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final rect = _tooltipPosition(layerSize, hole, align);
+    return Positioned(
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        builder: (context, t, child) {
+          return Opacity(
+            opacity: t,
+            child: Transform.translate(
+              offset: Offset(0, 8 * (1 - t)),
+              child: child,
+            ),
+          );
+        },
+        child: child,
       ),
     );
   }
@@ -271,7 +379,7 @@ class _AppGuidedTourState extends State<AppGuidedTour>
     final width = layer.width < cardWidth + margin * 2
         ? layer.width - margin * 2
         : cardWidth;
-    const estimatedHeight = 210.0;
+    const estimatedHeight = 220.0;
 
     if (hole == null || align == TourTooltipAlign.center) {
       return Rect.fromLTWH(
@@ -315,14 +423,14 @@ class _SpotlightPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final full = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-    final paint = Paint()..color = Colors.black.withValues(alpha: 0.42);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.48);
 
     if (hole == null) {
       canvas.drawPath(full, paint);
       return;
     }
 
-    final rrect = RRect.fromRectAndRadius(hole!, const Radius.circular(12));
+    final rrect = RRect.fromRectAndRadius(hole!, const Radius.circular(14));
     final holePath = Path()..addRRect(rrect);
     final combined = Path.combine(PathOperation.difference, full, holePath);
     canvas.drawPath(combined, paint);
@@ -355,7 +463,7 @@ class _TourTooltipCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      elevation: 8,
+      elevation: 10,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -364,13 +472,13 @@ class _TourTooltipCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: 0.16),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
           ],
           border: Border.all(
-            color: AppColors.brandOrange.withValues(alpha: 0.25),
+            color: AppColors.brandOrange.withValues(alpha: 0.28),
           ),
         ),
         child: Column(
@@ -380,7 +488,8 @@ class _TourTooltipCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.brandOrangeSoft,
                     borderRadius: BorderRadius.circular(8),
@@ -412,6 +521,7 @@ class _TourTooltipCard extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.grayDark,
+                    letterSpacing: -0.2,
                   ),
             ),
             const SizedBox(height: 6),
@@ -419,7 +529,7 @@ class _TourTooltipCard extends StatelessWidget {
               step.description,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.grayMedium,
-                    height: 1.35,
+                    height: 1.4,
                   ),
             ),
             const SizedBox(height: 12),

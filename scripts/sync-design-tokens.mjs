@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Lee shared/design-tokens.json y genera shared/design-tokens.css
- * con variables CSS alineadas a web (--orange-accent, --navy-structure, …).
+ * con variables CSS alineadas a web/desktop.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,11 +14,20 @@ const cssPath = path.join(root, 'shared', 'design-tokens.css');
 
 const COLOR_CSS_NAMES = {
   brandOrange: '--orange-accent',
+  brandOrangeVibrant: '--orange-vibrant',
   brandNavy: '--navy-structure',
-  emerald: '--emerald-success',
-  textMutedDark: '--text-muted-dark',
+  bgCanvasDark: '--bg-canvas-dark',
+  bgCanvasDarkAlt: '--bg-canvas-dark-alt',
   bgDominantDark: '--bg-dominant-dark',
   bgSurfaceDark: '--bg-surface-dark',
+  bgElevatedDark: '--bg-elevated-dark',
+  emerald: '--emerald-success',
+  textMainDark: '--text-main-dark',
+  textMutedDark: '--text-muted-dark',
+  textMainLight: '--text-main-light',
+  textMutedLight: '--text-muted-light',
+  bgDominantLight: '--bg-dominant-light',
+  crimsonError: '--crimson-error',
 };
 
 const tokens = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
@@ -34,9 +43,17 @@ for (const [key, value] of Object.entries(tokens.color ?? {})) {
     continue;
   }
   lines.push(`  ${cssName}: ${value};`);
-  // Alias desktop / legado
   if (key === 'emerald') {
     lines.push(`  --emerald: ${value};`);
+  }
+  if (key === 'brandNavy') {
+    lines.push(`  --navy-light: #1A2740;`);
+  }
+  if (key === 'brandOrange') {
+    lines.push(`  --orange-soft: rgba(240, 120, 42, 0.12);`);
+  }
+  if (key === 'emerald') {
+    lines.push(`  --emerald-soft: rgba(47, 158, 100, 0.18);`);
   }
 }
 
@@ -44,6 +61,8 @@ for (const [key, value] of Object.entries(tokens.radius ?? {})) {
   lines.push(`  --radius-${key}: ${value}px;`);
 }
 
+lines.push('  --border-dark: rgba(244, 242, 238, 0.1);');
+lines.push('  --border-light: rgba(10, 22, 40, 0.08);');
 lines.push('}');
 lines.push('');
 

@@ -20,7 +20,7 @@ class AppAuthScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppDecorations.screenBackground,
+      backgroundColor: AppDecorations.canvasOf(context),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

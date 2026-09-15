@@ -379,7 +379,10 @@ class _PricingModeQuestionnaireState extends State<PricingModeQuestionnaire> {
   Widget _buildResult(BuildContext context, PricingModeRecommendation rec) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppDecorations.surfaceCard(accent: AppColors.brandTeal),
+      decoration: AppDecorations.surfaceCardOf(
+        context,
+        accent: AppColors.brandTeal,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -4,6 +4,7 @@ import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_guided_tour.dart';
 
+/// Cabecera trabajador — saludo alineado a la izquierda (mockup premium).
 class WorkerHeader extends StatelessWidget {
   const WorkerHeader({
     super.key,
@@ -26,46 +27,48 @@ class WorkerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final titleColor = AppColors.onCanvas(brightness);
+    final mutedColor = AppColors.onCanvasMuted(brightness);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             '¡Hola de nuevo, $firstName!',
-            textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: AppColors.grayDark,
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+              height: 1.15,
+              color: titleColor,
             ),
           ),
           if (worker != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               worker!.profession,
-              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: AppColors.grayMedium.withValues(alpha: 0.95),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: mutedColor,
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             children: [
               if (worker != null)
-                Expanded(
-                  child: _HeaderChip(
-                    icon: Icons.star_rounded,
-                    label: worker!.rating.toStringAsFixed(1),
-                    color: AppColors.brandOrange,
-                  ),
+                _HeaderChip(
+                  icon: Icons.star_rounded,
+                  label: worker!.rating.toStringAsFixed(1),
+                  accent: AppColors.brandOrange,
                 ),
-              if (worker != null) const SizedBox(width: 8),
+              if (worker != null) const SizedBox(width: 10),
               if (!loading)
                 TourTarget(
                   tourKey: availabilityTourKey,
@@ -87,41 +90,45 @@ class _HeaderChip extends StatelessWidget {
   const _HeaderChip({
     required this.icon,
     required this.label,
-    required this.color,
+    required this.accent,
   });
 
   final IconData icon;
   final String label;
-  final Color color;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
+    final textColor = AppColors.onCanvas(Theme.of(context).brightness);
+    final muted = AppColors.onCanvasMuted(Theme.of(context).brightness);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.fieldFillOf(context),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.grayMedium.withValues(alpha: 0.2),
+          color: AppColors.hairlineOf(context, accent: accent),
         ),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.grayDark,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
+          Icon(icon, size: 16, color: accent),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
             ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 16,
+            color: muted,
           ),
         ],
       ),
@@ -142,54 +149,47 @@ class _AvailabilityPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final busy = hasActiveJobs;
-    final available = !busy && isAvailable;
-    final color = busy
-        ? AppColors.warning
-        : available
-            ? AppColors.success
-            : AppColors.grayMedium;
-    final bg = busy
-        ? AppColors.warning.withValues(alpha: 0.12)
-        : available
-            ? AppColors.brandOrangeSoft
-            : AppColors.grayLight;
-    final label = busy
+    final available = isAvailable && !hasActiveJobs;
+    final border = available ? AppColors.emerald : AppColors.brandOrange;
+    final label = hasActiveJobs
         ? 'Ocupado'
-        : available
-            ? 'Disponible'
-            : 'No disp.';
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: color.withValues(alpha: 0.45)),
+        : (isAvailable ? 'Disponible' : 'No disponible');
+    final textColor = available
+        ? AppColors.emerald
+        : AppColors.onCanvas(Theme.of(context).brightness);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.fieldFillOf(context),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.hairlineOf(context, accent: border),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                available ? Icons.circle : Icons.circle_outlined,
-                size: 10,
-                color: color,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: border,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.brandNavy,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -15,51 +15,53 @@ import {
 } from './domain';
 
 describe('domain constants', () => {
-  it('expone roles alineados a AppConstants', () => {
+  it('expone roles alineados a AppConstants (ES)', () => {
     expect(UserRoles).toEqual({
-      user: 'user',
-      worker: 'worker',
-      admin: 'admin',
+      user: 'usuario',
+      worker: 'trabajador',
+      admin: 'administrador',
     });
-    expect(USER_ROLES).toEqual(['user', 'worker', 'admin']);
+    expect(USER_ROLES).toEqual(['usuario', 'trabajador', 'administrador']);
   });
 
-  it('incluye job statuses de AppConstants y PricingConstants', () => {
-    expect(JobStatuses.pending).toBe('pending');
-    expect(JobStatuses.inProgress).toBe('in_progress');
-    expect(JobStatuses.awaitingPayment).toBe('awaiting_payment');
-    expect(JobStatuses.awaitingClientApproval).toBe('awaiting_client_approval');
-    expect(JOB_STATUSES).toContain('quote_selected');
-    expect(JOB_STATUSES).toContain('paused_change_order');
+  it('incluye job statuses de AppConstants y PricingConstants (ES)', () => {
+    expect(JobStatuses.pending).toBe('pendiente');
+    expect(JobStatuses.inProgress).toBe('en_curso');
+    expect(JobStatuses.awaitingPayment).toBe('esperando_pago');
+    expect(JobStatuses.awaitingClientApproval).toBe(
+      'esperando_aprobacion_cliente',
+    );
+    expect(JOB_STATUSES).toContain('cotizacion_seleccionada');
+    expect(JOB_STATUSES).toContain('pausado_orden_cambio');
   });
 
-  it('expone payment statuses y pricing modes', () => {
-    expect(PaymentStatuses.authorized).toBe('authorized');
-    expect(PAYMENT_STATUSES).toContain('held');
-    expect(PricingModes.fixedPrice).toBe('fixed_price');
+  it('expone payment statuses y pricing modes (ES)', () => {
+    expect(PaymentStatuses.authorized).toBe('autorizado');
+    expect(PAYMENT_STATUSES).toContain('retenido');
+    expect(PricingModes.fixedPrice).toBe('precio_fijo');
     expect(PRICING_MODES).toEqual([
-      'legacy',
-      'fixed_price',
-      'hourly_block',
-      'open_quote',
+      'legado',
+      'precio_fijo',
+      'bloque_horas',
+      'cotizacion_abierta',
     ]);
   });
 
-  it('expone dispute statuses', () => {
-    expect(DisputeStatuses.underReview).toBe('under_review');
-    expect(DISPUTE_STATUSES).toEqual(['open', 'under_review', 'resolved']);
+  it('expone dispute statuses (ES)', () => {
+    expect(DisputeStatuses.underReview).toBe('en_revision');
+    expect(DISPUTE_STATUSES).toEqual(['abierta', 'en_revision', 'resuelta']);
   });
 });
 
 describe('isWorkerActiveJobStatus', () => {
-  it('espeja WorkerJobStatus.activeStatuses', () => {
+  it('espeja WorkerJobStatus.activeStatuses (ES)', () => {
     expect(WORKER_ACTIVE_JOB_STATUSES).toEqual([
-      'accepted',
-      'in_progress',
-      'awaiting_client_approval',
-      'awaiting_payment',
-      'paused_change_order',
-      'quote_selected',
+      'aceptado',
+      'en_curso',
+      'esperando_aprobacion_cliente',
+      'esperando_pago',
+      'pausado_orden_cambio',
+      'cotizacion_seleccionada',
     ]);
 
     for (const status of WORKER_ACTIVE_JOB_STATUSES) {
@@ -68,10 +70,10 @@ describe('isWorkerActiveJobStatus', () => {
   });
 
   it('rechaza estados no activos', () => {
-    expect(isWorkerActiveJobStatus('pending')).toBe(false);
-    expect(isWorkerActiveJobStatus('completed')).toBe(false);
-    expect(isWorkerActiveJobStatus('cancelled')).toBe(false);
-    expect(isWorkerActiveJobStatus('awaiting_quotes')).toBe(false);
+    expect(isWorkerActiveJobStatus('pendiente')).toBe(false);
+    expect(isWorkerActiveJobStatus('completado')).toBe(false);
+    expect(isWorkerActiveJobStatus('cancelado')).toBe(false);
+    expect(isWorkerActiveJobStatus('esperando_cotizaciones')).toBe(false);
     expect(isWorkerActiveJobStatus('')).toBe(false);
   });
 });

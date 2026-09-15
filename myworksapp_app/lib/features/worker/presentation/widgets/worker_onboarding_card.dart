@@ -72,60 +72,112 @@ class _WorkerOnboardingCardState extends State<WorkerOnboardingCard> {
       return const SizedBox.shrink();
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? AppColors.white : AppColors.brandNavy;
+    final muted = isDark
+        ? AppColors.white.withValues(alpha: 0.7)
+        : AppColors.textSecondary;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-      child: Card(
-        color: AppColors.brandOrangeSoft,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.checklist, color: AppColors.brandOrange),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Completa tu perfil (${status.completionPercentage}%)',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDarkElevated : AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.brandOrange.withValues(alpha: 0.35),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandOrange.withValues(alpha: 0.1),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.brandOrange.withValues(alpha: 0.18),
+                  ),
+                  child: const Icon(
+                    Icons.checklist_rounded,
+                    color: AppColors.brandOrange,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Completa tu perfil (${status.completionPercentage}%)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: titleColor,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
-                      setState(() => _loading = true);
-                      _load();
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: status.completionPercentage / 100,
-                color: AppColors.brandOrange,
-                backgroundColor: Colors.white,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Para aparecer en búsquedas y recibir trabajos:',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 8),
-              ...status.missingItems.map(
-                (item) => ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.radio_button_unchecked, size: 20),
-                  title: Text(item),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _goToStep(item),
                 ),
+                IconButton(
+                  icon: Icon(Icons.refresh_rounded, color: muted),
+                  onPressed: () {
+                    setState(() => _loading = true);
+                    _load();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: status.completionPercentage / 100,
+                minHeight: 6,
+                color: AppColors.brandOrange,
+                backgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : AppColors.brandOrangeSoft,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Para aparecer en búsquedas y recibir trabajos:',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: muted,
+              ),
+            ),
+            const SizedBox(height: 4),
+            ...status.missingItems.map(
+              (item) => ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  Icons.radio_button_unchecked,
+                  size: 20,
+                  color: AppColors.brandOrange.withValues(alpha: 0.85),
+                ),
+                title: Text(
+                  item,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: titleColor,
+                  ),
+                ),
+                trailing: Icon(Icons.chevron_right, color: muted, size: 18),
+                onTap: () => _goToStep(item),
+              ),
+            ),
+          ],
         ),
       ),
     );

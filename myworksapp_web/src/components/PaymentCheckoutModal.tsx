@@ -1,22 +1,37 @@
 import { useState } from 'react';
-import { CreditCard, ShieldCheck, CheckCircle2, Lock, X, Building2, Smartphone } from 'lucide-react';
+import {
+  ShieldCheck,
+  CheckCircle2,
+  Lock,
+  X,
+  CreditCard,
+  Calendar,
+  Copy,
+  HelpCircle,
+} from 'lucide-react';
 
 interface PaymentCheckoutModalProps {
   workerName: string;
   profession: string;
   basePrice: number;
+  serviceDescription?: string;
   onClose: () => void;
   onSuccess: (paymentDetails: { method: string; totalAmount: number; date: string; simulated: true }) => void;
 }
 
-export function PaymentCheckoutModal({ workerName, profession, basePrice, onClose, onSuccess }: PaymentCheckoutModalProps) {
-  const [method, setMethod] = useState<'webpay' | 'mercadopago' | 'card' | 'khipu'>('webpay');
+export function PaymentCheckoutModal({
+  workerName,
+  profession: _profession,
+  basePrice,
+  serviceDescription = 'Servicio a domicilio',
+  onClose,
+  onSuccess,
+}: PaymentCheckoutModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
 
-  const iva = Math.round(basePrice * 0.19);
-  const serviceFee = Math.round(basePrice * 0.10);
-  const totalAmount = basePrice + iva + serviceFee;
+  const totalAmount = basePrice;
+  const orderId = 'MWA-89273H-7K2L';
 
   const handlePay = () => {
     setIsProcessing(true);
@@ -24,103 +39,135 @@ export function PaymentCheckoutModal({ workerName, profession, basePrice, onClos
       setIsProcessing(false);
       setIsDone(true);
       setTimeout(() => {
-        onSuccess({ method, totalAmount, date: new Date().toISOString(), simulated: true });
+        onSuccess({ method: 'card', totalAmount, date: new Date().toISOString(), simulated: true });
       }, 1200);
     }, 1600);
   };
 
   return (
     <div className="checkout-backdrop modal-fade-in" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
-      <div className="card-3d checkout-card modal-rise">
+      <div className="checkout-card-v2 modal-rise">
         <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">
           <X size={20} />
         </button>
 
         {!isDone ? (
           <>
-            <div className="checkout-demo-banner">
-              <span className="checkout-demo-pill">DEMO</span>
-              <p>Simulación de pago — no hay cobro real. Webpay, Mercado Pago y Khipu son solo referencia de interfaz.</p>
-            </div>
-
-            <div className="checkout-header">
-              <Lock size={20} color="#F0782A" aria-hidden />
-              <div>
-                <h3 id="checkout-title">Checkout de prueba</h3>
-                <p>Revisa el resumen y elige un método ilustrativo</p>
-              </div>
-            </div>
-
-            <div className="checkout-summary">
-              <div className="checkout-summary-row">
-                <span>Profesional</span>
-                <strong>
-                  {workerName} · {profession}
-                </strong>
-              </div>
-              <div className="checkout-summary-row muted">
-                <span>Visita / mano de obra (estimado)</span>
-                <span>${basePrice.toLocaleString('es-CL')} CLP</span>
-              </div>
-              <div className="checkout-summary-row muted">
-                <span>IVA referencial (19%)</span>
-                <span>${iva.toLocaleString('es-CL')} CLP</span>
-              </div>
-              <div className="checkout-summary-row muted">
-                <span>Comisión plataforma (demo 10%)</span>
-                <span>${serviceFee.toLocaleString('es-CL')} CLP</span>
-              </div>
-              <div className="checkout-summary-total">
-                <span>Total simulado</span>
-                <span>${totalAmount.toLocaleString('es-CL')} CLP</span>
-              </div>
-            </div>
-
-            <h4 className="checkout-methods-label">Método de pago (solo demo)</h4>
-            <div className="payment-methods-grid checkout-methods">
-              {(
-                [
-                  { id: 'webpay' as const, label: 'Webpay Plus', hint: 'Demo UI', icon: Building2, color: '#F0782A' },
-                  { id: 'mercadopago' as const, label: 'Mercado Pago', hint: 'Demo UI', icon: Smartphone, color: '#009EE3' },
-                  { id: 'card' as const, label: 'Tarjeta', hint: 'Demo UI', icon: CreditCard, color: '#2F9E64' },
-                  { id: 'khipu' as const, label: 'Khipu', hint: 'Demo UI', icon: Building2, color: '#007AFF' },
-                ] as const
-              ).map((item) => {
-                const Icon = item.icon;
-                const active = method === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`checkout-method${active ? ' is-active' : ''}`}
-                    onClick={() => setMethod(item.id)}
-                  >
-                    <Icon size={20} color={item.color} aria-hidden />
-                    <span>
-                      <strong>{item.label}</strong>
-                      <small>{item.hint}</small>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="checkout-escrow-note">
-              <ShieldCheck size={18} color="#2F9E64" aria-hidden />
-              <p>
-                Flujo de escrow ilustrativo: en producción el dinero se retendría hasta confirmar el servicio. Aquí no se cobra ni se retiene nada.
+            <div className="checkout-v2-header">
+              <p className="checkout-v2-kicker">
+                <Lock size={13} /> PAGO SEGURO CON ESCROW
               </p>
+              <h2 id="checkout-title">Resumen de pago</h2>
             </div>
 
-            <button type="button" onClick={handlePay} disabled={isProcessing} className="btn-primary checkout-pay-btn">
-              {isProcessing ? 'Simulando pago…' : `Simular pago $${totalAmount.toLocaleString('es-CL')} CLP`}
+            <div className="checkout-v2-total-row">
+              <span>Total</span>
+              <strong>{totalAmount.toLocaleString('es-CL')} CLP</strong>
+            </div>
+
+            <div className="checkout-v2-escrow-banner">
+              <div className="checkout-v2-escrow-copy">
+                <ShieldCheck size={22} color="var(--orange-accent)" />
+                <div>
+                  <strong>Pago protegido con escrow</strong>
+                  <p>Tu dinero se libera solo cuando apruebes el trabajo.</p>
+                </div>
+              </div>
+              <div className="checkout-v2-escrow-shield" aria-hidden>
+                <ShieldCheck size={48} strokeWidth={1.2} />
+              </div>
+            </div>
+
+            <div className="checkout-v2-details">
+              <h3>Detalles del pago</h3>
+              <dl className="checkout-v2-dl">
+                <div>
+                  <dt>Servicio</dt>
+                  <dd>{serviceDescription}</dd>
+                </div>
+                <div>
+                  <dt>Vendedor</dt>
+                  <dd>{workerName}</dd>
+                </div>
+                <div>
+                  <dt>Plazo acordado</dt>
+                  <dd>7 días</dd>
+                </div>
+                <div>
+                  <dt>ID de orden</dt>
+                  <dd className="checkout-v2-order">
+                    {orderId}
+                    <button type="button" className="checkout-v2-copy" aria-label="Copiar ID">
+                      <Copy size={14} />
+                    </button>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="checkout-v2-payment">
+              <h3>Método de pago</h3>
+              <div className="checkout-v2-method-select">
+                <CreditCard size={18} />
+                <span>Tarjeta de crédito o débito</span>
+                <span className="checkout-v2-chevron">▾</span>
+              </div>
+
+              <div className="checkout-v2-form">
+                <label className="checkout-v2-field checkout-v2-field-full">
+                  <span>Número de tarjeta</span>
+                  <div className="checkout-v2-input-wrap">
+                    <input type="text" placeholder="1234 5678 9012 3456" autoComplete="cc-number" />
+                    <CreditCard size={16} className="checkout-v2-field-icon" />
+                  </div>
+                </label>
+                <label className="checkout-v2-field checkout-v2-field-full">
+                  <span>Nombre en la tarjeta</span>
+                  <input type="text" placeholder="Tu nombre" autoComplete="cc-name" />
+                </label>
+                <label className="checkout-v2-field">
+                  <span>Fecha de vencimiento</span>
+                  <div className="checkout-v2-input-wrap">
+                    <input type="text" placeholder="MM / AA" autoComplete="cc-exp" />
+                    <Calendar size={16} className="checkout-v2-field-icon" />
+                  </div>
+                </label>
+                <label className="checkout-v2-field">
+                  <span>CVC</span>
+                  <div className="checkout-v2-input-wrap">
+                    <input type="text" placeholder="123" autoComplete="cc-csc" />
+                    <HelpCircle size={16} className="checkout-v2-field-icon" />
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handlePay}
+              disabled={isProcessing}
+              className="btn-primary checkout-v2-pay"
+            >
+              <Lock size={16} />
+              {isProcessing
+                ? 'Procesando…'
+                : `Confirmar pago • CLP ${totalAmount.toLocaleString('es-CL')}`}
             </button>
+
+            <div className="checkout-v2-footer">
+              <span>
+                <ShieldCheck size={12} /> Powered by My Works Escrow
+              </span>
+              <span>
+                <HelpCircle size={12} /> Este pago está protegido y se mantiene en escrow hasta la aprobación.
+              </span>
+            </div>
           </>
         ) : (
           <div className="checkout-done page-fade-in">
-            <CheckCircle2 color="#2F9E64" size={56} />
-            <h3>Simulación completada</h3>
-            <p>No se realizó ningún cobro. Total de referencia: ${totalAmount.toLocaleString('es-CL')} CLP.</p>
+            <CheckCircle2 color="var(--emerald-success)" size={56} />
+            <h3>Pago confirmado</h3>
+            <p>Tu pago de ${totalAmount.toLocaleString('es-CL')} CLP quedó retenido en escrow (demo).</p>
           </div>
         )}
       </div>

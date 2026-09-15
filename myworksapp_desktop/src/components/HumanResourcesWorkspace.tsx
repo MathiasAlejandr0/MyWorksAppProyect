@@ -1,222 +1,430 @@
-import React, { useState } from 'react';
-import { Users, UserPlus, ShieldCheck, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { useState } from 'react';
+
+import {
+
+  Users,
+
+  Send,
+
+  Search,
+
+  SlidersHorizontal,
+
+  Bell,
+
+  MoreVertical,
+
+  Shield,
+
+} from 'lucide-react';
+
+
+
+type RoleBadge = 'Admin' | 'Soporte' | 'QA';
+
+type StatusBadge = 'Activo' | 'Inactivo';
+
+
 
 interface Collaborator {
+
   id: string;
+
   name: string;
+
+  title: string;
+
   email: string;
-  demoId: string;
-  department: string;
-  role: string;
-  status: 'ACTIVE' | 'INACTIVE';
+
+  area: string;
+
+  role: RoleBadge;
+
+  status: StatusBadge;
+
+  initials: string;
+
 }
 
-/** Directorio ficticio — sin RUTs ni PII reales. */
+
+
 const DEMO_COLLABORATORS: Collaborator[] = [
-  { id: 'HR-DEMO-01', name: 'Ana Demo', email: 'ana.demo@example.com', demoId: 'DEMO-ID-001', department: 'Dirección General', role: 'Administrador General', status: 'ACTIVE' },
-  { id: 'HR-DEMO-02', name: 'Bruno Demo', email: 'bruno.demo@example.com', demoId: 'DEMO-ID-002', department: 'Soporte & Mediación', role: 'Especialista en Tickets', status: 'ACTIVE' },
-  { id: 'HR-DEMO-03', name: 'Carla Demo', email: 'carla.demo@example.com', demoId: 'DEMO-ID-003', department: 'Ingeniería & QA', role: 'DevSecOps Specialist', status: 'ACTIVE' },
+
+  { id: '1', name: 'Alex Morgan', title: 'Chief Operations Officer', email: 'alex.morgan@myworksapp.com', area: 'Operaciones', role: 'Admin', status: 'Activo', initials: 'AM' },
+
+  { id: '2', name: 'Bruno Demo', title: 'Especialista en Tickets', email: 'bruno.demo@myworksapp.com', area: 'Soporte', role: 'Soporte', status: 'Activo', initials: 'BD' },
+
+  { id: '3', name: 'Carla Demo', title: 'DevSecOps Specialist', email: 'carla.demo@myworksapp.com', area: 'Ingeniería', role: 'QA', status: 'Activo', initials: 'CD' },
+
+  { id: '4', name: 'Diana Ruiz', title: 'HR Manager', email: 'diana.ruiz@myworksapp.com', area: 'RRHH', role: 'Admin', status: 'Activo', initials: 'DR' },
+
+  { id: '5', name: 'Eduardo Paz', title: 'Agente de Soporte', email: 'eduardo.paz@myworksapp.com', area: 'Soporte', role: 'Soporte', status: 'Inactivo', initials: 'EP' },
+
 ];
 
+
+
 export function HumanResourcesWorkspace() {
-  const [collaborators, setCollaborators] = useState<Collaborator[]>(DEMO_COLLABORATORS);
-  const [showModal, setShowModal] = useState(false);
+
+  const [collaborators] = useState<Collaborator[]>(DEMO_COLLABORATORS);
+
   const [search, setSearch] = useState('');
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [demoId, setDemoId] = useState('');
-  const [department, setDepartment] = useState('Soporte & Mediación');
-  const [role, setRole] = useState('Agente de Soporte');
+  const [inviteRole, setInviteRole] = useState<RoleBadge>('Admin');
 
-  const addCollaborator = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !email || !demoId) return;
+  const [inviteEmail, setInviteEmail] = useState('');
 
-    const newCollab: Collaborator = {
-      id: `HR-DEMO-${Date.now().toString().slice(-3)}`,
-      name,
-      email,
-      demoId,
-      department,
-      role,
-      status: 'ACTIVE',
-    };
+  const [inviteName, setInviteName] = useState('');
 
-    setCollaborators((prev) => [newCollab, ...prev]);
-    setName('');
-    setEmail('');
-    setDemoId('');
-    setShowModal(false);
-  };
+  const [inviteMessage, setInviteMessage] = useState('');
 
-  const toggleStatus = (id: string) => {
-    setCollaborators((prev) => prev.map((c) => (c.id === id ? { ...c, status: c.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' } : c)));
-  };
+
 
   const filtered = collaborators.filter(
+
     (c) =>
+
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase()) ||
-      c.department.toLowerCase().includes(search.toLowerCase()),
+
+      c.email.toLowerCase().includes(search.toLowerCase()),
+
   );
+
+
+
+  const handleInvite = (e: React.FormEvent) => {
+
+    e.preventDefault();
+
+    setInviteEmail('');
+
+    setInviteName('');
+
+    setInviteMessage('');
+
+  };
+
+
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', gap: '16px', flexWrap: 'wrap' }}>
+
+    <div className="hr-workspace">
+
+      <header className="hr-header">
+
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <h1 style={{ fontSize: '22px', fontWeight: 900 }}>Recursos humanos</h1>
-            <span className="demo-badge">DEMO</span>
-          </div>
-          <p style={{ fontSize: '13.5px', color: '#98989D', marginTop: '4px' }}>
-            Directorio de ejemplo para la demo académica. No son empleados reales ni contiene RUTs/PII sensibles.
-          </p>
-        </div>
-        <button onClick={() => setShowModal(true)} className="btn-action-primary">
-          <UserPlus size={16} /> Agregar colaborador (demo)
-        </button>
-      </div>
 
-      <div className="demo-banner" style={{ marginBottom: '20px' }}>
-        Datos de demostración — los cambios solo viven en memoria de esta sesión.
-      </div>
+          <h1 className="hr-title">Mi Trabajo</h1>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <div className="card-3d">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#007AFF', marginBottom: '6px' }}>
-            <Users size={18} />
-            <span style={{ fontSize: '12px', fontWeight: 800 }}>TOTAL (DEMO)</span>
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 900 }}>{collaborators.length}</div>
+          <p className="hr-subtitle">Gestiona tu equipo y colaboradores en un solo lugar.</p>
+
         </div>
 
-        <div className="card-3d">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#34C759', marginBottom: '6px' }}>
-            <ShieldCheck size={18} />
-            <span style={{ fontSize: '12px', fontWeight: 800 }}>ACTIVOS (DEMO)</span>
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 900 }}>{collaborators.filter((c) => c.status === 'ACTIVE').length}</div>
-        </div>
-      </div>
+        <div className="hr-header-actions">
 
-      <div className="card-3d" style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', gap: '12px', flexWrap: 'wrap' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 800 }}>Directorio demo</h3>
-          <div style={{ position: 'relative', width: 'min(280px, 100%)' }}>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, email o departamento..."
-              style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)', color: 'white', fontSize: '13px', outline: 'none' }}
-            />
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '10px', color: '#98989D' }} />
-          </div>
+          <button type="button" className="icon-btn hr-notify" aria-label="Notificaciones">
+
+            <Bell size={20} />
+
+            <span className="notify-badge">3</span>
+
+          </button>
+
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <th style={{ padding: '12px 16px', color: '#98989D' }}>ID</th>
-                <th style={{ padding: '12px 16px', color: '#98989D' }}>COLABORADOR</th>
-                <th style={{ padding: '12px 16px', color: '#98989D' }}>ID DEMO</th>
-                <th style={{ padding: '12px 16px', color: '#98989D' }}>DEPARTAMENTO</th>
-                <th style={{ padding: '12px 16px', color: '#98989D' }}>ROL</th>
-                <th style={{ padding: '12px 16px', color: '#98989D' }}>ESTADO</th>
-                <th style={{ padding: '12px 16px', color: '#98989D' }}>ACCIÓN</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((c) => (
-                <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '12px 16px', fontWeight: 800, color: '#F0782A' }}>{c.id}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ fontWeight: 700 }}>{c.name}</div>
-                    <div style={{ fontSize: '11px', color: '#98989D' }}>{c.email}</div>
-                  </td>
-                  <td style={{ padding: '12px 16px', fontFamily: 'monospace' }}>{c.demoId}</td>
-                  <td style={{ padding: '12px 16px', fontWeight: 600 }}>{c.department}</td>
-                  <td style={{ padding: '12px 16px' }}>{c.role}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span className={c.status === 'ACTIVE' ? 'badge badge-success' : 'badge badge-error'}>
-                      {c.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <button
-                      onClick={() => toggleStatus(c.id)}
-                      className={c.status === 'ACTIVE' ? 'btn-action-danger' : 'btn-action-success'}
-                      style={{ padding: '4px 10px', fontSize: '11px' }}
-                    >
-                      {c.status === 'ACTIVE' ? <XCircle size={12} /> : <CheckCircle2 size={12} />}
-                      {c.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      </header>
 
-      {showModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(9, 13, 22, 0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' }}>
-          <div style={{ maxWidth: '480px', width: '100%', backgroundColor: '#121E33', borderRadius: '18px', padding: '28px', color: '#F5F5F7', boxShadow: '0 20px 50px rgba(0,0,0,0.55)', border: '1px solid rgba(240,120,42,0.22)', position: 'relative' }}>
-            <button onClick={() => setShowModal(false)} style={{ position: 'absolute', right: '20px', top: '20px', background: 'none', border: 'none', color: '#98989D', cursor: 'pointer', fontSize: '16px' }}>✕</button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#FFFFFF' }}>Nuevo colaborador</h3>
-              <span className="demo-badge">DEMO</span>
+
+      <div className="hr-body">
+
+        <section className="hr-directory card-surface">
+
+          <div className="hr-directory-head">
+
+            <div className="hr-directory-title">
+
+              <Users size={18} className="hr-directory-icon" />
+
+              <div>
+
+                <h2>Directorio de empleados</h2>
+
+                <p>Administra roles, accesos y estado de tu equipo.</p>
+
+              </div>
+
             </div>
-            <p style={{ fontSize: '13px', color: '#98989D', marginBottom: '20px' }}>Solo memoria local. No uses RUTs reales ni datos personales.</p>
 
-            <form onSubmit={addCollaborator} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: '#98989D', marginBottom: '4px', display: 'block' }}>Nombre</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }} placeholder="Ej: Persona Demo" />
+            <div className="hr-directory-tools">
+
+              <div className="hr-search">
+
+                <Search size={14} />
+
+                <input
+
+                  type="search"
+
+                  value={search}
+
+                  onChange={(e) => setSearch(e.target.value)}
+
+                  placeholder="Buscar por nombre…"
+
+                />
+
               </div>
 
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: '#98989D', marginBottom: '4px', display: 'block' }}>Email (ejemplo)</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }} placeholder="persona.demo@example.com" />
-              </div>
+              <button type="button" className="icon-btn" aria-label="Filtros">
 
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: '#98989D', marginBottom: '4px', display: 'block' }}>ID demo (no RUT)</label>
-                <input type="text" value={demoId} onChange={(e) => setDemoId(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }} placeholder="DEMO-ID-004" />
-              </div>
+                <SlidersHorizontal size={16} />
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#98989D', marginBottom: '4px', display: 'block' }}>Departamento</label>
-                  <select value={department} onChange={(e) => setDepartment(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', fontSize: '13px', outline: 'none', backgroundColor: '#090D16', color: 'white' }}>
-                    <option value="Soporte & Mediación">Soporte & Mediación</option>
-                    <option value="Operaciones & Finanzas">Operaciones & Finanzas</option>
-                    <option value="Ingeniería & QA">Ingeniería & QA</option>
-                    <option value="Dirección General">Dirección General</option>
-                  </select>
-                </div>
+              </button>
 
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#98989D', marginBottom: '4px', display: 'block' }}>Rol</label>
-                  <select value={role} onChange={(e) => setRole(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #1E2A3B', fontSize: '13px', outline: 'none', backgroundColor: '#090D16', color: 'white' }}>
-                    <option value="Especialista de Soporte">Soporte</option>
-                    <option value="DevSecOps Specialist">DevSecOps / QA</option>
-                    <option value="Administrador General">Admin</option>
-                  </select>
-                </div>
-              </div>
+            </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
-                <button type="button" onClick={() => setShowModal(false)} className="btn-action-secondary">Cancelar</button>
-                <button type="submit" className="btn-action-primary">Guardar (demo)</button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+
+
+
+          <div className="hr-table-wrap">
+
+            <table className="hr-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>Colaborador</th>
+
+                  <th>Email</th>
+
+                  <th>Área</th>
+
+                  <th>Rol</th>
+
+                  <th>Estado</th>
+
+                  <th aria-label="Acciones" />
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {filtered.map((c) => (
+
+                  <tr key={c.id}>
+
+                    <td>
+
+                      <div className="hr-person">
+
+                        <span className="hr-avatar">{c.initials}</span>
+
+                        <div>
+
+                          <strong>{c.name}</strong>
+
+                          <span>{c.title}</span>
+
+                        </div>
+
+                      </div>
+
+                    </td>
+
+                    <td className="hr-email">{c.email}</td>
+
+                    <td>{c.area}</td>
+
+                    <td>
+
+                      <span className={`hr-role-badge hr-role-badge--${c.role.toLowerCase()}`}>{c.role}</span>
+
+                    </td>
+
+                    <td>
+
+                      <span className={`hr-status-badge hr-status-badge--${c.status.toLowerCase()}`}>{c.status}</span>
+
+                    </td>
+
+                    <td>
+
+                      <button type="button" className="icon-btn icon-btn--sm" aria-label="Más acciones">
+
+                        <MoreVertical size={16} />
+
+                      </button>
+
+                    </td>
+
+                  </tr>
+
+                ))}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+
+
+          <div className="hr-pagination">
+
+            <span>Mostrando 1 a {filtered.length} de 24 colaboradores</span>
+
+            <div className="hr-pagination-controls">
+
+              <button type="button" disabled>‹</button>
+
+              <button type="button" className="active">1</button>
+
+              <button type="button">2</button>
+
+              <button type="button">3</button>
+
+              <span>…</span>
+
+              <button type="button">5</button>
+
+              <button type="button">›</button>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+        <aside className="hr-invite card-surface">
+
+          <div className="hr-invite-head">
+
+            <Send size={18} className="hr-invite-icon" />
+
+            <h2>Invitar colaborador</h2>
+
+          </div>
+
+
+
+          <form className="hr-invite-form" onSubmit={handleInvite}>
+
+            <label>
+
+              Correo electrónico
+
+              <input
+
+                type="email"
+
+                value={inviteEmail}
+
+                onChange={(e) => setInviteEmail(e.target.value)}
+
+                placeholder="nombre@empresa.com"
+
+                required
+
+              />
+
+            </label>
+
+            <label>
+
+              Nombre completo
+
+              <input
+
+                type="text"
+
+                value={inviteName}
+
+                onChange={(e) => setInviteName(e.target.value)}
+
+                placeholder="Nombre Apellido"
+
+                required
+
+              />
+
+            </label>
+
+            <fieldset className="hr-role-toggle">
+
+              <legend>Rol</legend>
+
+              {(['Admin', 'Soporte', 'QA'] as RoleBadge[]).map((role) => (
+
+                <button
+
+                  key={role}
+
+                  type="button"
+
+                  className={`hr-role-option${inviteRole === role ? ' active' : ''}`}
+
+                  onClick={() => setInviteRole(role)}
+
+                >
+
+                  {role}
+
+                </button>
+
+              ))}
+
+            </fieldset>
+
+            <label>
+
+              Mensaje (opcional)
+
+              <textarea
+
+                value={inviteMessage}
+
+                onChange={(e) => setInviteMessage(e.target.value)}
+
+                placeholder="Mensaje personalizado para la invitación…"
+
+                rows={3}
+
+              />
+
+            </label>
+
+            <button type="submit" className="hr-invite-submit">
+
+              <Send size={16} /> Enviar invitación
+
+            </button>
+
+          </form>
+
+        </aside>
+
+      </div>
+
+
+
+      <footer className="hr-footer">
+
+        <span>Área: RRHH · Rol: Admin</span>
+
+        <span><Shield size={12} /> Seguro y encriptado · Versión 1.4.0</span>
+
+      </footer>
+
     </div>
+
   );
+
 }
+

@@ -81,10 +81,15 @@ class PaymentService {
         updatedAt: DateTime.now(),
       );
 
-      await _paymentRepository.updatePayment(updated);
+      final persisted = await _paymentRepository.transitionPaymentStatus(
+        paymentId: paymentId,
+        newStatus: PricingConstants.paymentAuthorized,
+      );
 
       AppLogger.i('Pago autorizado (MOCK): $paymentId');
-      return updated;
+      return persisted.copyWith(
+        authorizedAt: updated.authorizedAt ?? persisted.authorizedAt,
+      );
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error autorizando pago', e);
@@ -104,15 +109,13 @@ class PaymentService {
         throw AppError.validation('Solo se pueden retener pagos autorizados');
       }
 
-      final updated = payment.copyWith(
-        status: PricingConstants.paymentHeld,
-        updatedAt: DateTime.now(),
+      final persisted = await _paymentRepository.transitionPaymentStatus(
+        paymentId: paymentId,
+        newStatus: PricingConstants.paymentHeld,
       );
 
-      await _paymentRepository.updatePayment(updated);
-
       AppLogger.i('Pago retenido: $paymentId');
-      return updated;
+      return persisted;
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error reteniendo pago', e);
@@ -133,16 +136,13 @@ class PaymentService {
         throw AppError.validation('El pago no puede ser liberado desde este estado');
       }
 
-      final updated = payment.copyWith(
-        status: PricingConstants.paymentReleased,
-        releasedAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+      final persisted = await _paymentRepository.transitionPaymentStatus(
+        paymentId: paymentId,
+        newStatus: PricingConstants.paymentReleased,
       );
 
-      await _paymentRepository.updatePayment(updated);
-
       AppLogger.i('Pago liberado: $paymentId');
-      return updated;
+      return persisted;
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error liberando pago', e);
@@ -163,16 +163,13 @@ class PaymentService {
         throw AppError.validation('El pago no puede ser reembolsado desde este estado');
       }
 
-      final updated = payment.copyWith(
-        status: PricingConstants.paymentRefunded,
-        refundedAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+      final persisted = await _paymentRepository.transitionPaymentStatus(
+        paymentId: paymentId,
+        newStatus: PricingConstants.paymentRefunded,
       );
 
-      await _paymentRepository.updatePayment(updated);
-
       AppLogger.i('Pago reembolsado: $paymentId');
-      return updated;
+      return persisted;
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error reembolsando pago', e);

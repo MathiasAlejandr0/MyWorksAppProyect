@@ -156,5 +156,33 @@ class AppColors {
   static Color getBackgroundColor(bool isDarkMode) {
     return isDarkMode ? backgroundDark : backgroundLight;
   }
+
+  /// Superficie elevada según brillo del tema.
+  static Color surfaceOf(BuildContext context) {
+    return getSurfaceColor(Theme.of(context).brightness == Brightness.dark);
+  }
+
+  /// Superficie más elevada (cards secundarias).
+  static Color surfaceElevatedOf(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? surfaceDarkElevated : surfaceLight;
+  }
+
+  /// Borde sutil sobre canvas/tarjeta.
+  static Color hairlineOf(BuildContext context, {Color? accent}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (accent != null) {
+      return accent.withValues(alpha: isDark ? 0.28 : 0.22);
+    }
+    return isDark
+        ? white.withValues(alpha: 0.12)
+        : grayBorder.withValues(alpha: 0.9);
+  }
+
+  /// Relleno de campo / chip sobre canvas.
+  static Color fieldFillOf(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? white.withValues(alpha: 0.08) : white;
+  }
 }
 

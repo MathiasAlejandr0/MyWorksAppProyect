@@ -26,7 +26,10 @@ class PricingQuoteCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppDecorations.surfaceCard(accent: AppColors.brandOrange),
+      decoration: AppDecorations.surfaceCardOf(
+        context,
+        accent: AppColors.brandOrange,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -22,23 +22,28 @@ class NoWorkersEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? AppColors.white : AppColors.brandNavy;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.work_off_outlined,
               size: 80,
-              color: AppColors.grayMedium,
+              color: isDark
+                  ? AppColors.brandOrange.withValues(alpha: 0.75)
+                  : AppColors.grayMedium,
             ),
             const SizedBox(height: AppSpacing.xl),
             Text(
               message ?? 'No hay trabajadores disponibles',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.grayDark,
-                    fontWeight: FontWeight.w600,
+                    color: titleColor,
+                    fontWeight: FontWeight.w800,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -48,7 +53,10 @@ class NoWorkersEmptyState extends StatelessWidget {
                   ? 'Intenta quitar algunos filtros para ver más resultados'
                   : 'Puede que no haya trabajadores disponibles en este momento. Intenta más tarde o amplía tu búsqueda.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.grayMedium,
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.7)
+                        : AppColors.grayMedium,
+                    fontWeight: FontWeight.w500,
                   ),
               textAlign: TextAlign.center,
             ),

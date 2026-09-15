@@ -8,6 +8,7 @@ import '../../../../core/database/repositories/notification_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/open_quote_utils.dart';
@@ -268,82 +269,85 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     return WorkerDemoTourOverlay(
       steps: _workerTourSteps(),
       child: Scaffold(
-        body: AuthSoftBackground(
-          showDecorations: false,
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _WorkerTopBar(
-                  userName: user.name,
-                  photoPath: user.profilePhotoPath,
-                  profileTourKey: _profileKey,
-                  unreadNotifications: _dashboard?.unreadNotifications ?? 0,
-                  onNotifications: () =>
-                      context.push(AppConstants.routeNotifications),
-                  onProfile: () =>
-                      context.push(AppConstants.routeWorkerProfile),
-                  onSettings: () => context.push(AppConstants.routeSettings),
-                ),
-                WorkerHeader(
-                  firstName: firstName,
-                  worker: _dashboard?.worker,
-                  isAvailable: _isAvailable,
-                  hasActiveJobs: _hasActiveJobs,
-                  loading: _loadingDashboard,
-                  availabilityTourKey: _availabilityKey,
-                  onToggleAvailability: _toggleAvailability,
-                ),
-                WorkerOnboardingCard(
-                  workerId: user.id,
-                  onCompleted: _refresh,
-                ),
-                if (_dashboardError != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-                    child: Material(
-                      color: AppColors.error.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      child: InkWell(
-                        onTap: _refresh,
+          backgroundColor: AppDecorations.canvasOf(context),
+          body: AuthSoftBackground(
+            showDecorations: true,
+            child: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _WorkerTopBar(
+                    userName: user.name,
+                    photoPath: user.profilePhotoPath,
+                    profileTourKey: _profileKey,
+                    unreadNotifications: _dashboard?.unreadNotifications ?? 0,
+                    onNotifications: () =>
+                        context.push(AppConstants.routeNotifications),
+                    onProfile: () =>
+                        context.push(AppConstants.routeWorkerProfile),
+                    onSettings: () => context.push(AppConstants.routeSettings),
+                  ),
+                  WorkerHeader(
+                    firstName: firstName,
+                    worker: _dashboard?.worker,
+                    isAvailable: _isAvailable,
+                    hasActiveJobs: _hasActiveJobs,
+                    loading: _loadingDashboard,
+                    availabilityTourKey: _availabilityKey,
+                    onToggleAvailability: _toggleAvailability,
+                  ),
+                  WorkerOnboardingCard(
+                    workerId: user.id,
+                    onCompleted: _refresh,
+                  ),
+                  if (_dashboardError != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                      child: Material(
+                        color: AppColors.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.error_outline,
-                                  color: AppColors.error, size: 18),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  'Error al cargar. Toca para reintentar.',
-                                  style: TextStyle(
-                                    color: AppColors.error,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
+                        child: InkWell(
+                          onTap: _refresh,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.error_outline,
+                                    color: AppColors.error, size: 18),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    'Error al cargar. Toca para reintentar.',
+                                    style: TextStyle(
+                                      color: AppColors.error,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              Icon(Icons.refresh,
-                                  color: AppColors.error.withValues(alpha: 0.8),
-                                  size: 18),
-                            ],
+                                Icon(Icons.refresh,
+                                    color:
+                                        AppColors.error.withValues(alpha: 0.8),
+                                    size: 18),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                if (_loadingDashboard)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                    child: LinearProgressIndicator(
-                      minHeight: 2,
-                      color: AppColors.brandOrange,
-                      backgroundColor: AppColors.brandOrangeSoft,
-                    ),
-                  )
-                else if (_dashboard != null) ...[
+                  if (_loadingDashboard)
+                    const Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                      child: LinearProgressIndicator(
+                        minHeight: 2,
+                        color: AppColors.brandOrange,
+                        backgroundColor: AppColors.brandOrangeSoft,
+                      ),
+                    )
+                  else if (_dashboard != null) ...[
                   TourTarget(
                     tourKey: _statsKey,
                     width: double.infinity,
@@ -361,23 +365,21 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                     child: WorkerEarningsSummary(
                       key: ValueKey('earnings-$_jobsListGeneration'),
                       workerId: user.id,
+                      onViewDetails: () =>
+                          context.push(AppConstants.routeStatistics),
                     ),
                   ),
                   TourTarget(
                     tourKey: _actionsKey,
                     width: double.infinity,
                     child: WorkerQuickActionsRow(
-                      unread: _dashboard!.unreadNotifications,
+                      onNewJob: () => _tabController.animateTo(0),
                       onCalendar: () =>
                           context.push(AppConstants.routeJobSchedule),
-                      onStats: () => context.push(AppConstants.routeStatistics),
-                      onHistory: () =>
+                      onJobMap: () =>
                           context.push(AppConstants.routeJobHistory),
-                      onNotifications: () =>
-                          context.push(AppConstants.routeNotifications),
-                      onEditPricing: () => context.push(
-                        '${AppConstants.routeWorkerPricingSetup}?edit=1',
-                      ),
+                      onInvoices: () =>
+                          context.push(AppConstants.routeStatistics),
                     ),
                   ),
                   if (_dashboard!.highlightJob != null)
@@ -395,24 +397,25 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                   child: Container(
                     margin: EdgeInsets.fromLTRB(
                       AppBreakpoints.screenPadding(context) - 4,
-                      6,
+                      8,
                       AppBreakpoints.screenPadding(context) - 4,
                       0,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(20)),
-                      border: Border.all(
-                        color: AppColors.grayMedium.withValues(alpha: 0.18),
+                      color: AppColors.surfaceOf(context),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, -2),
+                      border: Border.all(
+                        color: AppColors.hairlineOf(
+                          context,
+                          accent: AppColors.brandOrange,
                         ),
-                      ],
+                      ),
+                      boxShadow: AppDecorations.appleCardShadow(
+                        isDark:
+                            Theme.of(context).brightness == Brightness.dark,
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -422,20 +425,25 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                           child: TabBar(
                             controller: _tabController,
                             labelColor: AppColors.brandOrange,
-                            unselectedLabelColor: AppColors.grayMedium,
+                            unselectedLabelColor: AppColors.onCanvasMuted(
+                              Theme.of(context).brightness,
+                            ),
                             indicatorColor: AppColors.brandOrange,
                             indicatorWeight: 3,
                             indicatorSize: TabBarIndicatorSize.label,
-                            dividerColor:
-                                AppColors.grayMedium.withValues(alpha: 0.15),
+                            dividerColor: AppColors.hairlineOf(context),
                             labelStyle: Theme.of(context)
                                 .textTheme
                                 .titleSmall
                                 ?.copyWith(
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
                                 ),
-                            unselectedLabelStyle:
-                                Theme.of(context).textTheme.titleSmall,
+                            unselectedLabelStyle: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                             tabs: [
                               Tab(
                                   text:
@@ -590,12 +598,23 @@ class _WorkerTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = AppColors.headlineOnScreen(context);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Row(
         children: [
-          const AppBrandLogo(size: 32, textSize: 16),
-          const Spacer(),
+          const Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: AppBrandLogo(
+                horizontal: true,
+                size: 34,
+                textSize: 15,
+              ),
+            ),
+          ),
           IconButton(
             onPressed: onNotifications,
             icon: Badge(
@@ -604,25 +623,34 @@ class _WorkerTopBar extends StatelessWidget {
               backgroundColor: AppColors.brandOrange,
               child: Icon(
                 Icons.notifications_outlined,
-                color: AppColors.brandNavy.withValues(alpha: 0.85),
+                color: iconColor,
               ),
             ),
           ),
           TourTarget(
             tourKey: profileTourKey,
             child: SizedBox(
-              width: 44,
-              height: 44,
+              width: 48,
+              height: 48,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   GestureDetector(
                     onTap: onProfile,
-                    child: ProfileAvatarView(
-                      displayName: userName,
-                      photoPath: photoPath,
-                      radius: 20,
-                      onDarkBackground: false,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.hairlineOf(context),
+                          width: 2,
+                        ),
+                      ),
+                      child: ProfileAvatarView(
+                        displayName: userName,
+                        photoPath: photoPath,
+                        radius: 20,
+                        onDarkBackground: isDark,
+                      ),
                     ),
                   ),
                   Positioned(
@@ -631,12 +659,20 @@ class _WorkerTopBar extends StatelessWidget {
                     child: GestureDetector(
                       onTap: onSettings,
                       child: Container(
-                        width: 22,
-                        height: 22,
+                        width: 24,
+                        height: 24,
                         decoration: BoxDecoration(
-                          color: AppColors.brandOrange,
+                          gradient: const LinearGradient(
+                            colors: [
+                              AppColors.brandOrangeVibrant,
+                              AppColors.brandOrange,
+                            ],
+                          ),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                          border: Border.all(
+                            color: AppDecorations.canvasOf(context),
+                            width: 2,
+                          ),
                         ),
                         child: const Icon(
                           Icons.settings_rounded,

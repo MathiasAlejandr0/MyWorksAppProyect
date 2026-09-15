@@ -111,7 +111,9 @@ class _ProposalCard extends StatelessWidget {
               currency.format(proposal.montoTotalClp),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: AppColors.brandNavy,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.white
+                        : AppColors.brandNavy,
                   ),
             ),
             if (d != null) ...[

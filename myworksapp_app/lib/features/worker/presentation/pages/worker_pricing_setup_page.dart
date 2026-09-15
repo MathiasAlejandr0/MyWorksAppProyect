@@ -210,12 +210,15 @@ class _GuideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.brandOrangeSoft,
+        color: isDark
+            ? AppColors.brandOrange.withValues(alpha: 0.12)
+            : AppColors.brandOrangeSoft,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.brandOrange.withValues(alpha: 0.25)),
+        border: Border.all(color: AppColors.brandOrange.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +232,8 @@ class _GuideCard extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? AppColors.white : AppColors.brandNavy,
                       ),
                 ),
                 const SizedBox(height: 4),
@@ -237,6 +241,9 @@ class _GuideCard extends StatelessWidget {
                   body,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         height: 1.4,
+                        color: isDark
+                            ? AppColors.white.withValues(alpha: 0.72)
+                            : null,
                       ),
                 ),
               ],

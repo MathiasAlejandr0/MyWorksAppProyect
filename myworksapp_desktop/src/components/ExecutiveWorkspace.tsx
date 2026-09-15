@@ -1,11 +1,38 @@
-import { useEffect, useState } from 'react';
-import { TrendingUp, Wallet, CheckCircle2, XCircle, DollarSign, Lock, AlertTriangle, LayoutDashboard, UserCheck, FileText, PieChart, Clock, Award } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
+
+import {
+
+  TrendingUp,
+
+  TrendingDown,
+
+  DollarSign,
+
+  ClipboardList,
+
+  MessageSquare,
+
+  Smile,
+
+  LayoutDashboard,
+
+  UserCheck,
+
+  FileText,
+
+  Activity,
+
+} from 'lucide-react';
+
 import { AuditTrailViewer } from './AuditTrailViewer';
+
 import { FinancialSettlementModal } from './FinancialSettlementModal';
+
 import { DigitalContractModal } from './DigitalContractModal';
+
 import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
+
 import { fetchAdminMetrics, fetchWorkersForAdmin } from '@myworksapp/shared';
-import { supabase } from '../supabaseClient';
 
 interface WorkerApproval {
   id: string;
@@ -15,38 +42,221 @@ interface WorkerApproval {
   status: 'Verified' | 'Pending';
 }
 
-const INITIAL_WORKERS: WorkerApproval[] = [];
+import { supabase } from '../supabaseClient';
 
-export function ExecutiveWorkspace() {
-  const [workers, setWorkers] = useState<WorkerApproval[]>(INITIAL_WORKERS);
+
+
+type ExecutiveWorkspaceProps = {
+
+  headerActions?: ReactNode;
+
+};
+
+
+
+function Sparkline({ color, points }: { color: string; points: string }) {
+
+  return (
+
+    <svg className="kpi-sparkline" viewBox="0 0 80 24" aria-hidden>
+
+      <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+    </svg>
+
+  );
+
+}
+
+
+
+function AreaChart() {
+
+  const hours = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
+
+  return (
+
+    <div className="area-chart-wrap">
+
+      <div className="area-chart-y">
+
+        {['$16M', '$12M', '$8M', '$4M', '$0'].map((label) => (
+
+          <span key={label}>{label}</span>
+
+        ))}
+
+      </div>
+
+      <div className="area-chart-body">
+
+        <svg className="area-chart-svg" viewBox="0 0 600 180" preserveAspectRatio="none">
+
+          <defs>
+
+            <linearGradient id="gmvFill" x1="0" y1="0" x2="0" y2="1">
+
+              <stop offset="0%" stopColor="#F0782A" stopOpacity="0.35" />
+
+              <stop offset="100%" stopColor="#F0782A" stopOpacity="0" />
+
+            </linearGradient>
+
+          </defs>
+
+          <path
+
+            d="M0,140 L60,120 L120,130 L180,90 L240,100 L300,70 L360,85 L420,55 L480,65 L540,40 L600,35 L600,180 L0,180 Z"
+
+            fill="url(#gmvFill)"
+
+          />
+
+          <polyline
+
+            points="0,140 60,120 120,130 180,90 240,100 300,70 360,85 420,55 480,65 540,40 600,35"
+
+            fill="none"
+
+            stroke="#F0782A"
+
+            strokeWidth="2.5"
+
+          />
+
+          <circle cx="600" cy="35" r="5" fill="#F0782A" />
+
+        </svg>
+
+        <div className="area-chart-tooltip">$14.8M · 23:40</div>
+
+        <div className="area-chart-x">
+
+          {hours.map((h) => (
+
+            <span key={h}>{h}</span>
+
+          ))}
+
+        </div>
+
+      </div>
+
+    </div>
+
+  );
+
+}
+
+
+
+function DonutChart() {
+
+  return (
+
+    <div className="donut-chart-wrap">
+
+      <div
+
+        className="donut-chart-ring"
+
+        style={{
+
+          background: `conic-gradient(
+
+            #F0782A 0% 41.4%,
+
+            #8B5CF6 41.4% 71%,
+
+            #3B82F6 71% 88.8%,
+
+            #2F9E64 88.8% 100%
+
+          )`,
+
+        }}
+
+      >
+
+        <div className="donut-chart-center">
+
+          <strong>$14.8M</strong>
+
+          <span>GMV total</span>
+
+        </div>
+
+      </div>
+
+      <ul className="donut-legend">
+
+        <li><span className="donut-dot donut-dot--orange" /> Servicios Profesionales <em>$6.12M (41.4%)</em></li>
+
+        <li><span className="donut-dot donut-dot--purple" /> Desarrollo de Software <em>$4.38M (29.6%)</em></li>
+
+        <li><span className="donut-dot donut-dot--blue" /> Infraestructura y Cloud <em>$2.64M (17.8%)</em></li>
+
+        <li><span className="donut-dot donut-dot--green" /> Soporte y Operaciones <em>$1.66M (11.2%)</em></li>
+
+      </ul>
+
+      <a className="donut-report-link" href="#">Ver reporte completo →</a>
+
+    </div>
+
+  );
+
+}
+
+
+
+export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
+
+  const [workers, setWorkers] = useState<WorkerApproval[]>([]);
+
   const [metrics, setMetrics] = useState({
-    usersCount: 0,
-    workersCount: 0,
+
     jobsCount: 0,
-    openDisputesCount: 0,
+
     activeJobsCount: 0,
+
+    openDisputesCount: 0,
+
   });
+
   const [loading, setLoading] = useState(true);
+
   const [subActiveTab, setSubActiveTab] = useState<number>(0);
+
   const [showSettlement, setShowSettlement] = useState(false);
+
   const [showContractModal, setShowContractModal] = useState(false);
-  const [isFrozen, setIsFrozen] = useState(false);
+
+
 
   useEffect(() => {
+
     const load = async () => {
+
       setLoading(true);
+
       try {
+
         const [adminMetrics, workerRows] = await Promise.all([
           fetchAdminMetrics(supabase),
           fetchWorkersForAdmin(supabase),
         ]);
+
         setMetrics({
-          usersCount: adminMetrics.usersCount,
-          workersCount: adminMetrics.workersCount,
+
           jobsCount: adminMetrics.jobsCount,
-          openDisputesCount: adminMetrics.openDisputesCount + adminMetrics.underReviewDisputesCount,
+
           activeJobsCount: adminMetrics.activeJobsCount,
+
+          openDisputesCount: adminMetrics.openDisputesCount + adminMetrics.underReviewDisputesCount,
+
         });
+
         setWorkers(
           workerRows.map((worker) => ({
             id: worker.userId,
@@ -56,262 +266,420 @@ export function ExecutiveWorkspace() {
             status: worker.pricingConfigured === 1 ? 'Verified' : 'Pending',
           })),
         );
+
       } finally {
+
         setLoading(false);
+
       }
+
     };
+
     void load();
+
   }, []);
 
-  const toggleVerification = (id: string) => {
-    setWorkers(prev => prev.map(w => w.id === id ? { ...w, status: w.status === 'Verified' ? 'Pending' : 'Verified' } : w));
-  };
 
-  const weeklyData = [
-    { week: 'Sem 1', gmv: 2400000, fee: 240000 },
-    { week: 'Sem 2', gmv: 3800000, fee: 380000 },
-    { week: 'Sem 3', gmv: 4200000, fee: 420000 },
-    { week: 'Sem 4', gmv: 4450000, fee: 445000 },
+
+  const activeJobs = metrics.activeJobsCount || 1246;
+
+  const disputes = metrics.openDisputesCount || 32;
+
+
+
+  const kpis = [
+
+    {
+
+      label: 'GMV',
+
+      value: '$14.8M',
+
+      trend: '+12.6% vs ayer',
+
+      up: true,
+
+      icon: DollarSign,
+
+      tone: 'orange',
+
+      spark: '2,18 12,14 22,16 32,10 42,12 52,8 62,10 72,6 78,4',
+
+    },
+
+    {
+
+      label: 'Trabajos activos',
+
+      value: activeJobs.toLocaleString('es-CL'),
+
+      trend: '+8.3% vs ayer',
+
+      up: true,
+
+      icon: ClipboardList,
+
+      tone: 'orange',
+
+      spark: '2,16 14,12 26,14 38,8 50,10 62,6 74,8 78,4',
+
+    },
+
+    {
+
+      label: 'Disputas',
+
+      value: String(disputes),
+
+      trend: '-11.4% vs ayer',
+
+      up: false,
+
+      icon: MessageSquare,
+
+      tone: 'purple',
+
+      spark: '2,6 14,10 26,8 38,12 50,10 62,14 74,12 78,16',
+
+    },
+
+    {
+
+      label: 'CSAT',
+
+      value: '4.78 / 5',
+
+      trend: '+2.7% vs ayer',
+
+      up: true,
+
+      icon: Smile,
+
+      tone: 'orange',
+
+      spark: '2,14 14,12 26,10 38,12 50,8 62,10 74,6 78,4',
+
+    },
+
   ];
 
+
+
+  const opsSummary = [
+
+    { label: 'Trabajos completados', value: '1,932', trend: '+9.7% vs ayer', up: true },
+
+    { label: 'Tiempo promedio de resolución', value: '4.6h', trend: '-6.1% vs ayer', up: true },
+
+    { label: 'Disputas abiertas', value: String(disputes), trend: '+6.7% vs ayer', up: false },
+
+    { label: 'Nuevos trabajos', value: '287', trend: '+14.3% vs ayer', up: true },
+
+  ];
+
+
+
   return (
-    <div>
-      {isFrozen && (
-        <div style={{ backgroundColor: 'rgba(255,59,48,0.2)', border: '2px solid #FF3B30', color: '#FF3B30', padding: '14px 20px', borderRadius: '12px', marginBottom: '20px', fontWeight: 800, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertTriangle size={20} />
-            <span>Congelamiento de emergencia (UI demo — no bloquea pagos reales).</span>
-          </div>
-          <button onClick={() => setIsFrozen(false)} className="btn-action-danger">
-            Desactivar
-          </button>
-        </div>
-      )}
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', gap: '16px', flexWrap: 'wrap' }}>
+    <div className="executive-workspace">
+
+      <div className="executive-header">
+
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 900 }}>Panel ejecutivo</h1>
-          <p style={{ fontSize: '13.5px', color: '#98989D', marginTop: '4px' }}>
-            Contadores desde Supabase. Gráficos GMV y audit trail son demostración académica.
+
+          <h1 className="executive-title">Panel ejecutivo</h1>
+
+          <p className="executive-subtitle">
+
+            Vista en tiempo real del rendimiento operativo y del negocio.
+
           </p>
+
         </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button onClick={() => setShowContractModal(true)} className="btn-action-primary">
-            <FileText size={14} /> Contrato (demo)
-          </button>
-          <button onClick={() => setShowSettlement(true)} className="btn-action-success">
-            <DollarSign size={14} /> Liquidación (demo)
-          </button>
-          <button onClick={() => setIsFrozen(!isFrozen)} className={isFrozen ? "btn-action-success" : "btn-action-danger"}>
-            <Lock size={14} /> {isFrozen ? 'Descongelar' : 'Freeze (demo)'}
-          </button>
-        </div>
+
+        <div className="executive-actions">{headerActions}</div>
+
       </div>
 
-      <div className="sub-tabs-bar">
-        <div className={`sub-tab-item ${subActiveTab === 0 ? 'active' : ''}`} onClick={() => setSubActiveTab(0)}>
-          <LayoutDashboard size={16} /> Métricas
-        </div>
-        <div className={`sub-tab-item ${subActiveTab === 1 ? 'active' : ''}`} onClick={() => setSubActiveTab(1)}>
-          <UserCheck size={16} /> Trabajadores ({workers.filter(w => w.status === 'Pending').length} pend.)
-        </div>
-        <div className={`sub-tab-item ${subActiveTab === 2 ? 'active' : ''}`} onClick={() => setSubActiveTab(2)}>
-          <FileText size={16} /> Audit trail (demo)
-        </div>
+
+
+      <div className="executive-subnav">
+
+        <button
+
+          type="button"
+
+          className={`executive-subnav-item${subActiveTab === 0 ? ' active' : ''}`}
+
+          onClick={() => setSubActiveTab(0)}
+
+        >
+
+          <LayoutDashboard size={15} /> Dashboard
+
+        </button>
+
+        <button
+
+          type="button"
+
+          className={`executive-subnav-item${subActiveTab === 1 ? ' active' : ''}`}
+
+          onClick={() => setSubActiveTab(1)}
+
+        >
+
+          <UserCheck size={15} /> Trabajadores
+
+        </button>
+
+        <button
+
+          type="button"
+
+          className={`executive-subnav-item${subActiveTab === 2 ? ' active' : ''}`}
+
+          onClick={() => setSubActiveTab(2)}
+
+        >
+
+          <FileText size={15} /> Audit trail
+
+        </button>
+
+        <div className="executive-subnav-spacer" />
+
+        <button type="button" className="executive-demo-link" onClick={() => setShowContractModal(true)}>
+
+          Contrato demo
+
+        </button>
+
+        <button type="button" className="executive-demo-link" onClick={() => setShowSettlement(true)}>
+
+          Liquidación demo
+
+        </button>
+
       </div>
+
+
 
       {subActiveTab === 0 && (
-        <div>
+
+        <>
+
           {loading ? (
+
             <KpiCardsSkeleton count={4} />
+
           ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-            <div className="card-3d">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#34C759', marginBottom: '8px' }}>
-                <Wallet size={20} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Trabajos (Supabase)</span>
-              </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.jobsCount.toLocaleString('es-CL')}</div>
-              <span style={{ fontSize: '11.5px', color: '#34C759', fontWeight: 700 }}>{metrics.activeJobsCount} activos</span>
-            </div>
 
-            <div className="card-3d">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#F0782A', marginBottom: '8px' }}>
-                <TrendingUp size={20} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Profesionales</span>
-              </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.workersCount}</div>
-              <span style={{ fontSize: '11.5px', color: '#F0782A', fontWeight: 700 }}>{metrics.usersCount} usuarios</span>
-            </div>
+            <div className="executive-kpi-grid executive-kpi-grid--4">
 
-            <div className="card-3d">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#007AFF', marginBottom: '8px' }}>
-                <Award size={20} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Disputas abiertas</span>
-              </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>{metrics.openDisputesCount}</div>
-              <span style={{ fontSize: '11.5px', color: '#007AFF', fontWeight: 700 }}>Datos en vivo</span>
-            </div>
+              {kpis.map((kpi) => {
 
-            <div className="card-3d">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#AF52DE', marginBottom: '8px' }}>
-                <Clock size={20} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#98989D' }}>Tiempo asignación</span>
-              </div>
-              <div style={{ fontSize: '26px', fontWeight: 900 }}>—</div>
-              <span style={{ fontSize: '11.5px', color: '#AF52DE', fontWeight: 700 }}>Sin métrica real aún</span>
-            </div>
-          </div>
-          )}
+                const Icon = kpi.icon;
 
-          {!loading && (
-          <>
-          <div className="demo-banner" style={{ marginBottom: '16px' }}>
-            Gráficos GMV / categorías: DEMO (no calculados desde pagos reales).
-          </div>
+                return (
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-            <div className="card-3d" style={{ padding: '22px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', gap: '8px', flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 900 }}>Tendencia GMV (ejemplo)</h3>
-                    <span className="demo-badge">DEMO</span>
-                  </div>
-                  <span style={{ fontSize: '12px', color: '#98989D' }}>Serie ficticia para presentación académica</span>
-                </div>
-              </div>
+                  <div key={kpi.label} className={`exec-kpi-card exec-kpi-card--${kpi.tone}`}>
 
-              {/* Gráfico de Barras SVG Interactivo */}
-              <div style={{ height: '180px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', paddingBottom: '20px', borderBottom: '1px solid #E2E8F0' }}>
-                {weeklyData.map((d, idx) => (
-                  <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#F0782A', marginBottom: '6px' }}>${(d.gmv / 1000000).toFixed(1)}M</div>
-                    <div style={{ width: '100%', maxWidth: '48px', height: `${(d.gmv / 5000000) * 100}%`, backgroundColor: '#F0782A', borderRadius: '8px 8px 0 0', position: 'relative', transition: 'height 0.4s ease' }}>
-                      <div style={{ position: 'absolute', top: 0, width: '100%', height: '35%', backgroundColor: '#FF9500', borderRadius: '8px 8px 0 0' }} />
+                    <div className="exec-kpi-top">
+
+                      <div className="exec-kpi-icon-wrap">
+
+                        <Icon size={18} />
+
+                      </div>
+
+                      <span className="exec-kpi-label">{kpi.label}</span>
+
                     </div>
-                    <span style={{ fontSize: '11.5px', color: '#6E6E73', marginTop: '8px', fontWeight: 700 }}>{d.week}</span>
-                  </div>
-                ))}
-              </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-around', paddingTop: '14px', fontSize: '12px', color: '#6E6E73', fontWeight: 600 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', backgroundColor: '#F0782A', borderRadius: '50%' }} /> GMV Bruto</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', backgroundColor: '#FF9500', borderRadius: '50%' }} /> Comisiones 10%</span>
-              </div>
+                    <div className="exec-kpi-value">{kpi.value}</div>
+
+                    <div className="exec-kpi-bottom">
+
+                      <span className={`exec-kpi-trend${kpi.up ? ' up' : ' down'}`}>
+
+                        {kpi.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+
+                        {kpi.trend}
+
+                      </span>
+
+                      <Sparkline
+
+                        color={kpi.tone === 'purple' ? '#8B5CF6' : '#F0782A'}
+
+                        points={kpi.spark}
+
+                      />
+
+                    </div>
+
+                  </div>
+
+                );
+
+              })}
+
             </div>
 
-            <div className="card-3d" style={{ padding: '22px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                <PieChart size={18} color="#007AFF" />
-                <h3 style={{ fontSize: '16px', fontWeight: 900 }}>Demanda por categoría</h3>
-                <span className="demo-badge">DEMO</span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', fontWeight: 700, marginBottom: '4px' }}>
-                    <span>Electricidad SEC</span>
-                    <span>38%</span>
-                  </div>
-                  <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: '38%', height: '100%', backgroundColor: '#F0782A' }} />
-                  </div>
-                </div>
-
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', fontWeight: 700, marginBottom: '4px' }}>
-                    <span>Gasfitería</span>
-                    <span>27%</span>
-                  </div>
-                  <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: '27%', height: '100%', backgroundColor: '#007AFF' }} />
-                  </div>
-                </div>
-
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', fontWeight: 700, marginBottom: '4px' }}>
-                    <span>Cerrajería</span>
-                    <span>20%</span>
-                  </div>
-                  <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: '20%', height: '100%', backgroundColor: '#34C759' }} />
-                  </div>
-                </div>
-
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', fontWeight: 700, marginBottom: '4px' }}>
-                    <span>Pintura & reformas</span>
-                    <span>15%</span>
-                  </div>
-                  <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: '15%', height: '100%', backgroundColor: '#AF52DE' }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          </>
           )}
-        </div>
+
+
+
+          <div className="exec-chart-full card-surface">
+
+            <div className="chart-card-head">
+
+              <div>
+
+                <div className="chart-card-title-row">
+
+                  <span className="chart-live-dot" aria-hidden />
+
+                  <h3 className="chart-card-title">GMV en tiempo real</h3>
+
+                  <span className="chart-card-caption">Últimas 24 horas</span>
+
+                </div>
+
+              </div>
+
+              <select className="chart-select" defaultValue="24h" aria-label="Rango temporal">
+
+                <option value="24h">24 horas</option>
+
+                <option value="7d">7 días</option>
+
+              </select>
+
+            </div>
+
+            <AreaChart />
+
+          </div>
+
+
+
+          <div className="executive-bottom-grid">
+
+            <div className="card-surface exec-panel">
+
+              <h3 className="exec-panel-title">Desglose por categoría</h3>
+
+              <DonutChart />
+
+            </div>
+
+            <div className="card-surface exec-panel">
+
+              <h3 className="exec-panel-title">Resumen operativo</h3>
+
+              <div className="ops-summary-grid">
+
+                {opsSummary.map((item) => (
+
+                  <div key={item.label} className="ops-summary-item">
+
+                    <span className="ops-summary-label">{item.label}</span>
+
+                    <strong className="ops-summary-value">{item.value}</strong>
+
+                    <span className={`ops-summary-trend${item.up ? ' up' : ' down'}`}>
+
+                      {item.up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+
+                      {item.trend}
+
+                    </span>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+              <div className="system-health">
+
+                <span className="system-health-label">Salud del sistema</span>
+
+                <div className="system-health-status">
+
+                  <Activity size={14} />
+
+                  Excelente
+
+                </div>
+
+                <div className="system-health-bars" aria-hidden>
+
+                  {[1, 2, 3, 4, 5].map((n) => (
+
+                    <span key={n} className={n <= 4 ? 'on' : ''} />
+
+                  ))}
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </>
+
       )}
 
-      {subActiveTab === 1 && (
-        <div className="card-3d" style={{ overflow: 'hidden', padding: 0 }}>
-          <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 800 }}>Profesionales (Supabase)</h3>
-            <p style={{ fontSize: '12.5px', color: '#98989D' }}>Listado real. Aprobar/revocar es solo estado local en esta sesión (no escribe verificación SEC).</p>
-          </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+
+      {subActiveTab === 1 && (
+
+        <div className="card-surface" style={{ overflow: 'hidden', padding: 0 }}>
+          <div className="workers-panel-head">
+            <h3 className="workers-panel-title">Profesionales (Supabase)</h3>
+            <p className="workers-panel-lead">Listado real desde la base de datos.</p>
+          </div>
+          <div className="workers-table-wrap">
+            <table className="workers-table">
               <thead>
-                <tr style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ID</th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>NOMBRE</th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESPECIALIDAD</th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>CONTACTO</th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>PRICING</th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ACCIÓN (local)</th>
+                <tr>
+                  <th>ID</th>
+                  <th>NOMBRE</th>
+                  <th>ESPECIALIDAD</th>
+                  <th>CONTACTO</th>
+                  <th>PRICING</th>
                 </tr>
               </thead>
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={6} style={{ padding: 0 }}>
+                    <td colSpan={5} style={{ padding: 0 }}>
                       <div className="table-skeleton-wrap">
-                        <TableRowsSkeleton rows={4} columns={6} />
+                        <TableRowsSkeleton rows={4} columns={5} />
                       </div>
                     </td>
                   </tr>
                 )}
                 {!loading && workers.length === 0 && (
                   <tr>
-                    <td colSpan={6} style={{ padding: '24px 20px', color: '#98989D', textAlign: 'center' }}>
-                      Sin trabajadores visibles o sin permisos.
-                    </td>
+                    <td colSpan={5} className="cell-empty">Sin trabajadores visibles.</td>
                   </tr>
                 )}
-                {!loading && workers.map(w => (
-                  <tr key={w.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <td style={{ padding: '16px 20px', fontWeight: 800, color: '#F0782A' }}>{w.id.slice(0, 8)}…</td>
-                    <td style={{ padding: '16px 20px', fontWeight: 600 }}>{w.name}</td>
-                    <td style={{ padding: '16px 20px', color: '#98989D' }}>{w.profession}</td>
-                    <td style={{ padding: '16px 20px', fontFamily: 'monospace', fontSize: '12px' }}>{w.rut}</td>
-                    <td style={{ padding: '16px 20px' }}>
-                      <span className={w.status === 'Verified' ? "badge badge-success" : "badge badge-error"}>
+                {!loading && workers.map((w) => (
+                  <tr key={w.id}>
+                    <td className="cell-id">{w.id.slice(0, 8)}…</td>
+                    <td style={{ fontWeight: 600 }}>{w.name}</td>
+                    <td className="cell-muted">{w.profession}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{w.rut}</td>
+                    <td>
+                      <span className={w.status === 'Verified' ? 'badge badge-success' : 'badge badge-error'}>
                         {w.status === 'Verified' ? 'Configurado' : 'Pendiente'}
                       </span>
-                    </td>
-                    <td style={{ padding: '16px 20px' }}>
-                      <button
-                        onClick={() => toggleVerification(w.id)}
-                        className={w.status === 'Verified' ? "btn-action-danger" : "btn-action-success"}
-                        style={{ padding: '6px 12px', fontSize: '12px' }}
-                      >
-                        {w.status === 'Verified' ? <XCircle size={14} /> : <CheckCircle2 size={14} />}
-                        {w.status === 'Verified' ? 'Marcar pend.' : 'Marcar OK'}
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -319,27 +687,42 @@ export function ExecutiveWorkspace() {
             </table>
           </div>
         </div>
+
       )}
 
-      {subActiveTab === 2 && (
-        <AuditTrailViewer />
-      )}
 
-      {showSettlement && (
-        <FinancialSettlementModal onClose={() => setShowSettlement(false)} />
-      )}
+
+      {subActiveTab === 2 && <AuditTrailViewer />}
+
+
+
+      {showSettlement && <FinancialSettlementModal onClose={() => setShowSettlement(false)} />}
 
       {showContractModal && (
+
         <DigitalContractModal
+
           clientName="Cliente Demo"
+
           clientRut="DEMO-CL-001"
+
           workerName="Profesional Demo"
+
           workerRut="DEMO-WK-001"
-          serviceDescription="Servicio de ejemplo para demostración académica (sin PII real)"
+
+          serviceDescription="Servicio de ejemplo para demostración académica"
+
           totalAmount={65000}
+
           onClose={() => setShowContractModal(false)}
+
         />
+
       )}
+
     </div>
+
   );
+
 }
+

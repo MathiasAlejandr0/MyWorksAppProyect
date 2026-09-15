@@ -15,6 +15,7 @@ import {
   signIn,
   signOut,
 } from '@myworksapp/shared';
+import { canAccessDesktopHub } from '../authAccess';
 import { supabase } from '../supabaseClient';
 
 interface AuthContextValue {
@@ -38,6 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       requireRole(current, ['administrador']);
+      if (!canAccessDesktopHub(current.role)) {
+        throw new AuthError('Solo el rol administrador puede usar la consola ops.');
+      }
       setProfile(current);
     } catch {
       setProfile(null);
@@ -59,6 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextProfile = await signIn(supabase, email, password);
     try {
       requireRole(nextProfile, ['administrador']);
+      if (!canAccessDesktopHub(nextProfile.role)) {
+        throw new AuthError('Solo el rol administrador puede usar la consola ops.');
+      }
       setProfile(nextProfile);
     } catch (err) {
       await signOut(supabase);

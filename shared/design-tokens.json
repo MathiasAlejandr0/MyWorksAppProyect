@@ -1,17 +1,26 @@
 {
   "color": {
     "brandOrange": "#F0782A",
-    "brandNavy": "#0B192C",
-    "emerald": "#34C759",
-    "textMutedDark": "#A8B0BC",
-    "bgDominantDark": "#090D16",
-    "bgSurfaceDark": "#121826"
+    "brandOrangeVibrant": "#FF6B00",
+    "brandNavy": "#0A1628",
+    "bgCanvasDark": "#070B12",
+    "bgCanvasDarkAlt": "#0B1424",
+    "bgDominantDark": "#070B12",
+    "bgSurfaceDark": "#121E33",
+    "bgElevatedDark": "#17263D",
+    "emerald": "#2F9E64",
+    "textMainDark": "#F4F2EE",
+    "textMutedDark": "#9AA1AD",
+    "textMainLight": "#12141A",
+    "textMutedLight": "#5C6370",
+    "bgDominantLight": "#F7F5F2",
+    "crimsonError": "#E23D35"
   },
   "radius": {
-    "sm": 12,
-    "md": 16,
-    "lg": 18,
+    "sm": 10,
+    "md": 14,
+    "lg": 22,
     "xl": 22,
-    "pill": 28
+    "pill": 9999
   }
 }

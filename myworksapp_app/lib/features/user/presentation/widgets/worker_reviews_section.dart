@@ -214,7 +214,10 @@ class _MoreReviewsChip extends StatelessWidget {
       width: 88,
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: AppDecorations.surfaceCard(accent: AppColors.grayMedium),
+      decoration: AppDecorations.surfaceCardOf(
+        context,
+        accent: AppColors.grayMedium,
+      ),
       child: Text(
         '+$hiddenCount\n${hiddenCount == 1 ? 'más' : 'más'}',
         textAlign: TextAlign.center,
@@ -244,7 +247,10 @@ class _ReviewCard extends StatelessWidget {
       width: double.infinity,
       height: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.sm + 2),
-      decoration: AppDecorations.surfaceCard(accent: AppColors.brandOrange),
+      decoration: AppDecorations.surfaceCardOf(
+        context,
+        accent: AppColors.brandOrange,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -297,7 +303,9 @@ class _ReviewCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           height: 1.35,
-                          color: AppColors.grayDark,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.white.withValues(alpha: 0.85)
+                              : AppColors.grayDark,
                         ),
                   )
                 : Align(

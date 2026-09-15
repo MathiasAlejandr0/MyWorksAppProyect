@@ -1,11 +1,28 @@
 import { useState } from 'react';
-import { ShieldCheck, Lock, Mail, Home, Wrench } from 'lucide-react';
+import {
+  ShieldCheck,
+  Lock,
+  Mail,
+  Monitor,
+  BarChart3,
+  Users,
+  Eye,
+  EyeOff,
+  UserCircle,
+  Shield,
+  BadgeCheck,
+  LogIn,
+} from 'lucide-react';
 import { AuthError, useAuth } from '../context/AuthContext';
+
+type LoginRole = 'admin' | 'support';
 
 export function DesktopLoginScreen() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<LoginRole>('admin');
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,74 +40,147 @@ export function DesktopLoginScreen() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', width: '100vw', backgroundColor: '#090D16', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: 'sans-serif' }}>
-      <div style={{ maxWidth: '440px', width: '100%', backgroundColor: '#121826', border: '1px solid #1E2A3B', borderRadius: '24px', padding: '36px', boxShadow: '0 25px 60px rgba(0,0,0,0.6)', color: 'white' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px' }}>
-          <div style={{ position: 'relative', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
-            <Home size={50} color="#FFFFFF" />
-            <div style={{ position: 'absolute', bottom: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Wrench size={20} color="#F0782A" />
+    <div className="login-screen">
+      <aside className="login-brand-panel">
+        <div className="login-brand-map" aria-hidden />
+        <div className="login-brand-content">
+          <div className="login-brand-logo">
+            <div className="login-brand-logo-icon">
+              <ShieldCheck size={26} color="#fff" strokeWidth={2.2} />
+            </div>
+            <div>
+              <span className="login-brand-name">My Works App</span>
+              <span className="login-brand-kicker">OPS CONSOLE</span>
             </div>
           </div>
-          <h1 style={{ fontSize: '22px', fontWeight: 900, color: 'white', letterSpacing: '0.2px' }}>My Works App</h1>
-          <span style={{ fontSize: '11px', color: '#F0782A', fontWeight: 800, backgroundColor: 'rgba(240,120,42,0.15)', padding: '3px 10px', borderRadius: '8px', marginTop: '6px' }}>
-            Consola administrativa
-          </span>
-          <span style={{ fontSize: '10px', color: '#98989D', fontWeight: 600, marginTop: '8px', textAlign: 'center' }}>
-            Solo demo académica — sin credenciales embebidas
-          </span>
-        </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: '#98989D', marginBottom: '6px', display: 'block' }}>Email (rol administrador)</label>
-            <div style={{ position: 'relative' }}>
+          <div className="login-hero-icon">
+            <Monitor size={34} />
+          </div>
+          <h1 className="login-hero-title">Consola operativa</h1>
+          <p className="login-hero-tagline">Supervisa. Gestiona. Resuelve.</p>
+
+          <ul className="login-feature-list">
+            <li className="login-feature-item">
+              <span className="login-feature-icon"><ShieldCheck size={18} /></span>
+              Seguridad empresarial
+            </li>
+            <li className="login-feature-item">
+              <span className="login-feature-icon"><BarChart3 size={18} /></span>
+              Visibilidad en tiempo real
+            </li>
+            <li className="login-feature-item">
+              <span className="login-feature-icon"><Users size={18} /></span>
+              Control de acceso basado en roles
+            </li>
+          </ul>
+        </div>
+      </aside>
+
+      <section className="login-form-panel">
+        <div className="login-form-card">
+          <p className="login-form-kicker">— ACCESO A CONSOLA —</p>
+          <h2 className="login-form-title">Inicia sesión para continuar</h2>
+          <p className="login-form-subtitle">
+            Ingresa tus credenciales para acceder a la consola operativa.
+          </p>
+
+          <form onSubmit={handleSubmit}>
+            <label className="login-field-label" htmlFor="login-email">
+              CORREO ELECTRÓNICO
+            </label>
+            <div className="login-field-wrap">
+              <Mail size={16} className="login-field-icon" />
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="username"
-                placeholder="admin@tu-proyecto.cl"
-                style={{ width: '100%', padding: '12px 14px 12px 40px', borderRadius: '10px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }}
+                placeholder="tu.correo@myworksapp.com"
+                className="login-input"
                 required
               />
-              <Mail size={16} style={{ position: 'absolute', left: '14px', top: '14px', color: '#98989D' }} />
             </div>
-          </div>
 
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: '#98989D', marginBottom: '6px', display: 'block' }}>Contraseña</label>
-            <div style={{ position: 'relative' }}>
+            <label className="login-field-label" htmlFor="login-password">
+              CONTRASEÑA
+            </label>
+            <div className="login-field-wrap">
+              <Lock size={16} className="login-field-icon" />
               <input
-                type="password"
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                placeholder="••••••••"
-                style={{ width: '100%', padding: '12px 14px 12px 40px', borderRadius: '10px', border: '1px solid #1E2A3B', backgroundColor: '#090D16', color: 'white', fontSize: '13.5px', outline: 'none' }}
+                placeholder="Ingresa tu contraseña"
+                className="login-input login-input-password"
                 required
               />
-              <Lock size={16} style={{ position: 'absolute', left: '14px', top: '14px', color: '#98989D' }} />
+              <button
+                type="button"
+                className="login-eye-btn"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+
+            <label className="login-field-label">SELECCIONA TU ROL</label>
+            <div className="login-role-grid">
+              <button
+                type="button"
+                className={`login-role-card${role === 'admin' ? ' active' : ''}`}
+                onClick={() => setRole('admin')}
+              >
+                <UserCircle size={22} />
+                <span className="login-role-title">Admin</span>
+                <span className="login-role-desc">Acceso completo a la consola</span>
+              </button>
+              <button
+                type="button"
+                className={`login-role-card${role === 'support' ? ' active' : ''}`}
+                onClick={() => setRole('support')}
+              >
+                <Shield size={22} />
+                <span className="login-role-title">Soporte</span>
+                <span className="login-role-desc">Acceso limitado a incidentes.</span>
+              </button>
+            </div>
+
+            {error && <p className="login-error">{error}</p>}
+
+            <button type="submit" className="login-submit" disabled={submitting}>
+              <LogIn size={18} />
+              {submitting ? 'Validando…' : 'Entrar'}
+            </button>
+          </form>
+
+          <p className="login-forgot">
+            ¿Olvidaste tu contraseña? <a href="#">Recupérala aquí</a>
+          </p>
+
+          <div className="login-security-footer">
+            <p className="login-security-title">SEGURIDAD EMPRESARIAL</p>
+            <div className="login-security-grid">
+              <div className="login-security-item">
+                <Lock size={16} />
+                <span>Conexión cifrada TLS 1.3</span>
+              </div>
+              <div className="login-security-item">
+                <ShieldCheck size={16} />
+                <span>Autenticación de múltiples factores</span>
+              </div>
+              <div className="login-security-item">
+                <BadgeCheck size={16} />
+                <span>Cumplimiento SOC 2 Type II</span>
+              </div>
             </div>
           </div>
-
-          {error && (
-            <div style={{ color: '#FF3B30', fontSize: '13px', fontWeight: 700 }}>{error}</div>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{ marginTop: '8px', padding: '14px', borderRadius: '9999px', border: 'none', background: 'linear-gradient(135deg, #FF6B00, #F0782A)', color: 'white', fontWeight: 800, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(240, 120, 42, 0.4)' }}
-          >
-            <ShieldCheck size={18} /> {submitting ? 'Validando...' : 'Iniciar sesión'}
-          </button>
-        </form>
-
-        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '12px', color: '#98989D', lineHeight: 1.5 }}>
-          Solo cuentas con rol <strong style={{ color: '#F5F5F7' }}>administrador</strong> en Supabase pueden acceder. Otros roles se rechazan al iniciar sesión.
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Preferencia de tema del usuario. Nunca fuerza dark/light: respeta SharedPreferences.
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   static const _prefKey = 'dark_mode';
 
   @override
-  ThemeMode build() => ThemeMode.dark;
+  ThemeMode build() => ThemeMode.system;
 
   Future<void> loadFromPreferences() async {
     final prefs = await SharedPreferences.getInstance();

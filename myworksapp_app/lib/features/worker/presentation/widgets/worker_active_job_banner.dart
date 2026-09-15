@@ -19,26 +19,31 @@ class WorkerActiveJobBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? AppColors.white : AppColors.brandNavy;
+    final muted = isDark
+        ? AppColors.white.withValues(alpha: 0.65)
+        : AppColors.textSecondary;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        elevation: 0,
+        color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              color: isDark ? AppColors.surfaceDarkElevated : AppColors.white,
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.brandOrange.withValues(alpha: 0.25),
+                color: AppColors.brandOrange.withValues(alpha: 0.4),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+                  color: AppColors.brandOrange.withValues(alpha: 0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -48,11 +53,18 @@ class WorkerActiveJobBanner extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.brandOrangeSoft,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.brandOrange.withValues(alpha: 0.28),
+                        AppColors.brandOrange.withValues(alpha: 0.1),
+                      ],
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.work_outline,
-                      color: AppColors.brandOrange),
+                  child: const Icon(
+                    Icons.work_rounded,
+                    color: AppColors.brandOrange,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -63,7 +75,7 @@ class WorkerActiveJobBanner extends StatelessWidget {
                         WorkerJobStatus.activeBannerTitle(job.status),
                         style: const TextStyle(
                           color: AppColors.brandOrange,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                           fontSize: 12,
                         ),
                       ),
@@ -71,10 +83,10 @@ class WorkerActiveJobBanner extends StatelessWidget {
                         JobDisplayUtils.title(job),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
                           fontSize: 14,
-                          color: AppColors.grayDark,
+                          color: titleColor,
                         ),
                       ),
                       if (JobDisplayUtils.priceLine(job) != null)
@@ -83,14 +95,15 @@ class WorkerActiveJobBanner extends StatelessWidget {
                           style: const TextStyle(
                             color: AppColors.brandOrange,
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       Text(
                         JobDisplayUtils.dateLine(job),
-                        style: const TextStyle(
-                          color: AppColors.grayMedium,
+                        style: TextStyle(
+                          color: muted,
                           fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -98,12 +111,13 @@ class WorkerActiveJobBanner extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: onChat,
-                  icon: const Icon(Icons.chat_bubble_outline,
-                      color: AppColors.brandTeal),
+                  icon: Icon(
+                    Icons.chat_bubble_rounded,
+                    color: isDark ? AppColors.white : AppColors.brandOrange,
+                  ),
                   tooltip: 'Chat',
                 ),
-                Icon(Icons.chevron_right,
-                    color: AppColors.grayMedium.withValues(alpha: 0.8)),
+                Icon(Icons.chevron_right, color: muted),
               ],
             ),
           ),

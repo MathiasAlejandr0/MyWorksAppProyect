@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Genera docs/DICCIONARIO_BASE_DATOS.docx con formato profesional."""
+"""Genera docs/DICCIONARIO_BASE_DATOS.docx en español neutro (formato profesional)."""
 from pathlib import Path
 
 from docx import Document
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
 from docx.shared import Cm, Pt, RGBColor
 
-OUT = Path(r"d:\MyWorksAppProyect\docs\DICCIONARIO_BASE_DATOS.docx")
+OUT = Path(__file__).resolve().parent / "DICCIONARIO_BASE_DATOS.docx"
 
 
 def set_run_font(run, name="Calibri", size=11, bold=False, color=None):
@@ -91,7 +91,6 @@ def main():
         section.left_margin = Cm(2.5)
         section.right_margin = Cm(2.5)
 
-    # Portada
     for _ in range(3):
         doc.add_paragraph()
     t = doc.add_paragraph()
@@ -108,8 +107,8 @@ def main():
     set_paragraph_format(meta, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=4)
     r = meta.add_run(
         "Documento técnico de esquema · PostgreSQL / Supabase\n"
-        "Versión 1.1 · 14 de septiembre de 2026\n"
-        "Convención: español · snake_case"
+        "Versión 1.4 · 14 de septiembre de 2026\n"
+        "Convención: español neutro · snake_case"
     )
     set_run_font(r, size=11, color=RGBColor(90, 90, 90))
 
@@ -117,13 +116,13 @@ def main():
     set_paragraph_format(note, align=WD_ALIGN_PARAGRAPH.CENTER, space_before=24)
     r = note.add_run(
         "Uso académico y de desarrollo. Describe el esquema public "
-        "consumido por las aplicaciones móvil, web y escritorio."
+        "consumido por las aplicaciones móvil, web y escritorio. "
+        "Redacción en español neutro (sin regionalismos)."
     )
     set_run_font(r, size=10, color=RGBColor(100, 100, 100))
 
     doc.add_page_break()
 
-    # 1. Identificación
     add_heading(doc, "1. Identificación del documento", 1)
     add_table(
         doc,
@@ -134,11 +133,13 @@ def main():
             ["Motor", "PostgreSQL (Supabase)"],
             ["Esquema", "public"],
             ["Convención de nombres", "Español + snake_case"],
-            ["Versión del documento", "1.1"],
+            ["Idioma del documento", "Español neutro"],
+            ["Versión del documento", "1.4"],
             ["Fecha", "2026-09-14"],
             [
                 "Estado de migraciones",
-                "Rename ES (04) + catálogo (02). RLS (05) versionada en repo; confirmar aplicación remota.",
+                "Rename ES (04) aplicado; RLS (05) confirmado en tablas núcleo; "
+                "seed marketplace (06) en repositorio; hardening 20260915 pendiente de apply remoto.",
             ],
             [
                 "Tipado observado",
@@ -153,15 +154,23 @@ def main():
         "Este diccionario constituye el contrato canónico de datos de negocio del sistema "
         "My Works App. Documenta tablas, columnas, significados, códigos de dominio, "
         "relaciones lógicas, artefactos de seguridad (triggers, RLS, RPC) y los clientes "
-        "que consumen cada entidad. Está orientado a defensa académica, onboarding técnico "
+        "que consumen cada entidad. Está orientado a defensa académica, incorporación técnica "
         "y control de cambios tras el rename del esquema a español.",
+    )
+    add_body(
+        doc,
+        "En términos simples: si se cambia un nombre de columna o un estado sin actualizar "
+        "este documento y el código, se rompe el flujo entre aplicaciones. Esta es la "
+        "referencia compartida para no inventar nombres distintos entre móvil, web y escritorio.",
     )
 
     add_heading(doc, "3. Inventario de tablas (28)", 1)
     add_body(
         doc,
         "Todas las tablas de negocio listadas pertenecen al esquema public. "
-        "La columna «Origen EN» indica el nombre previo al rename.",
+        "La columna «Origen EN» indica el nombre previo al rename. Las primeras 10 son las de "
+        "uso cotidiano; del 11 al 16 cubren cotización, evidencia y cancelación; del 17 al 28 "
+        "soportan cumplimiento, flags y funciones de producto.",
     )
     tablas = [
         ("1", "perfiles", "profiles", "Identidad de aplicación ligada a Auth"),
@@ -187,11 +196,11 @@ def main():
         ("21", "consentimientos_usuario", "user_consents", "Términos / GDPR"),
         ("22", "banderas_funcionalidad", "feature_flags", "Feature flags"),
         ("23", "suscripciones", "subscriptions", "Planes de monetización"),
-        ("24", "impulsos", "boosts", "Boost de visibilidad"),
+        ("24", "impulsos", "boosts", "Impulso de visibilidad"),
         ("25", "eventos_analitica", "analytics_events", "Analítica de producto"),
         ("26", "configuraciones_servicio", "service_configs", "Schema UI por servicio"),
-        ("27", "codigos_restablecimiento", "password_reset_codes", "Códigos reset password"),
-        ("28", "tickets_soporte", "tickets", "Mesa de soporte / desk"),
+        ("27", "codigos_restablecimiento", "password_reset_codes", "Códigos de restablecimiento"),
+        ("28", "tickets_soporte", "tickets", "Mesa de soporte / ayuda"),
     ]
     add_table(doc, ["#", "Tabla", "Origen EN", "Propósito"], tablas)
 
@@ -199,7 +208,8 @@ def main():
     add_body(
         doc,
         "Los valores siguientes son los códigos almacenados en base de datos tras la migración a español. "
-        "Las aplicaciones deben usar estos literales (no los antiguos en inglés).",
+        "Las aplicaciones deben usar estos literales (no los antiguos en inglés). "
+        "Al programar filtros o condiciones, deben utilizarse exactamente estos valores.",
     )
     glosario = [
         ("Rol", "usuario | trabajador | administrador (is_admin también acepta admin)"),
@@ -232,13 +242,21 @@ def main():
         ("Ticket soporte", "pendiente | resuelto"),
     ]
     add_table(doc, ["Dominio", "Valores permitidos"], glosario)
+    add_body(
+        doc,
+        "Uso habitual: el cliente ingresa como usuario; el profesional como trabajador; "
+        "la consola de escritorio solo admite administrador. El estado de pago en clientes "
+        "es simulación académica hasta integrar una pasarela real; tras el hardening, las "
+        "transiciones deben realizarse mediante RPC (simular_transicion_pago).",
+    )
 
     add_heading(doc, "5. Detalle de tablas núcleo", 1)
 
     add_heading(doc, "5.1 perfiles", 2)
     add_body(
         doc,
-        "Perfil de aplicación vinculado a auth.users. La clave primaria coincide con el identificador de Auth.",
+        "Perfil de aplicación vinculado a auth.users. La clave primaria coincide con el identificador de Auth. "
+        "Aquí se guardan nombre, correo, rol y si la cuenta es usable.",
     )
     add_table(
         doc,
@@ -255,11 +273,17 @@ def main():
     )
     add_body(
         doc,
-        "Índice: idx_perfiles_rol. Triggers: handle_new_user (alta segura sin auto-admin); "
+        "Índice: idx_perfiles_rol. Triggers: handle_new_user (alta segura sin auto-administrador); "
         "protect_profiles_sensitive (impide cambio de rol/estado_cuenta sin is_admin).",
     )
 
     add_heading(doc, "5.2 trabajadores", 2)
+    add_body(
+        doc,
+        "Solo los perfiles que ofrecen oficios tienen fila aquí (relación 1:1 con id_usuario). "
+        "disponible = 1 indica que puede recibir contacto; precios_configurados = 1 indica que "
+        "completó la configuración de tarifas; niveles_precio es JSON para paquetes por oficio.",
+    )
     add_table(
         doc,
         ["Columna", "Tipo", "Descripción"],
@@ -271,9 +295,9 @@ def main():
             ("disponible", "int 0/1", "Disponibilidad para nuevos trabajos"),
             ("tarifa_visita", "numeric", "Tarifa de visita en CLP"),
             ("categoria_servicio", "text", "Categoría principal"),
-            ("niveles_precio", "json", "Tiers de precio"),
+            ("niveles_precio", "json", "Niveles de precio"),
             ("servicios_personalizados", "json", "Servicios adicionales"),
-            ("precios_configurados", "int 0/1", "Indica si completó setup de precios"),
+            ("precios_configurados", "int 0/1", "Indica si completó la configuración de precios"),
             ("zona_trabajo", "text", "Comuna o zona de cobertura"),
             ("conteo_rechazos", "int", "Penaliza el orden en listados"),
         ],
@@ -283,8 +307,10 @@ def main():
     add_heading(doc, "5.3 servicios", 2)
     add_body(
         doc,
-        "Catálogo: id, nombre, descripcion, categoria, activo, requiere_certificacion, "
-        "modelo_precio (por_hora | fijo | por_item), aviso_legal, creado_en, actualizado_en.",
+        "Catálogo de oficios: id, nombre, descripcion, categoria, activo, requiere_certificacion, "
+        "modelo_precio (por_hora | fijo | por_item), aviso_legal, creado_en, actualizado_en. "
+        "Si la tabla está vacía, el inicio del cliente no tiene qué listar; por eso existe el seed de la migración 06. "
+        "La política pública no invoca is_admin() para evitar el error 42501 con el rol anon.",
     )
 
     add_heading(doc, "5.4 trabajos", 2)
@@ -294,7 +320,8 @@ def main():
         "id_servicio, estado, direccion, latitud, longitud, descripcion, fecha_programada, "
         "metadatos_servicio, modalidad_cobro, estado_pago, id_comuna, instantanea_precio, "
         "id_sku_servicio, horas_bloque, id_cotizacion_seleccionada, creado_en, actualizado_en. "
-        "Índices: estado, id_usuario, id_trabajador, creado_en.",
+        "Índices: estado, id_usuario, id_trabajador, creado_en. "
+        "Las transiciones de estado deben realizarse mediante RPC transicionar_trabajo tras el hardening.",
     )
 
     add_heading(doc, "5.5 pagos", 2)
@@ -303,14 +330,15 @@ def main():
         "id, id_trabajo, id_orden_cambio, tipo_pago, monto, moneda (CLP), estado, metodo_pago, "
         "id_transaccion, autorizado_en, liberado_en, reembolsado_en, creado_en, actualizado_en. "
         "Importante: en las aplicaciones cliente el flujo de pasarela es simulación académica; "
-        "no hay cobro real integrado.",
+        "no hay cobro real integrado. Las actualizaciones de estado deben hacerse con "
+        "simular_transicion_pago (RPC), no con UPDATE directo.",
     )
 
     add_heading(doc, "5.6 mensajes", 2)
     add_body(
         doc,
-        "id_trabajo, id_remitente, id_destinatario, contenido, tipo (texto|imagen), "
-        "ruta_imagen, leido, creado_en.",
+        "Chat por trabajo (no bandeja global): id_trabajo, id_remitente, id_destinatario, contenido, "
+        "tipo (texto|imagen), ruta_imagen, leido, creado_en. El remitente debe coincidir con el usuario autenticado.",
     )
 
     add_heading(doc, "5.7 disputas", 2)
@@ -318,13 +346,13 @@ def main():
         doc,
         "id_trabajo, abierta_por, motivo, descripcion, estado, resolucion, resuelta_por, "
         "resuelta_en, creado_en, actualizado_en. Actualización de resolución reservada a administradores "
-        "(policy + RPC admin_actualizar_estado_disputa).",
+        "(política + RPC admin_actualizar_estado_disputa).",
     )
 
     add_heading(doc, "5.8 notificaciones", 2)
     add_body(
         doc,
-        "id_usuario, tipo (códigos de evento aún en inglés, p. ej. job_accepted), titulo, cuerpo, "
+        "id_usuario, tipo (códigos de evento aún en inglés, por ejemplo job_accepted), titulo, cuerpo, "
         "id_relacionado, leido, creado_en. Canal Realtime: notificaciones.",
     )
 
@@ -334,7 +362,8 @@ def main():
     add_heading(doc, "5.10 reportes", 2)
     add_body(
         doc,
-        "id_reportante, id_usuario_reportado, motivo, descripcion, estado, creado_en.",
+        "id_reportante, id_usuario_reportado, motivo, descripcion, estado, creado_en. "
+        "Denuncias entre usuarios para moderación.",
     )
 
     add_heading(doc, "6. Tablas secundarias", 1)
@@ -348,39 +377,49 @@ def main():
             ("portafolio_trabajador", "id_trabajador, ruta_foto, tipo_medio"),
             ("trabajador_servicios", "N:M id_trabajador + categoria_servicio"),
             ("cancelaciones_trabajo", "id_trabajo, cancelado_por, motivo, cancelado_en"),
-            ("registros_error_app", "Telemetría; policy INSERT autenticado"),
+            ("registros_error_app", "Telemetría; política INSERT autenticado"),
             ("eventos_abuso", "Antiabuso; códigos de tipo aún EN en modelo"),
             ("acciones_pendientes", "Cola sync offline"),
             ("bloqueos_usuario", "id_bloqueador, id_bloqueado"),
             ("consentimientos_usuario", "GDPR / versión de consentimiento"),
             ("banderas_funcionalidad", "Feature flags por rol/versión"),
-            ("suscripciones / impulsos", "Monetización y boost"),
-            ("eventos_analitica", "Product analytics"),
+            ("suscripciones / impulsos", "Monetización e impulso de visibilidad"),
+            ("eventos_analitica", "Analítica de producto"),
             ("configuraciones_servicio", "esquema_config por servicio"),
-            ("codigos_restablecimiento", "Reset password (sin model Dart dedicado)"),
-            ("tickets_soporte", "Mesa de ayuda; UI desktop parcialmente DEMO"),
+            ("codigos_restablecimiento", "Restablecimiento de contraseña (sin model Dart dedicado)"),
+            ("tickets_soporte", "Mesa de ayuda; interfaz de escritorio parcialmente DEMO"),
         ],
     )
 
-    add_heading(doc, "7. Seguridad y funciones (migración 05)", 1)
+    add_heading(doc, "7. Seguridad y funciones", 1)
     add_body(
         doc,
         "La migración 20260914000005_rls_politicas_negocio.sql habilita Row Level Security "
-        "en las tablas de negocio y define helpers y RPC administrativos. "
-        "Debido al tipado híbrido uuid/text, las comparaciones de identidad usan ::text en ambos lados.",
+        "en las tablas de negocio y define helpers y RPC administrativas. "
+        "Debido al tipado híbrido uuid/text, las comparaciones de identidad usan ::text en ambos lados. "
+        "El hardening 20260915000001 endurece pagos, mensajes y trabajos, elimina políticas EN residuales "
+        "y expone RPC mock de escrow hasta integrar una pasarela real.",
     )
     add_table(
         doc,
         ["Artefacto", "Efecto"],
         [
-            ("is_admin()", "True si el perfil autenticado es admin/administrador y cuenta activa"),
-            ("es_parte_trabajo(text)", "Cliente o trabajador del trabajo, o admin"),
-            ("RLS policies", "Lectura/escritura restringida a propio, parte del trabajo, admin o marketplace"),
+            ("is_admin()", "Verdadero si el perfil autenticado es admin/administrador y la cuenta está activa"),
+            ("es_parte_trabajo(text)", "Cliente o trabajador del trabajo, o administrador"),
+            ("RLS policies", "Lectura/escritura restringida a propio, parte del trabajo, administrador o marketplace"),
             ("admin_metricas_resumen()", "JSON de métricas; solo administradores"),
-            ("admin_actualizar_estado_disputa(...)", "Cambia estado/resolución de disputa; solo admin"),
-            ("handle_new_user", "Crea perfiles en signup; no permite auto-asignarse administrador"),
-            ("protect_profile_sensitive_fields", "Bloquea cambio de rol/estado_cuenta sin admin"),
+            ("admin_actualizar_estado_disputa(...)", "Cambia estado/resolución de disputa; solo administrador"),
+            ("transicionar_trabajo(...)", "Cambia estado de trabajo con matriz validada en servidor"),
+            ("simular_transicion_pago(...)", "Mock de escrow en servidor (sin cobro real)"),
+            ("asignar_trabajador_trabajo(...)", "Asigna profesional y pasa a aceptado"),
+            ("handle_new_user", "Crea perfiles en el registro; no permite autoasignarse administrador"),
+            ("protect_profile_sensitive_fields", "Bloquea cambio de rol/estado_cuenta sin administrador"),
         ],
+    )
+    add_body(
+        doc,
+        "Si se invocan RPC de administrador sin sesión de administrador, se observará un error "
+        "del tipo «Solo administradores» (HTTP 400 típico). Un 404 indicaría que la función no existe.",
     )
 
     add_heading(doc, "8. Aplicaciones consumidoras", 1)
@@ -390,9 +429,14 @@ def main():
         [
             ("Flutter (móvil)", "Repositories sobre casi todas las tablas de negocio"),
             ("Web (React)", "Catálogo, trabajadores, trabajos; checkout de pago simulado"),
-            ("Desktop (Tauri/React)", "Disputas y métricas vía RPC; paneles DEMO etiquetados"),
-            ("Paquete shared", "Auth tipada, repos TS, métricas y disputas admin"),
+            ("Escritorio (Tauri/React)", "Disputas y métricas vía RPC; paneles DEMO etiquetados"),
+            ("Paquete shared", "Auth tipada, repositorios TS, métricas y disputas de administrador"),
         ],
+    )
+    add_body(
+        doc,
+        "Flutter es el cliente completo. Web es marketplace y reserva. Escritorio es operaciones "
+        "(soporte/ejecutivo) con paneles demo académicos aparte: no deben confundirse con datos productivos.",
     )
 
     add_heading(doc, "9. Limitaciones y gaps conocidos", 1)
@@ -401,14 +445,14 @@ def main():
         ["Gap", "Severidad", "Comentario"],
         [
             (
-                "Confirmar RLS 05 en proyecto remoto",
+                "Aplicar hardening 20260915 en remoto",
                 "Alta",
                 "El script está en el repositorio; la seguridad efectiva depende de aplicarlo en Supabase.",
             ),
             (
                 "Tipado híbrido uuid / text",
                 "Media",
-                "Policies y RPC usan casts ::text. Falta dump CREATE TABLE histórico versionado.",
+                "Políticas y RPC usan casts ::text. Falta dump CREATE TABLE histórico versionado.",
             ),
             (
                 "Códigos de notificación / abuso en inglés",
@@ -421,9 +465,9 @@ def main():
                 "Existe model/TODO en código sin tabla en el rename.",
             ),
             (
-                "Clave publishable en Flutter",
-                "Media",
-                "Web y desktop usan variables de entorno; Flutter aún embebe la clave pública.",
+                "Pasarela de pago real",
+                "Alta (diferida)",
+                "Empresa aún no constituida; mock solo vía RPC en servidor.",
             ),
         ],
     )
@@ -431,15 +475,18 @@ def main():
     add_heading(doc, "10. Referencias", 1)
     add_body(
         doc,
-        "docs/mapa_esquema_en_es.md · docs/APLICAR_MIGRACION_ES.md · docs/AUDITORIA_PROYECTO.md · "
+        "docs/mapa_esquema_en_es.md · docs/APLICAR_MIGRACION_ES.md · docs/APLICAR_HARDENING_20260915.md · "
+        "docs/AUDITORIA_PROYECTO.md · docs/DICCIONARIO_BASE_DATOS.md · "
         "myworksapp_app/supabase/migrations/20260914000004_aplicar_rename_es.sql · "
-        "20260914000002_catalogo_datos_es.sql · 20260914000005_rls_politicas_negocio.sql",
+        "20260914000005_rls_politicas_negocio.sql · 20260914000006_seed_servicios_marketplace.sql · "
+        "20260915000001_hardening_seguridad_sin_psp.sql",
     )
 
-    # Pie final
     fin = doc.add_paragraph()
     set_paragraph_format(fin, space_before=18, align=WD_ALIGN_PARAGRAPH.CENTER)
-    r = fin.add_run("— Fin del diccionario · My Works App · Documento confidencial de proyecto —")
+    r = fin.add_run(
+        "— Fin del diccionario · My Works App · Español neutro · Documento de proyecto —"
+    )
     set_run_font(r, size=9, color=RGBColor(120, 120, 120))
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

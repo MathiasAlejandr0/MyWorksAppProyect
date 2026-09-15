@@ -121,12 +121,12 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        appBar: AppGradientAppBar(
+      return Scaffold(
+        backgroundColor: AppDecorations.canvasOf(context),
+        appBar: const AppGradientAppBar(
           title: Text('Perfil del trabajador'),
         ),
-        body: Padding(
+        body: const Padding(
           padding: EdgeInsets.symmetric(vertical: 12),
           child: Column(
             children: [
@@ -152,7 +152,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppDecorations.screenBackground,
+      backgroundColor: AppDecorations.canvasOf(context),
       appBar: const AppGradientAppBar(
         title: Text('Perfil del trabajador'),
       ),
@@ -277,14 +277,22 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
   }
 
   Widget _buildRequestFooter(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: isDark ? AppColors.surfaceDark : AppColors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : AppColors.grayBorder,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.grayDark.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -310,7 +318,9 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
                   'Este profesional no está disponible en este momento.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.grayMedium,
+                        color: isDark
+                            ? AppColors.white.withValues(alpha: 0.65)
+                            : AppColors.grayMedium,
                       ),
                 ),
               ],
@@ -333,7 +343,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: AppDecorations.surfaceCard(),
+      decoration: AppDecorations.surfaceCardOf(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -1,363 +1,729 @@
 import { useEffect, useState } from 'react';
-import { TicketCheck, CheckCircle2, RefreshCw, ArrowUpRight, Image, MessageSquare, Send, Scale, ShieldAlert, Edit3 } from 'lucide-react';
+
+import {
+
+  Search,
+
+  Filter,
+
+
+  CheckCircle2,
+
+  Send,
+
+  ShieldAlert,
+
+  Lock,
+
+  Shield,
+
+  ChevronDown,
+
+  Bell,
+
+  HelpCircle,
+
+  ArrowLeftRight,
+
+  Paperclip,
+
+} from 'lucide-react';
+
 import { JobScopeAdjustmentModal } from './JobScopeAdjustmentModal';
+
 import { TableRowsSkeleton } from './LoadingState';
+
 import { fetchOpenDisputes, updateDisputeStatus } from '@myworksapp/shared';
+
 import { supabase } from '../supabaseClient';
 
+
+
 interface Ticket {
+
   id: string;
+
   client: string;
+
   worker: string;
+
   issue: string;
+
   escrowAmount: number;
+
   date: string;
+
   status: 'Pending' | 'Resolved';
+
 }
 
-interface ChatMessage {
-  id: string;
-  sender: 'ADMIN' | 'CLIENT' | 'WORKER';
-  text: string;
-  timestamp: string;
-}
+
 
 interface SupportWorkspaceProps {
+
   adminId: string;
+
 }
+
+
+
+const DEMO_MESSAGES = {
+
+  client: 'El trabajo entregado no cumple con los requisitos acordados en el contrato. Solicito revisión inmediata.',
+
+  worker: 'El alcance original no incluía las revisiones adicionales solicitadas. Adjunto evidencia del acuerdo inicial.',
+
+};
+
+
 
 export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
+
   const [loading, setLoading] = useState(true);
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   const [scopeModalTicket, setScopeModalTicket] = useState<Ticket | null>(null);
-  const [modalTab, setModalTab] = useState<number>(0); // 0: Evidencias, 1: Mensajería Dual, 2: Veredicto
+
   const [notification, setNotification] = useState<string | null>(null);
 
+  const [search, setSearch] = useState('');
+
+  const [messageInput, setMessageInput] = useState('');
+
+
+
   const loadTickets = async () => {
+
     setLoading(true);
+
     try {
+
       const disputes = await fetchOpenDisputes(supabase);
-      setTickets(
-        disputes.map((dispute) => ({
-          id: dispute.id,
-          client: dispute.clientName,
-          worker: dispute.workerName,
-          issue: dispute.description ?? dispute.reason,
-          escrowAmount: dispute.escrowAmount,
-          date: new Date(dispute.createdAt).toLocaleString('es-CL'),
-          status: dispute.status === 'resuelta' ? 'Resolved' : 'Pending',
-        })),
-      );
+
+      const mapped = disputes.map((dispute) => ({
+
+        id: dispute.id,
+
+        client: dispute.clientName,
+
+        worker: dispute.workerName,
+
+        issue: dispute.description ?? dispute.reason,
+
+        escrowAmount: dispute.escrowAmount,
+
+        date: new Date(dispute.createdAt).toLocaleString('es-CL'),
+
+        status: dispute.status === 'resuelta' ? 'Resolved' as const : 'Pending' as const,
+
+      }));
+
+      setTickets(mapped);
+
+      if (mapped.length > 0 && !selectedId) {
+
+        setSelectedId(mapped[0].id);
+
+      }
+
     } catch {
+
       setTickets([]);
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
+
+
 
   useEffect(() => {
+
     void loadTickets();
+
   }, []);
 
-  const handleUpdateScope = (updatedTicket: Ticket, newTariff: number, newReason: string) => {
-    setTickets(prev => prev.map(t => t.id === updatedTicket.id ? { ...t, escrowAmount: newTariff, issue: newReason } : t));
-    setScopeModalTicket(null);
-    setNotification(`Propuesta de re-cotización a $${newTariff.toLocaleString('es-CL')} CLP (solo UI local — no notifica aún).`);
-    setTimeout(() => setNotification(null), 5000);
-  };
 
-  // Estado de Mensajería Dual
-  const [targetRecipient, setTargetRecipient] = useState<'CLIENT' | 'WORKER' | 'BOTH'>('BOTH');
-  const [messageInput, setMessageInput] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', sender: 'CLIENT', text: 'El profesional dejó los cables al descubierto y no terminó la instalación.', timestamp: '18:42' },
-    { id: '2', sender: 'WORKER', text: 'El tablero existente no tenía diferencial SEC, se requieren materiales adicionales.', timestamp: '19:05' },
-  ]);
 
-  const sendMessage = (textToSend?: string) => {
-    const text = textToSend || messageInput;
-    if (!text.trim()) return;
-    const recipientText = targetRecipient === 'CLIENT' ? '(Para Cliente)' : targetRecipient === 'WORKER' ? '(Para Profesional)' : '(Para Ambos)';
-    const newMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'ADMIN',
-      text: `Admin ${recipientText}: ${text}`,
-      timestamp: new Date().toLocaleTimeString().slice(0, 5),
-    };
-    setMessages(prev => [...prev, newMsg]);
-    setMessageInput('');
-  };
+  const selectedTicket = tickets.find((t) => t.id === selectedId) ?? null;
+
+
+
+  const filtered = tickets.filter(
+
+    (t) =>
+
+      t.id.toLowerCase().includes(search.toLowerCase()) ||
+
+      t.client.toLowerCase().includes(search.toLowerCase()) ||
+
+      t.worker.toLowerCase().includes(search.toLowerCase()),
+
+  );
+
+
 
   const resolveTicket = async (ticketId: string, action: 'refund' | 'payout' | 'split') => {
+
     const resolution =
+
       action === 'refund'
+
         ? 'Reembolso total al cliente'
+
         : action === 'payout'
+
           ? 'Pago liberado al profesional'
+
           : 'Resolución parcial 50/50';
 
+
+
     try {
+
       await updateDisputeStatus(supabase, ticketId, 'resuelta', resolution, adminId);
+
       setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'Resolved' } : t)));
-      setSelectedTicket(null);
-      setNotification(`Disputa actualizada en Supabase: ${resolution}.`);
+
+      setNotification(`Disputa actualizada: ${resolution}.`);
+
       setTimeout(() => setNotification(null), 4000);
+
     } catch {
-      setNotification('No se pudo resolver la disputa en Supabase.');
+
+      setNotification('No se pudo resolver la disputa.');
+
       setTimeout(() => setNotification(null), 4000);
+
     }
+
   };
 
+
+
+  const displayId = selectedTicket?.id.slice(0, 8).toUpperCase() ?? '—';
+
+
+
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 900 }}>Soporte y mediación</h1>
-          <p style={{ fontSize: '13.5px', color: '#98989D', marginTop: '4px' }}>
-            Listado y resolución de disputas desde Supabase. Evidencias y chat del expediente son UI de demostración.
-          </p>
+
+    <div className="support-workspace">
+
+      <header className="support-topbar">
+
+        <div className="support-topbar-brand">
+
+          <div className="support-topbar-logo" aria-hidden />
+
+          <div>
+
+            <strong>My Works App</strong>
+
+            <span>Enterprise Mediation Center</span>
+
+          </div>
+
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span className="badge-tag" style={{ backgroundColor: 'rgba(255, 149, 0, 0.15)', color: '#FF9500' }}>
-            <TicketCheck size={14} /> {tickets.filter(t => t.status === 'Pending').length} abiertas
-          </span>
-          <button onClick={() => void loadTickets()} className="btn-action-secondary">
-            <RefreshCw size={14} /> Actualizar
+
+        <div className="support-search">
+
+          <Search size={16} />
+
+          <input type="search" placeholder="Buscar tickets, usuarios o disputas…" />
+
+          <kbd>⌘ K</kbd>
+
+        </div>
+
+        <div className="support-topbar-actions">
+
+          <button type="button" className="icon-btn support-notify" aria-label="Notificaciones">
+
+            <Bell size={18} />
+
+            <span className="notify-badge">3</span>
+
           </button>
-        </div>
-      </div>
 
-      {notification && (
-        <div style={{ backgroundColor: 'rgba(52, 199, 89, 0.15)', border: '1px solid #34C759', color: '#34C759', padding: '12px 18px', borderRadius: '12px', marginBottom: '20px', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <CheckCircle2 size={18} /> {notification}
-        </div>
-      )}
+          <button type="button" className="icon-btn" aria-label="Ayuda">
 
-      <div className="card-3d" style={{ overflow: 'hidden', padding: 0 }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ID</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>CLIENTE</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>PROFESIONAL</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>MOTIVO</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESCROW</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ESTADO</th>
-                <th style={{ padding: '16px 20px', fontSize: '12px', color: '#98989D' }}>ACCIONES</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
-                <tr>
-                  <td colSpan={7} style={{ padding: 0 }}>
-                    <div className="table-skeleton-wrap">
-                      <TableRowsSkeleton rows={5} columns={7} />
-                    </div>
-                  </td>
-                </tr>
-              )}
-              {!loading && tickets.length === 0 && (
-                <tr>
-                  <td colSpan={7} style={{ padding: '28px 20px', color: '#98989D', textAlign: 'center' }}>
-                    No hay disputas abiertas en Supabase (o faltan permisos RLS).
-                  </td>
-                </tr>
-              )}
-              {!loading && tickets.map(ticket => (
-                <tr key={ticket.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '16px 20px', fontWeight: 800, color: '#F0782A' }}>{ticket.id}</td>
-                  <td style={{ padding: '16px 20px', fontWeight: 600 }}>{ticket.client}</td>
-                  <td style={{ padding: '16px 20px', color: '#98989D' }}>{ticket.worker}</td>
-                  <td style={{ padding: '16px 20px', maxWidth: '240px' }}>{ticket.issue}</td>
-                  <td style={{ padding: '16px 20px', fontWeight: 800, color: '#34C759' }}>
-                    ${ticket.escrowAmount.toLocaleString('es-CL')} CLP
-                  </td>
-                  <td style={{ padding: '16px 20px' }}>
-                    <span className="badge-tag" style={{ backgroundColor: ticket.status === 'Pending' ? 'rgba(255, 59, 48, 0.15)' : 'rgba(52, 199, 89, 0.15)', color: ticket.status === 'Pending' ? '#FF3B30' : '#34C759' }}>
-                      {ticket.status === 'Pending' ? 'Pendiente' : 'Resuelto'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px 20px' }}>
-                    {ticket.status === 'Pending' ? (
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        <button onClick={() => { setSelectedTicket(ticket); setModalTab(0); }} className="btn-action-primary" style={{ padding: '6px 12px', fontSize: '11.5px' }}>
-                          Abrir expediente
-                        </button>
-                        <button onClick={() => setScopeModalTicket(ticket)} className="btn-action-secondary" style={{ padding: '6px 12px', fontSize: '11.5px', color: '#F0782A', borderColor: '#F0782A' }}>
-                          <Edit3 size={12} /> Alcance
-                        </button>
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: '12px', color: '#98989D' }}>Cerrado</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            <HelpCircle size={18} />
 
-      {/* Modal del Expediente de Mediación Admin */}
-      {selectedTicket && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(9, 13, 22, 0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' }}>
-          <div style={{ maxWidth: '680px', width: '100%', backgroundColor: '#1E293B', borderRadius: '18px', border: '2px solid #FF3B30', padding: '28px', color: '#FFFFFF', boxShadow: '0 20px 50px rgba(0,0,0,0.6)', position: 'relative' }}>
-            <button onClick={() => setSelectedTicket(null)} style={{ position: 'absolute', right: '20px', top: '20px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#94A3B8', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              ✕
+          </button>
+
+          <div className="support-user-chip">
+
+            <div className="support-user-avatar">MS</div>
+
+            <div>
+
+              <strong>Mediador Senior</strong>
+
+              <span>Centro de Mediación</span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </header>
+
+
+
+      <div className="support-body">
+
+        <aside className="support-sidebar">
+
+          <div className="support-sidebar-head">
+
+            <strong>Disputas</strong>
+
+          </div>
+
+          <nav className="support-sidebar-nav">
+
+            <span className="support-nav-item active">Disputas</span>
+
+            <span className="support-nav-item">Panel principal</span>
+
+            <span className="support-nav-item">Tickets</span>
+
+            <span className="support-nav-item">Clientes</span>
+
+            <span className="support-nav-item">Trabajadores</span>
+
+            <span className="support-nav-item">Pagos en custodia</span>
+
+          </nav>
+
+          <div className="support-sidebar-footer">
+
+            <div className="support-online">
+
+              <span className="live-pill-dot" aria-hidden />
+
+              CENTRO DE MEDIACIÓN · En línea
+
+            </div>
+
+            <span className="support-tier">Nivel de servicio: Platino</span>
+
+            <span className="support-plan"><Shield size={12} /> Enterprise Plan</span>
+
+          </div>
+
+        </aside>
+
+
+
+        <section className="support-list-panel">
+
+          <div className="support-list-head">
+
+            <div>
+
+              <h2>Disputas y Tickets de Soporte</h2>
+
+              <span className="support-breadcrumb">Disputas › #{displayId}</span>
+
+            </div>
+
+            <button type="button" className="btn-filter" onClick={() => void loadTickets()}>
+
+              <Filter size={14} /> Filtros
+
             </button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#FF3B30', marginBottom: '14px' }}>
-              <ShieldAlert size={26} color="#FF3B30" />
-              <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#FFFFFF' }}>Expediente: {selectedTicket.id}</h3>
-                <span style={{ fontSize: '12px', color: '#94A3B8' }}>Cliente: {selectedTicket.client} vs Profesional: {selectedTicket.worker}</span>
-              </div>
-            </div>
-
-            <div className="demo-banner" style={{ marginBottom: '14px' }}>
-              Evidencias y mensajería son DEMO. El veredicto sí actualiza la disputa en Supabase.
-            </div>
-
-            <div className="sub-tabs-bar" style={{ marginBottom: '18px' }}>
-              <div className={`sub-tab-item ${modalTab === 0 ? 'active' : ''}`} onClick={() => setModalTab(0)}>
-                <Image size={15} /> Evidencias (demo)
-              </div>
-              <div className={`sub-tab-item ${modalTab === 1 ? 'active' : ''}`} onClick={() => setModalTab(1)}>
-                <MessageSquare size={15} /> Mensajería (demo)
-              </div>
-              <div className={`sub-tab-item ${modalTab === 2 ? 'active' : ''}`} onClick={() => setModalTab(2)}>
-                <Scale size={15} /> Veredicto (Supabase)
-              </div>
-            </div>
-
-            {modalTab === 0 && (
-              <div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '18px' }}>
-                  <div style={{ backgroundColor: '#0F172A', border: '1px solid #334155', borderRadius: '12px', padding: '14px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#EF4444', textTransform: 'uppercase', marginBottom: '8px' }}>
-                      Evidencia cliente (demo)
-                    </div>
-                    <img 
-                      src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=400&q=80" 
-                      alt="Falla Cliente" 
-                      style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} 
-                    />
-                    <p style={{ fontSize: '11.5px', color: '#CBD5E1' }}>"Fotografía del tablero con cableado expuesto sin protección."</p>
-                  </div>
-
-                  {/* Evidencias del Trabajador */}
-                  <div style={{ backgroundColor: '#0F172A', border: '1px solid #334155', borderRadius: '12px', padding: '14px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#10B981', textTransform: 'uppercase', marginBottom: '8px' }}>
-                      Evidencia profesional (demo)
-                    </div>
-                    <img 
-                      src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=400&q=80" 
-                      alt="Trabajo Entregado" 
-                      style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} 
-                    />
-                    <p style={{ fontSize: '11.5px', color: '#CBD5E1' }}>"Comprobante de instalación parcial y orden de materiales."</p>
-                  </div>
-                </div>
-
-                <div style={{ backgroundColor: '#0F172A', padding: '12px', borderRadius: '10px', fontSize: '12.5px', color: '#34C759', fontWeight: 800, display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Monto Retenido en Custodia Escrow:</span>
-                  <span>${selectedTicket.escrowAmount.toLocaleString('es-CL')} CLP</span>
-                </div>
-              </div>
-            )}
-
-            {/* PESTAÑA 2: Mensajería Directa Dual (Cliente & Trabajador) */}
-            {modalTab === 1 && (
-              <div>
-                {/* Historial de Chat */}
-                <div style={{ backgroundColor: '#0F172A', border: '1px solid #334155', borderRadius: '12px', padding: '14px', height: '180px', overflowY: 'auto', marginBottom: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {messages.map(m => (
-                    <div key={m.id} style={{ padding: '8px 12px', borderRadius: '8px', backgroundColor: m.sender === 'ADMIN' ? 'rgba(239,68,68,0.2)' : m.sender === 'CLIENT' ? 'rgba(0,122,255,0.15)' : 'rgba(52,199,89,0.15)', border: `1px solid ${m.sender === 'ADMIN' ? '#EF4444' : m.sender === 'CLIENT' ? '#007AFF' : '#34C759'}` }}>
-                      <div style={{ fontSize: '10.5px', fontWeight: 800, color: m.sender === 'ADMIN' ? '#EF4444' : m.sender === 'CLIENT' ? '#007AFF' : '#34C759', marginBottom: '2px' }}>
-                        {m.sender === 'ADMIN' ? 'ADMIN' : m.sender === 'CLIENT' ? 'CLIENTE' : 'PROFESIONAL'} — {m.timestamp}
-                      </div>
-                      <div style={{ fontSize: '12.5px', color: '#F8FAFC' }}>{m.text}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Selector de Destinatario */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700 }}>Enviar mensaje a:</span>
-                  <button onClick={() => setTargetRecipient('BOTH')} style={{ padding: '4px 10px', borderRadius: '12px', border: 'none', backgroundColor: targetRecipient === 'BOTH' ? '#EF4444' : '#334155', color: 'white', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Ambos</button>
-                  <button onClick={() => setTargetRecipient('CLIENT')} style={{ padding: '4px 10px', borderRadius: '12px', border: 'none', backgroundColor: targetRecipient === 'CLIENT' ? '#007AFF' : '#334155', color: 'white', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Cliente</button>
-                  <button onClick={() => setTargetRecipient('WORKER')} style={{ padding: '4px 10px', borderRadius: '12px', border: 'none', backgroundColor: targetRecipient === 'WORKER' ? '#34C759' : '#334155', color: 'white', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>Trabajador</button>
-                </div>
-
-                {/* Caja de Texto */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                  <input 
-                    type="text" 
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Escribe un mensaje oficial de mediación..."
-                    style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #334155', backgroundColor: '#0F172A', color: 'white', fontSize: '13px', outline: 'none' }}
-                  />
-                  <button onClick={() => sendMessage()} className="btn-action-primary" style={{ padding: '10px 16px' }}>
-                    <Send size={14} /> Enviar
-                  </button>
-                </div>
-
-                {/* Action Chips Rápidos */}
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  <button onClick={() => sendMessage('Por favor adjuntar foto del tablero con la tapa cerrada antes de 24h.')} style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid #334155', color: '#CBD5E1', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', cursor: 'pointer' }}>
-                    Pedir foto final en 24h
-                  </button>
-                  <button onClick={() => sendMessage('Se otorga un plazo final de 12h para descargos antes de liberar o reembolsar.')} style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid #334155', color: '#CBD5E1', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', cursor: 'pointer' }}>
-                    Dar plazo final 12h
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* PESTAÑA 3: Veredicto & Resolución Escrow */}
-            {modalTab === 2 && (
-              <div>
-                <div style={{ backgroundColor: '#0F172A', border: '1px solid #334155', padding: '16px', borderRadius: '12px', marginBottom: '18px', fontSize: '13px' }}>
-                  <div style={{ fontWeight: 800, color: '#F0782A', marginBottom: '6px' }}>Resolución en Supabase</div>
-                  <p style={{ color: '#CBD5E1', marginBottom: '10px' }}>Marca la disputa como resuelta. Las evidencias/chat de arriba son demo; este paso sí persiste el estado.</p>
-                  <div style={{ color: '#34C759', fontWeight: 900, fontSize: '16px' }}>Total a Disposición: ${selectedTicket.escrowAmount.toLocaleString('es-CL')} CLP</div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button onClick={() => resolveTicket(selectedTicket.id, 'refund')} className="btn-action-danger" style={{ padding: '12px', justifyContent: 'center' }}>
-                    <RefreshCw size={16} /> Reembolsar 100% al Cliente (${selectedTicket.escrowAmount.toLocaleString('es-CL')} CLP)
-                  </button>
-                  <button onClick={() => resolveTicket(selectedTicket.id, 'payout')} className="btn-action-success" style={{ padding: '12px', justifyContent: 'center' }}>
-                    <ArrowUpRight size={16} /> Liberar 100% al Profesional (${selectedTicket.escrowAmount.toLocaleString('es-CL')} CLP)
-                  </button>
-                  <button onClick={() => resolveTicket(selectedTicket.id, 'split')} className="btn-action-secondary" style={{ padding: '12px', justifyContent: 'center', color: '#F0782A', borderColor: '#F0782A' }}>
-                    <Scale size={16} /> Resolución Parcial 50% / 50% (${(selectedTicket.escrowAmount / 2).toLocaleString('es-CL')} CLP c/u)
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div style={{ marginTop: '18px', paddingTop: '12px', borderTop: '1px solid #334155' }}>
-              <button onClick={() => setSelectedTicket(null)} style={{ width: '100%', padding: '10px', background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: '12.5px', fontWeight: 700 }}>
-                Cerrar Expediente
-              </button>
-            </div>
           </div>
-        </div>
+
+
+
+          <div className="support-list-toolbar">
+
+            <span>Tickets de Disputa <em>{filtered.length || 128}</em></span>
+
+            <div className="support-list-search">
+
+              <Search size={14} />
+
+              <input
+
+                type="search"
+
+                value={search}
+
+                onChange={(e) => setSearch(e.target.value)}
+
+                placeholder="Buscar…"
+
+              />
+
+            </div>
+
+          </div>
+
+
+
+          {notification && (
+
+            <div className="support-toast">
+
+              <CheckCircle2 size={16} /> {notification}
+
+            </div>
+
+          )}
+
+
+
+          <div className="support-ticket-list">
+
+            {loading && <TableRowsSkeleton rows={4} columns={1} />}
+
+            {!loading && filtered.length === 0 && (
+
+              <p className="support-empty">No hay disputas abiertas.</p>
+
+            )}
+
+            {!loading && filtered.map((ticket) => (
+
+              <button
+
+                key={ticket.id}
+
+                type="button"
+
+                className={`support-ticket-card${selectedId === ticket.id ? ' active' : ''}`}
+
+                onClick={() => setSelectedId(ticket.id)}
+
+              >
+
+                <div className="support-ticket-card-top">
+
+                  <strong>#{ticket.id.slice(0, 8).toUpperCase()}</strong>
+
+                  <span className={`status-badge status-badge--${ticket.status === 'Pending' ? 'review' : 'resolved'}`}>
+
+                    {ticket.status === 'Pending' ? 'En revisión' : 'Resuelto'}
+
+                  </span>
+
+                </div>
+
+                <p className="support-ticket-issue">{ticket.issue}</p>
+
+                <div className="support-ticket-meta">
+
+                  <span>{ticket.client}</span>
+
+                  <span>{ticket.worker}</span>
+
+                </div>
+
+                <div className="support-ticket-foot">
+
+                  <span>{ticket.date.split(',')[0]}</span>
+
+                  {ticket.status === 'Pending' && <span className="support-ticket-dot" aria-hidden />}
+
+                </div>
+
+              </button>
+
+            ))}
+
+          </div>
+
+
+
+          <div className="support-pagination">
+
+            <button type="button" disabled>‹</button>
+
+            <button type="button" className="active">1</button>
+
+            <button type="button">2</button>
+
+            <button type="button">3</button>
+
+            <span>…</span>
+
+            <button type="button">›</button>
+
+          </div>
+
+        </section>
+
+
+
+        <section className="support-detail-panel">
+
+          {!selectedTicket ? (
+
+            <div className="support-detail-empty">Selecciona un ticket para ver el expediente.</div>
+
+          ) : (
+
+            <>
+
+              <div className="support-detail-head">
+
+                <div>
+
+                  <h2>Disputa #{displayId}</h2>
+
+                  <span className={`status-badge status-badge--review`}>En revisión</span>
+
+                </div>
+
+                <div className="support-detail-meta">
+
+                  <span>Abierto el {selectedTicket.date}</span>
+
+                  <span><Shield size={12} /> Prioridad: Media</span>
+
+                </div>
+
+              </div>
+
+
+
+              <div className="support-parties">
+
+                <div className="support-party">
+
+                  <span className="support-party-label">CLIENTE</span>
+
+                  <strong>{selectedTicket.client}</strong>
+
+                  <span>Representante legal</span>
+
+                </div>
+
+                <div className="support-party-swap"><ArrowLeftRight size={16} /></div>
+
+                <div className="support-party">
+
+                  <span className="support-party-label">TRABAJADOR</span>
+
+                  <strong>{selectedTicket.worker}</strong>
+
+                  <span>Profesional asignado</span>
+
+                </div>
+
+              </div>
+
+
+
+              <div className="support-evidence">
+
+                <h3>EVIDENCIA: COMPARACIÓN ANTES / DESPUÉS</h3>
+
+                <div className="support-evidence-grid">
+
+                  <div className="support-evidence-card">
+
+                    <span className="support-evidence-tag">ANTES (ACORDADO)</span>
+
+                    <div className="support-evidence-img support-evidence-img--before" />
+
+                  </div>
+
+                  <div className="support-evidence-vs">VS</div>
+
+                  <div className="support-evidence-card">
+
+                    <span className="support-evidence-tag support-evidence-tag--after">DESPUÉS (ENTREGADO)</span>
+
+                    <div className="support-evidence-img support-evidence-img--after" />
+
+                  </div>
+
+                </div>
+
+                <div className="support-evidence-footer">
+
+                  <span>Acuerdo: {selectedTicket.issue}</span>
+
+                  <span>Monto en custodia: ${selectedTicket.escrowAmount.toLocaleString('es-CL')} CLP</span>
+
+                </div>
+
+              </div>
+
+
+
+              <div className="support-threads">
+
+                <div className="support-thread support-thread--client">
+
+                  <div className="support-thread-head">
+
+                    <span className="support-thread-avatar support-thread-avatar--client">C</span>
+
+                    <div>
+
+                      <strong>{selectedTicket.client}</strong>
+
+                      <span>Hace 2h</span>
+
+                    </div>
+
+                  </div>
+
+                  <p>{DEMO_MESSAGES.client}</p>
+
+                  <a className="support-attachment" href="#"><Paperclip size={12} /> evidencia_cliente.pdf</a>
+
+                </div>
+
+                <div className="support-thread support-thread--worker">
+
+                  <div className="support-thread-head">
+
+                    <span className="support-thread-avatar support-thread-avatar--worker">T</span>
+
+                    <div>
+
+                      <strong>{selectedTicket.worker}</strong>
+
+                      <span>Hace 1h</span>
+
+                    </div>
+
+                  </div>
+
+                  <p>{DEMO_MESSAGES.worker}</p>
+
+                  <a className="support-attachment" href="#"><Paperclip size={12} /> entrega.zip</a>
+
+                </div>
+
+              </div>
+
+
+
+              <div className="support-compose">
+
+                <input
+
+                  type="text"
+
+                  value={messageInput}
+
+                  onChange={(e) => setMessageInput(e.target.value)}
+
+                  placeholder="Escribe un mensaje…"
+
+                />
+
+                <button type="button" className="support-send-btn" aria-label="Enviar">
+
+                  <Send size={16} />
+
+                </button>
+
+              </div>
+
+
+
+              <footer className="support-escrow-bar">
+
+                <div>
+
+                  <strong>RESOLUCIÓN DE CUSTODIA (ESCROW)</strong>
+
+                  <p>Como mediador, decide la distribución de fondos retenidos.</p>
+
+                </div>
+
+                <div className="support-escrow-actions">
+
+                  {selectedTicket.status === 'Pending' ? (
+
+                    <>
+
+                      <button type="button" className="btn-escrow-release" onClick={() => resolveTicket(selectedTicket.id, 'payout')}>
+
+                        <Lock size={14} /> LIBERAR FONDOS
+
+                      </button>
+
+                      <button type="button" className="btn-escrow-hold" onClick={() => resolveTicket(selectedTicket.id, 'refund')}>
+
+                        <ShieldAlert size={14} /> RETENER FONDOS
+
+                      </button>
+
+                      <button type="button" className="btn-escrow-more" onClick={() => resolveTicket(selectedTicket.id, 'split')}>
+
+                        Otras acciones <ChevronDown size={14} />
+
+                      </button>
+
+                    </>
+
+                  ) : (
+
+                    <span className="status-badge status-badge--resolved">Resuelto</span>
+
+                  )}
+
+                </div>
+
+              </footer>
+
+            </>
+
+          )}
+
+        </section>
+
+      </div>
+
+
+
+      {scopeModalTicket && (
+
+        <JobScopeAdjustmentModal
+
+          ticket={scopeModalTicket}
+
+          onClose={() => setScopeModalTicket(null)}
+
+          onUpdateScope={(updated, newTariff, newReason) => {
+
+            setTickets((prev) =>
+
+              prev.map((t) =>
+
+                t.id === updated.id ? { ...t, escrowAmount: newTariff, issue: newReason } : t,
+
+              ),
+
+            );
+
+            setScopeModalTicket(null);
+
+          }}
+
+        />
+
       )}
 
-      {/* Modal de Re-Cotización y Ajuste de Alcance */}
-      {scopeModalTicket && (
-        <JobScopeAdjustmentModal 
-          ticket={scopeModalTicket}
-          onClose={() => setScopeModalTicket(null)}
-          onUpdateScope={handleUpdateScope}
-        />
-      )}
     </div>
+
   );
+
 }
+

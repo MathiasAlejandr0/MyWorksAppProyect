@@ -8,8 +8,12 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "test": "node --import tsx --test src/repositories/metrics.test.ts"
+    "test": "node --import tsx --test src/repositories/metrics.test.ts src/domain.node.test.ts",
+    "test:vitest": "vitest run",
+    "check:domain": "node ../scripts/check-domain-drift.mjs",
+    "generate:domain": "node ../scripts/generate-domain-dart.mjs"
   },
+
   "peerDependencies": {
     "@supabase/supabase-js": "^2.112.3"
   },

@@ -19,17 +19,17 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
     {
       id: 'm1',
       sender: 'worker',
-      text: `Hola, soy ${workerName}. Recibí tu solicitud (demo). ¿En qué parte del domicilio necesitas la atención?`,
+      text: `Hola, soy ${workerName}. Recibí tu solicitud. ¿En qué parte del domicilio necesitas la atención?`,
       timestamp: '14:30',
     },
   ]);
   const [inputText, setInputText] = useState('');
 
   const quickReplies = [
-    '📍 Estoy en la dirección indicada',
-    '⏰ ¿A qué hora estimas llegar?',
-    '🔧 Necesito cotización adicional de materiales',
-    '👍 Perfecto, quedo atento',
+    'Estoy en la dirección indicada',
+    '¿A qué hora estimas llegar?',
+    'Necesito cotización adicional',
+    'Perfecto, quedo atento',
   ];
 
   const sendMessage = (text: string) => {
@@ -41,82 +41,68 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
       timestamp: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages(prev => [...prev, newMsg]);
+    setMessages((prev) => [...prev, newMsg]);
     setInputText('');
 
-    // Simular respuesta del profesional tras 1.2 segundos
     setTimeout(() => {
-      const replyMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: 'worker',
-        text: 'Gracias. En la app real el profesional confirmaría horario y detalles por aquí.',
-        timestamp: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages(prev => [...prev, replyMsg]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'worker',
+          text: 'Gracias. En la app real el profesional confirmaría horario y detalles por aquí.',
+          timestamp: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
     }, 1200);
   };
 
   return (
-    <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 250, width: '380px', height: '520px', backgroundColor: 'var(--bg-surface-light)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Header Chat */}
-      <div style={{ padding: '14px 18px', backgroundColor: 'var(--navy-structure)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src={workerPhoto} alt={workerName} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+    <div className="chat-widget modal-rise">
+      <div className="chat-widget-header">
+        <div className="chat-widget-user">
+          <img src={workerPhoto} alt="" />
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 800 }}>{workerName}</div>
-            <div style={{ fontSize: '11px', color: '#34C759', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '6px', height: '6px', backgroundColor: '#34C759', borderRadius: '50%' }} />
-              Demo · respuesta automática
-            </div>
+            <strong>{workerName}</strong>
+            <span className="chat-widget-online">
+              <span className="chat-online-dot" /> En línea
+            </span>
           </div>
         </div>
-
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+        <button type="button" onClick={onClose} className="chat-widget-close" aria-label="Cerrar chat">
           <X size={18} />
         </button>
       </div>
 
-      {/* Cuerpo Mensajes */}
-      <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: 'var(--bg-elevated-light)' }}>
-        {messages.map(m => (
-          <div key={m.id} style={{ alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
-            <div style={{ padding: '10px 14px', borderRadius: '16px', backgroundColor: m.sender === 'user' ? '#F0782A' : 'white', color: m.sender === 'user' ? 'white' : 'var(--text-main-light)', boxShadow: '0 2px 6px rgba(0,0,0,0.05)', fontSize: '13px', lineHeight: 1.4 }}>
-              {m.text}
-            </div>
-            <div style={{ fontSize: '10px', color: 'var(--text-muted-light)', marginTop: '2px', textAlign: m.sender === 'user' ? 'right' : 'left' }}>
-              {m.timestamp} {m.sender === 'user' && <CheckCheck size={12} color="#F0782A" style={{ display: 'inline', marginLeft: '4px' }} />}
+      <div className="chat-widget-body">
+        {messages.map((m) => (
+          <div key={m.id} className={`chat-bubble-row chat-bubble-row--${m.sender}`}>
+            <div className={`chat-bubble chat-bubble--${m.sender}`}>{m.text}</div>
+            <div className="chat-bubble-meta">
+              {m.timestamp}
+              {m.sender === 'user' && <CheckCheck size={12} color="var(--orange-accent)" />}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Respuestas rápidas */}
-      <div style={{ padding: '8px 12px', backgroundColor: 'white', borderTop: '1px solid var(--border-light)', display: 'flex', gap: '6px', overflowX: 'auto' }}>
-        {quickReplies.map((qr, idx) => (
-          <button 
-            key={idx}
-            onClick={() => sendMessage(qr)}
-            style={{ padding: '4px 10px', backgroundColor: 'var(--orange-soft)', color: '#F0782A', border: 'none', borderRadius: '12px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}
-          >
+      <div className="chat-widget-quick">
+        {quickReplies.map((qr) => (
+          <button key={qr} type="button" onClick={() => sendMessage(qr)} className="chat-quick-btn">
             {qr}
           </button>
         ))}
       </div>
 
-      {/* Input de Texto */}
-      <div style={{ padding: '12px', backgroundColor: 'white', display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <input 
-          type="text" 
+      <div className="chat-widget-input">
+        <input
+          type="text"
           value={inputText}
-          onChange={e => setInputText(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && sendMessage(inputText)}
+          onChange={(e) => setInputText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputText)}
           placeholder="Escribe un mensaje..."
-          style={{ flex: 1, padding: '10px 14px', borderRadius: 'var(--radius-pill)', border: '1px solid var(--border-light)', fontSize: '13px', outline: 'none' }}
         />
-        <button 
-          onClick={() => sendMessage(inputText)}
-          style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#F0782A', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-        >
+        <button type="button" onClick={() => sendMessage(inputText)} className="chat-send-btn" aria-label="Enviar">
           <Send size={16} />
         </button>
       </div>

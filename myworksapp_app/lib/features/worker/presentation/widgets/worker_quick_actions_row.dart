@@ -5,45 +5,42 @@ import '../../../../core/theme/app_colors.dart';
 class WorkerQuickActionsRow extends StatelessWidget {
   const WorkerQuickActionsRow({
     super.key,
-    required this.unread,
+    required this.onNewJob,
     required this.onCalendar,
-    required this.onStats,
-    required this.onHistory,
-    required this.onNotifications,
-    required this.onEditPricing,
+    required this.onJobMap,
+    required this.onInvoices,
   });
 
-  final int unread;
+  final VoidCallback onNewJob;
   final VoidCallback onCalendar;
-  final VoidCallback onStats;
-  final VoidCallback onHistory;
-  final VoidCallback onNotifications;
-  final VoidCallback onEditPricing;
+  final VoidCallback onJobMap;
+  final VoidCallback onInvoices;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      child: Row(
         children: [
-          _ActionChip(
-            icon: Icons.payments_outlined,
-            label: 'Mis tarifas',
-            onTap: onEditPricing,
+          _ActionTile(
+            icon: Icons.post_add_outlined,
+            label: 'Nuevo trabajo',
+            onTap: onNewJob,
           ),
-          const SizedBox(width: 8),
-          _ActionChip(icon: Icons.calendar_month, label: 'Calendario', onTap: onCalendar),
-          const SizedBox(width: 8),
-          _ActionChip(icon: Icons.bar_chart_rounded, label: 'Estadísticas', onTap: onStats),
-          const SizedBox(width: 8),
-          _ActionChip(icon: Icons.history, label: 'Historial', onTap: onHistory),
-          const SizedBox(width: 8),
-          _ActionChip(
-            icon: Icons.notifications_active_outlined,
-            label: unread > 0 ? 'Alertas ($unread)' : 'Alertas',
-            onTap: onNotifications,
+          _ActionTile(
+            icon: Icons.calendar_month_outlined,
+            label: 'Mi agenda',
+            onTap: onCalendar,
+          ),
+          _ActionTile(
+            icon: Icons.map_outlined,
+            label: 'Mapa de trabajos',
+            onTap: onJobMap,
+          ),
+          _ActionTile(
+            icon: Icons.receipt_long_outlined,
+            label: 'Mis facturas',
+            onTap: onInvoices,
           ),
         ],
       ),
@@ -51,8 +48,8 @@ class WorkerQuickActionsRow extends StatelessWidget {
   }
 }
 
-class _ActionChip extends StatelessWidget {
-  const _ActionChip({
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -64,16 +61,44 @@ class _ActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      avatar: Icon(icon, size: 18, color: AppColors.brandNavy),
-      label: Text(label),
-      onPressed: onTap,
-      backgroundColor: Colors.white,
-      side: BorderSide(color: AppColors.grayMedium.withValues(alpha: 0.22)),
-      labelStyle: const TextStyle(
-        color: AppColors.brandNavy,
-        fontWeight: FontWeight.w600,
-        fontSize: 13,
+    final muted = AppColors.onCanvasMuted(Theme.of(context).brightness);
+
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Ink(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              decoration: BoxDecoration(
+                color: AppColors.fieldFillOf(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.hairlineOf(context)),
+              ),
+              child: Column(
+                children: [
+                  Icon(icon, size: 22, color: AppColors.brandOrange),
+                  const SizedBox(height: 6),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      height: 1.15,
+                      color: muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

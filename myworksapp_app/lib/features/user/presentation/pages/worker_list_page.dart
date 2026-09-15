@@ -329,7 +329,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   @override
   Widget build(BuildContext context) {
     final page = Scaffold(
-      backgroundColor: AppDecorations.screenBackground,
+      backgroundColor: AppDecorations.canvasOf(context),
       appBar: AppGradientAppBar(
         title: Text(_serviceName ?? 'Trabajadores disponibles'),
       ),
@@ -521,7 +521,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                         displayName: user?.name ?? 'Trabajador',
                                         photoPath: user?.profilePhotoPath,
                                         radius: 26,
-                                        onDarkBackground: false,
+                                        onDarkBackground:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark,
                                       ),
                                       headerBadge: isRecommended
                                           ? 'Recomendado ${(score * 100).toStringAsFixed(0)}%'

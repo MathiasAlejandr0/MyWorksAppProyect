@@ -1,4 +1,6 @@
-/// Credenciales de demostración precargadas en la base de datos local.
+/// Credenciales de demostración (solo desarrollo / seeds locales).
+///
+/// Nunca se usan en release para autocompletar login; ver `kDebugMode` en LoginPage.
 class DemoCredentials {
   static const demoPassword = 'demo123';
 

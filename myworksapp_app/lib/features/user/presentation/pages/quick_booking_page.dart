@@ -172,7 +172,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
     final dateFmt = DateFormat('EEEE d MMMM', 'es_CL');
 
     return Scaffold(
-      backgroundColor: AppDecorations.screenBackground,
+      backgroundColor: AppDecorations.canvasOf(context),
       appBar: const AppGradientAppBar(title: Text('Agendar visita')),
       body: SingleChildScrollView(
         padding: LayoutUtils.scrollPadding(context),

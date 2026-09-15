@@ -27,22 +27,39 @@ class EmptyStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? AppColors.white : AppColors.brandNavy;
+    final messageColor = isDark
+        ? AppColors.white.withValues(alpha: 0.7)
+        : AppColors.textSecondary;
+    final glyphColor = iconColor ??
+        (isDark
+            ? AppColors.brandOrange.withValues(alpha: 0.75)
+            : AppColors.grayMedium);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 64,
-              color: iconColor ?? AppColors.grayMedium,
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.brandOrange.withValues(
+                  alpha: isDark ? 0.16 : 0.1,
+                ),
+              ),
+              child: Icon(icon, size: 34, color: glyphColor),
             ),
             const SizedBox(height: AppSpacing.xl),
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w800,
+                    color: titleColor,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -51,7 +68,9 @@ class EmptyStateWidget extends StatelessWidget {
               Text(
                 message!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.grayMedium,
+                      color: messageColor,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
                     ),
                 textAlign: TextAlign.center,
               ),
