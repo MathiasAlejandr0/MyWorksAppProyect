@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MyWorksApp — Modelo entidad-relación (28 tablas)</title>
+  <style>
+    :root {
+      --bg: #141414;
+      --surface: #1c1c1c;
+      --elevated: #242424;
+      --text: #f0f0f0;
+      --muted: #98989d;
+      --line: #3a3a3a;
+      --accent: #4d8dff;
+      --pk: #7db4ff;
+      --linked: #6a6a70;
+      --edge: #8a96a4;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f4f4f5;
+        --surface: #ffffff;
+        --elevated: #ececf0;
+        --text: #1a1a1a;
+        --muted: #6b6b70;
+        --line: #d8d8dc;
+        --accent: #1d6fe8;
+        --pk: #0b5bd3;
+        --linked: #8a8a90;
+        --edge: #6a7380;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header { flex-shrink: 0; padding: 16px 24px 6px; border-bottom: 1px solid var(--line); }
+    h1 { font-size: 20px; margin: 0 0 6px; font-weight: 650; }
+    .sub { color: var(--muted); font-size: 13.5px; max-width: 920px; margin: 0; }
+    .legend {
+      flex-shrink: 0;
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      padding: 8px 24px; font-size: 12.5px; color: var(--muted);
+    }
+    .legend button {
+      background: var(--elevated); color: var(--text);
+      border: 1px solid var(--line); border-radius: 6px;
+      padding: 5px 10px; cursor: pointer; font-size: 12px;
+    }
+    .legend button.on { border-color: var(--accent); color: var(--accent); }
+    .wrap {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+    }
+    @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+    .diagram { position: relative; overflow: auto; min-height: 0; height: 100%; }
+    #links { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
+    .board {
+      position: relative; z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      column-gap: clamp(92px, 8vw, 200px);
+      padding: 68px 16px 56px 52px;
+      width: 100%;
+      min-width: 0;
+      min-height: 100%;
+      align-items: stretch;
+    }
+    .col {
+      display: flex;
+      flex-direction: column;
+      background: transparent;
+      border: none;
+      border-top: 2px solid var(--line);
+      padding: 14px 8px 12px;
+      min-width: 0;
+    }
+    .col h2 {
+      font-size: 11px; font-weight: 650; color: var(--muted);
+      margin: 0 0 16px; letter-spacing: 0.02em;
+    }
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 52px;
+      flex: 1;
+      justify-content: space-between;
+    }
+    .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+    .tbl {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      cursor: pointer;
+      position: relative;
+      z-index: 4;
+      width: 100%;
+    }
+    .tbl.hub { border-left: 3px solid var(--accent); }
+    .tbl:hover { border-color: var(--muted); }
+    .tbl.selected { border-color: var(--accent); }
+    .tbl.linked { border-color: var(--linked); }
+    .name {
+      display: block; padding: 8px 10px;
+      font-family: ui-monospace, Consolas, monospace; font-size: 12px;
+      border-bottom: 1px solid var(--line); background: var(--elevated);
+      border-radius: 7px 7px 0 0;
+      overflow-wrap: anywhere;
+    }
+    .keys { padding: 8px 10px 10px; font-family: ui-monospace, Consolas, monospace; font-size: 10.5px; overflow-wrap: anywhere; }
+    .pk { color: var(--pk); }
+    .fk { color: var(--muted); margin-top: 3px; }
+    aside { border-left: 1px solid var(--line); padding: 18px; background: var(--surface); z-index: 3; overflow: auto; }
+    aside h2 { font-size: 13px; margin: 0 0 8px; }
+    aside code { font-size: 12px; background: var(--elevated); padding: 1px 5px; border-radius: 4px; }
+    aside ul { padding-left: 18px; font-size: 13px; }
+    aside li { margin: 5px 0; }
+    aside .hint { font-size: 12px; color: var(--muted); margin-top: 14px; }
+    button.reset {
+      margin-top: 12px; background: transparent; color: var(--text);
+      border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px;
+      cursor: pointer; font-size: 12px;
+    }
+    .edge-label { font-family: ui-monospace, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Modelo entidad-relación — 28 tablas</h1>
+    <p class="sub">
+      Las flechas van de la FK hacia la PK. El color indica a qué tabla llega.
+      Clic en una caja para resaltar sus relaciones.
+    </p>
+  </header>
+  <div class="legend">
+    <span><i class="swatch" style="background:#4d8dff"></i>perfiles</span>
+    <span><i class="swatch" style="background:#2bbf9a"></i>trabajadores</span>
+    <span><i class="swatch" style="background:#e0a12b"></i>servicios</span>
+    <span><i class="swatch" style="background:#f0782a"></i>trabajos</span>
+    <span><i class="swatch" style="background:#c084fc"></i>cobro</span>
+    <span>Trazos = nullable · Puntos = lógica</span>
+    <button type="button" id="toggleAll" class="on">Incluir relaciones lejanas</button>
+  </div>
+  <div class="wrap">
+    <div class="diagram" id="diagram">
+      <svg id="links"></svg>
+      <div class="board" id="board"></div>
+    </div>
+    <aside id="detail"></aside>
+  </div>
+  <script>
+    const HUBS = { perfiles: 1, trabajadores: 1, servicios: 1, trabajos: 1 };
+    const COLUMNS = [
+      {
+        title: "Identidad",
+        tables: [
+          { id: "perfiles", pk: "id", fks: [] },
+          { id: "notificaciones", pk: "id", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id" }] },
+          { id: "consentimientos_usuario", pk: "id", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id" }] },
+          { id: "bloqueos_usuario", pk: "id", fks: [
+            { col: "id_bloqueador", to: "perfiles", toCol: "id" },
+            { col: "id_bloqueado", to: "perfiles", toCol: "id" }
+          ]},
+          { id: "reportes", pk: "id", fks: [
+            { col: "id_reportante", to: "perfiles", toCol: "id" },
+            { col: "id_usuario_reportado", to: "perfiles", toCol: "id" }
+          ]},
+          { id: "suscripciones", pk: "id", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id" }] },
+          { id: "codigos_restablecimiento", pk: "id", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id" }] },
+          { id: "registros_error_app", pk: "id", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", nullable: true }] },
+          { id: "eventos_abuso", pk: "id", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id" }] },
+          { id: "acciones_pendientes", pk: "id", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id" }] },
+          { id: "eventos_analitica", pk: "id", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", nullable: true }] },
+          { id: "banderas_funcionalidad", pk: "id", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", nullable: true }] }
+        ]
+      },
+      {
+        title: "Catálogo y profesional",
+        tables: [
+          { id: "trabajadores", pk: "id_usuario", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id" }] },
+          { id: "servicios", pk: "id", fks: [] },
+          { id: "trabajador_servicios", pk: "(id_trabajador, categoria_servicio)", fks: [
+            { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario" },
+            { col: "categoria_servicio", to: "servicios", toCol: "categoria", logical: true }
+          ]},
+          { id: "portafolio_trabajador", pk: "id", fks: [{ col: "id_trabajador", to: "trabajadores", toCol: "id_usuario" }] },
+          { id: "impulsos", pk: "id", fks: [{ col: "id_trabajador", to: "trabajadores", toCol: "id_usuario" }] },
+          { id: "configuraciones_servicio", pk: "id", fks: [{ col: "id_servicio", to: "servicios", toCol: "id" }] }
+        ]
+      },
+      {
+        title: "Pedido",
+        tables: [
+          { id: "trabajos", pk: "id", fks: [
+            { col: "id_usuario", to: "perfiles", toCol: "id" },
+            { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", nullable: true },
+            { col: "id_servicio", to: "servicios", toCol: "id" },
+            { col: "id_cotizacion_seleccionada", to: "propuestas_cotizacion", toCol: "id", nullable: true }
+          ]},
+          { id: "mensajes", pk: "id", fks: [
+            { col: "id_trabajo", to: "trabajos", toCol: "id" },
+            { col: "id_remitente", to: "perfiles", toCol: "id" },
+            { col: "id_destinatario", to: "perfiles", toCol: "id" }
+          ]},
+          { id: "fotos_trabajo", pk: "id", fks: [{ col: "id_trabajo", to: "trabajos", toCol: "id" }] },
+          { id: "calificaciones", pk: "id", fks: [
+            { col: "id_trabajo", to: "trabajos", toCol: "id" },
+            { col: "id_usuario", to: "perfiles", toCol: "id" }
+          ]},
+          { id: "disputas", pk: "id", fks: [
+            { col: "id_trabajo", to: "trabajos", toCol: "id" },
+            { col: "abierta_por", to: "perfiles", toCol: "id" },
+            { col: "resuelta_por", to: "perfiles", toCol: "id", nullable: true }
+          ]},
+          { id: "cancelaciones_trabajo", pk: "id", fks: [
+            { col: "id_trabajo", to: "trabajos", toCol: "id" },
+            { col: "cancelado_por", to: "perfiles", toCol: "id" }
+          ]},
+          { id: "tickets_soporte", pk: "id", fks: [{ col: "id_trabajo", to: "trabajos", toCol: "id", nullable: true }] }
+        ]
+      },
+      {
+        title: "Cobro",
+        tables: [
+          { id: "propuestas_cotizacion", pk: "id", fks: [
+            { col: "id_trabajo", to: "trabajos", toCol: "id" },
+            { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario" }
+          ]},
+          { id: "pagos", pk: "id", fks: [
+            { col: "id_trabajo", to: "trabajos", toCol: "id" },
+            { col: "id_orden_cambio", to: "ordenes_cambio", toCol: "id", nullable: true }
+          ]},
+          { id: "ordenes_cambio", pk: "id", fks: [
+            { col: "id_trabajo", to: "trabajos", toCol: "id" },
+            { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario" },
+            { col: "id_pago", to: "pagos", toCol: "id", nullable: true }
+          ]}
+        ]
+      }
+    ];
+
+    const ALL = COLUMNS.flatMap((c) => c.tables);
+    const BY = Object.fromEntries(ALL.map((t) => [t.id, t]));
+    const COL_OF = {};
+    COLUMNS.forEach((c, i) => c.tables.forEach((t) => { COL_OF[t.id] = i; }));
+
+    const EDGES = [];
+    ALL.forEach((t) => {
+      t.fks.forEach((fk, fkIndex) => {
+        const fromCol = COL_OF[t.id];
+        const toCol = COL_OF[fk.to];
+        const span = Math.abs(fromCol - toCol);
+        EDGES.push({
+          from: t.id, to: fk.to, col: fk.col, toColName: fk.toCol,
+          nullable: !!fk.nullable, logical: !!fk.logical, fkIndex,
+          fromCol, toCol, span
+        });
+      });
+    });
+
+    let selected = "trabajos";
+    let showFar = true;
+
+    function scheduleDraw() {
+      requestAnimationFrame(() => requestAnimationFrame(drawLinks));
+    }
+
+    function incoming(id) {
+      return ALL.filter((t) => t.fks.some((fk) => fk.to === id));
+    }
+
+    function relBox(el, root) {
+      const a = el.getBoundingClientRect();
+      const b = root.getBoundingClientRect();
+      return {
+        x: a.left - b.left + root.scrollLeft,
+        y: a.top - b.top + root.scrollTop,
+        w: a.width,
+        h: a.height
+      };
+    }
+
+    function polyline(pts) {
+      return pts.map((p, i) => (i ? "L" : "M") + " " + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    }
+
+    const HUB_COLOR = {
+      perfiles: "#4d8dff",
+      trabajadores: "#2bbf9a",
+      servicios: "#e0a12b",
+      trabajos: "#f0782a",
+      propuestas_cotizacion: "#c084fc",
+      pagos: "#c084fc",
+      ordenes_cambio: "#c084fc"
+    };
+
+    function colorFor(toId) {
+      return HUB_COLOR[toId] || "#8a96a4";
+    }
+
+    function sideX(box, towardX) {
+      return box.x + box.w / 2 < towardX ? box.x + box.w : box.x;
+    }
+
+    function attachY(box, fkIndex) {
+      return box.y + Math.min(box.h - 10, 28 + fkIndex * 16);
+    }
+
+    function drawLinks() {
+      try {
+        drawLinksInner();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function drawLinksInner() {
+      const diagram = document.getElementById("diagram");
+      const svg = document.getElementById("links");
+      const board = document.getElementById("board");
+      const w = Math.max(board.scrollWidth, diagram.clientWidth, diagram.scrollWidth);
+      const h = Math.max(board.scrollHeight, diagram.clientHeight, diagram.scrollHeight);
+      svg.setAttribute("width", w);
+      svg.setAttribute("height", h);
+      svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+
+      const boxes = {};
+      board.querySelectorAll(".tbl").forEach((el) => {
+        boxes[el.getAttribute("data-id")] = relBox(el, diagram);
+      });
+      const colBoxes = {};
+      board.querySelectorAll(".col").forEach((el) => {
+        colBoxes[el.getAttribute("data-col")] = relBox(el, diagram);
+      });
+
+      const ns = "http://www.w3.org/2000/svg";
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      const defs = document.createElementNS(ns, "defs");
+      function marker(id, color) {
+        const m = document.createElementNS(ns, "marker");
+        m.setAttribute("id", id);
+        m.setAttribute("markerWidth", "10");
+        m.setAttribute("markerHeight", "10");
+        m.setAttribute("refX", "8");
+        m.setAttribute("refY", "5");
+        m.setAttribute("orient", "auto");
+        const p = document.createElementNS(ns, "polygon");
+        p.setAttribute("points", "0 0, 10 5, 0 10");
+        p.setAttribute("fill", color);
+        m.appendChild(p);
+        defs.appendChild(m);
+      }
+      Object.keys(HUB_COLOR).forEach((k) => marker("arr-" + k, HUB_COLOR[k]));
+      marker("arr-default", "#8a96a4");
+      svg.appendChild(defs);
+
+      const bgFill = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#141414";
+
+      function labelAt(x, y, text, color) {
+        if (!text) return;
+        const bg = document.createElementNS(ns, "rect");
+        const t = document.createElementNS(ns, "text");
+        t.setAttribute("x", x);
+        t.setAttribute("y", y);
+        t.setAttribute("fill", color);
+        t.setAttribute("font-size", "11");
+        t.setAttribute("font-weight", "700");
+        t.setAttribute("class", "edge-label");
+        t.textContent = text;
+        svg.appendChild(t);
+        try {
+          const bb = t.getBBox();
+          bg.setAttribute("x", bb.x - 3);
+          bg.setAttribute("y", bb.y - 1);
+          bg.setAttribute("width", bb.width + 6);
+          bg.setAttribute("height", bb.height + 2);
+        } catch (e) {
+          bg.setAttribute("x", x - 3);
+          bg.setAttribute("y", y - 12);
+          bg.setAttribute("width", Math.max(24, text.length * 7));
+          bg.setAttribute("height", 14);
+        }
+        bg.setAttribute("rx", "3");
+        bg.setAttribute("fill", bgFill);
+        bg.setAttribute("opacity", "0.9");
+        svg.insertBefore(bg, t);
+      }
+
+      function paint(pts, edge, opts) {
+        const active = !!(opts && opts.active);
+        const showLabel = !!(opts && opts.label);
+        const color = colorFor(edge.to);
+        const halo = document.createElementNS(ns, "path");
+        halo.setAttribute("d", polyline(pts));
+        halo.setAttribute("fill", "none");
+        halo.setAttribute("stroke", bgFill);
+        halo.setAttribute("stroke-width", active ? "8" : "6");
+        halo.setAttribute("stroke-linejoin", "round");
+        halo.setAttribute("stroke-linecap", "round");
+        svg.appendChild(halo);
+
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("d", polyline(pts));
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", color);
+        path.setAttribute("stroke-width", active ? "3.2" : "2.4");
+        path.setAttribute("stroke-linejoin", "round");
+        path.setAttribute("stroke-linecap", "round");
+        if (!opts || opts.arrow !== false) {
+          const mk = HUB_COLOR[edge.to] ? "arr-" + edge.to : "arr-default";
+          path.setAttribute("marker-end", "url(#" + mk + ")");
+        }
+        if (edge.logical) path.setAttribute("stroke-dasharray", "3 4");
+        else if (edge.nullable) path.setAttribute("stroke-dasharray", "8 5");
+        svg.appendChild(path);
+        if (showLabel && edge.col) {
+          if (opts && opts.labelOnVertical && pts.length >= 4) {
+            const gx = pts[1][0];
+            const yA = pts[1][1];
+            const yB = pts[2][1];
+            if (Math.abs(yA - yB) < 40) {
+              labelAt(gx + 4, Math.min(yA, yB) - 8, edge.col, color);
+            } else {
+              labelAt(gx + 6, (yA + yB) / 2, edge.col, color);
+            }
+          } else if (pts.length >= 4) {
+            const midX = (pts[1][0] + pts[2][0]) / 2;
+            const midY = Math.min(pts[1][1], pts[2][1]) - 8;
+            labelAt(midX, midY, edge.col, color);
+          } else {
+            const mid = pts[Math.max(0, Math.floor(pts.length / 2) - 1)];
+            labelAt(mid[0] + 6, mid[1] - 7, edge.col, color);
+          }
+        }
+      }
+
+      const local = EDGES.filter((e) => e.span === 0);
+      const near = EDGES.filter((e) => e.span === 1);
+      const far = EDGES.filter((e) => e.span >= 2);
+
+      const rails = {};
+      local.forEach((e) => {
+        const key = e.to + ":" + e.toColName;
+        (rails[key] || (rails[key] = [])).push(e);
+      });
+
+      const railOrder = {};
+      Object.keys(rails).forEach((key) => {
+        const col = String(rails[key][0].toCol);
+        (railOrder[col] || (railOrder[col] = [])).push(key);
+      });
+
+      Object.keys(rails).forEach((key) => {
+        const list = rails[key];
+        const parent = boxes[list[0].to];
+        const cluster = colBoxes[String(list[0].toCol)];
+        if (!parent || !cluster) return;
+        const kids = list.map((e) => ({ e: e, b: boxes[e.from] })).filter((x) => x.b);
+        if (!kids.length) return;
+        const railActive = list.some((e) => e.from === selected || e.to === selected);
+
+        const idx = railOrder[String(list[0].toCol)].indexOf(key);
+        const railX = cluster.x - 16 - idx * 22;
+        const yTop = parent.y + 22;
+        const yBot = Math.max.apply(null, kids.map((x) => attachY(x.b, x.e.fkIndex)));
+        paint([[railX, yTop], [railX, yBot]], { to: list[0].to, col: list[0].to }, { active: railActive, label: false, arrow: false });
+        paint([[railX, yTop], [parent.x, yTop]], { to: list[0].to, col: list[0].to }, { active: railActive, label: railActive });
+        kids.forEach(({ e, b }) => {
+          const y1 = attachY(b, e.fkIndex);
+          const active = e.from === selected || e.to === selected;
+          paint([[b.x, y1], [railX, y1]], e, { active: active, label: false });
+        });
+      });
+
+      const nearGroups = {};
+      near.forEach((e) => {
+        const g = Math.min(e.fromCol, e.toCol);
+        (nearGroups[g] || (nearGroups[g] = [])).push(e);
+      });
+
+      Object.keys(nearGroups).forEach((g) => {
+        const list = nearGroups[g];
+        const leftC = colBoxes[g];
+        const rightC = colBoxes[String(Number(g) + 1)];
+        if (!leftC || !rightC) return;
+        const nRailsRight = (railOrder[String(Number(g) + 1)] || []).length;
+        const x0 = leftC.x + leftC.w + 14;
+        const x1 = rightC.x - (22 + nRailsRight * 22);
+        const usable = Math.max(x1 - x0, 36);
+        list.forEach((e, i) => {
+          const from = boxes[e.from];
+          const to = boxes[e.to];
+          if (!from || !to) return;
+          const active = e.from === selected || e.to === selected;
+          const gx = x0 + (usable * (i + 1)) / (list.length + 1);
+          const yA = attachY(from, e.fkIndex);
+          const yB = Math.min(to.y + to.h - 12, to.y + 18 + i * 16);
+          paint(
+            [[sideX(from, gx), yA], [gx, yA], [gx, yB], [sideX(to, gx), yB]],
+            e,
+            { active: active, label: e.from === selected, labelOnVertical: true }
+          );
+        });
+      });
+
+      const farDraw = far.filter((e) => showFar && (e.from === selected || e.to === selected));
+      farDraw.forEach((e, i) => {
+        const from = boxes[e.from];
+        const to = boxes[e.to];
+        if (!from || !to) return;
+        const y1 = attachY(from, e.fkIndex);
+        const y2 = attachY(to, 0);
+        const yRun = 28 + i * 18;
+        const xStart = sideX(from, to.x + to.w / 2);
+        const xEnd = sideX(to, from.x + from.w / 2);
+        paint(
+          [[xStart, y1], [xStart, yRun], [xEnd, yRun], [xEnd, y2]],
+          e,
+          { active: true, label: e.from === selected }
+        );
+      });
+    }
+
+    function cardHtml(t) {
+      const isSel = t.id === selected;
+      const isLinked = t.fks.some((fk) => fk.to === selected) || incoming(selected).some((x) => x.id === t.id);
+      const cls = "tbl" + (HUBS[t.id] ? " hub" : "") + (isSel ? " selected" : isLinked && !isSel ? " linked" : "");
+      const fks = t.fks.length
+        ? t.fks.map((fk) =>
+            `<div class="fk">FK  ${fk.col}${fk.nullable ? " ?" : ""}${fk.logical ? " ~" : ""} → ${fk.to}.${fk.toCol}</div>`
+          ).join("")
+        : `<div class="fk">${t.id === "perfiles" ? "PK = auth.users.id" : "sin FK saliente"}</div>`;
+      return `<article class="${cls}" data-id="${t.id}">
+        <span class="name">${t.id}</span>
+        <div class="keys"><div class="pk">PK  ${t.pk}</div>${fks}</div>
+      </article>`;
+    }
+
+    function renderBoard() {
+      const board = document.getElementById("board");
+      board.innerHTML = COLUMNS.map((col, colIndex) => {
+        return `<section class="col" data-col="${colIndex}">
+          <h2>${col.title}</h2>
+          <div class="stack">${col.tables.map(cardHtml).join("")}</div>
+        </section>`;
+      }).join("");
+      board.querySelectorAll(".tbl").forEach((el) => {
+        el.addEventListener("click", () => {
+          selected = el.getAttribute("data-id");
+          renderBoard();
+          renderDetail();
+          scheduleDraw();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const t = BY[selected];
+      const ins = incoming(t.id);
+      const fkList = t.fks.length
+        ? `<ul>${t.fks.map((fk) =>
+            `<li><code>${fk.col}</code> → <code>${fk.to}.${fk.toCol}</code>${fk.nullable ? " (null)" : ""}${fk.logical ? " (lógica)" : ""}</li>`
+          ).join("")}</ul>`
+        : `<p class="hint">${t.id === "perfiles" ? "No apunta a otra tabla public." : "Catálogo raíz."}</p>`;
+      const inList = ins.length
+        ? `<ul>${ins.map((x) => {
+            const cols = x.fks.filter((fk) => fk.to === t.id).map((fk) => fk.col).join(", ");
+            return `<li><code>${x.id}</code> (${cols})</li>`;
+          }).join("")}</ul>`
+        : `<p class="hint">Nadie apunta a esta PK.</p>`;
+      document.getElementById("detail").innerHTML = `
+        <h2>Tabla <code>${t.id}</code></h2>
+        <p>PK <code>${t.pk}</code></p>
+        <h2>Sale hacia (FK)</h2>
+        ${fkList}
+        <h2>Entra desde</h2>
+        ${inList}
+        <p class="hint">Dentro del grupo: riel a la izquierda. Entre grupos: un carril por flecha en el hueco. El nombre de la FK se ve al seleccionar.</p>
+        <button class="reset" type="button" id="reset">Centrar en trabajos</button>
+      `;
+      document.getElementById("reset").onclick = () => {
+        selected = "trabajos";
+        renderBoard();
+        renderDetail();
+        scheduleDraw();
+      };
+    }
+
+    document.getElementById("toggleAll").onclick = function () {
+      showFar = !showFar;
+      this.classList.toggle("on", showFar);
+      this.textContent = showFar ? "Incluir relaciones lejanas" : "Ocultar relaciones lejanas";
+      drawLinks();
+    };
+
+    renderBoard();
+    renderDetail();
+    scheduleDraw();
+    window.addEventListener("resize", drawLinks);
+    document.getElementById("diagram").addEventListener("scroll", drawLinks);
+  </script>
+</body>
+</html>
