@@ -14,11 +14,12 @@ Este archivo es el **modelo entidad-relación del título**. Cada caja es una ta
 
 | Copia | Ruta | Para qué |
 |-------|------|----------|
-| **Título (esta)** | `proyecto_de_titulo/fase_2/MODELO_ENTIDAD_RELACION.md` | Memoria / entregable Fase 2 |
-| Canvas Cursor | carpeta de canvases del workspace (fuera del git) | Vista interactiva en el IDE |
+| **Vista portable (HTML)** | [modelo-entidad-relacion.html](modelo-entidad-relacion.html) | Abrir en el navegador; copiar a otro repo |
+| **Título (esta)** | `MODELO_ENTIDAD_RELACION.md` | Memoria / Mermaid / catálogo PK-FK |
+| Canvas Cursor | carpeta de canvases del workspace (fuera del git) | Solo se ve dentro de Cursor |
 | Diccionario técnico | `docs/DICCIONARIO_BASE_DATOS.md` | Columnas, RLS y consumidores de las apps |
 
-El canvas de Cursor **no** se puede guardar aquí: el IDE solo detecta `.canvas.tsx` en su directorio de canvases. El documento canónico del título es este Markdown.
+El `.canvas.tsx` **no viaja** a otro repositorio como vista viva: Cursor solo lo abre en su carpeta de canvases. Para compartir la vista, usá el HTML (doble clic) o este Markdown (GitHub renderiza los bloques Mermaid).
 
 ---
 
