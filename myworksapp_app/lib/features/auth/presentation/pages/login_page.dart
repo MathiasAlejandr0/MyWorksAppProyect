@@ -475,20 +475,20 @@ class _RoleChips extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
                   color: selected == roles[i].$1
-                      ? AppColors.brandOrange
+                      ? AppColors.brandOrange.withValues(alpha: 0.12)
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: selected == roles[i].$1
                         ? AppColors.brandOrange
                         : AppColors.hairlineOf(context),
-                    width: 1.2,
+                    width: selected == roles[i].$1 ? 1.6 : 1.2,
                   ),
                   boxShadow: selected == roles[i].$1
                       ? [
                           BoxShadow(
                             color:
-                                AppColors.brandOrange.withValues(alpha: 0.28),
+                                AppColors.brandOrange.withValues(alpha: 0.22),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -501,7 +501,7 @@ class _RoleChips extends StatelessWidget {
                       roles[i].$3,
                       size: 22,
                       color: selected == roles[i].$1
-                          ? AppColors.white
+                          ? AppColors.brandOrange
                           : inactiveFg,
                     ),
                     const SizedBox(height: 6),
@@ -511,7 +511,7 @@ class _RoleChips extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: selected == roles[i].$1
-                            ? AppColors.white
+                            ? AppColors.brandOrange
                             : inactiveFg,
                       ),
                     ),

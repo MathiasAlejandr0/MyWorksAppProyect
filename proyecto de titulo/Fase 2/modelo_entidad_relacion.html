@@ -1,0 +1,1094 @@
+﻿<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MyWorksApp — Modelo entidad-relación</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --bg-deep: #ebe4d6;
+      --surface: #fbf8f1;
+      --elevated: #f3eee4;
+      --text: #1b1814;
+      --muted: #6f6a60;
+      --faint: #9a9488;
+      --line: #ddd4c4;
+      --line-strong: #c9beaa;
+      --accent: #8a6a2f;
+      --accent-soft: rgba(138, 106, 47, 0.12);
+      --pk: #6b4f1d;
+      --ink: #1f3d4c;
+      --hub-perfiles: #1e4a7a;
+      --hub-trabajadores: #2c6a4e;
+      --hub-servicios: #9a6b18;
+      --hub-trabajos: #a24a1c;
+      --hub-cobro: #5c4578;
+      --edge: #8a8376;
+      --danger: #8f3b2c;
+      --shadow: 0 1px 0 rgba(27, 24, 20, 0.04);
+      --zoom: 1;
+      --sans: "Figtree", "Segoe UI", system-ui, sans-serif;
+      --serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+      --mono: "IBM Plex Mono", Consolas, monospace;
+    }
+    html[data-theme="dark"] {
+      --bg: #12110f;
+      --bg-deep: #0c0b0a;
+      --surface: #1c1a17;
+      --elevated: #25221d;
+      --text: #f3ece3;
+      --muted: #a39b8e;
+      --faint: #7a7368;
+      --line: #3a362e;
+      --line-strong: #524c40;
+      --accent: #c4a35a;
+      --accent-soft: rgba(196, 163, 90, 0.14);
+      --pk: #e0c37a;
+      --ink: #e8dcc8;
+      --hub-perfiles: #7eb0e0;
+      --hub-trabajadores: #6ec4a0;
+      --hub-servicios: #e0b45a;
+      --hub-trabajos: #e08958;
+      --hub-cobro: #c4a0ee;
+      --edge: #8a8376;
+      --danger: #e09080;
+      --shadow: none;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+    button, input { font-family: inherit; }
+
+    .masthead {
+      flex-shrink: 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px 24px;
+      align-items: end;
+      padding: 18px 28px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .brand {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 4px;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: clamp(26px, 2.6vw, 34px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--ink);
+      line-height: 1.15;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .chip {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--elevated);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 10px;
+    }
+    .chip strong { color: var(--text); font-weight: 600; }
+    .tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .tools input[type="search"] {
+      width: min(260px, 42vw);
+      height: 34px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 13px;
+      outline: none;
+    }
+    .tools input[type="search"]:focus {
+      border-color: var(--accent);
+    }
+    .btn {
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--elevated);
+      color: var(--text);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn:hover { border-color: var(--line-strong); }
+    .btn.on, .btn[aria-pressed="true"] {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .btn.ghost { background: transparent; }
+
+    .rail {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 28px 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12.5px;
+      color: var(--muted);
+      background: var(--bg);
+    }
+    .legend-row, .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+    }
+    .filter-row { gap: 6px; }
+    .swatch {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      margin-right: 6px;
+      vertical-align: 0;
+    }
+    .key {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .key i {
+      display: inline-block;
+      width: 28px;
+      height: 0;
+      border-top: 2px solid var(--muted);
+    }
+    .key i.opt { border-top-style: dashed; width: 32px; }
+    .key i.log { border-top: 2px dotted var(--muted); width: 32px; }
+
+    .wrap {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 252px;
+    }
+    @media (max-width: 980px) {
+      .wrap { grid-template-columns: 1fr; }
+      aside { border-left: none; border-top: 1px solid var(--line); max-height: 42vh; }
+      .masthead { grid-template-columns: 1fr; }
+      .tools { justify-content: flex-start; }
+    }
+
+    .diagram {
+      position: relative;
+      overflow: auto;
+      min-height: 0;
+      height: 100%;
+      zoom: var(--zoom);
+      background-image:
+        linear-gradient(rgba(27, 24, 20, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(27, 24, 20, 0.045) 1px, transparent 1px);
+      background-size: 56px 56px;
+      background-position: -1px -1px;
+      background-color: var(--bg);
+    }
+    html[data-theme="dark"] .diagram {
+      background-image:
+        linear-gradient(rgba(243, 236, 227, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(243, 236, 227, 0.04) 1px, transparent 1px);
+    }
+    #links { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
+    .board {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(196px, 1fr));
+      column-gap: clamp(88px, 6.5vw, 128px);
+      padding: 52px 40px 88px 72px;
+      width: 100%;
+      min-width: 1040px;
+      align-items: start;
+    }
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 0;
+      padding-top: 10px;
+      border-top: 2px solid var(--line-strong);
+      transition: opacity 160ms ease;
+    }
+    .col[data-domain="identidad"] { border-top-color: var(--hub-perfiles); }
+    .col[data-domain="catalogo"] { border-top-color: var(--hub-trabajadores); }
+    .col[data-domain="pedido"] { border-top-color: var(--hub-trabajos); }
+    .col[data-domain="cobro"] { border-top-color: var(--hub-cobro); }
+    .board.filter-identidad .col:not([data-domain="identidad"]),
+    .board.filter-catalogo .col:not([data-domain="catalogo"]),
+    .board.filter-pedido .col:not([data-domain="pedido"]),
+    .board.filter-cobro .col:not([data-domain="cobro"]) {
+      opacity: 0.22;
+    }
+    .col-head h2 {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .col-head h2 em {
+      font-family: var(--mono);
+      font-style: normal;
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--faint);
+      margin-left: 8px;
+    }
+    .group h3 {
+      margin: 0 0 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tbl {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      z-index: 4;
+      width: 100%;
+      box-shadow: var(--shadow);
+      transition: border-color 140ms ease, opacity 140ms ease, background 140ms ease;
+    }
+    .tbl.hub { border-left: 3px solid var(--accent); }
+    .tbl:hover { border-color: var(--line-strong); }
+    .tbl.selected {
+      border-color: var(--accent);
+      background: var(--surface);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .tbl.linked { border-color: var(--faint); }
+    .board.is-search .tbl { opacity: 0.28; }
+    .board.is-search .tbl.match { opacity: 1; }
+    .name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      border-bottom: 1px solid var(--line);
+      background: var(--elevated);
+      border-radius: 10px 10px 0 0;
+      overflow-wrap: break-word;
+    }
+    .hub-mark {
+      flex-shrink: 0;
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      padding: 1px 6px;
+    }
+    .keys {
+      padding: 8px 10px 10px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      line-height: 1.45;
+      overflow-wrap: break-word;
+    }
+    .pk { color: var(--pk); font-weight: 500; }
+    .fk { color: var(--muted); margin-top: 2px; }
+    .fk .q { color: var(--danger); }
+
+    aside {
+      border-left: 1px solid var(--line);
+      padding: 22px 22px 28px;
+      background: var(--surface);
+      z-index: 3;
+      overflow: auto;
+    }
+    .kicker {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 6px;
+    }
+    aside h2.entity {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 500;
+      margin: 0 0 6px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+    aside .role {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    aside h3 {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin: 18px 0 8px;
+    }
+    aside code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--elevated);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    aside ul { padding-left: 0; margin: 0; list-style: none; }
+    aside li {
+      margin: 0;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    aside li:last-child { border-bottom: none; }
+    aside .hint { font-size: 12px; color: var(--muted); margin: 16px 0 0; line-height: 1.5; }
+    aside .pk-block {
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 10px 12px;
+      background: var(--elevated);
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+    .card-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+    .edge-label { font-family: var(--mono); }
+
+    @media print {
+      @page { size: landscape; margin: 10mm; }
+      .masthead, .rail, aside, .tools { display: none !important; }
+      .wrap { display: block; }
+      .diagram { overflow: visible; height: auto; zoom: 0.72; background: white; }
+      body { background: white; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div>
+      <p class="brand">MyWorksApp · Fase 2</p>
+      <h1>Modelo entidad-relación</h1>
+      <div class="meta">
+        <span class="chip"><strong>28</strong> tablas</span>
+        <span class="chip">PostgreSQL <strong>public</strong></span>
+        <span class="chip">Supabase</span>
+        <span class="chip">español + snake_case</span>
+        <span class="chip">15 sep 2026</span>
+      </div>
+    </div>
+    <div class="tools">
+      <input type="search" id="search" placeholder="Buscar tabla…" autocomplete="off" />
+      <button type="button" class="btn ghost" id="btnTheme">Oscuro</button>
+      <button type="button" class="btn ghost" id="zoomOut" title="Alejar">−</button>
+      <button type="button" class="btn ghost" id="zoomLabel">100%</button>
+      <button type="button" class="btn ghost" id="zoomIn" title="Acercar">+</button>
+      <button type="button" class="btn" id="btnPrint">Imprimir</button>
+    </div>
+  </header>
+
+  <div class="rail">
+    <div class="legend-row">
+      <span class="key"><i class="swatch" style="background:var(--hub-perfiles)"></i>perfiles</span>
+      <span class="key"><i class="swatch" style="background:var(--hub-trabajadores)"></i>trabajadores</span>
+      <span class="key"><i class="swatch" style="background:var(--hub-servicios)"></i>servicios</span>
+      <span class="key"><i class="swatch" style="background:var(--hub-trabajos)"></i>trabajos</span>
+      <span class="key"><i class="swatch" style="background:var(--hub-cobro)"></i>cobro</span>
+      <span class="key"><i></i>FK obligatoria</span>
+      <span class="key"><i class="opt"></i>FK opcional</span>
+      <span class="key"><i class="log"></i>relación lógica</span>
+      <span class="key">Flecha: FK → PK de pertenencia. Al seleccionar, aparecen las FK de actor.</span>
+    </div>
+    <div class="filter-row">
+      <button type="button" class="btn ghost" data-filter="all" aria-pressed="true">Todos</button>
+      <button type="button" class="btn ghost" data-filter="identidad">Identidad</button>
+      <button type="button" class="btn ghost" data-filter="catalogo">Catálogo</button>
+      <button type="button" class="btn ghost" data-filter="pedido">Pedido</button>
+      <button type="button" class="btn ghost" data-filter="cobro">Cobro</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="diagram" id="diagram">
+      <svg id="links"></svg>
+      <div class="board" id="board"></div>
+    </div>
+    <aside id="detail"></aside>
+  </div>
+
+  <script>
+    const HUBS = { perfiles: 1, trabajadores: 1, servicios: 1, trabajos: 1 };
+    const COLUMNS = [
+      {
+        title: "Identidad",
+        domain: "identidad",
+        groups: [
+          {
+            title: "Cuenta",
+            tables: [
+              { id: "perfiles", pk: "id", role: "Identidad de app = Auth de Supabase", note: "perfiles.id coincide con auth.users.id, fuera de las 28 tablas public.", fks: [] }
+            ]
+          },
+          {
+            title: "Bandeja y sesión",
+            tables: [
+              { id: "notificaciones", pk: "id", role: "Inbox por usuario", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" }] },
+              { id: "suscripciones", pk: "id", role: "Planes", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" }] },
+              { id: "codigos_restablecimiento", pk: "id", role: "Reset de clave (app)", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" }] }
+            ]
+          },
+          {
+            title: "Confianza y cumplimiento",
+            tables: [
+              { id: "consentimientos_usuario", pk: "id", role: "GDPR / términos", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" }] },
+              { id: "bloqueos_usuario", pk: "id", role: "Bloqueo interpersonal", fks: [
+                { col: "id_bloqueador", to: "perfiles", toCol: "id", card: "N:1" },
+                { col: "id_bloqueado", to: "perfiles", toCol: "id", card: "N:1" }
+              ]},
+              { id: "reportes", pk: "id", role: "Denuncia entre usuarios", fks: [
+                { col: "id_reportante", to: "perfiles", toCol: "id", card: "N:1" },
+                { col: "id_usuario_reportado", to: "perfiles", toCol: "id", card: "N:1" }
+              ]},
+              { id: "eventos_abuso", pk: "id", role: "Antiabuso", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" }] }
+            ]
+          },
+          {
+            title: "Plataforma",
+            tables: [
+              { id: "acciones_pendientes", pk: "id", role: "Cola sync offline", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" }] },
+              { id: "registros_error_app", pk: "id", role: "Telemetría de errores", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", nullable: true, card: "N:0..1" }] },
+              { id: "eventos_analitica", pk: "id", role: "Analytics de producto", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", nullable: true, card: "N:0..1" }] },
+              { id: "banderas_funcionalidad", pk: "id", role: "Feature flags", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", nullable: true, card: "N:0..1" }] }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Catálogo y profesional",
+        domain: "catalogo",
+        groups: [
+          {
+            title: "Profesional",
+            tables: [
+              { id: "trabajadores", pk: "id_usuario", role: "Ficha profesional 1:1", note: "La PK es a la vez FK 1:1 hacia perfiles.id.", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", card: "1:1" }] },
+              { id: "portafolio_trabajador", pk: "id", role: "Galería del profesional", fks: [{ col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" }] },
+              { id: "impulsos", pk: "id", role: "Boost de visibilidad", fks: [{ col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" }] }
+            ]
+          },
+          {
+            title: "Oficios",
+            tables: [
+              { id: "servicios", pk: "id", role: "Catálogo de oficios", fks: [] },
+              { id: "trabajador_servicios", pk: "(id_trabajador, categoria_servicio)", role: "N:M profesional ↔ categoría", note: "Sin id surrogate. El cruce a servicios es por slug categoria, no por servicios.id.", fks: [
+                { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" },
+                { col: "categoria_servicio", to: "servicios", toCol: "categoria", logical: true, card: "N:M" }
+              ]},
+              { id: "configuraciones_servicio", pk: "id", role: "Schema UI por oficio", fks: [{ col: "id_servicio", to: "servicios", toCol: "id", card: "1:0..1" }] }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Pedido",
+        domain: "pedido",
+        groups: [
+          {
+            title: "Hub",
+            tables: [
+              { id: "trabajos", pk: "id", role: "Pedido y expediente", fks: [
+                { col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" },
+                { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", nullable: true, card: "N:0..1" },
+                { col: "id_servicio", to: "servicios", toCol: "id", card: "N:1" },
+                { col: "id_cotizacion_seleccionada", to: "propuestas_cotizacion", toCol: "id", nullable: true, card: "N:0..1" }
+              ]}
+            ]
+          },
+          {
+            title: "Expediente",
+            tables: [
+              { id: "mensajes", pk: "id", role: "Chat por trabajo", fks: [
+                { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
+                { col: "id_remitente", to: "perfiles", toCol: "id", card: "N:1" },
+                { col: "id_destinatario", to: "perfiles", toCol: "id", card: "N:1" }
+              ]},
+              { id: "fotos_trabajo", pk: "id", role: "Evidencia del servicio", fks: [{ col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" }] },
+              { id: "calificaciones", pk: "id", role: "Puntaje 1–5 del trabajo", fks: [
+                { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
+                { col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" }
+              ]},
+              { id: "disputas", pk: "id", role: "Conflicto sobre un trabajo", fks: [
+                { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
+                { col: "abierta_por", to: "perfiles", toCol: "id", card: "N:1" },
+                { col: "resuelta_por", to: "perfiles", toCol: "id", nullable: true, card: "N:0..1" }
+              ]},
+              { id: "cancelaciones_trabajo", pk: "id", role: "Auditoría de cancelación", fks: [
+                { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
+                { col: "cancelado_por", to: "perfiles", toCol: "id", card: "N:1" }
+              ]},
+              { id: "tickets_soporte", pk: "id", role: "Mesa de ayuda", fks: [{ col: "id_trabajo", to: "trabajos", toCol: "id", nullable: true, card: "N:0..1" }] }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Cobro",
+        domain: "cobro",
+        groups: [
+          {
+            title: "Cotización y escrow",
+            tables: [
+              { id: "propuestas_cotizacion", pk: "id", role: "Presupuesto (cotización abierta)", fks: [
+                { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
+                { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" }
+              ]},
+              { id: "pagos", pk: "id", role: "Escrow / cobro", fks: [
+                { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
+                { col: "id_orden_cambio", to: "ordenes_cambio", toCol: "id", nullable: true, card: "N:0..1" }
+              ]},
+              { id: "ordenes_cambio", pk: "id", role: "Extra / cambio de alcance", note: "Ciclo lógico con pagos: id_pago ↔ id_orden_cambio, ambos opcionales.", fks: [
+                { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
+                { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" },
+                { col: "id_pago", to: "pagos", toCol: "id", nullable: true, card: "N:0..1" }
+              ]}
+            ]
+          }
+        ]
+      }
+    ];
+
+    const ALL = COLUMNS.flatMap((c) => c.groups.flatMap((g) => g.tables));
+    const BY = Object.fromEntries(ALL.map((t) => [t.id, t]));
+    const COL_OF = {};
+    const DOMAIN_OF = {};
+    COLUMNS.forEach((c, i) => c.groups.forEach((g) => g.tables.forEach((t) => {
+      COL_OF[t.id] = i;
+      DOMAIN_OF[t.id] = c.domain;
+    })));
+
+    const DOMAIN_LABEL = {
+      identidad: "Identidad",
+      catalogo: "Catálogo",
+      pedido: "Pedido",
+      cobro: "Cobro"
+    };
+
+    const EDGES = [];
+    ALL.forEach((t) => {
+      t.fks.forEach((fk, fkIndex) => {
+        const fromCol = COL_OF[t.id];
+        const toCol = COL_OF[fk.to];
+        EDGES.push({
+          from: t.id, to: fk.to, col: fk.col, toColName: fk.toCol,
+          nullable: !!fk.nullable, logical: !!fk.logical, card: fk.card || "",
+          fkIndex, fromCol, toCol, span: Math.abs(fromCol - toCol)
+        });
+      });
+    });
+
+    const CONTEXT_FK = {
+      mensajes: ["id_remitente", "id_destinatario"],
+      calificaciones: ["id_usuario"],
+      disputas: ["abierta_por", "resuelta_por"],
+      cancelaciones_trabajo: ["cancelado_por"],
+      propuestas_cotizacion: ["id_trabajador"],
+      ordenes_cambio: ["id_trabajador"]
+    };
+
+    let selected = "trabajos";
+    let query = "";
+    let domainFilter = "all";
+    let zoom = 1;
+
+    function scheduleDraw() {
+      requestAnimationFrame(() => requestAnimationFrame(drawLinks));
+    }
+
+    function incoming(id) {
+      return ALL.filter((t) => t.fks.some((fk) => fk.to === id));
+    }
+
+    function relBox(el, root) {
+      const a = el.getBoundingClientRect();
+      const b = root.getBoundingClientRect();
+      const z = zoom || 1;
+      return {
+        x: (a.left - b.left) / z + root.scrollLeft / z,
+        y: (a.top - b.top) / z + root.scrollTop / z,
+        w: a.width / z,
+        h: a.height / z
+      };
+    }
+
+    function polyline(pts) {
+      return pts.map((p, i) => (i ? "L" : "M") + " " + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    }
+
+    function cssVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function colorFor(toId) {
+      const map = {
+        perfiles: "--hub-perfiles",
+        trabajadores: "--hub-trabajadores",
+        servicios: "--hub-servicios",
+        trabajos: "--hub-trabajos",
+        propuestas_cotizacion: "--hub-cobro",
+        pagos: "--hub-cobro",
+        ordenes_cambio: "--hub-cobro"
+      };
+      return cssVar(map[toId] || "--edge");
+    }
+
+    function markerId(toId) {
+      const known = {
+        perfiles: 1, trabajadores: 1, servicios: 1, trabajos: 1,
+        propuestas_cotizacion: 1, pagos: 1, ordenes_cambio: 1
+      };
+      return known[toId] ? "arr-" + toId : "arr-default";
+    }
+
+    function sideX(box, towardX) {
+      return box.x + box.w / 2 < towardX ? box.x + box.w : box.x;
+    }
+
+    function midY(box) {
+      return box.y + 18;
+    }
+
+    function stubY(box, fkIndex) {
+      return box.y + Math.min(box.h - 8, 26 + fkIndex * 13);
+    }
+
+    function isCycleEdge(e) {
+      return (e.from === "pagos" && e.to === "ordenes_cambio") ||
+        (e.from === "ordenes_cambio" && e.to === "pagos");
+    }
+
+    function isContextEdge(e) {
+      return (CONTEXT_FK[e.from] || []).indexOf(e.col) !== -1;
+    }
+
+    function edgeBetween(from, to) {
+      return EDGES.find((e) => e.from === from && e.to === to && !isContextEdge(e) && !isCycleEdge(e));
+    }
+
+    function drawLinks() {
+      try { drawLinksInner(); } catch (err) { console.error(err); }
+    }
+
+    function drawLinksInner() {
+      const diagram = document.getElementById("diagram");
+      const svg = document.getElementById("links");
+      const board = document.getElementById("board");
+      const z = zoom || 1;
+      const w = Math.max(board.scrollWidth, diagram.clientWidth / z, diagram.scrollWidth / z);
+      const h = Math.max(board.scrollHeight, diagram.clientHeight / z, diagram.scrollHeight / z);
+      svg.setAttribute("width", w);
+      svg.setAttribute("height", h);
+      svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+
+      const boxes = {};
+      board.querySelectorAll(".tbl").forEach((el) => {
+        boxes[el.getAttribute("data-id")] = relBox(el, diagram);
+      });
+      const colBoxes = {};
+      board.querySelectorAll(".col").forEach((el) => {
+        colBoxes[el.getAttribute("data-col")] = relBox(el, diagram);
+      });
+
+      const ns = "http://www.w3.org/2000/svg";
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      const defs = document.createElementNS(ns, "defs");
+      function marker(id, color) {
+        const m = document.createElementNS(ns, "marker");
+        m.setAttribute("id", id);
+        m.setAttribute("markerWidth", "8");
+        m.setAttribute("markerHeight", "8");
+        m.setAttribute("refX", "7");
+        m.setAttribute("refY", "4");
+        m.setAttribute("orient", "auto");
+        const p = document.createElementNS(ns, "polygon");
+        p.setAttribute("points", "0 0, 8 4, 0 8");
+        p.setAttribute("fill", color);
+        m.appendChild(p);
+        defs.appendChild(m);
+      }
+      ["perfiles", "trabajadores", "servicios", "trabajos", "propuestas_cotizacion", "pagos", "ordenes_cambio"].forEach((k) => {
+        marker("arr-" + k, colorFor(k));
+      });
+      marker("arr-default", cssVar("--edge"));
+      svg.appendChild(defs);
+
+      const bgFill = cssVar("--bg");
+
+      function live(e) {
+        return e.from === selected || e.to === selected;
+      }
+
+      function paint(pts, edge, opts) {
+        const active = !!(opts && opts.active);
+        const color = colorFor(edge.to);
+        if (active) {
+          const halo = document.createElementNS(ns, "path");
+          halo.setAttribute("d", polyline(pts));
+          halo.setAttribute("fill", "none");
+          halo.setAttribute("stroke", bgFill);
+          halo.setAttribute("stroke-width", "6");
+          halo.setAttribute("stroke-linejoin", "round");
+          halo.setAttribute("stroke-linecap", "round");
+          svg.appendChild(halo);
+        }
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("d", polyline(pts));
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", color);
+        path.setAttribute("stroke-width", active ? "2.4" : "1.7");
+        path.setAttribute("opacity", active ? "1" : "0.82");
+        path.setAttribute("stroke-linejoin", "round");
+        path.setAttribute("stroke-linecap", "round");
+        if (!opts || opts.arrow !== false) {
+          path.setAttribute("marker-end", "url(#" + markerId(edge.to) + ")");
+        }
+        if (edge.logical) path.setAttribute("stroke-dasharray", "2.5 3.5");
+        else if (edge.nullable) path.setAttribute("stroke-dasharray", "7 5");
+        svg.appendChild(path);
+      }
+
+      function laneX(leftIdx, lane, lanes) {
+        const L = colBoxes[String(leftIdx)];
+        const R = colBoxes[String(leftIdx + 1)];
+        if (!L || !R) return 0;
+        const a = L.x + L.w + 22;
+        const b = R.x - 22;
+        return a + ((lane + 1) / (lanes + 1)) * Math.max(b - a, 24);
+      }
+
+      function toParent(childBox, parentBox, gx, edge, yChild, yParent) {
+        const childRight = childBox.x > parentBox.x;
+        const x1 = childRight ? childBox.x : childBox.x + childBox.w;
+        const x2 = childRight ? parentBox.x + parentBox.w : parentBox.x;
+        paint([[x1, yChild], [gx, yChild], [gx, yParent], [x2, yParent]], edge, { active: live(edge) });
+      }
+
+      const local = EDGES.filter((e) => e.span === 0 && !isCycleEdge(e) && !isContextEdge(e));
+      const rails = {};
+      local.forEach((e) => {
+        const key = e.to + ":" + e.toColName;
+        (rails[key] || (rails[key] = [])).push(e);
+      });
+      const railOrder = {};
+      Object.keys(rails).forEach((key) => {
+        const col = String(rails[key][0].toCol);
+        (railOrder[col] || (railOrder[col] = [])).push(key);
+      });
+      Object.keys(railOrder).forEach((col) => {
+        railOrder[col].sort();
+      });
+
+      Object.keys(rails).forEach((key) => {
+        const list = rails[key];
+        const parent = boxes[list[0].to];
+        const cluster = colBoxes[String(list[0].toCol)];
+        if (!parent || !cluster) return;
+        const kids = list.map((e) => ({ e: e, b: boxes[e.from] })).filter((x) => x.b);
+        if (!kids.length) return;
+        const railActive = list.some(live);
+        const idx = railOrder[String(list[0].toCol)].indexOf(key);
+        const railX = cluster.x - 18 - idx * 16;
+        const yJoin = midY(parent);
+        const yBot = Math.max.apply(null, kids.map((x) => stubY(x.b, x.e.fkIndex)));
+        const yTop = Math.min(yJoin, Math.min.apply(null, kids.map((x) => stubY(x.b, x.e.fkIndex))));
+        paint([[railX, yTop], [railX, yBot]], { to: list[0].to }, { active: railActive, arrow: false });
+        paint([[railX, yJoin], [parent.x, yJoin]], { to: list[0].to }, { active: railActive });
+        kids.forEach(({ e, b }) => {
+          paint([[b.x, stubY(b, e.fkIndex)], [railX, stubY(b, e.fkIndex)]], e, {
+            active: live(e),
+            arrow: false
+          });
+        });
+      });
+
+      const tw = boxes.trabajadores;
+      const pf = boxes.perfiles;
+      const tr = boxes.trabajos;
+      const sv = boxes.servicios;
+      const pr = boxes.propuestas_cotizacion;
+      const pg = boxes.pagos;
+      const oc = boxes.ordenes_cambio;
+
+      const eTrabPerfiles = edgeBetween("trabajadores", "perfiles");
+      if (tw && pf && eTrabPerfiles) {
+        toParent(tw, pf, laneX(0, 0, 1), eTrabPerfiles, midY(tw), midY(pf));
+      }
+
+      if (tr && pf) {
+        const e = edgeBetween("trabajos", "perfiles");
+        if (e) {
+          const ySpine = Math.min(pf.y, tw ? tw.y : pf.y, tr.y) - 28;
+          paint(
+            [
+              [tr.x + tr.w / 2, tr.y],
+              [tr.x + tr.w / 2, ySpine],
+              [pf.x + pf.w / 2, ySpine],
+              [pf.x + pf.w / 2, pf.y]
+            ],
+            e,
+            { active: live(e) }
+          );
+        }
+      }
+
+      const eTrabajoTrabajador = edgeBetween("trabajos", "trabajadores");
+      const eTrabajoServicio = edgeBetween("trabajos", "servicios");
+      if (tr && tw && eTrabajoTrabajador) {
+        toParent(tr, tw, laneX(1, 0, 2), eTrabajoTrabajador, midY(tr), midY(tw));
+      }
+      if (tr && sv && eTrabajoServicio) {
+        toParent(tr, sv, laneX(1, 1, 2), eTrabajoServicio, midY(tr), midY(sv));
+      }
+
+      const cobroKids = ["propuestas_cotizacion", "pagos", "ordenes_cambio"];
+      const gxCobro = laneX(2, 0, 2);
+      cobroKids.forEach((id) => {
+        const child = boxes[id];
+        const e = edgeBetween(id, "trabajos");
+        if (!child || !tr || !e) return;
+        toParent(child, tr, gxCobro, e, midY(child), midY(tr));
+      });
+      const eSel = edgeBetween("trabajos", "propuestas_cotizacion");
+      if (tr && pr && eSel) {
+        toParent(tr, pr, laneX(2, 1, 2), eSel, midY(tr), midY(pr));
+      }
+
+      if (pg && oc && colBoxes["3"]) {
+        const cycle = EDGES.find(isCycleEdge);
+        if (cycle) {
+          const rx = colBoxes["3"].x + colBoxes["3"].w + 20;
+          paint(
+            [[pg.x + pg.w, midY(pg)], [rx, midY(pg)], [rx, midY(oc)], [oc.x + oc.w, midY(oc)]],
+            cycle,
+            { active: live(cycle) }
+          );
+        }
+      }
+
+      const extras = EDGES.filter((e) => isContextEdge(e) && e.from === selected);
+      if (extras.length) {
+        const floor = Math.max.apply(null, Object.keys(boxes).map((id) => boxes[id].y + boxes[id].h)) + 36;
+        extras.forEach((e, i) => {
+          const from = boxes[e.from];
+          const to = boxes[e.to];
+          if (!from || !to) return;
+          const y = floor + i * 16;
+          const x1 = from.x + from.w / 2;
+          const x2 = to.x + to.w / 2;
+          paint(
+            [[x1, from.y + from.h], [x1, y], [x2, y], [x2, to.y + to.h]],
+            e,
+            { active: true }
+          );
+        });
+      }
+    }
+
+
+    function cardHtml(t) {
+      const isSel = t.id === selected;
+      const isLinked = t.fks.some((fk) => fk.to === selected) || incoming(selected).some((x) => x.id === t.id);
+      const match = !query || t.id.toLowerCase().includes(query) || (t.role || "").toLowerCase().includes(query);
+      const cls = [
+        "tbl",
+        HUBS[t.id] ? "hub" : "",
+        isSel ? "selected" : "",
+        isLinked && !isSel ? "linked" : "",
+        match ? "match" : ""
+      ].filter(Boolean).join(" ");
+      const fks = t.fks.length
+        ? t.fks.map((fk) =>
+            `<div class="fk">FK  ${fk.col}${fk.nullable ? ' <span class="q">?</span>' : ""}${fk.logical ? " ~" : ""} → ${fk.to}.${fk.toCol}</div>`
+          ).join("")
+        : `<div class="fk">${t.id === "perfiles" ? "PK = auth.users.id" : "catálogo raíz"}</div>`;
+      return `<article class="${cls}" data-id="${t.id}" title="${t.role || t.id}">
+        <span class="name">${t.id}${HUBS[t.id] ? '<span class="hub-mark">HUB</span>' : ""}</span>
+        <div class="keys"><div class="pk">PK  ${t.pk}</div>${fks}</div>
+      </article>`;
+    }
+
+    function renderBoard() {
+      const board = document.getElementById("board");
+      board.classList.toggle("is-search", query.length > 0);
+      board.className = "board" + (query ? " is-search" : "") + (domainFilter !== "all" ? " filter-" + domainFilter : "");
+      board.innerHTML = COLUMNS.map((col, colIndex) => {
+        const n = col.groups.reduce((s, g) => s + g.tables.length, 0);
+        const groups = col.groups.map((g) =>
+          `<div class="group"><h3>${g.title}</h3><div class="stack">${g.tables.map(cardHtml).join("")}</div></div>`
+        ).join("");
+        return `<section class="col" data-col="${colIndex}" data-domain="${col.domain}">
+          <div class="col-head"><h2>${col.title}<em>${n}</em></h2></div>
+          ${groups}
+        </section>`;
+      }).join("");
+      board.querySelectorAll(".tbl").forEach((el) => {
+        el.addEventListener("click", () => {
+          selected = el.getAttribute("data-id");
+          renderBoard();
+          renderDetail();
+          scheduleDraw();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const t = BY[selected];
+      const ins = incoming(t.id);
+      const domain = DOMAIN_OF[t.id];
+      const fkList = t.fks.length
+        ? `<ul>${t.fks.map((fk) =>
+            `<li><code>${fk.col}</code> → <code>${fk.to}.${fk.toCol}</code><br /><span style="color:var(--muted);font-size:12px">${fk.card || ""}${fk.nullable ? " · opcional" : ""}${fk.logical ? " · lógica (~)" : ""}</span></li>`
+          ).join("")}</ul>`
+        : `<p class="hint">${t.id === "perfiles" ? "No apunta a otra tabla public. Relación 1:1 con auth.users.id." : "Catálogo raíz: sin FK saliente."}</p>`;
+      const inList = ins.length
+        ? `<ul>${ins.map((x) => {
+            const cols = x.fks.filter((fk) => fk.to === t.id).map((fk) => fk.col).join(", ");
+            return `<li><code>${x.id}</code><br /><span style="color:var(--muted);font-size:12px">${cols}</span></li>`;
+          }).join("")}</ul>`
+        : `<p class="hint">Ninguna tabla public apunta a esta PK.</p>`;
+      document.getElementById("detail").innerHTML = `
+        <p class="kicker">${DOMAIN_LABEL[domain]}</p>
+        <h2 class="entity">${t.id}</h2>
+        <p class="role">${t.role || ""}</p>
+        <h3>Clave primaria</h3>
+        <div class="pk-block">${t.pk}</div>
+        <h3>Sale hacia</h3>
+        ${fkList}
+        <h3>Entra desde</h3>
+        ${inList}
+        ${t.note ? `<p class="hint">${t.note}</p>` : ""}
+        <p class="hint">En el lienzo solo está la FK de pertenencia (un bus por destino). Remitente, disputa, profesional de la cotización y similares aparecen aquí y, si seleccionas esa tabla, por debajo del diagrama.</p>
+        <div class="card-actions">
+          <button class="btn" type="button" id="reset">Centrar en trabajos</button>
+        </div>
+      `;
+      document.getElementById("reset").onclick = () => {
+        selected = "trabajos";
+        renderBoard();
+        renderDetail();
+        scheduleDraw();
+      };
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      try { localStorage.setItem("mer-theme", theme); } catch (e) { /* private / file:// */ }
+      document.getElementById("btnTheme").textContent = theme === "dark" ? "Claro" : "Oscuro";
+      drawLinks();
+    }
+
+    function setZoom(next) {
+      zoom = Math.min(1.35, Math.max(0.7, next));
+      document.documentElement.style.setProperty("--zoom", String(zoom));
+      document.getElementById("zoomLabel").textContent = Math.round(zoom * 100) + "%";
+      scheduleDraw();
+    }
+
+    document.getElementById("btnTheme").onclick = function () {
+      applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+    };
+    document.getElementById("btnPrint").onclick = function () { window.print(); };
+    document.getElementById("zoomIn").onclick = function () { setZoom(zoom + 0.1); };
+    document.getElementById("zoomOut").onclick = function () { setZoom(zoom - 0.1); };
+    document.getElementById("zoomLabel").onclick = function () { setZoom(1); };
+    document.getElementById("search").addEventListener("input", function () {
+      query = this.value.trim().toLowerCase();
+      renderBoard();
+      scheduleDraw();
+    });
+    document.getElementById("search").addEventListener("keydown", function (ev) {
+      if (ev.key !== "Enter" || !query) return;
+      const hit = ALL.find((t) => t.id.toLowerCase().includes(query) || (t.role || "").toLowerCase().includes(query));
+      if (!hit) return;
+      selected = hit.id;
+      renderBoard();
+      renderDetail();
+      scheduleDraw();
+      const el = document.querySelector('.tbl[data-id="' + hit.id + '"]');
+      if (el) el.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
+    });
+    document.querySelectorAll("[data-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        domainFilter = btn.getAttribute("data-filter");
+        document.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+        renderBoard();
+        scheduleDraw();
+      });
+    });
+
+    const params = new URLSearchParams(location.search);
+    let saved = params.get("theme");
+    if (!saved) {
+      try { saved = localStorage.getItem("mer-theme"); } catch (e) { saved = null; }
+    }
+    applyTheme(saved === "dark" ? "dark" : "light");
+
+    renderBoard();
+    renderDetail();
+    scheduleDraw();
+    window.addEventListener("resize", drawLinks);
+    document.getElementById("diagram").addEventListener("scroll", drawLinks);
+  </script>
+</body>
+</html>

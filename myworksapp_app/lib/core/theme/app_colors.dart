@@ -20,13 +20,13 @@ class AppColors {
   static const Color brandOrange = GeneratedBrandColors.brandOrange;
 
   /// Naranjo neón / caliente para gradientes y estados destacados de alta visibilidad
-  static const Color brandOrangeVibrant = Color(0xFFFF6B00);
+  static const Color brandOrangeVibrant = GeneratedBrandColors.brandOrangeVibrant;
 
   /// Naranjo oscuro — gradientes y estados pressed
   static const Color brandOrangeDark = Color(0xFFD9530F);
 
   /// Fondo suave tintado de naranja para badges y selecciones
-  static const Color brandOrangeSoft = Color(0xFFFFF4EE);
+  static const Color brandOrangeSoft = Color(0x33F0782A);
 
   /// Alias legacy
   static const Color brandBlueSoft = brandOrangeSoft;
@@ -50,21 +50,20 @@ class AppColors {
 
   /// Completado / Verificado — Verde Esmeralda Suave
   static const Color success = GeneratedBrandColors.emerald;
-  static const Color successSoft = Color(0xFFE8F8EE);
+  static const Color successSoft = Color(0x332F9E64);
   static const Color emerald = GeneratedBrandColors.emerald;
 
   /// Urgente / Error / Cancelado — Coral Carmesí
-  static const Color error = Color(0xFFFF3B30);
-  static const Color errorSoft = Color(0xFFFFEBEA);
+  static const Color error = GeneratedBrandColors.crimsonError;
+  static const Color errorSoft = Color(0x33E23D35);
   static const Color crimson = error;
 
   /// Pendiente / En Revisión — Ámbar Cálido
-  static const Color warning = Color(0xFFFF9500);
-  static const Color warningSoft = Color(0xFFFFF5E6);
+  static const Color warning = Color(0xFFC9A227);
+  static const Color warningSoft = Color(0x33C9A227);
 
-  /// En Proceso / Técnico — Azul Cobalto Vivo
-  static const Color info = Color(0xFF007AFF);
-  static const Color infoSoft = Color(0xFFE5F1FF);
+  static const Color info = Color(0xFF4C8DDB);
+  static const Color infoSoft = Color(0x334C8DDB);
 
   // ========== NEUTRALS & TEXT (60% - CANVAS & TYPOGRAPHY) ==========
 
@@ -74,7 +73,7 @@ class AppColors {
   /// Texto Primario (Apple Dark Label)
   static const Color textPrimary = Color(0xFF1D1D1F);
 
-  /// Texto Secundario (Apple Muted Secondary Label)
+  /// Texto secundario en superficies claras. En canvas oscuro usar [onCanvasMuted].
   static const Color textSecondary = Color(0xFF8E8E93);
 
   /// Texto Terciario / Deshabilitado
@@ -89,26 +88,20 @@ class AppColors {
   // ========== APPLE SYSTEM BACKGROUNDS (LAYERS) ==========
 
   /// Fondo de pantalla principal (Light: Apple System Grouped Background)
-  static const Color backgroundLight = Color(0xFFF2F2F7);
+  static const Color backgroundLight = Color(0xFFF7F5F2);
   static const Color grayBackground = backgroundLight;
 
   /// Fondo de pantalla en Dark Mode (navy cinematográfico del mockup)
-  static const Color backgroundDark = Color(0xFF0B1424);
-
-  /// Superficie de tarjetas elevadas (Light)
+  static const Color backgroundDark = GeneratedBrandColors.bgCanvasDarkAlt;
   static const Color surfaceLight = Color(0xFFFFFFFF);
-
-  /// Superficie de tarjetas elevadas (Dark - Apple Grouped Cell)
-  static const Color surfaceDark = Color(0xFF121E33);
-
-  /// Superficie secundaria para elevaciones superiores en Dark Mode
-  static const Color surfaceDarkElevated = Color(0xFF17263D);
+  static const Color surfaceDark = GeneratedBrandColors.bgSurfaceDark;
+  static const Color surfaceDarkElevated = GeneratedBrandColors.bgElevatedDark;
 
   // ========== GLASSMORPHISM & TRANSLUCENCY ==========
 
   /// Fondo esmerilado translucido estilo iOS
   static Color glassBackgroundLight = const Color(0xFFFFFFFF).withValues(alpha: 0.75);
-  static Color glassBackgroundDark = const Color(0xFF121E33).withValues(alpha: 0.82);
+  static Color glassBackgroundDark = GeneratedBrandColors.bgSurfaceDark.withValues(alpha: 0.82);
   static Color glassBorderLight = const Color(0xFFFFFFFF).withValues(alpha: 0.4);
   static Color glassBorderDark = const Color(0xFFFFFFFF).withValues(alpha: 0.12);
 
@@ -132,7 +125,7 @@ class AppColors {
   /// Texto secundario con contraste WCAG-AA sobre navy `#0B1424`.
   static Color onCanvasMuted(Brightness brightness) {
     return brightness == Brightness.dark
-        ? const Color(0xFFD5DCE6)
+        ? GeneratedBrandColors.textMutedDark
         : textSecondary;
   }
 

@@ -14,7 +14,7 @@ Este archivo es el **modelo entidad-relación del título**. Cada caja es una ta
 
 | Copia | Ruta | Para qué |
 |-------|------|----------|
-| **Vista portable (HTML)** | [modelo-entidad-relacion.html](modelo-entidad-relacion.html) | Abrir en el navegador; copiar a otro repo |
+| **Vista portable (HTML)** | [modelo_entidad_relacion.html](modelo_entidad_relacion.html) | Abrir en el navegador; copiar a otro repo |
 | **Título (esta)** | `MODELO_ENTIDAD_RELACION.md` | Memoria / Mermaid / catálogo PK-FK |
 | Canvas Cursor | carpeta de canvases del workspace (fuera del git) | Solo se ve dentro de Cursor |
 | Diccionario técnico | `docs/DICCIONARIO_BASE_DATOS.md` | Columnas, RLS y consumidores de las apps |

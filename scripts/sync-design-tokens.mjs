@@ -50,7 +50,7 @@ for (const [key, value] of Object.entries(tokens.color ?? {})) {
     lines.push(`  --navy-light: #1A2740;`);
   }
   if (key === 'brandOrange') {
-    lines.push(`  --orange-soft: rgba(240, 120, 42, 0.12);`);
+    lines.push(`  --orange-soft: rgba(240, 120, 42, 0.16);`);
   }
   if (key === 'emerald') {
     lines.push(`  --emerald-soft: rgba(47, 158, 100, 0.18);`);

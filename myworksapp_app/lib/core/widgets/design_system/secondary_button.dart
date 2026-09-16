@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../design_system/app_radius.dart';
 import '../../design_system/app_spacing.dart';
 import '../../theme/app_colors.dart';
 
@@ -34,7 +35,7 @@ class SecondaryButton extends StatelessWidget {
           foregroundColor: AppColors.brandOrange,
           side: const BorderSide(color: AppColors.brandOrange, width: 2),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,

@@ -23,11 +23,16 @@ const outPath = path.join(
 /** Keys requeridas en design-tokens.json → campos Dart. */
 const REQUIRED_COLORS = [
   'brandOrange',
+  'brandOrangeVibrant',
   'brandNavy',
   'emerald',
+  'textMainDark',
   'textMutedDark',
   'bgDominantDark',
+  'bgCanvasDarkAlt',
   'bgSurfaceDark',
+  'bgElevatedDark',
+  'crimsonError',
 ];
 
 function hexToArgbConst(hex) {

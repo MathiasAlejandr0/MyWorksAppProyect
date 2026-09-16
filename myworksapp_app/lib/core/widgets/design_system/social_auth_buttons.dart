@@ -52,9 +52,13 @@ class SocialAuthButtons extends StatelessWidget {
         _SocialButton(
           label: 'Continuar con Google',
           icon: Icons.g_mobiledata_rounded,
-          foreground: AppColors.grayDark,
-          background: Colors.white,
-          borderColor: AppColors.grayMedium.withValues(alpha: 0.35),
+          foreground: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.white
+              : AppColors.grayDark,
+          background: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.surfaceDarkElevated
+              : Colors.white,
+          borderColor: AppColors.brandOrange.withValues(alpha: 0.28),
           onPressed: isLoading ? null : onGoogle,
         ),
         if (_showApple) ...[
