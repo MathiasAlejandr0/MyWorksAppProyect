@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../../utils/constants.dart';
 import '../../utils/worker_job_status.dart';
 import '../models/job_model.dart';
 import '../supabase_db.dart';
@@ -57,10 +58,59 @@ class JobRepository {
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
-  // Verificar si un trabajador tiene trabajos activos
+  /// True si el profesional tiene al menos un trabajo en curso (sin bajar filas).
   Future<bool> hasActiveJobs(String workerId) async {
-    final activeJobs = await getActiveJobsByWorkerId(workerId);
-    return activeJobs.isNotEmpty;
+    final row = await supabase
+        .from(_table)
+        .select('id')
+        .eq('id_trabajador', workerId)
+        .inFilter('estado', WorkerJobStatus.activeStatuses)
+        .limit(1)
+        .maybeSingle();
+    return row != null;
+  }
+
+  /// IDs de profesionales con al menos un trabajo activo (una consulta, no N+1).
+  Future<Set<String>> getBusyWorkerIds(List<String> workerIds) async {
+    if (workerIds.isEmpty) return {};
+    const chunkSize = 80;
+    final busy = <String>{};
+    for (var i = 0; i < workerIds.length; i += chunkSize) {
+      final end =
+          i + chunkSize > workerIds.length ? workerIds.length : i + chunkSize;
+      final chunk = workerIds.sublist(i, end);
+      final rows = await supabase
+          .from(_table)
+          .select('id_trabajador')
+          .inFilter('id_trabajador', chunk)
+          .inFilter('estado', WorkerJobStatus.activeStatuses);
+      for (final row in rows) {
+        final id = row['id_trabajador'] as String?;
+        if (id != null) busy.add(id);
+      }
+    }
+    return busy;
+  }
+
+  /// Conteos de historial sin bajar filas completas.
+  Future<({int total, int completed})> countJobsByUserId(String userId) {
+    return _countJobs('id_usuario', userId);
+  }
+
+  Future<({int total, int completed})> countJobsByWorkerId(String workerId) {
+    return _countJobs('id_trabajador', workerId);
+  }
+
+  Future<({int total, int completed})> _countJobs(
+    String column,
+    String id,
+  ) async {
+    final rows = await supabase.from(_table).select('estado').eq(column, id);
+    var completed = 0;
+    for (final row in rows) {
+      if (row['estado'] == AppConstants.jobStatusCompleted) completed++;
+    }
+    return (total: rows.length, completed: completed);
   }
 
   Future<List<JobModel>> getJobsByStatus(String status) async {

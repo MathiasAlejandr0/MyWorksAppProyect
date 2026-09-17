@@ -105,14 +105,10 @@ class WorkerJobRejectionService {
       service.category,
       near: near,
     );
-    final jobRepository = JobRepository();
-    final available = <WorkerModel>[];
-
-    for (final worker in workers) {
-      if (worker.userId == excludeWorkerId || !worker.isAvailable) continue;
-      if (await jobRepository.hasActiveJobs(worker.userId)) continue;
-      available.add(worker);
-    }
+    final available = workers
+        .where((worker) =>
+            worker.userId != excludeWorkerId && worker.isAvailable)
+        .toList();
 
     WorkerReputationService.instance.sortForListing(available);
     return available.take(5).toList();

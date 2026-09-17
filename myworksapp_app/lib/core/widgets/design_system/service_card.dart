@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../database/models/service_model.dart';
@@ -293,29 +294,30 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
                         Positioned.fill(
                           child: Container(
                             color: const Color(0xFF152033),
-                            child: Image.network(
-                              imageUrl,
+                            child: CachedNetworkImage(
+                              imageUrl: imageUrl,
                               fit: BoxFit.cover,
-                              loadingBuilder: (context, child, progress) {
-                                if (progress == null) return child;
-                                return Container(
-                                  color: const Color(0xFF152033),
-                                  alignment: Alignment.center,
-                                  child: SizedBox(
-                                    width: 28,
-                                    height: 28,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.4,
-                                      color: palette.accent.withValues(alpha: 0.85),
-                                    ),
+                              memCacheWidth: 720,
+                              fadeInDuration: const Duration(milliseconds: 180),
+                              placeholder: (context, url) => Container(
+                                color: const Color(0xFF152033),
+                                alignment: Alignment.center,
+                                child: SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.4,
+                                    color: palette.accent.withValues(alpha: 0.85),
                                   ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return Image.network(
-                                  ServiceCard.fallbackImageUrlFor(catKey),
+                                ),
+                              ),
+                              errorWidget: (context, error, stackTrace) {
+                                return CachedNetworkImage(
+                                  imageUrl:
+                                      ServiceCard.fallbackImageUrlFor(catKey),
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, e, s) => Container(
+                                  memCacheWidth: 720,
+                                  errorWidget: (context, e, s) => Container(
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [

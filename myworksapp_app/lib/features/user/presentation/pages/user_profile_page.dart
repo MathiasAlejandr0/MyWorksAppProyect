@@ -6,6 +6,7 @@ import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart'
 
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/services/profile_photo_service.dart';
@@ -30,11 +31,16 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
   bool _isLoading = false;
   bool _photoLoading = false;
   bool _isEditing = false;
+  late final Future<List<JobModel>> _jobsFuture;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    final user = ref.read(authProvider).user;
+    _jobsFuture = user == null
+        ? Future<List<JobModel>>.value(const [])
+        : _jobRepository.getJobsByUserId(user.id);
   }
 
   void _loadUserData() {
@@ -274,8 +280,8 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 16),
-                      FutureBuilder(
-                        future: _jobRepository.getJobsByUserId(user.id),
+                      FutureBuilder<List<JobModel>>(
+                        future: _jobsFuture,
                         builder: (context, snapshot) {
                           final jobs = snapshot.data ?? [];
                           final completed = jobs.where((j) => j.status == AppConstants.jobStatusCompleted).length;

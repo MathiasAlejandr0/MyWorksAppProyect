@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// Estilos de texto del Design System con Plus Jakarta Sans.
+/// Estilos de texto del Design System (fuente local/sistema, sin fetch en runtime).
 class AppTextStyles {
   AppTextStyles._();
 
@@ -14,7 +13,7 @@ class AppTextStyles {
     double? letterSpacing,
     double? height,
   }) {
-    return GoogleFonts.plusJakartaSans(
+    return TextStyle(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,

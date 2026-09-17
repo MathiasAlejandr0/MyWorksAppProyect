@@ -19,6 +19,22 @@ class StatisticsPage extends ConsumerStatefulWidget {
 class _StatisticsPageState extends ConsumerState<StatisticsPage> {
   JobRepository get _jobRepository => ref.read(jobRepositoryProvider);
   final RatingRepository _ratingRepository = RatingRepository();
+  Future<List<dynamic>>? _statsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _statsFuture = _loadStats();
+  }
+
+  Future<List<dynamic>>? _loadStats() {
+    final user = ref.read(authProvider).user;
+    if (user == null) return null;
+    return Future.wait([
+      _jobRepository.getJobsByWorkerId(user.id),
+      _ratingRepository.getAverageRatingByWorkerId(user.id),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,17 +52,30 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
         title: Text('Estadísticas'),
       ),
       body: FutureBuilder(
-        future: Future.wait([
-          _jobRepository.getJobsByWorkerId(user.id),
-          _ratingRepository.getAverageRatingByWorkerId(user.id),
-        ]),
+        future: _statsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Error: ${snapshot.error}'),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _statsFuture = _loadStats();
+                      });
+                    },
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            );
           }
 
           final results = snapshot.data as List;

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../design_system/app_radius.dart';
@@ -68,8 +69,12 @@ class WorkerCard extends StatelessWidget {
                     backgroundColor: isDark
                         ? AppColors.surfaceDarkElevated
                         : AppColors.brandOrangeSoft,
-                    backgroundImage:
-                        avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+                    backgroundImage: avatarUrl != null
+                        ? CachedNetworkImageProvider(
+                            avatarUrl!,
+                            maxWidth: 112,
+                          )
+                        : null,
                     child: avatarUrl == null
                         ? Text(
                             name.isNotEmpty ? name[0].toUpperCase() : '?',

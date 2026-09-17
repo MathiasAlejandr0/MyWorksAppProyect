@@ -57,6 +57,8 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
   List<PortfolioModel> _portfolio = [];
   double _averageRating = 0.0;
   String? _workZone;
+  int _jobsCount = 0;
+  int _completedJobsCount = 0;
 
   @override
   void initState() {
@@ -81,15 +83,25 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
     setState(() => _isLoading = true);
 
     try {
-      final worker = await _workerRepository.getWorkerByUserId(user.id);
-      final portfolio = await _portfolioRepository.getPortfolioByWorkerId(user.id);
-      final avgRating = await _ratingRepository.getAverageRatingByWorkerId(user.id);
+      final workerFuture = _workerRepository.getWorkerByUserId(user.id);
+      final portfolioFuture =
+          _portfolioRepository.getPortfolioByWorkerId(user.id);
+      final ratingFuture =
+          _ratingRepository.getAverageRatingByWorkerId(user.id);
+      final countsFuture = _jobRepository.countJobsByWorkerId(user.id);
+
+      final worker = await workerFuture;
+      final portfolio = await portfolioFuture;
+      final avgRating = await ratingFuture;
+      final jobCounts = await countsFuture;
 
       if (!mounted) return;
       setState(() {
         _worker = worker;
         _portfolio = portfolio;
         _averageRating = avgRating;
+        _jobsCount = jobCounts.total;
+        _completedJobsCount = jobCounts.completed;
         _nameController.text = user.name;
         _emailController.text = user.email;
         if (worker != null) {
@@ -589,23 +601,18 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 16),
-                      FutureBuilder(
-                        future: _jobRepository.getJobsByWorkerId(user.id),
-                        builder: (context, snapshot) {
-                          final jobs = snapshot.data ?? [];
-                          final completed = jobs.where((j) => j.status == AppConstants.jobStatusCompleted).length;
-                          return Row(
+                      Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               _StatItem(
                                 icon: Icons.work,
                                 label: 'Trabajos',
-                                value: jobs.length.toString(),
+                                value: _jobsCount.toString(),
                               ),
                               _StatItem(
                                 icon: Icons.check_circle,
                                 label: 'Completados',
-                                value: completed.toString(),
+                                value: _completedJobsCount.toString(),
                               ),
                               _StatItem(
                                 icon: Icons.star,
@@ -613,9 +620,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                                 value: _averageRating.toStringAsFixed(1),
                               ),
                             ],
-                          );
-                        },
-                      ),
+                          ),
                     ],
                   ),
                 ),

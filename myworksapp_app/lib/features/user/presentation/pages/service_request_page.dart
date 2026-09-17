@@ -87,16 +87,16 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   List<GuidedTourStep> get _requestTourSteps => [
         GuidedTourStep(
           targetKey: _locationKey,
-          title: 'Tu ubicaci?n en el mapa',
+          title: 'Tu ubicación en el mapa',
           description:
-              'Detectamos autom?ticamente d?nde est?s y lo mostramos en un mapa cuadrado. As? el profesional sabe exactamente a d?nde ir.',
+              'Detectamos automáticamente dónde estás y lo mostramos en un mapa cuadrado. Así el profesional sabe exactamente a dónde ir.',
           align: TourTooltipAlign.below,
         ),
         GuidedTourStep(
           targetKey: _submitKey,
           title: 'Enviar tu solicitud',
           description:
-              'Cuando completes la descripci?n y la fecha, pulsa este bot?n. El profesional recibir? tu pedido y te responder? con una cotizaci?n.',
+              'Cuando completes la descripción y la fecha, pulsa este botón. El profesional recibirá tu pedido y te responderá con una cotización.',
           align: TourTooltipAlign.above,
         ),
       ];
@@ -199,7 +199,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         }
       });
     } catch (e) {
-      // Ignorar errores, simplemente no mostrar campos din?micos
+      // Ignorar errores, simplemente no mostrar campos dinámicos
     }
   }
 
@@ -210,7 +210,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     super.dispose();
   }
 
-  /// Reemplaza la pila de navegaci?n para no volver paso a paso por el flujo de solicitud.
+  /// Reemplaza la pila de navegación para no volver paso a paso por el flujo de solicitud.
   void _navigateAfterJobCreated(
     String jobId, {
     ServiceRequestSubmittedAction action = ServiceRequestSubmittedAction.viewJob,
@@ -255,7 +255,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     }
     if (_selectedAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor selecciona una ubicaci?n en el mapa')),
+        const SnackBar(content: Text('Por favor selecciona una ubicación en el mapa')),
       );
       return;
     }
@@ -269,12 +269,12 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       if (user == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Debes iniciar sesi?n')),
+          const SnackBar(content: Text('Debes iniciar sesión')),
         );
         return;
       }
 
-      // Obtener informaci?n del servicio para el di?logo
+      // Obtener información del servicio para el diálogo
       final service = await _serviceRepository.getServiceById(_selectedServiceId!);
       if (service == null) {
         if (!mounted) return;
@@ -308,7 +308,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Este profesional no est? disponible. Elige otro o intenta m?s tarde.',
+                'Este profesional no está disponible. Elige otro o intenta más tarde.',
               ),
               backgroundColor: AppColors.warning,
             ),
@@ -383,7 +383,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
             isTierInvitation: true,
           );
         } catch (_) {
-          // La solicitud ya fue creada; la notificaci?n no debe bloquear al usuario.
+          // La solicitud ya fue creada; la notificación no debe bloquear al usuario.
         }
 
         if (!mounted) return;
@@ -533,15 +533,13 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         near: near,
       );
       for (final worker in workers) {
-        if (worker.isAvailable && !await jobRepository.hasActiveJobs(worker.userId)) {
-          await NotificationService.instance.showNotification(
-            title: 'Nueva solicitud',
-            body: 'Hay una nueva solicitud de servicio disponible',
-            userId: worker.userId,
-            type: 'new_job',
-            relatedId: job.id,
-          );
-        }
+        await NotificationService.instance.showNotification(
+          title: 'Nueva solicitud',
+          body: 'Hay una nueva solicitud de servicio disponible',
+          userId: worker.userId,
+          type: 'new_job',
+          relatedId: job.id,
+        );
       }
 
       if (_selectedWorkerId != null) {
@@ -627,7 +625,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                           Text(
-                            'El profesional revisar? tu solicitud y te enviar? una cotizaci?n. Pagas el total aprobado; la comisi?n del servicio (5%, m?nimo \$1.000) se descuenta del profesional.',
+                            'El profesional revisará tu solicitud y te enviará una cotización. Pagas el total aprobado; la comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -667,12 +665,12 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Ubicaci?n',
+                    'Ubicación',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tu ubicaci?n se detectar? autom?ticamente',
+                    'Tu ubicación se detectará automáticamente',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.grayMedium,
                         ),
@@ -784,10 +782,10 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                     TextFormField(
                       controller: _descriptionController,
                       decoration: const InputDecoration(
-                        labelText: 'Descripci?n del trabajo',
+                        labelText: 'Descripción del trabajo',
                         prefixIcon: Icon(Icons.description),
                         hintText:
-                            'Describe el problema o trabajo a realizar (m?n. 10 caracteres)',
+                            'Describe el problema o trabajo a realizar (mín. 10 caracteres)',
                       ),
                       maxLines: 5,
                       validator: Validators.validateDescription,

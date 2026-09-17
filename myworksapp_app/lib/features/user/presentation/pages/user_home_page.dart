@@ -40,6 +40,13 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
   final _firstServiceKey = GlobalKey();
   List<ServiceModel> _allServices = [];
   String _query = '';
+  late Future<List<ServiceModel>> _servicesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _servicesFuture = _serviceRepository.getMainServices();
+  }
 
   List<GuidedTourStep> get _homeTourSteps => [
         const GuidedTourStep(
@@ -132,7 +139,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                   ),
                   Expanded(
                     child: FutureBuilder<List<ServiceModel>>(
-                      future: _serviceRepository.getMainServices(),
+                      future: _servicesFuture,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                                 ConnectionState.waiting &&
@@ -155,7 +162,10 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                             title: 'No se pudieron cargar los servicios',
                             message: '${snapshot.error}',
                             actionLabel: 'Reintentar',
-                            onRetry: () => setState(() {}),
+                            onRetry: () => setState(() {
+                              _servicesFuture =
+                                  _serviceRepository.getMainServices();
+                            }),
                           );
                         }
 

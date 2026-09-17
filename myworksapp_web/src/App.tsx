@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 
 import {
   ShieldCheck,
@@ -10,21 +10,11 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-import { PaymentCheckoutModal } from './components/PaymentCheckoutModal';
-
-import { LiveChatWidget } from './components/LiveChatWidget';
-
-import { AuthModal } from './components/AuthModal';
-
 import { CategoryCard } from './components/CategoryCard';
 
 import { BrandLogo } from './components/BrandLogo';
 
-import { SearchResultsView, type SearchWorker } from './components/SearchResultsView';
-
-import { QuickBookingBar } from './components/QuickBookingBar';
-
-import { TrackingDashboard } from './components/TrackingDashboard';
+import type { SearchWorker } from './components/SearchResultsView';
 
 import { useAuth } from './context/AuthContext';
 
@@ -42,7 +32,43 @@ import {
 
 } from '@myworksapp/shared';
 
+const PaymentCheckoutModal = lazy(() =>
+  import('./components/PaymentCheckoutModal').then((m) => ({
+    default: m.PaymentCheckoutModal,
+  })),
+);
 
+const LiveChatWidget = lazy(() =>
+  import('./components/LiveChatWidget').then((m) => ({
+    default: m.LiveChatWidget,
+  })),
+);
+
+const AuthModal = lazy(() =>
+  import('./components/AuthModal').then((m) => ({ default: m.AuthModal })),
+);
+
+const SearchResultsView = lazy(() =>
+  import('./components/SearchResultsView').then((m) => ({
+    default: m.SearchResultsView,
+  })),
+);
+
+const QuickBookingBar = lazy(() =>
+  import('./components/QuickBookingBar').then((m) => ({
+    default: m.QuickBookingBar,
+  })),
+);
+
+const TrackingDashboard = lazy(() =>
+  import('./components/TrackingDashboard').then((m) => ({
+    default: m.TrackingDashboard,
+  })),
+);
+
+function ViewFallback() {
+  return <div className="min-h-screen app-shell" />;
+}
 
 type AppView = 'landing' | 'search' | 'tracking';
 
@@ -389,7 +415,7 @@ export function App() {
   if (view === 'tracking' && selectedWorker) {
 
     return (
-
+      <Suspense fallback={<ViewFallback />}>
       <div className="min-h-screen app-shell">
 
         <TrackingDashboard
@@ -437,7 +463,7 @@ export function App() {
         )}
 
       </div>
-
+      </Suspense>
     );
 
   }
@@ -447,7 +473,7 @@ export function App() {
   if (view === 'search') {
 
     return (
-
+      <Suspense fallback={<ViewFallback />}>
       <div className="min-h-screen app-shell app-shell--search">
 
         <SearchResultsView
@@ -539,7 +565,7 @@ export function App() {
         <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
 
       </div>
-
+      </Suspense>
     );
 
   }
@@ -1034,7 +1060,9 @@ export function App() {
 
 
 
-      <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+      <Suspense fallback={null}>
+        <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+      </Suspense>
 
     </div>
 

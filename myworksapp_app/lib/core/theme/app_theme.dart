@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../design_system/app_elevation.dart';
 import '../design_system/app_radius.dart';
@@ -49,7 +48,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.backgroundLight,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(textTheme).apply(
+      textTheme: textTheme.apply(
         bodyColor: colorScheme.onSurface,
         displayColor: colorScheme.onSurface,
       ),
@@ -251,7 +250,7 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.backgroundDark,
       brightness: Brightness.dark,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(textTheme).apply(
+      textTheme: textTheme.apply(
         bodyColor: colorScheme.onSurface,
         displayColor: colorScheme.onSurface,
       ),

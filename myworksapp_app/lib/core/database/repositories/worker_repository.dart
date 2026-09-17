@@ -38,12 +38,14 @@ class WorkerRepository {
         .order('calificacion', ascending: false);
 
     if (rows.isEmpty) {
-      // Búsqueda flexible por subcadena o coincidencia aproximada de categoría
-      final allRows = await supabase.from(_table).select();
-      rows = allRows.where((r) {
-        final cat = (r['categoria_servicio'] as String? ?? '').toLowerCase();
-        return cat.contains(category.toLowerCase()) || category.toLowerCase().contains(cat);
-      }).toList();
+      final needle = category.replaceAll(RegExp(r'[%_,]'), '');
+      if (needle.isNotEmpty) {
+        rows = await supabase
+            .from(_table)
+            .select()
+            .ilike('categoria_servicio', '%$needle%')
+            .order('calificacion', ascending: false);
+      }
     }
 
     final workers =
@@ -59,10 +61,13 @@ class WorkerRepository {
     if (workers.isEmpty) return [];
 
     final jobRepository = JobRepository();
+    final busyIds = await jobRepository.getBusyWorkerIds(
+      workers.map((w) => w.userId).toList(),
+    );
     final listed = <WorkerModel>[];
     for (final worker in workers) {
       if (!worker.isAvailable) continue;
-      if (await jobRepository.hasActiveJobs(worker.userId)) continue;
+      if (busyIds.contains(worker.userId)) continue;
       if (near != null && worker.workZone != null && worker.workZone!.isNotEmpty) {
         if (!WorkerZoneMatcher.serves(
           workZone: worker.workZone,

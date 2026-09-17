@@ -43,7 +43,9 @@ class ServiceRepository {
   Future<List<ServiceModel>> getMainServices() async {
     final rows = await supabase
         .from(_table)
-        .select()
+        .select(
+          'id, nombre, descripcion, categoria, activo, modelo_precio, creado_en, actualizado_en',
+        )
         .eq('activo', 1)
         .order('categoria', ascending: true)
         .order('nombre', ascending: true);

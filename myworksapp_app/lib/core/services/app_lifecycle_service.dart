@@ -210,29 +210,10 @@ class AppLifecycleService extends WidgetsBindingObserver {
       if (user == null) return;
 
       final jobRepository = JobRepository();
-      
-      // Obtener jobs activos según rol
-      if (user.role == AppConstants.roleUser) {
-        final activeJobs = await jobRepository.getJobsByUserId(user.id);
-        final pendingOrInProgress = activeJobs.where((job) => 
-          job.status == AppConstants.jobStatusPending || 
-          job.status == AppConstants.jobStatusAccepted || 
-          job.status == AppConstants.jobStatusInProgress
-        ).toList();
-        
-        if (pendingOrInProgress.isNotEmpty) {
-          AppLogger.i('${pendingOrInProgress.length} trabajos activos encontrados');
-        }
-      } else if (user.role == AppConstants.roleWorker) {
-        final activeJobs = await jobRepository.getJobsByWorkerId(user.id);
-        final pendingOrInProgress = activeJobs.where((job) => 
-          job.status == AppConstants.jobStatusPending || 
-          job.status == AppConstants.jobStatusAccepted || 
-          job.status == AppConstants.jobStatusInProgress
-        ).toList();
-        
-        if (pendingOrInProgress.isNotEmpty) {
-          AppLogger.i('${pendingOrInProgress.length} trabajos activos encontrados');
+      if (user.role == AppConstants.roleWorker) {
+        final busy = await jobRepository.hasActiveJobs(user.id);
+        if (busy) {
+          AppLogger.i('Trabajador con trabajos activos al resumir');
         }
       }
     } catch (e) {

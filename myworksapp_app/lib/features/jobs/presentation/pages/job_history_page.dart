@@ -20,11 +20,27 @@ class JobHistoryPage extends ConsumerStatefulWidget {
 }
 
 class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
+  late Future<List<JobModel>> _jobsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _jobsFuture = _loadJobs();
+  }
+
+  Future<List<JobModel>> _loadJobs() {
+    final user = ref.read(authProvider).user;
+    if (user == null) return Future.value([]);
+    final jobRepository = ref.read(jobRepositoryProvider);
+    return user.role == AppConstants.roleWorker
+        ? jobRepository.getJobsByWorkerId(user.id)
+        : jobRepository.getJobsByUserId(user.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final user = authState.user;
-    final jobRepository = ref.read(jobRepositoryProvider);
 
     if (user == null) {
       return const Scaffold(
@@ -38,9 +54,7 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
         title: Text('Historial de Trabajos'),
       ),
       body: FutureBuilder<List<JobModel>>(
-        future: user.role == AppConstants.roleWorker
-            ? jobRepository.getJobsByWorkerId(user.id)
-            : jobRepository.getJobsByUserId(user.id),
+        future: _jobsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingWidget();
@@ -52,7 +66,9 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
               message: ErrorHandler.getErrorMessage(snapshot.error),
               actionLabel: 'Reintentar',
               onRetry: () {
-                setState(() {});
+                setState(() {
+                  _jobsFuture = _loadJobs();
+                });
               },
             );
           }

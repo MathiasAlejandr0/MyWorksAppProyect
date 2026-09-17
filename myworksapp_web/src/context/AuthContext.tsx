@@ -69,9 +69,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void refreshProfile();
-    const { data: subscription } = supabase.auth.onAuthStateChange(() => {
-      void refreshProfile();
+    let inFlight: Promise<void> | null = null;
+    const run = () => {
+      if (inFlight) return inFlight;
+      inFlight = refreshProfile().finally(() => {
+        inFlight = null;
+      });
+      return inFlight;
+    };
+
+    void run();
+    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;
+      void run();
     });
     return () => subscription.subscription.unsubscribe();
   }, [refreshProfile]);

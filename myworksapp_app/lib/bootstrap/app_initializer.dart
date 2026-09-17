@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/services/crash_reporting_service.dart';
@@ -46,24 +48,8 @@ class AppInitializer {
     try {
       AppLogger.i('🚀 Iniciando inicialización de la app...');
 
-      // 1. Verificar conectividad con Supabase
-      AppLogger.i('🏥 Verificando conexión con Supabase...');
-      final healthService = AppHealthService.instance;
-      final isHealthy = await healthService.checkHealth();
-
-      if (!isHealthy) {
-        AppLogger.e('🚨 No se pudo conectar con Supabase');
-      } else {
-        AppLogger.i('✅ Supabase accesible');
-      }
-
-      try {
-        await CrashReportingService.instance.initialize();
-      } catch (e) {
-        AppLogger.w('⚠️ Crash reporting no inicializado', e);
-      }
-
-      // 2. Cargar preferencias
+      // Preferencias y sesión bloquean el primer frame útil.
+      // Health, crash reporting y notificaciones se calientan después.
       AppLogger.i('⚙️ Cargando preferencias...');
       final prefs = await SharedPreferences.getInstance();
       await _ensureDemoPreferences(prefs);
@@ -74,16 +60,6 @@ class AppInitializer {
       final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
       final isFirstLaunch = !prefs.containsKey('onboarding_completed');
       AppLogger.i('✅ Preferencias cargadas');
-
-      // 3. Inicializar servicios locales (notificaciones, lifecycle)
-      AppLogger.i('🔧 Inicializando servicios...');
-
-      try {
-        await NotificationService.instance.initialize();
-        AppLogger.i('✅ Notificaciones inicializadas');
-      } catch (e) {
-        AppLogger.w('⚠️ No se pudieron inicializar las notificaciones', e);
-      }
 
       AppLifecycleService.instance.initialize(ref);
       AppLogger.i('✅ App Lifecycle Service inicializado');
@@ -140,6 +116,8 @@ class AppInitializer {
         onboardingCompleted: onboardingCompleted,
       );
 
+      unawaited(_warmupBackgroundServices());
+
       AppLogger.i('✅ Inicialización completada exitosamente');
       AppLogger.i('   - Sesión activa: $hasActiveSession');
       AppLogger.i('   - Usuario: ${userId ?? "N/A"}');
@@ -170,6 +148,32 @@ class AppInitializer {
 
   AppInitializationResult? get lastResult => _lastResult;
   bool get isInitialized => _isInitialized;
+
+  Future<void> _warmupBackgroundServices() async {
+    try {
+      final isHealthy = await AppHealthService.instance.checkHealth();
+      if (!isHealthy) {
+        AppLogger.e('🚨 No se pudo conectar con Supabase');
+      } else {
+        AppLogger.i('✅ Supabase accesible');
+      }
+    } catch (e) {
+      AppLogger.w('⚠️ Health check diferido falló', e);
+    }
+
+    try {
+      await CrashReportingService.instance.initialize();
+    } catch (e) {
+      AppLogger.w('⚠️ Crash reporting no inicializado', e);
+    }
+
+    try {
+      await NotificationService.instance.initialize();
+      AppLogger.i('✅ Notificaciones inicializadas');
+    } catch (e) {
+      AppLogger.w('⚠️ No se pudieron inicializar las notificaciones', e);
+    }
+  }
 
   Future<void> _ensureDemoPreferences(SharedPreferences prefs) async {
     if (!prefs.containsKey('privacy_policy_url')) {

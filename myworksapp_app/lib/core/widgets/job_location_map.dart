@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
@@ -212,11 +215,55 @@ class JobLocationMap extends StatelessWidget {
   }
 
   Widget _mapBody(BuildContext context) {
+    if (_isPreview) {
+      return _staticPreview(context);
+    }
     if (AppPlatform.supportsEmbeddedGoogleMap &&
         GoogleMapsConfig.useEmbeddedGoogleMap) {
       return _googleMap(context);
     }
     return _desktopMap(context);
+  }
+
+  Widget _staticPreview(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          CachedNetworkImage(
+            imageUrl: _osmTileUrl(),
+            fit: BoxFit.cover,
+            memCacheWidth: 512,
+            httpHeaders: const {
+              'User-Agent': 'MyWorksApp/1.0 (com.myworksapp.myworksapp)',
+            },
+            placeholder: (context, url) => const ColoredBox(
+              color: Color(0xFF152033),
+            ),
+            errorWidget: (context, url, error) => const ColoredBox(
+              color: Color(0xFF152033),
+            ),
+          ),
+          _emphasisPin(),
+          _previewHint(context),
+        ],
+      ),
+    );
+  }
+
+  String _osmTileUrl() {
+    final z = _zoom.round().clamp(1, 19);
+    final n = 1 << z;
+    final latRad = latitude * math.pi / 180;
+    final x = ((longitude + 180.0) / 360.0 * n).floor().clamp(0, n - 1);
+    final y = ((1 -
+                math.log(math.tan(latRad) + 1 / math.cos(latRad)) / math.pi) /
+            2 *
+            n)
+        .floor()
+        .clamp(0, n - 1);
+    return 'https://tile.openstreetmap.org/$z/$x/$y.png';
   }
 
   @override
