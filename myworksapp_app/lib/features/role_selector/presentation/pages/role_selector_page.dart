@@ -6,6 +6,7 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/domain/user_role.dart';
 
 class RoleSelectorPage extends StatelessWidget {
   const RoleSelectorPage({super.key});
@@ -14,7 +15,7 @@ class RoleSelectorPage extends StatelessWidget {
     // Guardar el rol seleccionado (se guardará cuando el usuario se registre)
     // Por ahora, navegamos al login/registro
     context.push(
-      AppConstants.routeLogin,
+      AppConstants.routeRegister,
       extra: {'role': role},
     );
   }
@@ -47,19 +48,18 @@ class RoleSelectorPage extends StatelessWidget {
               // Botón Usuario
               _RoleCard(
                 icon: Icons.person,
-                title: 'Usuario',
-                description: 'Busco servicios profesionales',
+                title: UserRole.cliente.label,
+                description: UserRole.cliente.description,
                 color: AppColors.primaryLight,
-                onTap: () => _saveRoleAndNavigate(context, AppConstants.roleUser),
+                onTap: () => _saveRoleAndNavigate(context, UserRole.cliente.dbValue),
               ),
               const SizedBox(height: AppSpacing.xl),
-              // Botón Trabajador
               _RoleCard(
                 icon: Icons.build,
-                title: 'Trabajador',
-                description: 'Ofrezco servicios profesionales',
+                title: UserRole.especialista.label,
+                description: UserRole.especialista.description,
                 color: AppColors.success,
-                onTap: () => _saveRoleAndNavigate(context, AppConstants.roleWorker),
+                onTap: () => _saveRoleAndNavigate(context, UserRole.especialista.dbValue),
               ),
             ],
           ),

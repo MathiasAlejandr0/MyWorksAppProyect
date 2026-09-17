@@ -125,7 +125,7 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
                         setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
-                validator: Validators.validatePassword,
+                validator: Validators.validateSecurePassword,
               ),
               const SizedBox(height: 16),
               TextFormField(

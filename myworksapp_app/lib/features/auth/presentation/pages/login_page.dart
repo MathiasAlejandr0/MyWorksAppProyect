@@ -7,14 +7,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/demo_credentials.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
+import '../../../../core/domain/user_role.dart';
 import '../../../../core/domain/worker_login_item.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/role_utils.dart';
 import '../../../../core/utils/worker_navigation.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/role_selector_chips.dart';
 
 /// Login 1:1 con mockup-mobile-02-login.png
 class LoginPage extends ConsumerStatefulWidget {
@@ -34,7 +37,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordFocus = FocusNode();
   final WorkerRepository _workerRepository = WorkerRepository();
   bool _obscurePassword = true;
-  late String _selectedRole;
+  late UserRole _selectedRole;
   List<WorkerLoginItem> _demoWorkers = [];
   WorkerLoginItem? _selectedWorker;
   bool _loadingWorkers = false;
@@ -43,8 +46,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _selectedRole = widget.role ?? AppConstants.roleUser;
-    if (_selectedRole == AppConstants.roleWorker) {
+    _selectedRole = UserRole.fromDb(widget.role);
+    if (_selectedRole.isEspecialista) {
       _loadDemoWorkers();
     }
     if (kDebugMode) {
@@ -54,14 +57,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _passwordFocus.addListener(() => setState(() {}));
   }
 
-  void _applyDemoCredentials(String role) {
-    if (role == AppConstants.roleUser) {
+  void _applyDemoCredentials(UserRole role) {
+    if (role.isCliente) {
       _emailController.text = DemoCredentials.userEmail;
       _passwordController.text = DemoCredentials.demoPassword;
-    } else if (role == AppConstants.roleAdmin) {
+    } else if (role.isAdministrador) {
       _emailController.text = DemoCredentials.adminEmail;
       _passwordController.text = DemoCredentials.demoPassword;
-    } else if (role == AppConstants.roleWorker) {
+    } else if (role.isEspecialista) {
       final worker = _selectedWorker;
       if (worker != null) {
         _emailController.text = worker.email;
@@ -73,9 +76,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
-  void _onRoleChanged(String role) {
+  void _onRoleChanged(UserRole role) {
     setState(() => _selectedRole = role);
-    if (role == AppConstants.roleWorker && _demoWorkers.isEmpty) {
+    if (role.isEspecialista && _demoWorkers.isEmpty) {
       _loadDemoWorkers();
     }
     if (!kDebugMode) return;
@@ -113,10 +116,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _navigateAfterLogin() {
     final user = ref.read(authProvider).user;
     if (user == null) return;
-    if (user.role == AppConstants.roleAdmin) {
-      context.go(AppConstants.routeAdminDashboard);
-    } else if (user.role == AppConstants.roleUser) {
-      context.go(AppConstants.routeUserHome);
+    if (user.userRole.isAdministrador) {
+      context.go(homeRouteForRole(user.userRole));
+    } else if (user.userRole.isCliente) {
+      context.go(homeRouteForRole(user.userRole));
     } else {
       unawaited(goToWorkerEntryRoute(context, user.id));
     }
@@ -180,6 +183,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             padding: const EdgeInsets.fromLTRB(28, 28, 28, 20),
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -208,9 +212,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 26),
-                  _RoleChips(
+                  RoleSelectorChips(
                     selected: _selectedRole,
                     onChanged: _onRoleChanged,
+                    roles: kDebugMode
+                        ? const [
+                            ...UserRole.publicRoles,
+                            UserRole.administrador,
+                          ]
+                        : UserRole.publicRoles,
                   ),
                   const SizedBox(height: 22),
                   _AuthField(
@@ -244,7 +254,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                     ),
                   ),
-                  if (_selectedRole == AppConstants.roleWorker &&
+                  if (_selectedRole.isEspecialista &&
                       kDebugMode) ...[
                     const SizedBox(height: 12),
                     _WorkerPicker(
@@ -306,6 +316,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => context.push(
+                      AppConstants.routeRegister,
+                      extra: {'role': _selectedRole.dbValue},
+                    ),
+                    child: Text.rich(
+                      TextSpan(
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: muted,
+                        ),
+                        children: const [
+                          TextSpan(text: '¿No tienes cuenta? '),
+                          TextSpan(
+                            text: 'Regístrate',
+                            style: TextStyle(
+                              color: AppColors.brandOrange,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                   TextButton(
                     onPressed: () =>
                         context.push(AppConstants.routeForgotPassword),
@@ -443,85 +479,6 @@ class _LoginLogo extends StatelessWidget {
             letterSpacing: -0.3,
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _RoleChips extends StatelessWidget {
-  const _RoleChips({required this.selected, required this.onChanged});
-
-  final String selected;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final inactiveFg = AppColors.onCanvasMuted(brightness);
-    final roles = [
-      (AppConstants.roleUser, 'Usuario', Icons.person_outline_rounded),
-      (AppConstants.roleWorker, 'Trabajador', Icons.engineering_outlined),
-      (AppConstants.roleAdmin, 'Admin', Icons.shield_outlined),
-    ];
-
-    return Row(
-      children: [
-        for (var i = 0; i < roles.length; i++) ...[
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(roles[i].$1),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: selected == roles[i].$1
-                      ? AppColors.brandOrange.withValues(alpha: 0.12)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: selected == roles[i].$1
-                        ? AppColors.brandOrange
-                        : AppColors.hairlineOf(context),
-                    width: selected == roles[i].$1 ? 1.6 : 1.2,
-                  ),
-                  boxShadow: selected == roles[i].$1
-                      ? [
-                          BoxShadow(
-                            color:
-                                AppColors.brandOrange.withValues(alpha: 0.22),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      roles[i].$3,
-                      size: 22,
-                      color: selected == roles[i].$1
-                          ? AppColors.brandOrange
-                          : inactiveFg,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      roles[i].$2,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: selected == roles[i].$1
-                            ? AppColors.brandOrange
-                            : inactiveFg,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          if (i < roles.length - 1) const SizedBox(width: 8),
-        ],
       ],
     );
   }

@@ -51,7 +51,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     });
 
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         _useFallbackLocation();
         return;
@@ -71,7 +71,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         return;
       }
 
-      Position position = await Geolocator.getCurrentPosition(
+      final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 8),
       );
@@ -101,7 +101,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
 
   Future<void> _getAddressFromCoordinates(double latitude, double longitude) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
+      final placemarks = await placemarkFromCoordinates(
         latitude,
         longitude,
         localeIdentifier: 'es',

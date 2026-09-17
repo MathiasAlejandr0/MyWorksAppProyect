@@ -46,13 +46,13 @@ class _WorkerOnboardingCardState extends State<WorkerOnboardingCard> {
     if (item.contains('foto')) {
       context.push(AppConstants.routeWorkerProfile);
     } else if (item.contains('Descripción')) {
-      context.push(AppConstants.routeWorkerProfile);
+      context.push(AppConstants.routeWorkerProfileManage);
     } else if (item.contains('portafolio')) {
-      context.push(AppConstants.routeWorkerProfile);
+      context.push(AppConstants.routeWorkerProfileManage);
     } else if (item.contains('Tarifas') || item.contains('precio')) {
       context.push(AppConstants.routeWorkerPricingSetup);
     } else if (item.contains('zona')) {
-      context.push(AppConstants.routeWorkerProfile);
+      context.push(AppConstants.routeWorkerProfileManage);
     } else if (item.contains('Servicio')) {
       context.push(AppConstants.routeWorkerRegister);
     }
