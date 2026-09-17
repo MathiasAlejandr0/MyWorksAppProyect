@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../utils/constants.dart';
-import '../services/session_manager.dart';
 import '../utils/app_logger.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 
@@ -16,15 +15,8 @@ class LogoutService {
     try {
       AppLogger.i('Iniciando logout...');
 
-      // 1. Limpiar authProvider
       final authNotifier = ref.read(authProvider.notifier);
       await authNotifier.logout();
-
-      // 2. Limpiar sesión
-      await SessionManager.instance.clearSession();
-
-      // 3. Limpiar otros estados si es necesario
-      // (Aquí se pueden agregar más limpiezas de estado)
 
       AppLogger.i('Logout completado');
 

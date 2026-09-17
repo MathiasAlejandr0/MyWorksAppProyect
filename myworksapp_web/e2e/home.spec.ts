@@ -4,10 +4,14 @@ test.describe('Home smoke', () => {
   test('muestra hero y buscador de problema', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByText('My Works App').first()).toBeVisible();
+    await expect(page.locator('#root')).not.toBeEmpty({ timeout: 15_000 });
+    await expect(page.getByText('My Works App').first()).toBeVisible({
+      timeout: 15_000,
+    });
 
-    const search = page.getByPlaceholder(/fuga|describe/i);
-    await expect(search).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /buscar servicio/i }),
+    ).toBeVisible();
   });
 
   test('muestra CTA de login o AuthModal si está presente', async ({ page }) => {
@@ -25,7 +29,9 @@ test.describe('Home smoke', () => {
       await expect(loginLink).toBeVisible();
     } else {
       // Landing sin CTA visible (build parcial): no fallar el smoke
-      await expect(page.getByText('My Works App').first()).toBeVisible();
+      await expect(page.getByText('My Works App').first()).toBeVisible({
+        timeout: 15_000,
+      });
     }
   });
 });

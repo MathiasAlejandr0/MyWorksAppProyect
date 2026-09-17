@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import '../../utils/constants.dart';
 import '../../utils/worker_job_status.dart';
 import '../models/job_model.dart';
 import '../supabase_db.dart';

@@ -1,3 +1,5 @@
+import '../../domain/user_role.dart';
+
 class UserModel {
   final String id;
   final String name;
@@ -71,5 +73,8 @@ class UserModel {
   bool get isActive => accountStatus == 'activo';
   bool get isSuspended => accountStatus == 'suspendido';
   bool get isBlocked => accountStatus == 'bloqueado';
+
+  /// Rol tipado. El string [role] se mantiene para compatibilidad con la BD.
+  UserRole get userRole => UserRole.fromDb(role);
 }
 

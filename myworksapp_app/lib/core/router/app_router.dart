@@ -6,6 +6,7 @@ import '../database/models/user_model.dart';
 import '../../features/role_selector/presentation/pages/welcome_page.dart';
 import '../../features/role_selector/presentation/pages/role_selector_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/user/presentation/pages/user_home_page.dart';
@@ -48,6 +49,7 @@ import '../../features/admin/presentation/pages/admin_feature_flags_page.dart';
 import '../../features/admin/presentation/pages/admin_desktop_management_page.dart';
 import '../../core/utils/constants.dart';
 import '../../core/utils/app_logger.dart';
+import '../../core/utils/role_utils.dart';
 import '../../core/database/repositories/worker_repository.dart';
 
 /// Puente entre los cambios de [authProvider] y los redirects de GoRouter.
@@ -118,11 +120,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
         // Si está logueado y está en welcome/auth/onboarding, redirigir según rol
         if (isLoggedIn && (isOnWelcome || isOnAuth)) {
-          if (authUser.role == AppConstants.roleAdmin) {
-            return AppConstants.routeAdminDashboard;
+          if (authUser.userRole.isAdministrador) {
+            return homeRouteForRole(authUser.userRole);
           }
-          if (authUser.role == AppConstants.roleUser) {
-            return AppConstants.routeUserHome;
+          if (authUser.userRole.isCliente) {
+            return homeRouteForRole(authUser.userRole);
           }
           final workerRepo = WorkerRepository();
           final worker = await workerRepo.getWorkerByUserId(authUser.id);
@@ -130,12 +132,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (!worker.pricingConfigured) {
             return AppConstants.routeWorkerPricingSetup;
           }
-          return AppConstants.routeWorkerHome;
+          return homeRouteForRole(authUser.userRole);
         }
 
-        // Trabajador sin precios configurados no debe entrar al inicio aún
+        // Especialista sin precios configurados no debe entrar al inicio aún
         if (isLoggedIn &&
-            authUser.role == AppConstants.roleWorker &&
+            authUser.userRole.isEspecialista &&
             state.matchedLocation == AppConstants.routeWorkerHome) {
           final worker = await WorkerRepository().getWorkerByUserId(authUser.id);
           if (worker != null && !worker.pricingConfigured) {
@@ -144,10 +146,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
 
         final isAdminRoute = state.matchedLocation.startsWith('/admin');
-        if (isLoggedIn && isAdminRoute && authUser.role != AppConstants.roleAdmin) {
-          return authUser.role == AppConstants.roleWorker
-              ? AppConstants.routeWorkerHome
-              : AppConstants.routeUserHome;
+        if (isLoggedIn &&
+            isAdminRoute &&
+            !authUser.userRole.isAdministrador) {
+          return homeRouteForRole(authUser.userRole);
         }
 
       } catch (e, st) {
@@ -200,11 +202,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WorkerHomePage(),
       ),
       GoRoute(
+        path: AppConstants.routeProfile,
+        builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
         path: AppConstants.routeUserProfile,
+        builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeUserProfileEdit,
         builder: (context, state) => const UserProfilePage(),
       ),
       GoRoute(
         path: AppConstants.routeWorkerProfile,
+        builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeWorkerProfileManage,
         builder: (context, state) => const WorkerProfilePage(),
       ),
       GoRoute(

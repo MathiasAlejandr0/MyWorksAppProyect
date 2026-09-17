@@ -2,7 +2,8 @@ class AppConstants {
   /// Nombre de marca en logos, launcher y textos de la UI.
   static const String appBrandDisplayName = 'My Works App';
 
-  // Roles (códigos BD en español)
+  // Roles (códigos BD en español). Preferir [UserRole] en código nuevo.
+  // Cliente → usuario, Especialista → trabajador.
   static const String roleUser = 'usuario';
   static const String roleWorker = 'trabajador';
   static const String roleAdmin = 'administrador';
@@ -56,8 +57,11 @@ class AppConstants {
   static const String routeRegister = '/register';
   static const String routeUserHome = '/user/home';
   static const String routeWorkerHome = '/worker/home';
+  static const String routeProfile = '/profile';
   static const String routeUserProfile = '/user/profile';
+  static const String routeUserProfileEdit = '/user/profile/edit';
   static const String routeWorkerProfile = '/worker/profile';
+  static const String routeWorkerProfileManage = '/worker/profile/manage';
   static const String routeWorkerRegister = '/worker/register';
   static const String routeWorkerPricingSetup = '/worker/pricing-setup';
   static const String routeServiceRequest = '/user/service-request';

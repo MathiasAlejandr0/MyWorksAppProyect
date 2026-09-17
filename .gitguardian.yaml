@@ -1,0 +1,9 @@
+# Política local para ggshield / GitGuardian: los tests usan muestras
+# sintéticas de política de claves, no secretos reales.
+version: 2
+secret:
+  ignored_paths:
+    - '**/test/**'
+    - '**/*_test.dart'
+    - '**/*.test.ts'
+    - '**/*.spec.ts'
