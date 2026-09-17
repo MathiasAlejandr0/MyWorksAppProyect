@@ -1,33 +1,39 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../config/oauth_config.dart';
 import '../database/models/user_model.dart';
-import 'repository_providers.dart';
-import '../database/repositories/user_repository.dart';
-import '../database/supabase_db.dart';
+import '../domain/user_role.dart';
+import '../exceptions/auth_exceptions.dart';
+import '../services/auth_service.dart';
 import '../services/notification_realtime_service.dart';
-import '../services/session_manager.dart';
-import '../utils/role_utils.dart';
+import '../utils/app_logger.dart';
+import 'repository_providers.dart';
 
 class AuthState {
   final UserModel? user;
   final bool isLoading;
   final String? error;
 
-  AuthState({
+  const AuthState({
     this.user,
     this.isLoading = false,
     this.error,
   });
 
+  bool get isAuthenticated => user != null;
+
+  UserRole get role => user?.userRole ?? UserRole.cliente;
+
   AuthState copyWith({
     UserModel? user,
     bool? isLoading,
     String? error,
+    bool clearUser = false,
   }) {
     return AuthState(
-      user: user ?? this.user,
+      user: clearUser ? null : (user ?? this.user),
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -35,10 +41,18 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final UserRepository _userRepository;
-  final SessionManager _sessionManager = SessionManager.instance;
+  AuthNotifier(this._authService) : super(const AuthState()) {
+    _sessionSub = _authService.sessionChanges.listen(
+      _onSessionEvent,
+      onError: (Object e, StackTrace st) {
+        AppLogger.e('Error en auth stream', e, st);
+      },
+    );
+  }
 
-  AuthNotifier(this._userRepository) : super(AuthState());
+  final AuthService _authService;
+  StreamSubscription<AuthSessionEvent>? _sessionSub;
+  bool _handlingRemoteSignOut = false;
 
   Future<bool> register({
     required String name,
@@ -47,43 +61,41 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String role,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
-    final safeRole = sanitizeRegistrationRole(role);
-
     try {
-      final res = await supabase.auth.signUp(
-        email: email.toLowerCase().trim(),
+      final result = await _authService.register(
+        name: name,
+        email: email,
         password: password,
-        data: {'name': name.trim(), 'role': safeRole},
+        role: UserRole.fromDb(role),
       );
 
-      final authUser = res.user;
-      if (authUser == null) {
+      if (result.emailConfirmationRequired) {
         state = state.copyWith(
           isLoading: false,
-          error: 'No se pudo registrar el usuario',
+          error: const EmailConfirmationRequiredException().userMessage,
         );
         return false;
       }
 
-      if (res.session == null) {
+      final user = result.user;
+      if (user == null) {
         state = state.copyWith(
           isLoading: false,
-          error:
-              'Cuenta creada. Revisa tu correo para confirmarla antes de iniciar sesión.',
+          error: const RegistrationFailedException().userMessage,
         );
         return false;
       }
 
-      await _sessionManager.saveSession(authUser.id, safeRole);
-      await loadCurrentUser(authUser.id);
+      await NotificationRealtimeService.instance.subscribe(user.id);
+      state = state.copyWith(user: user, isLoading: false);
       return true;
-    } on AuthException catch (e) {
-      state = state.copyWith(isLoading: false, error: e.message);
+    } on AppAuthException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.userMessage);
       return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Error al registrar usuario: ${e.toString()}',
+        error: 'Error al registrar usuario: $e',
       );
       return false;
     }
@@ -94,35 +106,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String password,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
-
     try {
-      final res = await supabase.auth.signInWithPassword(
-        email: email.toLowerCase().trim(),
-        password: password,
-      );
-
-      final authUser = res.user;
-      if (authUser == null) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Email o contraseña incorrectos',
-        );
-        return false;
-      }
-
-      return await _finalizeAuthenticatedUser(authUser.id);
-    } on AuthException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.statusCode == '400'
-            ? 'Email o contraseña incorrectos'
-            : e.message,
-      );
+      final user = await _authService.login(email: email, password: password);
+      await NotificationRealtimeService.instance.subscribe(user.id);
+      state = state.copyWith(user: user, isLoading: false);
+      return true;
+    } on AppAuthException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.userMessage);
       return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Error al iniciar sesión: ${e.toString()}',
+        error: 'Error al iniciar sesión: $e',
       );
       return false;
     }
@@ -131,21 +126,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Abre el navegador del sistema para Google o Apple (Supabase OAuth).
   Future<bool> loginWithOAuth(OAuthProvider provider) async {
     state = state.copyWith(isLoading: true, error: null);
-
     try {
-      await supabase.auth.signInWithOAuth(
-        provider,
-        redirectTo: OAuthConfig.redirectUrl,
-        authScreenLaunchMode: LaunchMode.externalApplication,
+      await _authService.loginWithOAuth(
+        provider == OAuthProvider.apple
+            ? SocialAuthProvider.apple
+            : SocialAuthProvider.google,
       );
       return true;
-    } on AuthException catch (e) {
-      state = state.copyWith(isLoading: false, error: e.message);
+    } on AppAuthException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.userMessage);
       return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Error al iniciar sesión social: ${e.toString()}',
+        error: 'Error al iniciar sesión social: $e',
       );
       return false;
     }
@@ -154,76 +148,57 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Completa el inicio de sesión tras el deep link OAuth.
   Future<bool> completeOAuthSession() async {
     state = state.copyWith(isLoading: true, error: null);
-
     try {
-      final authUser = supabase.auth.currentUser;
-      if (authUser == null) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'No se pudo completar el inicio de sesión social',
-        );
-        return false;
-      }
-
-      return await _finalizeAuthenticatedUser(authUser.id);
+      final user = await _authService.completeOAuthSession();
+      await NotificationRealtimeService.instance.subscribe(user.id);
+      state = state.copyWith(user: user, isLoading: false);
+      return true;
+    } on AppAuthException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.userMessage);
+      return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Error al completar inicio de sesión: ${e.toString()}',
+        error: 'Error al completar inicio de sesión: $e',
       );
       return false;
     }
-  }
-
-  Future<bool> _finalizeAuthenticatedUser(String authUserId) async {
-    final user = await _userRepository.getUserById(authUserId);
-    if (user != null && !user.isActive) {
-      await _sessionManager.clearSession();
-      state = state.copyWith(
-        isLoading: false,
-        error: user.isBlocked
-            ? 'Tu cuenta está bloqueada. Contacta con soporte'
-            : 'Tu cuenta está suspendida',
-      );
-      return false;
-    }
-
-    await _sessionManager.saveSession(authUserId, user?.role ?? 'usuario');
-    state = state.copyWith(user: user, isLoading: false);
-    await NotificationRealtimeService.instance.subscribe(authUserId);
-    return true;
   }
 
   Future<void> logout() async {
-    await NotificationRealtimeService.instance.unsubscribe();
-    await _sessionManager.clearSession();
-    state = AuthState();
+    _handlingRemoteSignOut = true;
+    try {
+      await NotificationRealtimeService.instance.unsubscribe();
+      await _authService.logout();
+    } finally {
+      state = const AuthState();
+      _handlingRemoteSignOut = false;
+    }
   }
 
   Future<bool> restoreSession() async {
     state = state.copyWith(isLoading: true);
-
     try {
-      final userId = await _sessionManager.restoreSession();
-      if (userId == null) {
-        state = state.copyWith(isLoading: false);
+      final user = await _authService.restoreSession();
+      if (user == null) {
+        state = state.copyWith(isLoading: false, clearUser: true);
         return false;
       }
-
-      final user = await _userRepository.getUserById(userId);
-      if (user == null || !user.isActive) {
-        await _sessionManager.clearSession();
-        state = state.copyWith(isLoading: false);
-        return false;
-      }
-
+      await NotificationRealtimeService.instance.subscribe(user.id);
       state = state.copyWith(user: user, isLoading: false);
-      await NotificationRealtimeService.instance.subscribe(userId);
       return true;
+    } on AppAuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.userMessage,
+        clearUser: true,
+      );
+      return false;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Error al restaurar sesión: ${e.toString()}',
+        error: 'Error al restaurar sesión: $e',
+        clearUser: true,
       );
       return false;
     }
@@ -234,29 +209,65 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: true);
     }
     try {
-      final user = await _userRepository.getUserById(userId);
+      final user = await _authService.loadUser(userId);
       state = state.copyWith(user: user, isLoading: false);
+    } on AppAuthException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.userMessage);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Error al cargar usuario: ${e.toString()}',
+        error: 'Error al cargar usuario: $e',
       );
     }
   }
 
   Future<bool> changePassword({required String newPassword}) async {
     try {
-      await supabase.auth.updateUser(UserAttributes(password: newPassword));
+      await _authService.changePassword(newPassword);
       return true;
+    } on AppAuthException catch (e) {
+      state = state.copyWith(error: e.userMessage);
+      return false;
     } catch (e) {
       state = state.copyWith(
-        error: 'Error al cambiar contraseña: ${e.toString()}',
+        error: 'Error al cambiar contraseña: $e',
       );
       return false;
     }
   }
+
+  Future<void> _onSessionEvent(AuthSessionEvent event) async {
+    if (_handlingRemoteSignOut) return;
+
+    if (!event.isSignedIn) {
+      if (state.user != null) {
+        await NotificationRealtimeService.instance.unsubscribe();
+        state = const AuthState();
+      }
+      return;
+    }
+
+    final userId = event.userId;
+    if (userId == null) return;
+    if (state.user?.id == userId) return;
+
+    await loadCurrentUser(userId, silent: true);
+    await NotificationRealtimeService.instance.subscribe(userId);
+  }
+
+  @override
+  void dispose() {
+    _sessionSub?.cancel();
+    super.dispose();
+  }
 }
 
+final authServiceProvider = Provider<AuthService>((ref) {
+  return SupabaseAuthService(
+    userRepository: ref.read(userRepositoryProvider),
+  );
+});
+
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.read(userRepositoryProvider));
+  return AuthNotifier(ref.read(authServiceProvider));
 });

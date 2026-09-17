@@ -31,6 +31,42 @@ class Validators {
     return null;
   }
 
+  /// Política de contraseña segura para registro y cambio de clave.
+  /// El login sigue usando [validatePassword] para no bloquear cuentas existentes.
+  static String? validateSecurePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'La contraseña es requerida';
+    }
+    if (value.length < 8) {
+      return 'La contraseña debe tener al menos 8 caracteres';
+    }
+    if (!RegExp(r'[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]').hasMatch(value)) {
+      return 'Incluye al menos una letra';
+    }
+    if (!RegExp(r'\d').hasMatch(value)) {
+      return 'Incluye al menos un número';
+    }
+    return null;
+  }
+
+  static PasswordStrength passwordStrength(String value) {
+    var score = 0;
+    if (value.length >= 8) score++;
+    if (value.length >= 12) score++;
+    if (RegExp(r'[a-z]').hasMatch(value) &&
+        RegExp(r'[A-Z]').hasMatch(value)) {
+      score++;
+    } else if (RegExp(r'[A-Za-z]').hasMatch(value)) {
+      score++;
+    }
+    if (RegExp(r'\d').hasMatch(value)) score++;
+    if (RegExp(r'[^A-Za-z0-9]').hasMatch(value)) score++;
+
+    if (value.isEmpty || score <= 1) return PasswordStrength.weak;
+    if (score <= 3) return PasswordStrength.medium;
+    return PasswordStrength.strong;
+  }
+
   static String? validateRequired(String? value, String fieldName) {
     if (value == null || value.isEmpty) {
       return '$fieldName es requerido';
@@ -58,4 +94,6 @@ class Validators {
     return null;
   }
 }
+
+enum PasswordStrength { weak, medium, strong }
 
