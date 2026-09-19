@@ -107,8 +107,8 @@ def main():
     set_paragraph_format(meta, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=4)
     r = meta.add_run(
         "Documento técnico de esquema · PostgreSQL / Supabase\n"
-        "Versión 1.4 · 14 de septiembre de 2026\n"
-        "Convención: español neutro · snake_case"
+        "Versión 1.5 · 19 de septiembre de 2026\n"
+        "Español neutro · snake_case"
     )
     set_run_font(r, size=11, color=RGBColor(90, 90, 90))
 
@@ -134,12 +134,12 @@ def main():
             ["Esquema", "public"],
             ["Convención de nombres", "Español + snake_case"],
             ["Idioma del documento", "Español neutro"],
-            ["Versión del documento", "1.4"],
-            ["Fecha", "2026-09-14"],
+            ["Versión del documento", "1.5"],
+            ["Fecha", "2026-09-19"],
             [
                 "Estado de migraciones",
-                "Rename ES (04) aplicado; RLS (05) confirmado en tablas núcleo; "
-                "seed marketplace (06) en repositorio; hardening 20260915 pendiente de apply remoto.",
+                "Rename, RLS, catálogo, hardening y las correcciones del 19 de septiembre "
+                "aplicados en el servidor.",
             ],
             [
                 "Tipado observado",
@@ -159,9 +159,9 @@ def main():
     )
     add_body(
         doc,
-        "En términos simples: si se cambia un nombre de columna o un estado sin actualizar "
-        "este documento y el código, se rompe el flujo entre aplicaciones. Esta es la "
-        "referencia compartida para no inventar nombres distintos entre móvil, web y escritorio.",
+        "Cómo leerlo: la sección 3 es el índice de las 28 tablas. La sección 4 lista los textos "
+        "exactos de estado; hay que copiarlos tal cual. La sección 7 explica quién puede leer o "
+        "cambiar cada dato, incluidas las funciones corregidas el 19 de septiembre de 2026.",
     )
 
     add_heading(doc, "3. Inventario de tablas (28)", 1)
@@ -329,9 +329,9 @@ def main():
         doc,
         "id, id_trabajo, id_orden_cambio, tipo_pago, monto, moneda (CLP), estado, metodo_pago, "
         "id_transaccion, autorizado_en, liberado_en, reembolsado_en, creado_en, actualizado_en. "
-        "Importante: en las aplicaciones cliente el flujo de pasarela es simulación académica; "
-        "no hay cobro real integrado. Las actualizaciones de estado deben hacerse con "
-        "simular_transicion_pago (RPC), no con UPDATE directo.",
+        "No hay pasarela real. El cambio de estado se hace con simular_transicion_pago. "
+        "El cliente y el administrador usan la matriz completa. El profesional solo retiene "
+        "el cobro, libera si el trabajo ya está completado y reembolsa si ya está cancelado.",
     )
 
     add_heading(doc, "5.6 mensajes", 2)
@@ -410,16 +410,20 @@ def main():
             ("admin_metricas_resumen()", "JSON de métricas; solo administradores"),
             ("admin_actualizar_estado_disputa(...)", "Cambia estado/resolución de disputa; solo administrador"),
             ("transicionar_trabajo(...)", "Cambia estado de trabajo con matriz validada en servidor"),
-            ("simular_transicion_pago(...)", "Mock de escrow en servidor (sin cobro real)"),
-            ("asignar_trabajador_trabajo(...)", "Asigna profesional y pasa a aceptado"),
+            ("es_rol_trabajador(text)", "La persona es profesional activo (incluye alias worker, especialista, specialist)"),
+            ("simular_transicion_pago(...)", "Pago simulado. El profesional no libera ni reembolsa si el trabajo sigue abierto"),
+            ("asignar_trabajador_trabajo(...)", "Acepta el trabajo. El destino debe ser profesional activo. Un cliente no puede autoasignarse"),
+            ("rechazar_trabajo_pendiente(...)", "Cancela un pendiente. Si no hay profesional asignado, se detiene"),
             ("handle_new_user", "Crea perfiles en el registro; no permite autoasignarse administrador"),
             ("protect_profile_sensitive_fields", "Bloquea cambio de rol/estado_cuenta sin administrador"),
         ],
     )
     add_body(
         doc,
-        "Si se invocan RPC de administrador sin sesión de administrador, se observará un error "
-        "del tipo «Solo administradores» (HTTP 400 típico). Un 404 indicaría que la función no existe.",
+        "Regla del pago simulado: el cliente y el administrador pueden autorizar, retener, "
+        "liberar y reembolsar según la matriz. El profesional asignado solo retiene el cobro; "
+        "libera únicamente si el trabajo ya está completado y reembolsa únicamente si ya está "
+        "cancelado. Un cliente no puede aceptar un trabajo a su nombre.",
     )
 
     add_heading(doc, "8. Aplicaciones consumidoras", 1)
@@ -445,9 +449,9 @@ def main():
         ["Gap", "Severidad", "Comentario"],
         [
             (
-                "Aplicar hardening 20260915 en remoto",
+                "Autorización de trabajo y pago",
                 "Alta",
-                "El script está en el repositorio; la seguridad efectiva depende de aplicarlo en Supabase.",
+                "Cerrado en el servidor el 19 de septiembre de 2026.",
             ),
             (
                 "Tipado híbrido uuid / text",
@@ -479,7 +483,8 @@ def main():
         "docs/AUDITORIA_PROYECTO.md · docs/DICCIONARIO_BASE_DATOS.md · "
         "myworksapp_app/supabase/migrations/20260914000004_aplicar_rename_es.sql · "
         "20260914000005_rls_politicas_negocio.sql · 20260914000006_seed_servicios_marketplace.sql · "
-        "20260915000001_hardening_seguridad_sin_psp.sql",
+        "20260915000001_hardening_seguridad_sin_psp.sql · "
+        "20260919000001_fix_rpc_autorizacion.sql · 20260919000002_pago_al_cerrar_trabajo.sql",
     )
 
     fin = doc.add_paragraph()
