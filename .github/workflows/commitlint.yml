@@ -7,6 +7,8 @@ on:
 
 jobs:
   commitlint:
+    # Dependabot arma cuerpos largos (tablas y URLs). No son commits humanos.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

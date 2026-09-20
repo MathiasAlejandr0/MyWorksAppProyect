@@ -55,12 +55,19 @@ jobs:
             -H "apikey: $SUPABASE_KEY")
           echo "Auth health HTTP: $auth_code"
 
-          echo "== REST (tabla profiles) =="
-          rest_code=$(curl -s -o /dev/null -w "%{http_code}" \
-            "$SUPABASE_URL/rest/v1/profiles?select=id&limit=1" \
-            -H "apikey: $SUPABASE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_KEY")
-          echo "REST HTTP: $rest_code"
+          echo "== REST =="
+          rest_code="404"
+          for table in perfiles profiles; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" \
+              "$SUPABASE_URL/rest/v1/${table}?select=id&limit=1" \
+              -H "apikey: $SUPABASE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_KEY")
+            echo "REST ${table} HTTP: $code"
+            if [ "$code" != "404" ]; then
+              rest_code="$code"
+              break
+            fi
+          done
 
           # Consideramos exito cualquier respuesta del servidor que no sea
           # un fallo de gateway (5xx) o ausencia de conexion (000).

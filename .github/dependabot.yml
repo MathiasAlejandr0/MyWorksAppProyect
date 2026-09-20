@@ -1,6 +1,5 @@
-# Avisos de dependencias vulnerables y desactualizadas.
-# Menores y parches se agrupan; los majors quedan en PRs separados
-# para no subir de golpe algo incompatible con el stack.
+# Menores y parches se agrupan. Los saltos major se ignoran: rompen
+# Riverpod, go_router, TypeScript y el cliente de Supabase.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -10,6 +9,10 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: npm
     directory: /myworksapp_web
@@ -18,6 +21,11 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@supabase/supabase-js"
     groups:
       web-minor-patch:
         update-types:
@@ -31,6 +39,11 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@supabase/supabase-js"
     groups:
       desktop-minor-patch:
         update-types:
@@ -44,6 +57,11 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@supabase/supabase-js"
     groups:
       shared-minor-patch:
         update-types:
@@ -57,6 +75,10 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     groups:
       flutter-minor-patch:
         update-types:
@@ -70,6 +92,10 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     groups:
       tauri-minor-patch:
         update-types:
