@@ -10,7 +10,6 @@ import {
   SlidersHorizontal,
   Database,
   ChevronDown,
-  Box,
 } from 'lucide-react';
 import { ExecutiveWorkspace } from './components/ExecutiveWorkspace';
 import { DesktopLoginScreen } from './components/DesktopLoginScreen';
@@ -64,11 +63,11 @@ export function App() {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <div className="sidebar-brand-icon" aria-hidden>
-            <Box size={22} strokeWidth={2.2} />
+            <img src="/brand/mark.svg" alt="" width={28} height={28} />
           </div>
           <div>
             <h2 className="sidebar-brand-name">My Works App</h2>
-            <span className="sidebar-brand-subtitle">Enterprise Operations</span>
+            <span className="sidebar-brand-subtitle">Operación</span>
           </div>
         </div>
 
@@ -91,7 +90,7 @@ export function App() {
             <div className="sidebar-profile-avatar">{initials}</div>
             <div className="sidebar-profile-info">
               <div className="sidebar-profile-name">{profile.name}</div>
-              <div className="sidebar-profile-role">Chief Operations Officer</div>
+              <div className="sidebar-profile-role">Administración</div>
             </div>
             <ChevronDown size={16} className="sidebar-profile-chevron" aria-hidden />
           </div>

@@ -72,7 +72,10 @@ class JobStateMachine {
       await _jobRepository.updateJob(updatedJob);
 
       if (newStatus == AppConstants.jobStatusCompleted) {
-        await PaymentService.instance.releasePrimaryOnJobCompleted(jobId);
+        // Escrow queda retenido hasta liquidación manual (desktop / webpay-release).
+        AppLogger.i(
+          'Trabajo $jobId completado; pago sigue retenido hasta liquidación admin',
+        );
       } else if (newStatus == AppConstants.jobStatusCancelled) {
         await PaymentService.instance.refundPrimaryOnCancellation(jobId);
       }

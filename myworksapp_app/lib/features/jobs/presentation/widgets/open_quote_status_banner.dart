@@ -39,7 +39,7 @@ class OpenQuoteStatusBanner extends StatelessWidget {
         icon: Icons.payment_outlined,
         title: 'Precio aceptado — falta el pago',
         body:
-            'Aceptaste la propuesta del profesional. Completa el pago en garantía (demo) para confirmar el trabajo.',
+            'Aceptaste la propuesta del profesional. Completa el pago en garantía (Webpay) para confirmar el trabajo.',
       );
     }
 

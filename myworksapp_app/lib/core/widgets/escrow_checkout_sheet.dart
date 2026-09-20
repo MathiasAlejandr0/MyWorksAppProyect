@@ -1,15 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/price_quote.dart';
 import '../providers/auth_provider.dart';
 import '../providers/payment_gateway_provider.dart';
-import '../providers/service_providers.dart';
 import '../services/payment_gateway_port.dart';
 import '../theme/app_colors.dart';
 import 'pricing_quote_card.dart';
+import 'webpay_webview_page.dart';
 
-/// Checkout mock: simula pasarela y autoriza escrow.
+/// Checkout comercial: Webpay en WebView in-app (sin browser externo).
 class EscrowCheckoutSheet extends ConsumerStatefulWidget {
   const EscrowCheckoutSheet({
     super.key,
@@ -62,10 +63,9 @@ class EscrowCheckoutSheet extends ConsumerStatefulWidget {
 }
 
 class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
-  String _method = 'card';
   bool _processing = false;
 
-  Future<void> _pay() async {
+  Future<void> _payWithWebpay() async {
     setState(() => _processing = true);
     try {
       final user = ref.read(authProvider).user;
@@ -73,9 +73,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Debes iniciar sesión para completar el pago en garantía',
-            ),
+            content: Text('Debes iniciar sesión para pagar con Webpay'),
           ),
         );
         return;
@@ -94,26 +92,31 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              hold.message ?? 'No se pudo autorizar el hold de pago',
+              hold.message ?? 'No se pudo iniciar Webpay',
             ),
           ),
         );
         return;
       }
 
-      final payments = ref.read(paymentServiceProvider);
-      await payments.createPrimaryPayment(
-        jobId: widget.jobId,
-        quote: widget.quote,
-        paymentMethod: _method,
-      );
-      await payments.authorizePrimaryForJob(widget.jobId);
+      final url = hold.redirectUrl;
+      if (url != null && url.isNotEmpty) {
+        if (!mounted) return;
+        final paid = await WebpayWebViewPage.open(
+          context,
+          paymentUrl: url,
+        );
+        if (!mounted) return;
+        Navigator.of(context).pop(paid);
+        return;
+      }
+
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al procesar pago: $e')),
+        SnackBar(content: Text('Error al iniciar pago: $e')),
       );
     } finally {
       if (mounted) setState(() => _processing = false);
@@ -122,6 +125,10 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final integration = !kReleaseMode ||
+        const String.fromEnvironment('PAYMENTS_MODE', defaultValue: 'integration') !=
+            'production';
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -141,7 +148,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Pago seguro (demo)',
+              'Pago con Webpay',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -150,16 +157,23 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
             Material(
               color: AppColors.brandOrange.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, size: 16, color: AppColors.brandOrange),
-                    SizedBox(width: 8),
+                    const Icon(
+                      Icons.lock_outline,
+                      size: 16,
+                      color: AppColors.brandOrange,
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Pago simulado (MockPaymentGateway) — sin pasarela real',
-                        style: TextStyle(
+                        integration
+                            ? 'Ambiente de integración Transbank — pagas dentro de la app'
+                            : 'Pago protegido con Webpay Plus — sin salir a otro navegador',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.brandOrange,
                         ),
@@ -169,73 +183,34 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Simulación académica — no hay cobro real ni pasarela',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.grayMedium,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.brandOrange.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.brandOrange.withValues(alpha: 0.25),
-                ),
-              ),
-              child: Text(
-                'Esto autoriza un estado de escrow en la base de datos para la demo. '
-                'No se conecta a WebPay, Mercado Pago ni bancos.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
             const SizedBox(height: 16),
             PricingQuoteCard(
               quote: widget.quote,
               workerName: widget.workerName,
               serviceName: widget.serviceName,
             ),
-            const SizedBox(height: 16),
-            Text('Método de pago', style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(
-                  value: 'card',
-                  label: Text('Tarjeta'),
-                  icon: Icon(Icons.credit_card),
-                ),
-                ButtonSegment(
-                  value: 'transfer',
-                  label: Text('Transfer.'),
-                  icon: Icon(Icons.account_balance),
-                ),
-              ],
-              selected: {_method},
-              onSelectionChanged: _processing
-                  ? null
-                  : (s) => setState(() => _method = s.first),
-            ),
             const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _processing ? null : _pay,
+            FilledButton.icon(
+              onPressed: _processing ? null : _payWithWebpay,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.brandOrange,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: _processing
+              icon: _processing
                   ? const SizedBox(
-                      height: 22,
-                      width: 22,
+                      height: 18,
+                      width: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Simular pago y reservar'),
+                  : const Icon(Icons.credit_card),
+              label: Text(
+                _processing
+                    ? 'Conectando…'
+                    : 'Pagar con Webpay · \$${widget.quote.totalClp}',
+              ),
             ),
             TextButton(
               onPressed:

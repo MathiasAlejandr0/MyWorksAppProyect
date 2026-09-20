@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ShieldCheck,
   LogOut,
@@ -11,30 +11,29 @@ import {
 } from 'lucide-react';
 
 import { CategoryCard } from './components/CategoryCard';
-
 import { BrandLogo } from './components/BrandLogo';
-
 import type { SearchWorker } from './components/SearchResultsView';
-
 import { useAuth } from './context/AuthContext';
-
 import { supabase } from './supabaseClient';
-
+import { queryKeys } from './queryClient';
 import {
-
+  createGuestWebpayCheckout,
   createPendingJob,
-
+  createWebpaySession,
   fetchServiceByCategory,
-
   fetchWorkersByCategory,
-
   toWebWorkerCard,
-
 } from '@myworksapp/shared';
 
 const PaymentCheckoutModal = lazy(() =>
   import('./components/PaymentCheckoutModal').then((m) => ({
     default: m.PaymentCheckoutModal,
+  })),
+);
+
+const GuestCheckoutForm = lazy(() =>
+  import('./components/GuestCheckoutForm').then((m) => ({
+    default: m.GuestCheckoutForm,
   })),
 );
 
@@ -70,7 +69,7 @@ function ViewFallback() {
   return <div className="min-h-screen app-shell" />;
 }
 
-type AppView = 'landing' | 'search' | 'tracking';
+type AppView = 'landing' | 'search' | 'tracking' | 'paid';
 
 
 
@@ -92,7 +91,7 @@ const CATEGORIES = [
 
     subtitle: 'Muebles, estanterías y más',
 
-    photo: img('1555041469-a586c61e8bc7'),
+    photo: '/categories/armado.png',
 
   },
 
@@ -116,7 +115,7 @@ const CATEGORIES = [
 
     subtitle: 'Fugas, instalaciones y más',
 
-    photo: img('1585703903930-0b8e341a0895'),
+    photo: '/categories/plomeria.png',
 
   },
 
@@ -128,7 +127,7 @@ const CATEGORIES = [
 
     subtitle: 'Conexiones, revisiones y más',
 
-    photo: img('1581578731548-c64695cc6952'),
+    photo: '/categories/gasfiteria.png',
 
   },
 
@@ -243,6 +242,7 @@ function resolveCategory(text: string) {
 export function App() {
 
   const { profile, logout, error: authError, clearError } = useAuth();
+  const queryClient = useQueryClient();
 
   const [view, setView] = useState<AppView>('landing');
 
@@ -257,6 +257,10 @@ export function App() {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const [showCheckout, setShowCheckout] = useState(false);
+
+  const [showGuestCheckout, setShowGuestCheckout] = useState(false);
+
+  const [checkoutJobId, setCheckoutJobId] = useState<string | null>(null);
 
   const [showChat, setShowChat] = useState(false);
 
@@ -274,6 +278,41 @@ export function App() {
 
     localStorage.setItem('mwa-dark-mode', '1');
 
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pago = params.get('pago');
+    if (pago === 'ok' || pago === 'retorno') {
+      try {
+        const raw = sessionStorage.getItem('mwa-pending-checkout');
+        if (raw) {
+          const saved = JSON.parse(raw) as {
+            worker?: SearchWorker;
+            serviceTitle?: string;
+            jobId?: string;
+          };
+          if (saved.worker) setSelectedWorker(saved.worker);
+          if (saved.jobId) setCheckoutJobId(saved.jobId);
+          if (saved.serviceTitle) {
+            setServiceMatch((prev) =>
+              prev
+                ? { ...prev, categoryName: saved.serviceTitle || prev.categoryName }
+                : prev,
+            );
+          }
+          sessionStorage.removeItem('mwa-pending-checkout');
+        }
+      } catch {
+        // ignore
+      }
+      setView('paid');
+      setBookingError(null);
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (pago === 'fail') {
+      setBookingError('El pago no se completó. Puedes reintentar desde la búsqueda.');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
 
@@ -302,9 +341,15 @@ export function App() {
 
       const [service, workersRaw] = await Promise.all([
 
-        fetchServiceByCategory(supabase, meta.category),
+        queryClient.fetchQuery({
+          queryKey: queryKeys.serviceByCategory(meta.category),
+          queryFn: () => fetchServiceByCategory(supabase, meta.category),
+        }),
 
-        fetchWorkersByCategory(supabase, meta.category),
+        queryClient.fetchQuery({
+          queryKey: queryKeys.workersByCategory(meta.category),
+          queryFn: () => fetchWorkersByCategory(supabase, meta.category),
+        }),
 
       ]);
 
@@ -339,63 +384,89 @@ export function App() {
 
 
   const requestWorker = (worker: SearchWorker) => {
-
-    if (!profile) {
-
-      setShowAuth(true);
-
-      return;
-
-    }
-
     setSelectedWorker(worker);
-
     setBookingError(null);
-
   };
 
-
-
-  const confirmBooking = async () => {
-
-    if (!profile || !selectedWorker) return;
-
+  const startCheckout = async () => {
+    if (!selectedWorker) return;
     if (!selectedServiceId) {
-
       setBookingError('No hay un servicio activo en Supabase para esta categoría.');
-
       return;
-
     }
+    setBookingError(null);
 
-
+    // Sin sesión: formulario de datos + redirect Transbank (única excepción).
+    if (!profile) {
+      setShowGuestCheckout(true);
+      return;
+    }
 
     try {
-
-      await createPendingJob(supabase, {
-
+      const job = await createPendingJob(supabase, {
         userId: profile.id,
-
         workerId: selectedWorker.id,
-
         serviceId: selectedServiceId,
-
         description: serviceMatch?.problem ?? query,
-
+        pricingMode: 'precio_fijo',
       });
-
-      setBookingError(null);
-
-      setShowCheckout(false);
-
-      setView('tracking');
-
+      setCheckoutJobId(job.id);
+      setShowCheckout(true);
     } catch {
-
       setBookingError('No se pudo crear la solicitud. Verifica tu sesión.');
-
     }
+  };
 
+  const confirmBooking = async () => {
+    setShowCheckout(false);
+    setShowGuestCheckout(false);
+    setView('tracking');
+    setBookingError(null);
+  };
+
+  const payWithWebpay = async () => {
+    if (!checkoutJobId || !selectedWorker) {
+      throw new Error('Falta el trabajo para iniciar Webpay.');
+    }
+    const session = await createWebpaySession(supabase, {
+      jobId: checkoutJobId,
+      amountClp: selectedWorker.pricePerVisit,
+      presentMode: 'embed',
+    });
+    return {
+      redirectUrl: session.redirectUrl,
+      paymentId: session.paymentId,
+      token: session.token,
+    };
+  };
+
+  const submitGuestCheckout = async (data: {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+  }) => {
+    if (!selectedWorker || !selectedServiceId) {
+      throw new Error('Falta profesional o servicio.');
+    }
+    const session = await createGuestWebpayCheckout(supabase, {
+      ...data,
+      workerId: selectedWorker.id,
+      serviceId: selectedServiceId,
+      description: serviceMatch?.problem ?? query,
+      amountClp: selectedWorker.pricePerVisit,
+    });
+    setCheckoutJobId(session.jobId);
+    sessionStorage.setItem(
+      'mwa-pending-checkout',
+      JSON.stringify({
+        jobId: session.jobId,
+        worker: selectedWorker,
+        serviceTitle: serviceMatch?.categoryName,
+      }),
+    );
+    // Invitado: redirección completa a Transbank.
+    window.location.assign(session.redirectUrl);
   };
 
 
@@ -410,7 +481,34 @@ export function App() {
 
   };
 
-
+  if (view === 'paid') {
+    return (
+      <div className="min-h-screen app-shell paid-return">
+        <div className="paid-return-card">
+          <BrandLogo size={40} />
+          <h1>Pago recibido</h1>
+          <p>
+            Tu pago quedó retenido en escrow
+            {selectedWorker ? ` para ${selectedWorker.name}` : ''}.
+            {checkoutJobId
+              ? ` Referencia ${checkoutJobId.slice(0, 8)}…`
+              : ''}{' '}
+            Te contactaremos para coordinar la visita.
+          </p>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              if (selectedWorker) setView('tracking');
+              else setView('landing');
+            }}
+          >
+            {selectedWorker ? 'Ver seguimiento' : 'Volver al inicio'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (view === 'tracking' && selectedWorker) {
 
@@ -518,7 +616,7 @@ export function App() {
 
             pricePerHour={Math.round(selectedWorker.pricePerVisit / 1000) * 1000 || 35000}
 
-            onContinue={() => setShowCheckout(true)}
+            onContinue={() => void startCheckout()}
 
             onClose={() => setSelectedWorker(null)}
 
@@ -540,12 +638,33 @@ export function App() {
 
             serviceDescription={serviceMatch?.problem}
 
+            jobId={checkoutJobId}
+
+            presentMode="embed"
+
             onClose={() => setShowCheckout(false)}
+
+            onPayWithWebpay={payWithWebpay}
 
             onSuccess={() => void confirmBooking()}
 
           />
 
+        )}
+
+        {showGuestCheckout && selectedWorker && (
+          <GuestCheckoutForm
+            workerName={selectedWorker.name}
+            profession={selectedWorker.profession}
+            basePrice={selectedWorker.pricePerVisit}
+            serviceDescription={serviceMatch?.problem}
+            onClose={() => setShowGuestCheckout(false)}
+            onSubmit={submitGuestCheckout}
+            onPreferLogin={() => {
+              setShowGuestCheckout(false);
+              setShowAuth(true);
+            }}
+          />
         )}
 
 
@@ -876,7 +995,7 @@ export function App() {
 
                 <ShieldCheck size={16} color="var(--orange-accent)" />
 
-                <span>Profesionales verificados • Pago en escrow • Tú tienes el control</span>
+                <span>Profesionales verificados • Pago protegido • Tú tienes el control</span>
 
               </div>
 
@@ -908,7 +1027,7 @@ export function App() {
 
                   title: 'BUSCA Y COMPARA',
 
-                  text: 'Explora técnicos calificados. Revisa ratings, precios y disponibilidad.',
+                  text: 'Explora técnicos calificados. Revisa valoraciones, precios y disponibilidad.',
 
                 },
 
@@ -920,7 +1039,7 @@ export function App() {
 
                   title: 'RESERVA Y RECIBE',
 
-                  text: 'Paga con escrow protegido. Sigue el servicio hasta la entrega.',
+                  text: 'El pago queda protegido. Sigues el servicio hasta la entrega.',
 
                 },
 
@@ -964,7 +1083,7 @@ export function App() {
 
               <p className="section-kicker">CATEGORÍAS</p>
 
-              <h2>Premium Services. Curated for You.</h2>
+              <h2>Oficios para tu casa.</h2>
 
             </div>
 
@@ -992,7 +1111,7 @@ export function App() {
 
                 subtitle: 'Hogar, oficina y profunda',
 
-                photo: img('1581578749516-86a3a74134a8'),
+                photo: '/categories/limpieza.png',
 
               },
 
@@ -1028,7 +1147,7 @@ export function App() {
 
                 subtitle: 'Aperturas y cambio de chapas',
 
-                photo: img('1558002032-589707903656'),
+                photo: '/categories/cerrajeria.png',
 
               },
 

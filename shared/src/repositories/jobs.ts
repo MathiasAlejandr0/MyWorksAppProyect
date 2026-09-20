@@ -9,6 +9,8 @@ export interface CreateJobInput {
   address?: string;
   latitude?: number;
   longitude?: number;
+  /** Alineado a PricingModes Flutter — default precio_fijo (visita). */
+  pricingMode?: 'precio_fijo' | 'bloque_horas' | 'cotizacion_abierta' | 'legado';
 }
 
 export async function createPendingJob(
@@ -16,17 +18,18 @@ export async function createPendingJob(
   input: CreateJobInput,
 ): Promise<JobRow> {
   const now = new Date().toISOString();
+  const modalidad = input.pricingMode ?? 'precio_fijo';
   const payload = {
     id: crypto.randomUUID(),
     id_usuario: input.userId,
     id_trabajador: input.workerId,
     id_servicio: input.serviceId,
-    estado: 'pendiente',
+    estado: 'esperando_pago',
     descripcion: input.description,
     direccion: input.address ?? 'Solicitud desde web',
     latitud: input.latitude ?? null,
     longitud: input.longitude ?? null,
-    modalidad_cobro: 'legado',
+    modalidad_cobro: modalidad,
     estado_pago: 'pendiente',
     creado_en: now,
     actualizado_en: now,

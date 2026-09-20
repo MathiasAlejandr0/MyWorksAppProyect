@@ -7,14 +7,11 @@ import '../domain/price_quote.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 
-/// Servicio de pagos (MOCK - Preparado para integración futura)
-/// 
-/// NO implementa pasarela real todavía.
-/// Solo prepara la arquitectura para:
-/// - Escrow (pago retenido)
-/// - Liberación de pago
-/// - Reembolsos
-/// - Estados de pago
+/// Servicio de pagos — escrow vía Webpay (Edge) + RPCs admin.
+///
+/// Crear intención: Edge `webpay-create` / RPC `crear_intencion_pago`.
+/// Autorizar: `webpay-commit` (servidor).
+/// Liberar/reembolsar: `liberar_escrow` / `reembolsar_escrow` (admin).
 class PaymentService {
   PaymentService({
     PaymentRepository? paymentRepository,
@@ -36,29 +33,9 @@ class PaymentService {
     String currency = 'CLP',
     String? paymentMethod,
   }) async {
-    try {
-      AppLogger.i('Creando pago (MOCK) para job: $jobId');
-
-      final now = DateTime.now();
-      final payment = PaymentModel(
-        id: const Uuid().v4(),
-        jobId: jobId,
-        amount: amount,
-        currency: currency,
-        status: PricingConstants.paymentPending, // En producción: autorizado tras autorizar
-        paymentMethod: paymentMethod ?? 'card',
-        createdAt: now,
-        updatedAt: now,
-      );
-
-      await _paymentRepository.createPayment(payment);
-
-      AppLogger.i('Pago creado (MOCK): ${payment.id}');
-      return payment;
-    } catch (e) {
-      AppLogger.e('Error creando pago', e);
-      throw AppError.database('Error al crear pago: ${e.toString()}');
-    }
+    throw AppError.validation(
+      'Usa Webpay (TransbankWebpayGateway) para crear pagos. Insert directo deshabilitado.',
+    );
   }
 
   /// Autoriza un pago (MOCK)
@@ -123,8 +100,12 @@ class PaymentService {
     }
   }
 
-  /// Libera un pago al trabajador
-  Future<PaymentModel> releasePayment(String paymentId) async {
+  /// Libera un pago al trabajador (liquidación manual con referencia bancaria).
+  Future<PaymentModel> releasePayment(
+    String paymentId, {
+    required String transferRef,
+    String? notes,
+  }) async {
     try {
       final payment = await _paymentRepository.getPaymentById(paymentId);
       if (payment == null) {
@@ -139,6 +120,8 @@ class PaymentService {
       final persisted = await _paymentRepository.transitionPaymentStatus(
         paymentId: paymentId,
         newStatus: PricingConstants.paymentReleased,
+        transferRef: transferRef,
+        notes: notes,
       );
 
       AppLogger.i('Pago liberado: $paymentId');
@@ -189,7 +172,7 @@ class PaymentService {
 
   Future<PaymentModel?> getPaymentByJobId(String jobId) => getPrimaryPayment(jobId);
 
-  /// Pago adicional (orden de cambio / overtime).
+  /// Pago adicional (orden de cambio) — solo vía Webpay Edge.
   Future<PaymentModel> createSupplementalPayment({
     required String jobId,
     required String changeOrderId,
@@ -197,21 +180,9 @@ class PaymentService {
     required PriceQuote quote,
     String? paymentMethod,
   }) async {
-    final now = DateTime.now();
-    final payment = PaymentModel(
-      id: const Uuid().v4(),
-      jobId: jobId,
-      changeOrderId: changeOrderId,
-      paymentType: paymentType,
-      amount: quote.totalClp.toDouble(),
-      currency: quote.currency,
-      status: PricingConstants.paymentPending,
-      paymentMethod: paymentMethod ?? 'card',
-      createdAt: now,
-      updatedAt: now,
+    throw AppError.validation(
+      'Órdenes de cambio: pagar con Webpay (webpay-create). Insert local deshabilitado.',
     );
-    await _paymentRepository.createPayment(payment);
-    return payment;
   }
 
   /// Crea checkout del pago principal a partir de [PriceQuote].
@@ -220,47 +191,45 @@ class PaymentService {
     required PriceQuote quote,
     String? paymentMethod,
   }) async {
-    final existing = await getPrimaryPayment(jobId);
-    if (existing != null &&
-        existing.status != PricingConstants.paymentRefunded) {
-      throw AppError.validation('Este trabajo ya tiene un pago registrado');
-    }
-
-    final now = DateTime.now();
-    final payment = PaymentModel(
-      id: const Uuid().v4(),
-      jobId: jobId,
-      paymentType: PricingConstants.paymentTypePrimary,
-      amount: quote.totalClp.toDouble(),
-      currency: quote.currency,
-      status: PricingConstants.paymentPending,
-      paymentMethod: paymentMethod ?? 'card',
-      createdAt: now,
-      updatedAt: now,
+    throw AppError.validation(
+      'El pago principal se crea vía Webpay (webpay-create), no localmente.',
     );
-
-    await _paymentRepository.createPayment(payment);
-    await _syncJobPaymentStatus(jobId, PricingConstants.paymentPending);
-    return payment;
   }
 
-  /// Autoriza escrow (mock pasarela) y habilita transición a aceptado / en_curso.
+  /// Confirma escrow tras Webpay (Edge ya escribió estado) o lee estado actual.
   Future<PaymentModel> authorizePrimaryForJob(String jobId) async {
     final payment = await getPrimaryPayment(jobId);
     if (payment == null) {
       throw AppError.notFound('No hay pago principal para este trabajo');
     }
-    final authorized = await authorizePayment(payment.id);
-    await _syncJobPaymentStatus(jobId, PricingConstants.paymentAuthorized);
-    return authorized;
+    if (payment.status == PricingConstants.paymentAuthorized ||
+        payment.status == PricingConstants.paymentHeld) {
+      await _syncJobPaymentStatus(jobId, payment.status);
+      return payment;
+    }
+    if (payment.status != PricingConstants.paymentPending) {
+      throw AppError.validation('El pago ya fue procesado');
+    }
+    // Esperar confirmación Webpay (no simular transición local).
+    throw AppError.validation(
+      'Completa el pago en Webpay. El estado se actualizará al volver de Transbank.',
+    );
   }
 
-  /// Libera fondos al completar el trabajo.
-  Future<PaymentModel?> releasePrimaryOnJobCompleted(String jobId) async {
+  /// Libera fondos al completar el trabajo (requiere referencia de transferencia).
+  Future<PaymentModel?> releasePrimaryOnJobCompleted(
+    String jobId, {
+    required String transferRef,
+    String? notes,
+  }) async {
     final payment = await getPrimaryPayment(jobId);
     if (payment == null) return null;
     if (payment.status == PricingConstants.paymentReleased) return payment;
-    final released = await releasePayment(payment.id);
+    final released = await releasePayment(
+      payment.id,
+      transferRef: transferRef,
+      notes: notes,
+    );
     await _syncJobPaymentStatus(jobId, PricingConstants.paymentReleased);
     return released;
   }

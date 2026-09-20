@@ -15,6 +15,7 @@ import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/role_utils.dart';
 import '../../../../core/utils/worker_navigation.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/role_selector_chips.dart';
@@ -444,42 +445,12 @@ class _LoginLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = AppColors.headlineOnScreen(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.brandOrange,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.brandOrange.withValues(alpha: 0.35),
-                blurRadius: 14,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.keyboard_arrow_up_rounded,
-            color: AppColors.white,
-            size: 28,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          AppConstants.appBrandDisplayName,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: title,
-            letterSpacing: -0.3,
-          ),
-        ),
-      ],
+    return AppBrandLogo(
+      size: 44,
+      showText: true,
+      horizontal: true,
+      textSize: 20,
+      forceOnLight: Theme.of(context).brightness == Brightness.light,
     );
   }
 }

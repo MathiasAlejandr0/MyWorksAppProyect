@@ -12,8 +12,12 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   const { login, loginWithOAuth, register } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('usuario@demo.com');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState(
+    import.meta.env.DEV ? 'usuario@demo.com' : '',
+  );
+  const [password, setPassword] = useState(
+    import.meta.env.DEV ? 'demo123' : '',
+  );
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 

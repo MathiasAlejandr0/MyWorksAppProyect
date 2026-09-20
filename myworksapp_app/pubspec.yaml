@@ -67,6 +67,7 @@ dependencies:
   video_player: ^2.11.1
   video_player_win: ^3.2.2
   sentry_flutter: ^8.14.2
+  webview_flutter: ^4.14.1
 
 dev_dependencies:
   flutter_test:
@@ -78,4 +79,5 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/services/
     - assets/videos/

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
+import '../../../../core/widgets/design_system/premium_glyphs.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -28,19 +29,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
           'Conectamos usuarios con profesionales de servicios de manera rápida y segura.',
     ),
     _OnboardingItem(
-      icon: Icons.location_on_rounded,
+      glyph: PremiumGlyphKind.location,
       title: 'Ubicación automática',
       description:
           'Detectamos tu ubicación para facilitar la solicitud de servicios cerca de ti.',
     ),
     _OnboardingItem(
-      icon: Icons.verified_user_rounded,
+      glyph: PremiumGlyphKind.verified,
       title: 'Profesionales calificados',
       description:
           'Trabajadores evaluados y listos para ayudarte con confianza.',
     ),
     _OnboardingItem(
-      icon: Icons.forum_rounded,
+      glyph: PremiumGlyphKind.chat,
       title: 'Comunicación directa',
       description:
           'Chatea con el trabajador para coordinar cada detalle del servicio.',
@@ -96,7 +97,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   itemCount: _pages.length,
                   itemBuilder: (context, index) {
                     final item = _pages[index];
-                    final titleColor = AppColors.headlineOnScreen(context);
                     final bodyColor = AppColors.onCanvasMuted(
                       Theme.of(context).brightness,
                     );
@@ -111,13 +111,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           if (item.useBrandLogo)
                             const AppBrandLogo(size: 96, showText: false)
                           else
-                            _OnboardingIcon(icon: item.icon!),
+                            _OnboardingIcon(kind: item.glyph!),
                           const SizedBox(height: 36),
                           Text(
                             item.title,
                             textAlign: TextAlign.center,
-                            style: AppTextStyles.displayMedium(color: titleColor)
-                                .copyWith(fontSize: 26, height: 1.25),
+                            style: const TextStyle(
+                              color: Color(0xFFF7F8FA),
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              height: 1.25,
+                              letterSpacing: -0.3,
+                            ),
                           ),
                           const SizedBox(height: 14),
                           Text(
@@ -209,47 +214,38 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 }
 
-/// Icono de slide con paleta naranjo (como categorías de servicio en welcome).
 class _OnboardingIcon extends StatelessWidget {
-  const _OnboardingIcon({required this.icon});
+  const _OnboardingIcon({required this.kind});
 
-  final IconData icon;
+  final PremiumGlyphKind kind;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      width: 120,
-      height: 120,
+      width: 96,
+      height: 96,
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.brandOrange.withValues(alpha: 0.16)
-            : AppColors.brandOrangeSoft,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: AppColors.brandOrange.withValues(alpha: isDark ? 0.45 : 0.22),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.brandOrange.withValues(alpha: isDark ? 0.22 : 0.1),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: const Color(0xFFFF7A18),
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: Icon(icon, size: 52, color: AppColors.brandOrange),
+      alignment: Alignment.center,
+      child: PremiumGlyph(
+        kind: kind,
+        size: 46,
+        color: const Color(0xFF00205B),
+      ),
     );
   }
 }
 
 class _OnboardingItem {
-  final IconData? icon;
+  final PremiumGlyphKind? glyph;
   final bool useBrandLogo;
   final String title;
   final String description;
 
   const _OnboardingItem({
-    this.icon,
+    this.glyph,
     this.useBrandLogo = false,
     required this.title,
     required this.description,

@@ -1,14 +1,17 @@
 import type { AppSupabase } from '../client';
+import type { Tables } from '../database.types';
 import type { ServiceRow } from '../types';
 
-function mapService(row: Record<string, unknown>): ServiceRow {
+type ServiceDbRow = Tables<'servicios'>;
+
+function mapService(row: ServiceDbRow): ServiceRow {
   return {
-    id: row.id as string,
-    name: row.nombre as string,
-    description: row.descripcion as string | null,
-    category: row.categoria as string,
+    id: row.id,
+    name: row.nombre,
+    description: row.descripcion,
+    category: row.categoria,
     isActive: Number(row.activo ?? 0),
-    pricingModel: row.modelo_precio as string | null,
+    pricingModel: row.modelo_precio,
   };
 }
 
@@ -25,7 +28,7 @@ export async function fetchServiceByCategory(
     .maybeSingle();
 
   if (error) throw error;
-  return data ? mapService(data as Record<string, unknown>) : null;
+  return data ? mapService(data as ServiceDbRow) : null;
 }
 
 export async function fetchActiveServices(supabase: AppSupabase): Promise<ServiceRow[]> {
@@ -36,5 +39,5 @@ export async function fetchActiveServices(supabase: AppSupabase): Promise<Servic
     .order('nombre', { ascending: true });
 
   if (error) throw error;
-  return ((data ?? []) as Record<string, unknown>[]).map(mapService);
+  return ((data ?? []) as ServiceDbRow[]).map(mapService);
 }

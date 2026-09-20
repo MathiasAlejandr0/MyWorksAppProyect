@@ -16,8 +16,12 @@ export {
 export type { JobStatus, PaymentStatus, PricingMode } from './domain';
 
 export * from './types';
+export * from './database.types';
 export * from './client';
 export * from './auth';
+export * from './payments/webpay';
+export * from './payments/guestCheckout';
+export * from './payments/payout';
 export * from './repositories/services';
 export * from './repositories/workers';
 export * from './repositories/jobs';

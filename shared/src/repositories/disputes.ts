@@ -60,6 +60,19 @@ export async function fetchOpenDisputes(
 
   if (jobsError) throw jobsError;
 
+  const { data: payments } = await supabase
+    .from('pagos')
+    .select('id_trabajo, monto, estado')
+    .in('id_trabajo', jobIds)
+    .in('estado', ['autorizado', 'retenido', 'pendiente']);
+
+  const escrowByJob = new Map<string, number>();
+  for (const p of payments ?? []) {
+    const row = p as { id_trabajo: string; monto: number };
+    const prev = escrowByJob.get(row.id_trabajo) ?? 0;
+    escrowByJob.set(row.id_trabajo, Math.max(prev, Number(row.monto) || 0));
+  }
+
   const jobRows = (jobs ?? []) as JobSummary[];
   const userIds = new Set<string>();
   for (const job of jobRows) {
@@ -90,7 +103,7 @@ export async function fetchOpenDisputes(
       ...dispute,
       clientName,
       workerName,
-      escrowAmount: 45000,
+      escrowAmount: escrowByJob.get(dispute.jobId) ?? 0,
     };
   });
 }

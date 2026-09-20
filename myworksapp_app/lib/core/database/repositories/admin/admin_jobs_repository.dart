@@ -29,10 +29,13 @@ class AdminJobsRepository {
   }
 
   Future<void> updateJobStatus(String jobId, String status) async {
-    await supabase.from('trabajos').update({
-      'estado': status,
-      'actualizado_en': DateTime.now().toIso8601String(),
-    }).eq('id', jobId);
+    await supabase.rpc(
+      'transicionar_trabajo',
+      params: {
+        'p_trabajo_id': jobId,
+        'p_nuevo_estado': status,
+      },
+    );
   }
 
   Future<AdminJobDetail?> getJobDetail(String jobId) async {

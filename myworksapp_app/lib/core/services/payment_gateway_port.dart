@@ -1,10 +1,11 @@
-/// Puerto de pasarela de pago (autorización / hold).
+/// Puerto de pasarela de pago (autorización / hold vía PSP).
 ///
 /// Separado de [PaymentGuardPorts], que valida estado de pagos ya registrados
-/// en transiciones de trabajo. Aquí el contrato es contra un PSP externo
-/// (Webpay, Mercado Pago, etc.).
+/// en transiciones de trabajo. El contrato es contra un PSP externo
+/// (Webpay Plus / Transbank).
 abstract class PaymentGatewayPort {
-  /// Autoriza un hold/reserva por el monto del trabajo (CLP).
+  /// Inicia autorización/hold por el monto del trabajo (CLP).
+  /// En Webpay, [PaymentGatewayResult.redirectUrl] apunta a Transbank.
   Future<PaymentGatewayResult> authorizeHold({
     required String jobId,
     required int amountClp,
@@ -17,16 +18,27 @@ class PaymentGatewayResult {
   final bool success;
   final String? transactionId;
   final String? message;
+  final String? redirectUrl;
+  final String? token;
 
   const PaymentGatewayResult({
     required this.success,
     this.transactionId,
     this.message,
+    this.redirectUrl,
+    this.token,
   });
 
-  factory PaymentGatewayResult.ok(String transactionId) => PaymentGatewayResult(
+  factory PaymentGatewayResult.ok(
+    String transactionId, {
+    String? redirectUrl,
+    String? token,
+  }) =>
+      PaymentGatewayResult(
         success: true,
         transactionId: transactionId,
+        redirectUrl: redirectUrl,
+        token: token,
       );
 
   factory PaymentGatewayResult.fail(String message) => PaymentGatewayResult(
@@ -35,10 +47,7 @@ class PaymentGatewayResult {
       );
 }
 
-/// Simulación local para desarrollo y tests.
-///
-/// Reemplazar por una implementación real (Webpay Plus / Mercado Pago)
-/// cuando se integre la pasarela en producción.
+/// Solo tests unitarios. Producción usa [TransbankWebpayGateway].
 class MockPaymentGateway implements PaymentGatewayPort {
   @override
   Future<PaymentGatewayResult> authorizeHold({
@@ -51,19 +60,7 @@ class MockPaymentGateway implements PaymentGatewayPort {
     }
     return PaymentGatewayResult.ok(
       'mock-hold-$jobId-$userId-$amountClp',
+      redirectUrl: null,
     );
   }
-}
-
-/// Stub Webpay: no integrado. Usar [MockPaymentGateway] o configurar PSP.
-class UnimplementedWebpayGateway implements PaymentGatewayPort {
-  @override
-  Future<PaymentGatewayResult> authorizeHold({
-    required String jobId,
-    required int amountClp,
-    required String userId,
-  }) async =>
-      PaymentGatewayResult.fail(
-        'Webpay no integrado. Usa MockPaymentGateway o configura PSP.',
-      );
 }

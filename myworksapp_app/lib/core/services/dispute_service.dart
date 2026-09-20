@@ -112,12 +112,13 @@ class DisputeService {
 
       await _disputeRepository.updateDispute(updated);
 
-      // Si el pago estaba retenido, decidir qué hacer
+      // Liquidación manual: no auto-liberar sin referencia bancaria.
+      // El admin debe usar desktop → Liquidación / webpay-release.
       final payment = await _paymentService.getPaymentByJobId(dispute.jobId);
       if (payment != null && payment.status == PricingConstants.paymentHeld) {
-        // Por defecto, liberar el pago (en producción, esto dependería de la resolución)
-        await _paymentService.releasePayment(payment.id);
-        AppLogger.i('Pago liberado después de resolución de disputa');
+        AppLogger.i(
+          'Disputa resuelta; pago ${payment.id} sigue retenido hasta liquidación admin',
+        );
       }
 
       AppLogger.i('Disputa resuelta: $disputeId');

@@ -1,211 +1,128 @@
 import { useEffect, useState } from 'react';
-
 import {
-
   Search,
-
   Filter,
-
-
   CheckCircle2,
-
   Send,
-
   ShieldAlert,
-
   Lock,
-
   Shield,
-
   ChevronDown,
-
   Bell,
-
   HelpCircle,
-
   ArrowLeftRight,
-
   Paperclip,
-
 } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { JobScopeAdjustmentModal } from './JobScopeAdjustmentModal';
-
 import { TableRowsSkeleton } from './LoadingState';
-
 import { fetchOpenDisputes, updateDisputeStatus } from '@myworksapp/shared';
-
 import { supabase } from '../supabaseClient';
-
-
+import { queryKeys } from '../queryClient';
 
 interface Ticket {
-
   id: string;
-
   client: string;
-
   worker: string;
-
   issue: string;
-
   escrowAmount: number;
-
   date: string;
-
   status: 'Pending' | 'Resolved';
-
 }
-
-
 
 interface SupportWorkspaceProps {
-
   adminId: string;
-
 }
 
-
-
 const DEMO_MESSAGES = {
-
   client: 'El trabajo entregado no cumple con los requisitos acordados en el contrato. Solicito revisión inmediata.',
-
   worker: 'El alcance original no incluía las revisiones adicionales solicitadas. Adjunto evidencia del acuerdo inicial.',
-
 };
 
-
+function mapDisputesToTickets(
+  disputes: Awaited<ReturnType<typeof fetchOpenDisputes>>,
+): Ticket[] {
+  return disputes.map((dispute) => ({
+    id: dispute.id,
+    client: dispute.clientName,
+    worker: dispute.workerName,
+    issue: dispute.description ?? dispute.reason,
+    escrowAmount: dispute.escrowAmount,
+    date: new Date(dispute.createdAt).toLocaleString('es-CL'),
+    status: dispute.status === 'resuelta' ? ('Resolved' as const) : ('Pending' as const),
+  }));
+}
 
 export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
-
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-
-  const [loading, setLoading] = useState(true);
-
+  const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
   const [scopeModalTicket, setScopeModalTicket] = useState<Ticket | null>(null);
-
   const [notification, setNotification] = useState<string | null>(null);
-
   const [search, setSearch] = useState('');
-
   const [messageInput, setMessageInput] = useState('');
 
+  const ticketsQuery = useQuery({
+    queryKey: queryKeys.openDisputes,
+    queryFn: async () => mapDisputesToTickets(await fetchOpenDisputes(supabase)),
+  });
 
+  const tickets = ticketsQuery.data ?? [];
+  const loading = ticketsQuery.isPending;
 
-  const loadTickets = async () => {
+  const resolveMutation = useMutation({
+    mutationFn: async ({
+      ticketId,
+      resolution,
+    }: {
+      ticketId: string;
+      resolution: string;
+    }) => {
+      await updateDisputeStatus(supabase, ticketId, 'resuelta', resolution, adminId);
+      return ticketId;
+    },
+    onSuccess: (ticketId) => {
+      queryClient.setQueryData<Ticket[]>(queryKeys.openDisputes, (prev) =>
+        (prev ?? []).map((t) =>
+          t.id === ticketId ? { ...t, status: 'Resolved' } : t,
+        ),
+      );
+    },
+  });
 
-    setLoading(true);
-
-    try {
-
-      const disputes = await fetchOpenDisputes(supabase);
-
-      const mapped = disputes.map((dispute) => ({
-
-        id: dispute.id,
-
-        client: dispute.clientName,
-
-        worker: dispute.workerName,
-
-        issue: dispute.description ?? dispute.reason,
-
-        escrowAmount: dispute.escrowAmount,
-
-        date: new Date(dispute.createdAt).toLocaleString('es-CL'),
-
-        status: dispute.status === 'resuelta' ? 'Resolved' as const : 'Pending' as const,
-
-      }));
-
-      setTickets(mapped);
-
-      if (mapped.length > 0 && !selectedId) {
-
-        setSelectedId(mapped[0].id);
-
-      }
-
-    } catch {
-
-      setTickets([]);
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
-
-
-
+  // Auto-select first ticket once data arrives
   useEffect(() => {
-
-    void loadTickets();
-
-  }, []);
-
-
+    if (!selectedId && tickets.length > 0) {
+      setSelectedId(tickets[0].id);
+    }
+  }, [selectedId, tickets]);
 
   const selectedTicket = tickets.find((t) => t.id === selectedId) ?? null;
 
-
-
   const filtered = tickets.filter(
-
     (t) =>
-
       t.id.toLowerCase().includes(search.toLowerCase()) ||
-
       t.client.toLowerCase().includes(search.toLowerCase()) ||
-
       t.worker.toLowerCase().includes(search.toLowerCase()),
-
   );
 
-
-
   const resolveTicket = async (ticketId: string, action: 'refund' | 'payout' | 'split') => {
-
     const resolution =
-
       action === 'refund'
-
         ? 'Reembolso total al cliente'
-
         : action === 'payout'
-
           ? 'Pago liberado al profesional'
-
           : 'Resolución parcial 50/50';
 
-
-
     try {
-
-      await updateDisputeStatus(supabase, ticketId, 'resuelta', resolution, adminId);
-
-      setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'Resolved' } : t)));
-
+      await resolveMutation.mutateAsync({ ticketId, resolution });
       setNotification(`Disputa actualizada: ${resolution}.`);
-
       setTimeout(() => setNotification(null), 4000);
-
     } catch {
-
       setNotification('No se pudo resolver la disputa.');
-
       setTimeout(() => setNotification(null), 4000);
-
     }
-
   };
-
-
 
   const displayId = selectedTicket?.id.slice(0, 8).toUpperCase() ?? '—';
 
@@ -225,7 +142,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
             <strong>My Works App</strong>
 
-            <span>Enterprise Mediation Center</span>
+            <span>Centro de soporte</span>
 
           </div>
 
@@ -315,7 +232,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
             <span className="support-tier">Nivel de servicio: Platino</span>
 
-            <span className="support-plan"><Shield size={12} /> Enterprise Plan</span>
+            <span className="support-plan"><Shield size={12} /> Plan de operación</span>
 
           </div>
 
@@ -335,7 +252,11 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
             </div>
 
-            <button type="button" className="btn-filter" onClick={() => void loadTickets()}>
+            <button
+              type="button"
+              className="btn-filter"
+              onClick={() => void ticketsQuery.refetch()}
+            >
 
               <Filter size={14} /> Filtros
 
@@ -641,7 +562,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
                 <div>
 
-                  <strong>RESOLUCIÓN DE CUSTODIA (ESCROW)</strong>
+                  <strong>Resolución del pago retenido</strong>
 
                   <p>Como mediador, decide la distribución de fondos retenidos.</p>
 
@@ -703,9 +624,9 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
           onUpdateScope={(updated, newTariff, newReason) => {
 
-            setTickets((prev) =>
+            queryClient.setQueryData<Ticket[]>(queryKeys.openDisputes, (prev) =>
 
-              prev.map((t) =>
+              (prev ?? []).map((t) =>
 
                 t.id === updated.id ? { ...t, escrowAmount: newTariff, issue: newReason } : t,
 

@@ -1,6 +1,7 @@
-/// Credenciales de demostración (solo desarrollo / seeds locales).
+/// Credenciales de demostración — SOLO desarrollo (`kDebugMode`).
 ///
-/// Nunca se usan en release para autocompletar login; ver `kDebugMode` en LoginPage.
+/// Nunca autocompletar en release. Seeds de staging documentados en DEMO.md;
+/// producción no debe tener estas cuentas.
 class DemoCredentials {
   static const demoPassword = 'demo123';
 

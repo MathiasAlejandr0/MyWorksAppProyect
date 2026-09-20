@@ -46,11 +46,11 @@ export function DesktopLoginScreen() {
         <div className="login-brand-content">
           <div className="login-brand-logo">
             <div className="login-brand-logo-icon">
-              <ShieldCheck size={26} color="#fff" strokeWidth={2.2} />
+              <img src="/brand/mark.svg" alt="" width={28} height={28} />
             </div>
             <div>
               <span className="login-brand-name">My Works App</span>
-              <span className="login-brand-kicker">OPS CONSOLE</span>
+              <span className="login-brand-kicker">Consola</span>
             </div>
           </div>
 
@@ -136,7 +136,7 @@ export function DesktopLoginScreen() {
                 onClick={() => setRole('admin')}
               >
                 <UserCircle size={22} />
-                <span className="login-role-title">Admin</span>
+                <span className="login-role-title">Administrador</span>
                 <span className="login-role-desc">Acceso completo a la consola</span>
               </button>
               <button
@@ -175,7 +175,7 @@ export function DesktopLoginScreen() {
               </div>
               <div className="login-security-item">
                 <BadgeCheck size={16} />
-                <span>Cumplimiento SOC 2 Type II</span>
+                <span>Sesión protegida</span>
               </div>
             </div>
           </div>

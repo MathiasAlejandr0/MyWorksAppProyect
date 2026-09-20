@@ -26,7 +26,7 @@ class AppColors {
   static const Color brandOrangeDark = Color(0xFFD9530F);
 
   /// Fondo suave tintado de naranja para badges y selecciones
-  static const Color brandOrangeSoft = Color(0x33F0782A);
+  static const Color brandOrangeSoft = Color(0x33FF5E03);
 
   /// Alias legacy
   static const Color brandBlueSoft = brandOrangeSoft;

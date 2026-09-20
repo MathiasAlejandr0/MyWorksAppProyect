@@ -58,7 +58,7 @@ export function TrackingDashboard({
             <Lock size={13} /> Dark Web Access
           </span>
           <span className="tracking-secure-item tracking-secure-live">
-            <span className="tracking-live-dot" /> Secure Connection
+            <span className="tracking-live-dot" /> Conexión segura
           </span>
         </div>
 
@@ -70,8 +70,8 @@ export function TrackingDashboard({
           <div className="tracking-nav-user">
             <div className="search-nav-avatar">{profileName?.charAt(0) ?? 'A'}</div>
             <div>
-              <strong>{profileName ?? 'Admin User'}</strong>
-              <span>Premium Plan</span>
+              <strong>{profileName ?? 'Tu cuenta'}</strong>
+              <span>Plan de la cuenta</span>
             </div>
             <ChevronDown size={14} />
           </div>
@@ -81,7 +81,7 @@ export function TrackingDashboard({
       <div className="tracking-layout">
         <aside className="tracking-sidebar">
           <button type="button" className="tracking-back-link" onClick={onBack}>
-            <ArrowLeft size={16} /> Tracking Dashboard
+            <ArrowLeft size={16} /> Seguimiento del trabajo
           </button>
 
           <div className="tracking-status-pill">
@@ -96,7 +96,7 @@ export function TrackingDashboard({
 
           <div className="tracking-eta-block">
             <div className="tracking-eta-main">
-              <span className="tracking-eta-label">ETA</span>
+              <span className="tracking-eta-label">Llegada</span>
               <strong className="tracking-eta-value">{etaMinutes} min</strong>
               <span className="tracking-eta-km">~ {distanceKm} km</span>
             </div>
@@ -132,10 +132,10 @@ export function TrackingDashboard({
           <div className="tracking-escrow-card">
             <ShieldCheck size={22} className="tracking-escrow-icon" />
             <div>
-              <strong>Escrow Protegido</strong>
+              <strong>Pago protegido</strong>
               <p>Fondos seguros en custodia. Liberación automática al completar el trabajo.</p>
               <button type="button" className="tracking-escrow-link">
-                Ver detalles de escrow
+                Ver detalles del pago
               </button>
             </div>
           </div>

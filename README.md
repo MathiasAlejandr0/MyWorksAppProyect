@@ -5,7 +5,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Supabase%20PostgreSQL-orange.svg)]()
 
 Marketplace de servicios del hogar (cliente + profesional) para Chile, con hub web y escritorio admin.  
-**Estado:** MVP funcional para demos académicas. **No** está listo para producción comercial (falta pasarela de pago real, push remoto, schema versionado completo y publicación en tiendas).
+**Estado:** listo para lanzar comercial con Webpay en integración; flip a producción al crear la empresa (ver runbook Transbank).
 
 Documento técnico de referencia: [`ESTADO_DEL_PROYECTO.md`](ESTADO_DEL_PROYECTO.md).
 
@@ -38,7 +38,7 @@ graph TD
 |-----------|----------|
 | Auth Supabase + perfiles / roles | Real |
 | Jobs, matching, estado de trabajos (Flutter) | Real (con reglas de dominio) |
-| Escrow / pagos | **Simulado** (sin Webpay/MP/Khipu SDK) |
+| Escrow / pagos | **Webpay Plus** (integración Transbank; flip a prod vía secrets) |
 | GPS en vivo (web) | **Simulado** (animación UI) |
 | Firma “SHA-256 / Ley 19.799” (desktop) | **Demo** (no es firma criptográfica legal) |
 | DevSecOps “test runner 1-click” | **Demo UI** (no ejecuta suites reales) |
@@ -90,7 +90,7 @@ flutter test
 flutter run
 ```
 
-Cuentas demo (si están sembradas): `usuario@demo.com`, `trabajador@demo.com`, `admin@demo.com` — contraseña `demo123`.
+Cuentas demo **solo staging/debug** (nunca en release UI): ver `DEMO.md`. Runbook Webpay: [`docs/RUNBOOK_TRANSBANK_PRODUCCION.md`](docs/RUNBOOK_TRANSBANK_PRODUCCION.md).
 
 ---
 

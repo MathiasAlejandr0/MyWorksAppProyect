@@ -83,33 +83,10 @@ class ChangeOrderService {
       breakdown: {'change_order_id': order.id},
     );
 
-    final payment = await PaymentService.instance.createSupplementalPayment(
-      jobId: job.id,
-      changeOrderId: order.id,
-      paymentType: PricingConstants.paymentTypeChangeOrder,
-      quote: quote,
-      paymentMethod: paymentMethod,
-    );
-    await PaymentService.instance.authorizePayment(payment.id);
-
-    await _repository.update(ChangeOrderModel(
-      id: order.id,
-      jobId: order.jobId,
-      workerId: order.workerId,
-      tipo: order.tipo,
-      titulo: order.titulo,
-      descripcion: order.descripcion,
-      montoClp: order.montoClp,
-      estado: PricingConstants.changeOrderPaid,
-      paymentId: payment.id,
-      createdAt: order.createdAt,
-      respondedAt: DateTime.now(),
-    ));
-
-    await _stateMachine.transitionTo(
-      jobId: job.id,
-      newStatus: AppConstants.jobStatusInProgress,
-      userId: clientUserId,
+    // Pago adicional solo por Webpay (Edge). La UI debe abrir TransbankWebpayGateway.
+    throw AppError.validation(
+      'Para pagar la orden de cambio (\$${quote.totalClp} CLP) usa Webpay. '
+      'El cobro local/mock está deshabilitado.',
     );
   }
 

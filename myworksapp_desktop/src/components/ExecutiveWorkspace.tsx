@@ -1,38 +1,26 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import {
-
   TrendingUp,
-
   TrendingDown,
-
   DollarSign,
-
   ClipboardList,
-
   MessageSquare,
-
   Smile,
-
   LayoutDashboard,
-
   UserCheck,
-
   FileText,
-
   Activity,
-
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 import { AuditTrailViewer } from './AuditTrailViewer';
-
 import { FinancialSettlementModal } from './FinancialSettlementModal';
-
 import { DigitalContractModal } from './DigitalContractModal';
-
 import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
-
 import { fetchAdminMetrics, fetchWorkersForAdmin } from '@myworksapp/shared';
+import { supabase } from '../supabaseClient';
+import { queryKeys } from '../queryClient';
 
 interface WorkerApproval {
   id: string;
@@ -41,8 +29,6 @@ interface WorkerApproval {
   rut: string;
   status: 'Verified' | 'Pending';
 }
-
-import { supabase } from '../supabaseClient';
 
 
 
@@ -212,77 +198,48 @@ function DonutChart() {
 
 export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
-  const [workers, setWorkers] = useState<WorkerApproval[]>([]);
-
-  const [metrics, setMetrics] = useState({
-
-    jobsCount: 0,
-
-    activeJobsCount: 0,
-
-    openDisputesCount: 0,
-
-  });
-
-  const [loading, setLoading] = useState(true);
-
   const [subActiveTab, setSubActiveTab] = useState<number>(0);
-
   const [showSettlement, setShowSettlement] = useState(false);
-
   const [showContractModal, setShowContractModal] = useState(false);
 
+  const metricsQuery = useQuery({
+    queryKey: queryKeys.adminMetrics,
+    queryFn: () => fetchAdminMetrics(supabase),
+  });
 
+  const workersQuery = useQuery({
+    queryKey: queryKeys.adminWorkers,
+    queryFn: () => fetchWorkersForAdmin(supabase),
+  });
 
-  useEffect(() => {
+  const loading = metricsQuery.isPending || workersQuery.isPending;
 
-    const load = async () => {
-
-      setLoading(true);
-
-      try {
-
-        const [adminMetrics, workerRows] = await Promise.all([
-          fetchAdminMetrics(supabase),
-          fetchWorkersForAdmin(supabase),
-        ]);
-
-        setMetrics({
-
-          jobsCount: adminMetrics.jobsCount,
-
-          activeJobsCount: adminMetrics.activeJobsCount,
-
-          openDisputesCount: adminMetrics.openDisputesCount + adminMetrics.underReviewDisputesCount,
-
-        });
-
-        setWorkers(
-          workerRows.map((worker) => ({
-            id: worker.userId,
-            name: worker.name,
-            profession: worker.profession,
-            rut: worker.email ?? '—',
-            status: worker.pricingConfigured === 1 ? 'Verified' : 'Pending',
-          })),
-        );
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
+  const metrics = useMemo(() => {
+    const adminMetrics = metricsQuery.data;
+    if (!adminMetrics) {
+      return { jobsCount: 0, activeJobsCount: 0, openDisputesCount: 0 };
+    }
+    return {
+      jobsCount: adminMetrics.jobsCount,
+      activeJobsCount: adminMetrics.activeJobsCount,
+      openDisputesCount:
+        adminMetrics.openDisputesCount + adminMetrics.underReviewDisputesCount,
     };
+  }, [metricsQuery.data]);
 
-    void load();
-
-  }, []);
-
-
+  const workers: WorkerApproval[] = useMemo(
+    () =>
+      (workersQuery.data ?? []).map((worker) => ({
+        id: worker.userId,
+        name: worker.name,
+        profession: worker.profession,
+        rut: worker.email ?? '—',
+        status: worker.pricingConfigured === 1 ? 'Verified' : 'Pending',
+      })),
+    [workersQuery.data],
+  );
 
   const activeJobs = metrics.activeJobsCount || 1246;
-
   const disputes = metrics.openDisputesCount || 32;
 
 
@@ -415,7 +372,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
         >
 
-          <LayoutDashboard size={15} /> Dashboard
+          <LayoutDashboard size={15} /> Resumen
 
         </button>
 
@@ -449,17 +406,17 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
         <div className="executive-subnav-spacer" />
 
-        <button type="button" className="executive-demo-link" onClick={() => setShowContractModal(true)}>
-
-          Contrato demo
-
-        </button>
-
         <button type="button" className="executive-demo-link" onClick={() => setShowSettlement(true)}>
 
-          Liquidación demo
+          Liquidación
 
         </button>
+
+        {import.meta.env.DEV ? (
+          <button type="button" className="executive-demo-link" onClick={() => setShowContractModal(true)}>
+            Contrato (solo DEV)
+          </button>
+        ) : null}
 
       </div>
 
@@ -652,7 +609,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
                   <th>NOMBRE</th>
                   <th>ESPECIALIDAD</th>
                   <th>CONTACTO</th>
-                  <th>PRICING</th>
+                  <th>PRECIO</th>
                 </tr>
               </thead>
               <tbody>
@@ -698,7 +655,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       {showSettlement && <FinancialSettlementModal onClose={() => setShowSettlement(false)} />}
 
-      {showContractModal && (
+      {import.meta.env.DEV && showContractModal && (
 
         <DigitalContractModal
 

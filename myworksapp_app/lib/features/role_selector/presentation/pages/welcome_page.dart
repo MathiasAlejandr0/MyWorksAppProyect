@@ -7,7 +7,9 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
+import '../../../../core/widgets/design_system/premium_glyphs.dart';
 
 /// Pantalla de bienvenida — layout premium alineado al mockup, theme-aware.
 class WelcomePage extends StatelessWidget {
@@ -31,8 +33,8 @@ class WelcomePage extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 28),
-                const _BrandMark(size: 64),
-                const SizedBox(height: 14),
+                const AppBrandLogo(size: 48, showText: false),
+                const SizedBox(height: 10),
                 Text(
                   AppConstants.appBrandDisplayName,
                   textAlign: TextAlign.center,
@@ -138,36 +140,6 @@ class WelcomePage extends StatelessWidget {
   }
 }
 
-class _BrandMark extends StatelessWidget {
-  const _BrandMark({this.size = 56});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.brandOrange,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.brandOrange.withValues(alpha: 0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Icon(
-        Icons.build_rounded,
-        color: AppColors.white,
-        size: size * 0.48,
-      ),
-    );
-  }
-}
-
 class _CategoryPills extends StatelessWidget {
   const _CategoryPills();
 
@@ -175,9 +147,9 @@ class _CategoryPills extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     const items = [
-      (Icons.handyman_outlined, 'Armado'),
-      (Icons.bolt_outlined, 'Electricidad'),
-      (Icons.water_drop_outlined, 'Plomería'),
+      (PremiumGlyphKind.assembly, 'Armado'),
+      (PremiumGlyphKind.electric, 'Electricidad'),
+      (PremiumGlyphKind.plumbing, 'Plomería'),
     ];
 
     return Row(
@@ -194,7 +166,11 @@ class _CategoryPills extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(items[i].$1, color: AppColors.brandOrange, size: 18),
+                  PremiumGlyph(
+                    kind: items[i].$1,
+                    size: 18,
+                    color: AppColors.brandOrange,
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(

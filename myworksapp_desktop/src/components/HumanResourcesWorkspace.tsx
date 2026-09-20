@@ -50,13 +50,13 @@ interface Collaborator {
 
 const DEMO_COLLABORATORS: Collaborator[] = [
 
-  { id: '1', name: 'Alex Morgan', title: 'Chief Operations Officer', email: 'alex.morgan@myworksapp.com', area: 'Operaciones', role: 'Admin', status: 'Activo', initials: 'AM' },
+  { id: '1', name: 'Alex Morgan', title: 'Dirección de operaciones', email: 'alex.morgan@myworksapp.com', area: 'Operaciones', role: 'Admin', status: 'Activo', initials: 'AM' },
 
   { id: '2', name: 'Bruno Demo', title: 'Especialista en Tickets', email: 'bruno.demo@myworksapp.com', area: 'Soporte', role: 'Soporte', status: 'Activo', initials: 'BD' },
 
-  { id: '3', name: 'Carla Demo', title: 'DevSecOps Specialist', email: 'carla.demo@myworksapp.com', area: 'Ingeniería', role: 'QA', status: 'Activo', initials: 'CD' },
+  { id: '3', name: 'Carla Demo', title: 'Especialista de calidad', email: 'carla.demo@myworksapp.com', area: 'Ingeniería', role: 'QA', status: 'Activo', initials: 'CD' },
 
-  { id: '4', name: 'Diana Ruiz', title: 'HR Manager', email: 'diana.ruiz@myworksapp.com', area: 'RRHH', role: 'Admin', status: 'Activo', initials: 'DR' },
+  { id: '4', name: 'Diana Ruiz', title: 'Jefatura de equipo', email: 'diana.ruiz@myworksapp.com', area: 'RRHH', role: 'Admin', status: 'Activo', initials: 'DR' },
 
   { id: '5', name: 'Eduardo Paz', title: 'Agente de Soporte', email: 'eduardo.paz@myworksapp.com', area: 'Soporte', role: 'Soporte', status: 'Inactivo', initials: 'EP' },
 
@@ -66,7 +66,10 @@ const DEMO_COLLABORATORS: Collaborator[] = [
 
 export function HumanResourcesWorkspace() {
 
-  const [collaborators] = useState<Collaborator[]>(DEMO_COLLABORATORS);
+  // Colaboradores ficticios solo en DEV — en build de producto la lista parte vacía.
+  const [collaborators] = useState<Collaborator[]>(
+    import.meta.env.DEV ? DEMO_COLLABORATORS : [],
+  );
 
   const [search, setSearch] = useState('');
 

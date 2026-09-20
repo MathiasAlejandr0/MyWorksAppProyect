@@ -46,11 +46,11 @@ for (const [key, value] of Object.entries(tokens.color ?? {})) {
   if (key === 'emerald') {
     lines.push(`  --emerald: ${value};`);
   }
-  if (key === 'brandNavy') {
-    lines.push(`  --navy-light: #1A2740;`);
-  }
   if (key === 'brandOrange') {
-    lines.push(`  --orange-soft: rgba(240, 120, 42, 0.16);`);
+    lines.push(`  --orange-soft: rgba(255, 94, 3, 0.16);`);
+  }
+  if (key === 'brandNavy') {
+    lines.push(`  --navy-light: #1A3A6E;`);
   }
   if (key === 'emerald') {
     lines.push(`  --emerald-soft: rgba(47, 158, 100, 0.18);`);

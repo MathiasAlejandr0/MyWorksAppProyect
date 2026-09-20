@@ -5,8 +5,13 @@ import '../../domain/pricing_constants.dart';
 class PaymentRepository {
   static const String _table = 'pagos';
 
+  /// Insert directo prohibido en flujos comerciales (RLS).
+  /// Usar Edge `webpay-create` / RPC `crear_intencion_pago`.
+  @Deprecated('Usar TransbankWebpayGateway / webpay-create')
   Future<void> createPayment(PaymentModel payment) async {
-    await supabase.from(_table).insert(payment.toMap());
+    throw UnsupportedError(
+      'createPayment directo deshabilitado. Usa Webpay (webpay-create).',
+    );
   }
 
   Future<PaymentModel?> getPaymentById(String id) async {
@@ -16,7 +21,6 @@ class PaymentRepository {
     return PaymentModel.fromMap(row);
   }
 
-  /// Primer pago del job (compatibilidad con esquema 1:1 anterior).
   Future<PaymentModel?> getPaymentByJobId(String jobId) async {
     return getPrimaryByJobId(jobId);
   }
@@ -31,32 +35,45 @@ class PaymentRepository {
     if (rows.isNotEmpty) {
       return PaymentModel.fromMap(rows.first);
     }
-    // Fallback registros antiguos sin paymentType
     final legacy =
         await supabase.from(_table).select().eq('id_trabajo', jobId).limit(1);
     if (legacy.isEmpty) return null;
     return PaymentModel.fromMap(legacy.first);
   }
 
-  /// Mock escrow: transición de estado vía RPC (no UPDATE directo de clientes).
-  /// Sustituir por webhook PSP cuando exista pasarela real.
   Future<PaymentModel> transitionPaymentStatus({
     required String paymentId,
     required String newStatus,
+    String? transferRef,
+    String? notes,
   }) async {
-    final row = await supabase.rpc(
-      'simular_transicion_pago',
-      params: {
-        'p_pago_id': paymentId,
-        'p_nuevo_estado': newStatus,
-      },
-    );
-    if (row is Map<String, dynamic>) {
-      return PaymentModel.fromMap(row);
+    if (newStatus == PricingConstants.paymentReleased) {
+      final ref = (transferRef ?? '').trim();
+      if (ref.length < 4) {
+        throw ArgumentError(
+          'transferRef requerido para liberar escrow (liquidación manual)',
+        );
+      }
+      final res = await supabase.functions.invoke(
+        'webpay-release',
+        body: {
+          'paymentId': paymentId,
+          'transferRef': ref,
+          'notes': notes,
+          'confirmExternal': true,
+          'provider': 'manual',
+        },
+      );
+      return _mapEdgePayment(res.data, paymentId);
     }
-    if (row is List && row.isNotEmpty) {
-      return PaymentModel.fromMap(Map<String, dynamic>.from(row.first as Map));
+    if (newStatus == PricingConstants.paymentRefunded) {
+      final res = await supabase.functions.invoke(
+        'webpay-refund',
+        body: {'paymentId': paymentId},
+      );
+      return _mapEdgePayment(res.data, paymentId);
     }
+
     final refreshed = await getPaymentById(paymentId);
     if (refreshed == null) {
       throw StateError('Pago no encontrado tras transición');
@@ -64,12 +81,16 @@ class PaymentRepository {
     return refreshed;
   }
 
-  @Deprecated('Usar transitionPaymentStatus — RLS bloquea UPDATE directo')
-  Future<void> updatePayment(PaymentModel payment) async {
-    await transitionPaymentStatus(
-      paymentId: payment.id,
-      newStatus: payment.status,
-    );
+  PaymentModel _mapEdgePayment(dynamic data, String paymentId) {
+    if (data is Map && data['payment'] is Map) {
+      return PaymentModel.fromMap(
+        Map<String, dynamic>.from(data['payment'] as Map),
+      );
+    }
+    if (data is Map && data['error'] != null) {
+      throw StateError(data['error'].toString());
+    }
+    throw StateError('Respuesta Edge inválida para pago $paymentId');
   }
 
   Future<List<PaymentModel>> listByJobIds(List<String> jobIds) async {
@@ -77,10 +98,7 @@ class PaymentRepository {
     final rows = await supabase
         .from(_table)
         .select()
-        .inFilter('id_trabajo', jobIds)
-        .order('creado_en', ascending: false);
-    return rows
-        .map<PaymentModel>((m) => PaymentModel.fromMap(m))
-        .toList();
+        .inFilter('id_trabajo', jobIds);
+    return rows.map((r) => PaymentModel.fromMap(r)).toList();
   }
 }

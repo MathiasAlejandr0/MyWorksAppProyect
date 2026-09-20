@@ -117,9 +117,9 @@ class ServiceCard extends StatefulWidget {
     }
   }
 
+  /// Foto del oficio. Prefijo `asset:` = imagen local; si no, URL remota.
   static String imageUrlFor(String category) {
     final cat = category.toLowerCase().trim();
-    // Fotos estables (misma familia que DemoFreeMedia) con params de crop.
     const q = 'auto=format&fit=crop&w=900&h=700&q=80';
     if (cat.contains('construction') ||
         cat.contains('construc') ||
@@ -131,8 +131,11 @@ class ServiceCard extends StatefulWidget {
         cat.contains('gásfiter') ||
         cat.contains('gasfiter') ||
         cat.contains('plomer') ||
-        cat.contains('fuga')) {
-      return 'https://images.unsplash.com/photo-1585703903930-0b8e341a0895?$q';
+        cat.contains('fuga') ||
+        cat.contains('calefon') ||
+        cat.contains('calefón') ||
+        cat.contains('grifer')) {
+      return 'asset:assets/images/services/plumbing.png';
     }
     if (cat.contains('electr') || cat.contains('luz') || cat.contains('enchufe')) {
       return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?$q';
@@ -140,19 +143,35 @@ class ServiceCard extends StatefulWidget {
     if (cat.contains('garden') || cat.contains('jardin') || cat.contains('poda')) {
       return 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?$q';
     }
-    if (cat.contains('clean') || cat.contains('limpieza') || cat.contains('hogar')) {
-      return 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?$q';
+    if (cat.contains('clean') ||
+        cat.contains('limpieza') ||
+        cat.contains('aseo') ||
+        cat.contains('sanitiz')) {
+      return 'asset:assets/images/services/cleaning.png';
     }
     if (cat.contains('assembl') || cat.contains('armado') || cat.contains('mueble')) {
-      return 'https://images.unsplash.com/photo-1555041469-a586c61e8bc7?$q';
+      return 'asset:assets/images/services/assembly.png';
     }
-    if (cat.contains('tech') || cat.contains('soporte') || cat.contains('comput')) {
-      return 'https://images.unsplash.com/photo-1496181136068-2ce8ab39f198?$q';
+    if (cat.contains('tech') ||
+        cat.contains('soporte') ||
+        cat.contains('comput') ||
+        cat.contains('impresora') ||
+        cat.contains('redes')) {
+      return 'asset:assets/images/services/tech.png';
     }
-    if (cat.contains('mov') || cat.contains('mudanza') || cat.contains('flete')) {
-      return 'https://images.unsplash.com/photo-1600518468010-6d62c1586477?$q';
+    if (cat.contains('mov') ||
+        cat.contains('mudanza') ||
+        cat.contains('flete') ||
+        cat.contains('carga')) {
+      return 'asset:assets/images/services/moving.png';
     }
     return 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?$q';
+  }
+
+  static String? assetPathFor(String category) {
+    final url = imageUrlFor(category);
+    if (url.startsWith('asset:')) return url.substring(6);
+    return null;
   }
 
   static String fallbackImageUrlFor(String category) {
@@ -249,6 +268,7 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
     final catKey = widget.categoryKey ?? ServiceCategories.electrical;
     final palette = widget.palette ?? ServiceCardPalette.forCategory(catKey);
     final imageUrl = ServiceCard.imageUrlFor(catKey);
+    final assetPath = ServiceCard.assetPathFor(catKey);
     final badgeText = ServiceCard.badgeTextFor(catKey);
 
     return LayoutBuilder(
@@ -294,51 +314,81 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
                         Positioned.fill(
                           child: Container(
                             color: const Color(0xFF152033),
-                            child: CachedNetworkImage(
-                              imageUrl: imageUrl,
-                              fit: BoxFit.cover,
-                              memCacheWidth: 720,
-                              fadeInDuration: const Duration(milliseconds: 180),
-                              placeholder: (context, url) => Container(
-                                color: const Color(0xFF152033),
-                                alignment: Alignment.center,
-                                child: SizedBox(
-                                  width: 28,
-                                  height: 28,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.4,
-                                    color: palette.accent.withValues(alpha: 0.85),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, error, stackTrace) {
-                                return CachedNetworkImage(
-                                  imageUrl:
-                                      ServiceCard.fallbackImageUrlFor(catKey),
-                                  fit: BoxFit.cover,
-                                  memCacheWidth: 720,
-                                  errorWidget: (context, e, s) => Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          const Color(0xFF1A2740),
-                                          palette.accent.withValues(alpha: 0.75),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
+                            child: assetPath != null
+                                ? Image.asset(
+                                    assetPath,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            const Color(0xFF1A2740),
+                                            palette.accent.withValues(alpha: 0.75),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Icon(
+                                          widget.icon,
+                                          size: 48,
+                                          color: Colors.white.withValues(alpha: 0.7),
+                                        ),
                                       ),
                                     ),
-                                    child: Center(
-                                      child: Icon(
-                                        widget.icon,
-                                        size: 48,
-                                        color: Colors.white.withValues(alpha: 0.7),
+                                  )
+                                : CachedNetworkImage(
+                                    imageUrl: imageUrl,
+                                    fit: BoxFit.cover,
+                                    memCacheWidth: 720,
+                                    fadeInDuration:
+                                        const Duration(milliseconds: 180),
+                                    placeholder: (context, url) => Container(
+                                      color: const Color(0xFF152033),
+                                      alignment: Alignment.center,
+                                      child: SizedBox(
+                                        width: 28,
+                                        height: 28,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.4,
+                                          color: palette.accent
+                                              .withValues(alpha: 0.85),
+                                        ),
                                       ),
                                     ),
+                                    errorWidget: (context, error, stackTrace) {
+                                      return CachedNetworkImage(
+                                        imageUrl: ServiceCard.fallbackImageUrlFor(
+                                          catKey,
+                                        ),
+                                        fit: BoxFit.cover,
+                                        memCacheWidth: 720,
+                                        errorWidget: (context, e, s) => Container(
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                const Color(0xFF1A2740),
+                                                palette.accent
+                                                    .withValues(alpha: 0.75),
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Icon(
+                                              widget.icon,
+                                              size: 48,
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.7),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
                           ),
                         ),
 

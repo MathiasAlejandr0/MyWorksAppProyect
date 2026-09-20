@@ -1,0 +1,27 @@
+# Config mínima para CLI (migraciones + functions bajo myworksapp_app/supabase)
+project_id = "wxqrfcqifkfgawrnqmnj"
+
+[api]
+enabled = true
+
+[functions.webpay-create]
+verify_jwt = true
+
+[functions.webpay-commit]
+verify_jwt = false
+
+[functions.webpay-handoff]
+verify_jwt = false
+
+[functions.webpay-status]
+verify_jwt = true
+
+[functions.webpay-refund]
+verify_jwt = true
+
+[functions.webpay-release]
+verify_jwt = true
+
+# Pedido urgencia sin sesión (web): valida datos + crea trabajo + Webpay.
+[functions.guest-checkout]
+verify_jwt = false

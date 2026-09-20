@@ -76,13 +76,13 @@ export async function getProfile(
   if (!data) return null;
 
   return {
-    id: data.id as string,
-    name: data.nombre as string,
-    email: data.correo as string,
+    id: data.id,
+    name: data.nombre,
+    email: data.correo,
     role: data.rol as UserRole,
     accountStatus: data.estado_cuenta as Profile['accountStatus'],
-    profilePhotoPath: data.ruta_foto_perfil as string | null | undefined,
-    createdAt: data.creado_en as string | undefined,
+    profilePhotoPath: data.ruta_foto_perfil,
+    createdAt: data.creado_en,
   };
 }
 
