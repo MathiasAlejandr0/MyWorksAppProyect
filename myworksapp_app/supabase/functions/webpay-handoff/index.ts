@@ -1,7 +1,7 @@
 import { serviceClient } from "../_shared/supabase.ts";
 import { verifyHandoffTicket } from "../_shared/security.ts";
 
-/** Handoff Webpay: solo con ticket HMAC (no paymentId crudo). */
+/** Handoff Webpay: ticket HMAC de un solo uso (marca handoff_consumido_en). */
 Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const admin = serviceClient();
     const { data, error } = await admin
       .from("pagos")
-      .select("token_tbk, url_tbk, estado")
+      .select("token_tbk, url_tbk, estado, handoff_consumido_en")
       .eq("id", verified.paymentId)
       .maybeSingle();
 
@@ -27,6 +27,22 @@ Deno.serve(async (req) => {
     }
     if (data.estado !== "pendiente") {
       return new Response("Pago ya no está pendiente", { status: 409 });
+    }
+    if (data.handoff_consumido_en) {
+      return new Response("Ticket ya utilizado", { status: 409 });
+    }
+
+    const { data: claimed, error: claimErr } = await admin
+      .from("pagos")
+      .update({ handoff_consumido_en: new Date().toISOString() })
+      .eq("id", verified.paymentId)
+      .is("handoff_consumido_en", null)
+      .eq("estado", "pendiente")
+      .select("id")
+      .maybeSingle();
+
+    if (claimErr || !claimed) {
+      return new Response("Ticket ya utilizado", { status: 409 });
     }
 
     const action = String(data.url_tbk).replace(/"/g, "&quot;");
@@ -48,6 +64,8 @@ Deno.serve(async (req) => {
       },
     });
   } catch (e) {
-    return new Response(String(e), { status: 500 });
+    const msg = e instanceof Error ? e.message : String(e);
+    const status = msg.includes("WEBPAY_HANDOFF_SECRET") ? 503 : 500;
+    return new Response(msg, { status });
   }
 });

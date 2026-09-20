@@ -6,6 +6,8 @@ import {
   X,
   CreditCard,
 } from 'lucide-react';
+import { fetchPaymentStatus } from '@myworksapp/shared';
+import { supabase } from '../supabaseClient';
 
 export type PaymentCheckoutSuccess = {
   method: 'webpay';
@@ -23,13 +25,8 @@ interface PaymentCheckoutModalProps {
   basePrice: number;
   serviceDescription?: string;
   jobId?: string | null;
-  /**
-   * `embed` (default): usuario autenticado — popup/WebView controlado, SPA no navega.
-   * `redirect`: solo invitado web — window.location.assign.
-   */
-  presentMode?: 'embed' | 'redirect';
   onClose: () => void;
-  /** Inicia Webpay (Edge). Debe devolver URL de handoff (+ paymentId para polling). */
+  /** Inicia Webpay (Edge). Debe devolver URL de handoff (+ paymentId). */
   onPayWithWebpay: () => Promise<{
     redirectUrl: string;
     paymentId?: string;
@@ -44,13 +41,29 @@ const paymentsMode =
 
 const MWA_WEBPAY_MSG = 'mwa-webpay';
 
+function allowedPostMessageOrigin(origin: string): boolean {
+  if (origin === window.location.origin) return true;
+  const env = (import.meta.env.VITE_WEBPAY_POSTMESSAGE_ORIGINS as string | undefined)
+    ?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (env?.includes(origin)) return true;
+  // Commit Edge puede vivir en *.supabase.co
+  try {
+    const u = new URL(origin);
+    if (u.hostname.endsWith('.supabase.co')) return true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
 export function PaymentCheckoutModal({
   workerName,
   profession: _profession,
   basePrice,
   serviceDescription = 'Servicio a domicilio',
   jobId,
-  presentMode = 'embed',
   onClose,
   onPayWithWebpay,
   onSuccess,
@@ -61,40 +74,78 @@ export function PaymentCheckoutModal({
   const [error, setError] = useState<string | null>(null);
   const popupRef = useRef<Window | null>(null);
   const paymentIdRef = useRef<string | null>(null);
+  const settledRef = useRef(false);
 
   const totalAmount = basePrice;
   const isIntegration = paymentsMode !== 'production';
 
+  const settleSuccess = async (paymentId?: string) => {
+    if (settledRef.current) return;
+    const pid = paymentId || paymentIdRef.current;
+    if (!pid) {
+      setError('No se pudo confirmar el pago (sin paymentId).');
+      return;
+    }
+    try {
+      const status = await fetchPaymentStatus(supabase, pid, jobId ?? undefined);
+      if (!status || !['retenido', 'autorizado', 'liberado'].includes(status.estado)) {
+        setError('El banco aún no confirma el pago. Espera unos segundos e inténtalo de nuevo.');
+        return;
+      }
+      settledRef.current = true;
+      setIsDone(true);
+      setIsWaitingBank(false);
+      setIsProcessing(false);
+      onSuccess({
+        method: 'webpay',
+        totalAmount,
+        date: new Date().toISOString(),
+        integration: isIntegration,
+        paymentId: pid,
+      });
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : 'No se pudo verificar el estado del pago.',
+      );
+    }
+  };
+
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string; ok?: boolean; paymentId?: string };
+      if (!allowedPostMessageOrigin(event.origin)) return;
+      const data = event.data as {
+        type?: string;
+        ok?: boolean;
+        paymentId?: string;
+      };
       if (!data || data.type !== MWA_WEBPAY_MSG) return;
-      if (paymentIdRef.current && data.paymentId && data.paymentId !== paymentIdRef.current) {
+      if (
+        paymentIdRef.current &&
+        data.paymentId &&
+        data.paymentId !== paymentIdRef.current
+      ) {
         return;
       }
       setIsWaitingBank(false);
       setIsProcessing(false);
-      if (data.ok) {
-        setIsDone(true);
-        onSuccess({
-          method: 'webpay',
-          totalAmount,
-          date: new Date().toISOString(),
-          integration: isIntegration,
-          paymentId: data.paymentId,
-        });
-      } else {
-        setError('El pago no fue autorizado en Transbank. Puedes reintentar.');
-      }
       try {
         popupRef.current?.close();
       } catch {
         // ignore
       }
+      if (data.ok) {
+        void settleSuccess(data.paymentId);
+      } else {
+        setError('El pago no fue autorizado en Transbank. Puedes reintentar.');
+      }
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [isIntegration, onSuccess, totalAmount]);
+    // settleSuccess closes over stable refs + env
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIntegration, onSuccess, totalAmount, jobId]);
 
   useEffect(() => {
     if (!isWaitingBank) return;
@@ -102,41 +153,34 @@ export function PaymentCheckoutModal({
       if (popupRef.current && popupRef.current.closed) {
         setIsWaitingBank(false);
         setIsProcessing(false);
-        setError(
-          (prev) =>
-            prev ??
-            'Cerraste la ventana de pago. Si ya pagaste, el estado se actualizará en unos segundos.',
-        );
+        // Popup cerrado: intentar confirmar por status (puede haber pagado)
+        if (paymentIdRef.current && !settledRef.current) {
+          void settleSuccess(paymentIdRef.current);
+        } else {
+          setError(
+            (prev) =>
+              prev ??
+              'Cerraste la ventana de pago. Si ya pagaste, el estado se actualizará en unos segundos.',
+          );
+        }
       }
     }, 800);
     return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWaitingBank]);
 
   const handlePay = async () => {
     setIsProcessing(true);
     setError(null);
+    settledRef.current = false;
     try {
       const session = await onPayWithWebpay();
       if (!session?.redirectUrl) {
-        setIsDone(true);
-        onSuccess({
-          method: 'webpay',
-          totalAmount,
-          date: new Date().toISOString(),
-          integration: isIntegration,
-        });
-        return;
+        throw new Error('Webpay no devolvió URL de pago.');
       }
 
       paymentIdRef.current = session.paymentId ?? null;
 
-      if (presentMode === 'redirect') {
-        // Invitado web: única excepción de producto — redirección completa.
-        window.location.assign(session.redirectUrl);
-        return;
-      }
-
-      // Autenticado: mantener la SPA; abrir Transbank en ventana controlada.
       const w = 480;
       const h = 720;
       const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
@@ -204,9 +248,8 @@ export function PaymentCheckoutModal({
                       : 'Pago protegido con Webpay'}
                   </strong>
                   <p>
-                    {presentMode === 'redirect'
-                      ? 'Serás redirigido a Transbank para completar el pago de tu visita (sin sesión).'
-                      : 'Pagas en una ventana segura de Transbank sin abandonar My Works App. No ingreses datos de tarjeta en nuestro sitio.'}
+                    Pagas en una ventana segura de Transbank sin abandonar My
+                    Works App. No ingreses datos de tarjeta en nuestro sitio.
                   </p>
                 </div>
               </div>

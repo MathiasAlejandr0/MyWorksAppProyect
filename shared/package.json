@@ -9,7 +9,6 @@
   },
   "scripts": {
     "test": "node --import tsx --test src/repositories/metrics.test.ts src/domain.node.test.ts src/payments/webpay.test.ts src/payments/webpay.contract.test.ts src/payments/payout.test.ts",
-    "test:vitest": "vitest run",
     "check:domain": "node ../scripts/check-domain-drift.mjs",
     "generate:domain": "node ../scripts/generate-domain-dart.mjs",
     "gen:db-types": "node ../scripts/gen-supabase-types.mjs",

@@ -6,11 +6,14 @@ function toHex(buf: ArrayBuffer): string {
     .join("");
 }
 
+/** Fail-closed: sin WEBPAY_HANDOFF_SECRET no se firman tickets. */
 async function hmacKey(): Promise<CryptoKey> {
-  const secret =
-    Deno.env.get("WEBPAY_HANDOFF_SECRET") ||
-    Deno.env.get("TBK_API_KEY") ||
-    "dev-handoff-secret-change-me";
+  const secret = Deno.env.get("WEBPAY_HANDOFF_SECRET")?.trim();
+  if (!secret || secret.length < 16) {
+    throw new Error(
+      "WEBPAY_HANDOFF_SECRET ausente o demasiado corto (mín. 16). Configura el secret en Edge.",
+    );
+  }
   const raw = new TextEncoder().encode(secret);
   return crypto.subtle.importKey(
     "raw",
@@ -19,6 +22,16 @@ async function hmacKey(): Promise<CryptoKey> {
     false,
     ["sign", "verify"],
   );
+}
+
+/** Comparación en tiempo constante de hex igual longitud. */
+function timingSafeEqualHex(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 export async function signHandoffTicket(
@@ -52,7 +65,9 @@ export async function verifyHandoffTicket(
   const expected = toHex(
     await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload)),
   );
-  if (expected !== sig) return { ok: false, error: "firma inválida" };
+  if (!timingSafeEqualHex(expected, sig)) {
+    return { ok: false, error: "firma inválida" };
+  }
   return { ok: true, paymentId };
 }
 
@@ -92,4 +107,22 @@ export function resolveReturnUrl(requested: string | undefined): string {
   }
 
   return base;
+}
+
+/** Orígenes permitidos para postMessage (web return). */
+export function webPostMessageOrigins(): string[] {
+  const fromEnv = (Deno.env.get("WEBPAY_ALLOWED_RETURN_ORIGINS") || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (fromEnv.length) return fromEnv;
+  if ((Deno.env.get("TBK_ENV") || "integration") !== "production") {
+    return [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+    ];
+  }
+  return [];
 }

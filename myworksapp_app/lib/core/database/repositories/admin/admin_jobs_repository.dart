@@ -4,6 +4,7 @@ import '../../models/message_model.dart';
 import '../../models/payment_model.dart';
 import '../../models/rating_model.dart';
 import '../../supabase_db.dart';
+import '../payment_repository.dart';
 import 'admin_models.dart';
 
 class AdminJobsRepository {
@@ -76,8 +77,10 @@ class AdminJobsRepository {
         )
         .toList();
 
-    final paymentRows =
-        await supabase.from('pagos').select().eq('id_trabajo', jobId);
+    final paymentRows = await supabase
+        .from('pagos')
+        .select(PaymentRepository.clientSelect)
+        .eq('id_trabajo', jobId);
     final payments = paymentRows
         .map<PaymentModel>(
           (m) => PaymentModel.fromMap(Map<String, dynamic>.from(m)),

@@ -76,9 +76,10 @@ export async function createWebpaySession(
 export async function fetchPaymentStatus(
   supabase: AppSupabase,
   paymentId: string,
+  jobId?: string,
 ): Promise<{ id: string; estado: string; id_trabajo?: string } | null> {
   const { data, error } = await supabase.functions.invoke('webpay-status', {
-    body: { paymentId },
+    body: { paymentId, jobId },
   });
   if (error) throw new Error(error.message || 'No se pudo consultar el pago');
   const payload = data as { payment?: Record<string, unknown>; error?: string } | null;

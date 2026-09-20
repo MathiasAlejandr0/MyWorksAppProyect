@@ -20,6 +20,7 @@ import {
   createGuestWebpayCheckout,
   createPendingJob,
   createWebpaySession,
+  fetchPaymentStatus,
   fetchServiceByCategory,
   fetchWorkersByCategory,
   toWebWorkerCard,
@@ -28,6 +29,12 @@ import {
 const PaymentCheckoutModal = lazy(() =>
   import('./components/PaymentCheckoutModal').then((m) => ({
     default: m.PaymentCheckoutModal,
+  })),
+);
+
+const PaidReturnView = lazy(() =>
+  import('./components/PaidReturnView').then((m) => ({
+    default: m.PaidReturnView,
   })),
 );
 
@@ -267,6 +274,8 @@ export function App() {
   const [showAuth, setShowAuth] = useState(false);
 
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [paidVerifying, setPaidVerifying] = useState(false);
+  const [paidVerifyError, setPaidVerifyError] = useState<string | null>(null);
 
   const [activeNav, setActiveNav] = useState<'servicios' | 'como-funciona'>('servicios');
 
@@ -283,6 +292,9 @@ export function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const pago = params.get('pago');
+    const paymentId = params.get('paymentId');
+    const jobIdParam = params.get('jobId');
+
     if (pago === 'ok' || pago === 'retorno') {
       try {
         const raw = sessionStorage.getItem('mwa-pending-checkout');
@@ -306,9 +318,37 @@ export function App() {
       } catch {
         // ignore
       }
+      if (jobIdParam) setCheckoutJobId(jobIdParam);
+
       setView('paid');
       setBookingError(null);
+      setPaidVerifyError(null);
       window.history.replaceState({}, '', window.location.pathname);
+
+      if (paymentId) {
+        setPaidVerifying(true);
+        void fetchPaymentStatus(supabase, paymentId, jobIdParam ?? undefined)
+          .then((status) => {
+            if (
+              !status ||
+              !['retenido', 'autorizado', 'liberado'].includes(status.estado)
+            ) {
+              setPaidVerifyError(
+                'Aún no confirmamos el pago con Transbank. Si ya pagaste, espera un momento y recarga.',
+              );
+            }
+          })
+          .catch(() => {
+            setPaidVerifyError(
+              'No se pudo verificar el pago. Si ya pagaste, tu trabajo aparecerá en breve.',
+            );
+          })
+          .finally(() => setPaidVerifying(false));
+      } else {
+        setPaidVerifyError(
+          'Falta referencia de pago. Si ya pagaste, revisa tu correo o inicia sesión.',
+        );
+      }
     } else if (pago === 'fail') {
       setBookingError('El pago no se completó. Puedes reintentar desde la búsqueda.');
       window.history.replaceState({}, '', window.location.pathname);
@@ -431,7 +471,6 @@ export function App() {
     const session = await createWebpaySession(supabase, {
       jobId: checkoutJobId,
       amountClp: selectedWorker.pricePerVisit,
-      presentMode: 'embed',
     });
     return {
       redirectUrl: session.redirectUrl,
@@ -483,30 +522,16 @@ export function App() {
 
   if (view === 'paid') {
     return (
-      <div className="min-h-screen app-shell paid-return">
-        <div className="paid-return-card">
-          <BrandLogo size={40} />
-          <h1>Pago recibido</h1>
-          <p>
-            Tu pago quedó retenido en escrow
-            {selectedWorker ? ` para ${selectedWorker.name}` : ''}.
-            {checkoutJobId
-              ? ` Referencia ${checkoutJobId.slice(0, 8)}…`
-              : ''}{' '}
-            Te contactaremos para coordinar la visita.
-          </p>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => {
-              if (selectedWorker) setView('tracking');
-              else setView('landing');
-            }}
-          >
-            {selectedWorker ? 'Ver seguimiento' : 'Volver al inicio'}
-          </button>
-        </div>
-      </div>
+      <Suspense fallback={<ViewFallback />}>
+        <PaidReturnView
+          workerName={selectedWorker?.name}
+          jobId={checkoutJobId}
+          verifying={paidVerifying}
+          verifyError={paidVerifyError}
+          onContinueTracking={() => setView('tracking')}
+          onGoHome={() => setView('landing')}
+        />
+      </Suspense>
     );
   }
 
@@ -639,8 +664,6 @@ export function App() {
             serviceDescription={serviceMatch?.problem}
 
             jobId={checkoutJobId}
-
-            presentMode="embed"
 
             onClose={() => setShowCheckout(false)}
 

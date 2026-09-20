@@ -5,6 +5,12 @@ import '../../domain/pricing_constants.dart';
 class PaymentRepository {
   static const String _table = 'pagos';
 
+  /// Columnas visibles al cliente (sin token_tbk / url_tbk).
+  static const String clientSelect =
+      'id, id_trabajo, id_orden_cambio, tipo_pago, monto, moneda, estado, '
+      'metodo_pago, id_transaccion, buy_order, ambiente, autorizado_en, '
+      'liberado_en, reembolsado_en, creado_en, actualizado_en';
+
   /// Insert directo prohibido en flujos comerciales (RLS).
   /// Usar Edge `webpay-create` / RPC `crear_intencion_pago`.
   @Deprecated('Usar TransbankWebpayGateway / webpay-create')
@@ -15,8 +21,11 @@ class PaymentRepository {
   }
 
   Future<PaymentModel?> getPaymentById(String id) async {
-    final row =
-        await supabase.from(_table).select().eq('id', id).maybeSingle();
+    final row = await supabase
+        .from(_table)
+        .select(clientSelect)
+        .eq('id', id)
+        .maybeSingle();
     if (row == null) return null;
     return PaymentModel.fromMap(row);
   }
@@ -28,15 +37,18 @@ class PaymentRepository {
   Future<PaymentModel?> getPrimaryByJobId(String jobId) async {
     final rows = await supabase
         .from(_table)
-        .select()
+        .select(clientSelect)
         .eq('id_trabajo', jobId)
         .eq('tipo_pago', PricingConstants.paymentTypePrimary)
         .limit(1);
     if (rows.isNotEmpty) {
       return PaymentModel.fromMap(rows.first);
     }
-    final legacy =
-        await supabase.from(_table).select().eq('id_trabajo', jobId).limit(1);
+    final legacy = await supabase
+        .from(_table)
+        .select(clientSelect)
+        .eq('id_trabajo', jobId)
+        .limit(1);
     if (legacy.isEmpty) return null;
     return PaymentModel.fromMap(legacy.first);
   }
@@ -97,7 +109,7 @@ class PaymentRepository {
     if (jobIds.isEmpty) return [];
     final rows = await supabase
         .from(_table)
-        .select()
+        .select(clientSelect)
         .inFilter('id_trabajo', jobIds);
     return rows.map((r) => PaymentModel.fromMap(r)).toList();
   }

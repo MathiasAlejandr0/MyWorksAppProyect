@@ -23,6 +23,32 @@ function isEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
+/** Rate-limit in-memory por IP (Edge isolate; mitiga abuso básico). */
+const guestHits = new Map<string, { count: number; resetAt: number }>();
+const GUEST_WINDOW_MS = 60_000;
+const GUEST_MAX = 8;
+
+function clientIp(req: Request): string {
+  return (
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+function allowGuest(ip: string): boolean {
+  const now = Date.now();
+  const row = guestHits.get(ip);
+  if (!row || row.resetAt < now) {
+    guestHits.set(ip, { count: 1, resetAt: now + GUEST_WINDOW_MS });
+    return true;
+  }
+  if (row.count >= GUEST_MAX) return false;
+  row.count += 1;
+  return true;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeadersFor(req) });
@@ -32,6 +58,15 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const ip = clientIp(req);
+    if (!allowGuest(ip)) {
+      return jsonResponse(
+        req,
+        { error: "Demasiados intentos. Espera un minuto e inténtalo de nuevo." },
+        429,
+      );
+    }
+
     const body = (await req.json()) as GuestBody;
     const name = clean(body.name, 120);
     const email = clean(body.email, 160).toLowerCase();
@@ -213,10 +248,12 @@ Deno.serve(async (req) => {
       mode: "guest_redirect",
     });
   } catch (e) {
-    return jsonResponse(
-      req,
-      { error: e instanceof Error ? e.message : String(e) },
-      500,
-    );
+    const msg = e instanceof Error ? e.message : String(e);
+    const status = msg.includes("WEBPAY_HANDOFF_SECRET")
+      ? 503
+      : msg.includes("Demasiados")
+        ? 429
+        : 500;
+    return jsonResponse(req, { error: msg }, status);
   }
 });

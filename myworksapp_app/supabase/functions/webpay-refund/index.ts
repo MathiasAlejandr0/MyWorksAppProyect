@@ -3,8 +3,8 @@ import { serviceClient, userClient } from "../_shared/supabase.ts";
 import { tbkRefund } from "../_shared/tbk.ts";
 
 /**
- * Reembolso Transbank + estado reembolsado.
- * Solo admin (JWT + is_admin vía RPC o perfil).
+ * Reembolso Transbank + estado reembolsado en pago y trabajo.
+ * Solo admin.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     const admin = serviceClient();
     const { data: payment, error } = await admin
       .from("pagos")
-      .select("id, monto, token_tbk, estado")
+      .select("id, monto, token_tbk, estado, id_trabajo")
       .eq("id", paymentId)
       .maybeSingle();
     if (error || !payment) {
@@ -62,11 +62,23 @@ Deno.serve(async (req) => {
         actualizado_en: new Date().toISOString(),
       })
       .eq("id", paymentId)
-      .select()
+      .select(
+        "id, id_trabajo, monto, moneda, estado, metodo_pago, id_transaccion, autorizado_en, liberado_en, reembolsado_en, creado_en, actualizado_en",
+      )
       .single();
 
     if (upErr) {
       return jsonResponse(req, { error: upErr.message, refund }, 500);
+    }
+
+    if (payment.id_trabajo) {
+      await admin
+        .from("trabajos")
+        .update({
+          estado_pago: "reembolsado",
+          actualizado_en: new Date().toISOString(),
+        })
+        .eq("id", payment.id_trabajo);
     }
 
     return jsonResponse(req, { payment: updated, refund });

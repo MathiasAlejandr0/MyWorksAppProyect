@@ -1,6 +1,7 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { tbkCommit } from "../_shared/tbk.ts";
+import { webPostMessageOrigins } from "../_shared/security.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -51,7 +52,8 @@ Deno.serve(async (req) => {
     }
 
     if (!payment) {
-      return jsonResponse(req, { error: "Pago no encontrado", commit }, 404);
+      // No filtrar payload TBK al cliente
+      return jsonResponse(req, { error: "Pago no encontrado" }, 404);
     }
 
     // Webpay Plus commit = captura en comercio. Escrow de negocio = retenido.
@@ -77,11 +79,14 @@ Deno.serve(async (req) => {
         .eq("id", payment.id_trabajo);
     }
 
-    const webReturn =
-      Deno.env.get("WEBPAY_WEB_RETURN_URL") ||
-      (approved
-        ? "http://localhost:5173/?pago=ok"
-        : "http://localhost:5173/?pago=fail");
+    const webBase =
+      Deno.env.get("WEBPAY_WEB_RETURN_URL") || "http://localhost:5173/";
+    const webUrl = new URL(webBase);
+    webUrl.searchParams.set("pago", approved ? "ok" : "fail");
+    webUrl.searchParams.set("paymentId", payment.id);
+    webUrl.searchParams.set("jobId", payment.id_trabajo);
+    const webReturn = webUrl.toString();
+
     const appReturn =
       Deno.env.get("WEBPAY_APP_RETURN_URL") || "myworksapp://pago/retorno";
 
@@ -92,8 +97,9 @@ Deno.serve(async (req) => {
       jobId: payment.id_trabajo,
     });
 
-    // Embed (iframe/popup/WebView): avisa al opener/parent y cierra.
-    // Redirect invitado: meta-refresh a la web.
+    const origins = webPostMessageOrigins();
+    const originsJs = JSON.stringify(origins);
+
     const html = `<!DOCTYPE html>
 <html lang="es"><head>
 <meta charset="utf-8"/>
@@ -106,24 +112,34 @@ Deno.serve(async (req) => {
 </head><body>
 <h1>${approved ? "Pago autorizado y retenido" : "Pago no autorizado"}</h1>
 <p>Puedes volver a My Works App.</p>
-<p><a id="web" href="${webReturn}">Volver a la web</a> · <a id="app" href="${appReturn}?ok=${approved ? "1" : "0"}&paymentId=${payment.id}">Abrir app</a></p>
+<p><a id="web" href="${webReturn}">Volver a la web</a> · <a id="app" href="${appReturn}?ok=${approved ? "1" : "0"}&paymentId=${payment.id}&jobId=${payment.id_trabajo}">Abrir app</a></p>
 <script>
 (function(){
   var msg = ${payload};
+  var origins = ${originsJs};
+  function post(target) {
+    if (!target) return;
+    if (!origins.length) {
+      try { target.postMessage(msg, "*"); } catch (e) {}
+      return;
+    }
+    for (var i = 0; i < origins.length; i++) {
+      try { target.postMessage(msg, origins[i]); } catch (e) {}
+    }
+  }
   try {
     if (window.opener && !window.opener.closed) {
-      window.opener.postMessage(msg, "*");
+      post(window.opener);
       setTimeout(function(){ window.close(); }, 400);
       return;
     }
   } catch (e) {}
   try {
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage(msg, "*");
+      post(window.parent);
       return;
     }
   } catch (e) {}
-  // Flujo invitado / navegación completa
   setTimeout(function(){ location.replace(${JSON.stringify(webReturn)}); }, 1200);
 })();
 </script>

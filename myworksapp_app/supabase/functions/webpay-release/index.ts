@@ -2,9 +2,8 @@ import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 /**
- * Liberación de escrow de negocio + registro de liquidación.
- * Hoy: proveedor `manual` (admin confirma transferencia bancaria fuera de la app).
- * Futuro: mismo endpoint podrá orquestar khipu/fintoc cuando exista empresa.
+ * Liberación de escrow + liquidación atómica (RPC liberar_escrow_manual).
+ * Hoy: proveedor `manual`. Futuro: khipu/fintoc.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -71,89 +70,46 @@ Deno.serve(async (req) => {
     }
 
     const admin = serviceClient();
+    const { data: rpcResult, error: rpcErr } = await admin.rpc(
+      "liberar_escrow_manual",
+      {
+        p_id_pago: paymentId,
+        p_id_operador: user.id,
+        p_referencia: transferRef,
+        p_notas: notes || null,
+        p_proveedor: provider,
+      },
+    );
+
+    if (rpcErr) {
+      const msg = rpcErr.message || "Error al liberar";
+      const status = /no encontrado|no liberable|ya liquidado|requeridos|inválido/i
+        .test(msg)
+        ? 409
+        : 500;
+      return jsonResponse(req, { error: msg }, status);
+    }
+
     const { data: payment } = await admin
       .from("pagos")
-      .select("id, estado, id_trabajo, monto")
+      .select(
+        "id, id_trabajo, monto, moneda, estado, metodo_pago, id_transaccion, autorizado_en, liberado_en, reembolsado_en, creado_en, actualizado_en",
+      )
       .eq("id", paymentId)
       .maybeSingle();
 
-    if (!payment) {
-      return jsonResponse(req, { error: "Pago no encontrado" }, 404);
-    }
-    if (!["autorizado", "retenido"].includes(payment.estado)) {
-      return jsonResponse(req, { error: "Pago no liberable" }, 409);
-    }
-
-    const { data: existingLiq } = await admin
+    const { data: liquidacion } = await admin
       .from("liquidaciones")
-      .select("id")
+      .select("*")
       .eq("id_pago", paymentId)
       .maybeSingle();
-    if (existingLiq) {
-      return jsonResponse(req, { error: "Pago ya liquidado" }, 409);
-    }
-
-    const { data: job } = await admin
-      .from("trabajos")
-      .select("id, id_trabajador")
-      .eq("id", payment.id_trabajo)
-      .maybeSingle();
-
-    const { data: updated, error } = await admin
-      .from("pagos")
-      .update({
-        estado: "liberado",
-        liberado_en: new Date().toISOString(),
-        actualizado_en: new Date().toISOString(),
-      })
-      .eq("id", paymentId)
-      .select()
-      .single();
-
-    if (error) return jsonResponse(req, { error: error.message }, 500);
-
-    await admin
-      .from("trabajos")
-      .update({
-        estado_pago: "liberado",
-        actualizado_en: new Date().toISOString(),
-      })
-      .eq("id", payment.id_trabajo);
-
-    const { data: liquidacion, error: liqErr } = await admin
-      .from("liquidaciones")
-      .insert({
-        id: crypto.randomUUID(),
-        id_pago: paymentId,
-        id_trabajo: payment.id_trabajo,
-        id_trabajador: job?.id_trabajador ?? null,
-        monto_clp: payment.monto,
-        proveedor: provider,
-        referencia_transferencia: transferRef,
-        notas: notes || null,
-        id_operador: user.id,
-        creado_en: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (liqErr) {
-      return jsonResponse(
-        req,
-        {
-          error: liqErr.message,
-          payment: updated,
-          warning: "Pago liberado pero falló el registro de liquidación",
-        },
-        500,
-      );
-    }
 
     return jsonResponse(req, {
-      payment: updated,
+      payment,
       liquidacion,
+      result: rpcResult,
       note:
-        "Escrow liberado. Liquidación manual registrada — confirma que la transferencia bancaria ya se ejecutó.",
+        "Escrow liberado y liquidación registrada en una sola transacción.",
     });
   } catch (e) {
     return jsonResponse(

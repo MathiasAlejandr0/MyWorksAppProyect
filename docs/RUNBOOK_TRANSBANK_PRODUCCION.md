@@ -4,8 +4,10 @@
 
 - Ambiente por defecto: **integration** (`TBK_ENV=integration`).
 - Edge Functions: `webpay-create`, `webpay-handoff`, `webpay-commit`, `webpay-status`, `webpay-refund`, `webpay-release`, `guest-checkout`.
-- Migración: `myworksapp_app/supabase/migrations/20260322000001_webpay_escrow_hardening.sql` (+ reaffirm `20260922`).
+- Migración: `myworksapp_app/supabase/migrations/20260322000001_webpay_escrow_hardening.sql` (+ reaffirm `20260922`, thermos `20260924`).
 - Clientes **no** capturan PAN.
+- `token_tbk` / `url_tbk` **no** son legibles por `authenticated`/`anon` (solo Edge / service_role).
+- `WEBPAY_HANDOFF_SECRET` es **obligatorio** (fail-closed; sin fallback a `TBK_API_KEY` ni secret de desarrollo).
 
 ## Regla UX de presentación
 
@@ -21,6 +23,7 @@
 cd myworksapp_app
 npx supabase db push
 # o aplicar el SQL en el SQL Editor del dashboard
+# Incluye: 20260924000001_thermos_security_fixes.sql
 ```
 
 ## 2. Desplegar Edge Functions
@@ -40,11 +43,13 @@ npx supabase functions deploy guest-checkout
 
 ```bash
 npx supabase secrets set TBK_ENV=integration
+# OBLIGATORIO — mínimo 16 caracteres; sin esto handoff/create fallan 503
 npx supabase secrets set WEBPAY_HANDOFF_SECRET=<random-32-chars>
 npx supabase secrets set WEBPAY_RETURN_URL=https://<project>.supabase.co/functions/v1/webpay-commit
+# Orígenes para postMessage del commit (popup autenticado):
+npx supabase secrets set WEBPAY_ALLOWED_RETURN_ORIGINS=https://app.myworksapp.cl,http://localhost:5173
 # Opcional:
 # npx supabase secrets set CORS_ALLOWED_ORIGINS=https://app.myworksapp.cl,http://localhost:5173
-# npx supabase secrets set WEBPAY_ALLOWED_RETURN_ORIGINS=https://app.myworksapp.cl
 ```
 
 Cuando Transbank entregue comercio real:

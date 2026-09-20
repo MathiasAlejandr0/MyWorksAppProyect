@@ -85,10 +85,8 @@ Deno.serve(async (req) => {
       presentMode,
     });
   } catch (e) {
-    return jsonResponse(
-      req,
-      { error: e instanceof Error ? e.message : String(e) },
-      500,
-    );
+    const msg = e instanceof Error ? e.message : String(e);
+    const status = msg.includes("WEBPAY_HANDOFF_SECRET") ? 503 : 500;
+    return jsonResponse(req, { error: msg }, status);
   }
 });
