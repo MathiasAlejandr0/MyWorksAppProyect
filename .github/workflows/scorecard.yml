@@ -2,15 +2,27 @@ name: OSSF Scorecard
 
 on:
   schedule:
-    - cron: "0 3 * * 0" # semanal
+    - cron: "0 3 * * 0" # semanal, domingo
   workflow_dispatch:
+
+permissions: read-all
 
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - name: Run OSSF Scorecard
-        uses: ossf/scorecard-action@v2
+        uses: ossf/scorecard-action@v2.4.4
         with:
           results_file: results.sarif
           results_format: sarif
@@ -23,4 +35,3 @@ jobs:
           name: scorecard-results
           path: results.sarif
           if-no-files-found: ignore
-

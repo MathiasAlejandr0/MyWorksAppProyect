@@ -2,8 +2,9 @@ name: Supabase Keep-Alive
 
 # Evita que el proyecto Supabase (plan gratuito) se pause por inactividad.
 # Hace una peticion ligera cada dia, lo que cuenta como actividad del proyecto.
-# Requiere secretos del repo (Settings -> Secrets and variables -> Actions):
-#   SUPABASE_URL y SUPABASE_ANON_KEY
+# Usa SUPABASE_URL + SUPABASE_ANON_KEY, o si no existen VITE_SUPABASE_URL +
+# VITE_SUPABASE_ANON_KEY. Si no hay ninguno, el job termina bien y no avisa:
+# sin credenciales no se puede hacer ping, pero tampoco debe marcar el run como failed.
 
 on:
   schedule:
@@ -15,20 +16,32 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Require Supabase secrets
+      - name: Resolve Supabase secrets
+        id: supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
-            echo "::error ::Faltan secrets SUPABASE_URL y/o SUPABASE_ANON_KEY. Configúralos en Settings -> Secrets and variables -> Actions."
-            exit 1
+          url="${SUPABASE_URL:-$VITE_URL}"
+          key="${SUPABASE_KEY:-$VITE_KEY}"
+          if [ -z "$url" ] || [ -z "$key" ]; then
+            echo "::warning ::Keep-alive omitido: configura SUPABASE_URL y SUPABASE_ANON_KEY (o VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY) en Settings -> Secrets and variables -> Actions."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::$url"
+          echo "::add-mask::$key"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "key=$key" >> "$GITHUB_OUTPUT"
 
       - name: Ping Supabase REST + Auth
+        if: steps.supabase.outputs.ready == 'true'
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ steps.supabase.outputs.url }}
+          SUPABASE_KEY: ${{ steps.supabase.outputs.key }}
         run: |
           set -e
 
