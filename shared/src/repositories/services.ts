@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AppSupabase } from '../client';
 import type { ServiceRow } from '../types';
 
 function mapService(row: Record<string, unknown>): ServiceRow {
@@ -13,7 +13,7 @@ function mapService(row: Record<string, unknown>): ServiceRow {
 }
 
 export async function fetchServiceByCategory(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
   category: string,
 ): Promise<ServiceRow | null> {
   const { data, error } = await supabase
@@ -28,7 +28,7 @@ export async function fetchServiceByCategory(
   return data ? mapService(data as Record<string, unknown>) : null;
 }
 
-export async function fetchActiveServices(supabase: SupabaseClient): Promise<ServiceRow[]> {
+export async function fetchActiveServices(supabase: AppSupabase): Promise<ServiceRow[]> {
   const { data, error } = await supabase
     .from('servicios')
     .select('id, nombre, descripcion, categoria, activo, modelo_precio')

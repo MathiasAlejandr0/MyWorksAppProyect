@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AppSupabase } from './client';
 import type { Profile, UserRole } from './types';
 
 export class AuthError extends Error {
@@ -9,7 +9,7 @@ export class AuthError extends Error {
 }
 
 export async function signIn(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
   email: string,
   password: string,
 ): Promise<Profile> {
@@ -27,7 +27,7 @@ export async function signIn(
 }
 
 export async function signUpUser(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
   email: string,
   password: string,
   name: string,
@@ -52,18 +52,18 @@ export async function signUpUser(
   };
 }
 
-export async function signOut(supabase: SupabaseClient): Promise<void> {
+export async function signOut(supabase: AppSupabase): Promise<void> {
   await supabase.auth.signOut();
 }
 
-export async function getSessionProfile(supabase: SupabaseClient): Promise<Profile | null> {
+export async function getSessionProfile(supabase: AppSupabase): Promise<Profile | null> {
   const { data } = await supabase.auth.getSession();
   if (!data.session?.user) return null;
   return getProfile(supabase, data.session.user.id);
 }
 
 export async function getProfile(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
   userId: string,
 ): Promise<Profile | null> {
   const { data, error } = await supabase
@@ -95,7 +95,7 @@ export function requireRole(profile: Profile, allowed: UserRole[]): void {
 export type OAuthProviderId = 'google' | 'apple';
 
 export async function signInWithOAuthProvider(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
   provider: OAuthProviderId,
   redirectTo: string,
 ): Promise<void> {

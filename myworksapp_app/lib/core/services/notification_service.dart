@@ -42,7 +42,7 @@ class NotificationService {
       );
 
       final ok = await _notifications.initialize(
-        initSettings,
+        settings: initSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
       );
 
@@ -134,7 +134,12 @@ class NotificationService {
         linux: linuxDetails,
       );
 
-      await _notifications.show(id, title, body, details);
+      await _notifications.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: details,
+      );
     } catch (e) {
       AppLogger.w('No se pudo mostrar notificación local', e);
     }
@@ -180,14 +185,12 @@ class NotificationService {
       );
 
       await _notifications.zonedSchedule(
-        notification.id.hashCode,
-        title,
-        body,
-        tz.TZDateTime.from(scheduledDate, tz.local),
-        details,
+        id: notification.id.hashCode,
+        title: title,
+        body: body,
+        scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+        notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
       );
     } catch (e) {
       AppLogger.w('Error programando notificación local', e);
@@ -197,7 +200,7 @@ class NotificationService {
   Future<void> cancelNotification(int id) async {
     if (!_isInitialized) return;
     try {
-      await _notifications.cancel(id);
+      await _notifications.cancel(id: id);
     } catch (_) {}
   }
 

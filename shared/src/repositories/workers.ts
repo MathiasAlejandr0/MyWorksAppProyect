@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AppSupabase } from '../client';
 import type { WebWorkerCard, WorkerWithProfile } from '../types';
 
 const DEFAULT_AVATAR =
@@ -41,7 +41,7 @@ function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
 }
 
 export async function fetchWorkersByCategory(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
   category: string,
 ): Promise<WorkerWithProfile[]> {
   const { data, error } = await supabase
@@ -59,7 +59,7 @@ export async function fetchWorkersByCategory(
 }
 
 export async function fetchWorkersForAdmin(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
 ): Promise<WorkerWithProfile[]> {
   const { data, error } = await supabase
     .from('trabajadores')

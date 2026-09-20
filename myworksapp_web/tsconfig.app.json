@@ -25,7 +25,6 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
     "paths": {
       "@myworksapp/shared": ["../shared/src/index.ts"],
       "@myworksapp/shared/*": ["../shared/src/*"]

@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AppSupabase } from '../client';
 import type { JobRow } from '../types';
 
 export interface CreateJobInput {
@@ -12,7 +12,7 @@ export interface CreateJobInput {
 }
 
 export async function createPendingJob(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
   input: CreateJobInput,
 ): Promise<JobRow> {
   const now = new Date().toISOString();
@@ -48,7 +48,7 @@ export async function createPendingJob(
 }
 
 export async function fetchUserJobs(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
   userId: string,
 ): Promise<JobRow[]> {
   const { data, error } = await supabase

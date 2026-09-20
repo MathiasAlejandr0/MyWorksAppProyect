@@ -223,10 +223,12 @@ class _UserRightsPageState extends ConsumerState<UserRightsPage> {
       await file.writeAsString(jsonData);
 
       // Compartir archivo
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        subject: 'Exportación de Datos - My Works App',
-        text: 'Mis datos personales exportados desde My Works App',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          subject: 'Exportación de Datos - My Works App',
+          text: 'Mis datos personales exportados desde My Works App',
+        ),
       );
 
       if (mounted) {

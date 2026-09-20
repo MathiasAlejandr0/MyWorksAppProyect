@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/widgets.dart';
 import 'package:geocoding/geocoding.dart';
 
 import 'constants.dart';
@@ -26,11 +27,8 @@ class LocationUtils {
         _offsetLongitude(latitude, longitude, distanceInMeters, bearing);
 
     try {
-      final placemarks = await placemarkFromCoordinates(
-        approximateLat,
-        approximateLon,
-        localeIdentifier: 'es',
-      );
+      final placemarks = await Geocoding(locale: const Locale('es'))
+          .placemarkFromCoordinates(approximateLat, approximateLon);
 
       if (placemarks.isNotEmpty) {
         return _formatApproximateAddress(placemarks.first);
@@ -112,11 +110,8 @@ class LocationUtils {
     double longitude,
   ) async {
     try {
-      final placemarks = await placemarkFromCoordinates(
-        latitude,
-        longitude,
-        localeIdentifier: 'es',
-      );
+      final placemarks = await Geocoding(locale: const Locale('es'))
+          .placemarkFromCoordinates(latitude, longitude);
       if (placemarks.isNotEmpty) {
         final formatted = _formatExactAddress(placemarks.first);
         if (formatted.isNotEmpty) return formatted;

@@ -40,19 +40,23 @@ class AuthState {
   }
 }
 
-class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._authService) : super(const AuthState()) {
+class AuthNotifier extends Notifier<AuthState> {
+  late final AuthService _authService;
+  StreamSubscription<AuthSessionEvent>? _sessionSub;
+  bool _handlingRemoteSignOut = false;
+
+  @override
+  AuthState build() {
+    _authService = ref.read(authServiceProvider);
     _sessionSub = _authService.sessionChanges.listen(
       _onSessionEvent,
       onError: (Object e, StackTrace st) {
         AppLogger.e('Error en auth stream', e, st);
       },
     );
+    ref.onDispose(() => _sessionSub?.cancel());
+    return const AuthState();
   }
-
-  final AuthService _authService;
-  StreamSubscription<AuthSessionEvent>? _sessionSub;
-  bool _handlingRemoteSignOut = false;
 
   Future<bool> register({
     required String name,
@@ -255,11 +259,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await NotificationRealtimeService.instance.subscribe(userId);
   }
 
-  @override
-  void dispose() {
-    _sessionSub?.cancel();
-    super.dispose();
-  }
 }
 
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -268,6 +267,4 @@ final authServiceProvider = Provider<AuthService>((ref) {
   );
 });
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.read(authServiceProvider));
-});
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);

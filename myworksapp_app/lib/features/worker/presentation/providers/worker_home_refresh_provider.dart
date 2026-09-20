@@ -24,22 +24,35 @@ class WorkerHomeRefreshState {
 
 /// Incrementar [token] fuerza recarga del panel del trabajador.
 final workerHomeRefreshProvider =
-    StateProvider<WorkerHomeRefreshState>((ref) => const WorkerHomeRefreshState(token: 0));
+    NotifierProvider<WorkerHomeRefreshNotifier, WorkerHomeRefreshState>(
+  WorkerHomeRefreshNotifier.new,
+);
+
+class WorkerHomeRefreshNotifier extends Notifier<WorkerHomeRefreshState> {
+  @override
+  WorkerHomeRefreshState build() => const WorkerHomeRefreshState(token: 0);
+
+  void request({int? openTabIndex}) {
+    state = WorkerHomeRefreshState(
+      token: state.token + 1,
+      openTabIndex: openTabIndex,
+    );
+  }
+
+  void clearOpenTab() {
+    state = state.copyWith(clearOpenTabIndex: true);
+  }
+}
 
 void requestWorkerHomeRefresh(
   WidgetRef ref, {
   int? openTabIndex,
 }) {
-  ref.read(workerHomeRefreshProvider.notifier).update(
-        (state) => WorkerHomeRefreshState(
-          token: state.token + 1,
-          openTabIndex: openTabIndex,
-        ),
+  ref.read(workerHomeRefreshProvider.notifier).request(
+        openTabIndex: openTabIndex,
       );
 }
 
 void clearWorkerHomeOpenTab(WidgetRef ref) {
-  ref.read(workerHomeRefreshProvider.notifier).update(
-        (state) => state.copyWith(clearOpenTabIndex: true),
-      );
+  ref.read(workerHomeRefreshProvider.notifier).clearOpenTab();
 }

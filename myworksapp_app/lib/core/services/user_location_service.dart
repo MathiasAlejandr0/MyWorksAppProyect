@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -96,10 +97,12 @@ class UserLocationService {
       Position? position;
       try {
         position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: AppPlatform.isDesktopNative
-              ? LocationAccuracy.low
-              : LocationAccuracy.medium,
-          timeLimit: const Duration(seconds: 20),
+          locationSettings: LocationSettings(
+            accuracy: AppPlatform.isDesktopNative
+                ? LocationAccuracy.low
+                : LocationAccuracy.medium,
+            timeLimit: const Duration(seconds: 20),
+          ),
         );
       } catch (_) {
         position = await Geolocator.getLastKnownPosition();
@@ -183,11 +186,8 @@ class UserLocationService {
     double longitude,
   ) async {
     try {
-      final placemarks = await placemarkFromCoordinates(
-        latitude,
-        longitude,
-        localeIdentifier: 'es',
-      );
+      final placemarks = await Geocoding(locale: const Locale('es'))
+          .placemarkFromCoordinates(latitude, longitude);
       if (placemarks.isEmpty) return null;
 
       final place = placemarks.first;

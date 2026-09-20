@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AppSupabase } from '../client';
 import type { AdminMetrics } from '../types';
 
 function asInt(value: unknown, fallback = 0): number {
@@ -32,7 +32,7 @@ export function mapMetricsPayload(data: unknown): AdminMetrics {
  * Requiere migración `20260914000005_rls_politicas_negocio.sql`.
  */
 export async function fetchAdminMetrics(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
 ): Promise<AdminMetrics> {
   const { data, error } = await supabase.rpc('admin_metricas_resumen');
   if (error) throw error;

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Provider para el loader global
-final globalLoaderProvider = StateNotifierProvider<GlobalLoaderNotifier, bool>((ref) {
-  return GlobalLoaderNotifier();
-});
+final globalLoaderProvider =
+    NotifierProvider<GlobalLoaderNotifier, bool>(GlobalLoaderNotifier.new);
 
-class GlobalLoaderNotifier extends StateNotifier<bool> {
-  GlobalLoaderNotifier() : super(false);
+class GlobalLoaderNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
 
   void show() => state = true;
   void hide() => state = false;

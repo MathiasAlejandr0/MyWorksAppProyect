@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AppSupabase } from '../client';
 import type { DisputeRow, DisputeStatus, DisputeWithContext } from '../types';
 
 interface JobSummary {
@@ -40,7 +40,7 @@ function mapDispute(row: Record<string, unknown>): DisputeRow {
 }
 
 export async function fetchOpenDisputes(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
 ): Promise<DisputeWithContext[]> {
   const { data, error } = await supabase
     .from('disputas')
@@ -101,7 +101,7 @@ export async function fetchOpenDisputes(
  * `resolvedBy` se ignora: el servidor usa auth.uid().
  */
 export async function updateDisputeStatus(
-  supabase: SupabaseClient,
+  supabase: AppSupabase,
   disputeId: string,
   status: DisputeStatus,
   resolution: string,
