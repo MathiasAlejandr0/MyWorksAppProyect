@@ -34,7 +34,7 @@ dependencies:
   timezone: ^0.11.1
 
   # Imágenes
-  cached_network_image: ^3.3.1
+  cached_network_image: ^4.0.0
   image_picker: ^1.0.5
   flutter_image_compress: ^2.1.0
 
@@ -42,7 +42,7 @@ dependencies:
   table_calendar: ^3.0.9
 
   # Validación
-  email_validator: ^2.1.17
+  email_validator: ^3.0.0
   
   # Logging
   logger: ^2.0.2+1
@@ -53,7 +53,7 @@ dependencies:
   # firebase_crashlytics: ^3.4.9
   
   # Permisos
-  permission_handler: ^11.3.0
+  permission_handler: ^13.0.2
   
   # Compartir/Exportar
   share_plus: ^13.3.0
@@ -61,9 +61,9 @@ dependencies:
   # Info de app
   package_info_plus: ^10.2.1
   supabase_flutter: ^2.8.4
-  app_links: ^6.3.2
-  flutter_map: ^6.1.0
-  latlong2: ^0.9.1
+  app_links: ^7.2.1
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
   video_player: ^2.11.1
   video_player_win: ^3.2.2
   sentry_flutter: ^8.14.2
@@ -71,7 +71,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.1
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
