@@ -125,8 +125,8 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final integration = !kReleaseMode ||
-        const String.fromEnvironment('PAYMENTS_MODE', defaultValue: 'integration') !=
+    const integration = !kReleaseMode ||
+        String.fromEnvironment('PAYMENTS_MODE', defaultValue: 'integration') !=
             'production';
 
     return SafeArea(

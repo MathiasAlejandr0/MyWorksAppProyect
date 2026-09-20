@@ -19,7 +19,9 @@ test.describe('Home smoke', () => {
   }) => {
     await page.goto('/');
 
-    const entrar = page.getByRole('button', { name: /entrar|iniciar sesión/i });
+    const entrar = page.getByRole('button', {
+      name: /ingresar|entrar|iniciar sesión/i,
+    });
     await expect(entrar.first()).toBeVisible({ timeout: 15_000 });
     await entrar.first().click();
 
