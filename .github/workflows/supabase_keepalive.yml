@@ -2,9 +2,9 @@ name: Supabase Keep-Alive
 
 # Evita que el proyecto Supabase (plan gratuito) se pause por inactividad.
 # Hace una peticion ligera cada dia, lo que cuenta como actividad del proyecto.
-# Usa SUPABASE_URL + SUPABASE_ANON_KEY, o si no existen VITE_SUPABASE_URL +
-# VITE_SUPABASE_ANON_KEY. Si no hay ninguno, el job termina bien y no avisa:
-# sin credenciales no se puede hacer ping, pero tampoco debe marcar el run como failed.
+# Lee la URL y la clave publicable de SupabaseConfig (cliente Flutter).
+# Los secrets del repo, si existen, tienen prioridad.
+# Nunca uses aquí la service_role.
 
 on:
   schedule:
@@ -16,7 +16,10 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve Supabase secrets
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve Supabase credentials
         id: supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -24,16 +27,17 @@ jobs:
           VITE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          url="${SUPABASE_URL:-$VITE_URL}"
-          key="${SUPABASE_KEY:-$VITE_KEY}"
+          config="myworksapp_app/lib/core/config/supabase_config.dart"
+          file_url=$(sed -n "s/.*defaultValue: '\\(https:\\/\\/[^']*supabase\\.co\\)'.*/\\1/p" "$config" | head -n 1)
+          file_key=$(sed -n "s/.*defaultValue: '\\(sb_publishable_[^']*\\)'.*/\\1/p" "$config" | head -n 1)
+          url="${SUPABASE_URL:-${VITE_URL:-$file_url}}"
+          key="${SUPABASE_KEY:-${VITE_KEY:-$file_key}}"
           if [ -z "$url" ] || [ -z "$key" ]; then
-            echo "::warning ::Keep-alive omitido: configura SUPABASE_URL y SUPABASE_ANON_KEY (o VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY) en Settings -> Secrets and variables -> Actions."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            echo "::error ::No hay URL ni clave publicable en SupabaseConfig ni en los secrets."
+            exit 1
           fi
-          echo "ready=true" >> "$GITHUB_OUTPUT"
-          echo "::add-mask::$url"
           echo "::add-mask::$key"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "key=$key" >> "$GITHUB_OUTPUT"
 
