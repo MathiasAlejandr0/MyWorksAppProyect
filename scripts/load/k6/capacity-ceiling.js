@@ -1,10 +1,5 @@
 /**
- * k6 — Tope de capacidad (arrival-rate): cuántas peticiones/segundo aguanta el catálogo.
- *
- * Sube el rate hasta que p95 o errores se rompen. Sirve para estimar
- * "cuántos usuarios concurrentes mirando el home" con think-time ~1s.
- *
- *   k6 run -e SUPABASE_URL=... -e SUPABASE_ANON_KEY=... scripts/load/k6/capacity-ceiling.js
+ * k6 — Techo de RPS sobre lectura marketplace (trabajadores).
  */
 import http from 'k6/http';
 import { check, sleep } from 'k6';
@@ -49,8 +44,8 @@ const headers = {
 
 export default function () {
   const res = http.get(
-    `${url}/rest/v1/servicios?select=id,nombre&activo=eq.1&limit=20`,
-    { headers, tags: { name: 'servicios_ceiling' } },
+    `${url}/rest/v1/trabajadores?select=id_usuario,profesion,tarifa_visita&disponible=eq.1&limit=20`,
+    { headers, tags: { name: 'trabajadores_ceiling' } },
   );
   check(res, { '200': (r) => r.status === 200 });
   sleep(0.1);

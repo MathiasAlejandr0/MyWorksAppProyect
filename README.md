@@ -9,7 +9,9 @@ Marketplace de servicios del hogar (cliente + profesional) para Chile, con hub w
 
 Documento técnico de referencia: [`ESTADO_DEL_PROYECTO.md`](ESTADO_DEL_PROYECTO.md).  
 Diccionario de datos: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md).  
-Pruebas de capacidad (k6): [`docs/RUNBOOK_CAPACIDAD_CARGA.md`](docs/RUNBOOK_CAPACIDAD_CARGA.md).
+Pruebas de capacidad (k6): [`docs/RUNBOOK_CAPACIDAD_CARGA.md`](docs/RUNBOOK_CAPACIDAD_CARGA.md).  
+Escala ≥20.000 usuarios: [`docs/RUNBOOK_ESCALA_20K_USUARIOS.md`](docs/RUNBOOK_ESCALA_20K_USUARIOS.md).  
+Informe Word (Duoc UC): [`docs/INFORME_PRUEBAS_CARGA_CAPACIDAD.docx`](docs/INFORME_PRUEBAS_CARGA_CAPACIDAD.docx).
 
 ---
 

@@ -1,12 +1,6 @@
 /**
- * k6 — Lectura de catálogo (anon)
- * Simula usuarios mirando oficios y profesionales (home / búsqueda).
- *
- * Uso:
- *   k6 run -e SUPABASE_URL=https://xxx.supabase.co -e SUPABASE_ANON_KEY=eyJ... scripts/load/k6/catalog.js
- *   k6 run -e SUPABASE_URL=... -e SUPABASE_ANON_KEY=... -e PROFILE=stress scripts/load/k6/catalog.js
- *
- * Profiles: smoke | baseline | stress | soak  (default: baseline)
+ * k6 — Lectura marketplace (anon): oficios + profesionales.
+ * Profiles: smoke | baseline | stress | soak
  */
 import http from 'k6/http';
 import { check, sleep } from 'k6';
@@ -25,11 +19,7 @@ const serviciosMs = new Trend('mwa_servicios_ms');
 const trabajadoresMs = new Trend('mwa_trabajadores_ms');
 
 const profiles = {
-  smoke: {
-    executor: 'constant-vus',
-    vus: 5,
-    duration: '30s',
-  },
+  smoke: { executor: 'constant-vus', vus: 5, duration: '30s' },
   baseline: {
     executor: 'ramping-vus',
     startVUs: 0,
@@ -51,11 +41,7 @@ const profiles = {
       { duration: '1m', target: 0 },
     ],
   },
-  soak: {
-    executor: 'constant-vus',
-    vus: 40,
-    duration: '10m',
-  },
+  soak: { executor: 'constant-vus', vus: 40, duration: '10m' },
 };
 
 export const options = {
@@ -75,12 +61,15 @@ const headers = {
   Accept: 'application/json',
 };
 
-function get(path) {
-  return http.get(`${url}/rest/v1/${path}`, { headers, tags: { name: path.split('?')[0] } });
+function get(path, tag) {
+  return http.get(`${url}/rest/v1/${path}`, { headers, tags: { name: tag } });
 }
 
 export default function () {
-  const s = get('servicios?select=id,nombre,categoria,activo&activo=eq.1&limit=50');
+  const s = get(
+    'servicios?select=id,nombre,categoria,activo&activo=eq.1&limit=50',
+    'servicios',
+  );
   serviciosMs.add(s.timings.duration);
   const okS = check(s, {
     'servicios 200': (r) => r.status === 200,
@@ -95,6 +84,7 @@ export default function () {
 
   const t = get(
     'trabajadores?select=id_usuario,profesion,calificacion,disponible,tarifa_visita,categoria_servicio&disponible=eq.1&limit=40',
+    'trabajadores',
   );
   trabajadoresMs.add(t.timings.duration);
   const okT = check(t, {
