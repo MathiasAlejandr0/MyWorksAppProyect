@@ -1,0 +1,4 @@
+# Resultados de pruebas de carga
+# Ejecutar k6 con --summary-export=scripts/load/results/<nombre>.json
+*
+!.gitignore

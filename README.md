@@ -8,7 +8,8 @@ Marketplace de servicios del hogar (cliente + profesional) para Chile, con hub w
 **Estado:** listo para lanzar comercial con Webpay en integración; flip a producción al crear la empresa (ver runbook Transbank).
 
 Documento técnico de referencia: [`ESTADO_DEL_PROYECTO.md`](ESTADO_DEL_PROYECTO.md).  
-Diccionario de datos: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md).
+Diccionario de datos: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md).  
+Pruebas de capacidad (k6): [`docs/RUNBOOK_CAPACIDAD_CARGA.md`](docs/RUNBOOK_CAPACIDAD_CARGA.md).
 
 ---
 
@@ -197,6 +198,7 @@ Cuentas demo **solo staging/debug** (nunca en release UI): ver `DEMO.md`. Runboo
 - Flutter: `flutter analyze` + `flutter test` (`.github/workflows/flutter_ci.yml`)
 - Web/desktop: lint + build; Tauri build en Windows (`.github/workflows/web_desktop_ci.yml`)
 - Gitleaks, Scorecard, commitlint y keepalive de Supabase (requiere secrets `SUPABASE_URL` / `SUPABASE_ANON_KEY`)
+- **Capacidad / stress (manual):** [`docs/RUNBOOK_CAPACIDAD_CARGA.md`](docs/RUNBOOK_CAPACIDAD_CARGA.md) — scripts en `scripts/load/k6/`
 
 Pre-commit local: ver `.pre-commit-config.yaml`.
 
