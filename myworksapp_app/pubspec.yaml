@@ -42,7 +42,7 @@ dependencies:
   table_calendar: ^3.0.9
 
   # Validación
-  email_validator: ^2.1.17
+  email_validator: ^3.0.0
   
   # Logging
   logger: ^2.0.2+1
