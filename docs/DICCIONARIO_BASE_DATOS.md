@@ -4,31 +4,45 @@
 |-------|--------|
 | Proyecto | My Works App |
 | Base | Supabase `wxqrfcqifkfgawrnqmnj` (PostgreSQL, esquema `public`) |
-| Convención | Nombres en español, formato `snake_case` |
-| Idioma de este texto | Español neutro |
-| Versión | **1.5** — 19 de septiembre de 2026 |
-| Estado en el servidor | Rename a español, RLS, catálogo, hardening y las dos correcciones del 19 de septiembre **aplicados** |
+| Convención | Nombres en español, `snake_case` |
+| Versión | **1.6** — 20 de septiembre de 2026 |
+| Estado en el servidor | Rename ES, RLS, Webpay, liquidaciones y blindaje `token_tbk` **aplicados** |
 
-Este documento responde dos preguntas: dónde se guarda cada dato y qué significa. Los nombres técnicos se mantienen. Debajo de cada bloque hay una explicación en lenguaje directo, para que cualquier persona del equipo pueda leerlo sin adivinar.
+---
 
-## Cómo se lee
+## En una frase (para explicar el proyecto)
 
-1. La sección 3 es el índice: 28 tablas y para qué sirve cada una.
-2. La sección 4 lista los textos exactos que aceptan las columnas de estado. Hay que copiarlos tal cual. Un valor inventado a veces entra en la base y el error aparece después, en la aplicación.
-3. La sección 5 explica las tablas que se usan todos los días.
-4. La sección 7 explica quién puede leer o cambiar cada cosa. Esa parte ya incluye las funciones corregidas el 19 de septiembre de 2026.
+> La base guarda **quiénes son** las personas, **qué trabajo** pidieron y **qué pasó con el dinero**. El cobro real lo hace **Transbank**; nosotros guardamos el estado del escrow y, al final, la liquidación al profesional.
 
-Los identificadores no son todos del mismo tipo. Algunos son `uuid` y otros son `text`. Los sí/no suelen guardarse como número: `1` es sí y `0` es no. Muchas fechas son texto en formato ISO, no un tipo fecha de PostgreSQL. Las políticas de seguridad comparan los identificadores con `::text` para que esa mezcla no falle.
+---
 
-## 1. Para qué sirve
+## Cómo se lee este documento
 
-Es el contrato de datos de las tres aplicaciones: móvil (Flutter), web (React) y escritorio (Tauri/React). Si se cambia el nombre de una columna o un estado (`pendiente`, por ejemplo) y no se actualiza este documento y el código, las tres aplicaciones dejan de entenderse.
+1. **Sección 1** — historia de un servicio (útil para defender el título).
+2. **Sección 2** — índice de tablas (29).
+3. **Sección 3** — textos exactos de estado (hay que copiarlos tal cual).
+4. **Sección 4** — tablas del día a día, con columnas.
+5. **Sección 5** — plata: Webpay → retenido → liquidación.
+6. **Sección 6** — quién puede ver o cambiar cada cosa.
+7. **Sección 7–9** — apps, pendientes y SQL.
 
-## 2. Cómo se relacionan los datos
+Tipos mixtos: algunos `id` son `uuid` y otros `text`. Los sí/no suelen ser `1` / `0`. Las políticas comparan con `::text` para que eso no falle.
 
-Casi todo empieza en `auth.users`, la cuenta de Supabase. Esa cuenta tiene una ficha en `perfiles`. Si la persona ofrece un oficio, también tiene una fila en `trabajadores`. Cuando un cliente pide un servicio, nace un registro en `trabajos`. De ese registro cuelgan el pago, el chat, las disputas, las fotos y el resto.
+---
 
-El diagrama no dibuja las 28 tablas. Muestra el esqueleto.
+## 1. Historia de un servicio (el hilo conductor)
+
+```text
+1. La persona se registra     → auth.users + perfiles
+2. Si ofrece oficio           → trabajadores
+3. Elige un oficio del catálogo → servicios
+4. Pide una visita            → trabajos (estado + estado_pago)
+5. Paga con Webpay            → pagos (pendiente → retenido)
+6. Se hace el trabajo         → trabajos (en_curso → completado)
+7. Admin liquida al profesional → liquidaciones (+ pago liberado)
+```
+
+Diagrama del esqueleto (no dibuja las 29 tablas):
 
 ```mermaid
 erDiagram
@@ -38,312 +52,267 @@ erDiagram
   trabajadores ||--o{ trabajos : "id_trabajador"
   servicios ||--o{ trabajos : "id_servicio"
   trabajos ||--o{ pagos : "id_trabajo"
+  pagos ||--o| liquidaciones : "id_pago"
   trabajos ||--o{ mensajes : "id_trabajo"
   trabajos ||--o{ disputas : "id_trabajo"
   trabajos ||--o{ calificaciones : "id_trabajo"
-  trabajos ||--o{ fotos_trabajo : "id_trabajo"
-  trabajos ||--o{ propuestas_cotizacion : "id_trabajo"
-  trabajos ||--o{ ordenes_cambio : "id_trabajo"
-  trabajos ||--o{ cancelaciones_trabajo : "id_trabajo"
-  trabajadores ||--o{ portafolio_trabajador : "id_trabajador"
-  trabajadores ||--o{ trabajador_servicios : "id_trabajador"
-  perfiles ||--o{ notificaciones : "id_usuario"
 ```
 
-Cómo leer una flecha: `perfiles ||--o| trabajadores` significa que un perfil puede tener como máximo un perfil profesional. `trabajos ||--o{ pagos` significa que un trabajo puede tener varios pagos.
+**Cómo explicar una flecha:** `trabajos ||--o{ pagos` = un trabajo puede tener varios pagos. `pagos ||--o| liquidaciones` = un pago se liquida como máximo una vez.
 
-## 3. Las 28 tablas
+---
 
-La columna «Nombre anterior» es el nombre en inglés, antes del cambio a español. Sirve si alguien busca `profiles` o `jobs` en un commit viejo.
+## 2. Las 29 tablas
 
-| # | Tabla | Nombre anterior | Qué guarda |
-|---|--------|-----------------|------------|
-| 1 | perfiles | profiles | La ficha de la persona en la aplicación |
-| 2 | trabajadores | workers | El perfil de quien ofrece un oficio |
-| 3 | servicios | services | El catálogo de oficios |
-| 4 | trabajos | jobs | La solicitud y su ciclo de vida |
-| 5 | pagos | payments | El cobro retenido (simulado, sin pasarela real) |
-| 6 | mensajes | messages | El chat de un trabajo |
-| 7 | disputas | disputes | Un conflicto entre las partes |
-| 8 | notificaciones | notifications | Avisos dentro de la aplicación |
-| 9 | calificaciones | ratings | La nota de 1 a 5 |
-| 10 | reportes | reports | Una denuncia entre usuarios |
-| 11 | propuestas_cotizacion | quote_proposals | Una cotización enviada |
-| 12 | ordenes_cambio | change_orders | Un extra o un cambio de alcance |
-| 13 | fotos_trabajo | job_photos | Fotos o video del trabajo |
-| 14 | portafolio_trabajador | worker_portfolio | La galería del profesional |
-| 15 | trabajador_servicios | worker_services | Qué oficios ofrece cada profesional |
-| 16 | cancelaciones_trabajo | job_cancellations | Por qué se canceló un trabajo |
-| 17 | registros_error_app | app_error_logs | Errores enviados por la aplicación |
-| 18 | eventos_abuso | abuse_events | Señales de uso indebido |
-| 19 | acciones_pendientes | pending_actions | Acciones hechas sin conexión, pendientes de enviar |
-| 20 | bloqueos_usuario | user_blocks | Un usuario bloqueado por otro |
-| 21 | consentimientos_usuario | user_consents | Aceptación de términos y protección de datos |
-| 22 | banderas_funcionalidad | feature_flags | Interruptores para activar funciones |
-| 23 | suscripciones | subscriptions | Planes de pago |
-| 24 | impulsos | boosts | Un aumento temporal de visibilidad |
-| 25 | eventos_analitica | analytics_events | Eventos de uso del producto |
-| 26 | configuraciones_servicio | service_configs | Cómo se arma el formulario de cada oficio |
-| 27 | codigos_restablecimiento | password_reset_codes | Códigos para restablecer la contraseña |
-| 28 | tickets_soporte | tickets | Un caso de la mesa de ayuda |
+| # | Tabla | En lenguaje simple |
+|---|--------|-------------------|
+| 1 | `perfiles` | Ficha de la persona (nombre, correo, rol) |
+| 2 | `trabajadores` | Quien ofrece el oficio (tarifa, zona, nota) |
+| 3 | `servicios` | Catálogo de oficios (plomería, electricidad…) |
+| 4 | `trabajos` | La solicitud y su ciclo de vida |
+| 5 | `pagos` | El cobro Webpay / escrow de negocio |
+| 6 | **`liquidaciones`** | **Comprobante de pago al profesional (manual hoy)** |
+| 7 | `mensajes` | Chat del trabajo |
+| 8 | `disputas` | Conflicto entre las partes |
+| 9 | `notificaciones` | Avisos en la app |
+| 10 | `calificaciones` | Nota 1–5 |
+| 11 | `reportes` | Denuncia entre usuarios |
+| 12–17 | cotizaciones, órdenes de cambio, fotos, portafolio, oficios del trabajador, cancelaciones | Alcance, evidencia y cancelación |
+| 18–29 | errores, abuso, sync offline, bloqueos, consentimientos, flags, suscripciones, impulsos, analítica, configs, reset password, tickets | Soporte, cumplimiento y funciones auxiliares |
 
-Uso diario: de la 1 a la 10 (cuenta, oficio, solicitud, pago y chat). De la 11 a la 16: cotización, evidencia y cancelación. De la 17 a la 28: soporte, cumplimiento y funciones que pueden existir en la base aunque la demostración casi no las use.
+Uso diario del título: **1–11**. El resto existe en el esquema y puede no usarse en la demo.
 
-## 4. Textos exactos de estado
+---
 
-Estos valores van en columnas `text`. No siempre son un enum rígido de PostgreSQL. Hay que usarlos exactamente así.
+## 3. Textos exactos de estado
+
+Hay que usarlos **tal cual**. Un valor inventado a veces entra en la base y el error aparece después en la app.
 
 | Tema | Valores |
 |------|---------|
-| Rol | `usuario`, `trabajador`, `administrador`. La función `is_admin()` también acepta `admin`. |
-| Estado de la cuenta | `activo`, `suspendido`, `bloqueado`, `eliminado`. También se reconoce `active` en algunas funciones. |
-| Estado del trabajo | `pendiente`, `aceptado`, `en_curso`, `completado`, `cancelado`, `expirado`, `no_asistio`, `esperando_pago`, `esperando_cotizaciones`, `cotizacion_seleccionada`, `pausado_orden_cambio`, `esperando_aprobacion_cliente` |
-| Estado del pago | `ninguno`, `pendiente`, `autorizado`, `retenido`, `liberado`, `reembolsado` |
+| Rol | `usuario`, `trabajador`, `administrador` (`is_admin()` también acepta `admin`) |
+| Cuenta | `activo`, `suspendido`, `bloqueado`, `eliminado` |
+| Trabajo | `pendiente`, `aceptado`, `en_curso`, `completado`, `cancelado`, `expirado`, `no_asistio`, `esperando_pago`, `esperando_cotizaciones`, `cotizacion_seleccionada`, `pausado_orden_cambio`, `esperando_aprobacion_cliente` |
+| Pago | `pendiente`, `autorizado`, `retenido`, `liberado`, `reembolsado` |
 | Modalidad de cobro | `legado`, `precio_fijo`, `bloque_horas`, `cotizacion_abierta` |
 | Tipo de pago | `principal`, `orden_cambio`, `horas_extra` |
-| Disputa | Estado: `abierta`, `en_revision`, `resuelta`. Motivo: `calidad`, `pago`, `conducta`, `otro`. |
-| Reporte | `pendiente`, `revisado`, `resuelto`, `descartado` |
-| Categoría de oficio | `construccion`, `plomeria`, `electricidad`, `limpieza`, `ensamblaje`, `soporte_tecnico`, `jardinera`, `mudanza`, `general` |
-| Modelo de precio | `por_hora`, `fijo`, `por_item` |
-| Cotización | `enviada`, `retirada`, `aceptada`, `rechazada` |
-| Orden de cambio | `pendiente_cliente`, `aprobada`, `rechazada`, `pagada`, `cancelada` |
-| Mensaje | `texto` o `imagen`. Medio: `foto` o `video`. |
-| Error de la aplicación | `nuevo`, `reconocido`, `resuelto`, `ignorado` |
-| Sincronización sin conexión | `pendiente_sync`, `sincronizando`, `sincronizado`, `fallido` |
-| Suscripción | `activa`, `cancelada`, `expirada` |
-| Impulso | `visibilidad`, `prioridad`, `destacado` |
-| Ticket de soporte | `pendiente`, `resuelto` |
+| Ambiente Webpay | `integration`, `production` |
+| Proveedor liquidación | `manual`, `khipu`, `fintoc` (hoy solo `manual` en producción de producto) |
+| Disputa | Estado: `abierta`, `en_revision`, `resuelta` |
+| Categoría oficio | `construccion`, `plomeria`, `electricidad`, `limpieza`, `ensamblaje`, `soporte_tecnico`, `jardinera`, `mudanza`, `general` |
 
-Qué significa cada grupo:
+### Qué significa el dinero (explicación corta)
 
-- **Rol.** El cliente es `usuario`. Quien ofrece el oficio es `trabajador`. El escritorio solo deja entrar a `administrador`. Al registrarse, si la persona pide `cliente` se guarda `usuario`. Si pide `especialista`, `specialist` o `worker`, se guarda `trabajador`. El registro público no puede crear un `administrador`.
-- **Estado de la cuenta.** Si no está `activo`, la persona no debería operar con normalidad.
-- **Estado del trabajo.** Es el recorrido de la solicitud. `pendiente` acaba de crearse. `aceptado` ya tiene profesional. `en_curso` se está ejecutando. `completado` y `cancelado` son finales.
-- **Estado del pago.** No hay cobro real a una pasarela. Los estados existen para mostrar el flujo: autorizado, retenido, liberado o reembolsado.
-- **Categoría.** Es la clave estable del oficio, por ejemplo `plomeria`. El nombre que ve la persona está en `servicios.nombre`.
+| Estado del pago | Qué le dices a alguien no técnico |
+|-----------------|-----------------------------------|
+| `pendiente` | Se abrió la intención; el cliente aún no termina en Transbank |
+| `retenido` | Transbank autorizó; el dinero queda **retenido** en escrow de negocio |
+| `liberado` | Admin confirmó la transferencia al profesional |
+| `reembolsado` | Se devolvió el cobro (Edge `webpay-refund`) |
 
-## 5. Tablas principales
+`autorizado` puede aparecer en caminos legacy; el flujo Webpay actual deja el pago en **`retenido`** tras un commit exitoso.
 
-### 5.1 perfiles
+---
 
-Qué guarda: nombre, correo, rol y si la cuenta se puede usar. El `id` es el mismo que `auth.users.id`. Si no coincide, esa ficha no pertenece a ese inicio de sesión.
+## 4. Tablas principales
 
-| Columna | Tipo | Obligatorio | Qué es |
-|---------|------|-------------|--------|
-| id | uuid, en general | Sí | Identificador. Igual a `auth.users.id`. |
-| nombre | text | Sí | Nombre visible |
-| correo | text | Sí | Correo electrónico |
-| rol | text | Sí | Ver sección 4 |
-| estado_cuenta | text | Sí | Ver sección 4 |
-| ruta_foto_perfil | text | No | Dirección de la foto |
-| creado_en | text o timestamptz | Sí | Fecha de alta |
+### 4.1 perfiles
 
-Índice: `idx_perfiles_rol`.
+**En una frase:** la ficha de quien inicia sesión.
 
-Funciones ligadas:
+| Columna | Qué es |
+|---------|--------|
+| `id` | Mismo id que `auth.users` |
+| `nombre`, `correo` | Datos visibles |
+| `rol` | `usuario` / `trabajador` / `administrador` |
+| `estado_cuenta` | Si puede operar (`activo`, etc.) |
+| `ruta_foto_perfil` | Foto (opcional) |
+| `creado_en` | Alta |
 
-- `handle_new_user` crea la ficha al registrarse. Traduce los alias de rol y nunca asigna administrador en un registro público.
-- `protect_profile_sensitive_fields` impide que una persona cambie su propio rol o el estado de la cuenta. Eso solo lo hace un administrador.
-
-Con RLS, cada persona ve y edita su ficha. El administrador puede ver más.
-
-### 5.2 trabajadores
-
-Qué guarda: la ficha profesional. No todo perfil tiene fila aquí. Solo quien ofrece un oficio. La relación es uno a uno con `id_usuario`.
-
-| Columna | Tipo | Qué es |
-|---------|------|--------|
-| id_usuario | clave, apunta a perfiles | Identificador de la persona |
-| profesion | text | Oficio |
-| descripcion | text | Presentación |
-| calificacion | numeric | Nota promedio |
-| disponible | int 0/1 | `1` = puede recibir solicitudes |
-| tarifa_visita | numeric | Precio de la visita, en CLP |
-| categoria_servicio | text | Oficio principal |
-| niveles_precio | json | Paquetes de precio. Es JSON porque cada oficio arma paquetes distintos. |
-| servicios_personalizados | json | Servicios extra |
-| precios_configurados | int 0/1 | `1` = ya configuró las tarifas |
-| zona_trabajo | text | Zona de cobertura |
-| conteo_rechazos | int | Cuántas veces rechazó. Se usa para ordenar listados. |
+Al registrarse, `handle_new_user` crea la ficha. Nadie se auto-asigna `administrador` en registro público.
 
-Clave foránea: `trabajadores_id_usuario_fkey`.
+### 4.2 trabajadores
 
-El catálogo público puede leer esta tabla sin iniciar sesión (`anon` y `authenticated`). No puede modificarla.
+**En una frase:** el perfil comercial del profesional.
 
-### 5.3 servicios
+Columnas clave: `id_usuario`, `profesion`, `descripcion`, `calificacion`, `disponible` (0/1), `tarifa_visita` (CLP), `categoria_servicio`, `zona_trabajo`, `niveles_precio` (JSON).
 
-Qué guarda: el catálogo que ve el cliente (plomería, electricidad y el resto). Si esta tabla está vacía, la pantalla de inicio no tiene oficios que mostrar, aunque existan profesionales.
+El catálogo público puede **leer** esta tabla sin sesión. No la puede modificar.
 
-| Columna | Tipo | Qué es |
-|---------|------|--------|
-| id | text o uuid | Identificador. El seed usa `svc-plomeria` … `svc-construccion`. |
-| nombre | text | Nombre visible |
-| descripcion | text | Texto de apoyo |
-| categoria | text | Clave estable. Ver sección 4. |
-| activo | int 0/1 | `1` = se muestra. `0` = se oculta sin borrar la fila. |
-| requiere_certificacion | int 0/1 | Por ejemplo, electricidad |
-| modelo_precio | text | `por_hora`, `fijo` o `por_item` |
-| aviso_legal | text | Aviso que se muestra al usuario |
-| creado_en / actualizado_en | text ISO | Fechas de auditoría |
+### 4.3 servicios
 
-La migración `06` inserta 8 oficios si falta la categoría. La política pública de lectura no llama a `is_admin()`. Si lo hiciera, una visita sin sesión fallaría con el error `42501`.
+**En una frase:** los oficios que aparecen en el home.
 
-### 5.4 trabajos
+Columnas clave: `id`, `nombre`, `categoria`, `activo` (0/1), `modelo_precio`, `requiere_certificacion`.
 
-Qué guarda: la solicitud. Quién la pidió, qué profesional quedó asignado (si ya hay uno), qué oficio, dirección, estado y forma de cobro. Casi toda la aplicación gira alrededor de esta tabla.
+Si está vacía, la app no muestra oficios aunque existan profesionales.
 
-Columnas: `id` (a menudo **text**, no asumir uuid), `id_usuario`, `id_trabajador`, `id_servicio`, `estado`, `direccion`, `latitud`, `longitud`, `descripcion`, `fecha_programada`, `metadatos_servicio`, `modalidad_cobro`, `estado_pago`, `id_comuna`, `instantanea_precio`, `id_sku_servicio`, `horas_bloque`, `id_cotizacion_seleccionada`, `creado_en`, `actualizado_en`.
+### 4.4 trabajos
 
-Qué significa lo importante:
+**En una frase:** la solicitud: quién pidió, a quién, qué oficio y en qué estado.
 
-- `id_usuario` es el cliente.
-- `id_trabajador` es el profesional. Puede estar vacío mientras nadie acepta el trabajo.
-- `metadatos_servicio` guarda datos del servicio pactado, incluido un `pin` si el trabajo lo tiene.
-- `instantanea_precio` guarda el precio acordado, para no depender solo del catálogo actual.
+Columnas clave: `id`, `id_usuario` (cliente), `id_trabajador` (profesional, puede ir vacío), `id_servicio`, `estado`, `estado_pago`, `direccion`, `descripcion`, `modalidad_cobro`, `metadatos_servicio`, `instantanea_precio`, `creado_en`, `actualizado_en`.
 
-El cambio de `estado` no se hace con un `UPDATE` directo del cliente. Se hace con la función `transicionar_trabajo`.
+El cliente **no** cambia `estado` con un `UPDATE` directo: usa la función `transicionar_trabajo`.
 
-### 5.5 pagos
+### 4.5 pagos
 
-Qué guarda: el cobro ligado a un trabajo. En esta versión no hay pasarela real (no hay Transbank ni Stripe cobrando). La fila y los estados sirven para mostrar el flujo.
+**En una frase:** el cobro Webpay ligado a un trabajo (escrow de negocio).
 
-Columnas: `id`, `id_trabajo`, `id_orden_cambio`, `tipo_pago`, `monto`, `moneda` (CLP), `estado`, `metodo_pago`, `id_transaccion`, `autorizado_en`, `liberado_en`, `reembolsado_en`, `creado_en`, `actualizado_en`.
+| Columna | Quién la ve | Qué es |
+|---------|-------------|--------|
+| `id`, `id_trabajo`, `monto`, `moneda` | Cliente / partes / admin | Identidad y monto (CLP) |
+| `estado` | Igual | Ver sección 3 |
+| `tipo_pago`, `metodo_pago` | Igual | p. ej. `principal`, `webpay` |
+| `id_transaccion`, `buy_order` | Igual | Referencias de la pasarela |
+| `ambiente` | Igual | `integration` o `production` |
+| `autorizado_en`, `liberado_en`, `reembolsado_en` | Igual | Fechas del ciclo |
+| **`token_tbk`**, **`url_tbk`** | **Solo Edge / service_role** | Token y URL de Transbank. **El cliente no puede leerlas** (REVOKE de columnas). |
+| `handoff_consumido_en` | Sistema | Marca que el ticket de handoff ya se usó (un solo uso) |
 
-El cambio de estado se hace con `simular_transicion_pago`, no con un `UPDATE` directo. Quién puede mover cada estado está en la sección 7.4.
+**Regla de oro:** la app nunca captura datos de tarjeta. Transbank cobra; nosotros guardamos el resultado.
 
-Una consulta con la clave pública y sin sesión no debe devolver pagos. Un 401 o una lista vacía es lo correcto.
+### 4.6 liquidaciones *(nueva en v1.6)*
 
-### 5.6 a 5.10
+**En una frase:** el registro de que el admin ya pagó al profesional (hoy: transferencia bancaria fuera de la app).
 
-| Tabla | Qué guarda | Regla práctica |
-|-------|------------|----------------|
-| mensajes | `id_trabajo`, `id_remitente`, `id_destinatario`, `contenido`, `tipo`, `ruta_imagen`, `leido`, `creado_en` | El chat es de un trabajo, no una bandeja general. El remitente debe ser la persona que inició sesión. |
-| disputas | `id_trabajo`, `abierta_por`, `motivo`, `descripcion`, `estado`, `resolucion`, `resuelta_por`, `resuelta_en` | La abre una de las partes. La cierra un administrador, con la función `admin_actualizar_estado_disputa`. |
-| notificaciones | `id_usuario`, `tipo`, `titulo`, `cuerpo`, `id_relacionado`, `leido` | `tipo` todavía puede venir en inglés (por ejemplo `job_accepted`). El resto del esquema ya está en español. |
-| calificaciones | `id_trabajo`, `id_usuario`, `puntaje` de 1 a 5, `comentario` | Alimentan la nota promedio del profesional (`trabajadores.calificacion`). |
-| reportes | `id_reportante`, `id_usuario_reportado`, `motivo`, `descripcion`, `estado` | Denuncias para moderación. |
+| Columna | Qué es |
+|---------|--------|
+| `id` | Identificador |
+| `id_pago` | Pago liberado (único: un pago → una liquidación) |
+| `id_trabajo`, `id_trabajador` | Contexto |
+| `monto_clp` | Monto liquidado |
+| `proveedor` | `manual` hoy; `khipu` / `fintoc` reservados |
+| `referencia_transferencia` | Nº o código de la transferencia (≥ 4 caracteres) |
+| `notas` | Opcional |
+| `id_operador` | Admin que confirmó |
+| `creado_en` | Cuándo se registró |
 
-## 6. Tablas de apoyo
+Solo administradores leen/escriben esta tabla (RLS + `is_admin()`).
 
-La migración `05` activa RLS en estas tablas cuando existen.
+### 4.7 Chat, disputas y reputación
 
-| Tabla | Para qué se usa |
-|-------|-----------------|
-| propuestas_cotizacion | Precio enviado en una cotización abierta |
-| ordenes_cambio | Un cambio de alcance, con cobro adicional |
-| fotos_trabajo | Evidencia del trabajo realizado |
-| portafolio_trabajador | Galería del perfil profesional |
-| trabajador_servicios | Cruce profesional ↔ oficios (varios oficios por persona) |
-| cancelaciones_trabajo | Historial del motivo de cancelación |
-| registros_error_app | Errores que envía la aplicación |
-| eventos_abuso | Registro de uso indebido, asociado a quien inició sesión |
-| acciones_pendientes | Cola de acciones hechas sin conexión |
-| bloqueos_usuario | Una persona bloquea a otra |
-| consentimientos_usuario | Aceptación de términos y versión del consentimiento |
-| banderas_funcionalidad | Activar o apagar una función sin publicar otra versión |
-| suscripciones | Plan de la cuenta |
-| impulsos | Más visibilidad durante un tiempo |
-| eventos_analitica | Uso del producto, para medir |
-| configuraciones_servicio | Campos del formulario según el oficio |
-| codigos_restablecimiento | Código de restablecimiento de contraseña, además de lo que haga Auth |
-| tickets_soporte | Caso de la mesa de ayuda |
+| Tabla | Para qué |
+|-------|----------|
+| `mensajes` | Chat del trabajo |
+| `disputas` | Conflicto; cierra un admin |
+| `calificaciones` | Nota 1–5 del servicio |
+| `notificaciones` | Avisos in-app |
+| `reportes` | Denuncias |
 
-## 7. Quién puede ver y cambiar los datos
+---
 
-RLS (Row Level Security) filtra filas dentro de PostgreSQL. Tener la clave pública de Supabase no alcanza para leer todo. Sin RLS, esa clave podría leer de más.
+## 5. Flujo del dinero (fácil de explicar)
 
-Confirmado en el servidor el 14 de septiembre de 2026: `rowsecurity = true` en `pagos`, `perfiles`, `servicios`, `trabajadores` y `trabajos`. Eso significa que el filtro está activo. No significa que cada política futura sea perfecta.
+```text
+Cliente paga en Transbank
+        ↓
+Edge webpay-commit → pagos.estado = retenido
+        ↓
+Trabajo se completa
+        ↓
+Admin confirma transferencia bancaria
+        ↓
+Edge webpay-release → RPC liberar_escrow_manual
+        ↓
+pagos = liberado  +  fila en liquidaciones
+```
 
-### 7.1 Funciones de apoyo
+| Paso | Qué ocurre en la base | Qué ocurre fuera |
+|------|----------------------|------------------|
+| Crear intención | Fila en `pagos` (`pendiente`) + `token_tbk` / `url_tbk` solo en servidor | Edge habla con Transbank |
+| Handoff | Marca `handoff_consumido_en` | Ticket HMAC de un solo uso |
+| Commit OK | `pagos` → `retenido`; `trabajos.estado_pago` → `retenido` | Cliente vuelve a la app/web |
+| Liquidar | `liberar_escrow_manual` en **una** transacción | Admin ya transfirió (manual) |
+| Reembolsar | Edge `webpay-refund` → `reembolsado` | Transbank anula/devuelve |
 
-| Función | Qué responde |
-|---------|----------------|
-| `is_admin()` | Sí, si el rol es `admin` o `administrador` y la cuenta está `activo` o `active`. Solo la puede ejecutar quien inició sesión. |
-| `es_parte_trabajo(text)` | Sí, si la persona es el cliente de ese trabajo, el profesional asignado o un administrador. El parámetro es `text` porque los identificadores están mezclados. |
-| `es_rol_trabajador(text)` | Sí, si esa persona tiene rol de profesional (`trabajador` y alias `worker`, `especialista`, `specialist`) y la cuenta está activa. |
+**Funciones / Edge (no confundir):**
 
-### 7.2 Funciones que cambian datos
+| Nombre | Quién la usa | Qué hace |
+|--------|--------------|----------|
+| Edge `webpay-create` / `guest-checkout` | App / web | Crea intención + handoff |
+| Edge `webpay-commit` | Transbank (return) | Confirma y deja `retenido` |
+| Edge `webpay-status` | App / web | Consulta estado **sin** tokens |
+| Edge `webpay-release` | Solo admin | Llama `liberar_escrow_manual` |
+| Edge `webpay-refund` | Solo admin | Reembolso TBK + estado |
+| RPC `liberar_escrow_manual` | Solo `service_role` | Libera pago + inserta liquidación (atómico) |
+| RPC `liberar_escrow` | Solo `service_role` | Legacy interno; el cliente **no** la ejecuta |
+| RPC `simular_transicion_pago` | Legacy / demos | **No** es el camino comercial Webpay |
 
-El cliente no hace `UPDATE` directo sobre el estado del trabajo ni del pago. Llama a estas funciones. Todas exigen sesión. El rol `anon` no puede ejecutarlas.
+---
 
-| Función | Quién puede usarla | Qué hace |
-|---------|--------------------|----------|
-| `transicionar_trabajo(id, estado, pin)` | Cliente, profesional asignado o administrador | Cambia el estado solo si la matriz de esa modalidad lo permite. El administrador puede saltarse la matriz. Si el trabajo tiene `pin` en `metadatos_servicio`, pasar a `en_curso` o `completado` exige ese PIN. Omitir el PIN no lo salta. El administrador no necesita PIN. |
-| `asignar_trabajador_trabajo(id, id_profesional)` | El propio profesional o un administrador | Acepta un trabajo en `pendiente`, `esperando_pago` o `cotizacion_seleccionada`. El destino tiene que ser un profesional activo. Un cliente no puede asignarse el trabajo a sí mismo. |
-| `rechazar_trabajo_pendiente(id, metadatos)` | El profesional ya asignado o un administrador | Cancela un trabajo que sigue en `pendiente`. Si todavía no hay profesional, la función se detiene. Un identificador vacío no autoriza a cualquiera. |
-| `simular_transicion_pago(id, estado)` | Ver 7.4 | Mueve el pago simulado. No cobra dinero real. |
-| `admin_metricas_resumen()` | Solo administrador | Devuelve un JSON de métricas. |
-| `admin_actualizar_estado_disputa(...)` | Solo administrador | Cierra o actualiza una disputa. |
-| `registrar_evento_abuso(...)` | La persona que inició sesión | Anota un evento de abuso a su nombre. |
+## 6. Quién puede ver y cambiar los datos
 
-Si se llama una función de administrador sin ser administrador, la base responde un error del tipo «Solo administradores». En HTTP suele verse como 400, no como 404. Un 404 significa que la función no está creada en el servidor.
+**RLS** = el filtro vive en PostgreSQL. Tener la clave pública de Supabase no alcanza para leer todo.
 
-### 7.3 Matriz del trabajo, en corto
+### 6.1 Resumen para defensa oral
 
-Un trabajo ya `completado`, `cancelado`, `expirado` o `no_asistio` no vuelve atrás.
+| Actor | Puede |
+|-------|--------|
+| Sin sesión (`anon`) | Ver oficios activos y fichas públicas de profesionales. **No** pagos ni mensajes. |
+| Cliente / profesional | Ver sus trabajos y pagos de esos trabajos (sin `token_tbk` / `url_tbk`). |
+| Administrador | Operar disputas, métricas, liquidaciones y releases vía Edge. |
+| Edge (`service_role`) | Escribir tokens Webpay, hacer commit/refund/release. |
 
-Se puede pasar a `cancelado` desde casi cualquier estado que no sea final.
+### 6.2 Funciones de apoyo
 
-El camino normal, según la modalidad:
+| Función | Pregunta que responde |
+|---------|----------------------|
+| `is_admin()` | ¿Esta sesión es administrador activo? |
+| `es_parte_trabajo(id)` | ¿Es cliente, profesional asignado o admin de ese trabajo? |
+| `es_rol_trabajador(id)` | ¿Esa persona es profesional activo? |
 
-- Precio fijo o bloque de horas: `esperando_pago` → `aceptado` → `en_curso` → `completado`.
-- Cotización abierta: primero se elige cotización y se espera el pago; después el mismo camino.
-- Modalidad antigua (`legado`): `pendiente` → `aceptado` → `en_curso` → `completado`. También puede pasar por `esperando_aprobacion_cliente`.
+### 6.3 Cambio de estado del trabajo
 
-### 7.4 Matriz del pago simulado
+Camino normal (precio fijo / bloque de horas):
 
-Cliente y administrador pueden:
+`esperando_pago` → `aceptado` → `en_curso` → `completado`
 
-- `pendiente` → `autorizado` o `reembolsado`
-- `autorizado` → `retenido`, `liberado` o `reembolsado`
-- `retenido` → `liberado` o `reembolsado`
+Se usa `transicionar_trabajo`. Un trabajo ya final (`completado`, `cancelado`, …) no vuelve atrás.
 
-El profesional asignado puede menos:
+---
 
-- Retener (`autorizado` → `retenido`) para congelar el cobro si hay una disputa.
-- Liberar solo si el trabajo ya está `completado`.
-- Reembolsar solo si el trabajo ya está `cancelado`.
+## 7. Qué usa cada aplicación
 
-No puede autorizar un pago ni liberarlo mientras el trabajo sigue abierto.
+| Aplicación | Uso de la base |
+|------------|----------------|
+| Móvil (Flutter) | Casi todas las tablas vía repositorios; pago con WebView / Edge |
+| Web (React) | Catálogo, reserva, guest checkout (redirect) o popup si hay sesión |
+| Escritorio (Tauri) | Admin: disputas, métricas, liquidación manual |
+| `shared/` (TypeScript) | Contratos comunes web/desktop (status, payout, jobs) |
 
-La aplicación hace dos llamadas seguidas, no una sola transacción: primero cambia el trabajo y después mueve el pago. Por eso la liberación mira el estado que el trabajo ya tiene.
+---
 
-### 7.5 Qué ve alguien sin sesión
+## 8. Lo que todavía no está cerrado
 
-Puede leer oficios activos (`servicios`) y fichas públicas de profesionales (`trabajadores`). No puede leer pagos, mensajes ni el resto de tablas sensibles. Esa separación está en la migración `06`.
+| Tema | Estado |
+|------|--------|
+| RLS tablas núcleo | Cerrado |
+| Webpay integración + escrow `retenido` | Cerrado (ambiente integración) |
+| Liquidación manual atómica | Cerrado |
+| Blindaje `token_tbk` / `url_tbk` | Cerrado (migración `20260924`) |
+| Flip a Transbank producción | Pendiente de empresa + secrets |
+| Payout automático Khipu/Fintoc | Reservado en esquema (`proveedor`); no conectado |
+| MFA, E2E vivo en producción | Pendiente de producto |
 
-## 8. Qué aplicación usa cada cosa
+---
 
-| Aplicación | Uso |
-|------------|-----|
-| Móvil (Flutter) | Casi todas las tablas, por repositorios. La versión de publicación exige las claves de Supabase por `--dart-define`. |
-| Web (React) | Catálogo, profesionales y reserva. El pago en pantalla es simulado. Solo entra el rol `usuario`. |
-| Escritorio (Tauri/React) | Soporte y operación. Métricas y disputas por las funciones de administrador. Solo entra el rol `administrador`. Hay paneles de demostración académica: no son datos de producción. |
-| Paquete `shared` | Llamadas compartidas de métricas y disputas para web y escritorio. |
+## 9. Dónde está el SQL
 
-## 9. Lo que todavía no está cerrado
+Orden útil para el título:
 
-| Tema | Gravedad | Estado |
-|------|----------|--------|
-| RLS en las tablas principales | Alta | Cerrado. Confirmado el 14 de septiembre de 2026. |
-| Catálogo vacío o error `42501` | Alta | Mitigado con la migración `06`. Si el catálogo falla por `is_admin`, hay que volver a aplicar el bloque de políticas de `servicios`. |
-| Autorización de las funciones de trabajo y pago | Alta | Cerrado en el servidor el 19 de septiembre de 2026 (`20260919000001` y `20260919000002`). |
-| Identificadores `uuid` mezclados con `text` | Media | Documentado. Las funciones comparan con `::text`. |
-| Códigos de notificación y de abuso en inglés | Baja | Siguen en inglés. |
-| Tabla `service_pricing` | Baja | Hay un modelo en el código y no hay tabla en el rename. |
-| Pasarela de pago real | Alta, diferida | No hay cobro real. El flujo es la función de simulación. |
-| PIN del servicio | Baja | Si el trabajo guarda un `pin`, las partes que ya pueden leer la fila también pueden verlo. Hoy la aplicación no escribe ese campo. |
+| Migración | Qué aporta |
+|-----------|------------|
+| `20260914000004` … `06` | Rename ES, RLS, seed de oficios |
+| `20260915` / `20260919` | Hardening de RPC de trabajo/pago |
+| `20260322000001` + `20260922` | Columnas Webpay en `pagos` |
+| `20260923000001` | Tabla `liquidaciones` |
+| `20260924000001` | REVOKE tokens, handoff de un uso, `liberar_escrow_manual` |
 
-## 10. Dónde está el SQL
+Runbooks: [`RUNBOOK_TRANSBANK_PRODUCCION.md`](RUNBOOK_TRANSBANK_PRODUCCION.md), [`RUNBOOK_PAYOUT.md`](RUNBOOK_PAYOUT.md).
 
-- `myworksapp_app/supabase/migrations/20260914000004_aplicar_rename_es.sql` — nombres en español
-- `20260914000005_rls_politicas_negocio.sql` — RLS y funciones de administrador
-- `20260914000006_seed_servicios_marketplace.sql` — 8 oficios y lectura pública del catálogo
-- `20260915000001_hardening_seguridad_sin_psp.sql` — primera versión de las funciones de estado y pago
-- `20260917000001_auth_role_aliases_cliente_especialista.sql` — alias de rol al registrarse
-- `20260919000001_fix_rpc_autorizacion.sql` — cierra rechazo, asignación, pago y PIN
-- `20260919000002_pago_al_cerrar_trabajo.sql` — el profesional solo mueve el pago si el trabajo ya está cerrado
+---
 
-Otros textos: [mapa_esquema_en_es.md](mapa_esquema_en_es.md), [APLICAR_MIGRACION_ES.md](APLICAR_MIGRACION_ES.md), [VERIFICACION_BD_REMOTA.md](VERIFICACION_BD_REMOTA.md), [APLICAR_HARDENING_20260915.md](APLICAR_HARDENING_20260915.md).
+## Frase lista para la presentación
 
-Versión Word de este mismo documento: `docs/DICCIONARIO_BASE_DATOS.docx`.
+> “Usamos PostgreSQL en Supabase. Las tablas principales son personas (`perfiles` / `trabajadores`), solicitudes (`trabajos`), cobros (`pagos`) y liquidaciones. El cliente paga en Transbank; el dinero queda retenido hasta que un administrador registra la transferencia al profesional. Los tokens de Webpay nunca salen al celular ni al navegador del usuario.”
