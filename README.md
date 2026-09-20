@@ -65,9 +65,9 @@ Web y desktop reutilizan contratos TypeScript en `shared/` y hablan al mismo bac
 
 ### Dinero (patrón de pagos)
 
-1. El cliente paga en **Transbank Webpay** (la app **no** captura tarjeta).  
-2. El commit deja el pago **`retenido`** (escrow de negocio).  
-3. Un administrador registra la liquidación al profesional (`liquidaciones`, hoy manual).
+1. El cliente paga en **Transbank Webpay**. My Works App **no** pide ni guarda el número de la tarjeta (en jerga bancaria: **PAN** = *Primary Account Number*, el número largo de la tarjeta).  
+2. El commit deja el pago **`retenido`** (escrow de negocio: la plata queda “congelada” hasta liquidar al profesional).  
+3. Un administrador registra la liquidación al profesional (`liquidaciones`, hoy transferencia manual).
 
 Detalle: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md) y [`docs/RUNBOOK_TRANSBANK_PRODUCCION.md`](docs/RUNBOOK_TRANSBANK_PRODUCCION.md).
 
