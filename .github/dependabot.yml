@@ -1,5 +1,7 @@
-# Menores y parches se agrupan. Los saltos major se ignoran: rompen
-# Riverpod, go_router, TypeScript y el cliente de Supabase.
+# Dependabot abre actualizaciones estables.
+# Un salto de versión mayor se revisa aparte: si el código usa APIs viejas,
+# se migra el código. No se ignoran majors por comodidad.
+# glib queda fuera: Tauri 2 resuelve 0.18 y 0.20 no entra en ese stack.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -9,10 +11,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
 
   - package-ecosystem: npm
     directory: /myworksapp_web
@@ -21,11 +19,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
-      - dependency-name: "@supabase/supabase-js"
     groups:
       web-minor-patch:
         update-types:
@@ -39,11 +32,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
-      - dependency-name: "@supabase/supabase-js"
     groups:
       desktop-minor-patch:
         update-types:
@@ -57,11 +45,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
-      - dependency-name: "@supabase/supabase-js"
     groups:
       shared-minor-patch:
         update-types:
@@ -75,10 +58,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
     groups:
       flutter-minor-patch:
         update-types:
@@ -93,9 +72,7 @@ updates:
     labels:
       - dependencies
     ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
+      - dependency-name: glib
     groups:
       tauri-minor-patch:
         update-types:
