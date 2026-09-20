@@ -15,10 +15,10 @@
   },
 
   "peerDependencies": {
-    "@supabase/supabase-js": "^2.112.3"
+    "@supabase/supabase-js": "^2.116.0"
   },
   "devDependencies": {
-    "@supabase/supabase-js": "^2.112.3",
+    "@supabase/supabase-js": "^2.116.0",
     "tsx": "^4.23.13"
   }
 }
