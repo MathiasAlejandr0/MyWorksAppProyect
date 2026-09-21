@@ -7,10 +7,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Navigation,
-  Zap,
   X,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
+import { PremiumSearchMap } from './PremiumSearchMap';
 
 export interface SearchWorker {
   id: string;
@@ -50,8 +50,8 @@ export function SearchResultsView({
   onBack,
   onShowAuth,
 }: SearchResultsViewProps) {
-  const displayQuery = query || 'electricistas';
-  const total = workers.length > 0 ? 248 : workers.length;
+  const displayQuery = query.trim() || 'profesionales';
+  const total = workers.length > 0 ? Math.max(workers.length, 12) : 0;
 
   return (
     <div className="search-view">
@@ -124,10 +124,11 @@ export function SearchResultsView({
             <label className="filter-label">
               <MapPin size={14} /> Ubicación
             </label>
-            <select className="filter-select" defaultValue="all">
+            <select className="filter-select" defaultValue="condes">
               <option value="all">Todas las ubicaciones</option>
-              <option value="palermo">Palermo</option>
-              <option value="condes">Las Condes</option>
+              <option value="condes">Las Condes, Santiago</option>
+              <option value="providencia">Providencia</option>
+              <option value="nunoa">Ñuñoa</option>
             </select>
           </div>
 
@@ -169,7 +170,7 @@ export function SearchResultsView({
 
           <div className="filter-group">
             <label className="filter-label">Servicios</label>
-            {['Instalaciones eléctricas', 'Reparaciones', 'Mantenimiento', 'Emergencias'].map(
+            {['Instalaciones', 'Reparaciones', 'Mantenimiento', 'Emergencias'].map(
               (svc, i) => (
                 <label key={svc} className="filter-check">
                   <input type="checkbox" defaultChecked={i === 0} /> {svc}
@@ -271,38 +272,17 @@ export function SearchResultsView({
         </main>
 
         <aside className="search-map-panel">
-          <div className="search-map-canvas">
-            <div className="search-map-grid" aria-hidden />
-            <div className="search-map-route" aria-hidden />
-            {['Palermo', 'Recoleta', 'Belgrano'].map((zone, i) => (
-              <div
-                key={zone}
-                className={`search-map-pin${i === 0 ? ' is-active' : ''}`}
-                style={{ top: `${28 + i * 18}%`, left: `${35 + i * 12}%` }}
-              >
-                <Zap size={14} />
-              </div>
-            ))}
-            <div className="search-map-zone-label">Palermo</div>
-            {workers[0] && (
-              <div className="search-map-card">
-                <img src={workers[0].photoUrl} alt="" />
-                <div>
-                  <strong>{workers[0].name}</strong>
-                  <span>{workers[0].profession}</span>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="search-map-controls">
-            <button type="button" className="search-map-zoom">+</button>
-            <button type="button" className="search-map-zoom">−</button>
-          </div>
+          <PremiumSearchMap
+            workers={workers}
+            selectedWorkerId={selectedWorkerId}
+            onSelectWorker={onSelectWorker}
+            categoryLabel={displayQuery}
+          />
           <button type="button" className="search-map-locate">
             <Navigation size={14} /> Usar mi ubicación actual
           </button>
           <div className="search-map-legend">
-            <span className="search-map-legend-dot" /> Alta coincidencia
+            <span className="search-map-legend-dot" /> Profesionales cerca
           </div>
         </aside>
       </div>

@@ -17,6 +17,11 @@ import { useAuth } from './context/AuthContext';
 import { supabase } from './supabaseClient';
 import { queryKeys } from './queryClient';
 import {
+  ALL_SERVICE_CATEGORIES,
+  FEATURED_CATEGORIES,
+  type ServiceCategory,
+} from './data/serviceCategories';
+import {
   createGuestWebpayCheckout,
   createPendingJob,
   createWebpaySession,
@@ -76,69 +81,17 @@ function ViewFallback() {
   return <div className="min-h-screen app-shell" />;
 }
 
-type AppView = 'landing' | 'search' | 'tracking' | 'paid';
-
-
+type AppView = 'landing' | 'categories' | 'search' | 'tracking' | 'paid';
 
 const U = 'https://images.unsplash.com';
-
 const img = (id: string) =>
-
   `${U}/photo-${id}?auto=format&fit=crop&w=900&h=560&q=80`;
 
-
-
-const CATEGORIES = [
-
-  {
-
-    id: 'ensamblaje',
-
-    title: 'Armado',
-
-    subtitle: 'Muebles, estanterías y más',
-
-    photo: '/categories/armado.png',
-
-  },
-
-  {
-
-    id: 'electricidad',
-
-    title: 'Electricidad',
-
-    subtitle: 'Instalaciones, reparaciones y más',
-
-    photo: img('1621905251189-08b45d6a269e'),
-
-  },
-
-  {
-
-    id: 'plomeria',
-
-    title: 'Plomería',
-
-    subtitle: 'Fugas, instalaciones y más',
-
-    photo: '/categories/plomeria.png',
-
-  },
-
-  {
-
-    id: 'gasfiteria',
-
-    title: 'Gasfitería',
-
-    subtitle: 'Conexiones, revisiones y más',
-
-    photo: '/categories/gasfiteria.png',
-
-  },
-
-];
+const CategoriesCatalogView = lazy(() =>
+  import('./components/CategoriesCatalogView').then((m) => ({
+    default: m.CategoriesCatalogView,
+  })),
+);
 
 
 
@@ -163,85 +116,166 @@ interface ServiceMatch {
 
 
 function resolveCategory(text: string) {
-
   const lower = text.toLowerCase();
 
-  let category = 'electricidad';
-
-  let categoryName = 'Electricista Certificado';
-
-  let problem = 'Diagnóstico y reparación de falla eléctrica';
-
-  let minPrice = 25000;
-
-  let maxPrice = 60000;
-
-
-
   if (
-
     lower.includes('fuga') ||
-
     lower.includes('agua') ||
-
     lower.includes('lavaplatos') ||
-
     lower.includes('llave') ||
-
-    lower.includes('gasfiter') ||
-
     lower.includes('plomer')
-
   ) {
-
-    category = 'plomeria';
-
-    categoryName = 'Gásfiter / Plomero SEC';
-
-    problem = 'Reparación de fuga de agua y cambio de llaves o grifería';
-
-    minPrice = 30000;
-
-    maxPrice = 75000;
-
-  } else if (
-
-    lower.includes('mueble') ||
-
-    lower.includes('armar') ||
-
-    lower.includes('closet') ||
-
-    lower.includes('rack') ||
-
-    lower.includes('armado')
-
-  ) {
-
-    category = 'ensamblaje';
-
-    categoryName = 'Armado de Muebles';
-
-    problem = 'Montaje e instalación de mueble listo para armar';
-
-    minPrice = 20000;
-
-    maxPrice = 45000;
-
-  } else if (lower.includes('electric')) {
-
-    category = 'electricidad';
-
-    categoryName = 'Electricista Certificado';
-
-    problem = 'Instalaciones y reparaciones eléctricas';
-
+    return {
+      category: 'plomeria',
+      categoryName: 'Gásfiter / Plomero SEC',
+      problem: 'Reparación de fuga de agua y cambio de llaves o grifería',
+      minPrice: 30000,
+      maxPrice: 75000,
+      urgency: 'Media' as const,
+    };
   }
 
+  if (lower.includes('gasfiter') || lower.includes('gas ')) {
+    return {
+      category: 'gasfiteria',
+      categoryName: 'Gasfitería',
+      problem: 'Conexiones, revisiones y mantención de gas',
+      minPrice: 30000,
+      maxPrice: 80000,
+      urgency: 'Media' as const,
+    };
+  }
 
+  if (
+    lower.includes('mueble') ||
+    lower.includes('armar') ||
+    lower.includes('closet') ||
+    lower.includes('rack') ||
+    lower.includes('armado') ||
+    lower.includes('ensamblaje')
+  ) {
+    return {
+      category: 'ensamblaje',
+      categoryName: 'Armado de Muebles',
+      problem: 'Montaje e instalación de mueble listo para armar',
+      minPrice: 20000,
+      maxPrice: 45000,
+      urgency: 'Media' as const,
+    };
+  }
 
-  return { category, categoryName, problem, minPrice, maxPrice, urgency: 'Media' as const };
+  if (lower.includes('limpieza') || lower.includes('aseo')) {
+    return {
+      category: 'limpieza',
+      categoryName: 'Limpieza',
+      problem: 'Limpieza del hogar u oficina',
+      minPrice: 18000,
+      maxPrice: 45000,
+      urgency: 'Media' as const,
+    };
+  }
 
+  if (lower.includes('pintura') || lower.includes('pintor')) {
+    return {
+      category: 'pintura',
+      categoryName: 'Pintura',
+      problem: 'Pintura de interiores o exteriores',
+      minPrice: 25000,
+      maxPrice: 70000,
+      urgency: 'Media' as const,
+    };
+  }
+
+  if (lower.includes('jardin') || lower.includes('poda')) {
+    return {
+      category: 'jardineria',
+      categoryName: 'Jardinería',
+      problem: 'Poda, riego y mantención de áreas verdes',
+      minPrice: 20000,
+      maxPrice: 55000,
+      urgency: 'Media' as const,
+    };
+  }
+
+  if (lower.includes('cerraj') || lower.includes('chapa')) {
+    return {
+      category: 'cerrajeria',
+      categoryName: 'Cerrajería',
+      problem: 'Apertura o cambio de chapas',
+      minPrice: 22000,
+      maxPrice: 60000,
+      urgency: 'Alta' as const,
+    };
+  }
+
+  if (lower.includes('construc') || lower.includes('remodel')) {
+    return {
+      category: 'construccion',
+      categoryName: 'Construcción',
+      problem: 'Obras menores y remodelaciones',
+      minPrice: 40000,
+      maxPrice: 120000,
+      urgency: 'Media' as const,
+    };
+  }
+
+  if (lower.includes('soporte') || lower.includes('comput') || lower.includes('pc ')) {
+    return {
+      category: 'soporte_tecnico',
+      categoryName: 'Soporte técnico',
+      problem: 'Diagnóstico y reparación de equipos',
+      minPrice: 20000,
+      maxPrice: 50000,
+      urgency: 'Media' as const,
+    };
+  }
+
+  if (lower.includes('mudanza') || lower.includes('traslado')) {
+    return {
+      category: 'mudanza',
+      categoryName: 'Mudanza',
+      problem: 'Traslado y embalaje',
+      minPrice: 50000,
+      maxPrice: 150000,
+      urgency: 'Media' as const,
+    };
+  }
+
+  if (
+    lower.includes('climat') ||
+    lower.includes('aire acondicionado') ||
+    lower.includes('calefacc')
+  ) {
+    return {
+      category: 'climatizacion',
+      categoryName: 'Climatización',
+      problem: 'Instalación o mantención de climatización',
+      minPrice: 35000,
+      maxPrice: 90000,
+      urgency: 'Media' as const,
+    };
+  }
+
+  if (lower.includes('electric') || lower.includes('electricista')) {
+    return {
+      category: 'electricidad',
+      categoryName: 'Electricista Certificado',
+      problem: 'Instalaciones y reparaciones eléctricas',
+      minPrice: 25000,
+      maxPrice: 60000,
+      urgency: 'Media' as const,
+    };
+  }
+
+  // Sin match claro: no forzar electricistas
+  return {
+    category: 'electricidad',
+    categoryName: 'Profesional verificado',
+    problem: 'Servicio a domicilio',
+    minPrice: 25000,
+    maxPrice: 60000,
+    urgency: 'Media' as const,
+  };
 }
 
 
@@ -510,14 +544,13 @@ export function App() {
 
 
 
-  const goToSearch = () => {
+  const goToCategories = () => {
+    setView('categories');
+    setSelectedWorker(null);
+  };
 
-    setView('search');
-
-    if (!query) setQuery('electricistas');
-
-    if (!serviceMatch) void searchService(query || 'electricistas');
-
+  const openCategory = (cat: ServiceCategory) => {
+    void searchService(cat.searchQuery);
   };
 
   if (view === 'paid') {
@@ -593,6 +626,25 @@ export function App() {
 
 
 
+  if (view === 'categories') {
+    return (
+      <Suspense fallback={<ViewFallback />}>
+        <div className="min-h-screen app-shell">
+          <CategoriesCatalogView
+            categories={ALL_SERVICE_CATEGORIES}
+            profileName={profile?.name}
+            onBack={() => setView('landing')}
+            onSelectCategory={openCategory}
+            onShowAuth={() => setShowAuth(true)}
+          />
+          <Suspense fallback={null}>
+            <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+          </Suspense>
+        </div>
+      </Suspense>
+    );
+  }
+
   if (view === 'search') {
 
     return (
@@ -618,11 +670,8 @@ export function App() {
           onSelectWorker={requestWorker}
 
           onBack={() => {
-
-            setView('landing');
-
+            setView('categories');
             setSelectedWorker(null);
-
           }}
 
           onShowAuth={() => setShowAuth(true)}
@@ -864,7 +913,7 @@ export function App() {
 
             <div className="hero-cta-row">
 
-              <button type="button" className="btn-primary" onClick={goToSearch}>
+              <button type="button" className="btn-primary" onClick={goToCategories}>
 
                 Buscar servicio <ArrowRight size={18} />
 
@@ -962,7 +1011,7 @@ export function App() {
 
           <div className="categories-grid">
 
-            {CATEGORIES.map((cat) => (
+            {FEATURED_CATEGORIES.map((cat) => (
 
               <CategoryCard
 
@@ -974,7 +1023,7 @@ export function App() {
 
                 photo={cat.photo}
 
-                onClick={() => void searchService(`Necesito ${cat.title.toLowerCase()}`)}
+                onClick={() => openCategory(cat)}
 
               />
 
@@ -1110,7 +1159,7 @@ export function App() {
 
             </div>
 
-            <button type="button" className="categories-v2-link" onClick={goToSearch}>
+            <button type="button" className="categories-v2-link" onClick={goToCategories}>
 
               VER TODAS LAS CATEGORÍAS <ArrowRight size={14} />
 
@@ -1122,59 +1171,7 @@ export function App() {
 
           <div className="categories-grid categories-grid--8">
 
-            {[
-
-              ...CATEGORIES,
-
-              {
-
-                id: 'limpieza',
-
-                title: 'Limpieza',
-
-                subtitle: 'Hogar, oficina y profunda',
-
-                photo: '/categories/limpieza.png',
-
-              },
-
-              {
-
-                id: 'pintura',
-
-                title: 'Pintura',
-
-                subtitle: 'Interiores y exteriores',
-
-                photo: img('1562259949-e8e7689d7828'),
-
-              },
-
-              {
-
-                id: 'jardineria',
-
-                title: 'Jardinería',
-
-                subtitle: 'Poda, riego y mantención',
-
-                photo: img('1416879595882-3373a0480b5b'),
-
-              },
-
-              {
-
-                id: 'cerrajeria',
-
-                title: 'Cerrajería',
-
-                subtitle: 'Aperturas y cambio de chapas',
-
-                photo: '/categories/cerrajeria.png',
-
-              },
-
-            ].map((cat) => (
+            {ALL_SERVICE_CATEGORIES.slice(0, 8).map((cat) => (
 
               <CategoryCard
 
@@ -1188,7 +1185,7 @@ export function App() {
 
                 variant="grid"
 
-                onClick={() => void searchService(`Necesito ${cat.title.toLowerCase()}`)}
+                onClick={() => openCategory(cat)}
 
               />
 
