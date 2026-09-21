@@ -2,7 +2,7 @@
 
 const U = 'https://images.unsplash.com';
 const img = (id: string) =>
-  `${U}/photo-${id}?auto=format&fit=crop&w=900&h=560&q=80`;
+  `${U}/photo-${id}?auto=format&fit=crop&w=640&h=400&q=70`;
 
 export type ServiceCategory = {
   id: string;

@@ -1,7 +1,12 @@
 /*
   Headers for Netlify / Cloudflare Pages.
   CSP allows Supabase + Transbank Webpay (integration + production hosts).
+  Assets hashed by Vite: cache largo. HTML (/*) no lleva max-age alto.
 */
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/categories/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 /
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff

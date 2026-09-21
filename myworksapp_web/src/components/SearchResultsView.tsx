@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import {
   Heart,
   Bell,
@@ -5,12 +6,14 @@ import {
   MapPin,
   SlidersHorizontal,
   ChevronLeft,
-  ChevronRight,
   Navigation,
   X,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
-import { PremiumSearchMap } from './PremiumSearchMap';
+
+const PremiumSearchMap = lazy(() =>
+  import('./PremiumSearchMap').then((m) => ({ default: m.PremiumSearchMap })),
+);
 
 export interface SearchWorker {
   id: string;
@@ -36,6 +39,9 @@ interface SearchResultsViewProps {
   onSelectWorker: (worker: SearchWorker) => void;
   onBack: () => void;
   onShowAuth: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 export function SearchResultsView({
@@ -49,9 +55,12 @@ export function SearchResultsView({
   onSelectWorker,
   onBack,
   onShowAuth,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
 }: SearchResultsViewProps) {
   const displayQuery = query.trim() || 'profesionales';
-  const total = workers.length > 0 ? Math.max(workers.length, 12) : 0;
+  const total = workers.length;
 
   return (
     <div className="search-view">
@@ -189,7 +198,9 @@ export function SearchResultsView({
             <div>
               <h1>Resultados para &ldquo;{displayQuery}&rdquo;</h1>
               <p>
-                Mostrando 1–{Math.min(12, workers.length || 12)} de {total} profesionales
+                {total === 0
+                  ? 'Sin profesionales en esta página'
+                  : `Mostrando ${total} profesional${total === 1 ? '' : 'es'}${hasMore ? ' (hay más)' : ''}`}
               </p>
             </div>
             <select className="search-sort" defaultValue="relevance" aria-label="Ordenar por">
@@ -222,7 +233,15 @@ export function SearchResultsView({
                   className={`pro-card${selectedWorkerId === w.id ? ' is-selected' : ''}`}
                   onClick={() => onSelectWorker(w)}
                 >
-                  <img src={w.photoUrl} alt="" className="pro-card-photo" />
+                  <img
+                    src={w.photoUrl}
+                    alt=""
+                    className="pro-card-photo"
+                    width={72}
+                    height={72}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <div className="pro-card-body">
                     <div className="pro-card-top">
                       <strong>{w.name}</strong>
@@ -248,36 +267,29 @@ export function SearchResultsView({
             </div>
           )}
 
-          <nav className="search-pagination" aria-label="Paginación">
-            <button type="button" className="search-page-btn" disabled aria-label="Anterior">
-              <ChevronLeft size={16} />
-            </button>
-            {[1, 2, 3].map((n) => (
+          {hasMore && (
+            <nav className="search-pagination" aria-label="Más resultados">
               <button
-                key={n}
                 type="button"
-                className={`search-page-num${n === 1 ? ' is-active' : ''}`}
+                className="search-page-btn"
+                disabled={isLoadingMore}
+                onClick={onLoadMore}
               >
-                {n}
+                {isLoadingMore ? 'Cargando…' : 'Cargar más'}
               </button>
-            ))}
-            <span className="search-page-dots">…</span>
-            <button type="button" className="search-page-num">
-              21
-            </button>
-            <button type="button" className="search-page-btn" aria-label="Siguiente">
-              <ChevronRight size={16} />
-            </button>
-          </nav>
+            </nav>
+          )}
         </main>
 
         <aside className="search-map-panel">
-          <PremiumSearchMap
-            workers={workers}
-            selectedWorkerId={selectedWorkerId}
-            onSelectWorker={onSelectWorker}
-            categoryLabel={displayQuery}
-          />
+          <Suspense fallback={<div className="search-map-skeleton" aria-hidden />}>
+            <PremiumSearchMap
+              workers={workers}
+              selectedWorkerId={selectedWorkerId}
+              onSelectWorker={onSelectWorker}
+              categoryLabel={displayQuery}
+            />
+          </Suspense>
           <button type="button" className="search-map-locate">
             <Navigation size={14} /> Usar mi ubicación actual
           </button>

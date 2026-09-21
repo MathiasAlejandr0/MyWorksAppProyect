@@ -36,7 +36,8 @@ export async function fetchActiveServices(supabase: AppSupabase): Promise<Servic
     .from('servicios')
     .select('id, nombre, descripcion, categoria, activo, modelo_precio')
     .eq('activo', 1)
-    .order('nombre', { ascending: true });
+    .order('nombre', { ascending: true })
+    .limit(80);
 
   if (error) throw error;
   return ((data ?? []) as ServiceDbRow[]).map(mapService);

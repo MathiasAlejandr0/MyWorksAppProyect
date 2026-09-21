@@ -22,13 +22,17 @@ import {
   type ServiceCategory,
 } from './data/serviceCategories';
 import {
+  CATALOG_STALE_MS,
   createGuestWebpayCheckout,
   createPendingJob,
   createWebpaySession,
+  fetchActiveServices,
   fetchPaymentStatus,
   fetchServiceByCategory,
-  fetchWorkersByCategory,
+  fetchWorkersCatalog,
   toWebWorkerCard,
+  type CatalogCursor,
+  type WorkerWithProfile,
 } from '@myworksapp/shared';
 
 const PaymentCheckoutModal = lazy(() =>
@@ -85,7 +89,7 @@ type AppView = 'landing' | 'categories' | 'search' | 'tracking' | 'paid';
 
 const U = 'https://images.unsplash.com';
 const img = (id: string) =>
-  `${U}/photo-${id}?auto=format&fit=crop&w=900&h=560&q=80`;
+  `${U}/photo-${id}?auto=format&fit=crop&w=640&h=400&q=70`;
 
 const CategoriesCatalogView = lazy(() =>
   import('./components/CategoriesCatalogView').then((m) => ({
@@ -110,6 +114,8 @@ interface ServiceMatch {
   urgency: string;
 
   workers: SearchWorker[];
+
+  nextCursor: CatalogCursor | null;
 
 }
 
@@ -308,6 +314,8 @@ export function App() {
   const [showAuth, setShowAuth] = useState(false);
 
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [loadingMoreWorkers, setLoadingMoreWorkers] = useState(false);
   const [paidVerifying, setPaidVerifying] = useState(false);
   const [paidVerifyError, setPaidVerifyError] = useState<string | null>(null);
 
@@ -322,6 +330,14 @@ export function App() {
     localStorage.setItem('mwa-dark-mode', '1');
 
   }, []);
+
+  useEffect(() => {
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.activeServices,
+      queryFn: () => fetchActiveServices(supabase),
+      staleTime: CATALOG_STALE_MS,
+    });
+  }, [queryClient]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -407,29 +423,33 @@ export function App() {
 
 
 
+    setCatalogError(null);
+
     const meta = resolveCategory(text);
 
 
 
     try {
 
-      const [service, workersRaw] = await Promise.all([
+      const [service, page] = await Promise.all([
 
         queryClient.fetchQuery({
           queryKey: queryKeys.serviceByCategory(meta.category),
           queryFn: () => fetchServiceByCategory(supabase, meta.category),
+          staleTime: CATALOG_STALE_MS,
         }),
 
         queryClient.fetchQuery({
           queryKey: queryKeys.workersByCategory(meta.category),
-          queryFn: () => fetchWorkersByCategory(supabase, meta.category),
+          queryFn: () => fetchWorkersCatalog(supabase, { category: meta.category }),
+          staleTime: CATALOG_STALE_MS,
         }),
 
       ]);
 
       setSelectedServiceId(service?.id ?? null);
 
-      const workers: SearchWorker[] = workersRaw.map((worker) => ({
+      const workers: SearchWorker[] = page.workers.map((worker: WorkerWithProfile) => ({
 
         ...toWebWorkerCard(worker),
 
@@ -439,13 +459,15 @@ export function App() {
 
 
 
-      setServiceMatch({ ...meta, workers });
+      setServiceMatch({ ...meta, workers, nextCursor: page.nextCursor });
 
     } catch {
 
       setSelectedServiceId(null);
 
-      setServiceMatch({ ...meta, workers: [] });
+      setCatalogError('No se pudo cargar el catálogo. Revisa tu conexión e inténtalo de nuevo.');
+
+      setServiceMatch({ ...meta, workers: [], nextCursor: null });
 
     } finally {
 
@@ -456,6 +478,32 @@ export function App() {
   };
 
 
+
+  const loadMoreWorkers = async () => {
+    const match = serviceMatch;
+    if (!match?.nextCursor || loadingMoreWorkers) return;
+    setLoadingMoreWorkers(true);
+    setCatalogError(null);
+    try {
+      const page = await fetchWorkersCatalog(supabase, {
+        category: match.category,
+        cursor: match.nextCursor,
+      });
+      const extra: SearchWorker[] = page.workers.map((worker: WorkerWithProfile) => ({
+        ...toWebWorkerCard(worker),
+        availableNow: true,
+      }));
+      setServiceMatch({
+        ...match,
+        workers: [...match.workers, ...extra],
+        nextCursor: page.nextCursor,
+      });
+    } catch {
+      setCatalogError('No se pudieron cargar más profesionales. Inténtalo de nuevo.');
+    } finally {
+      setLoadingMoreWorkers(false);
+    }
+  };
 
   const requestWorker = (worker: SearchWorker) => {
     setSelectedWorker(worker);
@@ -675,6 +723,9 @@ export function App() {
           }}
 
           onShowAuth={() => setShowAuth(true)}
+          hasMore={Boolean(serviceMatch?.nextCursor)}
+          isLoadingMore={loadingMoreWorkers}
+          onLoadMore={() => void loadMoreWorkers()}
 
         />
 
@@ -749,6 +800,12 @@ export function App() {
 
           </div>
 
+        )}
+
+        {catalogError && (
+          <div className="toast-error" role="alert">
+            {catalogError}
+          </div>
         )}
 
 

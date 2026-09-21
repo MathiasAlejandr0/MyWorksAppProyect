@@ -9,7 +9,8 @@ class ServiceRepository {
         .from(_table)
         .select()
         .eq('activo', 1)
-        .order('nombre', ascending: true);
+        .order('nombre', ascending: true)
+        .limit(80);
     return rows.map<ServiceModel>((m) => ServiceModel.fromMap(m)).toList();
   }
 
@@ -19,7 +20,8 @@ class ServiceRepository {
         .select()
         .eq('categoria', category)
         .eq('activo', 1)
-        .order('nombre', ascending: true);
+        .order('nombre', ascending: true)
+        .limit(80);
     return rows.map<ServiceModel>((m) => ServiceModel.fromMap(m)).toList();
   }
 
@@ -48,7 +50,8 @@ class ServiceRepository {
         )
         .eq('activo', 1)
         .order('categoria', ascending: true)
-        .order('nombre', ascending: true);
+        .order('nombre', ascending: true)
+        .limit(80);
     final allServices =
         rows.map<ServiceModel>((m) => ServiceModel.fromMap(m)).toList();
 

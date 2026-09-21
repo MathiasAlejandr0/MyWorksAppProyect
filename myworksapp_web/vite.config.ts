@@ -9,4 +9,15 @@ export default defineConfig({
       '@myworksapp/shared': path.resolve(__dirname, '../shared/src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')) {
+            return 'map';
+          }
+        },
+      },
+    },
+  },
 });

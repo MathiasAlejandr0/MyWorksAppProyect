@@ -1,4 +1,11 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
+import {
+  allowRate,
+  clientIp,
+  rateLimitExceededMessage,
+} from "../_shared/rate_limit.ts";
+import { publicErrorMessage } from "../_shared/safe_error.ts";
 import { resolveReturnUrl, signHandoffTicket } from "../_shared/security.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 import { tbkConfig, tbkCreateTransaction } from "../_shared/tbk.ts";
@@ -12,6 +19,15 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (isKillSwitchOn("MWA_READ_ONLY") || isKillSwitchOn("MWA_KILL_WEBPAY")) {
+      return jsonResponse(req, killSwitchResponse(), 503);
+    }
+
+    const ip = clientIp(req);
+    if (!allowRate(`webpay:ip:${ip}`, 20, 60_000)) {
+      return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
+    }
+
     const userSb = userClient(req);
     const {
       data: { user },
@@ -19,6 +35,10 @@ Deno.serve(async (req) => {
     } = await userSb.auth.getUser();
     if (authErr || !user) {
       return jsonResponse(req, { error: "No autenticado" }, 401);
+    }
+
+    if (!allowRate(`webpay:user:${user.id}`, 10, 60_000)) {
+      return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
     const body = await req.json();
@@ -37,7 +57,7 @@ Deno.serve(async (req) => {
       },
     );
     if (payErr) {
-      return jsonResponse(req, { error: payErr.message }, 400);
+      return jsonResponse(req, { error: publicErrorMessage(payErr, "No se pudo crear la intención de pago") }, 400);
     }
 
     const paymentId = payment.id as string;
@@ -85,8 +105,12 @@ Deno.serve(async (req) => {
       presentMode,
     });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    const status = msg.includes("WEBPAY_HANDOFF_SECRET") ? 503 : 500;
-    return jsonResponse(req, { error: msg }, status);
+    const raw = e instanceof Error ? e.message : String(e);
+    const status = raw.includes("WEBPAY_HANDOFF_SECRET")
+      ? 503
+      : raw.includes("Demasiados")
+        ? 429
+        : 500;
+    return jsonResponse(req, { error: publicErrorMessage(e) }, status);
   }
 });

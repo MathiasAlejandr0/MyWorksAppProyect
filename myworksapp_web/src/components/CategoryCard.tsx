@@ -25,6 +25,8 @@ export function CategoryCard({ title, subtitle, photo, onClick, variant = 'landi
             alt=""
             loading="lazy"
             decoding="async"
+            width={640}
+            height={400}
             onError={() => setFailed(true)}
           />
         ) : null}

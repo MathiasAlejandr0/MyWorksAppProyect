@@ -1,5 +1,37 @@
 /** Cliente Transbank Webpay Plus REST (integración / producción). */
 
+const TBK_TIMEOUT_MS = 12_000;
+const TBK_RETRIES = 1;
+
+async function tbkFetch(
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= TBK_RETRIES; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), TBK_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, { ...init, signal: ctrl.signal });
+      if (res.status >= 500 && attempt < TBK_RETRIES) {
+        lastErr = new Error(`TBK ${res.status}`);
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        continue;
+      }
+      return res;
+    } catch (e) {
+      lastErr = e;
+      if (attempt >= TBK_RETRIES) break;
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("TBK timeout");
+}
+
+
+
 export type TbkEnv = "integration" | "production";
 
 export function tbkConfig() {
@@ -32,7 +64,7 @@ export async function tbkCreateTransaction(input: {
   returnUrl: string;
 }): Promise<{ token: string; url: string }> {
   const { commerceCode, apiKey, host } = tbkConfig();
-  const res = await fetch(
+  const res = await tbkFetch(
     `${host}/rswebpaytransaction/api/webpay/v1.2/transactions`,
     {
       method: "POST",
@@ -62,7 +94,7 @@ export async function tbkCreateTransaction(input: {
 
 export async function tbkCommit(token: string): Promise<Record<string, unknown>> {
   const { commerceCode, apiKey, host } = tbkConfig();
-  const res = await fetch(
+  const res = await tbkFetch(
     `${host}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`,
     {
       method: "PUT",
@@ -90,7 +122,7 @@ export async function tbkRefund(
   amount: number,
 ): Promise<Record<string, unknown>> {
   const { commerceCode, apiKey, host } = tbkConfig();
-  const res = await fetch(
+  const res = await tbkFetch(
     `${host}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}/refunds`,
     {
       method: "POST",

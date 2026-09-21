@@ -35,7 +35,8 @@ class WorkerRepository {
         .from(_table)
         .select()
         .eq('categoria_servicio', category)
-        .order('calificacion', ascending: false);
+        .order('calificacion', ascending: false)
+        .limit(40);
 
     if (rows.isEmpty) {
       final needle = category.replaceAll(RegExp(r'[%_,]'), '');
@@ -44,7 +45,8 @@ class WorkerRepository {
             .from(_table)
             .select()
             .ilike('categoria_servicio', '%$needle%')
-            .order('calificacion', ascending: false);
+            .order('calificacion', ascending: false)
+            .limit(40);
       }
     }
 
@@ -96,15 +98,24 @@ class WorkerRepository {
         .from(_table)
         .select()
         .eq('profesion', profession)
-        .eq('disponible', 1);
+        .eq('disponible', 1)
+        .order('calificacion', ascending: false)
+        .limit(40);
     final workers = rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
     WorkerReputationService.instance.sortForListing(workers);
     return workers;
   }
 
   Future<List<WorkerModel>> getAllAvailableWorkers() async {
-    final rows = await supabase.from(_table).select().eq('disponible', 1);
-    final workers = rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('disponible', 1)
+        .eq('precios_configurados', 1)
+        .order('calificacion', ascending: false)
+        .limit(40);
+    final workers =
+        rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
     WorkerReputationService.instance.sortForListing(workers);
     return workers;
   }
@@ -113,12 +124,14 @@ class WorkerRepository {
   Future<List<WorkerLoginItem>> getWorkersForLogin() async {
     final workerRows = await supabase
         .from(_table)
-        .select('id_usuario, profesion, categoria_servicio');
+        .select('id_usuario, profesion, categoria_servicio')
+        .limit(80);
 
     final profileRows = await supabase
         .from('perfiles')
         .select('id, nombre, correo, rol')
-        .eq('rol', 'trabajador');
+        .eq('rol', 'trabajador')
+        .limit(80);
 
     final profilesById = <String, Map<String, dynamic>>{
       for (final row in profileRows)
@@ -193,7 +206,8 @@ class WorkerRepository {
         .select()
         .eq('disponible', 1)
         .eq('precios_configurados', 1)
-        .order('calificacion', ascending: false);
+        .order('calificacion', ascending: false)
+        .limit(40);
     final allWorkers =
         rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
     return _filterListedWorkers(allWorkers, near: near);

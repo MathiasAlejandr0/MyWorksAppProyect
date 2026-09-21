@@ -1187,6 +1187,26 @@ export type Database = {
       es_parte_trabajo: { Args: { p_trabajo_id: string }; Returns: boolean }
       es_rol_trabajador: { Args: { p_usuario_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      listar_profesionales_catalogo: {
+        Args: {
+          p_categoria?: string
+          p_cursor_calificacion?: number
+          p_cursor_id?: string
+          p_limit?: number
+          p_zona?: string
+        }
+        Returns: {
+          calificacion: number | null
+          categoria_servicio: string
+          descripcion: string | null
+          id_usuario: string
+          nombre: string | null
+          profesion: string
+          ruta_foto_perfil: string | null
+          tarifa_visita: number | null
+          zona_trabajo: string | null
+        }[]
+      }
       rechazar_trabajo_pendiente: {
         Args: { p_metadatos?: string; p_trabajo_id: string }
         Returns: {

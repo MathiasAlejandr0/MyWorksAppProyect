@@ -15,10 +15,16 @@ export {
 } from './domain';
 export type { JobStatus, PaymentStatus, PricingMode } from './domain';
 
-export * from './types';
+export * from './catalog';
 export * from './database.types';
 export * from './client';
 export * from './auth';
+export type {
+  Profile,
+  ServiceRow,
+  WorkerWithProfile,
+  WebWorkerCard,
+} from './types';
 export * from './payments/webpay';
 export * from './payments/guestCheckout';
 export * from './payments/payout';

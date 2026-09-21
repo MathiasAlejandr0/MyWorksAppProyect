@@ -10,7 +10,7 @@ param(
   [string]$SupabaseUrl = "https://wxqrfcqifkfgawrnqmnj.supabase.co",
   [Parameter(Mandatory = $true)]
   [string]$AnonKey,
-  [ValidateSet("smoke", "baseline", "stress", "soak")]
+  [ValidateSet("smoke", "baseline", "stress", "soak", "free-ceiling")]
   [string]$Profile = "baseline",
   [string]$UserJwt = "",
   [switch]$Full,
@@ -66,6 +66,7 @@ if ($Full) {
   Run-K6 "scripts\load\k6\catalog.js" "smoke" "catalog-smoke"
   Run-K6 "scripts\load\k6\catalog.js" "baseline" "catalog-baseline"
   Run-K6 "scripts\load\k6\catalog.js" "stress" "catalog-stress"
+  Run-K6 "scripts\load\k6\catalog.js" "free-ceiling" "catalog-free-ceiling"
   Run-K6 "scripts\load\k6\capacity-ceiling.js" "baseline" "capacity-ceiling"
   if ($UserJwt) {
     Run-K6 "scripts\load\k6\mixed-read.js" "baseline" "mixed-baseline"

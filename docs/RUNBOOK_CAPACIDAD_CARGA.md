@@ -74,6 +74,10 @@ k6 run -e SUPABASE_URL=$env:SUPABASE_URL -e SUPABASE_ANON_KEY=$env:SUPABASE_ANON
 # 3) Stress — hasta ~200 VUs (~6 min)
 k6 run -e SUPABASE_URL=$env:SUPABASE_URL -e SUPABASE_ANON_KEY=$env:SUPABASE_ANON_KEY -e PROFILE=stress scripts/load/k6/catalog.js
 
+# 3b) Techo Free — 100→300 VUs, umbral error <1 % y p95 <500 ms (~5,5 min)
+k6 run -e SUPABASE_URL=$env:SUPABASE_URL -e SUPABASE_ANON_KEY=$env:SUPABASE_ANON_KEY -e PROFILE=free-ceiling scripts/load/k6/catalog.js
+# Opcional (tras migración 20260926): -e K6_USE_RPC=1
+
 # 4) Techo de RPS — sube peticiones/segundo hasta notar degradación (~4 min)
 k6 run -e SUPABASE_URL=$env:SUPABASE_URL -e SUPABASE_ANON_KEY=$env:SUPABASE_ANON_KEY scripts/load/k6/capacity-ceiling.js
 
@@ -118,9 +122,10 @@ Si se rompe a **50 VUs**:
 
 | Prueba | Fecha | VUs máx | p95 (ms) | Error % | RPS aprox | Conclusión |
 |--------|-------|---------|----------|---------|-----------|------------|
-| smoke | | 5 | | | | |
+| smoke | 20-09-2026 | 5 | 303 | 0 | ~6,5 | OK, sin 401 |
 | baseline | | 50 | | | | |
-| stress | | 200 | | | | |
+| stress | 20-09-2026 | 200 | ~220 | 0 | | OK (informe previo) |
+| free-ceiling | 20-09-2026 | 300 | **263** | **0** | ~302 | Umbrales Free cumplidos (p95&lt;500, error&lt;1 %). Egress prueba ≈ 196 MB |
 | ceiling | | (arrival-rate) | | | | |
 | soak | | 40 | | | | |
 
@@ -132,11 +137,11 @@ Orden práctico (de barato a caro):
 
 1. **Medir** (esta batería) y anotar el techo actual.  
 2. **Índices** en columnas filtradas (`activo`, `disponible`, `id_usuario` en trabajos) — ya hay varios; revisar en dashboard.  
-3. **Plan Supabase** (Free → Pro): más CPU, conexiones y Edge.  
-4. **Caché de catálogo** en web (TanStack Query ya ayuda; CDN / edge cache después).  
+3. **Plan Supabase** (Free hasta medir cuello; Pro si p95/cuotas lo exigen — ver `RUNBOOK_ESCALA_20K_USUARIOS.md` § Techo Free 50k MAU).  
+4. **Caché de catálogo** en web (TanStack Query 5 min; CDN `/assets`).  
 5. **Separar lecturas pesadas** de escrituras (pagos siguen en Edge, no en el path del home).  
-6. **Read replicas / pooling** cuando el tráfico comercial lo justifique.  
-7. Re-medir tras cada cambio (mismo script = comparación justa).
+6. **Read replicas / pooling** cuando el tráfico comercial lo justifique (pooler = URI Postgres, no supabase-js).  
+7. Re-medir tras cada cambio (mismo script = comparación justa). El perfil `free-ceiling` es la prueba de techo en Free.
 
 Pagos (Webpay): la capacidad la limitan **Transbank + Edge + rate limits**, no el `SELECT` del catálogo. Se prueba aparte, con pocas sesiones reales de integración, no con stress masivo.
 
