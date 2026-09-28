@@ -191,12 +191,6 @@ class WorkerRepository {
     }
   }
 
-  Future<void> updateRating(String userId, double rating) async {
-    await supabase
-        .from(_table)
-        .update({'calificacion': rating}).eq('id_usuario', userId);
-  }
-
   // Obtener trabajadores disponibles que no tienen trabajos activos
   Future<List<WorkerModel>> getAvailableWorkersWithoutActiveJobs({
     UserLocationContext? near,

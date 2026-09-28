@@ -72,3 +72,18 @@ export async function fetchUserJobs(
     createdAt: row.creado_en as string,
   }));
 }
+
+/** Tras un pago retenido, el profesional puede aceptar. Si ya está pendiente, no falla. */
+export async function openJobForWorker(
+  supabase: AppSupabase,
+  jobId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('transicionar_trabajo', {
+    p_trabajo_id: jobId,
+    p_nuevo_estado: 'pendiente',
+  });
+  if (!error) return;
+  const message = error.message || '';
+  if (/transicion no permitida/i.test(message)) return;
+  throw new Error(message);
+}

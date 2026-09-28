@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/database/repositories/admin_repository.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
@@ -48,6 +49,30 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
     }
   }
 
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text('Vas a salir del panel y volver al inicio de sesión.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await ref.read(authProvider.notifier).logout();
+    if (!mounted) return;
+    context.go(AppConstants.routeWelcome);
+  }
+
   @override
   Widget build(BuildContext context) {
     final m = _metrics;
@@ -57,8 +82,14 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
         title: const Text('Panel administrador'),
         actions: [
           IconButton(
+            tooltip: 'Actualizar',
             onPressed: _load,
             icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            tooltip: 'Cerrar sesión',
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
           ),
         ],
       ),
@@ -90,7 +121,7 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
                     'Resumen de la plataforma',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  if (m!.totalIncidents > 0) ...[
+                  if (m.totalIncidents > 0) ...[
                     const SizedBox(height: AppSpacing.sm),
                     _AlertBanner(count: m.totalIncidents),
                   ],
@@ -154,6 +185,12 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
                     subtitle: 'Activar funciones por rol o versión',
                     onTap: () =>
                         context.push(AppConstants.routeAdminFeatureFlags),
+                  ),
+                  AdminNavTile(
+                    icon: Icons.desktop_windows_outlined,
+                    title: 'Programa de escritorio',
+                    subtitle: 'La liquidación y el soporte viven en la app de escritorio',
+                    onTap: () => context.push(AppConstants.routeAdminDesktopHub),
                   ),
                 ],
               ),

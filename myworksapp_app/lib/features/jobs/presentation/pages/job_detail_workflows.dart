@@ -193,7 +193,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Pago en garantía. El profesional debe aceptar o rechazar el trabajo.',
+            'Pedido confirmado. Se descontará el monto de tu tarjeta. El profesional ya puede aceptar el pedido.',
           ),
         ),
       );

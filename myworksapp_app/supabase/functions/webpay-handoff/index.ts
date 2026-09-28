@@ -1,5 +1,9 @@
-import { serviceClient } from "../_shared/supabase.ts";
 import { verifyHandoffTicket } from "../_shared/security.ts";
+import { serviceClient } from "../_shared/supabase.ts";
+import {
+  transbankAutoPostHtml,
+  transbankFormResponse,
+} from "../_shared/transbank_form.ts";
 
 /** Handoff Webpay: ticket HMAC de un solo uso (marca handoff_consumido_en). */
 Deno.serve(async (req) => {
@@ -45,24 +49,14 @@ Deno.serve(async (req) => {
       return new Response("Ticket ya utilizado", { status: 409 });
     }
 
-    const action = String(data.url_tbk).replace(/"/g, "&quot;");
-    const token = String(data.token_tbk).replace(/"/g, "&quot;");
-    const html = `<!DOCTYPE html>
-<html lang="es"><head><meta charset="utf-8"/><title>Redirigiendo a Webpay…</title></head>
-<body>
-<p>Redirigiendo a Transbank Webpay de forma segura…</p>
-<form id="tbk" method="POST" action="${action}">
-  <input type="hidden" name="token_ws" value="${token}" />
-</form>
-<script>document.getElementById('tbk').submit();</script>
-</body></html>`;
-
-    return new Response(html, {
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store",
-      },
+    const html = transbankAutoPostHtml({
+      action: String(data.url_tbk),
+      fieldName: "token_ws",
+      token: String(data.token_tbk),
+      title: "Redirigiendo a Webpay",
+      message: "Redirigiendo a Transbank Webpay de forma segura.",
     });
+    return transbankFormResponse(html);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     const status = msg.includes("WEBPAY_HANDOFF_SECRET") ? 503 : 500;

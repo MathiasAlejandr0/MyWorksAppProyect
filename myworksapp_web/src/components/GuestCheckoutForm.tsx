@@ -80,8 +80,8 @@ export function GuestCheckoutForm({
           </p>
           <h2 id="guest-checkout-title">Datos para la visita</h2>
           <p className="guest-checkout-lead">
-            Sin iniciar sesión puedes agendar. Pediremos tus datos y el pago se
-            completa en Transbank (redirección).
+            Sin cuenta te enviamos a Webpay para pagar este pedido. Si inicias
+            sesión, el cobro sale de la tarjeta inscrita en la app.
           </p>
         </div>
 

@@ -3,61 +3,34 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/database/repositories/rating_repository.dart';
-import '../../../../core/database/repositories/job_repository.dart';
-import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/models/rating_model.dart';
-import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/supabase_db.dart';
-import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/utils/error_handler.dart';
 
-class RatingPage extends ConsumerStatefulWidget {
+class RatingPage extends StatefulWidget {
   final String jobId;
 
   const RatingPage({super.key, required this.jobId});
 
   @override
-  ConsumerState<RatingPage> createState() => _RatingPageState();
+  State<RatingPage> createState() => _RatingPageState();
 }
 
-class _RatingPageState extends ConsumerState<RatingPage> {
+class _RatingPageState extends State<RatingPage> {
   final _formKey = GlobalKey<FormState>();
   final _commentController = TextEditingController();
   final RatingRepository _ratingRepository = RatingRepository();
 
-  JobRepository get _jobRepository => ref.read(jobRepositoryProvider);
-  WorkerRepository get _workerRepository => ref.read(workerRepositoryProvider);
-
   int _selectedRating = 0;
   bool _isLoading = false;
-  JobModel? _job;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadJob();
-  }
 
   @override
   void dispose() {
     _commentController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadJob() async {
-    try {
-      final job = await _jobRepository.getJobById(widget.jobId);
-      setState(() {
-        _job = job;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      ErrorHandler.showError(context, e);
-    }
   }
 
   Future<void> _submitRating() async {
@@ -90,12 +63,6 @@ class _RatingPageState extends ConsumerState<RatingPage> {
       );
 
       await _ratingRepository.createRating(rating);
-
-      // Actualizar calificación promedio del trabajador
-      if (_job?.workerId != null) {
-        final avgRating = await _ratingRepository.getAverageRatingByWorkerId(_job!.workerId!);
-        await _workerRepository.updateRating(_job!.workerId!, avgRating);
-      }
 
       if (!mounted) return;
 

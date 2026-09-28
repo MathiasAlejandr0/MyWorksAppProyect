@@ -1,12 +1,4 @@
-import { useEffect, useMemo } from 'react';
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  Circle,
-  useMap,
-} from 'react-leaflet';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { SearchWorker } from './SearchResultsView';
@@ -29,37 +21,24 @@ export function workerLatLng(worker: SearchWorker): [number, number] {
 
 const pinIcon = L.divIcon({
   className: 'mwa-map-pin',
-  html: `<span class="mwa-map-pin-dot"></span>`,
+  html: '<span class="mwa-map-pin-dot"></span>',
   iconSize: [28, 28],
   iconAnchor: [14, 14],
 });
 
 const pinIconActive = L.divIcon({
   className: 'mwa-map-pin mwa-map-pin--active',
-  html: `<span class="mwa-map-pin-dot"></span>`,
+  html: '<span class="mwa-map-pin-dot"></span>',
   iconSize: [36, 36],
   iconAnchor: [18, 18],
 });
 
-function FitWorkers({
-  positions,
-}: {
-  positions: [number, number][];
-}) {
-  const map = useMap();
-  useEffect(() => {
-    if (!positions.length) {
-      map.setView(SANTIAGO_CENTER, 13);
-      return;
-    }
-    if (positions.length === 1) {
-      map.setView(positions[0], 14);
-      return;
-    }
-    const bounds = L.latLngBounds(positions.map((p) => L.latLng(p[0], p[1])));
-    map.fitBounds(bounds.pad(0.25));
-  }, [map, positions]);
-  return null;
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
 }
 
 type PremiumSearchMapProps = {
@@ -69,9 +48,14 @@ type PremiumSearchMapProps = {
   categoryLabel?: string;
 };
 
+type StampedEl = HTMLElement & { _leaflet_id?: number };
+
 /**
  * Mapa realista (OpenStreetMap + estilo Carto Voyager) — sin API key.
  * Posiciones ilustrativas alrededor de Las Condes para la demo.
+ *
+ * Leaflet se crea una sola vez. Elegir un profesional solo cambia el pin,
+ * sin volver a montar el mapa (eso dejaba la página en negro).
  */
 export function PremiumSearchMap({
   workers,
@@ -79,66 +63,102 @@ export function PremiumSearchMap({
   onSelectWorker,
   categoryLabel,
 }: PremiumSearchMapProps) {
-  const markers = useMemo(
-    () =>
-      workers.map((w) => ({
-        worker: w,
-        position: workerLatLng(w),
-      })),
-    [workers],
-  );
+  const hostRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const onSelectRef = useRef(onSelectWorker);
+  onSelectRef.current = onSelectWorker;
 
-  const positions = markers.map((m) => m.position);
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const stamped = host as StampedEl;
+    if (stamped._leaflet_id != null) delete stamped._leaflet_id;
+
+    const map = L.map(host, { scrollWheelZoom: true, zoomControl: true }).setView(
+      SANTIAGO_CENTER,
+      13,
+    );
+    mapRef.current = map;
+
+    L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      },
+    ).addTo(map);
+
+    L.circle(SANTIAGO_CENTER, {
+      radius: 2200,
+      color: '#FF5E03',
+      fillColor: '#FF5E03',
+      fillOpacity: 0.06,
+      weight: 1.5,
+      dashArray: '6 8',
+    }).addTo(map);
+
+    const resize = () => map.invalidateSize();
+    const timer = window.setTimeout(resize, 0);
+    window.addEventListener('resize', resize);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('resize', resize);
+      markersRef.current.clear();
+      mapRef.current = null;
+      try {
+        map.remove();
+      } catch {
+        if (stamped._leaflet_id != null) delete stamped._leaflet_id;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    for (const marker of markersRef.current.values()) marker.remove();
+    markersRef.current.clear();
+
+    const positions: L.LatLngExpression[] = [];
+    for (const worker of workers) {
+      const position = workerLatLng(worker);
+      positions.push(position);
+      const price = Math.round(worker.pricePerVisit).toLocaleString('es-CL');
+      const marker = L.marker(position, { icon: pinIcon });
+      marker.bindPopup(
+        `<div class="mwa-map-popup"><strong>${escapeHtml(worker.name)}</strong><span>${escapeHtml(worker.profession)}</span><span>★ ${worker.rating.toFixed(1)} · desde $${price}</span></div>`,
+      );
+      marker.on('click', () => onSelectRef.current(worker));
+      marker.addTo(map);
+      markersRef.current.set(worker.id, marker);
+    }
+
+    if (!positions.length) {
+      map.setView(SANTIAGO_CENTER, 13);
+    } else if (positions.length === 1) {
+      map.setView(positions[0], 14);
+    } else {
+      map.fitBounds(L.latLngBounds(positions).pad(0.25));
+    }
+  }, [workers]);
+
+  useEffect(() => {
+    for (const [id, marker] of markersRef.current) {
+      marker.setIcon(id === selectedWorkerId ? pinIconActive : pinIcon);
+    }
+    const timer = window.setTimeout(() => mapRef.current?.invalidateSize(), 50);
+    return () => window.clearTimeout(timer);
+  }, [selectedWorkerId]);
 
   return (
     <div className="premium-search-map">
-      <MapContainer
-        center={SANTIAGO_CENTER}
-        zoom={13}
-        className="premium-search-map-leaflet"
-        scrollWheelZoom
-        zoomControl
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · &copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
-          maxZoom={19}
-        />
-        <Circle
-          center={SANTIAGO_CENTER}
-          radius={2200}
-          pathOptions={{
-            color: '#FF5E03',
-            fillColor: '#FF5E03',
-            fillOpacity: 0.06,
-            weight: 1.5,
-            dashArray: '6 8',
-          }}
-        />
-        <FitWorkers positions={positions} />
-        {markers.map(({ worker, position }) => (
-          <Marker
-            key={worker.id}
-            position={position}
-            icon={worker.id === selectedWorkerId ? pinIconActive : pinIcon}
-            eventHandlers={{
-              click: () => onSelectWorker(worker),
-            }}
-          >
-            <Popup>
-              <div className="mwa-map-popup">
-                <strong>{worker.name}</strong>
-                <span>{worker.profession}</span>
-                <span>
-                  ★ {worker.rating.toFixed(1)} · desde $
-                  {Math.round(worker.pricePerVisit).toLocaleString('es-CL')}
-                </span>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+      <div ref={hostRef} className="premium-search-map-leaflet" />
 
       <div className="premium-search-map-chrome">
         <div className="premium-search-map-badge">

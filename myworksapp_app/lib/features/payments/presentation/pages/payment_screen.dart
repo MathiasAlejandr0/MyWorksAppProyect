@@ -2,13 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_error.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
-import '../../../../core/widgets/webpay_webview_page.dart';
+import 'card_enrollment_page.dart';
 
 /// Resumen de la orden y arranque del pago Webpay Plus.
 class PaymentScreen extends ConsumerStatefulWidget {
@@ -52,7 +51,6 @@ class PaymentScreen extends ConsumerStatefulWidget {
 class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   bool _processing = false;
   String? _error;
-  bool _openedExternal = false;
 
   String get _amountLabel => NumberFormat.currency(
         locale: 'es_CL',
@@ -66,46 +64,39 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       _error = null;
     });
     try {
-      final tx = await ref.read(paymentServiceProvider).initiateWebpayPayment(
+      final charge = await ref.read(paymentServiceProvider).chargeSavedCard(
             jobId: widget.jobId,
             amount: widget.amount,
           );
       if (!mounted) return;
 
-      if (kIsWeb) {
-        final target = tx.redirectUrl;
-        if (target == null || target.isEmpty) {
-          setState(() {
-            _error =
-                'En web hace falta WEBPAY_HANDOFF_SECRET en Supabase para abrir Webpay.';
-          });
-          return;
-        }
-        final launched = await launchUrl(
-          Uri.parse(target),
-          mode: LaunchMode.externalApplication,
-        );
-        if (!mounted) return;
-        if (!launched) {
-          setState(() => _error = 'No se pudo abrir Webpay');
-          return;
-        }
-        setState(() => _openedExternal = true);
+      if (charge.charged) {
+        Navigator.of(context).pop(true);
         return;
       }
 
-      final target = tx.redirectUrl;
-      if (target == null || target.isEmpty) {
-        setState(() => _error = 'No se pudo abrir Webpay');
+      if (kIsWeb) {
+        setState(() {
+          _error =
+              'Inscribe la tarjeta al entrar a la app. Con esa tarjeta se cobra el pedido.';
+        });
         return;
       }
-      final approved = await WebpayWebViewPage.open(
-        context,
-        paymentUrl: target,
-      );
+
+      final enrolled = await CardEnrollmentPage.open(context);
       if (!mounted) return;
-      if (!approved) {
-        setState(() => _error = 'Pago cancelado o no autorizado');
+      if (!enrolled) {
+        setState(() => _error = 'Inscribe la tarjeta para confirmar el pedido.');
+        return;
+      }
+
+      final again = await ref.read(paymentServiceProvider).chargeSavedCard(
+            jobId: widget.jobId,
+            amount: widget.amount,
+          );
+      if (!mounted) return;
+      if (!again.charged) {
+        setState(() => _error = 'La tarjeta no quedó lista para este cobro.');
         return;
       }
       Navigator.of(context).pop(true);
@@ -127,7 +118,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
     return Scaffold(
       appBar: const AppGradientAppBar(
-        title: Text('Pago con Webpay'),
+        title: Text('Confirmar pedido'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -162,7 +153,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'El monto queda retenido en garantía hasta que el trabajo se ejecute.',
+                      'Al confirmar se descuenta el monto de tu tarjeta y vuelves al pedido. Si aún no la inscribiste, Transbank la pide una sola vez en la app.',
                       style: TextStyle(fontSize: 13, color: AppColors.brandOrange),
                     ),
                   ),
@@ -191,14 +182,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     ),
                   )
                 : const Icon(Icons.credit_card),
-            label: Text(_processing ? 'Conectando…' : 'Pagar con Webpay'),
+            label: Text(_processing ? 'Confirmando…' : 'Confirmar pedido'),
           ),
-          if (_openedExternal) ...[
-            const SizedBox(height: 12),
-            const Text(
-              'Completa el pago en Transbank. El resultado vuelve con el token de esa ventana, no se guarda en la app antes de pagar.',
-            ),
-          ],
         ],
       ),
     );

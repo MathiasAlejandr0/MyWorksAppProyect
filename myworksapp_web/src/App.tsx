@@ -12,10 +12,13 @@ import {
 } from './data/serviceCategories';
 import {
   CATALOG_STALE_MS,
+  chargeSavedCard,
   createGuestWebpayCheckout,
   createPendingJob,
-  createWebpaySession,
   fetchActiveServices,
+  orderConfirmedMessage,
+  openJobForWorker,
+  parseCheckoutReturn,
   fetchPaymentStatus,
   fetchServiceByCategory,
   fetchWorkersCatalog,
@@ -303,6 +306,7 @@ export function App() {
   const [loadingMoreWorkers, setLoadingMoreWorkers] = useState(false);
   const [paidVerifying, setPaidVerifying] = useState(false);
   const [paidVerifyError, setPaidVerifyError] = useState<string | null>(null);
+  const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
 
   const [activeNav, setActiveNav] = useState<'servicios' | 'como-funciona'>('servicios');
 
@@ -325,12 +329,12 @@ export function App() {
   }, [queryClient]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const pago = params.get('pago');
-    const paymentId = params.get('paymentId');
-    const jobIdParam = params.get('jobId');
+    const returned = parseCheckoutReturn(window.location.search);
+    if (returned.kind === 'none') return;
 
-    if (pago === 'ok' || pago === 'retorno') {
+    const restorePending = () => {
+      let workerName = '';
+      let savedAmount = 0;
       try {
         const raw = sessionStorage.getItem('mwa-pending-checkout');
         if (raw) {
@@ -338,9 +342,14 @@ export function App() {
             worker?: SearchWorker;
             serviceTitle?: string;
             jobId?: string;
+            amount?: number;
           };
-          if (saved.worker) setSelectedWorker(saved.worker);
+          if (saved.worker) {
+            setSelectedWorker(saved.worker);
+            workerName = saved.worker.name;
+          }
           if (saved.jobId) setCheckoutJobId(saved.jobId);
+          if (saved.amount) savedAmount = saved.amount;
           if (saved.serviceTitle) {
             setServiceMatch((prev) =>
               prev
@@ -351,8 +360,70 @@ export function App() {
           sessionStorage.removeItem('mwa-pending-checkout');
         }
       } catch {
-        // ignore
+        // el checkout pendiente no es JSON válido
       }
+      return { workerName, savedAmount };
+    };
+
+    if (returned.kind === 'card') {
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+
+    if (returned.kind === 'tracked') {
+      const pending = restorePending();
+      const jobIdParam = returned.jobId;
+      const amount = returned.amount || pending.savedAmount;
+      const workerName = pending.workerName;
+      const paymentId = returned.paymentId;
+      if (jobIdParam) setCheckoutJobId(jobIdParam);
+      setBookingError(null);
+      setPaidVerifyError(null);
+      setView('paid');
+      window.history.replaceState({}, '', window.location.pathname);
+      if (!paymentId) {
+        setPaidVerifyError(
+          'Falta referencia de pago. Si ya pagaste, revisa tu correo o inicia sesión.',
+        );
+        return;
+      }
+      setPaidVerifying(true);
+      void fetchPaymentStatus(supabase, paymentId, jobIdParam ?? undefined)
+        .then(async (status) => {
+          if (
+            status &&
+            ['retenido', 'autorizado', 'liberado'].includes(status.estado)
+          ) {
+            if (jobIdParam) {
+              await openJobForWorker(supabase, jobIdParam).catch(() => undefined);
+            }
+            setPaymentNotice(
+              orderConfirmedMessage({
+                amountClp: amount,
+                last4: returned.last4,
+                workerName,
+              }),
+            );
+            setView(workerName ? 'tracking' : 'paid');
+            return;
+          }
+          setPaidVerifyError(
+            'Aún no confirmamos el pago con Transbank. Si ya pagaste, espera un momento y recarga.',
+          );
+        })
+        .catch(() => {
+          setPaidVerifyError(
+            'No se pudo verificar el pago. Si ya pagaste, tu trabajo aparecerá en breve.',
+          );
+        })
+        .finally(() => setPaidVerifying(false));
+      return;
+    }
+
+    if (returned.kind === 'verify') {
+      restorePending();
+      const jobIdParam = returned.jobId;
+      const paymentId = returned.paymentId;
       if (jobIdParam) setCheckoutJobId(jobIdParam);
 
       setView('paid');
@@ -384,8 +455,8 @@ export function App() {
           'Falta referencia de pago. Si ya pagaste, revisa tu correo o inicia sesión.',
         );
       }
-    } else if (pago === 'fail') {
-      setBookingError('El pago no se completó. Puedes reintentar desde la búsqueda.');
+    } else if (returned.kind === 'failed') {
+      setBookingError(returned.message);
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -503,7 +574,7 @@ export function App() {
     }
     setBookingError(null);
 
-    // Sin sesión: formulario de datos + redirect Transbank (única excepción).
+    // Sin sesión: datos + Webpay. Con sesión: cobro a la tarjeta de la app.
     if (!profile) {
       setShowGuestCheckout(true);
       return;
@@ -533,17 +604,25 @@ export function App() {
 
   const payWithWebpay = async () => {
     if (!checkoutJobId || !selectedWorker) {
-      throw new Error('Falta el trabajo para iniciar Webpay.');
+      throw new Error('Falta el trabajo para confirmar el pedido.');
     }
-    const session = await createWebpaySession(supabase, {
+    sessionStorage.setItem(
+      'mwa-pending-checkout',
+      JSON.stringify({
+        jobId: checkoutJobId,
+        worker: selectedWorker,
+        serviceTitle: serviceMatch?.categoryName,
+        amount: selectedWorker.pricePerVisit,
+      }),
+    );
+    const charged = await chargeSavedCard(supabase, {
       jobId: checkoutJobId,
       amountClp: selectedWorker.pricePerVisit,
     });
-    return {
-      redirectUrl: session.redirectUrl,
-      paymentId: session.paymentId,
-      token: session.token,
-    };
+    if (charged.charged) {
+      await openJobForWorker(supabase, checkoutJobId);
+    }
+    return charged;
   };
 
   const submitGuestCheckout = async (data: {
@@ -626,6 +705,8 @@ export function App() {
           orderId={checkoutJobId ?? 'sin-pedido'}
 
           profileName={profile?.name}
+
+          paymentNotice={paymentNotice}
 
           onBack={() => setView('search')}
 
@@ -750,7 +831,11 @@ export function App() {
 
             onPayWithWebpay={payWithWebpay}
 
-            onSuccess={() => void confirmBooking()}
+            onSuccess={(details) => {
+              sessionStorage.removeItem('mwa-pending-checkout');
+              setPaymentNotice(details.notice);
+              void confirmBooking();
+            }}
 
           />
 

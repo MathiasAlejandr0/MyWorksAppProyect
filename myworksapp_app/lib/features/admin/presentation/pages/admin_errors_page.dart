@@ -12,6 +12,27 @@ import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../widgets/admin_search_field.dart';
 
+String _recordedOn(String? platform) {
+  switch (platform) {
+    case 'android':
+      return 'Registrado en Android';
+    case 'ios':
+      return 'Registrado en iPhone';
+    case 'windows':
+      return 'Registrado en Windows';
+    case 'macos':
+      return 'Registrado en Mac';
+    case 'linux':
+      return 'Registrado en Linux';
+    case 'web':
+      return 'Registrado en el navegador';
+    default:
+      return platform == null || platform.isEmpty
+          ? 'Sin dispositivo'
+          : 'Registrado en $platform';
+  }
+}
+
 class AdminErrorsPage extends ConsumerStatefulWidget {
   const AdminErrorsPage({super.key});
 
@@ -224,9 +245,9 @@ class _ErrorLogsTab extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              subtitle: Text(
-                '${log.errorType} · ${log.status} · ${log.platform ?? '—'}',
-              ),
+                subtitle: Text(
+                  '${log.errorType} · ${log.status} · ${_recordedOn(log.platform)}',
+                ),
               children: [
                 if (log.stackTrace != null)
                   Padding(

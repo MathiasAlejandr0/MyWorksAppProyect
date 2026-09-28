@@ -4,13 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/price_quote.dart';
 import '../providers/auth_provider.dart';
-import '../providers/payment_gateway_provider.dart';
-import '../services/payment_gateway_port.dart';
+import '../providers/service_providers.dart';
 import '../theme/app_colors.dart';
+import '../../features/payments/presentation/pages/card_enrollment_page.dart';
 import 'pricing_quote_card.dart';
-import 'webpay_webview_page.dart';
 
-/// Checkout comercial: Webpay en WebView in-app (sin browser externo).
+/// Checkout de la app: cobra la tarjeta inscrita. Si no hay, la pide una vez.
 class EscrowCheckoutSheet extends ConsumerStatefulWidget {
   const EscrowCheckoutSheet({
     super.key,
@@ -18,7 +17,6 @@ class EscrowCheckoutSheet extends ConsumerStatefulWidget {
     required this.quote,
     this.workerName,
     this.serviceName,
-    this.gateway,
   });
 
   final String jobId;
@@ -26,16 +24,12 @@ class EscrowCheckoutSheet extends ConsumerStatefulWidget {
   final String? workerName;
   final String? serviceName;
 
-  /// Override opcional (tests); si es null se usa [paymentGatewayProvider].
-  final PaymentGatewayPort? gateway;
-
   static Future<bool> show(
     BuildContext context, {
     required String jobId,
     required PriceQuote quote,
     String? workerName,
     String? serviceName,
-    PaymentGatewayPort? gateway,
   }) async {
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -50,7 +44,6 @@ class EscrowCheckoutSheet extends ConsumerStatefulWidget {
           quote: quote,
           workerName: workerName,
           serviceName: serviceName,
-          gateway: gateway,
         ),
       ),
     );
@@ -65,58 +58,56 @@ class EscrowCheckoutSheet extends ConsumerStatefulWidget {
 class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
   bool _processing = false;
 
-  Future<void> _payWithWebpay() async {
+  Future<void> _payWithCard() async {
     setState(() => _processing = true);
     try {
       final user = ref.read(authProvider).user;
       if (user == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Debes iniciar sesión para pagar con Webpay'),
-          ),
+          const SnackBar(content: Text('Debes iniciar sesión para confirmar el pedido')),
         );
         return;
       }
 
-      final PaymentGatewayPort gateway =
-          widget.gateway ?? ref.read(paymentGatewayProvider);
-      final hold = await gateway.authorizeHold(
-        jobId: widget.jobId,
-        amountClp: widget.quote.totalClp,
-        userId: user.id,
-      );
-
-      if (!hold.success) {
+      if (kIsWeb) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
-              hold.message ?? 'No se pudo iniciar Webpay',
+              'Inscribe la tarjeta en la app. Con esa tarjeta se cobra el pedido.',
             ),
           ),
         );
         return;
       }
 
-      final url = hold.redirectUrl;
-      if (url != null && url.isNotEmpty) {
-        if (!mounted) return;
-        final paid = await WebpayWebViewPage.open(
-          context,
-          paymentUrl: url,
+      final payments = ref.read(paymentServiceProvider);
+      var charge = await payments.chargeSavedCard(
+        jobId: widget.jobId,
+        amount: widget.quote.totalClp.toDouble(),
+      );
+      if (!mounted) return;
+      if (charge.needsCard) {
+        final enrolled = await CardEnrollmentPage.open(context);
+        if (!mounted || !enrolled) return;
+        charge = await payments.chargeSavedCard(
+          jobId: widget.jobId,
+          amount: widget.quote.totalClp.toDouble(),
         );
-        if (!mounted) return;
-        Navigator.of(context).pop(paid);
+      }
+      if (!mounted) return;
+      if (!charge.charged) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('La tarjeta no quedó lista para este cobro.')),
+        );
         return;
       }
-
-      if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al iniciar pago: $e')),
+        SnackBar(content: Text('No se pudo cobrar la tarjeta: $e')),
       );
     } finally {
       if (mounted) setState(() => _processing = false);
@@ -125,10 +116,6 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
 
   @override
   Widget build(BuildContext context) {
-    const integration = !kReleaseMode ||
-        String.fromEnvironment('PAYMENTS_MODE', defaultValue: 'integration') !=
-            'production';
-
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -148,7 +135,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Pago con Webpay',
+              'Confirmar pedido',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -157,23 +144,21 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
             Material(
               color: AppColors.brandOrange.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
-              child: Padding(
+              child: const Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.lock_outline,
                       size: 16,
                       color: AppColors.brandOrange,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        integration
-                            ? 'Ambiente de integración Transbank — pagas dentro de la app'
-                            : 'Pago protegido con Webpay Plus — sin salir a otro navegador',
-                        style: const TextStyle(
+                        'Se descuenta de la tarjeta inscrita en la app. Si es la primera vez, Transbank la pide una sola vez.',
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.brandOrange,
                         ),
@@ -191,7 +176,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
             ),
             const SizedBox(height: 20),
             FilledButton.icon(
-              onPressed: _processing ? null : _payWithWebpay,
+              onPressed: _processing ? null : _payWithCard,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.brandOrange,
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -209,7 +194,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
               label: Text(
                 _processing
                     ? 'Conectando…'
-                    : 'Pagar con Webpay · \$${widget.quote.totalClp}',
+                    : 'Confirmar · \$${widget.quote.totalClp}',
               ),
             ),
             TextButton(

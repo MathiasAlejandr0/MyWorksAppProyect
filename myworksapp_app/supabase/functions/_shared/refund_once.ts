@@ -1,4 +1,4 @@
-import { tbkRefund } from "./tbk.ts";
+import { tbkOneclickRefund, tbkRefund } from "./tbk.ts";
 
 type RefundAdmin = {
   from: (table: string) => any;
@@ -15,7 +15,9 @@ export async function refundHeldPaymentOnce(
 ): Promise<{ status: "already" | "refunded"; payment: Record<string, unknown> }> {
   const { data: payment, error } = await admin
     .from("pagos")
-    .select("id, monto, token_tbk, estado, id_trabajo, reembolso_solicitado_en")
+    .select(
+      "id, monto, token_tbk, buy_order, orden_detalle_oneclick, metodo_pago, estado, id_trabajo, reembolso_solicitado_en",
+    )
     .eq("id", paymentId)
     .maybeSingle();
   if (error || !payment) throw new Error("Pago no encontrado");
@@ -50,7 +52,13 @@ export async function refundHeldPaymentOnce(
       }
       throw new Error("Reembolso en curso. Reintenta en unos segundos.");
     }
-    if (!payment.token_tbk) {
+    const oneclickDetail = String(
+      payment.orden_detalle_oneclick || payment.token_tbk || "",
+    );
+    const canRefund = payment.metodo_pago === "oneclick"
+      ? Boolean(payment.buy_order) && Boolean(oneclickDetail)
+      : Boolean(payment.token_tbk);
+    if (!canRefund) {
       await admin
         .from("pagos")
         .update({ reembolso_solicitado_en: null })
@@ -58,7 +66,20 @@ export async function refundHeldPaymentOnce(
       throw new Error("El cobro no tiene token de Transbank para devolverlo a la tarjeta");
     }
     try {
-      await tbkRefund(String(payment.token_tbk), Number(payment.monto));
+      if (payment.metodo_pago === "oneclick") {
+        const buyOrder = String(payment.buy_order || "");
+        const detail = oneclickDetail;
+        if (!buyOrder || !detail) {
+          throw new Error("El cobro Oneclick no tiene orden para devolverlo a la tarjeta");
+        }
+        await tbkOneclickRefund({
+          buyOrder,
+          detailBuyOrder: detail,
+          amount: Number(payment.monto),
+        });
+      } else {
+        await tbkRefund(String(payment.token_tbk), Number(payment.monto));
+      }
     } catch (e) {
       await admin
         .from("pagos")

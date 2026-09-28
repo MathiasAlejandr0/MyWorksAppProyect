@@ -34,3 +34,13 @@ verify_jwt = true
 # Pedido urgencia sin sesión (web): valida datos + crea trabajo + Webpay.
 [functions.guest-checkout]
 verify_jwt = false
+
+[functions.oneclick-charge]
+verify_jwt = true
+
+[functions.oneclick-return]
+verify_jwt = false
+
+# La app abre esta URL. El token de Transbank no sale en el JSON del cliente.
+[functions.oneclick-handoff]
+verify_jwt = false

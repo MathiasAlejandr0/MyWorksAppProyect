@@ -323,6 +323,91 @@ class PaymentService {
     return payment != null;
   }
 
+  Future<bool> hasSavedCard() async {
+    final sessionId = supabase.auth.currentUser?.id;
+    if (sessionId == null || sessionId.isEmpty) return false;
+    final response = await supabase.functions.invoke(
+      'oneclick-charge',
+      body: {'action': 'status'},
+    );
+    final data = _asMap(response.data);
+    if (data['error'] != null) {
+      throw AppError.validation(data['error'].toString());
+    }
+    return data['enrolled'] == true;
+  }
+
+  /// Primera vez en la app: URL del servidor que abre Transbank. Vacía si ya hay tarjeta.
+  Future<String> startCardEnrollment() async {
+    final sessionId = supabase.auth.currentUser?.id;
+    if (sessionId == null || sessionId.isEmpty) {
+      throw AppError.authentication('Debes iniciar sesión para guardar la tarjeta');
+    }
+    try {
+      final response = await supabase.functions.invoke(
+        'oneclick-charge',
+        body: {'action': 'enroll'},
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null) {
+        throw AppError.validation(data['error'].toString());
+      }
+      if (data['enrolled'] == true) return '';
+      final handoff = data['handoffUrl']?.toString() ?? '';
+      if (!handoff.startsWith('https://')) {
+        throw AppError.validation('No se pudo iniciar la inscripción de la tarjeta');
+      }
+      return handoff;
+    } catch (e) {
+      if (e is AppError) rethrow;
+      AppLogger.e('Error inscribiendo tarjeta', e);
+      throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
+  /// Cobra la tarjeta Oneclick ya inscrita.
+  /// Si todavía no hay tarjeta, [needsCard] pide inscribirla en la app.
+  Future<({bool charged, bool needsCard})> chargeSavedCard({
+    required String jobId,
+    required double amount,
+  }) async {
+    if (jobId.trim().isEmpty) {
+      throw AppError.validation('Falta el identificador del trabajo');
+    }
+    if (amount <= 0) {
+      throw AppError.validation('El monto a pagar debe ser mayor a cero');
+    }
+    final sessionId = supabase.auth.currentUser?.id;
+    if (sessionId == null || sessionId.isEmpty) {
+      throw AppError.authentication('Debes iniciar sesión para pagar');
+    }
+
+    try {
+      final response = await supabase.functions.invoke(
+        'oneclick-charge',
+        body: {
+          'jobId': jobId,
+          'amountClp': amount.round(),
+        },
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null) {
+        throw AppError.validation(data['error'].toString());
+      }
+      if (data['charged'] == true) {
+        return (charged: true, needsCard: false);
+      }
+      if (data['needsCard'] == true) {
+        return (charged: false, needsCard: true);
+      }
+      throw AppError.validation('Respuesta de pago inválida');
+    } catch (e) {
+      if (e is AppError) rethrow;
+      AppLogger.e('Error cobrando tarjeta', e);
+      throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
   /// Abre Webpay Plus por `webpay-create` (handoff, sin token al cliente).
   Future<WebpayTransactionResponse> initiateWebpayPayment({
     required String jobId,

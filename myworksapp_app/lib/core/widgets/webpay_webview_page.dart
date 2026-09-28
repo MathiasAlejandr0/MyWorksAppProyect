@@ -7,19 +7,30 @@ import '../theme/app_colors.dart';
 class WebpayWebViewPage extends StatefulWidget {
   const WebpayWebViewPage({
     super.key,
-    required this.paymentUrl,
+    this.paymentUrl,
+    this.html,
     this.title = 'Pago Webpay',
   });
 
-  final String paymentUrl;
+  final String? paymentUrl;
+  final String? html;
   final String title;
 
-  /// Abre la URL de handoff y espera retorno (deep link o post-commit).
-  static Future<bool> open(BuildContext context, {required String paymentUrl}) async {
+  /// Abre la URL de handoff, o un HTML propio que hace POST a Transbank.
+  static Future<bool> open(
+    BuildContext context, {
+    String? paymentUrl,
+    String? html,
+    String title = 'Pago Webpay',
+  }) async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => WebpayWebViewPage(paymentUrl: paymentUrl),
+        builder: (_) => WebpayWebViewPage(
+          paymentUrl: paymentUrl,
+          html: html,
+          title: title,
+        ),
       ),
     );
     return result == true;
@@ -39,11 +50,15 @@ class _WebpayWebViewPageState extends State<WebpayWebViewPage> {
         lower.contains('pago=ok') ||
         lower.contains('pago=fail') ||
         lower.contains('pago=retorno') ||
+        lower.contains('tarjeta=ok') ||
+        lower.contains('tarjeta=fail') ||
         lower.contains('/pago/retorno');
   }
 
   bool _isApprovedReturn(String url) {
     final lower = url.toLowerCase();
+    if (lower.contains('tarjeta=fail')) return false;
+    if (lower.contains('tarjeta=ok')) return true;
     if (lower.contains('ok=0') || lower.contains('pago=fail')) return false;
     if (lower.contains('ok=1') || lower.contains('pago=ok')) return true;
     // Commit HTML embebido: tratamos llegada al commit como pendiente de mensaje;
@@ -82,8 +97,16 @@ class _WebpayWebViewPageState extends State<WebpayWebViewPage> {
             }
           },
         ),
-      )
-      ..loadRequest(Uri.parse(widget.paymentUrl));
+      );
+    final html = widget.html;
+    if (html != null && html.isNotEmpty) {
+      _controller.loadHtmlString(
+        html,
+        baseUrl: 'https://webpay3gint.transbank.cl/',
+      );
+    } else {
+      _controller.loadRequest(Uri.parse(widget.paymentUrl ?? ''));
+    }
   }
 
   @override

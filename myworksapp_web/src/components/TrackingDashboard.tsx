@@ -24,6 +24,7 @@ interface TrackingDashboardProps {
   etaMinutes?: number | null;
   distanceKm?: number | null;
   profileName?: string;
+  paymentNotice?: string | null;
   onBack: () => void;
   onOpenChat: () => void;
 }
@@ -40,6 +41,7 @@ export function TrackingDashboard({
   etaMinutes,
   distanceKm,
   profileName,
+  paymentNotice,
   onBack,
   onOpenChat,
 }: TrackingDashboardProps) {
@@ -160,6 +162,11 @@ export function TrackingDashboard({
         </aside>
 
         <div className="tracking-map-full">
+          {paymentNotice ? (
+            <p className="tracking-payment-banner" role="status">
+              {paymentNotice}
+            </p>
+          ) : null}
           <div className="tracking-map-bg">
             <div className="tracking-map-labels">
               <span style={{ top: '22%', left: '38%' }}>PROVIDENCIA</span>

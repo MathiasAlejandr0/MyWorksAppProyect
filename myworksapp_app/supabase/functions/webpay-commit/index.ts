@@ -1,4 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { openJobAfterHold } from "../_shared/open_job_after_hold.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { tbkCommit } from "../_shared/tbk.ts";
 import { webPostMessageOrigins } from "../_shared/security.ts";
@@ -28,19 +29,26 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "token_ws ausente" }, 400);
     }
 
+    const admin = serviceClient();
+    const { data: payment } = await admin
+      .from("pagos")
+      .select("id, id_trabajo, monto, estado, metodo_pago")
+      .eq("token_tbk", token)
+      .maybeSingle();
+
+    if (!payment) {
+      return jsonResponse(req, { error: "Pago no encontrado" }, 404);
+    }
+    if (payment.metodo_pago === "oneclick") {
+      return jsonResponse(req, { error: "Este pago no es Webpay" }, 409);
+    }
+
     const wantsJson = (req.headers.get("content-type") || "").includes(
       "application/json",
     );
 
-    const admin = serviceClient();
-    let { data: payment } = await admin
-      .from("pagos")
-      .select("id, id_trabajo, monto, estado")
-      .eq("token_tbk", token)
-      .maybeSingle();
-
-    const alreadyHeld = payment?.estado === "retenido" ||
-      payment?.estado === "liberado";
+    const alreadyHeld = payment.estado === "retenido" ||
+      payment.estado === "liberado";
     let commit: Record<string, unknown> = {};
     if (!alreadyHeld) {
       commit = await tbkCommit(token);
@@ -50,19 +58,6 @@ Deno.serve(async (req) => {
     const buyOrder = String(commit.buy_order || "");
     const approved = alreadyHeld ||
       responseCode === 0 || status.toUpperCase() === "AUTHORIZED";
-
-    if (!payment && buyOrder) {
-      const fb = await admin
-        .from("pagos")
-        .select("id, id_trabajo, monto")
-        .eq("buy_order", buyOrder)
-        .maybeSingle();
-      payment = fb.data;
-    }
-
-    if (!payment) {
-      return jsonResponse(req, { error: "Pago no encontrado" }, 404);
-    }
 
     if (payment.estado !== "liberado") {
       await admin
@@ -80,13 +75,7 @@ Deno.serve(async (req) => {
 
     let passwordSetupUrl = "";
     if (approved && payment.estado !== "liberado") {
-      await admin
-        .from("trabajos")
-        .update({
-          estado_pago: "retenido",
-          actualizado_en: new Date().toISOString(),
-        })
-        .eq("id", payment.id_trabajo);
+      await openJobAfterHold(admin, payment.id_trabajo);
 
       const { data: job } = await admin
         .from("trabajos")

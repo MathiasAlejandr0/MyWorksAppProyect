@@ -22,6 +22,8 @@ import '../../../../core/widgets/design_system/auth_soft_background.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../payments/presentation/pages/card_enrollment_page.dart';
+import '../../../../core/providers/service_providers.dart';
 
 class UserHomePage extends ConsumerStatefulWidget {
   const UserHomePage({super.key});
@@ -46,6 +48,21 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
   void initState() {
     super.initState();
     _servicesFuture = _serviceRepository.getMainServices();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _askForCardOnce();
+    });
+  }
+
+  Future<void> _askForCardOnce() async {
+    final user = ref.read(authProvider).user;
+    if (!mounted || user == null || user.role != AppConstants.roleUser) return;
+    try {
+      final enrolled = await ref.read(paymentServiceProvider).hasSavedCard();
+      if (!mounted || enrolled) return;
+      await CardEnrollmentPage.open(context);
+    } catch (_) {
+      // Sin la función desplegada el inicio sigue usable.
+    }
   }
 
   List<GuidedTourStep> get _homeTourSteps => [
