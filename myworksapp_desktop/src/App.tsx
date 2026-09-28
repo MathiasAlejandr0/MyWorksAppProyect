@@ -43,6 +43,7 @@ const NAV_ITEMS = [
 export function App() {
   const { profile, loading, logout, needsMfa } = useAuth();
   const [activeRoleWorkspace, setActiveRoleWorkspace] = useState<number>(0);
+  const [showProfile, setShowProfile] = useState(false);
 
   if (loading) {
     return <SessionLoadingShell />;
@@ -99,7 +100,7 @@ export function App() {
             </div>
             <ChevronDown size={16} className="sidebar-profile-chevron" aria-hidden />
           </div>
-          <button type="button" className="sidebar-profile-btn">
+          <button type="button" className="sidebar-profile-btn" onClick={() => setShowProfile(true)}>
             <UserCheck size={14} /> Ver perfil completo
           </button>
           <button
@@ -145,6 +146,42 @@ export function App() {
           </Suspense>
         </div>
       </main>
+      {showProfile && (
+        <div
+          role="presentation"
+          onClick={() => setShowProfile(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(8, 16, 32, 0.55)',
+            display: 'grid',
+            placeItems: 'center',
+            zIndex: 40,
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-profile-title"
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              background: '#0B1F3A',
+              color: '#fff',
+              padding: 24,
+              borderRadius: 16,
+              minWidth: 320,
+              maxWidth: 420,
+            }}
+          >
+            <h2 id="admin-profile-title" style={{ margin: '0 0 8px' }}>{profile.name}</h2>
+            <p style={{ margin: '0 0 4px' }}>{profile.email}</p>
+            <p style={{ margin: '0 0 16px', opacity: 0.8 }}>Rol: {profile.role}</p>
+            <button type="button" className="sidebar-logout-btn" onClick={() => setShowProfile(false)}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

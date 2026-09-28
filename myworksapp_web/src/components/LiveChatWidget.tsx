@@ -19,8 +19,8 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
     {
       id: 'm1',
       sender: 'worker',
-      text: `Hola, soy ${workerName}. Recibí tu solicitud. ¿En qué parte del domicilio necesitas la atención?`,
-      timestamp: '14:30',
+      text: 'La conversación con el profesional está en la app. Este panel no le envía mensajes.',
+      timestamp: '',
     },
   ]);
   const [inputText, setInputText] = useState('');
@@ -43,18 +43,6 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
 
     setMessages((prev) => [...prev, newMsg]);
     setInputText('');
-
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: 'worker',
-          text: 'Gracias. En la app real el profesional confirmaría horario y detalles por aquí.',
-          timestamp: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
-    }, 1200);
   };
 
   return (
@@ -64,9 +52,7 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
           <img src={workerPhoto} alt="" />
           <div>
             <strong>{workerName}</strong>
-            <span className="chat-widget-online">
-              <span className="chat-online-dot" /> En línea
-            </span>
+            <span className="chat-widget-online">No llega al profesional</span>
           </div>
         </div>
         <button type="button" onClick={onClose} className="chat-widget-close" aria-label="Cerrar chat">

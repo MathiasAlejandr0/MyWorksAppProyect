@@ -3,21 +3,18 @@ import {
   Search,
   Filter,
   CheckCircle2,
-  Send,
   ShieldAlert,
   Lock,
   Shield,
-  ChevronDown,
   Bell,
   HelpCircle,
   ArrowLeftRight,
-  Paperclip,
 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { JobScopeAdjustmentModal } from './JobScopeAdjustmentModal';
 import { TableRowsSkeleton } from './LoadingState';
-import { fetchOpenDisputes, updateDisputeStatus } from '@myworksapp/shared';
+import { fetchOpenDisputes } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 import { queryKeys } from '../queryClient';
 
@@ -32,13 +29,8 @@ interface Ticket {
 }
 
 interface SupportWorkspaceProps {
-  adminId: string;
+  adminId?: string;
 }
-
-const DEMO_MESSAGES = {
-  client: 'El trabajo entregado no cumple con los requisitos acordados en el contrato. Solicito revisión inmediata.',
-  worker: 'El alcance original no incluía las revisiones adicionales solicitadas. Adjunto evidencia del acuerdo inicial.',
-};
 
 function mapDisputesToTickets(
   disputes: Awaited<ReturnType<typeof fetchOpenDisputes>>,
@@ -55,12 +47,12 @@ function mapDisputesToTickets(
 }
 
 export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
+  void adminId;
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [scopeModalTicket, setScopeModalTicket] = useState<Ticket | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [messageInput, setMessageInput] = useState('');
 
   const ticketsQuery = useQuery({
     queryKey: queryKeys.openDisputes,
@@ -73,20 +65,35 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
   const resolveMutation = useMutation({
     mutationFn: async ({
       ticketId,
+      decision,
       resolution,
     }: {
       ticketId: string;
+      decision: 'liberar' | 'reembolsar';
       resolution: string;
     }) => {
-      await updateDisputeStatus(supabase, ticketId, 'resuelta', resolution, adminId);
+      const { data, error } = await supabase.functions.invoke('webpay-resolve-dispute', {
+        body: { disputeId: ticketId, decision, resolution },
+      });
+      if (error) {
+        let message = 'No se pudo resolver la disputa.';
+        const context = (error as { context?: Response }).context;
+        if (context) {
+          try {
+            const body = await context.json() as { error?: string };
+            if (body?.error) message = body.error;
+          } catch {
+            message = error.message || message;
+          }
+        }
+        throw new Error(message);
+      }
+      const payload = data as { error?: string } | null;
+      if (payload?.error) throw new Error(payload.error);
       return ticketId;
     },
-    onSuccess: (ticketId) => {
-      queryClient.setQueryData<Ticket[]>(queryKeys.openDisputes, (prev) =>
-        (prev ?? []).map((t) =>
-          t.id === ticketId ? { ...t, status: 'Resolved' } : t,
-        ),
-      );
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.openDisputes });
     },
   });
 
@@ -106,21 +113,24 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
       t.worker.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const resolveTicket = async (ticketId: string, action: 'refund' | 'payout' | 'split') => {
+  const resolveTicket = async (ticketId: string, decision: 'liberar' | 'reembolsar') => {
     const resolution =
-      action === 'refund'
-        ? 'Reembolso total al cliente'
-        : action === 'payout'
-          ? 'Pago liberado al profesional'
-          : 'Resolución parcial 50/50';
+      decision === 'reembolsar'
+        ? 'Devolución a la tarjeta del cliente'
+        : 'Liberación al profesional';
 
     try {
-      await resolveMutation.mutateAsync({ ticketId, resolution });
-      setNotification(`Disputa actualizada: ${resolution}.`);
+      await resolveMutation.mutateAsync({ ticketId, decision, resolution });
+      setNotification(
+        decision === 'reembolsar'
+          ? 'El pago volvió a la tarjeta del cliente.'
+          : 'El pago quedó liberado al profesional.',
+      );
+      setSelectedId(null);
       setTimeout(() => setNotification(null), 4000);
-    } catch {
-      setNotification('No se pudo resolver la disputa.');
-      setTimeout(() => setNotification(null), 4000);
+    } catch (e) {
+      setNotification(e instanceof Error ? e.message : 'No se pudo resolver la disputa.');
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -152,7 +162,12 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
           <Search size={16} />
 
-          <input type="search" placeholder="Buscar tickets, usuarios o disputas…" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar tickets, usuarios o disputas…"
+          />
 
           <kbd>⌘ K</kbd>
 
@@ -163,8 +178,6 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
           <button type="button" className="icon-btn support-notify" aria-label="Notificaciones">
 
             <Bell size={18} />
-
-            <span className="notify-badge">3</span>
 
           </button>
 
@@ -230,7 +243,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
             </div>
 
-            <span className="support-tier">Nivel de servicio: Platino</span>
+            <span className="support-tier">Disputas leídas de la base</span>
 
             <span className="support-plan"><Shield size={12} /> Plan de operación</span>
 
@@ -268,7 +281,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
           <div className="support-list-toolbar">
 
-            <span>Tickets de Disputa <em>{filtered.length || 128}</em></span>
+            <span>Tickets de disputa <em>{filtered.length}</em></span>
 
             <div className="support-list-search">
 
@@ -496,65 +509,20 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
                       <strong>{selectedTicket.client}</strong>
 
-                      <span>Hace 2h</span>
+                      <span>{selectedTicket.date}</span>
 
                     </div>
 
                   </div>
 
-                  <p>{DEMO_MESSAGES.client}</p>
-
-                  <a className="support-attachment" href="#"><Paperclip size={12} /> evidencia_cliente.pdf</a>
-
+                  <p>{selectedTicket.issue}</p>
+                  <p>La conversación entre cliente y profesional está en la app. Aquí solo se decide el pago.</p>
                 </div>
-
-                <div className="support-thread support-thread--worker">
-
-                  <div className="support-thread-head">
-
-                    <span className="support-thread-avatar support-thread-avatar--worker">T</span>
-
-                    <div>
-
-                      <strong>{selectedTicket.worker}</strong>
-
-                      <span>Hace 1h</span>
-
-                    </div>
-
-                  </div>
-
-                  <p>{DEMO_MESSAGES.worker}</p>
-
-                  <a className="support-attachment" href="#"><Paperclip size={12} /> entrega.zip</a>
-
-                </div>
-
               </div>
 
 
 
-              <div className="support-compose">
-
-                <input
-
-                  type="text"
-
-                  value={messageInput}
-
-                  onChange={(e) => setMessageInput(e.target.value)}
-
-                  placeholder="Escribe un mensaje…"
-
-                />
-
-                <button type="button" className="support-send-btn" aria-label="Enviar">
-
-                  <Send size={16} />
-
-                </button>
-
-              </div>
+              <p className="support-compose">El mensaje al cliente no se envía desde esta consola.</p>
 
 
 
@@ -564,7 +532,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
                   <strong>Resolución del pago retenido</strong>
 
-                  <p>Como mediador, decide la distribución de fondos retenidos.</p>
+                  <p>El pago sigue retenido hasta que liberes al profesional o lo devuelvas a la tarjeta.</p>
 
                 </div>
 
@@ -574,21 +542,15 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
                     <>
 
-                      <button type="button" className="btn-escrow-release" onClick={() => resolveTicket(selectedTicket.id, 'payout')}>
+                      <button type="button" className="btn-escrow-release" disabled={resolveMutation.isPending} onClick={() => resolveTicket(selectedTicket.id, 'liberar')}>
 
-                        <Lock size={14} /> LIBERAR FONDOS
-
-                      </button>
-
-                      <button type="button" className="btn-escrow-hold" onClick={() => resolveTicket(selectedTicket.id, 'refund')}>
-
-                        <ShieldAlert size={14} /> RETENER FONDOS
+                        <Lock size={14} /> Liberar al profesional
 
                       </button>
 
-                      <button type="button" className="btn-escrow-more" onClick={() => resolveTicket(selectedTicket.id, 'split')}>
+                      <button type="button" className="btn-escrow-hold" disabled={resolveMutation.isPending} onClick={() => resolveTicket(selectedTicket.id, 'reembolsar')}>
 
-                        Otras acciones <ChevronDown size={14} />
+                        <ShieldAlert size={14} /> Devolver a la tarjeta
 
                       </button>
 

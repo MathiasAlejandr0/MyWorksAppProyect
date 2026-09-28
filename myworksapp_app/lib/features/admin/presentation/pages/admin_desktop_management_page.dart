@@ -54,6 +54,41 @@ class _AdminDesktopManagementPageState extends State<AdminDesktopManagementPage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    if (MediaQuery.sizeOf(context).width < 900) {
+      return Scaffold(
+        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        appBar: AppBar(
+          title: const Text('Consola de escritorio'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(AppConstants.routeUserHome);
+              }
+            },
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Esta consola está armada para el programa de escritorio. En el teléfono usa el panel de administración.',
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () => context.go(AppConstants.routeAdminDashboard),
+                child: const Text('Abrir panel de administración'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       body: Row(

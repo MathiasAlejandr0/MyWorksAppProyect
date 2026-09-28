@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Clock, Phone } from 'lucide-react';
+import { MapPin, Navigation, Phone } from 'lucide-react';
 
 interface LiveGpsTrackingMapProps {
   workerName: string;
@@ -7,20 +6,7 @@ interface LiveGpsTrackingMapProps {
   etaMinutes: number;
 }
 
-export function LiveGpsTrackingMap({ workerName, etaMinutes: initialEta }: LiveGpsTrackingMapProps) {
-  const [eta, setEta] = useState(initialEta);
-  const [distanceKm, setDistanceKm] = useState(1.4);
-  const [progress, setProgress] = useState(35);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setProgress((prev) => (prev >= 95 ? 95 : prev + 4));
-      setDistanceKm((prev) => Math.max(0.2, Number((prev - 0.08).toFixed(1))));
-      setEta((prev) => Math.max(1, prev - 1));
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
+export function LiveGpsTrackingMap({ workerName }: LiveGpsTrackingMapProps) {
   return (
     <div className="tracking-map">
       <p className="tracking-map-disclaimer">
@@ -54,12 +40,9 @@ export function LiveGpsTrackingMap({ workerName, etaMinutes: initialEta }: LiveG
           <MapPin size={24} color="#E23D35" fill="#E23D35" />
         </div>
 
-        <div
-          className="tracking-map-worker"
-          style={{ left: `${Math.min(progress, 72)}%` }}
-        >
+        <div className="tracking-map-worker">
           <div className="tracking-map-label tracking-map-label-worker">
-            {workerName} ({distanceKm} km)
+            {workerName}
           </div>
           <div className="tracking-map-dot" />
         </div>
@@ -67,15 +50,9 @@ export function LiveGpsTrackingMap({ workerName, etaMinutes: initialEta }: LiveG
 
       <div className="tracking-stats">
         <div className="tracking-stat">
-          <Clock size={16} color="#F0782A" />
-          <div className="tracking-stat-value">{eta} min</div>
-          <span className="tracking-stat-label">Referencia</span>
-        </div>
-
-        <div className="tracking-stat">
           <Navigation size={16} color="#F0782A" />
-          <div className="tracking-stat-value">{distanceKm} km</div>
-          <span className="tracking-stat-label">Distancia</span>
+          <div className="tracking-stat-value">Sin GPS</div>
+          <span className="tracking-stat-label">Ubicación en vivo</span>
         </div>
 
         <div className="tracking-stat tracking-stat-action">

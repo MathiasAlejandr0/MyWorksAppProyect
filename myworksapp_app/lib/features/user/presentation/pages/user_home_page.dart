@@ -228,7 +228,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                                 const SizedBox(height: 12),
                                 _AdminConsoleTile(
                                   onTap: () => context.push(
-                                    AppConstants.routeAdminDesktopHub,
+                                    AppConstants.routeAdminDashboard,
                                   ),
                                 ),
                               ],
@@ -265,7 +265,18 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                                     ),
                                     const Spacer(),
                                     TextButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _query = '');
+                                        final target = _servicesKey.currentContext;
+                                        if (target != null) {
+                                          Scrollable.ensureVisible(
+                                            target,
+                                            duration: const Duration(milliseconds: 280),
+                                            alignment: 0.05,
+                                          );
+                                        }
+                                      },
                                       style: TextButton.styleFrom(
                                         foregroundColor: AppColors.brandOrange,
                                         padding: EdgeInsets.zero,
