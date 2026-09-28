@@ -28,19 +28,28 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "token_ws ausente" }, 400);
     }
 
-    const commit = await tbkCommit(token);
-    const responseCode = Number(commit.response_code ?? -1);
-    const status = String(commit.status || "");
-    const buyOrder = String(commit.buy_order || "");
-    const approved =
-      responseCode === 0 || status.toUpperCase() === "AUTHORIZED";
+    const wantsJson = (req.headers.get("content-type") || "").includes(
+      "application/json",
+    );
 
     const admin = serviceClient();
     let { data: payment } = await admin
       .from("pagos")
-      .select("id, id_trabajo, monto")
+      .select("id, id_trabajo, monto, estado")
       .eq("token_tbk", token)
       .maybeSingle();
+
+    const alreadyHeld = payment?.estado === "retenido" ||
+      payment?.estado === "liberado";
+    let commit: Record<string, unknown> = {};
+    if (!alreadyHeld) {
+      commit = await tbkCommit(token);
+    }
+    const responseCode = Number(commit.response_code ?? (alreadyHeld ? 0 : -1));
+    const status = String(commit.status || (alreadyHeld ? "AUTHORIZED" : ""));
+    const buyOrder = String(commit.buy_order || "");
+    const approved = alreadyHeld ||
+      responseCode === 0 || status.toUpperCase() === "AUTHORIZED";
 
     if (!payment && buyOrder) {
       const fb = await admin
@@ -52,24 +61,25 @@ Deno.serve(async (req) => {
     }
 
     if (!payment) {
-      // No filtrar payload TBK al cliente
       return jsonResponse(req, { error: "Pago no encontrado" }, 404);
     }
 
-    // Webpay Plus commit = captura en comercio. Escrow de negocio = retenido.
-    await admin
-      .from("pagos")
-      .update({
-        estado: approved ? "retenido" : "pendiente",
-        autorizado_en: approved ? new Date().toISOString() : null,
-        id_transaccion: String(
-          commit.authorization_code || buyOrder || token,
-        ),
-        actualizado_en: new Date().toISOString(),
-      })
-      .eq("id", payment.id);
+    if (payment.estado !== "liberado") {
+      await admin
+        .from("pagos")
+        .update({
+          estado: approved ? "retenido" : "pendiente",
+          autorizado_en: approved ? new Date().toISOString() : null,
+          id_transaccion: String(
+            commit.authorization_code || buyOrder || token,
+          ),
+          actualizado_en: new Date().toISOString(),
+        })
+        .eq("id", payment.id);
+    }
 
-    if (approved) {
+    let passwordSetupUrl = "";
+    if (approved && payment.estado !== "liberado") {
       await admin
         .from("trabajos")
         .update({
@@ -77,7 +87,44 @@ Deno.serve(async (req) => {
           actualizado_en: new Date().toISOString(),
         })
         .eq("id", payment.id_trabajo);
+
+      const { data: job } = await admin
+        .from("trabajos")
+        .select("id_usuario")
+        .eq("id", payment.id_trabajo)
+        .maybeSingle();
+      const ownerId = job?.id_usuario ? String(job.id_usuario) : "";
+      if (ownerId) {
+        const { data: owner } = await admin.auth.admin.getUserById(ownerId);
+        const meta = owner.user?.user_metadata ?? {};
+        const guest = meta.guest_checkout === true || meta.guest_checkout === "true";
+        const email = owner.user?.email ?? "";
+        if (guest && email) {
+          await admin.auth.admin.updateUserById(ownerId, { email_confirm: true });
+          const link = await admin.auth.admin.generateLink({
+            type: "recovery",
+            email,
+          });
+          passwordSetupUrl = link.data?.properties?.action_link ?? "";
+        }
+      }
     }
+
+    if (wantsJson) {
+      return jsonResponse(req, {
+        approved,
+        ok: approved,
+        paymentStatus: approved ? "ESCROW" : "REJECTED",
+        paymentId: payment.id,
+        jobId: payment.id_trabajo,
+      });
+    }
+
+    const passwordHref = passwordSetupUrl
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
 
     const webBase =
       Deno.env.get("WEBPAY_WEB_RETURN_URL") || "http://localhost:5173/";
@@ -112,6 +159,7 @@ Deno.serve(async (req) => {
 </head><body>
 <h1>${approved ? "Pago autorizado y retenido" : "Pago no autorizado"}</h1>
 <p>Puedes volver a My Works App.</p>
+${passwordHref ? `<p><a href="${passwordHref}">Crea tu contraseña para entrar después</a></p>` : ""}
 <p><a id="web" href="${webReturn}">Volver a la web</a> · <a id="app" href="${appReturn}?ok=${approved ? "1" : "0"}&paymentId=${payment.id}&jobId=${payment.id_trabajo}">Abrir app</a></p>
 <script>
 (function(){
@@ -140,7 +188,9 @@ Deno.serve(async (req) => {
       return;
     }
   } catch (e) {}
-  setTimeout(function(){ location.replace(${JSON.stringify(webReturn)}); }, 1200);
+  if (${passwordHref ? "false" : "true"}) {
+    setTimeout(function(){ location.replace(${JSON.stringify(webReturn)}); }, 1200);
+  }
 })();
 </script>
 </body></html>`;

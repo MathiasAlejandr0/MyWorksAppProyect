@@ -1,115 +1,36 @@
-import '../domain/pricing_constants.dart';
-import '../utils/constants.dart';
+import '../database/supabase_db.dart';
 
-/// Transiciones válidas de [JobModel.status] según [pricing_mode].
+/// Los destinos válidos los decide Postgres (`transiciones_trabajo_posibles`).
 class JobTransitionMatrix {
   JobTransitionMatrix._();
 
-  static const _legacy = {
-    AppConstants.jobStatusPending: [
-      AppConstants.jobStatusAccepted,
-      AppConstants.jobStatusCancelled,
-      AppConstants.jobStatusExpired,
-    ],
-    AppConstants.jobStatusAccepted: [
-      AppConstants.jobStatusInProgress,
-      AppConstants.jobStatusCancelled,
-      AppConstants.jobStatusPending,
-    ],
-    AppConstants.jobStatusInProgress: [
-      AppConstants.jobStatusCompleted,
-      PricingConstants.jobAwaitingClientApproval,
-      AppConstants.jobStatusCancelled,
-      AppConstants.jobStatusNoShow,
-      PricingConstants.jobPausedChangeOrder,
-    ],
-    PricingConstants.jobAwaitingClientApproval: [
-      AppConstants.jobStatusCompleted,
-      AppConstants.jobStatusInProgress,
-      AppConstants.jobStatusCancelled,
-    ],
-    AppConstants.jobStatusCompleted: <String>[],
-    AppConstants.jobStatusCancelled: <String>[],
-    AppConstants.jobStatusExpired: <String>[],
-    AppConstants.jobStatusNoShow: <String>[],
-    PricingConstants.jobPausedChangeOrder: [
-      AppConstants.jobStatusInProgress,
-      AppConstants.jobStatusCancelled,
-    ],
-  };
-
-  static const _escrowPreWork = {
-    PricingConstants.jobAwaitingPayment: [
-      AppConstants.jobStatusAccepted,
-      AppConstants.jobStatusCancelled,
-    ],
-    AppConstants.jobStatusAccepted: [
-      AppConstants.jobStatusInProgress,
-      AppConstants.jobStatusCancelled,
-    ],
-  };
-
-  static Map<String, List<String>> forMode(String pricingMode) {
-    switch (pricingMode) {
-      case PricingConstants.modeFixedPrice:
-      case PricingConstants.modeHourlyBlock:
-        return {
-          ..._escrowPreWork,
-          AppConstants.jobStatusInProgress: [
-            AppConstants.jobStatusCompleted,
-            AppConstants.jobStatusCancelled,
-            AppConstants.jobStatusNoShow,
-            PricingConstants.jobPausedChangeOrder,
-          ],
-          AppConstants.jobStatusCompleted: <String>[],
-          AppConstants.jobStatusCancelled: <String>[],
-          AppConstants.jobStatusNoShow: <String>[],
-          PricingConstants.jobPausedChangeOrder: [
-            AppConstants.jobStatusInProgress,
-            AppConstants.jobStatusCancelled,
-          ],
-        };
-      case PricingConstants.modeOpenQuote:
-        return {
-          PricingConstants.jobAwaitingQuotes: [
-            PricingConstants.jobQuoteSelected,
-            AppConstants.jobStatusCancelled,
-            AppConstants.jobStatusExpired,
-          ],
-          PricingConstants.jobQuoteSelected: [
-            PricingConstants.jobAwaitingPayment,
-            AppConstants.jobStatusCancelled,
-          ],
-          ..._escrowPreWork,
-          AppConstants.jobStatusInProgress: [
-            AppConstants.jobStatusCompleted,
-            AppConstants.jobStatusCancelled,
-            AppConstants.jobStatusNoShow,
-            PricingConstants.jobPausedChangeOrder,
-          ],
-          AppConstants.jobStatusCompleted: <String>[],
-          AppConstants.jobStatusCancelled: <String>[],
-          AppConstants.jobStatusExpired: <String>[],
-          AppConstants.jobStatusNoShow: <String>[],
-          PricingConstants.jobPausedChangeOrder: [
-            AppConstants.jobStatusInProgress,
-            AppConstants.jobStatusCancelled,
-          ],
-        };
-      case PricingConstants.modeLegacy:
-      default:
-        return _legacy;
-    }
+  static Future<List<String>> allowedTargets(
+    String pricingMode,
+    String from,
+  ) async {
+    final data = await supabase.rpc(
+      'transiciones_trabajo_posibles',
+      params: {
+        'p_desde': from,
+        'p_modalidad': pricingMode,
+      },
+    );
+    return targetsFromRpc(data);
   }
 
-  static bool isAllowed(String pricingMode, String from, String to) {
-    final map = forMode(pricingMode);
-    final allowed = map[from];
-    if (allowed == null) return false;
-    return allowed.contains(to);
+  static Future<bool> isAllowed(
+    String pricingMode,
+    String from,
+    String to,
+  ) async {
+    final targets = await allowedTargets(pricingMode, from);
+    return targets.contains(to);
   }
+}
 
-  static List<String> allowedTargets(String pricingMode, String from) {
-    return List.unmodifiable(forMode(pricingMode)[from] ?? []);
-  }
+/// Normaliza el array que devuelve el RPC. Sirve para probar el cliente
+/// sin abrir una sesión de base de datos.
+List<String> targetsFromRpc(dynamic data) {
+  if (data is! List) return const [];
+  return data.map((row) => row.toString()).toList();
 }

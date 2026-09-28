@@ -143,7 +143,7 @@ export function PremiumSearchMap({
       <div className="premium-search-map-chrome">
         <div className="premium-search-map-badge">
           {categoryLabel
-            ? `Cerca · ${categoryLabel}`
+            ? `Referencia · ${categoryLabel}`
             : 'Mapa · Santiago (Las Condes)'}
         </div>
         {workers[0] && (

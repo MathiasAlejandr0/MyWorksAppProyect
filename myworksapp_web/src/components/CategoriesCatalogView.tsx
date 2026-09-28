@@ -51,8 +51,8 @@ export function CategoriesCatalogView({
         <p className="section-kicker">CATÁLOGO</p>
         <h1>Todas las categorías</h1>
         <p className="categories-catalog-lead">
-          Elige un oficio. Te mostraremos profesionales cerca de ti en el mapa, con
-          disponibilidad y precio de visita.
+          Elige un oficio. El mapa muestra profesionales de referencia, sin usar tu
+          ubicación, con disponibilidad y precio de visita.
         </p>
 
         <div className="categories-grid categories-grid--catalog">

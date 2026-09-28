@@ -54,7 +54,7 @@ class DisputeSection extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Puedes abrir una disputa. Se congelará la calificación y el pago hasta resolverla.',
+              'Se abre un ticket de atención al cliente. El pago sigue retenido hasta que ellos lo liberen al profesional o lo devuelvan a tu tarjeta.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),

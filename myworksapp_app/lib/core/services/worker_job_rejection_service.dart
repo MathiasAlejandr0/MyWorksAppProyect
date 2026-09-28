@@ -8,6 +8,7 @@ import '../database/repositories/service_repository.dart';
 import '../utils/app_error.dart';
 import '../utils/constants.dart';
 import 'notification_service.dart';
+import 'payment_service.dart';
 import 'user_location_service.dart';
 import 'worker_reputation_service.dart';
 
@@ -51,16 +52,23 @@ class WorkerJobRejectionService {
     metadata['rejected_at'] = DateTime.now().toIso8601String();
     metadata['rejection_reason'] = 'worker_unavailable';
 
-    final updated = await _jobs.rejectPendingJobByWorker(
-      jobId: jobId,
-      workerId: workerId,
-      metadata: metadata,
-    );
-
-    if (!updated) {
-      throw AppError.database(
-        'No se pudo actualizar el trabajo. Intenta de nuevo.',
+    final held = await PaymentService.instance.hasAuthorizedPrimaryPayment(jobId);
+    if (held) {
+      await PaymentService.instance.refundBecauseWorkerRejected(
+        jobId: jobId,
+        metadata: metadata,
       );
+    } else {
+      final updated = await _jobs.rejectPendingJobByWorker(
+        jobId: jobId,
+        workerId: workerId,
+        metadata: metadata,
+      );
+      if (!updated) {
+        throw AppError.database(
+          'No se pudo actualizar el trabajo. Intenta de nuevo.',
+        );
+      }
     }
 
     await _incrementRejectionCount(workerId);

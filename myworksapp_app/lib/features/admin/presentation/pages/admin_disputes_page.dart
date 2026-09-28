@@ -13,6 +13,7 @@ import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/admin_search_field.dart';
+import '../widgets/dispute_resolution_dialog.dart';
 
 class AdminDisputesPage extends ConsumerStatefulWidget {
   const AdminDisputesPage({super.key});
@@ -84,42 +85,16 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
     final admin = ref.read(authProvider).user;
     if (admin == null) return;
 
-    final resolutionCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Resolver disputa'),
-        content: TextField(
-          controller: resolutionCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Resolución para las partes',
-          ),
-          maxLines: 4,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Resolver'),
-          ),
-        ],
-      ),
-    );
-    final resolutionText = resolutionCtrl.text.trim();
-    resolutionCtrl.dispose();
-    if (ok != true || !mounted) return;
+    final choice = await showDisputeResolutionDialog(context);
+    if (choice == null || !mounted) return;
 
     try {
-      final resolution = resolutionText.isEmpty
-          ? 'Resuelta por administrador'
-          : resolutionText;
+      final resolution = choice.resolution;
       await DisputeService.instance.resolveDispute(
         disputeId: dispute.id,
         resolvedBy: admin.id,
         resolution: resolution,
+        decision: choice.decision,
       );
       final detail = await _repo.getJobDetail(dispute.jobId);
       if (detail != null) {

@@ -1,6 +1,8 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
+import { publicErrorMessage } from "../_shared/safe_error.ts";
+import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
-import { tbkRefund } from "../_shared/tbk.ts";
 
 /**
  * Reembolso Transbank + estado reembolsado en pago y trabajo.
@@ -45,48 +47,26 @@ Deno.serve(async (req) => {
     if (error || !payment) {
       return jsonResponse(req, { error: "Pago no encontrado" }, 404);
     }
-    if (!payment.token_tbk) {
-      return jsonResponse(req, { error: "Pago sin token Transbank" }, 400);
+    if (payment.estado === "reembolsado") {
+      return jsonResponse(req, { already: true, payment });
     }
     if (!["autorizado", "retenido", "pendiente"].includes(payment.estado)) {
       return jsonResponse(req, { error: "Estado no reembolsable" }, 409);
     }
-
-    const refund = await tbkRefund(payment.token_tbk, Number(payment.monto));
-
-    const { data: updated, error: upErr } = await admin
-      .from("pagos")
-      .update({
-        estado: "reembolsado",
-        reembolsado_en: new Date().toISOString(),
-        actualizado_en: new Date().toISOString(),
-      })
-      .eq("id", paymentId)
-      .select(
-        "id, id_trabajo, monto, moneda, estado, metodo_pago, id_transaccion, autorizado_en, liberado_en, reembolsado_en, creado_en, actualizado_en",
-      )
-      .single();
-
-    if (upErr) {
-      return jsonResponse(req, { error: upErr.message, refund }, 500);
+    if (payment.id_trabajo && await jobHasOpenDispute(admin, payment.id_trabajo)) {
+      return jsonResponse(
+        req,
+        {
+          error:
+            "Hay una disputa abierta. Resuélvela en atención al cliente para liberar o devolver el pago.",
+        },
+        409,
+      );
     }
 
-    if (payment.id_trabajo) {
-      await admin
-        .from("trabajos")
-        .update({
-          estado_pago: "reembolsado",
-          actualizado_en: new Date().toISOString(),
-        })
-        .eq("id", payment.id_trabajo);
-    }
-
-    return jsonResponse(req, { payment: updated, refund });
+    const result = await refundHeldPaymentOnce(admin, paymentId);
+    return jsonResponse(req, { payment: result.payment, status: result.status });
   } catch (e) {
-    return jsonResponse(
-      req,
-      { error: e instanceof Error ? e.message : String(e) },
-      500,
-    );
+    return jsonResponse(req, { error: publicErrorMessage(e) }, 500);
   }
 });

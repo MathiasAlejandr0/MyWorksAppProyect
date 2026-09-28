@@ -1,4 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 /**
@@ -70,6 +71,22 @@ Deno.serve(async (req) => {
     }
 
     const admin = serviceClient();
+    const { data: paymentRow } = await admin
+      .from("pagos")
+      .select("id_trabajo")
+      .eq("id", paymentId)
+      .maybeSingle();
+    if (paymentRow?.id_trabajo && await jobHasOpenDispute(admin, paymentRow.id_trabajo)) {
+      return jsonResponse(
+        req,
+        {
+          error:
+            "Hay una disputa abierta. Resuélvela en atención al cliente para liberar o devolver el pago.",
+        },
+        409,
+      );
+    }
+
     const { data: rpcResult, error: rpcErr } = await admin.rpc(
       "liberar_escrow_manual",
       {

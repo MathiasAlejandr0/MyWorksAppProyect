@@ -10,11 +10,13 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/services/admin_notification_service.dart';
 import '../../../../core/services/dispute_service.dart';
+import '../../../../core/services/payment_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../widgets/dispute_resolution_dialog.dart';
 
 class AdminJobDetailPage extends ConsumerStatefulWidget {
   const AdminJobDetailPage({super.key, required this.jobId});
@@ -84,8 +86,16 @@ class _AdminJobDetailPageState extends ConsumerState<AdminJobDetailPage>
       ),
     );
     if (ok != true) return;
-    await _repo.updateJobStatus(widget.jobId, AppConstants.jobStatusCancelled);
-    await _load();
+    try {
+      await PaymentService.instance.refundPrimaryOnCancellation(widget.jobId);
+      await _repo.updateJobStatus(widget.jobId, AppConstants.jobStatusCancelled);
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 
   Future<void> _resolveDispute() async {
@@ -93,43 +103,21 @@ class _AdminJobDetailPageState extends ConsumerState<AdminJobDetailPage>
     final admin = ref.read(authProvider).user;
     if (d == null || admin == null) return;
 
-    final resolutionCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Resolver disputa'),
-        content: TextField(
-          controller: resolutionCtrl,
-          decoration: const InputDecoration(labelText: 'Resolución'),
-          maxLines: 4,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Resolver'),
-          ),
-        ],
-      ),
-    );
-    final text = resolutionCtrl.text.trim();
-    resolutionCtrl.dispose();
-    if (ok != true || !mounted) return;
+    final choice = await showDisputeResolutionDialog(context);
+    if (choice == null || !mounted) return;
 
     await DisputeService.instance.resolveDispute(
       disputeId: d.id,
       resolvedBy: admin.id,
-      resolution: text.isEmpty ? 'Resuelta por administrador' : text,
+      resolution: choice.resolution,
+      decision: choice.decision,
     );
     final job = _detail!.job;
     await AdminNotificationService.instance.notifyDisputeResolved(
       userId: job.userId,
       workerId: job.workerId,
       disputeId: d.id,
-      resolution: text,
+      resolution: choice.resolution,
     );
     await _load();
   }

@@ -34,11 +34,11 @@ void main() {
       );
     });
 
-    test('trabajo normal → completed', () {
+    test('al finalizar, el cliente debe recibir conforme', () {
       final job = _job(status: AppConstants.jobStatusInProgress);
       expect(
         JobDetailHelpers.completionTargetStatus(job),
-        AppConstants.jobStatusCompleted,
+        PricingConstants.jobAwaitingClientApproval,
       );
     });
   });

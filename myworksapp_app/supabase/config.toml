@@ -19,7 +19,16 @@ verify_jwt = true
 [functions.webpay-refund]
 verify_jwt = true
 
+[functions.webpay-refund-cancellation]
+verify_jwt = true
+
 [functions.webpay-release]
+verify_jwt = true
+
+[functions.webpay-resolve-dispute]
+verify_jwt = true
+
+[functions.webpay-refund-rejection]
 verify_jwt = true
 
 # Pedido urgencia sin sesión (web): valida datos + crea trabajo + Webpay.

@@ -1,4 +1,5 @@
-
+-- NO APLICAR. Volcado remoto en inglés (jobs, payments, profiles).
+-- No es el esquema actual en español. Si se ejecuta, pisa el modelo de My Works App.
 
 
 SET statement_timeout = 0;

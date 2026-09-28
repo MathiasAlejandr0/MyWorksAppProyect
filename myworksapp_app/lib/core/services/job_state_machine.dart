@@ -18,12 +18,7 @@ class JobStateMachine {
   static const int pendingTimeoutMinutes = 5;
   static const int acceptedTimeoutMinutes = 30;
 
-  /// Mapa legado (solo [PricingConstants.modeLegacy]).
-  @Deprecated('Usar JobTransitionMatrix.forMode(pricingMode)')
-  static Map<String, List<String>> get validTransitions =>
-      JobTransitionMatrix.forMode(PricingConstants.modeLegacy);
-
-  bool isValidTransition(
+  Future<bool> isValidTransition(
     String fromStatus,
     String toStatus, {
     String pricingMode = PricingConstants.modeLegacy,
@@ -42,7 +37,7 @@ class JobStateMachine {
         throw AppError.notFound('Trabajo no encontrado');
       }
 
-      if (!isValidTransition(
+      if (!await isValidTransition(
         job.status,
         newStatus,
         pricingMode: job.pricingMode,
@@ -69,15 +64,18 @@ class JobStateMachine {
         updatedAt: DateTime.now(),
       );
 
+      if (newStatus == AppConstants.jobStatusCancelled) {
+        await PaymentService.instance.refundPrimaryOnCancellation(jobId);
+      }
+
       await _jobRepository.updateJob(updatedJob);
 
       if (newStatus == AppConstants.jobStatusCompleted) {
-        // Escrow queda retenido hasta liquidación manual (desktop / webpay-release).
         AppLogger.i(
-          'Trabajo $jobId completado; pago sigue retenido hasta liquidación admin',
+          'Trabajo $jobId completado. La liberación del pago ocurre al recibir conforme o al cerrar una disputa.',
         );
       } else if (newStatus == AppConstants.jobStatusCancelled) {
-        await PaymentService.instance.refundPrimaryOnCancellation(jobId);
+        AppLogger.i('Trabajo $jobId cancelado; reembolso pedido antes del cambio de estado');
       }
 
       AppLogger.i(
@@ -113,6 +111,7 @@ class JobStateMachine {
       const clientActions = [
         PricingConstants.jobQuoteSelected,
         PricingConstants.jobAwaitingPayment,
+        AppConstants.jobStatusPending,
         AppConstants.jobStatusAccepted,
         AppConstants.jobStatusCompleted,
         AppConstants.jobStatusInProgress,
@@ -203,8 +202,11 @@ class JobStateMachine {
     }
   }
 
-  String? getSuggestedNextStatus(JobModel job) {
-    final targets = JobTransitionMatrix.allowedTargets(job.pricingMode, job.status);
+  Future<String?> getSuggestedNextStatus(JobModel job) async {
+    final targets = await JobTransitionMatrix.allowedTargets(
+      job.pricingMode,
+      job.status,
+    );
     if (targets.isEmpty) return null;
 
     if (job.status == AppConstants.jobStatusPending ||
@@ -222,9 +224,12 @@ class JobStateMachine {
     return targets.first;
   }
 
-  bool canCancel(JobModel job) {
-    return JobTransitionMatrix.allowedTargets(job.pricingMode, job.status)
-        .contains(AppConstants.jobStatusCancelled);
+  Future<bool> canCancel(JobModel job) async {
+    final targets = await JobTransitionMatrix.allowedTargets(
+      job.pricingMode,
+      job.status,
+    );
+    return targets.contains(AppConstants.jobStatusCancelled);
   }
 
   bool canComplete(JobModel job) {

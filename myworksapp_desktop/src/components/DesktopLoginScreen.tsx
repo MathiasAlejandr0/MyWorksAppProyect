@@ -8,20 +8,15 @@ import {
   Users,
   Eye,
   EyeOff,
-  UserCircle,
-  Shield,
   BadgeCheck,
   LogIn,
 } from 'lucide-react';
 import { AuthError, useAuth } from '../context/AuthContext';
 
-type LoginRole = 'admin' | 'support';
-
 export function DesktopLoginScreen() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<LoginRole>('admin');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,28 +123,6 @@ export function DesktopLoginScreen() {
               </button>
             </div>
 
-            <label className="login-field-label">SELECCIONA TU ROL</label>
-            <div className="login-role-grid">
-              <button
-                type="button"
-                className={`login-role-card${role === 'admin' ? ' active' : ''}`}
-                onClick={() => setRole('admin')}
-              >
-                <UserCircle size={22} />
-                <span className="login-role-title">Administrador</span>
-                <span className="login-role-desc">Acceso completo a la consola</span>
-              </button>
-              <button
-                type="button"
-                className={`login-role-card${role === 'support' ? ' active' : ''}`}
-                onClick={() => setRole('support')}
-              >
-                <Shield size={22} />
-                <span className="login-role-title">Soporte</span>
-                <span className="login-role-desc">Acceso limitado a incidentes.</span>
-              </button>
-            </div>
-
             {error && <p className="login-error">{error}</p>}
 
             <button type="submit" className="login-submit" disabled={submitting}>
@@ -171,7 +144,7 @@ export function DesktopLoginScreen() {
               </div>
               <div className="login-security-item">
                 <ShieldCheck size={16} />
-                <span>Autenticación de múltiples factores</span>
+                <span>Acceso solo con rol administrador</span>
               </div>
               <div className="login-security-item">
                 <BadgeCheck size={16} />

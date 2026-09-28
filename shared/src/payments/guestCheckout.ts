@@ -53,14 +53,11 @@ export async function createGuestWebpayCheckout(
     throw new Error('Respuesta guest-checkout vacía');
   }
 
-  if (payload.error === 'account_exists') {
+  if (payload.needsLogin === true) {
     const err = new Error(
-      String(
-        payload.message ||
-          'Ya existe una cuenta con este correo. Inicia sesión.',
-      ),
+      'No se abrió el pago. Si ya estás registrado, entra con tu cuenta.',
     );
-    (err as Error & { code?: string }).code = 'account_exists';
+    (err as Error & { code?: string }).code = 'sign_in';
     throw err;
   }
 

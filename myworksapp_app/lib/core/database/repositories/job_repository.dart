@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../../utils/app_error.dart';
 import '../../utils/constants.dart';
 import '../../utils/worker_job_status.dart';
 import '../models/job_model.dart';
@@ -8,6 +9,16 @@ class JobRepository {
   static const String _table = 'trabajos';
 
   Future<String> createJob(JobModel job) async {
+    const initial = {
+      'pendiente',
+      'esperando_cotizaciones',
+      'esperando_pago',
+    };
+    if (job.workerId != null || !initial.contains(job.status)) {
+      throw AppError.validation(
+        'Un trabajo nuevo empieza sin profesional y en un estado inicial.',
+      );
+    }
     await supabase.from(_table).insert(job.toMap());
     return job.id;
   }
@@ -15,8 +26,14 @@ class JobRepository {
   Future<JobModel?> getJobById(String id) async {
     final row =
         await supabase.from(_table).select().eq('id', id).maybeSingle();
-    if (row == null) return null;
-    return JobModel.fromMap(row);
+    if (row != null) return JobModel.fromMap(row);
+    final pub = await supabase.rpc(
+      'obtener_trabajo_sin_direccion',
+      params: {'p_id': id},
+    );
+    if (pub == null) return null;
+    if (pub is! Map) return null;
+    return _openListing(Map<String, dynamic>.from(pub));
   }
 
   Future<List<JobModel>> getJobsByUserId(String userId) async {
@@ -142,8 +159,8 @@ class JobRepository {
         },
       );
       return row != null;
-    } catch (_) {
-      return false;
+    } catch (e) {
+      throw AppError.database('No se pudo rechazar el trabajo: $e');
     }
   }
 
@@ -170,6 +187,95 @@ class JobRepository {
 
   Future<void> deleteJob(String id) async {
     await supabase.from(_table).delete().eq('id', id);
+  }
+
+  Future<void> requestWorker({
+    required String jobId,
+    required String workerId,
+  }) async {
+    await supabase.rpc(
+      'vincular_trabajador_solicitud',
+      params: {
+        'p_trabajo_id': jobId,
+        'p_trabajador_id': workerId,
+      },
+    );
+  }
+
+  /// El cliente recibe conforme: completa el trabajo y libera el pago retenido.
+  Future<void> closeOnClientApproval(String jobId) async {
+    await supabase.rpc(
+      'cerrar_trabajo_conforme',
+      params: {'p_trabajo_id': jobId},
+    );
+  }
+
+  Future<void> linkQuotedWorker({
+    required String jobId,
+    required String workerId,
+  }) async {
+    await supabase.rpc(
+      'vincular_trabajador_cotizacion',
+      params: {
+        'p_trabajo_id': jobId,
+        'p_trabajador_id': workerId,
+      },
+    );
+  }
+
+  Future<void> syncPaymentStatusFromLedger(String jobId) async {
+    await supabase.rpc(
+      'sincronizar_estado_pago_trabajo',
+      params: {'p_trabajo_id': jobId},
+    );
+  }
+
+  Future<List<JobModel>> listOpenMarketplaceJobs() async {
+    final rows = await supabase.rpc(
+      'listar_trabajos_marketplace',
+      params: {'p_limite': 50},
+    );
+    if (rows is! List) return const [];
+    return rows
+        .whereType<Map>()
+        .map((row) => _openListing(Map<String, dynamic>.from(row)))
+        .toList();
+  }
+
+  JobModel _openListing(Map<String, dynamic> map) {
+    final now = DateTime.now().toUtc();
+    DateTime parse(dynamic value) {
+      if (value is String && value.isNotEmpty) {
+        return DateTime.tryParse(value) ?? now;
+      }
+      return now;
+    }
+
+    Map<String, dynamic>? metadata;
+    final rawMeta = map['metadatos_servicio'];
+    if (rawMeta is String && rawMeta.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawMeta);
+        if (decoded is Map) metadata = Map<String, dynamic>.from(decoded);
+      } catch (_) {
+        metadata = null;
+      }
+    } else if (rawMeta is Map) {
+      metadata = Map<String, dynamic>.from(rawMeta);
+    }
+
+    return JobModel(
+      id: map['id'] as String,
+      userId: '',
+      serviceId: (map['id_servicio'] as String?) ?? '',
+      status: (map['estado'] as String?) ?? 'pendiente',
+      address: 'La dirección se muestra al aceptar el trabajo',
+      description: map['descripcion'] as String?,
+      serviceMetadata: metadata,
+      pricingMode: (map['modalidad_cobro'] as String?) ?? 'legado',
+      createdAt: parse(map['creado_en']),
+      updatedAt: parse(map['actualizado_en']),
+    );
   }
 
   /// Obtiene todos los trabajos de un trabajador (alias para getJobsByWorkerId)

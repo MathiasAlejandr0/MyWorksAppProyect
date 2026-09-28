@@ -352,6 +352,8 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
           </p>
 
+          <p className="executive-subtitle">Datos de demostración. El GMV y los porcentajes no salen de la base.</p>
+
         </div>
 
         <div className="executive-actions">{headerActions}</div>

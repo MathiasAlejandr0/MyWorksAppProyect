@@ -21,10 +21,7 @@ class JobDetailHelpers {
   }
 
   static String completionTargetStatus(JobModel job) {
-    if (isWorkerTierInvitation(job)) {
-      return PricingConstants.jobAwaitingClientApproval;
-    }
-    return AppConstants.jobStatusCompleted;
+    return PricingConstants.jobAwaitingClientApproval;
   }
 
   static bool canOpenDispute(JobModel job, DisputeModel? dispute) {

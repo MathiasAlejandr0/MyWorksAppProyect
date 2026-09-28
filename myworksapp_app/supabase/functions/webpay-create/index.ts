@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     });
 
     const admin = serviceClient();
-    await admin
+    const { error: updErr } = await admin
       .from("pagos")
       .update({
         buy_order: buyOrder,
@@ -86,6 +86,13 @@ Deno.serve(async (req) => {
         actualizado_en: new Date().toISOString(),
       })
       .eq("id", paymentId);
+    if (updErr) {
+      return jsonResponse(
+        req,
+        { error: "No se pudo guardar la transacción. No continúes el pago." },
+        500,
+      );
+    }
 
     const ticket = await signHandoffTicket(paymentId);
     const handoff = `${Deno.env.get("SUPABASE_URL")}/functions/v1/webpay-handoff?t=${encodeURIComponent(ticket)}`;

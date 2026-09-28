@@ -26,7 +26,7 @@ class PaymentGuard {
 
     if (requiresAuthorizedForAccepted(mode, targetStatus)) {
       if (payment == null ||
-          payment.status != PricingConstants.paymentAuthorized) {
+          !PricingConstants.isEscrowSecured(payment.status)) {
         throw AppError.validation(
           'El pago debe estar autorizado (en garantía) antes de continuar',
         );
@@ -35,7 +35,7 @@ class PaymentGuard {
 
     if (targetStatus == AppConstants.jobStatusInProgress) {
       if (payment == null ||
-          payment.status != PricingConstants.paymentAuthorized) {
+          !PricingConstants.isEscrowSecured(payment.status)) {
         throw AppError.validation(
           'No se puede iniciar el trabajo sin pago en garantía',
         );
@@ -46,11 +46,13 @@ class PaymentGuard {
       }
     }
 
-    if (fromAwaitingPaymentToAccepted(job, targetStatus)) {
+    if (fromAwaitingPaymentToAccepted(job, targetStatus) ||
+        (job.status == PricingConstants.jobAwaitingPayment &&
+            targetStatus == AppConstants.jobStatusPending)) {
       if (payment == null ||
-          payment.status != PricingConstants.paymentAuthorized) {
+          !PricingConstants.isEscrowSecured(payment.status)) {
         throw AppError.validation(
-          'Confirma el pago antes de aceptar el trabajo',
+          'Confirma el pago antes de dejar el trabajo al profesional',
         );
       }
     }

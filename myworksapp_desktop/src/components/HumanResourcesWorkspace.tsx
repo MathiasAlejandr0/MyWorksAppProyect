@@ -153,7 +153,7 @@ export function HumanResourcesWorkspace() {
 
                 <h2>Directorio de empleados</h2>
 
-                <p>Administra roles, accesos y estado de tu equipo.</p>
+                <p>Datos de demostración. Estas personas no están en la base.</p>
 
               </div>
 

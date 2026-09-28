@@ -338,12 +338,33 @@ class JobBookingService {
       createdAt: now,
       updatedAt: now,
     );
-    await _jobs.createJob(job);
+    final draft = JobModel(
+      id: job.id,
+      userId: job.userId,
+      serviceId: job.serviceId,
+      status: job.status,
+      address: job.address,
+      description: job.description,
+      latitude: job.latitude,
+      longitude: job.longitude,
+      scheduledDate: job.scheduledDate,
+      serviceMetadata: job.serviceMetadata,
+      pricingMode: job.pricingMode,
+      paymentStatus: job.paymentStatus,
+      comunaId: job.comunaId,
+      pricingSnapshot: job.pricingSnapshot,
+      serviceSkuId: job.serviceSkuId,
+      hourlyBlockHours: job.hourlyBlockHours,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+    );
+    await _jobs.createJob(draft);
+    await _jobs.requestWorker(jobId: job.id, workerId: workerId);
     AppLogger.i('Job escrow $pricingMode: ${job.id}');
     return (job: job, quote: quote);
   }
 
-  /// Tras aprobar evidencia: pago autorizado → trabajo completado.
+  /// El cliente recibe conforme: el servidor completa el trabajo y libera el pago.
   Future<JobModel> confirmCompletionAndPay({
     required String jobId,
     required String userId,
@@ -356,14 +377,13 @@ class JobBookingService {
       throw AppError.validation('El trabajo no está pendiente de tu aprobación');
     }
 
-    return _stateMachine.transitionTo(
-      jobId: jobId,
-      newStatus: AppConstants.jobStatusCompleted,
-      userId: userId,
-    );
+    await _jobs.closeOnClientApproval(jobId);
+    final updated = await _jobs.getJobById(jobId);
+    if (updated == null) throw AppError.notFound('Trabajo no encontrado');
+    return updated;
   }
 
-  /// Tras checkout mock: escrow autorizado → trabajo aceptado.
+  /// Tras el cobro en garantía el trabajo queda pendiente de que el profesional acepte.
   Future<JobModel> confirmEscrowAndAccept({
     required String jobId,
     required String userId,
@@ -378,7 +398,7 @@ class JobBookingService {
 
     return _stateMachine.transitionTo(
       jobId: jobId,
-      newStatus: AppConstants.jobStatusAccepted,
+      newStatus: AppConstants.jobStatusPending,
       userId: userId,
     );
   }

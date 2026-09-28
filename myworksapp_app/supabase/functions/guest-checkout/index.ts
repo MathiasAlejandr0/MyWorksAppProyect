@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
     return jsonResponse(req, { error: "Method not allowed" }, 405);
   }
 
+  let guestUserId: string | null = null;
   try {
     if (isKillSwitchOn("MWA_READ_ONLY") || isKillSwitchOn("MWA_KILL_GUEST_CHECKOUT")) {
       return jsonResponse(req, killSwitchResponse(), 503);
@@ -81,6 +82,7 @@ Deno.serve(async (req) => {
     }
 
     const admin = serviceClient();
+    await admin.rpc("limpiar_invitados_sin_pago");
 
     const { data: existingProfile } = await admin
       .from("perfiles")
@@ -89,15 +91,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingProfile) {
-      return jsonResponse(
-        req,
-        {
-          error: "account_exists",
-          message:
-            "Ya existe una cuenta con este correo. Inicia sesión para pagar sin salir de My Works App.",
-        },
-        409,
-      );
+      return jsonResponse(req, {
+        mode: "guest_redirect",
+        needsLogin: true,
+        redirectUrl: "",
+        jobId: "",
+        paymentId: "",
+        buyOrder: "",
+      });
     }
 
     const { data: worker, error: workerErr } = await admin
@@ -128,7 +129,7 @@ Deno.serve(async (req) => {
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
       email,
       password: tempPassword,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: {
         name,
         phone,
@@ -138,6 +139,18 @@ Deno.serve(async (req) => {
     });
 
     if (createErr || !created.user) {
+      const raw = createErr?.message ?? "";
+      const taken = /already|registered|exists/i.test(raw);
+      if (taken) {
+        return jsonResponse(req, {
+          mode: "guest_redirect",
+          needsLogin: true,
+          redirectUrl: "",
+          jobId: "",
+          paymentId: "",
+          buyOrder: "",
+        });
+      }
       return jsonResponse(
         req,
         { error: publicErrorMessage(createErr, "No se pudo crear la cuenta invitada") },
@@ -146,6 +159,11 @@ Deno.serve(async (req) => {
     }
 
     const userId = created.user.id;
+    guestUserId = userId;
+    const discardGuest = async () => {
+      await admin.auth.admin.deleteUser(userId);
+      guestUserId = null;
+    };
     const now = new Date().toISOString();
 
     const { error: profileErr } = await admin.from("perfiles").upsert({
@@ -158,6 +176,7 @@ Deno.serve(async (req) => {
     });
 
     if (profileErr) {
+      await discardGuest();
       return jsonResponse(req, { error: publicErrorMessage(profileErr, "No se pudo guardar el perfil") }, 400);
     }
 
@@ -184,6 +203,7 @@ Deno.serve(async (req) => {
     });
 
     if (jobErr) {
+      await discardGuest();
       return jsonResponse(req, { error: publicErrorMessage(jobErr, "No se pudo crear el trabajo") }, 400);
     }
 
@@ -219,12 +239,14 @@ Deno.serve(async (req) => {
     });
 
     if (payErr) {
+      await discardGuest();
       return jsonResponse(req, { error: publicErrorMessage(payErr, "No se pudo registrar el pago") }, 400);
     }
 
     const ticket = await signHandoffTicket(paymentId);
     const handoff =
       `${Deno.env.get("SUPABASE_URL")}/functions/v1/webpay-handoff?t=${encodeURIComponent(ticket)}`;
+    guestUserId = null;
 
     // Invitado: redirección completa a Transbank (única excepción de producto).
     return jsonResponse(req, {
@@ -236,6 +258,13 @@ Deno.serve(async (req) => {
       mode: "guest_redirect",
     });
   } catch (e) {
+    if (guestUserId) {
+      try {
+        await serviceClient().auth.admin.deleteUser(guestUserId);
+      } catch {
+        // El barrido de invitados sin pago cubre lo que no se pudo borrar aquí.
+      }
+    }
     const raw = e instanceof Error ? e.message : String(e);
     const status = raw.includes("WEBPAY_HANDOFF_SECRET")
       ? 503

@@ -21,8 +21,8 @@ interface TrackingDashboardProps {
   serviceTitle: string;
   serviceLocation: string;
   orderId: string;
-  etaMinutes: number;
-  distanceKm: number;
+  etaMinutes?: number | null;
+  distanceKm?: number | null;
   profileName?: string;
   onBack: () => void;
   onOpenChat: () => void;
@@ -43,9 +43,13 @@ export function TrackingDashboard({
   onBack,
   onOpenChat,
 }: TrackingDashboardProps) {
+  const hasRoute =
+    typeof etaMinutes === 'number' && typeof distanceKm === 'number';
   const arrival = new Date();
-  arrival.setMinutes(arrival.getMinutes() + etaMinutes);
-  const arrivalTime = arrival.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+  if (hasRoute) arrival.setMinutes(arrival.getMinutes() + etaMinutes);
+  const arrivalTime = hasRoute
+    ? arrival.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   return (
     <div className="tracking-dashboard">
@@ -97,10 +101,16 @@ export function TrackingDashboard({
           <div className="tracking-eta-block">
             <div className="tracking-eta-main">
               <span className="tracking-eta-label">Llegada</span>
-              <strong className="tracking-eta-value">{etaMinutes} min</strong>
-              <span className="tracking-eta-km">~ {distanceKm} km</span>
+              <strong className="tracking-eta-value">
+                {hasRoute ? `${etaMinutes} min` : 'Sin estimación'}
+              </strong>
+              {hasRoute ? <span className="tracking-eta-km">~ {distanceKm} km</span> : null}
             </div>
-            <p className="tracking-eta-arrival">Llegada estimada: {arrivalTime}</p>
+            <p className="tracking-eta-arrival">
+              {arrivalTime
+                ? `Llegada estimada: ${arrivalTime}`
+                : 'Todavía no hay una ruta real del profesional.'}
+            </p>
           </div>
 
           <div className="tracking-worker-block">
@@ -122,7 +132,11 @@ export function TrackingDashboard({
             <div className="tracking-current-status">
               <span className="tracking-status-dot" /> En camino
             </div>
-            <p className="tracking-status-detail">Salió del último punto a las {arrivalTime}</p>
+            <p className="tracking-status-detail">
+              {arrivalTime
+                ? `Salió del último punto a las ${arrivalTime}`
+                : 'El estado en vivo se conecta cuando el profesional actualiza el trabajo.'}
+            </p>
           </div>
 
           <button type="button" className="btn-primary tracking-chat-btn" onClick={onOpenChat}>
@@ -133,7 +147,7 @@ export function TrackingDashboard({
             <ShieldCheck size={22} className="tracking-escrow-icon" />
             <div>
               <strong>Pago protegido</strong>
-              <p>Fondos seguros en custodia. Liberación automática al completar el trabajo.</p>
+              <p>Fondos retenidos. Se liberan cuando recibes conforme el trabajo. Si abres una disputa, solo atención al cliente puede liberarlos o devolverlos a tu tarjeta.</p>
               <button type="button" className="tracking-escrow-link">
                 Ver detalles del pago
               </button>

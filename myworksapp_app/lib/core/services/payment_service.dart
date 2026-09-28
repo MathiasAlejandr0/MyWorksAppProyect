@@ -1,4 +1,9 @@
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../database/repositories/payment_repository.dart';
+import '../database/supabase_db.dart';
+import '../domain/webpay_transaction.dart';
 import '../database/repositories/job_repository.dart';
 import '../database/models/payment_model.dart';
 import '../domain/pricing_constants.dart';
@@ -96,6 +101,56 @@ class PaymentService {
       if (e is AppError) rethrow;
       AppLogger.e('Error reteniendo pago', e);
       throw AppError.database('Error al retener pago: ${e.toString()}');
+    }
+  }
+
+  /// Atención al cliente cierra la disputa liberando el pago o devolviéndolo a la tarjeta.
+  Future<void> resolveDisputeFunds({
+    required String disputeId,
+    required String decision,
+    required String resolution,
+  }) async {
+    try {
+      final response = await supabase.functions.invoke(
+        'webpay-resolve-dispute',
+        body: {
+          'disputeId': disputeId,
+          'decision': decision,
+          'resolution': resolution,
+        },
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null) {
+        throw AppError.validation(data['error'].toString());
+      }
+    } catch (e) {
+      if (e is AppError) rethrow;
+      AppLogger.e('Error cerrando disputa', e);
+      throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
+  /// El profesional rechaza un pendiente con pago retenido: vuelve a la tarjeta.
+  Future<void> refundBecauseWorkerRejected({
+    required String jobId,
+    required Map<String, dynamic> metadata,
+  }) async {
+    try {
+      final response = await supabase.functions.invoke(
+        'webpay-refund-rejection',
+        body: {
+          'jobId': jobId,
+          'metadata': metadata,
+        },
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null) {
+        throw AppError.validation(data['error'].toString());
+      }
+    } catch (e) {
+      if (e is AppError) rethrow;
+      AppLogger.e('Error reembolsando rechazo', e);
+      throw AppError.network(_edgeErrorMessage(e), e);
     }
   }
 
@@ -238,29 +293,124 @@ class PaymentService {
     if (payment == null) return;
     if ([PricingConstants.paymentAuthorized, PricingConstants.paymentHeld]
         .contains(payment.status)) {
-      await refundPayment(payment.id);
+      final response = await supabase.functions.invoke(
+        'webpay-refund-cancellation',
+        body: {'jobId': jobId},
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null) {
+        throw AppError.validation(data['error'].toString());
+      }
+      if (data['skipped'] == true) return;
       await _syncJobPaymentStatus(jobId, PricingConstants.paymentRefunded);
     }
   }
 
   Future<void> _syncJobPaymentStatus(String jobId, String paymentStatus) async {
-    final job = await _jobRepository.getJobById(jobId);
-    if (job == null) return;
-    await _jobRepository.updateJob(
-      job.copyWith(paymentStatus: paymentStatus, updatedAt: DateTime.now()),
-    );
+    if (paymentStatus.isEmpty) return;
+    await _jobRepository.syncPaymentStatusFromLedger(jobId);
   }
 
   /// Verifica si un job tiene pago principal autorizado (garantía).
   Future<bool> hasAuthorizedPrimaryPayment(String jobId) async {
     final payment = await getPrimaryPayment(jobId);
     return payment != null &&
-        payment.status == PricingConstants.paymentAuthorized;
+        PricingConstants.isEscrowSecured(payment.status);
   }
 
   Future<bool> hasPayment(String jobId) async {
     final payment = await getPrimaryPayment(jobId);
     return payment != null;
+  }
+
+  /// Abre Webpay Plus por `webpay-create` (handoff, sin token al cliente).
+  Future<WebpayTransactionResponse> initiateWebpayPayment({
+    required String jobId,
+    required double amount,
+  }) async {
+    if (jobId.trim().isEmpty) {
+      throw AppError.validation('Falta el identificador del trabajo');
+    }
+    if (amount <= 0) {
+      throw AppError.validation('El monto a pagar debe ser mayor a cero');
+    }
+    final sessionId = supabase.auth.currentUser?.id;
+    if (sessionId == null || sessionId.isEmpty) {
+      throw AppError.authentication('Debes iniciar sesión para pagar');
+    }
+
+    try {
+      final response = await supabase.functions.invoke(
+        'webpay-create',
+        body: {
+          'jobId': jobId,
+          'amountClp': amount.round(),
+          'returnUrl': _webpayClientReturn(),
+        },
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null) {
+        throw AppError.validation(data['error'].toString());
+      }
+      return WebpayTransactionResponse.fromMap(data);
+    } catch (e) {
+      if (e is AppError) rethrow;
+      AppLogger.e('Error iniciando Webpay', e);
+      throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
+  /// Confirma `token_ws` en `webpay-commit`.
+  Future<WebpayCommitResult> confirmWebpayPayment({
+    required String token,
+  }) async {
+    final tokenWs = token.trim();
+    if (tokenWs.isEmpty) {
+      throw AppError.validation('token_ws ausente');
+    }
+    try {
+      final response = await supabase.functions.invoke(
+        'webpay-commit',
+        body: {'token_ws': tokenWs},
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null && data['approved'] != true) {
+        return WebpayCommitResult(
+          approved: false,
+          paymentStatus: 'REJECTED',
+          message: data['error'].toString(),
+        );
+      }
+      return WebpayCommitResult.fromMap(data);
+    } catch (e) {
+      if (e is AppError) rethrow;
+      AppLogger.e('Error confirmando Webpay', e);
+      throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
+  String _webpayClientReturn() {
+    if (kIsWeb) return '${Uri.base.origin}/payment-result';
+    return 'myworksapp://payment-result';
+  }
+
+  Map<String, dynamic> _asMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    throw AppError.validation('Respuesta inválida de Webpay');
+  }
+
+  String _edgeErrorMessage(Object error) {
+    if (error is FunctionException) {
+      final details = error.details;
+      if (details is Map && details['error'] != null) {
+        return details['error'].toString();
+      }
+      if (details is String && details.isNotEmpty) return details;
+      return error.reasonPhrase ?? 'No se pudo contactar a Webpay';
+    }
+    if (error is FormatException) return error.message;
+    return 'No se pudo contactar a Webpay';
   }
 }
 

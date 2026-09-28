@@ -531,16 +531,19 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     final hasActiveJobs = await _jobRepository.hasActiveJobs(workerId);
     if (hasActiveJobs) return [];
     final assigned = await _jobRepository.getPendingJobsForWorker(workerId);
-    final openQuotes = await _jobRepository.getJobsByStatus(
-      PricingConstants.jobAwaitingQuotes,
+    final open = await _jobRepository.listOpenMarketplaceJobs();
+    final openQuotes = open.where(
+      (job) => job.status == PricingConstants.jobAwaitingQuotes,
     );
     final openForWorker = openQuotes.where((j) {
       return OpenQuoteUtils.canWorkerSubmitQuote(j, workerId);
     });
-    final legacy = (await _jobRepository.getJobsByStatus(
-      AppConstants.jobStatusPending,
-    ))
-        .where((j) => j.workerId == null)
+    final legacy = open
+        .where(
+          (job) =>
+              job.status == AppConstants.jobStatusPending &&
+              job.workerId == null,
+        )
         .toList();
     return [...assigned, ...legacy, ...openForWorker];
   }

@@ -8,6 +8,7 @@ import '../database/models/notification_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 import '../utils/constants.dart';
+import 'job_transition_matrix.dart';
 import 'notification_service.dart';
 import 'service_legal_validator.dart';
 import 'abuse_protection_service.dart';
@@ -228,8 +229,15 @@ class JobService {
       }
 
       // Validar transición de estado
-      if (!_isValidStatusTransition(job.status, newStatus)) {
-        throw AppError.validation('Transición de estado inválida: ${job.status} -> $newStatus');
+      final allowed = await JobTransitionMatrix.isAllowed(
+        job.pricingMode,
+        job.status,
+        newStatus,
+      );
+      if (!allowed) {
+        throw AppError.validation(
+          'Transición de estado inválida: ${job.status} -> $newStatus',
+        );
       }
 
       // Actualizar trabajo
@@ -295,34 +303,6 @@ class JobService {
   }
 
   // ========== MÉTODOS PRIVADOS ==========
-
-  /// Valida si una transición de estado es válida
-  bool _isValidStatusTransition(String currentStatus, String newStatus) {
-    // Definir transiciones válidas
-    const validTransitions = {
-      AppConstants.jobStatusPending: [
-        AppConstants.jobStatusAccepted,
-        AppConstants.jobStatusCancelled,
-        AppConstants.jobStatusExpired,
-      ],
-      AppConstants.jobStatusAccepted: [
-        AppConstants.jobStatusInProgress,
-        AppConstants.jobStatusCancelled,
-      ],
-      AppConstants.jobStatusInProgress: [
-        AppConstants.jobStatusCompleted,
-        AppConstants.jobStatusCancelled,
-        AppConstants.jobStatusNoShow,
-      ],
-      AppConstants.jobStatusCompleted: [], // Estado final
-      AppConstants.jobStatusCancelled: [], // Estado final
-      AppConstants.jobStatusExpired: [], // Estado final
-      AppConstants.jobStatusNoShow: [], // Estado final
-    };
-
-    final allowed = validTransitions[currentStatus] ?? [];
-    return allowed.contains(newStatus);
-  }
 
   /// Crea notificación cuando se crea un trabajo
   Future<void> _createJobCreatedNotification(JobModel job) async {

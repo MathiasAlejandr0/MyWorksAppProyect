@@ -53,6 +53,15 @@ export function tbkConfig() {
   if (!commerceCode || !apiKey) {
     throw new Error("TBK_COMMERCE_CODE / TBK_API_KEY requeridos en production");
   }
+  if (
+    isProd &&
+    (commerceCode === "597055555532" ||
+      apiKey.startsWith("579B532A7440BB0C9079DED94D31EA1615BACEB566103322646"))
+  ) {
+    throw new Error(
+      "TBK_ENV=production no acepta las claves públicas de integración",
+    );
+  }
 
   return { env, commerceCode, apiKey, host };
 }

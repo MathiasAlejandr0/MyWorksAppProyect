@@ -67,12 +67,15 @@ class DisputeService {
 
       await _disputeRepository.createDispute(dispute);
 
-      // 5. Congelar pago si existe
+      // El cobro de Webpay ya está retenido. Si solo quedó autorizado, se retiene.
       final payment = await _paymentService.getPaymentByJobId(jobId);
       if (payment != null &&
           payment.status == PricingConstants.paymentAuthorized) {
         await _paymentService.holdPayment(payment.id);
         AppLogger.i('Pago retenido por disputa: ${payment.id}');
+      } else if (payment != null &&
+          payment.status == PricingConstants.paymentHeld) {
+        AppLogger.i('Disputa abierta; el pago ${payment.id} ya estaba retenido');
       }
 
       AppLogger.i('Disputa abierta: ${dispute.id}');
@@ -84,13 +87,12 @@ class DisputeService {
     }
   }
 
-  /// Resuelve una disputa (solo admin en producción)
-  /// 
-  /// En producción, esto requeriría permisos de admin.
+  /// Cierra la disputa y mueve el dinero: [decision] es `liberar` o `reembolsar`.
   Future<DisputeModel> resolveDispute({
     required String disputeId,
     required String resolvedBy,
     required String resolution,
+    required String decision,
   }) async {
     try {
       final dispute = await _disputeRepository.getDisputeById(disputeId);
@@ -101,28 +103,25 @@ class DisputeService {
       if (dispute.status != 'abierta' && dispute.status != 'en_revision') {
         throw AppError.validation('La disputa ya fue resuelta');
       }
+      if (decision != 'liberar' && decision != 'reembolsar') {
+        throw AppError.validation('Elige liberar el pago o devolverlo a la tarjeta');
+      }
 
-      final updated = dispute.copyWith(
+      await _paymentService.resolveDisputeFunds(
+        disputeId: disputeId,
+        decision: decision,
+        resolution: resolution,
+      );
+
+      final updated = await _disputeRepository.getDisputeById(disputeId);
+      AppLogger.i('Disputa $disputeId cerrada por $resolvedBy: $decision');
+      return updated ?? dispute.copyWith(
         status: 'resuelta',
         resolution: resolution,
         resolvedBy: resolvedBy,
         resolvedAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-
-      await _disputeRepository.updateDispute(updated);
-
-      // Liquidación manual: no auto-liberar sin referencia bancaria.
-      // El admin debe usar desktop → Liquidación / webpay-release.
-      final payment = await _paymentService.getPaymentByJobId(dispute.jobId);
-      if (payment != null && payment.status == PricingConstants.paymentHeld) {
-        AppLogger.i(
-          'Disputa resuelta; pago ${payment.id} sigue retenido hasta liquidación admin',
-        );
-      }
-
-      AppLogger.i('Disputa resuelta: $disputeId');
-      return updated;
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error resolviendo disputa', e);
@@ -134,7 +133,8 @@ class DisputeService {
   Future<bool> hasOpenDispute(String jobId) async {
     try {
       final dispute = await _disputeRepository.getDisputeByJobId(jobId);
-      return dispute != null && dispute.status == 'abierta';
+      return dispute != null &&
+          (dispute.status == 'abierta' || dispute.status == 'en_revision');
     } catch (e) {
       AppLogger.e('Error verificando disputa', e);
       return false;

@@ -44,7 +44,7 @@ class JobDetailClientApprovalCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'El profesional subió evidencia del trabajo. Revísala y, si todo está correcto, aprueba para realizar el pago.',
+              'El profesional avisó que terminó. Si recibes conforme, se liberan los fondos que ya están retenidos. Si no estás conforme, se abre un ticket y el dinero queda quieto hasta que atención al cliente decida.',
             ),
             if (quote != null) ...[
               const SizedBox(height: 12),
@@ -65,13 +65,13 @@ class JobDetailClientApprovalCard extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onApprove,
               icon: const Icon(Icons.check_circle),
-              label: const Text('Aprobar y pagar'),
+              label: const Text('Recibo conforme'),
             ),
             const SizedBox(height: 8),
             OutlinedButton(
               onPressed: onReject,
               style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
-              child: const Text('Rechazar finalización'),
+              child: const Text('No estoy conforme'),
             ),
           ],
         ),

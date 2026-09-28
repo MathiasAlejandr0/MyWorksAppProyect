@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ExecutiveWorkspace } from './components/ExecutiveWorkspace';
 import { DesktopLoginScreen } from './components/DesktopLoginScreen';
+import { AdminMfaGate } from './components/AdminMfaGate';
 import { SessionLoadingShell } from './components/LoadingState';
 import { useAuth } from './context/AuthContext';
 
@@ -40,11 +41,15 @@ const NAV_ITEMS = [
 ] as const;
 
 export function App() {
-  const { profile, loading, logout } = useAuth();
+  const { profile, loading, logout, needsMfa } = useAuth();
   const [activeRoleWorkspace, setActiveRoleWorkspace] = useState<number>(0);
 
   if (loading) {
     return <SessionLoadingShell />;
+  }
+
+  if (needsMfa) {
+    return <AdminMfaGate />;
   }
 
   if (!profile) {

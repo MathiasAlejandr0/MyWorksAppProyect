@@ -9,7 +9,6 @@ import '../utils/app_error.dart';
 import '../utils/app_logger.dart';
 import 'job_state_machine.dart';
 import 'notification_service.dart';
-import 'pricing_service.dart';
 import '../utils/open_quote_utils.dart';
 
 /// Cotizaciones abiertas (modalidad open_quote).
@@ -124,7 +123,8 @@ class QuoteProposalService {
     final job = await _jobs.getJobById(jobId);
     if (job == null) throw AppError.notFound('Trabajo no encontrado');
     if (job.userId != clientUserId) throw AppError.permission('Sin permiso');
-    if (job.status != PricingConstants.jobAwaitingQuotes) {
+    if (job.status != PricingConstants.jobAwaitingQuotes &&
+        job.status != PricingConstants.jobQuoteSelected) {
       throw AppError.validation('No hay cotizaciones pendientes de elegir');
     }
 
@@ -132,29 +132,27 @@ class QuoteProposalService {
     if (proposal == null || proposal.jobId != jobId) {
       throw AppError.notFound('Cotización no encontrada');
     }
-    if (proposal.estado != PricingConstants.quoteSubmitted) {
+    final canChoose = proposal.estado == PricingConstants.quoteSubmitted ||
+        (proposal.estado == PricingConstants.quoteAccepted &&
+            job.status == PricingConstants.jobQuoteSelected);
+    if (!canChoose) {
       throw AppError.validation('Esta cotización ya no está disponible');
     }
 
     await _rejectOtherProposals(jobId, proposalId);
 
-    final quote = PricingService.instance.quoteFromOpenProposal(
-      proposalAmountClp: proposal.montoTotalClp,
-    );
+    if (job.status == PricingConstants.jobAwaitingQuotes) {
+      await _stateMachine.transitionTo(
+        jobId: jobId,
+        newStatus: PricingConstants.jobQuoteSelected,
+        userId: clientUserId,
+      );
+    }
 
-    var updated = await _stateMachine.transitionTo(
+    await _jobs.linkQuotedWorker(
       jobId: jobId,
-      newStatus: PricingConstants.jobQuoteSelected,
-      userId: clientUserId,
-    );
-
-    updated = updated.copyWith(
       workerId: proposal.workerId,
-      selectedQuoteId: proposal.id,
-      pricingSnapshot: quote.toJson(),
-      updatedAt: DateTime.now(),
     );
-    await _jobs.updateJob(updated);
 
     await _proposals.update(QuoteProposalModel(
       id: proposal.id,
