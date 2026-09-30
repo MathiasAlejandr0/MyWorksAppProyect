@@ -157,36 +157,34 @@ async function mockSignedInTracking(page: import('@playwright/test').Page) {
           created_at: '2026-01-01T00:00:00.000Z',
         },
       });
-      const original = Storage.prototype.getItem;
-      Storage.prototype.getItem = function (key) {
-        if (key.startsWith('sb-') && key.endsWith('-auth-token')) return session;
-        return original.call(this, key);
-      };
+      localStorage.setItem('sb-example-auth-token', session);
       sessionStorage.setItem('mwa-active-job', jobId);
     },
     { userId: trackingUserId, jobId: trackingJobId },
   );
 
-  await page.route('**/*', async (route) => {
-    const url = route.request().url();
-    const supabase = url.includes('/rest/v1/') || url.includes('/auth/v1/');
-    if (!supabase) {
-      await route.continue();
+  const cors = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-headers': '*',
+    'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+  };
+
+  await page.route('**/*example.supabase.co/**', async (route) => {
+    const request = route.request();
+    if (request.method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: cors });
       return;
     }
-    const accept = route.request().headers().accept ?? '';
-    const asObject = accept.includes('application/vnd.pgrst.object+json');
+    const url = request.url();
+    const asObject = (request.headers().accept ?? '').includes('application/vnd.pgrst.object+json');
     const json = (body: unknown) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: cors,
         body: JSON.stringify(body),
       });
 
-    if (url.includes('/auth/v1/')) {
-      await json({ id: trackingUserId, email: 'camila.soto@demo.myworksapp.cl' });
-      return;
-    }
     if (url.includes('/rest/v1/perfiles')) {
       await json({
         id: trackingUserId,
@@ -224,61 +222,62 @@ async function mockSignedInTracking(page: import('@playwright/test').Page) {
       });
       return;
     }
-    if (url.includes('/rest/v1/ubicacion_en_vivo')) {
-      await json(asObject ? null : []);
-      return;
-    }
-    if (url.includes('/rpc/listar_profesionales_catalogo')) {
-      await json([]);
-      return;
-    }
     await json(asObject ? null : []);
   });
 }
 
-test('el chat del seguimiento no queda bajo el mapa a 1280 y a 390', async ({ page }) => {
-  await mockSignedInTracking(page);
-  for (const viewport of [
-    { width: 1280, height: 800 },
-    { width: 390, height: 844 },
-  ]) {
-    await page.setViewportSize(viewport);
-    await page.goto('/');
-    await page.getByRole('button', { name: 'Abrir chat' }).click();
-    const chat = page.locator('.chat-widget');
-    const map = page.locator('.leaflet-container');
-    await expect(chat).toBeVisible();
-    await expect(map).toBeVisible();
-    const covered = await page.evaluate(() => {
-      const chatEl = document.querySelector('.chat-widget');
-      const mapEl = document.querySelector('.leaflet-container');
-      if (!chatEl || !mapEl) return { overlap: false, ok: false, hits: [] };
-      const chatBox = chatEl.getBoundingClientRect();
-      const mapBox = mapEl.getBoundingClientRect();
-      const left = Math.max(chatBox.left, mapBox.left);
-      const right = Math.min(chatBox.right, mapBox.right);
-      const top = Math.max(chatBox.top, mapBox.top);
-      const bottom = Math.min(chatBox.bottom, mapBox.bottom);
-      if (right - left < 8 || bottom - top < 8) return { overlap: false, ok: false, hits: [] };
-      const samples = [
-        [left + 4, top + 4],
-        [(left + right) / 2, (top + bottom) / 2],
-        [right - 4, bottom - 4],
-      ];
-      const hits = samples.map(([x, y]) => {
-        const el = document.elementFromPoint(x, y);
-        return {
-          x,
-          y,
-          onChat: Boolean(el && (el === chatEl || chatEl.contains(el))),
-        };
-      });
-      return { overlap: true, ok: hits.every((hit) => hit.onChat), hits };
+async function expectChatAboveMap(page: import('@playwright/test').Page, viewport: { width: number; height: number }) {
+  await page.setViewportSize(viewport);
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Fuga en la llave' })).toBeVisible();
+  await page.getByRole('button', { name: 'Abrir chat' }).click();
+  const chat = page.locator('.chat-widget');
+  const map = page.locator('.leaflet-container');
+  await expect(chat).toBeVisible();
+  await expect(map).toBeVisible();
+  const covered = await page.evaluate(() => {
+    const chatEl = document.querySelector('.chat-widget');
+    const mapEl = document.querySelector('.leaflet-container');
+    if (!chatEl || !mapEl) return { overlap: false, ok: false, hits: [] };
+    const chatBox = chatEl.getBoundingClientRect();
+    const mapBox = mapEl.getBoundingClientRect();
+    const left = Math.max(chatBox.left, mapBox.left);
+    const right = Math.min(chatBox.right, mapBox.right);
+    const top = Math.max(chatBox.top, mapBox.top);
+    const bottom = Math.min(chatBox.bottom, mapBox.bottom);
+    if (right - left < 64 || bottom - top < 64) return { overlap: false, ok: false, hits: [] };
+    const inset = 28;
+    const samples = [
+      [left + inset, top + inset],
+      [(left + right) / 2, (top + bottom) / 2],
+      [right - inset, bottom - inset],
+    ];
+    const hits = samples.map(([x, y]) => {
+      const el = document.elementFromPoint(x, y);
+      const onChat = Boolean(el && (el === chatEl || chatEl.contains(el)));
+      const onMap = Boolean(el && (el === mapEl || mapEl.contains(el)));
+      return {
+        x,
+        y,
+        onChat,
+        onMap,
+        cls: el instanceof Element ? String(el.className) : '',
+      };
     });
-    expect(covered.overlap, `el chat y el mapa se solapan a ${viewport.width}`).toBe(true);
-    expect(covered.ok, JSON.stringify(covered.hits)).toBe(true);
-    await page.getByRole('button', { name: 'Cerrar chat' }).click();
-  }
+    return { overlap: true, ok: hits.every((hit) => hit.onChat && !hit.onMap), hits };
+  });
+  expect(covered.overlap, `el chat y el mapa se solapan a ${viewport.width}`).toBe(true);
+  expect(covered.ok, JSON.stringify(covered.hits)).toBe(true);
+}
+
+test('el chat del seguimiento no queda bajo el mapa a 1280', async ({ page }) => {
+  await mockSignedInTracking(page);
+  await expectChatAboveMap(page, { width: 1280, height: 800 });
+});
+
+test('el chat del seguimiento no queda bajo el mapa a 390', async ({ page }) => {
+  await mockSignedInTracking(page);
+  await expectChatAboveMap(page, { width: 390, height: 844 });
 });
 
 test('a 390 el formulario de invitado no corta el monto', async ({ page }) => {
