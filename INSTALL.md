@@ -177,7 +177,15 @@ cd myworksapp_app
 supabase db push
 ```
 
-La migración `20261005000001_verificacion_profesional.sql` agrega `estado_verificacion` y el bucket privado `verificacion-profesional`. Sin aplicarla, el resto de la app sigue funcionando y la revisión de identidad muestra el error. No hace falta una variable de entorno nueva: el cliente usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (web y escritorio) o `--dart-define=SUPABASE_URL` y `SUPABASE_ANON_KEY` (Flutter). Pagos reales: `TBK_COMMERCE_CODE`, `TBK_API_KEY` y `TBK_ENV` solo en los secretos de las Edge Functions, nunca en el cliente.
+La migración `20261005000001_verificacion_profesional.sql` agrega `estado_verificacion` y el bucket privado `verificacion-profesional`. La `20261006000001_gps_y_base_profesional.sql` agrega la ubicación base del profesional, el estado `en_camino` y la tabla `ubicacion_en_vivo`. Sin aplicarlas, el resto de la app sigue funcionando y esas pantallas muestran el error. No hace falta una variable de entorno nueva para el mapa: el cliente usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (web y escritorio) o `--dart-define=SUPABASE_URL` y `SUPABASE_ANON_KEY` (Flutter). Pagos reales: `TBK_COMMERCE_CODE`, `TBK_API_KEY` y `TBK_ENV` solo en los secretos de las Edge Functions, nunca en el cliente.
+
+Invitaciones de RRHH (función `invitar-colaborador`, solo un administrador):
+
+- `INVITE_PROVIDER=supabase` (por defecto) usa `inviteUserByEmail`. Hace falta el SMTP del proyecto Auth.
+- `INVITE_PROVIDER=resend` exige `RESEND_API_KEY` y `RESEND_FROM`.
+- `INVITE_REDIRECT_URL` es opcional (a dónde vuelve quien acepta).
+
+Esos secretos viven en las Edge Functions, no en el escritorio.
 
 ### 2. Google Cloud Console
 

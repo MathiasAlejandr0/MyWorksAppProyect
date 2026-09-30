@@ -18,7 +18,7 @@ El producto es un marketplace de oficios del hogar para Chile (cliente y especia
 
 - **Base y auth:** Supabase Auth (correo y OAuth Google/Apple preparados) + tabla `perfiles`. El rol vive en la base (`usuario`, `trabajador`, `administrador`), no solo en la pantalla.
 - **Pagos:** Transbank Webpay Plus y Oneclick (tarjeta guardada). El número de tarjeta no pasa por la app. El commit deja el cobro `retenido` hasta la conformidad del cliente. La liquidación al profesional es manual (`liquidaciones`). Las claves de comercio van en secretos de las Edge Functions (`TBK_COMMERCE_CODE`, `TBK_API_KEY`, `TBK_ENV`).
-- **Mapas:** Leaflet + OpenStreetMap en la web. Flutter usa `google_maps_flutter` y `flutter_map`. El seguimiento GPS del profesional **no existe**: el mapa muestra el domicilio del pedido si hay coordenadas.
+- **Mapas:** Leaflet + OpenStreetMap en la web. Flutter usa `google_maps_flutter` y `flutter_map`. El GPS en vivo del especialista se publica solo en primer plano cuando el trabajo está `en_camino` o `en_curso`, en `ubicacion_en_vivo`, y lo leen el cliente de ese pedido y un administrador. La base del profesional (`latitud_base`, `longitud_base`, `radio_servicio_km`) alimenta el mapa y el matching.
 - **Push:** notificaciones locales en el teléfono (`flutter_local_notifications`). FCM está como puerto sin implementar (`UnimplementedFcmPushNotifications`). No hay correo transaccional de producto (Resend no está cableado al flujo).
 - **Archivos:** fotos de perfil y evidencia siguen rutas locales o URLs. La verificación nueva sube el documento al bucket privado `verificacion-profesional` cuando la migración está aplicada.
 
@@ -40,14 +40,14 @@ Herramientas de esta pasada: Flutter 3.47.5 (Dart 3.13.4, canal stable), Node 22
 
 | Comando | Resultado |
 |---|---|
-| `shared` `npm test` | 32 pruebas, 0 fallos |
+| `shared` `npm test` | 39 pruebas, 0 fallos |
 | `myworksapp_web` `npm run lint` | 0 errores. 4 avisos previos de oxlint (fast refresh y un ref en `PremiumSearchMap` / `AuthContext`) |
 | `myworksapp_web` `tsc -b` y `vite build` | OK |
 | `myworksapp_desktop` `npm test` | 2 pruebas, 0 fallos |
 | `myworksapp_desktop` `npm run lint` | 0 errores. 2 avisos previos (`AuthContext`, `SupportWorkspace`) |
 | `myworksapp_desktop` `tsc -b` y `vite build` | OK |
 | `flutter analyze` | Sin avisos (exit 0). Antes de este arreglo había 8 avisos: `setState` en extensiones, `anonKey` deprecado, un `BuildContext` tras un `await` y un `FormatException` sin `const`. |
-| `flutter test` | 56 pruebas, 0 fallos (incluye zona de matching y la bienvenida: marca y botón «Comenzar Ahora»). La captura PNG de esa pantalla está en los artefactos; el test no escribe archivos para no colgar el runner sin rasterizador. |
+| `flutter test` | 61 pruebas, 0 fallos (zona, distancia, GPS, línea de tiempo y la bienvenida). La captura PNG de la bienvenida está en los artefactos; el test no escribe archivos. |
 | `cargo check` y `cargo clippy` | OK con Rust 1.98.1. El Cargo 1.83 del entorno no lee crates `edition2024`. Hizo falta `libgtk-3-dev` y `libwebkit2gtk-4.1-dev` para compilar Tauri en Linux. Clippy no reportó avisos. |
 
 La web en release y el hub de escritorio compilan. El build web de Flutter también compila; en Chromium headless el canvas queda negro (WebGL) y el arranque registra un error minificado, así que la captura de la app móvil es la pantalla de bienvenida pintada por el test de widgets, no el binario web.
@@ -76,8 +76,8 @@ Estados: **terminada** (flujo real y estados de carga/vacío/error), **falta pul
 | `/user/service-request`, `/user/quick-booking` | terminada | terminada | Crean el trabajo en Supabase. |
 | `/user/profile`, `/user/profile/edit` | terminada | terminada | Datos del cliente. |
 | `/worker/home`, `/worker/register`, `/worker/pricing-setup` | terminada | terminada | Alta, zona y tarifas. |
-| `/worker/profile`, `/worker/profile/manage` | incompleta | falta pulir | Faltaba pedir verificación. Ahora hay nota, foto del documento y estado. Sigue sin antecedentes automáticos. |
-| `/job/detail/:id` | falta pulir | falta pulir | Flujo real (estados, evidencia, cotización). El archivo sigue partido en extensiones; se corrigió el aviso de `setState`. |
+| `/worker/profile`, `/worker/profile/manage` | incompleta | falta pulir | Verificación, ubicación base en el mapa, radio y estados de carga/error. Sigue sin antecedentes automáticos. |
+| `/job/detail/:id` | falta pulir | terminada | Línea de tiempo, «Voy en camino», GPS en primer plano para el especialista y pin en vivo para el cliente. |
 | `/job/history`, `/job/photos/:id`, `/job/schedule` | terminada | terminada | Historial, evidencia y calendario del especialista. |
 | `/rating/:id` | terminada | terminada | Calificación al cerrar. |
 | `/chat/:id` | incompleta | terminada | Guardaba en `mensajes` pero se quedaba cargando si faltaba la otra parte y no se actualizaba solo. Ahora hay error visible, Realtime y refresco. |
@@ -96,9 +96,9 @@ El matching ahora suma puntaje si la zona del profesional aparece en la direcci�
 |---|---|---|---|
 | Landing | terminada | terminada | Hero, buscador y acceso. |
 | Catálogo de categorías | terminada | terminada | Oficios con foto. |
-| Resultados y mapa Leaflet | falta pulir | falta pulir | El catálogo es real. Los pines que no tienen coordenada propia siguen repartidos alrededor de Las Condes para la demo. |
+| Resultados y mapa Leaflet | falta pulir | terminada | El pin sale de `latitud_base` / `longitud_base`. Quien no la tiene no aparece en el mapa. |
 | Checkout y vuelta de pago | terminada | terminada | Webpay / tarjeta guardada. Sin claves de comercio el cobro no sale. |
-| Seguimiento | rota | terminada | Decía «Dark Web Access», «en camino» y «32 km/h» fijos, y el botón de pago no hacía nada. Ahora muestra el estado real del trabajo, el pago y el mapa del domicilio si hay coordenadas. |
+| Seguimiento | rota | terminada | Estado real, pago, domicilio y pin del profesional por Realtime, con llegada estimada a 28 km/h. |
 | Chat del seguimiento | placeholder | terminada | Los mensajes se quedaban en el navegador y se marcaban como enviados. Ahora se escriben en `mensajes` si hay sesión y pedido. |
 | Modal de auth e invitado | terminada | terminada | Sin campo de número de tarjeta. |
 | Búsqueda sin oficio reconocible | rota | terminada | Cualquier texto caía en electricistas y decía «profesional verificado». Ahora pide elegir una categoría. |
@@ -108,11 +108,11 @@ El matching ahora suma puntaje si la zona del profesional aparece en la direcci�
 | Pantalla | Antes | Después | Por qué |
 |---|---|---|---|
 | Login y MFA | terminada | terminada | Solo entra `administrador`. |
-| Panel ejecutivo | falta pulir | falta pulir | El GMV, el donut y el CSAT siguen dibujados como ejemplo, ahora etiquetados. Los conteos de trabajos y disputas ya no se reemplazan por 1246 y 32 cuando la base dice 0. |
+| Panel ejecutivo | falta pulir | terminada | GMV, comisión 15%, completados, ticket y CSAT por 24 h / 7 / 30 / 90 días. En cero dice «sin cobros» o «sin calificaciones». |
 | Trabajadores del panel | incompleta | terminada | La columna «precio» mostraba «verificado» si tenía tarifas. Ahora muestra la visita en pesos y la verificación, con aprobar o rechazar. |
 | Soporte y disputas | terminada | terminada | Lista disputas reales y permite cerrarlas. |
 | DevSecOps | placeholder | falta pulir | El runner decía 28/28 y un usuario `researcher@myworks.edu`. Ahora mide la latencia real y deja claro que las suites corren en CI. No ejecuta las pruebas. |
-| RRHH | placeholder | incompleta | La lista de personas es de demostración solo en desarrollo. La invitación no envía correo: el formulario lo dice en vez de vaciarse como si hubiera funcionado. |
+| RRHH | placeholder | falta pulir | La invitación llama a `invitar-colaborador` y muestra el error o el envío. El directorio de ejemplo sigue solo en desarrollo. |
 | Campana y ajustes | rota | terminada | No hacían nada. Abren las notificaciones de la cuenta y el estado de las variables de Supabase. |
 | Perfil | terminada | terminada | Nombre, correo y rol. |
 
@@ -122,12 +122,13 @@ El matching ahora suma puntaje si la zona del profesional aparece en la direcci�
 |---|---|---|---|---|
 | Alta y sesión | App y web | App | Escritorio (+ MFA) | Hecho |
 | Verificación de identidad y antecedentes | — | Nota + foto; un admin aprueba | Aprueba o rechaza en el escritorio | Parcial. Falta aplicar la migración. No hay consulta a un registro de antecedentes. |
+| Ubicación base y GPS | Ve el pin en la web y en el detalle | Publica en primer plano en camino/en curso y fija su base | Lee el punto por RLS | Hecho en código. Hay que aplicar `20261006000001`. |
 | Catálogo | Web y app | Oficios y tarifas | Servicios en el admin móvil | Hecho |
 | Pedido con lugar | Dirección y coordenadas en el trabajo | La ve al aceptar | La ve en el trabajo | Hecho. Fotos del problema al crear el pedido: la evidencia fuerte es la del profesional al terminar. |
-| Matching cercano | Elige en el catálogo; la app puntúa por zona, nota y rechazos | Recibe el pendiente | — | Parcial. No hay dispatch automático por GPS. |
+| Matching cercano | Elige en el catálogo; la app excluye fuera del radio y puntúa por distancia | Recibe el pendiente | — | Parcial. No hay dispatch automático. Sin base, sigue la zona de texto. |
 | Cotizaciones y precio fijo | Los dos modos existen | Propone o publica tarifa | — | Hecho |
 | Aceptar o rechazar | — | App | — | Hecho |
-| Seguimiento en vivo | Estado real en la web | Cambia el estado en la app | Ve el trabajo | Parcial. No hay GPS del especialista. |
+| Seguimiento en vivo | Pin y ETA en la web y en el detalle | Publica GPS en primer plano | Puede leerlo | Hecho. Se detiene al cerrar el trabajo o al pasar la app a segundo plano. |
 | Chat | Web (con sesión) y app | App | — | Hecho sobre `mensajes` |
 | Avisos | In-app | Locales en el teléfono | Bandeja del escritorio | Parcial. Sin push remoto ni correo de producto. |
 | Cobro retenido, liberación, reembolso | Webpay / Oneclick | Ve el estado | Liquidación manual | Hecho en código. Producción exige comercio Transbank real. |
@@ -135,7 +136,7 @@ El matching ahora suma puntaje si la zona del profesional aparece en la direcci�
 | Disputas | Puede abrirlas | Las ve | Las cierra en soporte | Hecho |
 | Calificaciones e historial | App | App | — | Hecho |
 | Perfil | App y web | App | Escritorio | Hecho |
-| Métricas | — | Estadísticas propias | Conteos reales; GMV ilustrativo | Parcial |
+| Métricas | — | Estadísticas propias | GMV, comisión, ticket, CSAT y completados por período | Hecho. La comisión es 15% sobre el GMV cobrado o retenido. |
 
 Quién usa qué: el **cliente** usa la web para buscar y pagar, y la app para el ciclo completo. El **especialista** usa la app. El **admin** opera en el escritorio; el admin del teléfono es un complemento, no el back-office.
 
@@ -148,16 +149,17 @@ Hecho en esta rama, en este orden:
 3. Bandeja, ajustes y panel de calidad del escritorio; conteos que no se sustituyen por cifras de ejemplo; verificación aprobar/rechazar.
 4. Tarjeta de verificación en el perfil del especialista, migración y trigger para que no se autoapruebe.
 5. Matching por zona, sincronización de banderas ya leídas desde Supabase, y pruebas de estados, mensajes y verificación.
+6. GPS en vivo (`en_camino` / `en_curso`), ubicación base, métricas reales del escritorio e invitación por Edge Function.
 
 Sigue fuera de este código, porque depende del dueño:
 
-- Aplicar `20261005000001_verificacion_profesional.sql` en el proyecto Supabase (`supabase db push`).
+- Aplicar `20261005000001_verificacion_profesional.sql` y `20261006000001_gps_y_base_profesional.sql` (`supabase db push`).
+- SMTP de Supabase Auth, o `RESEND_API_KEY`, `RESEND_FROM` e `INVITE_PROVIDER=resend`, para que el correo de RRHH salga.
 - Comercio Transbank de producción y secretos `TBK_*` cuando exista la empresa.
 - Cuenta de Firebase / APNs para push, y un proveedor de correo si se quieren avisos fuera de la app.
 - Payout automático (cuenta de payout).
 - Publicar en Play Store, App Store y firmar el instalador de Tauri.
-- GPS en vivo del especialista (hay que guardar su posición y una política de privacidad explícita).
 - Antecedentes distintos de la revisión humana del documento.
-- Quitar el reparto ilustrativo de pines en Santiago cuando cada profesional tenga coordenada.
+- GPS en segundo plano. Hoy se corta al minimizar la app, a propósito, para cuidar batería y privacidad.
 
 No se inventaron credenciales. No se hizo push a `main` y no se abrió un pull request.
