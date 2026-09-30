@@ -40,7 +40,7 @@ Herramientas de esta pasada: Flutter 3.47.5 (Dart 3.13.4, canal stable), Node 22
 
 | Comando | Resultado |
 |---|---|
-| `shared` `npm test` | 39 pruebas, 0 fallos |
+| `shared` `npm test` | 40 pruebas, 0 fallos (incluye que el cliente no llama RPCs de `service_role`) |
 | `myworksapp_web` `npm run lint` | 0 errores. 4 avisos previos de oxlint (fast refresh y un ref en `PremiumSearchMap` / `AuthContext`) |
 | `myworksapp_web` `tsc -b` y `vite build` | OK |
 | `myworksapp_desktop` `npm test` | 2 pruebas, 0 fallos |
@@ -48,6 +48,7 @@ Herramientas de esta pasada: Flutter 3.47.5 (Dart 3.13.4, canal stable), Node 22
 | `myworksapp_desktop` `tsc -b` y `vite build` | OK |
 | `flutter analyze` | Sin avisos (exit 0). Antes de este arreglo había 8 avisos: `setState` en extensiones, `anonKey` deprecado, un `BuildContext` tras un `await` y un `FormatException` sin `const`. |
 | `flutter test` | 61 pruebas, 0 fallos (zona, distancia, GPS, línea de tiempo y la bienvenida). La captura PNG de la bienvenida está en los artefactos; el test no escribe archivos. |
+| `myworksapp_web` `npm run test:e2e` | 5 pruebas Playwright (humo + catálogo con Supabase simulado, pin real y pedido sin número de tarjeta) |
 | `cargo check` y `cargo clippy` | OK con Rust 1.98.1. El Cargo 1.83 del entorno no lee crates `edition2024`. Hizo falta `libgtk-3-dev` y `libwebkit2gtk-4.1-dev` para compilar Tauri en Linux. Clippy no reportó avisos. |
 
 La web en release y el hub de escritorio compilan. El build web de Flutter también compila; en Chromium headless el canvas queda negro (WebGL) y el arranque registra un error minificado, así que la captura de la app móvil es la pantalla de bienvenida pintada por el test de widgets, no el binario web.

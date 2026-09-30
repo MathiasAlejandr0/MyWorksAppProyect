@@ -78,13 +78,15 @@ test('demo web: catálogo con coordenada real y pedido sin tarjeta en el sitio',
   await page.getByRole('button', { name: /buscar servicio/i }).click();
   await page.getByRole('button', { name: /plomería/i }).click();
 
-  await expect(page.getByRole('button', { name: /Pedro Rojas/i })).toBeVisible({
-    timeout: 15_000,
-  });
+  const card = page.locator('.pro-card', { hasText: 'Pedro Rojas' });
+  await expect(card).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.mwa-map-pin')).toHaveCount(1);
 
-  await page.getByRole('button', { name: /Pedro Rojas/i }).click();
-  await page.getByRole('button', { name: /continuar con la reserva/i }).click();
+  await card.click();
+  const reserve = page.getByRole('button', { name: /continuar con la reserva/i });
+  await expect(reserve).toBeVisible();
+  // La barra queda fija al borde inferior y Playwright no siempre puede desplazarla.
+  await reserve.dispatchEvent('click');
 
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByText(/pedido sin sesión/i)).toBeVisible();
