@@ -177,6 +177,8 @@ cd myworksapp_app
 supabase db push
 ```
 
+La migración `20261005000001_verificacion_profesional.sql` agrega `estado_verificacion` y el bucket privado `verificacion-profesional`. Sin aplicarla, el resto de la app sigue funcionando y la revisión de identidad muestra el error. No hace falta una variable de entorno nueva: el cliente usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (web y escritorio) o `--dart-define=SUPABASE_URL` y `SUPABASE_ANON_KEY` (Flutter). Pagos reales: `TBK_COMMERCE_CODE`, `TBK_API_KEY` y `TBK_ENV` solo en los secretos de las Edge Functions, nunca en el cliente.
+
 ### 2. Google Cloud Console
 
 1. Crear proyecto (o usar uno existente).

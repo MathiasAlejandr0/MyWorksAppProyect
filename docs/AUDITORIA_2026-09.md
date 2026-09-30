@@ -1,0 +1,163 @@
+# Auditoría MyWorksApp — 30 de septiembre de 2026
+
+Auditoría del monorepo completo (app Flutter, sitio web, escritorio Tauri y paquete `shared`) y de lo que se cerró en la rama `cursor/finish-ecosystem-fa99`.
+
+El producto es un marketplace de oficios del hogar para Chile (cliente y especialista), con un panel de administración en escritorio. El backend es **Supabase** (Auth, PostgreSQL, PostgREST, RLS, Storage y Edge Functions). No hay un API propio ni Firebase.
+
+## 1. Arquitectura
+
+| Pieza | Qué es | Cómo habla con el resto |
+|---|---|---|
+| `myworksapp_app` | App Flutter (Android, iOS y carpeta `windows/`). Roles cliente, especialista y un admin móvil reducido. | `supabase_flutter`. Capas: `features/*/presentation` → `core/services` → `core/database/repositories` → Postgres. |
+| `myworksapp_web` | Sitio Vite + React. Landing, catálogo, reserva y checkout del **cliente**. | Importa `@myworksapp/shared` por alias de Vite. Misma base. |
+| `myworksapp_desktop` | Hub operativo. La UI es React; Tauri la empaqueta. Es el **back-office** (administrador). | El mismo `shared` y el mismo Supabase. El acceso exige rol `administrador`. |
+| `shared` | Tipos, dominio (estados en español), repositorios y pagos (Webpay / Oneclick). | Lo consumen web y escritorio. Flutter tiene un espejo generado del dominio. |
+| `myworksapp_app/supabase` | Migraciones SQL, RLS y Edge Functions (Deno). | Pagos, disputas, invitados y liquidación. |
+
+### Backend, auth, pagos, mapas, push y archivos
+
+- **Base y auth:** Supabase Auth (correo y OAuth Google/Apple preparados) + tabla `perfiles`. El rol vive en la base (`usuario`, `trabajador`, `administrador`), no solo en la pantalla.
+- **Pagos:** Transbank Webpay Plus y Oneclick (tarjeta guardada). El número de tarjeta no pasa por la app. El commit deja el cobro `retenido` hasta la conformidad del cliente. La liquidación al profesional es manual (`liquidaciones`). Las claves de comercio van en secretos de las Edge Functions (`TBK_COMMERCE_CODE`, `TBK_API_KEY`, `TBK_ENV`).
+- **Mapas:** Leaflet + OpenStreetMap en la web. Flutter usa `google_maps_flutter` y `flutter_map`. El seguimiento GPS del profesional **no existe**: el mapa muestra el domicilio del pedido si hay coordenadas.
+- **Push:** notificaciones locales en el teléfono (`flutter_local_notifications`). FCM está como puerto sin implementar (`UnimplementedFcmPushNotifications`). No hay correo transaccional de producto (Resend no está cableado al flujo).
+- **Archivos:** fotos de perfil y evidencia siguen rutas locales o URLs. La verificación nueva sube el documento al bucket privado `verificacion-profesional` cuando la migración está aplicada.
+
+### Cómo se comparten los datos
+
+Los tres clientes leen y escriben las mismas tablas (`perfiles`, `trabajadores`, `trabajos`, `pagos`, `mensajes`, `disputas`, `notificaciones`). Las transiciones de trabajo y el dinero pasan por RPC y Edge Functions, no por un `UPDATE` libre del cliente. `shared/src/domain.ts` es la fuente de los códigos de estado; Flutter los regenera.
+
+## 2. Rama `origin/cursor/auth-roles-views-d56a`
+
+**Ya está superada por `main`. No hay que integrarla.**
+
+El merge-base es `7a7b5d3`. La rama aporta dos commits (roles Cliente/Especialista y las vistas de registro, login y perfil). Ese trabajo entró a `main` en `8fcce70` (*Sistema de autenticación por roles Cliente y Especialista*). Después, `main` avanzó 25 commits (Webpay, retención hasta la conformidad, disputas, catálogo y mapa). En `main` ya están `user_role.dart`, `auth_service.dart`, el medidor de contraseña, los chips de rol, la migración de alias `cliente`/`especialista` y los tests. Fusionar la rama ahora pisaría pagos y seguridad.
+
+Las ramas `dependabot/*` no se tocaron.
+
+## 3. Build y pruebas
+
+Herramientas de esta pasada: Flutter 3.47.5 (Dart 3.13.4, canal stable), Node 22, Rust 1.98.1 (el Cargo 1.83 del entorno no compilaba dependencias `edition2024`).
+
+| Comando | Resultado |
+|---|---|
+| `shared` `npm test` | 32 pruebas, 0 fallos |
+| `myworksapp_web` `npm run lint` | 0 errores. 4 avisos previos de oxlint (fast refresh y un ref en `PremiumSearchMap` / `AuthContext`) |
+| `myworksapp_web` `tsc -b` y `vite build` | OK |
+| `myworksapp_desktop` `npm test` | 2 pruebas, 0 fallos |
+| `myworksapp_desktop` `npm run lint` | 0 errores. 2 avisos previos (`AuthContext`, `SupportWorkspace`) |
+| `myworksapp_desktop` `tsc -b` y `vite build` | OK |
+| `flutter analyze` | Sin avisos (exit 0). Antes de este arreglo había 8 avisos: `setState` en extensiones, `anonKey` deprecado, un `BuildContext` tras un `await` y un `FormatException` sin `const`. |
+| `flutter test` | 56 pruebas, 0 fallos (incluye zona de matching y la bienvenida: marca y botón «Comenzar Ahora»). La captura PNG de esa pantalla está en los artefactos; el test no escribe archivos para no colgar el runner sin rasterizador. |
+| `cargo check` y `cargo clippy` | OK con Rust 1.98.1. El Cargo 1.83 del entorno no lee crates `edition2024`. Hizo falta `libgtk-3-dev` y `libwebkit2gtk-4.1-dev` para compilar Tauri en Linux. Clippy no reportó avisos. |
+
+La web en release y el hub de escritorio compilan. El build web de Flutter también compila; en Chromium headless el canvas queda negro (WebGL) y el arranque registra un error minificado, así que la captura de la app móvil es la pantalla de bienvenida pintada por el test de widgets, no el binario web.
+
+## 4. Seguridad
+
+- No hay `service_role` en los clientes. Los `.env` reales no están en el repositorio. Web y escritorio arrancan con un URL de ejemplo (`example.supabase.co`) y una clave ficticia `public-anon-placeholder` si faltan variables, para que el smoke de Playwright no reviente.
+- Flutter trae en el código la URL del proyecto de demo y la **clave publicable** (`sb_publishable_…`). Es la clave de cliente, no la secreta. Un release sin `--dart-define` de URL y clave falla a propósito (`SupabaseConfig.validateForCurrentBuild`). Aun así, la clave publicable queda en el historial del repo: conviene rotarla si el proyecto deja de ser demo.
+- Las Edge Functions usan la clave pública de **integración** de Transbank solo si `TBK_ENV` no es `production`. En producción, si alguien deja esa clave, el servidor rechaza el cobro.
+- RLS: mensajes solo entre las partes del trabajo (o admin); el profesional no puede autoaprobarse (`proteger_verificacion_profesional`); pagos y liberación de escrow van por `service_role` / RPC. El commit de Webpay lo hace el servidor con el token de Transbank, no un webhook sin firma pegado en el cliente.
+- Validación: registro con validadores, mensajes recortados a 2000 caracteres, rol web limitado a `usuario` (un trabajador o admin que entre al sitio es deslogueado).
+- Huecos que siguen: no hay verificación de antecedentes (registro civil / causas); el documento es una foto que revisa un humano; no hay WAF ni rate limit de aplicación fuera de las funciones de pago; el chat usa Realtime si la publicación está activa y, si no, un refresco cada 12 segundos.
+
+## 5. Pantallas
+
+Estados: **terminada** (flujo real y estados de carga/vacío/error), **falta pulir**, **incompleta**, **placeholder**, **rota**.
+
+### App Flutter
+
+| Ruta | Antes | Después | Por qué |
+|---|---|---|---|
+| `/welcome`, `/onboarding`, `/role-selector` | terminada | terminada | Bienvenida, tour y elección de rol. |
+| `/login`, `/register`, `/forgot-password`, `/reset-password` | terminada | terminada | Auth por rol ya estaba en `main`. |
+| `/profile` | terminada | terminada | Perfil según cliente o especialista. |
+| `/user/home`, `/user/worker-list`, `/user/worker-detail/:id` | terminada | terminada | Catálogo y ficha del profesional. |
+| `/user/service-request`, `/user/quick-booking` | terminada | terminada | Crean el trabajo en Supabase. |
+| `/user/profile`, `/user/profile/edit` | terminada | terminada | Datos del cliente. |
+| `/worker/home`, `/worker/register`, `/worker/pricing-setup` | terminada | terminada | Alta, zona y tarifas. |
+| `/worker/profile`, `/worker/profile/manage` | incompleta | falta pulir | Faltaba pedir verificación. Ahora hay nota, foto del documento y estado. Sigue sin antecedentes automáticos. |
+| `/job/detail/:id` | falta pulir | falta pulir | Flujo real (estados, evidencia, cotización). El archivo sigue partido en extensiones; se corrigió el aviso de `setState`. |
+| `/job/history`, `/job/photos/:id`, `/job/schedule` | terminada | terminada | Historial, evidencia y calendario del especialista. |
+| `/rating/:id` | terminada | terminada | Calificación al cerrar. |
+| `/chat/:id` | incompleta | terminada | Guardaba en `mensajes` pero se quedaba cargando si faltaba la otra parte y no se actualizaba solo. Ahora hay error visible, Realtime y refresco. |
+| `/notifications`, `/settings` | terminada | terminada | Centro local y ajustes. |
+| `/statistics` | terminada | terminada | Cifras del especialista desde sus trabajos. |
+| `/privacy-policy`, `/terms`, `/user-rights`, `/help-center`, `/maintenance` | terminada | terminada | Textos legales y ayuda. El contacto de soporte de mantenimiento sigue como nota interna. |
+| Permisos de cámara, ubicación y almacenamiento; Webpay WebView | terminada | terminada | Pasos del sistema y el handoff de pago. |
+| `/admin` y subrutas (usuarios, trabajadores, trabajos, disputas, reportes, errores, servicios, banderas) | terminada | terminada | Operan contra Supabase. El admin de teléfono no reemplaza al escritorio. |
+| `/admin/desktop-hub` | terminada | terminada | Explica que la operación vive en el programa de escritorio. No es un panel falso. |
+
+El matching ahora suma puntaje si la zona del profesional aparece en la dirección. No inventa kilómetros: el profesional no tiene latitud y longitud.
+
+### Sitio web (vistas, no hay router)
+
+| Vista | Antes | Después | Por qué |
+|---|---|---|---|
+| Landing | terminada | terminada | Hero, buscador y acceso. |
+| Catálogo de categorías | terminada | terminada | Oficios con foto. |
+| Resultados y mapa Leaflet | falta pulir | falta pulir | El catálogo es real. Los pines que no tienen coordenada propia siguen repartidos alrededor de Las Condes para la demo. |
+| Checkout y vuelta de pago | terminada | terminada | Webpay / tarjeta guardada. Sin claves de comercio el cobro no sale. |
+| Seguimiento | rota | terminada | Decía «Dark Web Access», «en camino» y «32 km/h» fijos, y el botón de pago no hacía nada. Ahora muestra el estado real del trabajo, el pago y el mapa del domicilio si hay coordenadas. |
+| Chat del seguimiento | placeholder | terminada | Los mensajes se quedaban en el navegador y se marcaban como enviados. Ahora se escriben en `mensajes` si hay sesión y pedido. |
+| Modal de auth e invitado | terminada | terminada | Sin campo de número de tarjeta. |
+| Búsqueda sin oficio reconocible | rota | terminada | Cualquier texto caía en electricistas y decía «profesional verificado». Ahora pide elegir una categoría. |
+
+### Escritorio
+
+| Pantalla | Antes | Después | Por qué |
+|---|---|---|---|
+| Login y MFA | terminada | terminada | Solo entra `administrador`. |
+| Panel ejecutivo | falta pulir | falta pulir | El GMV, el donut y el CSAT siguen dibujados como ejemplo, ahora etiquetados. Los conteos de trabajos y disputas ya no se reemplazan por 1246 y 32 cuando la base dice 0. |
+| Trabajadores del panel | incompleta | terminada | La columna «precio» mostraba «verificado» si tenía tarifas. Ahora muestra la visita en pesos y la verificación, con aprobar o rechazar. |
+| Soporte y disputas | terminada | terminada | Lista disputas reales y permite cerrarlas. |
+| DevSecOps | placeholder | falta pulir | El runner decía 28/28 y un usuario `researcher@myworks.edu`. Ahora mide la latencia real y deja claro que las suites corren en CI. No ejecuta las pruebas. |
+| RRHH | placeholder | incompleta | La lista de personas es de demostración solo en desarrollo. La invitación no envía correo: el formulario lo dice en vez de vaciarse como si hubiera funcionado. |
+| Campana y ajustes | rota | terminada | No hacían nada. Abren las notificaciones de la cuenta y el estado de las variables de Supabase. |
+| Perfil | terminada | terminada | Nombre, correo y rol. |
+
+## 6. Completitud frente a un marketplace tipo Uber de oficios
+
+| Capacidad | Cliente | Especialista | Admin | Estado |
+|---|---|---|---|---|
+| Alta y sesión | App y web | App | Escritorio (+ MFA) | Hecho |
+| Verificación de identidad y antecedentes | — | Nota + foto; un admin aprueba | Aprueba o rechaza en el escritorio | Parcial. Falta aplicar la migración. No hay consulta a un registro de antecedentes. |
+| Catálogo | Web y app | Oficios y tarifas | Servicios en el admin móvil | Hecho |
+| Pedido con lugar | Dirección y coordenadas en el trabajo | La ve al aceptar | La ve en el trabajo | Hecho. Fotos del problema al crear el pedido: la evidencia fuerte es la del profesional al terminar. |
+| Matching cercano | Elige en el catálogo; la app puntúa por zona, nota y rechazos | Recibe el pendiente | — | Parcial. No hay dispatch automático por GPS. |
+| Cotizaciones y precio fijo | Los dos modos existen | Propone o publica tarifa | — | Hecho |
+| Aceptar o rechazar | — | App | — | Hecho |
+| Seguimiento en vivo | Estado real en la web | Cambia el estado en la app | Ve el trabajo | Parcial. No hay GPS del especialista. |
+| Chat | Web (con sesión) y app | App | — | Hecho sobre `mensajes` |
+| Avisos | In-app | Locales en el teléfono | Bandeja del escritorio | Parcial. Sin push remoto ni correo de producto. |
+| Cobro retenido, liberación, reembolso | Webpay / Oneclick | Ve el estado | Liquidación manual | Hecho en código. Producción exige comercio Transbank real. |
+| Comisión y payout automático | — | — | Transferencia manual | Falta. Khipu/Fintoc están como stub. |
+| Disputas | Puede abrirlas | Las ve | Las cierra en soporte | Hecho |
+| Calificaciones e historial | App | App | — | Hecho |
+| Perfil | App y web | App | Escritorio | Hecho |
+| Métricas | — | Estadísticas propias | Conteos reales; GMV ilustrativo | Parcial |
+
+Quién usa qué: el **cliente** usa la web para buscar y pagar, y la app para el ciclo completo. El **especialista** usa la app. El **admin** opera en el escritorio; el admin del teléfono es un complemento, no el back-office.
+
+## 7. Plan (lo que se hizo y lo que queda)
+
+Hecho en esta rama, en este orden:
+
+1. Corregir avisos de `flutter analyze` que esta versión del SDK marca (constructor `const`, `publishableKey`, `setState` en extensiones, contexto tras un `await`).
+2. Chat web real, seguimiento honesto y búsqueda que no inventa un electricista.
+3. Bandeja, ajustes y panel de calidad del escritorio; conteos que no se sustituyen por cifras de ejemplo; verificación aprobar/rechazar.
+4. Tarjeta de verificación en el perfil del especialista, migración y trigger para que no se autoapruebe.
+5. Matching por zona, sincronización de banderas ya leídas desde Supabase, y pruebas de estados, mensajes y verificación.
+
+Sigue fuera de este código, porque depende del dueño:
+
+- Aplicar `20261005000001_verificacion_profesional.sql` en el proyecto Supabase (`supabase db push`).
+- Comercio Transbank de producción y secretos `TBK_*` cuando exista la empresa.
+- Cuenta de Firebase / APNs para push, y un proveedor de correo si se quieren avisos fuera de la app.
+- Payout automático (cuenta de payout).
+- Publicar en Play Store, App Store y firmar el instalador de Tauri.
+- GPS en vivo del especialista (hay que guardar su posición y una política de privacidad explícita).
+- Antecedentes distintos de la revisión humana del documento.
+- Quitar el reparto ilustrativo de pines en Santiago cuando cada profesional tenga coordenada.
+
+No se inventaron credenciales. No se hizo push a `main` y no se abrió un pull request.
