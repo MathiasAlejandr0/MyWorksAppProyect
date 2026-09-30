@@ -39,7 +39,7 @@ const HumanResourcesWorkspace = lazy(() =>
 const NAV_ITEMS = [
   { id: 0, label: 'Panel ejecutivo', icon: LayoutGrid },
   { id: 1, label: 'Soporte y disputas', icon: Headset },
-  { id: 2, label: 'DevSecOps', icon: Shield },
+  { id: 2, label: 'Seguridad', icon: Shield },
   { id: 3, label: 'RRHH', icon: Users },
 ] as const;
 

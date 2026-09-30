@@ -28,7 +28,7 @@ export async function createPendingJob(
     id_servicio: input.serviceId,
     estado: 'esperando_pago',
     descripcion: input.description,
-    direccion: input.address ?? 'Solicitud desde web',
+    direccion: input.address ?? 'Dirección por confirmar',
     latitud: input.latitude ?? null,
     longitud: input.longitude ?? null,
     fecha_programada: input.scheduledAt ?? null,

@@ -306,7 +306,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
         >
 
-          <FileText size={15} /> Audit trail
+          <FileText size={15} /> Auditoría
 
         </button>
 
@@ -320,7 +320,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
         {import.meta.env.DEV ? (
           <button type="button" className="executive-demo-link" onClick={() => setShowContractModal(true)}>
-            Contrato (solo DEV)
+            Contrato (solo desarrollo)
           </button>
         ) : null}
 

@@ -492,7 +492,8 @@ export function App() {
       const rows = await fetchUserJobs(supabase, profile.id);
       const closed = new Set(['completado', 'cancelado', 'expirado', 'no_asistio']);
       const active = rows.filter((row) => !closed.has(row.status));
-      setMyOrders(active.length > 0 ? active : rows.slice(0, 8));
+      const completed = rows.filter((row) => row.status === 'completado').slice(0, 8);
+      setMyOrders([...active, ...completed]);
     } catch {
       setOrdersError('No se pudieron leer tus pedidos.');
       setMyOrders([]);
@@ -916,7 +917,15 @@ export function App() {
               void openJobTracking(checkoutJobId);
               return;
             }
-            if (selectedWorker) setView('tracking');
+            if (profile) {
+              if (selectedWorker) setView('tracking');
+              return;
+            }
+            // El invitado todavía no tiene sesión: sin ella el seguimiento sale vacío.
+            // Al entrar, el efecto de restauración abre 'mwa-active-job'.
+            if (checkoutJobId) sessionStorage.setItem('mwa-active-job', checkoutJobId);
+            setView('landing');
+            setShowAuth(true);
           }}
           onGoHome={() => setView('landing')}
         />

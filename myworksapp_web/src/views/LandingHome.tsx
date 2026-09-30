@@ -171,17 +171,28 @@ export function LandingHome({
             </div>
             {ordersError ? <p role="alert">{ordersError}</p> : null}
             {orders.length === 0 ? <p>No tienes pedidos todavía.</p> : null}
-            {orders.map((order) => (
-              <button
-                key={order.id}
-                type="button"
-                className="orders-row"
-                onClick={() => onOpenOrder?.(order.id)}
-              >
-                <strong>{jobStatusLabel(order.status)}</strong>
-                <span>{order.address || order.description || order.id.slice(0, 8)}</span>
-              </button>
-            ))}
+            {(['activo', 'completado'] as const).map((group) => {
+              const rows = orders.filter((order) =>
+                group === 'completado' ? order.status === 'completado' : order.status !== 'completado',
+              );
+              if (rows.length === 0) return null;
+              return (
+                <div key={group} className="orders-group">
+                  <h3>{group === 'completado' ? 'Completados' : 'En curso'}</h3>
+                  {rows.map((order) => (
+                    <button
+                      key={order.id}
+                      type="button"
+                      className="orders-row"
+                      onClick={() => onOpenOrder?.(order.id)}
+                    >
+                      <strong>{jobStatusLabel(order.status)}</strong>
+                      <span>{order.address || order.description || order.id.slice(0, 8)}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
           </section>
         </div>
       )}
