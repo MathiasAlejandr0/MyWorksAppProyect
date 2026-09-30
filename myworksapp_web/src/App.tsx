@@ -316,6 +316,7 @@ export function App() {
   const [showChat, setShowChat] = useState(false);
 
   const [showAuth, setShowAuth] = useState(false);
+  const [authInitialEmail, setAuthInitialEmail] = useState('');
 
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [catalogError, setCatalogError] = useState<string | null>(null);
@@ -484,6 +485,7 @@ export function App() {
 
   const showMyOrders = async () => {
     if (!profile) {
+      setAuthInitialEmail('');
       setShowAuth(true);
       return;
     }
@@ -878,6 +880,7 @@ export function App() {
     if (session.nonce) {
       sessionStorage.setItem('mwa-guest-alta-nonce', session.nonce);
     }
+    sessionStorage.setItem('mwa-guest-email', data.email.trim());
     setCheckoutJobId(session.jobId);
     sessionStorage.setItem('mwa-active-job', session.jobId);
     sessionStorage.setItem(
@@ -924,6 +927,7 @@ export function App() {
             // El invitado todavía no tiene sesión: sin ella el seguimiento sale vacío.
             // Al entrar, el efecto de restauración abre 'mwa-active-job'.
             if (checkoutJobId) sessionStorage.setItem('mwa-active-job', checkoutJobId);
+            setAuthInitialEmail(sessionStorage.getItem('mwa-guest-email')?.trim() ?? '');
             setView('landing');
             setShowAuth(true);
           }}
@@ -1075,10 +1079,13 @@ export function App() {
             profileName={profile?.name}
             onBack={() => setView('landing')}
             onSelectCategory={openCategory}
-            onShowAuth={() => setShowAuth(true)}
+            onShowAuth={() => {
+              setAuthInitialEmail('');
+              setShowAuth(true);
+            }}
           />
           <Suspense fallback={null}>
-            <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+            <AuthModal open={showAuth} initialEmail={authInitialEmail} onClose={() => setShowAuth(false)} />
           </Suspense>
         </div>
       </Suspense>
@@ -1114,7 +1121,10 @@ export function App() {
             setSelectedWorker(null);
           }}
 
-          onShowAuth={() => setShowAuth(true)}
+          onShowAuth={() => {
+            setAuthInitialEmail('');
+            setShowAuth(true);
+          }}
           hasMore={Boolean(serviceMatch?.nextCursor)}
           isLoadingMore={loadingMoreWorkers}
           onLoadMore={() => void loadMoreWorkers()}
@@ -1181,6 +1191,7 @@ export function App() {
             onSubmit={submitGuestCheckout}
             onPreferLogin={() => {
               setShowGuestCheckout(false);
+              setAuthInitialEmail('');
               setShowAuth(true);
             }}
           />
@@ -1206,7 +1217,7 @@ export function App() {
 
 
 
-        <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+        <AuthModal open={showAuth} initialEmail={authInitialEmail} onClose={() => setShowAuth(false)} />
 
       </div>
       </Suspense>
@@ -1221,7 +1232,11 @@ export function App() {
       activeNav={activeNav}
       setActiveNav={setActiveNav}
       profile={profile}
-      setShowAuth={setShowAuth}
+      setShowAuth={(open) => {
+        if (open) setAuthInitialEmail('');
+        setShowAuth(open);
+      }}
+      authInitialEmail={authInitialEmail}
       logout={() => void logout()}
       authError={authError}
       clearError={clearError}

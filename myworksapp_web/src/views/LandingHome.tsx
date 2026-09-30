@@ -28,6 +28,7 @@ type LandingHomeProps = {
   goToCategories: () => void;
   openCategory: (cat: ServiceCategory) => void;
   showAuth: boolean;
+  authInitialEmail?: string;
   availableCategoryIds: ReadonlySet<string> | null;
   checkoutNotice?: string | null;
   clearCheckoutNotice?: () => void;
@@ -49,6 +50,7 @@ export function LandingHome({
   goToCategories,
   openCategory,
   showAuth,
+  authInitialEmail = '',
   availableCategoryIds,
   checkoutNotice = null,
   clearCheckoutNotice,
@@ -136,9 +138,9 @@ export function LandingHome({
                   Mis pedidos
                 </button>
 
-                <button type="button" className="btn-ghost" onClick={() => void logout()}>
+                <button type="button" className="btn-ghost" aria-label="Salir" onClick={() => void logout()}>
 
-                  <LogOut size={16} /> Salir
+                  <LogOut size={16} /> <span className="nav-btn-label">Salir</span>
 
                 </button>
 
@@ -568,7 +570,11 @@ export function LandingHome({
 
 
       <Suspense fallback={null}>
-        <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+        <AuthModal
+          open={showAuth}
+          initialEmail={authInitialEmail}
+          onClose={() => setShowAuth(false)}
+        />
       </Suspense>
 
     </div>

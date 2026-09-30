@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LogIn, UserPlus, X } from 'lucide-react';
 import {
   AuthError,
@@ -14,20 +14,31 @@ import { turnstileSiteKey } from './turnstileSite';
 interface AuthModalProps {
   open: boolean;
   onClose: () => void;
+  /** Correo del invitado, solo cuando el diálogo se abre desde «Ver mi pedido». */
+  initialEmail?: string;
 }
 
-export function AuthModal({ open, onClose }: AuthModalProps) {
+export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) {
   const { login, loginWithOAuth, register } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState(
-    import.meta.env.DEV ? 'usuario@demo.com' : '',
-  );
+  const [email, setEmail] = useState(() => initialEmail.trim());
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [resendNote, setResendNote] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState('');
+  const wasOpen = useRef(false);
+
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      setEmail(initialEmail.trim());
+      setPassword('');
+      setLocalError(null);
+      setResendNote(null);
+    }
+    wasOpen.current = open;
+  }, [open, initialEmail]);
 
   if (!open) return null;
 

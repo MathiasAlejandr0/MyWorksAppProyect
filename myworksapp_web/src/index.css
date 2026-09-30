@@ -2244,8 +2244,14 @@ h1, h2, h3, .brand-display {
   .glass-nav .nav-actions .btn-outline-orange { padding: 8px 12px; font-size: 13px; }
   .glass-nav .nav-hello { display: none; }
   .glass-nav .nav-avatar { display: grid; }
+  /* Con la inicial a la vista, Salir queda solo con el ícono para no tapar la marca. */
+  .glass-nav .nav-actions .nav-btn-label { display: none; }
   .glass-nav .brand-logo-name { font-size: 15px; }
 }
 @media (max-width: 360px) {
   .glass-nav .brand-logo-name { display: none; }
 }
+
+/* Los paneles de Leaflet usan z-index 400-1000. Sin un contexto propio competían con los
+   paneles fijos de la página: el mapa del seguimiento tapaba el chat (z-index 250). */
+.leaflet-container { isolation: isolate; }
