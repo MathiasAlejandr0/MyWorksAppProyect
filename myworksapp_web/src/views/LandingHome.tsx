@@ -128,6 +128,9 @@ export function LandingHome({
 
               <>
 
+                <span className="nav-avatar" title={`Hola, ${profile.name.split(' ')[0]}`}>
+                  {profile.name.trim().charAt(0).toUpperCase() || 'C'}
+                </span>
                 <span className="nav-hello">Hola, {profile.name.split(' ')[0]}</span>
                 <button type="button" className="btn-ghost" onClick={() => onShowOrders?.()}>
                   Mis pedidos

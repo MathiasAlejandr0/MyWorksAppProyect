@@ -89,6 +89,31 @@ test('a 1280 la barra de reserva queda dentro de la ventana', async ({ page }) =
   expect(box!.x + box!.width).toBeLessThanOrEqual(1280);
 });
 
+test('Ingresar queda dentro de la ventana a 1280 y a 390', async ({ page }) => {
+  for (const viewport of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Ingresar' }).click();
+    const dialog = page.getByRole('dialog', { name: /iniciar sesión/i });
+    await expect(dialog).toBeVisible();
+    const box = await dialog.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(-1);
+    expect(box!.y).toBeGreaterThanOrEqual(-1);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width + 1);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height + 1);
+    const title = dialog.getByRole('heading', { name: 'Iniciar sesión' });
+    await expect(title).toBeInViewport();
+    const titleBox = await title.boundingBox();
+    expect(titleBox).not.toBeNull();
+    expect(titleBox!.y).toBeGreaterThanOrEqual(0);
+    expect(titleBox!.y + titleBox!.height).toBeLessThanOrEqual(viewport.height);
+  }
+});
+
 test('a 390 la portada muestra Ingresar y Registrarse', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
