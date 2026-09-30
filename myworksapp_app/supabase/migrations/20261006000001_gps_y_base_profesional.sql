@@ -172,9 +172,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.publicar_ubicacion_trabajo(text, double precision, double precision, double precision) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.publicar_ubicacion_trabajo(text, double precision, double precision, double precision) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.publicar_ubicacion_trabajo(text, double precision, double precision, double precision) TO authenticated;
-REVOKE EXECUTE ON FUNCTION public.publicar_ubicacion_trabajo(text, double precision, double precision, double precision) FROM anon;
 
 CREATE OR REPLACE FUNCTION public.borrar_gps_si_trabajo_cerrado()
 RETURNS trigger
@@ -191,7 +190,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.borrar_gps_si_trabajo_cerrado() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.borrar_gps_si_trabajo_cerrado() FROM PUBLIC, anon, authenticated;
 
 DROP TRIGGER IF EXISTS trabajos_borrar_gps ON public.trabajos;
 CREATE TRIGGER trabajos_borrar_gps
@@ -379,6 +378,9 @@ AS $$
     COALESCE(NULLIF(trim(p_modalidad), ''), 'legado')
   );
 $$;
+
+REVOKE ALL ON FUNCTION public.transiciones_trabajo_posibles(text, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.transiciones_trabajo_posibles(text, text) TO authenticated;
 
 DO $$
 BEGIN

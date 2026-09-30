@@ -6,13 +6,12 @@ El flujo de un pedido nuevo (pagar, aceptar, ir en camino, conformidad) se hace 
 
 ## 1. Qué aplicar en la base, en este orden
 
-En el SQL Editor del proyecto (no hace falta repetir migraciones ya aplicadas; la última aplicada es `20261005000001_verificacion_profesional`):
+En el SQL Editor del proyecto. Ya están aplicadas `20261005000001_verificacion_profesional` y el cierre `security_lockdown_rpc` (en el repo: `20261005000002_security_lockdown_rpc.sql`; si el historial no la tiene, correrla de nuevo es inocuo).
 
 1. `myworksapp_app/supabase/migrations/20261006000001_gps_y_base_profesional.sql`
-2. `myworksapp_app/supabase/migrations/20261007000001_rls_indices_asesores.sql`
-3. `scripts/demo/seed_demo.sql`
-
-`20261007` no revoca `EXECUTE`. Ese cierre lo estás aplicando aparte; cuando pases el SQL, se commitea tal cual, sin duplicarlo.
+2. `myworksapp_app/supabase/migrations/20261006000002_ocultar_pin_listados.sql`
+3. `myworksapp_app/supabase/migrations/20261007000001_rls_indices_asesores.sql`
+4. `scripts/demo/seed_demo.sql`
 
 ## 2. Edge Functions
 

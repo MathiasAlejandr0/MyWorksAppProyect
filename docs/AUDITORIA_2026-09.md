@@ -158,8 +158,7 @@ Hecho en esta rama, en este orden:
 
 Sigue fuera de este código, porque depende del dueño:
 
-- Aplicar `20261006000001_gps_y_base_profesional.sql` y después `20261007000001_rls_indices_asesores.sql`. `20261005000001` ya está en la base. El seed de demo va aparte.
-- El SQL de revocación de `EXECUTE` a `anon` (incluido `liberar_escrow_manual`) lo aplica el dueño; no está duplicado aquí.
+- Aplicar, en orden, `20261006000001_gps_y_base_profesional.sql`, `20261006000002_ocultar_pin_listados.sql` y `20261007000001_rls_indices_asesores.sql`. `20261005000001` y el cierre `20261005000002_security_lockdown_rpc.sql` ya están en la base. El seed de demo va aparte.
 - SMTP de Supabase Auth, o `RESEND_API_KEY`, `RESEND_FROM` e `INVITE_PROVIDER=resend`, para que el correo de RRHH salga.
 - Comercio Transbank de producción y secretos `TBK_*` cuando exista la empresa.
 - Cuenta de Firebase / APNs para push, y un proveedor de correo si se quieren avisos fuera de la app.
