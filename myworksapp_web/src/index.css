@@ -1978,6 +1978,12 @@ h1, h2, h3, .brand-display {
   border-color: rgba(240, 120, 42, 0.55);
   box-shadow: 0 0 0 3px rgba(240, 120, 42, 0.15);
 }
+.auth-modal-hint {
+  margin: -4px 0 0;
+  color: var(--text-muted-dark);
+  font-size: 12px;
+  line-height: 1.4;
+}
 .auth-modal-error { color: var(--crimson-error); font-size: 13px; font-weight: 600; }
 .auth-modal-submit { justify-content: center; width: 100%; }
 .auth-modal-divider {

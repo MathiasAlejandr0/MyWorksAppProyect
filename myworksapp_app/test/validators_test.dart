@@ -21,9 +21,19 @@ void main() {
 
   group('validateSecurePassword', () {
     test('exige 8 caracteres, letra y número', () {
-      expect(Validators.validateSecurePassword(_sample('x', 4, '12')), isNotNull);
-      expect(Validators.validateSecurePassword(_sample('a', 8)), isNotNull);
-      expect(Validators.validateSecurePassword(_sample('1', 8)), isNotNull);
+      expect(Validators.validateSecurePassword(''), 'La contraseña es requerida');
+      expect(
+        Validators.validateSecurePassword(_sample('a', 7)),
+        'La contraseña debe tener al menos 8 caracteres',
+      );
+      expect(
+        Validators.validateSecurePassword(_sample('a', 8)),
+        'Incluye al menos un número',
+      );
+      expect(
+        Validators.validateSecurePassword(_sample('1', 8)),
+        'Incluye al menos una letra',
+      );
       expect(
         Validators.validateSecurePassword(_sample('a', 6, '12')),
         isNull,

@@ -1,5 +1,8 @@
 import type { AppSupabase } from './client';
+import { passwordPolicyMessage } from './passwordPolicy';
 import type { Profile, UserRole } from './types';
+
+export { authLinkRequiresPassword, passwordPolicyMessage, PASSWORD_SETUP_STORAGE_KEY } from './passwordPolicy';
 
 export class AuthError extends Error {
   constructor(message: string) {
@@ -32,6 +35,9 @@ export async function signUpUser(
   password: string,
   name: string,
 ): Promise<Profile> {
+  const policy = passwordPolicyMessage(password);
+  if (policy) throw new AuthError(policy);
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -50,6 +56,17 @@ export async function signUpUser(
     role: 'usuario',
     accountStatus: 'activo',
   };
+}
+
+/** Cambio de clave (recuperación, invitación o cuenta ya iniciada). */
+export async function updateAccountPassword(
+  supabase: AppSupabase,
+  password: string,
+): Promise<void> {
+  const policy = passwordPolicyMessage(password);
+  if (policy) throw new AuthError(policy);
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw new AuthError(error.message);
 }
 
 export async function signOut(supabase: AppSupabase): Promise<void> {

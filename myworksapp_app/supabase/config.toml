@@ -47,3 +47,8 @@ verify_jwt = false
 
 [functions.invitar-colaborador]
 verify_jwt = true
+
+# Local hasta que se publique en el proyecto (Authentication → Password).
+[auth]
+minimum_password_length = 8
+password_requirements = "letters_digits"

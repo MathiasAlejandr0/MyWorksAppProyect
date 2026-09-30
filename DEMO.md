@@ -30,7 +30,7 @@ Secretos de esa función:
 |---|---|
 | `INVITE_PROVIDER` | `supabase` (por defecto). El correo sale por el SMTP de Auth. |
 | `RESEND_API_KEY` y `RESEND_FROM` | Solo si `INVITE_PROVIDER=resend`. |
-| `INVITE_REDIRECT_URL` | Opcional. Ej. `http://localhost:5173`. |
+| `INVITE_REDIRECT_URL` | `http://127.0.0.1:3001` (consola de escritorio). Ahí la persona invitada elige su contraseña antes del segundo factor. |
 
 Secretos de pago (integración, no producción):
 
@@ -60,6 +60,10 @@ Funciones de pago que ya deben estar desplegadas (volver a desplegar solo si cam
 | Admin escritorio | `admin.ops@demo.myworksapp.cl` | administrador |
 
 El escritorio pide un segundo factor la primera vez: escanea el QR con una app de códigos (Authenticator o similar) y guarda ese dispositivo para la demo.
+
+Registro (web y app) y cambio de clave piden al menos 8 caracteres, con una letra y un número. El login de estas cuentas no cambia: `Demo2026!` ya cumple. La misma regla está en `myworksapp_app/supabase/config.toml` (`minimum_password_length = 8`, `password_requirements = "letters_digits"`). Ese archivo no modifica el proyecto en la nube: en el dashboard, Authentication → Password, deja el mínimo en 8 y el requisito en letras y dígitos. Hasta que lo guardes ahí, el servidor puede aceptar una clave más débil; las pantallas de la demo ya no.
+
+La invitación de RRHH abre la consola y pide esa contraseña antes del segundo factor. Si el enlace cae en otro puerto, la persona no ve esa pantalla.
 
 ## 4. Tarjetas Transbank (integración)
 

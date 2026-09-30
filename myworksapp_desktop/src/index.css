@@ -1135,6 +1135,10 @@ body::before {
   font-family: var(--font-family);
 }
 
+.login-screen-single {
+  grid-template-columns: 1fr;
+}
+
 .login-brand-panel {
   position: relative;
   display: flex;

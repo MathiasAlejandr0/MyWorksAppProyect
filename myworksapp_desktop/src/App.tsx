@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ExecutiveWorkspace } from './components/ExecutiveWorkspace';
 import { DesktopLoginScreen } from './components/DesktopLoginScreen';
+import { InvitePasswordScreen } from './components/InvitePasswordScreen';
 import { AdminMfaGate } from './components/AdminMfaGate';
 import { SessionLoadingShell } from './components/LoadingState';
 import { AdminInboxPanel } from './components/AdminInboxPanel';
@@ -43,7 +44,7 @@ const NAV_ITEMS = [
 ] as const;
 
 export function App() {
-  const { profile, loading, logout, needsMfa } = useAuth();
+  const { profile, loading, logout, needsMfa, mustSetPassword, finishPasswordSetup } = useAuth();
   const [activeRoleWorkspace, setActiveRoleWorkspace] = useState<number>(0);
   const [showProfile, setShowProfile] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
@@ -51,6 +52,15 @@ export function App() {
 
   if (loading) {
     return <SessionLoadingShell />;
+  }
+
+  if (mustSetPassword) {
+    return (
+      <InvitePasswordScreen
+        onSubmit={finishPasswordSetup}
+        onCancel={logout}
+      />
+    );
   }
 
   if (needsMfa) {

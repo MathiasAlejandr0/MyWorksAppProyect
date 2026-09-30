@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LogIn, UserPlus, X } from 'lucide-react';
-import { AuthError } from '@myworksapp/shared';
+import { AuthError, passwordPolicyMessage } from '@myworksapp/shared';
 import { useAuth } from '../context/AuthContext';
 
 interface AuthModalProps {
@@ -15,9 +15,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   const [email, setEmail] = useState(
     import.meta.env.DEV ? 'usuario@demo.com' : '',
   );
-  const [password, setPassword] = useState(
-    import.meta.env.DEV ? 'demo123' : '',
-  );
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -42,6 +40,11 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
       if (mode === 'login') {
         await login(email, password);
       } else {
+        const policy = passwordPolicyMessage(password);
+        if (policy) {
+          setLocalError(policy);
+          return;
+        }
         await register(name, email, password);
       }
       onClose();
@@ -91,10 +94,22 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Contraseña"
             required
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            aria-invalid={localError ? true : undefined}
+            aria-describedby={mode === 'register' ? 'auth-password-policy' : undefined}
             className="auth-modal-input"
           />
+          {mode === 'register' && (
+            <p id="auth-password-policy" className="auth-modal-hint">
+              Mínimo 8 caracteres, con al menos una letra y un número.
+            </p>
+          )}
 
-          {localError && <div className="auth-modal-error">{localError}</div>}
+          {localError && (
+            <div className="auth-modal-error" role="alert">
+              {localError}
+            </div>
+          )}
 
           <button type="submit" className="btn-primary auth-modal-submit" disabled={submitting}>
             {mode === 'login' ? <LogIn size={16} /> : <UserPlus size={16} />}

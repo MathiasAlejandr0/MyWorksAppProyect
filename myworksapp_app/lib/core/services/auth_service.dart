@@ -8,6 +8,7 @@ import '../database/repositories/user_repository.dart';
 import '../database/supabase_db.dart';
 import '../domain/user_role.dart';
 import '../exceptions/auth_exceptions.dart';
+import '../utils/validators.dart';
 import 'session_manager.dart';
 
 /// Resultado de un registro. [user] es null si hace falta confirmar el correo.
@@ -219,6 +220,8 @@ class SupabaseAuthService implements AuthService {
   @override
   Future<void> changePassword(String newPassword) async {
     try {
+      final policyError = Validators.validateSecurePassword(newPassword);
+      if (policyError != null) throw WeakPasswordException(policyError);
       await _client.auth.updateUser(UserAttributes(password: newPassword));
     } catch (e) {
       throw _mapError(e);

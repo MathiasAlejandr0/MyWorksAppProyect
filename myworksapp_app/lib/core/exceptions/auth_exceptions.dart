@@ -76,6 +76,10 @@ final class SessionExpiredException extends AppAuthException {
         );
 }
 
+final class WeakPasswordException extends AppAuthException {
+  const WeakPasswordException(super.userMessage);
+}
+
 final class AuthUnexpectedException extends AppAuthException {
   const AuthUnexpectedException([
     super.userMessage =

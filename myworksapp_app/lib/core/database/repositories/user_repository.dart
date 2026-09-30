@@ -1,4 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
+import '../../exceptions/auth_exceptions.dart';
+import '../../utils/validators.dart';
 import '../models/user_model.dart';
 import '../supabase_db.dart';
 
@@ -49,6 +51,8 @@ class UserRepository {
 
   /// La contraseña la gestiona Supabase Auth; se mantiene por compatibilidad.
   Future<void> updatePassword(String userId, String passwordHash) async {
+    final policyError = Validators.validateSecurePassword(passwordHash);
+    if (policyError != null) throw WeakPasswordException(policyError);
     await supabase.auth.updateUser(UserAttributes(password: passwordHash));
   }
 
