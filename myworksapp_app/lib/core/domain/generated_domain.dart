@@ -41,6 +41,8 @@ class GeneratedPaymentStatuses {
   static const String held = 'retenido';
   static const String released = 'liberado';
   static const String refunded = 'reembolsado';
+  static const String voided = 'anulado';
+  static const String failed = 'fallido';
 }
 
 /// Pricing modes - generated from shared/src/domain.ts

@@ -1246,6 +1246,10 @@ export type Database = {
       es_parte_trabajo: { Args: { p_trabajo_id: string }; Returns: boolean }
       es_rol_trabajador: { Args: { p_usuario_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      categorias_con_disponibles: {
+        Args: never
+        Returns: string[]
+      }
       listar_profesionales_catalogo: {
         Args: {
           p_categoria?: string

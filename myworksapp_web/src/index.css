@@ -873,6 +873,9 @@ h1, h2, h3, .brand-display {
 }
 .search-page-dots { color: var(--text-muted-dark); padding: 0 4px; }
 .search-empty { padding: 40px; text-align: center; color: var(--text-muted-dark); }
+.search-empty h2 { margin: 0 0 8px; color: var(--text-dark, inherit); font-size: 1.25rem; }
+.search-empty p { margin: 0 0 16px; }
+.categories-empty { margin: 24px 0; text-align: center; color: var(--text-muted-dark); }
 
 .search-map-panel {
   position: relative;

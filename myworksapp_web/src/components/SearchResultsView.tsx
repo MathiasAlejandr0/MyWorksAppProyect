@@ -223,8 +223,15 @@ export function SearchResultsView({
               ))}
             </div>
           ) : workers.length === 0 ? (
-            <div className="search-empty">
-              <p>No hay profesionales disponibles para esta búsqueda.</p>
+            <div className="search-empty" role="status">
+              <h2>Todavía no hay profesionales en esta categoría</h2>
+              <p>
+                No hay visitas publicadas ahora. Elige otro oficio del catálogo
+                o vuelve más tarde.
+              </p>
+              <button type="button" className="btn-outline-orange" onClick={onBack}>
+                Ver otras categorías
+              </button>
             </div>
           ) : (
             <div className="search-results-grid">

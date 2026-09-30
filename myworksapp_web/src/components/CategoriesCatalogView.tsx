@@ -55,18 +55,24 @@ export function CategoriesCatalogView({
           disponibilidad y precio de visita.
         </p>
 
-        <div className="categories-grid categories-grid--catalog">
-          {categories.map((cat) => (
-            <CategoryCard
-              key={cat.id}
-              title={cat.title}
-              subtitle={cat.subtitle}
-              photo={cat.photo}
-              variant="grid"
-              onClick={() => onSelectCategory(cat)}
-            />
-          ))}
-        </div>
+        {categories.length === 0 ? (
+          <p className="categories-empty" role="status">
+            Por ahora no hay profesionales disponibles. Vuelve más tarde.
+          </p>
+        ) : (
+          <div className="categories-grid categories-grid--catalog">
+            {categories.map((cat) => (
+              <CategoryCard
+                key={cat.id}
+                title={cat.title}
+                subtitle={cat.subtitle}
+                photo={cat.photo}
+                variant="grid"
+                onClick={() => onSelectCategory(cat)}
+              />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

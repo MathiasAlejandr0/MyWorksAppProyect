@@ -54,6 +54,13 @@ BEGIN
     ('tomas.herrera@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000104', 'Tomás Herrera', 'trabajador', 'especialista'),
     ('ana.vidal@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000105', 'Ana Vidal', 'trabajador', 'especialista'),
     ('luis.contreras@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000106', 'Luis Contreras', 'trabajador', 'especialista'),
+    ('diego.salazar@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000107', 'Diego Salazar', 'trabajador', 'especialista'),
+    ('carmen.lagos@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000108', 'Carmen Lagos', 'trabajador', 'especialista'),
+    ('felipe.araya@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000109', 'Felipe Araya', 'trabajador', 'especialista'),
+    ('rodrigo.pena@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000110', 'Rodrigo Peña', 'trabajador', 'especialista'),
+    ('isabel.campos@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000111', 'Isabel Campos', 'trabajador', 'especialista'),
+    ('hugo.vargas@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000112', 'Hugo Vargas', 'trabajador', 'especialista'),
+    ('paula.riquelme@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000113', 'Paula Riquelme', 'trabajador', 'especialista'),
     ('admin.ops@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000901', 'Valentina Riquelme', 'administrador', 'usuario');
 
   INSERT INTO auth.users (
@@ -150,6 +157,13 @@ BEGIN
       ('jose.munoz@demo.myworksapp.cl', 'Pintor', 'Interiores y fachadas en el sur de Santiago.', 4.6, 1, 28000, 'pintura', 'La Florida', 'verificado', 'Cédula revisada para la demo.', -33.5225, -70.5980, 18),
       ('tomas.herrera@demo.myworksapp.cl', 'Maestro', 'Obras menores y albañilería.', 4.7, 1, 45000, 'construccion', 'Maipú', 'verificado', 'Cédula revisada para la demo.', -33.5111, -70.7580, 20),
       ('ana.vidal@demo.myworksapp.cl', 'Aseo hogar', 'Limpieza de departamentos y casas.', 4.9, 1, 25000, 'limpieza', 'Ñuñoa', 'verificado', 'Cédula revisada para la demo.', -33.4569, -70.5978, 10),
+      ('diego.salazar@demo.myworksapp.cl', 'Armador de muebles', 'Armado de muebles y estanterías en Santiago centro.', 4.7, 1, 22000, 'ensamblaje', 'Santiago', 'verificado', 'Cédula revisada para la demo.', -33.4489, -70.6506, 8),
+      ('carmen.lagos@demo.myworksapp.cl', 'Gasfíter', 'Conexiones y revisiones de gas en el sur de Santiago.', 4.8, 1, 33000, 'gasfiteria', 'San Miguel', 'verificado', 'Cédula revisada para la demo.', -33.4969, -70.6514, 12),
+      ('felipe.araya@demo.myworksapp.cl', 'Jardinero', 'Poda, riego y mantención de jardines.', 4.6, 1, 24000, 'jardineria', 'La Reina', 'verificado', 'Cédula revisada para la demo.', -33.4455, -70.5410, 14),
+      ('rodrigo.pena@demo.myworksapp.cl', 'Cerrajero', 'Apertura y cambio de chapas en el poniente.', 4.7, 1, 28000, 'cerrajeria', 'Estación Central', 'verificado', 'Cédula revisada para la demo.', -33.4518, -70.6793, 16),
+      ('isabel.campos@demo.myworksapp.cl', 'Soporte técnico', 'Diagnóstico de PC y redes domiciliarias.', 4.9, 1, 26000, 'soporte_tecnico', 'Providencia', 'verificado', 'Cédula revisada para la demo.', -33.4265, -70.6148, 10),
+      ('hugo.vargas@demo.myworksapp.cl', 'Mudanzas', 'Traslado y embalaje dentro de Santiago.', 4.5, 1, 55000, 'mudanza', 'Quinta Normal', 'verificado', 'Cédula revisada para la demo.', -33.4330, -70.6900, 20),
+      ('paula.riquelme@demo.myworksapp.cl', 'Climatización', 'Mantención de aire acondicionado y calefacción.', 4.8, 1, 38000, 'climatizacion', 'Las Condes', 'verificado', 'Cédula revisada para la demo.', -33.4100, -70.5750, 12),
       ('luis.contreras@demo.myworksapp.cl', 'Gasfíter', 'En revisión: aún no toma pedidos.', 0, 0, 30000, 'plomeria', 'Santiago', 'en_revision', 'Documento de demo pendiente de aprobación.', -33.4489, -70.6693, 15)
   ) AS v(email, profesion, descripcion, calificacion, disponible, tarifa, categoria, zona, verificacion, nota, lat, lng, radio)
   JOIN demo_cuentas c ON c.email = v.email
@@ -184,7 +198,10 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM (
-      VALUES ('plomeria'), ('electricidad'), ('pintura'), ('construccion'), ('limpieza')
+      VALUES
+        ('plomeria'), ('electricidad'), ('pintura'), ('construccion'), ('limpieza'),
+        ('ensamblaje'), ('gasfiteria'), ('jardineria'), ('cerrajeria'),
+        ('soporte_tecnico'), ('mudanza'), ('climatizacion')
     ) AS c(categoria)
     WHERE NOT EXISTS (
       SELECT 1
@@ -212,11 +229,27 @@ BEGIN
       ('svc-demo-electricidad', 'Electricidad domiciliaria', 'Fallas e instalaciones.', 'electricidad'),
       ('svc-demo-pintura', 'Pintura', 'Interiores y fachadas.', 'pintura'),
       ('svc-demo-construccion', 'Construcción y albañilería', 'Obras menores.', 'construccion'),
-      ('svc-demo-limpieza', 'Limpieza e higiene', 'Casas y departamentos.', 'limpieza')
+      ('svc-demo-limpieza', 'Limpieza e higiene', 'Casas y departamentos.', 'limpieza'),
+      ('svc-demo-ensamblaje', 'Armado de muebles', 'Montaje de muebles y estanterías.', 'ensamblaje'),
+      ('svc-demo-gasfiteria', 'Gasfitería', 'Conexiones y revisiones de gas.', 'gasfiteria'),
+      ('svc-demo-jardineria', 'Jardinería', 'Poda y mantención de áreas verdes.', 'jardineria'),
+      ('svc-demo-cerrajeria', 'Cerrajería', 'Apertura y cambio de chapas.', 'cerrajeria'),
+      ('svc-demo-soporte', 'Soporte técnico', 'PC, redes y dispositivos.', 'soporte_tecnico'),
+      ('svc-demo-mudanza', 'Mudanza', 'Traslado y embalaje.', 'mudanza'),
+      ('svc-demo-climatizacion', 'Climatización', 'Aire acondicionado y calefacción.', 'climatizacion')
   ) AS v(id, nombre, descripcion, categoria)
   WHERE NOT EXISTS (
     SELECT 1 FROM public.servicios s WHERE s.categoria = v.categoria
   );
+
+  UPDATE public.servicios
+  SET activo = 1
+  WHERE categoria IN (
+    'plomeria', 'electricidad', 'pintura', 'construccion', 'limpieza',
+    'ensamblaje', 'gasfiteria', 'jardineria', 'cerrajeria',
+    'soporte_tecnico', 'mudanza', 'climatizacion'
+  )
+    AND COALESCE(activo, 0) <> 1;
 
   SELECT id INTO v_svc_plomeria FROM public.servicios WHERE categoria = 'plomeria' ORDER BY activo DESC LIMIT 1;
   SELECT id INTO v_svc_electricidad FROM public.servicios WHERE categoria = 'electricidad' ORDER BY activo DESC LIMIT 1;
@@ -227,6 +260,24 @@ BEGIN
   IF v_svc_plomeria IS NULL OR v_svc_electricidad IS NULL OR v_svc_pintura IS NULL
      OR v_svc_construccion IS NULL OR v_svc_limpieza IS NULL THEN
     RAISE EXCEPTION 'No se pudieron crear los servicios de la demo.';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM (
+      VALUES
+        ('plomeria'), ('electricidad'), ('pintura'), ('construccion'), ('limpieza'),
+        ('ensamblaje'), ('gasfiteria'), ('jardineria'), ('cerrajeria'),
+        ('soporte_tecnico'), ('mudanza'), ('climatizacion')
+    ) AS c(categoria)
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM public.servicios s
+      WHERE s.categoria = c.categoria
+        AND COALESCE(s.activo, 0) = 1
+    )
+  ) THEN
+    RAISE EXCEPTION 'Falta un servicio activo para alguna categoría del catálogo.';
   END IF;
 
   IF to_regclass('public.ubicacion_en_vivo') IS NOT NULL THEN

@@ -137,6 +137,24 @@ export async function fetchWorkersCatalog(
   return pageFromRows((data ?? []) as WorkerQueryRow[], limit);
 }
 
+/** Oficios con al menos un profesional disponible y con precio. Null si la RPC no está. */
+export async function fetchCategoriesWithPros(
+  supabase: AppSupabase,
+): Promise<string[] | null> {
+  const rpc = await supabase.rpc('categorias_con_disponibles');
+  if (rpc.error || !Array.isArray(rpc.data)) return null;
+  const ids = (rpc.data as unknown[])
+    .map((row: unknown) => {
+      if (typeof row === 'string') return row.trim();
+      if (row && typeof row === 'object' && 'categoria' in row) {
+        return String((row as { categoria: unknown }).categoria).trim();
+      }
+      return '';
+    })
+    .filter((id: string) => id.length > 0);
+  return ids;
+}
+
 /** Primera página del catálogo (compat). No incluye correo. */
 export async function fetchWorkersByCategory(
   supabase: AppSupabase,

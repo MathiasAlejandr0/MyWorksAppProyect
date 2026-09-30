@@ -24,9 +24,10 @@ Falta aplicar, en este orden, antes de la demo:
 2. `myworksapp_app/supabase/migrations/20261008000003_origen_retorno_pago.sql`
 3. `myworksapp_app/supabase/migrations/20261008000004_disputas_partes.sql`
 4. `myworksapp_app/supabase/migrations/20261008000005_precios_cotizaciones_privacidad.sql`
-5. Volver a correr `scripts/demo/seed_demo.sql` (deja no disponibles a Ana Volt, Marcelo Rivas, Pablo Maestro, Carolina Brillo y María Limpieza, y exige un demo verificado por categoría).
+5. `myworksapp_app/supabase/migrations/20261008000006_pagos_abandonados_y_catalogo.sql`
+6. Volver a correr `scripts/demo/seed_demo.sql` (deja no disponibles a Ana Volt, Marcelo Rivas, Pablo Maestro, Carolina Brillo y María Limpieza, y exige un demo verificado, disponible y con coordenadas de Santiago en las 12 categorías de la web, con su fila en `servicios`).
 
-Después corre `docs/PRUEBAS_RLS_20261008.sql` y `docs/PRUEBAS_RLS_20261009.sql` en el SQL Editor. Tienen que terminar en `RLS 20261008 ok` y `RLS 20261009 ok`. El archivo de 20261009 hace `ROLLBACK`: no deja datos de prueba.
+Después corre `docs/PRUEBAS_RLS_20261008.sql`, `docs/PRUEBAS_RLS_20261009.sql` y `docs/PRUEBAS_RLS_20261010.sql` en el SQL Editor. Tienen que terminar en `RLS 20261008 ok`, `RLS 20261009 ok` y `RLS 20261010 ok`. Los de 20261009 y 20261010 hacen `ROLLBACK`: no dejan datos de prueba.
 
 `20261008000005` deja dos interruptores en `public.app_config`:
 
@@ -61,7 +62,7 @@ npx supabase migration repair --status applied 20261007000004 --project-ref wxqr
 npx supabase migration repair --status applied 20261008000001 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
-`20261008000001` ya está aplicada: no la vuelvas a correr. El `repair` de esa versión solo marca el historial local; no ejecuta el SQL. Repara `20261008000002`, `20261008000003`, `20261008000004` y `20261008000005` **solo después** de aplicar cada archivo en el SQL Editor:
+`20261008000001` ya está aplicada: no la vuelvas a correr. El `repair` de esa versión solo marca el historial local; no ejecuta el SQL. Repara `20261008000002`, `20261008000003`, `20261008000004`, `20261008000005` y `20261008000006` **solo después** de aplicar cada archivo en el SQL Editor:
 
 ```bash
 cd myworksapp_app
@@ -69,6 +70,7 @@ npx supabase migration repair --status applied 20261008000002 --project-ref wxqr
 npx supabase migration repair --status applied 20261008000003 --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase migration repair --status applied 20261008000004 --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase migration repair --status applied 20261008000005 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261008000006 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
 Si el dashboard muestra otra cadena de versión, usa esa en `migration repair` y no la de esta lista. No borres las filas de nombre corto. No hagas push a `main`.
@@ -142,6 +144,10 @@ npx supabase functions deploy webpay-resolve-dispute --project-ref wxqrfcqifkfga
 
 `definir-clave-invitado` no pide JWT. El enlace dura 15 minutos, se usa una vez y exige el nonce que quedó en el `sessionStorage` del navegador que pagó. Guarda la clave con la API de admin y **no** marca el correo como confirmado. Si en Authentication está activo "Confirm email", el invitado puede crear la contraseña en esa sesión pero no entra hasta verificar el correo. Para la demo el camino principal es Camila, que ya está confirmada. Si quieres que el invitado entre al tiro, deja "Confirm email" apagado en el proyecto de prueba. Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita.
 
+En el proyecto, `definir-clave-invitado` sigue desplegada como un stub que responde **503** hasta que se publique el código de esta rama (ticket de un solo uso y nonce del navegador). Hay que redesplegarla con el comando de arriba. El repo no deja ese 503.
+
+Un pago con tarjeta de prueba y la liberación del escrow ya se probaron de punta a punta en vivo: Webpay autorizó, el cobro quedó `retenido` y la conformidad lo pasó a `liberado`. Ese camino no se anula.
+
 ## 3. Cuentas (contraseña `Demo2026!` en todas)
 
 | Quién | Correo | Rol |
@@ -153,6 +159,13 @@ npx supabase functions deploy webpay-resolve-dispute --project-ref wxqrfcqifkfga
 | Pintor, La Florida | `jose.munoz@demo.myworksapp.cl` | trabajador verificado |
 | Maestro, Maipú | `tomas.herrera@demo.myworksapp.cl` | trabajador verificado |
 | Aseo, Ñuñoa | `ana.vidal@demo.myworksapp.cl` | trabajador verificado |
+| Armado, Santiago centro | `diego.salazar@demo.myworksapp.cl` | trabajador verificado |
+| Gasfitería, San Miguel | `carmen.lagos@demo.myworksapp.cl` | trabajador verificado |
+| Jardinería, La Reina | `felipe.araya@demo.myworksapp.cl` | trabajador verificado |
+| Cerrajería, Estación Central | `rodrigo.pena@demo.myworksapp.cl` | trabajador verificado |
+| Soporte técnico, Providencia | `isabel.campos@demo.myworksapp.cl` | trabajador verificado |
+| Mudanza, Quinta Normal | `hugo.vargas@demo.myworksapp.cl` | trabajador verificado |
+| Climatización, Las Condes | `paula.riquelme@demo.myworksapp.cl` | trabajador verificado |
 | Gasfíter en revisión, Santiago | `luis.contreras@demo.myworksapp.cl` | trabajador, no disponible |
 | Admin escritorio | `admin.ops@demo.myworksapp.cl` | administrador |
 
@@ -174,6 +187,16 @@ En `https://webpay3gint.transbank.cl` cualquier fecha futura sirve. CVV `123` (A
 | Aprobada | American Express | `370000000002032` |
 
 En la página de autenticación de prueba: RUT `11.111.111-1`, clave `123`.
+
+Si la persona cancela en Webpay (`TBK_TOKEN` sin `token_ws`, o la vuelta `?pago=fail` de un cobro todavía pendiente), `webpay-commit` deja el pago en `anulado` (cancelación) o `fallido` (el banco rechazó o el monto no coincidió) y el trabajo en `cancelado`. Un pago `retenido` o `liberado` no se toca. Hay que volver a elegir al profesional: el pedido cancelado no se reutiliza.
+
+`20261008000006` además cierra los `esperando_pago` de más de 30 minutos que no tienen garantía, y borra invitados con `guest_checkout` y sin pago retenido, autorizado o liberado cuando la cuenta tiene más de 24 horas. Las cuentas `@demo.myworksapp.cl` no entran en ese borrado.
+
+Si `pg_cron` está en el proyecto, la migración deja el trabajo `mwa_expirar_pagos_abandonados` cada 10 minutos (`*/10 * * * *`). Si la extensión no se puede crear, el SQL igual deja la función y el aviso en el log. En ese caso programa a mano, o corre en el SQL Editor:
+
+```sql
+SELECT public.expirar_pagos_abandonados();
+```
 
 El commit deja el pago `retenido` en la base. **Recibo conforme** (web, en el seguimiento, o app) llama a `cerrar_trabajo_conforme` y el ledger pasa a `liberado`. Eso no es un segundo cargo. El reembolso de una disputa lo hace el admin con la función `webpay-resolve-dispute`.
 
@@ -273,6 +296,9 @@ Si algo del pago en vivo se traba, no improvises producción.
 | Camila no puede pagar sin tarjeta en la app | Con sesión, **Confirmar pedido** abre Webpay Plus. No hace falta inscribir la tarjeta antes. |
 | El invitado no ve «Crea tu contraseña» | La URL tiene que traer `invitado=1` y `alta`. Hace falta `WEBPAY_HANDOFF_SECRET` y la función `definir-clave-invitado`. Sin ese secreto, el pago igual queda retenido; la cuenta entra después solo si Auth tiene SMTP de recuperación. |
 | El catálogo muestra Ana Volt u otros nombres que no son `@demo` | Vuelve a correr el seed. Esos perfiles quedan no disponibles. |
+| Armado, Gasfitería u otro oficio sale vacío | Vuelve a correr el seed después de `20261008000006`. Tiene que haber un profesional verificado por cada categoría de la web. Si una categoría queda en cero, la portada la oculta; al abrirla, el texto es «Todavía no hay profesionales». |
+| Al cancelar en Webpay el pedido sigue en esperando pago | Redesplega `webpay-commit` y aplica `20261008000006`. El cobro pendiente pasa a `anulado` o `fallido` y el trabajo a `cancelado`. |
+| `definir-clave-invitado` responde 503 | Esa función en el proyecto es el stub viejo. Redesplega la de esta rama. |
 | La disputa no se abre | Aplica `20261008000004`. Cliente y profesional usan **Abrir disputa**; el comentario va por `comentar_disputa`. Resolver solo desde el escritorio admin. |
 | El mapa no tiene GPS del salón | Abre en la app el pedido `demo-job-en-camino` (Camila y Pedro, Irarrázaval). |
 | El segundo factor del escritorio no está a mano | Entra con el dispositivo que ya escaneó el QR. No desactives MFA en la demo. |

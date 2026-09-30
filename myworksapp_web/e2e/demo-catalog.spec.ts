@@ -36,6 +36,28 @@ test('demo web: catálogo con coordenada real y pedido sin tarjeta en el sitio',
       return;
     }
 
+    if (url.includes('/rpc/categorias_con_disponibles')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          'ensamblaje',
+          'electricidad',
+          'plomeria',
+          'gasfiteria',
+          'limpieza',
+          'pintura',
+          'jardineria',
+          'cerrajeria',
+          'construccion',
+          'soporte_tecnico',
+          'mudanza',
+          'climatizacion',
+        ]),
+      });
+      return;
+    }
+
     if (url.includes('/rpc/listar_profesionales_catalogo')) {
       await route.fulfill({
         status: 200,
@@ -92,4 +114,69 @@ test('demo web: catálogo con coordenada real y pedido sin tarjeta en el sitio',
   await expect(page.getByText(/pedido sin sesión/i)).toBeVisible();
   await expect(page.locator('input[autocomplete="cc-number"]')).toHaveCount(0);
   await expect(page.getByLabel(/dirección/i)).toBeVisible();
+});
+
+test('oculta un oficio sin profesionales y explica la búsqueda vacía', async ({ page }) => {
+  await page.route('**/*', async (route) => {
+    const url = route.request().url();
+    const supabase = url.includes('/rest/v1/') || url.includes('/auth/v1/');
+    if (!supabase) {
+      await route.continue();
+      return;
+    }
+
+    if (url.includes('/rpc/categorias_con_disponibles')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(['ensamblaje', 'plomeria']),
+      });
+      return;
+    }
+
+    if (url.includes('/rpc/listar_profesionales_catalogo')) {
+      const payload = route.request().postDataJSON() as { p_categoria?: string } | null;
+      const body = payload?.p_categoria === 'ensamblaje' ? [] : [pedro];
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(body),
+      });
+      return;
+    }
+
+    if (url.includes('/rest/v1/servicios')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(servicio),
+      });
+      return;
+    }
+
+    if (url.includes('/auth/v1/')) {
+      await route.fulfill({
+        status: 400,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'sin sesion de demo' }),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: '[]',
+    });
+  });
+
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: /plomería/i }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /jardinería/i })).toHaveCount(0);
+
+  await page.getByRole('button', { name: /armado/i }).first().click();
+  await expect(page.getByRole('status').filter({ hasText: 'Todavía no hay profesionales' })).toBeVisible();
+  await page.getByRole('button', { name: /ver otras categorías/i }).click();
+  await expect(page.getByRole('heading', { name: 'Todas las categorías' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /jardinería/i })).toHaveCount(0);
 });

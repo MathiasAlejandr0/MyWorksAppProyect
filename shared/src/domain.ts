@@ -68,6 +68,8 @@ export const PaymentStatuses = {
   held: 'retenido',
   released: 'liberado',
   refunded: 'reembolsado',
+  voided: 'anulado',
+  failed: 'fallido',
 } as const;
 
 export type PaymentStatus = (typeof PaymentStatuses)[keyof typeof PaymentStatuses];

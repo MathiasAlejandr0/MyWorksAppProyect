@@ -39,6 +39,8 @@ const PAYMENT_LABELS: Record<string, string> = {
   [PaymentStatuses.held]: 'Pago retenido',
   [PaymentStatuses.released]: 'Pago liberado al profesional',
   [PaymentStatuses.refunded]: 'Pago devuelto',
+  [PaymentStatuses.voided]: 'Pago anulado',
+  [PaymentStatuses.failed]: 'Pago fallido',
 };
 
 export function jobStatusLabel(status: string | null | undefined): string {

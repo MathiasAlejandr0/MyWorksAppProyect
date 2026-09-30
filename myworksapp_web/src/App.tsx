@@ -25,6 +25,8 @@ import {
   fetchPaymentStatus,
   fetchServiceByCategory,
   fetchWorkersCatalog,
+  fetchCategoriesWithPros,
+  categoriesWithPros,
   fetchJobTrackingSnapshot,
   fetchMyNotifications,
   toWebWorkerCard,
@@ -325,6 +327,23 @@ export function App() {
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
   const [activeNav, setActiveNav] = useState<'servicios' | 'como-funciona'>('servicios');
+  const [availableCategoryIds, setAvailableCategoryIds] = useState<ReadonlySet<string> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchCategoriesWithPros(supabase).then((ids) => {
+      if (cancelled || ids == null) return;
+      setAvailableCategoryIds(new Set(ids));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visibleCategories = categoriesWithPros(
+    ALL_SERVICE_CATEGORIES,
+    availableCategoryIds,
+  );
 
   const liveLocation = useLiveJobLocation(
     view === 'tracking' ? checkoutJobId : null,
@@ -912,7 +931,7 @@ export function App() {
       <Suspense fallback={<ViewFallback />}>
         <div className="min-h-screen app-shell">
           <CategoriesCatalogView
-            categories={ALL_SERVICE_CATEGORIES}
+            categories={visibleCategories}
             profileName={profile?.name}
             onBack={() => setView('landing')}
             onSelectCategory={openCategory}
@@ -1069,6 +1088,7 @@ export function App() {
       goToCategories={goToCategories}
       openCategory={openCategory}
       showAuth={showAuth}
+      availableCategoryIds={availableCategoryIds}
     />
   );
 

@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { ArrowRight, Lock, LogOut, Play, Search as SearchIcon, ShieldCheck, UserPlus } from 'lucide-react';
 import { CategoryCard } from '../components/CategoryCard';
 import { BrandLogo } from '../components/BrandLogo';
+import { categoriesWithPros } from '@myworksapp/shared';
 import {
   ALL_SERVICE_CATEGORIES,
   FEATURED_CATEGORIES,
@@ -27,6 +28,7 @@ type LandingHomeProps = {
   goToCategories: () => void;
   openCategory: (cat: ServiceCategory) => void;
   showAuth: boolean;
+  availableCategoryIds: ReadonlySet<string> | null;
 };
 
 export function LandingHome({
@@ -40,7 +42,16 @@ export function LandingHome({
   goToCategories,
   openCategory,
   showAuth,
+  availableCategoryIds,
 }: LandingHomeProps) {
+  const featuredCategories = categoriesWithPros(
+    FEATURED_CATEGORIES,
+    availableCategoryIds,
+  );
+  const gridCategories = categoriesWithPros(
+    ALL_SERVICE_CATEGORIES.slice(0, 8),
+    availableCategoryIds,
+  );
   return (
 
     <div className="min-h-screen app-shell">
@@ -289,7 +300,11 @@ export function LandingHome({
 
           <div className="categories-grid">
 
-            {FEATURED_CATEGORIES.map((cat) => (
+            {featuredCategories.length === 0 ? (
+              <p className="categories-empty" role="status">
+                Por ahora no hay profesionales disponibles en estas categorías.
+              </p>
+            ) : featuredCategories.map((cat) => (
 
               <CategoryCard
 
@@ -449,7 +464,11 @@ export function LandingHome({
 
           <div className="categories-grid categories-grid--8">
 
-            {ALL_SERVICE_CATEGORIES.slice(0, 8).map((cat) => (
+            {gridCategories.length === 0 ? (
+              <p className="categories-empty" role="status">
+                Por ahora no hay profesionales disponibles en estas categorías.
+              </p>
+            ) : gridCategories.map((cat) => (
 
               <CategoryCard
 

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { abandonedCheckoutUpdate } from "./abandon_payment.ts";
 import { assessWebpayCommit } from "./commit_guard.ts";
 import { resolveCorsAllowOrigin } from "./cors_origin.ts";
 import {
@@ -117,6 +118,69 @@ describe("commit de Webpay", () => {
         storedBuyOrder: "MWA1",
       }),
       { action: "mismatch", reason: "buy_order" },
+    );
+  });
+});
+
+describe("pago abandonado en Webpay", () => {
+  it("anula el cobro pendiente si el cliente cancela con TBK_TOKEN", () => {
+    assert.deepEqual(
+      abandonedCheckoutUpdate({
+        estado: "pendiente",
+        tokenWs: "",
+        tbkToken: "tok-abort",
+      }),
+      { pago: "anulado", job: "cancelado", reason: "abort" },
+    );
+  });
+
+  it("marca fallido un rechazo o un monto distinto", () => {
+    assert.deepEqual(
+      abandonedCheckoutUpdate({
+        estado: "pendiente",
+        tokenWs: "tok",
+        tbkToken: "",
+        decision: "reject",
+      }),
+      { pago: "fallido", job: "cancelado", reason: "reject" },
+    );
+    assert.equal(
+      abandonedCheckoutUpdate({
+        estado: "pendiente",
+        tokenWs: "tok",
+        tbkToken: "",
+        decision: "mismatch",
+      })?.pago,
+      "fallido",
+    );
+  });
+
+  it("no toca un pago ya retenido o liberado", () => {
+    assert.equal(
+      abandonedCheckoutUpdate({
+        estado: "retenido",
+        tokenWs: "",
+        tbkToken: "tok-abort",
+      }),
+      null,
+    );
+    assert.equal(
+      abandonedCheckoutUpdate({
+        estado: "liberado",
+        tokenWs: "tok",
+        tbkToken: "",
+        decision: "reject",
+      }),
+      null,
+    );
+    assert.equal(
+      abandonedCheckoutUpdate({
+        estado: "pendiente",
+        tokenWs: "tok",
+        tbkToken: "",
+        decision: "hold",
+      }),
+      null,
     );
   });
 });

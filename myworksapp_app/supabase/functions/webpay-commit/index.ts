@@ -1,3 +1,4 @@
+import { abandonedCheckoutUpdate } from "../_shared/abandon_payment.ts";
 import { assessWebpayCommit } from "../_shared/commit_guard.ts";
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { shouldIssueGuestPasswordTicket } from "../_shared/guest_ticket.ts";
@@ -25,6 +26,46 @@ function returnOrigin(stored: string | null | undefined): string {
   const value = (stored || "").trim();
   if (value) return value;
   return fallbackWebReturnOrigin();
+}
+
+type AdminClient = ReturnType<typeof serviceClient>;
+
+async function voidPendingCheckout(
+  admin: AdminClient,
+  paymentId: string,
+  jobId: string,
+  pagoEstado: "anulado" | "fallido",
+): Promise<void> {
+  const paymentUpdate = await admin
+    .from("pagos")
+    .update({
+      estado: pagoEstado,
+      actualizado_en: new Date().toISOString(),
+    })
+    .eq("id", paymentId)
+    .eq("estado", "pendiente");
+  if (paymentUpdate.error) {
+    console.error("anular pago", paymentUpdate.error.message);
+    return;
+  }
+  const held = await admin
+    .from("pagos")
+    .select("id")
+    .eq("id_trabajo", jobId)
+    .in("estado", ["retenido", "liberado", "autorizado"])
+    .limit(1);
+  if (held.data && held.data.length > 0) return;
+  const jobUpdate = await admin
+    .from("trabajos")
+    .update({
+      estado: "cancelado",
+      actualizado_en: new Date().toISOString(),
+    })
+    .eq("id", jobId)
+    .eq("estado", "esperando_pago");
+  if (jobUpdate.error) {
+    console.error("cancelar trabajo", jobUpdate.error.message);
+  }
 }
 
 Deno.serve(async (req) => {
@@ -65,14 +106,31 @@ Deno.serve(async (req) => {
     if (!tokenWs && tbkToken) {
       const { data: abandoned } = await admin
         .from("pagos")
-        .select("id, id_trabajo, origen_retorno")
+        .select("id, id_trabajo, origen_retorno, estado")
         .eq("token_tbk", tbkToken)
         .maybeSingle();
+      const plan = abandoned
+        ? abandonedCheckoutUpdate({
+          estado: String(abandoned.estado || ""),
+          tokenWs: "",
+          tbkToken,
+        })
+        : null;
+      if (plan && abandoned?.id && abandoned.id_trabajo) {
+        await voidPendingCheckout(
+          admin,
+          String(abandoned.id),
+          String(abandoned.id_trabajo),
+          plan.pago,
+        );
+      }
+      const settled = abandoned?.estado === "retenido" ||
+        abandoned?.estado === "liberado";
       if (wantsJson) {
         return jsonResponse(req, {
-          approved: false,
-          ok: false,
-          paymentStatus: "REJECTED",
+          approved: settled,
+          ok: settled,
+          paymentStatus: settled ? "ESCROW" : "REJECTED",
           paymentId: abandoned?.id ?? null,
           jobId: abandoned?.id_trabajo ?? null,
         });
@@ -80,7 +138,7 @@ Deno.serve(async (req) => {
       return browserRedirect(
         webReturnLocation({
           origin: returnOrigin(abandoned?.origen_retorno),
-          pago: "fail",
+          pago: settled ? "ok" : "fail",
           paymentId: abandoned?.id ? String(abandoned.id) : undefined,
           jobId: abandoned?.id_trabajo ? String(abandoned.id_trabajo) : undefined,
         }),
@@ -134,6 +192,22 @@ Deno.serve(async (req) => {
       storedBuyOrder: String(payment.buy_order || ""),
     });
     const approved = decision.action === "hold" || decision.action === "replay";
+    const voidPlan = abandonedCheckoutUpdate({
+      estado: String(payment.estado || ""),
+      tokenWs,
+      tbkToken,
+      decision: decision.action === "reject" || decision.action === "mismatch"
+        ? decision.action
+        : undefined,
+    });
+    if (voidPlan) {
+      await voidPendingCheckout(
+        admin,
+        String(payment.id),
+        String(payment.id_trabajo),
+        voidPlan.pago,
+      );
+    }
 
     if (decision.action === "hold") {
       const jti = crypto.randomUUID().replace(/-/g, "");
