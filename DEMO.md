@@ -6,18 +6,53 @@ El flujo de un pedido nuevo (pagar, aceptar, ir en camino, conformidad) se hace 
 
 ## 1. Qué aplicar en la base, en este orden
 
-En el SQL Editor del proyecto. Ya están aplicadas `20261005000001_verificacion_profesional` y el cierre `security_lockdown_rpc` (en el repo: `20261005000002_security_lockdown_rpc.sql`; si el historial no la tiene, correrla de nuevo es inocuo).
+En el SQL Editor del proyecto. Ya están aplicadas, con otros nombres de versión en `supabase_migrations.schema_migrations`:
 
-1. `myworksapp_app/supabase/migrations/20261006000001_gps_y_base_profesional.sql`
-2. `myworksapp_app/supabase/migrations/20261006000002_ocultar_pin_listados.sql`
-3. `myworksapp_app/supabase/migrations/20261007000001_rls_indices_asesores.sql`
-4. `scripts/demo/seed_demo.sql`
+- `security_lockdown_rpc` y `security_lockdown_rpc_repo_sync` (repo: `20261005000002_security_lockdown_rpc.sql`)
+- `gps_y_base_profesional` (`20261006000001`)
+- `ocultar_pin_listados` (`20261006000002`)
+- `rls_indices_asesores` (`20261007000001`)
+- `rpc_uuid_trabajador` (`20261007000002`)
+- `perfiles_rol_service_role` (`20261007000003`)
+- `quitar_indices_fk_duplicados` (`20261007000004`)
+- el seed `scripts/demo/seed_demo.sql`
+
+Falta aplicar, y solo esta, antes de la demo de las brechas:
+
+1. `myworksapp_app/supabase/migrations/20261008000001_cerrar_brechas_rls.sql`
+
+Después corre `docs/PRUEBAS_RLS_20261008.sql` en el SQL Editor. Tiene que terminar en `RLS 20261008 ok`.
+
+### Antes de un `supabase db push`
+
+El historial en vivo no usa los timestamps del repo. Un push intentaría volver a correr archivos que ya están aplicados y chocaría con las versiones de nombre corto. Primero mira las versiones reales:
+
+```sql
+SELECT version, name
+FROM supabase_migrations.schema_migrations
+ORDER BY version;
+```
+
+Para cada archivo local cuyo SQL ya está en la base, marca esa versión local como aplicada (no borres las filas de nombre corto):
+
+```bash
+cd myworksapp_app
+npx supabase migration repair --status applied 20261005000002 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261006000001 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261006000002 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261007000001 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261007000002 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261007000003 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261007000004 --project-ref wxqrfcqifkfgawrnqmnj
+```
+
+`20261008000001` se repara solo después de aplicarla. Si el dashboard muestra otra cadena de versión, usa esa en `migration repair` y no la de esta lista. No hagas push a `main`.
 
 ## 2. Edge Functions
 
 No desplegar `webpay-create-transaction` ni `webpay-commit-transaction`. No están en el repo y ningún cliente las llama. El camino vigente es `webpay-create` y `webpay-commit`.
 
-Desplegar la que aún no está en el proyecto:
+Volver a desplegar `invitar-colaborador`: ahora muestra el error si no puede dejar el perfil en `administrador`.
 
 ```bash
 cd myworksapp_app

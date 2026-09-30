@@ -91,6 +91,28 @@ Deno.serve(async (req) => {
     const redirectTo = Deno.env.get("INVITE_REDIRECT_URL")?.trim() || undefined;
     const admin = serviceClient();
 
+    const promote = async (userId: string | undefined) => {
+      if (!userId) {
+        return jsonResponse(req, { error: "La invitación no devolvió el usuario" }, 400);
+      }
+      const updated = await admin
+        .from("perfiles")
+        .update({ rol: "administrador", nombre: parsed.name })
+        .eq("id", userId)
+        .select("id");
+      if (updated.error) {
+        return jsonResponse(req, { error: updated.error.message }, 400);
+      }
+      if (!updated.data?.length) {
+        return jsonResponse(
+          req,
+          { error: "No se pudo asignar el rol administrador. El perfil no existe o el trigger lo rechazó." },
+          400,
+        );
+      }
+      return null;
+    };
+
     if (provider === "resend") {
       const link = await admin.auth.admin.generateLink({
         type: "invite",
@@ -101,6 +123,8 @@ Deno.serve(async (req) => {
         },
       });
       if (link.error) return jsonResponse(req, { error: link.error.message }, 400);
+      const roleError = await promote(link.data?.user?.id);
+      if (roleError) return roleError;
       const actionLink = link.data?.properties?.action_link;
       const mailError = await sendResend({
         to: parsed.email,
@@ -123,10 +147,8 @@ Deno.serve(async (req) => {
     });
     if (invited.error) return jsonResponse(req, { error: invited.error.message }, 400);
 
-    const userId = invited.data.user?.id;
-    if (userId) {
-      await admin.from("perfiles").update({ rol: "administrador", nombre: parsed.name }).eq("id", userId);
-    }
+    const roleError = await promote(invited.data.user?.id);
+    if (roleError) return roleError;
 
     return jsonResponse(req, {
       ok: true,

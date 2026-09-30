@@ -35,6 +35,19 @@ function filesOf(dir: string): string[] {
   return out;
 }
 
+test('los clientes no escriben la tabla pagos', () => {
+  const hits: string[] = [];
+  const write = /\.from\(\s*['"]pagos['"]\)[\s\S]{0,180}\.(insert|update|upsert|delete)\(/;
+  for (const rel of roots) {
+    for (const file of filesOf(join(root, rel))) {
+      if (file.endsWith('database.types.ts')) continue;
+      const text = readFileSync(file, 'utf8');
+      if (write.test(text)) hits.push(file);
+    }
+  }
+  assert.deepEqual(hits, []);
+});
+
 test('los clientes no llaman RPCs de service_role', () => {
   const hits: string[] = [];
   for (const rel of roots) {

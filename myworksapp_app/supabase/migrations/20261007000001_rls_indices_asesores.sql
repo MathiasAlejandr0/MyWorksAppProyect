@@ -1,40 +1,12 @@
--- Asesores de Supabase: initplan de auth.uid(), políticas permisivas duplicadas
--- del rename inglés→español, índices idénticos y FKs sin índice.
--- Idempotente. No revoca EXECUTE: ese cierre lo aplica el dueño aparte.
+-- Asesores de Supabase: initplan de auth.uid(), políticas idénticas duplicadas,
+-- índices idénticos y FKs sin índice.
+-- No borra políticas inglesas: jobs_insert, profiles_select,
+-- notifications_insert_participants y quotes_update conceden cosas que las
+-- españolas todavía no cubren. Ese cierre va en 20261008000001.
+-- Idempotente. No revoca EXECUTE.
 -- Aplicar después de 20261006000001_gps_y_base_profesional.sql.
 
 BEGIN;
-
--- -----------------------------------------------------------------------------
--- 1) Políticas inglesas que quedaron junto a las españolas (blocks_all, etc.)
---    Solo se borran si la tabla ya tiene otra política con nombre vigente.
--- -----------------------------------------------------------------------------
-DO $$
-DECLARE
-  r record;
-  legacy_re text := '^(profiles_|jobs_|payments_|msg_|messages_|notifications_|workers_|services_|ratings_|reports_|disputes_|quotes_|jp_all$|jc_all$|co_all$|prc_all$|pending_|blocks_|consents_|boosts_|portfolio_|ws_select$|ws_write$|sc_select$|ff_|abuse_|analytics_|app_error_logs_|subs_all$|job_cancellations_)';
-BEGIN
-  FOR r IN
-    SELECT n.nspname AS schema_name, c.relname AS table_name, p.polname
-    FROM pg_policy p
-    JOIN pg_class c ON c.oid = p.polrelid
-    JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE n.nspname = 'public'
-      AND p.polname ~* legacy_re
-      AND EXISTS (
-        SELECT 1
-        FROM pg_policy q
-        WHERE q.polrelid = p.polrelid
-          AND q.polname <> p.polname
-          AND q.polname !~* legacy_re
-      )
-  LOOP
-    EXECUTE format(
-      'DROP POLICY IF EXISTS %I ON %I.%I',
-      r.polname, r.schema_name, r.table_name
-    );
-  END LOOP;
-END $$;
 
 -- Pares con el mismo comando, roles y expresión: queda un solo nombre.
 DO $$
@@ -258,7 +230,7 @@ BEGIN
           AND i.indisvalid
           AND i.indisready
           AND i.indpred IS NULL
-          AND (i.indkey::smallint[])[1:cardinality(con.conkey)] = con.conkey::smallint[]
+          AND (string_to_array(i.indkey::text, ' ')::smallint[])[1:cardinality(con.conkey)] = con.conkey::smallint[]
       )
   LOOP
     idx_name := left('idx_' || r.table_name || '_' || r.col_slug || '_fkey', 63);

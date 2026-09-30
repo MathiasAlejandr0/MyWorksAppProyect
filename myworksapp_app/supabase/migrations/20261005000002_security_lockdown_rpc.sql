@@ -20,12 +20,13 @@ DECLARE
   v_pago public.pagos%ROWTYPE;
   v_job public.trabajos%ROWTYPE;
   v_liq_id text;
-  v_jwt_role text := NULLIF(current_setting('request.jwt.claim.role', true), '');
 BEGIN
+  -- auth.role() lee el JWT. Un token anon no es NULL: la versión con
+  -- request.jwt.claim.role lo dejaba pasar.
   IF NOT (
-    v_jwt_role = 'service_role'
+    COALESCE(auth.role(), '') = 'service_role'
     OR public.is_admin()
-    OR (auth.uid() IS NULL AND v_jwt_role IS NULL)
+    OR (auth.role() IS NULL AND auth.uid() IS NULL)
   ) THEN
     RAISE EXCEPTION 'forbidden';
   END IF;

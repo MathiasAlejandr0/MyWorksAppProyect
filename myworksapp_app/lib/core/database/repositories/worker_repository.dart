@@ -120,35 +120,21 @@ class WorkerRepository {
     return workers;
   }
 
-  /// Lista trabajadores con nombre y correo para el selector de login demo.
+  /// Correos solo de cuentas @demo.myworksapp.cl. El resto de perfiles no se lista.
   Future<List<WorkerLoginItem>> getWorkersForLogin() async {
-    final workerRows = await supabase
-        .from(_table)
-        .select('id_usuario, profesion, categoria_servicio')
-        .limit(80);
-
-    final profileRows = await supabase
-        .from('perfiles')
-        .select('id, nombre, correo, rol')
-        .eq('rol', 'trabajador')
-        .limit(80);
-
-    final profilesById = <String, Map<String, dynamic>>{
-      for (final row in profileRows)
-        row['id'] as String: Map<String, dynamic>.from(row),
-    };
-
+    final rows = await supabase.rpc('listar_cuentas_demo_acceso');
     final items = <WorkerLoginItem>[];
-    for (final row in workerRows) {
-      final userId = row['id_usuario'] as String;
-      final profile = profilesById[userId];
-      if (profile == null) continue;
-
+    if (rows is! List) return items;
+    for (final raw in rows) {
+      if (raw is! Map) continue;
+      final row = Map<String, dynamic>.from(raw);
+      final userId = row['id'] as String?;
+      if (userId == null || userId.isEmpty) continue;
       items.add(
         WorkerLoginItem(
           userId: userId,
-          name: profile['nombre'] as String? ?? 'Trabajador',
-          email: profile['correo'] as String? ?? '',
+          name: row['nombre'] as String? ?? 'Trabajador',
+          email: row['correo'] as String? ?? '',
           profession: row['profesion'] as String? ?? '',
           serviceCategory: row['categoria_servicio'] as String? ?? 'general',
         ),

@@ -1,9 +1,9 @@
 -- =============================================================================
 -- DEMO / TEST. No es una migración. No corre en producción sola.
 -- Proyecto: wxqrfcqifkfgawrnqmnj
--- Aplicar en el SQL Editor DESPUÉS de:
---   1) 20261006000001_gps_y_base_profesional.sql
---   2) 20261007000001_rls_indices_asesores.sql
+-- Aplicar en el SQL Editor DESPUÉS de las migraciones de GPS y de las de
+-- 20261007. Si ya corriste 20261008000001, este script sigue siendo válido:
+-- entra como postgres, sin JWT.
 -- Contraseña de todas las cuentas: Demo2026!
 -- Reejecutar deja las mismas cuentas y reinicia solo filas id demo-*.
 -- =============================================================================
@@ -114,15 +114,27 @@ BEGIN
     WHERE i.user_id = c.uid AND i.provider = 'email'
   );
 
-  INSERT INTO public.perfiles (id, nombre, correo, rol, estado_cuenta, creado_en)
-  SELECT c.uid, c.nombre, c.email, c.rol, 'activo', v_now
-  FROM demo_cuentas c
-  ON CONFLICT (id) DO UPDATE SET
-    nombre = EXCLUDED.nombre,
-    correo = EXCLUDED.correo,
-    rol = EXCLUDED.rol,
-    estado_cuenta = 'activo';
+  -- handle_new_user deja el perfil en 'usuario'. El trigger impide cambiar el rol
+  -- si no eres admin ni service_role. El seed corre como postgres, sin JWT.
+  ALTER TABLE public.perfiles DISABLE TRIGGER protect_profiles_sensitive;
+  BEGIN
+    INSERT INTO public.perfiles (id, nombre, correo, rol, estado_cuenta, creado_en)
+    SELECT c.uid, c.nombre, c.email, c.rol, 'activo', v_now
+    FROM demo_cuentas c
+    ON CONFLICT (id) DO UPDATE SET
+      nombre = EXCLUDED.nombre,
+      correo = EXCLUDED.correo,
+      rol = EXCLUDED.rol,
+      estado_cuenta = 'activo';
+    ALTER TABLE public.perfiles ENABLE TRIGGER protect_profiles_sensitive;
+  EXCEPTION
+    WHEN OTHERS THEN
+      ALTER TABLE public.perfiles ENABLE TRIGGER protect_profiles_sensitive;
+      RAISE;
+  END;
 
+  ALTER TABLE public.trabajadores DISABLE TRIGGER trabajadores_proteger_verificacion;
+  BEGIN
   INSERT INTO public.trabajadores (
     id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita,
     categoria_servicio, precios_configurados, zona_trabajo, estado_verificacion,
@@ -156,6 +168,36 @@ BEGIN
     longitud_base = EXCLUDED.longitud_base,
     radio_servicio_km = EXCLUDED.radio_servicio_km,
     origen_base = 'mapa';
+  ALTER TABLE public.trabajadores ENABLE TRIGGER trabajadores_proteger_verificacion;
+  EXCEPTION
+    WHEN OTHERS THEN
+      ALTER TABLE public.trabajadores ENABLE TRIGGER trabajadores_proteger_verificacion;
+      RAISE;
+  END;
+
+  UPDATE public.trabajadores t
+  SET disponible = 0
+  FROM public.perfiles p
+  WHERE p.id = t.id_usuario
+    AND p.nombre IN ('Luis Cañería', 'Pedro Gasfiter')
+    AND COALESCE(p.correo, '') NOT ILIKE '%@demo.myworksapp.cl';
+
+  INSERT INTO public.servicios (
+    id, nombre, descripcion, categoria, activo,
+    requiere_certificacion, modelo_precio, creado_en, actualizado_en
+  )
+  SELECT v.id, v.nombre, v.descripcion, v.categoria, 1, 0, 'por_hora', v_now, v_now
+  FROM (
+    VALUES
+      ('svc-demo-plomeria', 'Gasfitería y plomería', 'Reparaciones de agua.', 'plomeria'),
+      ('svc-demo-electricidad', 'Electricidad domiciliaria', 'Fallas e instalaciones.', 'electricidad'),
+      ('svc-demo-pintura', 'Pintura', 'Interiores y fachadas.', 'pintura'),
+      ('svc-demo-construccion', 'Construcción y albañilería', 'Obras menores.', 'construccion'),
+      ('svc-demo-limpieza', 'Limpieza e higiene', 'Casas y departamentos.', 'limpieza')
+  ) AS v(id, nombre, descripcion, categoria)
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.servicios s WHERE s.categoria = v.categoria
+  );
 
   SELECT id INTO v_svc_plomeria FROM public.servicios WHERE categoria = 'plomeria' ORDER BY activo DESC LIMIT 1;
   SELECT id INTO v_svc_electricidad FROM public.servicios WHERE categoria = 'electricidad' ORDER BY activo DESC LIMIT 1;
@@ -163,8 +205,9 @@ BEGIN
   SELECT id INTO v_svc_construccion FROM public.servicios WHERE categoria = 'construccion' ORDER BY activo DESC LIMIT 1;
   SELECT id INTO v_svc_limpieza FROM public.servicios WHERE categoria = 'limpieza' ORDER BY activo DESC LIMIT 1;
 
-  IF v_svc_plomeria IS NULL OR v_svc_electricidad IS NULL OR v_svc_limpieza IS NULL THEN
-    RAISE EXCEPTION 'Faltan servicios del catálogo (plomeria, electricidad, limpieza).';
+  IF v_svc_plomeria IS NULL OR v_svc_electricidad IS NULL OR v_svc_pintura IS NULL
+     OR v_svc_construccion IS NULL OR v_svc_limpieza IS NULL THEN
+    RAISE EXCEPTION 'No se pudieron crear los servicios de la demo.';
   END IF;
 
   IF to_regclass('public.ubicacion_en_vivo') IS NOT NULL THEN
