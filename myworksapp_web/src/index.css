@@ -1002,6 +1002,10 @@ h1, h2, h3, .brand-display {
   border: 3px solid #fff;
   box-shadow: 0 4px 14px rgba(255, 94, 3, 0.55);
 }
+.mwa-map-pin--worker .mwa-map-pin-dot {
+  background: #2563eb;
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.25);
+}
 .mwa-map-pin--active .mwa-map-pin-dot {
   width: 28px;
   height: 28px;

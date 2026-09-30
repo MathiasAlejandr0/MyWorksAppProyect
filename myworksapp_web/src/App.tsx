@@ -5,6 +5,7 @@ import { LandingHome } from './views/LandingHome';
 import type { SearchWorker } from './components/SearchResultsView';
 import { useAuth } from './context/AuthContext';
 import { supabase } from './supabaseClient';
+import { useLiveJobLocation } from './hooks/useLiveJobLocation';
 import { queryKeys } from './queryClient';
 import {
   ALL_SERVICE_CATEGORIES,
@@ -319,6 +320,12 @@ export function App() {
   const [notificationLines, setNotificationLines] = useState<string[]>([]);
 
   const [activeNav, setActiveNav] = useState<'servicios' | 'como-funciona'>('servicios');
+
+  const liveLocation = useLiveJobLocation(
+    view === 'tracking' ? checkoutJobId : null,
+    jobSnapshot?.latitude,
+    jobSnapshot?.longitude,
+  );
 
 
 
@@ -758,6 +765,16 @@ export function App() {
           latitude={jobSnapshot?.latitude}
 
           longitude={jobSnapshot?.longitude}
+
+          workerLatitude={liveLocation.fix?.latitude}
+
+          workerLongitude={liveLocation.fix?.longitude}
+
+          etaMinutes={liveLocation.fix?.etaMinutes}
+
+          distanceKm={liveLocation.fix?.distanceKm}
+
+          gpsError={liveLocation.error}
 
           profileName={profile?.name}
 

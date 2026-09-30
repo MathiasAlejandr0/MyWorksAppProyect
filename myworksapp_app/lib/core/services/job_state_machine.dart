@@ -98,6 +98,7 @@ class JobStateMachine {
     if (job.workerId == userId) {
       const workerActions = [
         AppConstants.jobStatusAccepted,
+        AppConstants.jobStatusEnRoute,
         AppConstants.jobStatusInProgress,
         AppConstants.jobStatusCompleted,
         PricingConstants.jobAwaitingClientApproval,
@@ -216,6 +217,9 @@ class JobStateMachine {
           : targets.first;
     }
     if (job.status == AppConstants.jobStatusAccepted) {
+      return AppConstants.jobStatusEnRoute;
+    }
+    if (job.status == AppConstants.jobStatusEnRoute) {
       return AppConstants.jobStatusInProgress;
     }
     if (job.status == AppConstants.jobStatusInProgress) {

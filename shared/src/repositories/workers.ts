@@ -20,6 +20,10 @@ type WorkerQueryRow = {
   zona_trabajo?: string | null;
   estado_verificacion?: string | null;
   nota_verificacion?: string | null;
+  latitud_base?: number | null;
+  longitud_base?: number | null;
+  radio_servicio_km?: number | null;
+  origen_base?: string | null;
   nombre?: string | null;
   ruta_foto_perfil?: string | null;
   perfiles?:
@@ -59,6 +63,11 @@ function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
     workZone: row.zona_trabajo,
     verificationStatus: row.estado_verificacion ?? null,
     verificationNote: row.nota_verificacion ?? null,
+    baseLatitude: row.latitud_base == null ? null : Number(row.latitud_base),
+    baseLongitude: row.longitud_base == null ? null : Number(row.longitud_base),
+    serviceRadiusKm:
+      row.radio_servicio_km == null ? null : Number(row.radio_servicio_km),
+    baseOrigin: row.origen_base ?? null,
     name: row.nombre ?? profileRow?.nombre ?? 'Profesional',
     profilePhotoPath: row.ruta_foto_perfil ?? profileRow?.ruta_foto_perfil,
   };
@@ -108,7 +117,7 @@ export async function fetchWorkersCatalog(
   let query = supabase
     .from('trabajadores')
     .select(
-      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo',
+      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, latitud_base, longitud_base, radio_servicio_km, origen_base',
     )
     .eq('categoria_servicio', opts.category)
     .eq('disponible', 1)
@@ -190,5 +199,8 @@ export function toWebWorkerCard(worker: WorkerWithProfile, jobsDone = 0): WebWor
     jobsDone,
     photoUrl: listPhotoUrl(worker.profilePhotoPath),
     pricePerVisit: worker.visitFee,
+    latitude: worker.baseLatitude ?? null,
+    longitude: worker.baseLongitude ?? null,
+    serviceRadiusKm: worker.serviceRadiusKm ?? null,
   };
 }

@@ -5,6 +5,7 @@ import '../database/repositories/user_repository.dart';
 import '../database/models/worker_model.dart';
 import '../database/models/job_model.dart';
 import '../database/models/user_model.dart';
+import '../domain/distance_match.dart';
 import '../domain/zone_match.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
@@ -199,11 +200,17 @@ class MatchingService {
       final user = await _userRepository.getUserById(worker.userId);
       if (user == null) return null;
 
-      // 2. Calcular distancia (si tenemos coordenadas del trabajador)
-      // Nota: Por ahora, asumimos que no tenemos coordenadas del trabajador
-      // En producción, esto requeriría agregar lat/lng al WorkerModel
-      double? distanceKm;
-      // TODO: Calcular distancia real cuando tengamos coordenadas del trabajador
+      final jobLat = job.latitude ?? userLatitude;
+      final jobLng = job.longitude ?? userLongitude;
+      final distance = matchByDistance(
+        workerLat: worker.baseLatitude,
+        workerLng: worker.baseLongitude,
+        jobLat: jobLat,
+        jobLng: jobLng,
+        radiusKm: worker.serviceRadiusKm,
+      );
+      if (distance != null && distance.outsideRadius) return null;
+      final double? distanceKm = distance?.distanceKm;
 
       // 3. Obtener cancelaciones previas (solo del trabajador, no del usuario)
       final cancellationCount = await _getCancellationCount(worker.userId);
@@ -226,9 +233,8 @@ class MatchingService {
         score += _weightAvailability;
       }
 
-      // La zona declarada se compara con la dirección. Sin lat/lng del
-      // profesional no se calcula una distancia inventada.
-      final zoneScore = zoneMatchScore(worker.workZone, job.address);
+      final zoneScore = distance?.score ??
+          zoneMatchScore(worker.workZone, job.address);
       score += _weightZone * zoneScore;
 
       // Score por cancelaciones (menos cancelaciones = mayor score)
@@ -251,6 +257,7 @@ class MatchingService {
         cancellationCount,
         lastActivity,
         zoneScore > 0,
+        distanceKm,
       );
 
       return MatchResult(
@@ -301,10 +308,13 @@ class MatchingService {
     int cancellationCount,
     DateTime? lastActivity,
     bool sameZone,
+    double? distanceKm,
   ) {
     final reasons = <String>[];
 
-    if (sameZone) {
+    if (distanceKm != null) {
+      reasons.add('A ${distanceKm.toStringAsFixed(1)} km de la base');
+    } else if (sameZone) {
       reasons.add('Trabaja en la misma zona');
     }
 

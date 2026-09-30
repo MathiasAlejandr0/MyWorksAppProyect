@@ -512,6 +512,8 @@ extension JobDetailWorkflows on _JobDetailPageState {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             JobDetailStatusHeader(job: _job!),
+            const SizedBox(height: 12),
+            JobStatusTimeline(status: _job!.status),
             if (_job!.scheduledDate != null && !workerShowsLocationCard) ...[
               const SizedBox(height: 12),
               JobDetailScheduledDateRow(scheduledDate: _job!.scheduledDate!),
@@ -541,6 +543,20 @@ extension JobDetailWorkflows on _JobDetailPageState {
             const SizedBox(height: 16),
             JobDetailDescriptionSection(job: _job!),
             const SizedBox(height: 16),
+            if (!isWorker && currentUser?.id == _job!.userId) ...[
+              const SizedBox(height: 12),
+              ClientLiveTracking(
+                jobId: _job!.id,
+                jobStatus: _job!.status,
+                destinationLat: _job!.latitude,
+                destinationLng: _job!.longitude,
+              ),
+            ],
+            if (isWorker && currentUser?.id == _job!.workerId)
+              WorkerGpsPublisher(
+                jobId: _job!.id,
+                active: publishesLiveGps(_job!.status),
+              ),
             if (clientShowsLocationPreview) ...[
               JobLocationPreviewSection(
                 address: _isLoadingAddress
@@ -608,6 +624,10 @@ extension JobDetailWorkflows on _JobDetailPageState {
               onCancelJob: () => JobDetailStatusActions(this)._cancelJob(),
               onAcceptJob: () => JobDetailStatusActions(this)._acceptJob(),
               onRejectJob: () => JobDetailStatusActions(this)._rejectJob(),
+              onMarkEnRoute: () =>
+                  JobDetailStatusActions(this)._updateJobStatus(
+                    AppConstants.jobStatusEnRoute,
+                  ),
               onStartJob: () =>
                   JobDetailStatusActions(this)._updateJobStatus(
                     AppConstants.jobStatusInProgress,

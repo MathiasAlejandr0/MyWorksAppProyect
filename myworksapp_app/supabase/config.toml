@@ -44,3 +44,6 @@ verify_jwt = false
 # La app abre esta URL. El token de Transbank no sale en el JSON del cliente.
 [functions.oneclick-handoff]
 verify_jwt = false
+
+[functions.invitar-colaborador]
+verify_jwt = true

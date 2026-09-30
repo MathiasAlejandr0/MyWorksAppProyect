@@ -33,6 +33,10 @@ export interface WorkerRow {
   workZone?: string | null;
   verificationStatus?: string | null;
   verificationNote?: string | null;
+  baseLatitude?: number | null;
+  baseLongitude?: number | null;
+  serviceRadiusKm?: number | null;
+  baseOrigin?: string | null;
 }
 
 export interface WorkerWithProfile extends WorkerRow {
@@ -92,4 +96,7 @@ export interface WebWorkerCard {
   jobsDone: number;
   photoUrl: string;
   pricePerVisit: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  serviceRadiusKm?: number | null;
 }

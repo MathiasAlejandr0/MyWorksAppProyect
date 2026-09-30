@@ -11,6 +11,7 @@ class AppConstants {
   // Estados de trabajo
   static const String jobStatusPending = 'pendiente';
   static const String jobStatusAccepted = 'aceptado';
+  static const String jobStatusEnRoute = 'en_camino';
   static const String jobStatusInProgress = 'en_curso';
   static const String jobStatusCompleted = 'completado';
   static const String jobStatusCancelled = 'cancelado';

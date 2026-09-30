@@ -25,6 +25,8 @@ export interface SearchWorker {
   photoUrl: string;
   pricePerVisit: number;
   availableNow?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface SearchResultsViewProps {

@@ -3,6 +3,7 @@ import { JobStatuses, PaymentStatuses } from '../domain';
 const JOB_LABELS: Record<string, string> = {
   [JobStatuses.pending]: 'Pendiente de aceptación',
   [JobStatuses.accepted]: 'Aceptado',
+  [JobStatuses.enRoute]: 'En camino',
   [JobStatuses.inProgress]: 'En curso',
   [JobStatuses.completed]: 'Completado',
   [JobStatuses.cancelled]: 'Cancelado',
@@ -17,8 +18,9 @@ const JOB_LABELS: Record<string, string> = {
 
 const JOB_DETAILS: Record<string, string> = {
   [JobStatuses.pending]: 'El profesional todavía puede aceptar o rechazar.',
-  [JobStatuses.accepted]: 'El profesional aceptó. Aún no hay GPS en vivo.',
-  [JobStatuses.inProgress]: 'El profesional marcó el trabajo en curso.',
+  [JobStatuses.accepted]: 'El profesional aceptó. El GPS parte cuando marca que va en camino.',
+  [JobStatuses.enRoute]: 'Va hacia el domicilio. La app publica su ubicación en primer plano.',
+  [JobStatuses.inProgress]: 'El trabajo está en curso. El GPS sigue activo en primer plano.',
   [JobStatuses.completed]: 'El trabajo quedó cerrado.',
   [JobStatuses.cancelled]: 'El trabajo fue cancelado.',
   [JobStatuses.expired]: 'La solicitud venció sin aceptación.',

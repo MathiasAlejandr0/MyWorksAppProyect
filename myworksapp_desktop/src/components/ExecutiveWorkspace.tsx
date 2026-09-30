@@ -15,6 +15,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 
 import { AuditTrailViewer } from './AuditTrailViewer';
+import { ExecutivePeriodPanel } from './ExecutivePeriodPanel';
 import { FinancialSettlementModal } from './FinancialSettlementModal';
 import { DigitalContractModal } from './DigitalContractModal';
 import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
@@ -56,144 +57,6 @@ function Sparkline({ color, points }: { color: string; points: string }) {
 }
 
 
-
-function AreaChart() {
-
-  const hours = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
-
-  return (
-
-    <div className="area-chart-wrap">
-
-      <div className="area-chart-y">
-
-        {['$16M', '$12M', '$8M', '$4M', '$0'].map((label) => (
-
-          <span key={label}>{label}</span>
-
-        ))}
-
-      </div>
-
-      <div className="area-chart-body">
-
-        <svg className="area-chart-svg" viewBox="0 0 600 180" preserveAspectRatio="none">
-
-          <defs>
-
-            <linearGradient id="gmvFill" x1="0" y1="0" x2="0" y2="1">
-
-              <stop offset="0%" stopColor="#F0782A" stopOpacity="0.35" />
-
-              <stop offset="100%" stopColor="#F0782A" stopOpacity="0" />
-
-            </linearGradient>
-
-          </defs>
-
-          <path
-
-            d="M0,140 L60,120 L120,130 L180,90 L240,100 L300,70 L360,85 L420,55 L480,65 L540,40 L600,35 L600,180 L0,180 Z"
-
-            fill="url(#gmvFill)"
-
-          />
-
-          <polyline
-
-            points="0,140 60,120 120,130 180,90 240,100 300,70 360,85 420,55 480,65 540,40 600,35"
-
-            fill="none"
-
-            stroke="#F0782A"
-
-            strokeWidth="2.5"
-
-          />
-
-          <circle cx="600" cy="35" r="5" fill="#F0782A" />
-
-        </svg>
-
-        <div className="area-chart-tooltip">Ejemplo · no es un dato real</div>
-
-        <div className="area-chart-x">
-
-          {hours.map((h) => (
-
-            <span key={h}>{h}</span>
-
-          ))}
-
-        </div>
-
-      </div>
-
-    </div>
-
-  );
-
-}
-
-
-
-function DonutChart() {
-
-  return (
-
-    <div className="donut-chart-wrap">
-
-      <div
-
-        className="donut-chart-ring"
-
-        style={{
-
-          background: `conic-gradient(
-
-            #F0782A 0% 41.4%,
-
-            #8B5CF6 41.4% 71%,
-
-            #3B82F6 71% 88.8%,
-
-            #2F9E64 88.8% 100%
-
-          )`,
-
-        }}
-
-      >
-
-        <div className="donut-chart-center">
-
-          <strong>$14.8M</strong>
-
-          <span>GMV total</span>
-
-        </div>
-
-      </div>
-
-      <ul className="donut-legend">
-
-        <li><span className="donut-dot donut-dot--orange" /> Servicios Profesionales <em>$6.12M (41.4%)</em></li>
-
-        <li><span className="donut-dot donut-dot--purple" /> Desarrollo de Software <em>$4.38M (29.6%)</em></li>
-
-        <li><span className="donut-dot donut-dot--blue" /> Infraestructura y Cloud <em>$2.64M (17.8%)</em></li>
-
-        <li><span className="donut-dot donut-dot--green" /> Soporte y Operaciones <em>$1.66M (11.2%)</em></li>
-
-      </ul>
-
-      <p className="donut-report-link">Gráfico ilustrativo. No sale de la base.</p>
-
-    </div>
-
-  );
-
-}
 
 
 
@@ -365,7 +228,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
           </p>
 
-          <p className="executive-subtitle">Datos de demostración. El GMV y los porcentajes no salen de la base.</p>
+          <p className="executive-subtitle">GMV, comisión, ticket y CSAT salen de pagos, trabajos completados y calificaciones.</p>
 
         </div>
 
@@ -513,7 +376,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
                   <span className="chart-live-dot" aria-hidden />
 
-                  <h3 className="chart-card-title">GMV ilustrativo</h3>
+                  <h3 className="chart-card-title">Periodo de negocio</h3>
 
                   <span className="chart-card-caption">Últimas 24 horas</span>
 
@@ -531,7 +394,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
             </div>
 
-            <AreaChart />
+            <ExecutivePeriodPanel activeJobs={activeJobs} />
 
           </div>
 
@@ -541,9 +404,9 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
             <div className="card-surface exec-panel">
 
-              <h3 className="exec-panel-title">Desglose por categoría</h3>
+              <h3 className="exec-panel-title">Conteos en vivo</h3>
 
-              <DonutChart />
+              <p className="cell-empty">El desglose de cobros está en el período de arriba.</p>
 
             </div>
 

@@ -46,6 +46,10 @@ extension JobDetailStatusActions on _JobDetailPageState {
               title = 'Trabajo Aceptado';
               body = 'Tu solicitud ha sido aceptada por el trabajador';
               break;
+            case AppConstants.jobStatusEnRoute:
+              title = 'Profesional en camino';
+              body = 'El especialista va hacia el domicilio. Puedes ver su ubicación.';
+              break;
             case AppConstants.jobStatusInProgress:
               title = 'Trabajo Iniciado';
               body = 'El trabajador ha iniciado el trabajo';

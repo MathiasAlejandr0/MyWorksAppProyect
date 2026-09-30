@@ -17,6 +17,7 @@ class JobDetailActionsSection extends StatelessWidget {
   final Future<void> Function() onCancelJob;
   final VoidCallback onAcceptJob;
   final Future<void> Function() onRejectJob;
+  final VoidCallback onMarkEnRoute;
   final VoidCallback onStartJob;
   final VoidCallback onRequestOvertimeHours;
   final VoidCallback onCompleteJob;
@@ -32,6 +33,7 @@ class JobDetailActionsSection extends StatelessWidget {
     required this.onCancelJob,
     required this.onAcceptJob,
     required this.onRejectJob,
+    required this.onMarkEnRoute,
     required this.onStartJob,
     required this.onRequestOvertimeHours,
     required this.onCompleteJob,
@@ -65,12 +67,15 @@ class JobDetailActionsSection extends StatelessWidget {
               child: const Text('Rechazar'),
             ),
           ],
-          if (isWorker &&
-              job.status == AppConstants.jobStatusAccepted &&
-              canTransition[AppConstants.jobStatusInProgress] == true)
+          if (isWorker && job.status == AppConstants.jobStatusAccepted)
+            ElevatedButton(
+              onPressed: onMarkEnRoute,
+              child: const Text('Voy en camino'),
+            ),
+          if (isWorker && job.status == AppConstants.jobStatusEnRoute)
             ElevatedButton(
               onPressed: onStartJob,
-              child: const Text('Iniciar Trabajo'),
+              child: const Text('Iniciar trabajo'),
             ),
           if (isWorker && job.status == AppConstants.jobStatusInProgress) ...[
             if (job.pricingMode == PricingConstants.modeHourlyBlock) ...[

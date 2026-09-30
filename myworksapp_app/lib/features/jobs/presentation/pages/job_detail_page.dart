@@ -45,6 +45,10 @@ import '../widgets/job_detail_actions_section.dart';
 import '../widgets/job_detail_payment_escrow_section.dart';
 import '../widgets/job_detail_scheduled_date_row.dart';
 import '../widgets/job_detail_description_section.dart';
+import '../widgets/job_status_timeline.dart';
+import '../widgets/worker_gps_publisher.dart';
+import '../widgets/client_live_tracking.dart';
+import '../../../../core/services/gps_publish_gate.dart';
 
 part 'job_detail_workflows.dart';
 part 'job_detail_status.dart';
@@ -134,6 +138,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       PricingConstants.jobAwaitingPayment,
       PricingConstants.jobAwaitingClientApproval,
       AppConstants.jobStatusAccepted,
+      AppConstants.jobStatusEnRoute,
       AppConstants.jobStatusInProgress,
       AppConstants.jobStatusCompleted,
       AppConstants.jobStatusCancelled,

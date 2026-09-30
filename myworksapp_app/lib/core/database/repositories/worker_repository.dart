@@ -195,6 +195,20 @@ class WorkerRepository {
     }).eq('id_usuario', userId);
   }
 
+  Future<void> updateBaseLocation({
+    required String userId,
+    required double latitude,
+    required double longitude,
+    required double radiusKm,
+  }) async {
+    await supabase.from(_table).update({
+      'latitud_base': latitude,
+      'longitud_base': longitude,
+      'radio_servicio_km': radiusKm,
+      'origen_base': 'mapa',
+    }).eq('id_usuario', userId);
+  }
+
   Future<void> updateAvailability(String userId, bool isAvailable) async {
     await supabase
         .from(_table)

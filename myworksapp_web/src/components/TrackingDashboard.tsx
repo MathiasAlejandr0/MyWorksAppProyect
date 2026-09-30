@@ -24,6 +24,11 @@ interface TrackingDashboardProps {
   paymentStatus?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  workerLatitude?: number | null;
+  workerLongitude?: number | null;
+  etaMinutes?: number | null;
+  distanceKm?: number | null;
+  gpsError?: string | null;
   profileName?: string;
   paymentNotice?: string | null;
   unreadCount?: number;
@@ -45,6 +50,11 @@ export function TrackingDashboard({
   paymentStatus,
   latitude,
   longitude,
+  workerLatitude,
+  workerLongitude,
+  etaMinutes,
+  distanceKm,
+  gpsError,
   profileName,
   paymentNotice,
   unreadCount = 0,
@@ -55,6 +65,8 @@ export function TrackingDashboard({
   const [showPayment, setShowPayment] = useState(false);
   const hasPoint = typeof latitude === 'number' && typeof longitude === 'number'
     && Number.isFinite(latitude) && Number.isFinite(longitude);
+  const hasWorker = typeof workerLatitude === 'number' && typeof workerLongitude === 'number'
+    && Number.isFinite(workerLatitude) && Number.isFinite(workerLongitude);
   const statusLabel = jobStatusLabel(jobStatus);
   const statusDetail = jobStatusDetail(jobStatus);
 
@@ -111,10 +123,15 @@ export function TrackingDashboard({
           <div className="tracking-eta-block">
             <div className="tracking-eta-main">
               <span className="tracking-eta-label">Llegada</span>
-              <strong className="tracking-eta-value">Sin GPS</strong>
+              <strong className="tracking-eta-value">
+                {etaMinutes == null ? 'Sin GPS' : `${etaMinutes} min`}
+              </strong>
             </div>
             <p className="tracking-eta-arrival">
-              No hay seguimiento de ubicación del profesional. El estado cambia cuando él actualiza el trabajo en la app.
+              {gpsError
+                ?? (etaMinutes == null
+                  ? 'La llegada aparece cuando el profesional publica su ubicación en camino o en curso.'
+                  : `A ${distanceKm?.toFixed(1) ?? '—'} km. Estimación a 28 km/h, sin tráfico en vivo.`)}
             </p>
           </div>
 
@@ -182,6 +199,11 @@ export function TrackingDashboard({
               latitude={latitude}
               longitude={longitude}
               label={serviceLocation}
+              worker={hasWorker ? {
+                latitude: workerLatitude,
+                longitude: workerLongitude,
+                label: workerName,
+              } : null}
             />
           ) : (
             <div className="tracking-map-empty">

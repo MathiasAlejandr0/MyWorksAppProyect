@@ -38,6 +38,8 @@ class WorkerJobStatus {
         return 'Esperando aprobación del cliente';
       case AppConstants.jobStatusAccepted:
         return 'Trabajo aceptado';
+      case AppConstants.jobStatusEnRoute:
+        return 'En camino al domicilio';
       default:
         return 'Trabajo en curso';
     }

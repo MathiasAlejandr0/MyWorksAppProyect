@@ -10,6 +10,7 @@ describe('textos de estado del trabajo', () => {
   it('traduce los códigos de la base', () => {
     assert.equal(jobStatusLabel('esperando_pago'), 'Esperando el pago');
     assert.equal(jobStatusLabel('en_curso'), 'En curso');
+    assert.equal(jobStatusLabel('en_camino'), 'En camino');
     assert.equal(paymentStatusLabel('retenido'), 'Pago retenido');
   });
 

@@ -63,6 +63,7 @@ describe('isWorkerActiveJobStatus', () => {
   it('espeja WorkerJobStatus.activeStatuses (ES)', () => {
     assert.deepEqual(WORKER_ACTIVE_JOB_STATUSES, [
       'aceptado',
+      'en_camino',
       'en_curso',
       'esperando_aprobacion_cliente',
       'esperando_pago',
