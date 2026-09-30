@@ -102,9 +102,12 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
       status === 'en_revision' || status === 'pendiente' ? 0 : 1;
     return (workersQuery.data ?? [])
       .filter((worker) => {
+        // fetchWorkersForAdmin no trae el correo, así que no sirve para detectar
+        // cuentas demo. Se ocultan solo los rechazados: quedan los verificados y
+        // la cola por aprobar (pendiente / en revisión), que es lo que el admin revisa.
         const demo = (worker.email ?? '').toLowerCase().endsWith('@demo.myworksapp.cl');
         if (demo) return true;
-        return (worker.verificationStatus ?? 'pendiente') === 'verificado';
+        return (worker.verificationStatus ?? 'pendiente') !== 'rechazado';
       })
       .map((worker) => ({
         id: worker.userId,

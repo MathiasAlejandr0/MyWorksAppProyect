@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { ArrowRight, Lock, LogOut, Play, Search as SearchIcon, ShieldCheck, UserPlus } from 'lucide-react';
 import { CategoryCard } from '../components/CategoryCard';
 import { BrandLogo } from '../components/BrandLogo';
-import { categoriesWithPros } from '@myworksapp/shared';
+import { categoriesWithPros, jobStatusLabel } from '@myworksapp/shared';
 import {
   ALL_SERVICE_CATEGORIES,
   FEATURED_CATEGORIES,
@@ -31,6 +31,11 @@ type LandingHomeProps = {
   availableCategoryIds: ReadonlySet<string> | null;
   checkoutNotice?: string | null;
   clearCheckoutNotice?: () => void;
+  onShowOrders?: () => void;
+  orders?: { id: string; status: string; address: string | null; description: string | null }[] | null;
+  ordersError?: string | null;
+  onOpenOrder?: (jobId: string) => void;
+  onCloseOrders?: () => void;
 };
 
 export function LandingHome({
@@ -47,6 +52,11 @@ export function LandingHome({
   availableCategoryIds,
   checkoutNotice = null,
   clearCheckoutNotice,
+  onShowOrders,
+  orders = null,
+  ordersError = null,
+  onOpenOrder,
+  onCloseOrders,
 }: LandingHomeProps) {
   const featuredCategories = categoriesWithPros(
     FEATURED_CATEGORIES,
@@ -119,6 +129,9 @@ export function LandingHome({
               <>
 
                 <span className="nav-hello">Hola, {profile.name.split(' ')[0]}</span>
+                <button type="button" className="btn-ghost" onClick={() => onShowOrders?.()}>
+                  Mis pedidos
+                </button>
 
                 <button type="button" className="btn-ghost" onClick={() => void logout()}>
 
@@ -130,11 +143,14 @@ export function LandingHome({
 
             ) : (
 
-              <button type="button" className="btn-outline-orange" onClick={() => setShowAuth(true)}>
-
-                Registrarse
-
-              </button>
+              <>
+                <button type="button" className="btn-ghost nav-login-mobile" onClick={() => setShowAuth(true)}>
+                  Ingresar
+                </button>
+                <button type="button" className="btn-outline-orange" onClick={() => setShowAuth(true)}>
+                  Registrarse
+                </button>
+              </>
 
             )}
 
@@ -145,6 +161,30 @@ export function LandingHome({
       </nav>
 
 
+
+      {orders && (
+        <div className="container">
+          <section className="orders-panel" aria-label="Mis pedidos">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>Mis pedidos</h2>
+              <button type="button" className="btn-ghost" onClick={() => onCloseOrders?.()}>Cerrar</button>
+            </div>
+            {ordersError ? <p role="alert">{ordersError}</p> : null}
+            {orders.length === 0 ? <p>No tienes pedidos todavía.</p> : null}
+            {orders.map((order) => (
+              <button
+                key={order.id}
+                type="button"
+                className="orders-row"
+                onClick={() => onOpenOrder?.(order.id)}
+              >
+                <strong>{jobStatusLabel(order.status)}</strong>
+                <span>{order.address || order.description || order.id.slice(0, 8)}</span>
+              </button>
+            ))}
+          </section>
+        </div>
+      )}
 
       {checkoutNotice && (
         <div className="auth-banner container page-fade-in" role="alert">

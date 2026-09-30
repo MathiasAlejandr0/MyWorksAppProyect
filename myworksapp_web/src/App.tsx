@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { LandingHome } from './views/LandingHome';
@@ -29,6 +29,7 @@ import {
   categoriesWithPros,
   fetchJobTrackingSnapshot,
   fetchMyNotifications,
+  fetchUserJobs,
   toWebWorkerCard,
   type JobTrackingSnapshot,
   type CatalogCursor,
@@ -84,6 +85,9 @@ const TrackingDashboard = lazy(() =>
 function ViewFallback() {
   return <div className="min-h-screen app-shell" />;
 }
+
+const FALLBACK_PHOTO =
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&q=70';
 
 type AppView = 'landing' | 'categories' | 'search' | 'tracking' | 'paid';
 
@@ -325,6 +329,9 @@ export function App() {
   const [notificationLines, setNotificationLines] = useState<string[]>([]);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [myOrders, setMyOrders] = useState<Awaited<ReturnType<typeof fetchUserJobs>> | null>(null);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const restoredJob = useRef(false);
 
   const [activeNav, setActiveNav] = useState<'servicios' | 'como-funciona'>('servicios');
   const [availableCategoryIds, setAvailableCategoryIds] = useState<ReadonlySet<string> | null>(null);
@@ -399,6 +406,94 @@ export function App() {
     }
   };
 
+  const openJobTracking = async (jobId: string) => {
+    try {
+      const snapshot = await fetchJobTrackingSnapshot(supabase, jobId);
+      if (!snapshot) {
+        setBookingError('No encontramos ese pedido.');
+        return;
+      }
+      setCheckoutJobId(snapshot.id);
+      setJobSnapshot(snapshot);
+      sessionStorage.setItem('mwa-active-job', snapshot.id);
+      let worker: SearchWorker = {
+        id: snapshot.workerId ?? 'sin-profesional',
+        name: 'Profesional',
+        profession: 'Visita',
+        category: '',
+        rating: 0,
+        jobsDone: 0,
+        photoUrl: FALLBACK_PHOTO,
+        pricePerVisit: 0,
+      };
+      if (snapshot.workerId) {
+        const { data } = await supabase
+          .from('trabajadores')
+          .select('id_usuario, profesion, calificacion, tarifa_visita, categoria_servicio, perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)')
+          .eq('id_usuario', snapshot.workerId)
+          .maybeSingle();
+        if (data) {
+          const joined = data.perfiles as
+            | { nombre?: string; ruta_foto_perfil?: string | null }
+            | { nombre?: string; ruta_foto_perfil?: string | null }[]
+            | null;
+          const profileRow = Array.isArray(joined) ? joined[0] : joined;
+          worker = {
+            id: String(data.id_usuario),
+            name: profileRow?.nombre ?? 'Profesional',
+            profession: String(data.profesion ?? 'Visita'),
+            category: String(data.categoria_servicio ?? ''),
+            rating: Number(data.calificacion ?? 0),
+            jobsDone: 0,
+            photoUrl: profileRow?.ruta_foto_perfil || FALLBACK_PHOTO,
+            pricePerVisit: Number(data.tarifa_visita ?? 0),
+          };
+        }
+      }
+      setSelectedWorker(worker);
+      setServiceMatch((prev) => prev ?? {
+        category: worker.category || 'plomeria',
+        categoryName: snapshot.description ?? worker.profession,
+        problem: snapshot.description ?? '',
+        minPrice: worker.pricePerVisit,
+        maxPrice: worker.pricePerVisit,
+        urgency: 'normal',
+        workers: [],
+        nextCursor: null,
+      });
+      setMyOrders(null);
+      setBookingError(null);
+      setView('tracking');
+    } catch {
+      setBookingError('No se pudo abrir el seguimiento. Entra de nuevo e inténtalo.');
+    }
+  };
+
+  const showMyOrders = async () => {
+    if (!profile) {
+      setShowAuth(true);
+      return;
+    }
+    setOrdersError(null);
+    try {
+      const rows = await fetchUserJobs(supabase, profile.id);
+      const closed = new Set(['completado', 'cancelado', 'expirado', 'no_asistio']);
+      const active = rows.filter((row) => !closed.has(row.status));
+      setMyOrders(active.length > 0 ? active : rows.slice(0, 8));
+    } catch {
+      setOrdersError('No se pudieron leer tus pedidos.');
+      setMyOrders([]);
+    }
+  };
+
+  useEffect(() => {
+    if (!profile || restoredJob.current) return;
+    restoredJob.current = true;
+    if (parseCheckoutReturn(window.location.search).kind !== 'none') return;
+    const jobId = sessionStorage.getItem('mwa-active-job');
+    if (jobId) void openJobTracking(jobId);
+  }, [profile]);
+
   useEffect(() => {
     if (!profile) {
       setUnreadCount(0);
@@ -443,7 +538,10 @@ export function App() {
             setSelectedWorker(saved.worker);
             workerName = saved.worker.name;
           }
-          if (saved.jobId) setCheckoutJobId(saved.jobId);
+          if (saved.jobId) {
+            setCheckoutJobId(saved.jobId);
+            sessionStorage.setItem('mwa-active-job', saved.jobId);
+          }
           if (saved.amount) savedAmount = saved.amount;
           if (saved.serviceTitle) {
             setServiceMatch((prev) =>
@@ -499,6 +597,7 @@ export function App() {
                 workerName,
               }),
             );
+            if (jobIdParam) sessionStorage.setItem('mwa-active-job', jobIdParam);
             setView(workerName ? 'tracking' : 'paid');
             return;
           }
@@ -693,6 +792,7 @@ export function App() {
         pricingMode: 'precio_fijo',
       });
       setCheckoutJobId(job.id);
+      sessionStorage.setItem('mwa-active-job', job.id);
       setShowCheckout(true);
     } catch {
       setBookingError('No se pudo crear la solicitud. Verifica tu sesión.');
@@ -758,6 +858,7 @@ export function App() {
       sessionStorage.setItem('mwa-guest-alta-nonce', session.nonce);
     }
     setCheckoutJobId(session.jobId);
+    sessionStorage.setItem('mwa-active-job', session.jobId);
     sessionStorage.setItem(
       'mwa-pending-checkout',
       JSON.stringify({
@@ -790,7 +891,14 @@ export function App() {
           verifying={paidVerifying}
           verifyError={paidVerifyError}
           passwordToken={guestPasswordToken}
-          onContinueTracking={() => setView('tracking')}
+          canOpenOrder={Boolean(profile && checkoutJobId)}
+          onContinueTracking={() => {
+            if (checkoutJobId && profile) {
+              void openJobTracking(checkoutJobId);
+              return;
+            }
+            if (selectedWorker) setView('tracking');
+          }}
           onGoHome={() => setView('landing')}
         />
       </Suspense>
@@ -1091,6 +1199,16 @@ export function App() {
       availableCategoryIds={availableCategoryIds}
       checkoutNotice={bookingError}
       clearCheckoutNotice={() => setBookingError(null)}
+      onShowOrders={() => void showMyOrders()}
+      orders={myOrders?.map((order) => ({
+        id: order.id,
+        status: order.status,
+        address: order.address ?? null,
+        description: order.description ?? null,
+      })) ?? null}
+      ordersError={ordersError}
+      onOpenOrder={(jobId) => void openJobTracking(jobId)}
+      onCloseOrders={() => setMyOrders(null)}
     />
   );
 

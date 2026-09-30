@@ -9,6 +9,7 @@ type PaidReturnViewProps = {
   verifying?: boolean;
   verifyError?: string | null;
   passwordToken?: string | null;
+  canOpenOrder?: boolean;
   onContinueTracking: () => void;
   onGoHome: () => void;
 };
@@ -20,6 +21,7 @@ export function PaidReturnView({
   verifying = false,
   verifyError = null,
   passwordToken = null,
+  canOpenOrder = false,
   onContinueTracking,
   onGoHome,
 }: PaidReturnViewProps) {
@@ -48,7 +50,12 @@ export function PaidReturnView({
           <BrandLogo size={40} />
           <h1>No pudimos confirmar el pago</h1>
           <p>{verifyError}</p>
-          <button type="button" className="btn-primary" onClick={onGoHome}>
+          {canOpenOrder ? (
+            <button type="button" className="btn-primary" onClick={onContinueTracking}>
+              Ver mi pedido
+            </button>
+          ) : null}
+          <button type="button" className={canOpenOrder ? 'btn-ghost' : 'btn-primary'} onClick={onGoHome}>
             Volver al inicio
           </button>
         </div>
@@ -140,12 +147,17 @@ export function PaidReturnView({
               : 'Te enviamos un correo para confirmar.'}
           </p>
         ) : null}
+        {canOpenOrder || workerName ? (
+          <button type="button" className="btn-primary" onClick={onContinueTracking}>
+            Ver mi pedido
+          </button>
+        ) : null}
         <button
           type="button"
-          className="btn-primary"
-          onClick={workerName ? onContinueTracking : onGoHome}
+          className={canOpenOrder || workerName ? 'btn-ghost' : 'btn-primary'}
+          onClick={onGoHome}
         >
-          {workerName ? 'Ver seguimiento' : 'Volver al inicio'}
+          Volver al inicio
         </button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FileText, Download, Search, Calendar, User } from 'lucide-react';
-import { listLiquidaciones } from '@myworksapp/shared';
+import { formatDbDateTime, listLiquidaciones } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 
 export interface AuditLog {
@@ -30,7 +30,7 @@ export function AuditTrailViewer() {
         setLogs(
           rows.map((r) => ({
             id: r.id.slice(0, 8),
-            timestamp: new Date(r.createdAt).toLocaleString('es-CL'),
+            timestamp: formatDbDateTime(r.createdAt),
             operator: r.operatorId.slice(0, 8),
             action: 'RELEASE_PAYOUT',
             details: `${r.provider} · ${r.amountClp.toLocaleString('es-CL')} CLP · ref ${r.transferRef}${r.notes ? ` · ${r.notes}` : ''}`,

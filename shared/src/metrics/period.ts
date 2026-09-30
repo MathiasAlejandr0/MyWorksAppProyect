@@ -34,13 +34,42 @@ export type BusinessPeriodSummary = {
   dailyGmv: DailyGmv[];
 };
 
+/**
+ * Las columnas creado_en/actualizado_en son texto y a veces vienen sin zona
+ * (p. ej. el seed: "2026-09-30T07:58:44.929384" o "2026-09-30 08:14:15+00").
+ * La base escribe UTC, así que un valor sin zona se lee como UTC; si no, el
+ * navegador lo toma como hora local y en Chile queda 3 h en el futuro.
+ */
+export function parseDbTimestamp(value: string | null | undefined): number {
+  if (!value) return Number.NaN;
+  let s = String(value).trim().replace(' ', 'T');
+  if (/[+-]\d{2}$/.test(s)) s = `${s}:00`;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s) && !/(Z|[+-]\d{2}:?\d{2})$/i.test(s)) s = `${s}Z`;
+  return Date.parse(s);
+}
+
+/** Hora de Chile a partir de un timestamp de la base, con o sin zona. */
+export function formatDbDateTime(value: string | null | undefined): string {
+  const ms = parseDbTimestamp(value);
+  if (!Number.isFinite(ms)) return '—';
+  return new Date(ms).toLocaleString('es-CL', {
+    timeZone: 'America/Santiago',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+}
+
 function inRange(iso: string, fromMs: number, toMs: number): boolean {
-  const ms = Date.parse(iso);
+  const ms = parseDbTimestamp(iso);
   return Number.isFinite(ms) && ms >= fromMs && ms <= toMs;
 }
 
 function dayKey(iso: string): string {
-  const ms = Date.parse(iso);
+  const ms = parseDbTimestamp(iso);
   if (!Number.isFinite(ms)) return '';
   return new Date(ms).toISOString().slice(0, 10);
 }

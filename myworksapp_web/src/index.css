@@ -83,6 +83,13 @@ h1, h2, h3, .brand-display {
 .section-fade-in { animation: pageFadeIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 40ms; }
 .modal-fade-in { animation: modalFadeIn 220ms ease-out both; }
 .modal-rise { animation: modalRise 260ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* La barra de reserva se centra con translateX(-50%). modalRise deja transform en
+   translateY(0) scale(1) y la corría media pantalla a la derecha. */
+@keyframes quickBookingRise {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+.quick-booking-bar.modal-rise { animation-name: quickBookingRise; }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-rise, .page-fade-in, .section-fade-in, .modal-fade-in, .modal-rise, .glass-nav, .app-shell, .skeleton-block {
@@ -158,6 +165,7 @@ h1, h2, h3, .brand-display {
 }
 .nav-link:hover, .nav-link-btn:hover { color: var(--orange-accent); opacity: 1; }
 .nav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nav-login-mobile { display: none; }
 .nav-hello { font-size: 13px; font-weight: 700; }
 
 /* —— Buttons —— */
@@ -832,11 +840,12 @@ h1, h2, h3, .brand-display {
 .pro-card-stars { color: var(--orange-accent); font-size: 11px; letter-spacing: 1px; }
 .pro-card-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
 }
-.pro-card-price { font-size: 13px; font-weight: 700; }
+.pro-card-price { font-size: 13px; font-weight: 700; white-space: nowrap; }
 .pro-card-badge {
   font-size: 10px;
   font-weight: 800;
@@ -879,6 +888,8 @@ h1, h2, h3, .brand-display {
 
 .search-map-panel {
   position: relative;
+  /* Los controles del mapa (z-index 400-450) quedan dentro del panel y no tapan la barra de reserva. */
+  isolation: isolate;
   border-left: 1px solid var(--border-dark);
   background: var(--bg-canvas-dark-alt);
   display: flex;
@@ -1218,6 +1229,7 @@ h1, h2, h3, .brand-display {
 /* —— Tracking dashboard (mockup 03) —— */
 .tracking-dashboard {
   min-height: 100vh;
+  height: 100vh; /* escritorio: panel con scroll propio y mapa del alto de la ventana */
   display: flex;
   flex-direction: column;
   background: var(--bg-dominant-dark);
@@ -1560,8 +1572,11 @@ h1, h2, h3, .brand-display {
 .checkout-v2-header { text-align: center; margin-bottom: 20px; }
 .checkout-v2-kicker {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -1571,6 +1586,8 @@ h1, h2, h3, .brand-display {
 .checkout-v2-header h2 { font-size: 26px; font-weight: 800; }
 .checkout-v2-total-row {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: space-between;
   align-items: baseline;
   padding: 16px 0;
@@ -1578,7 +1595,33 @@ h1, h2, h3, .brand-display {
   margin-bottom: 18px;
 }
 .checkout-v2-total-row span { font-size: 14px; color: var(--text-muted-dark); }
-.checkout-v2-total-row strong { font-size: 28px; font-weight: 900; color: var(--orange-accent); }
+.checkout-v2-total-row strong { font-size: 28px; font-weight: 900; color: var(--orange-accent); white-space: nowrap; }
+.orders-panel {
+  margin: 12px auto 0;
+  max-width: 720px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface-dark);
+}
+.orders-panel h2 { margin: 0 0 8px; font-size: 18px; }
+.orders-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-dark);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.orders-row strong { font-size: 14px; }
+.orders-row span { color: var(--text-muted-dark); font-size: 13px; }
 .checkout-v2-escrow-banner {
   display: flex;
   justify-content: space-between;
@@ -2089,14 +2132,18 @@ h1, h2, h3, .brand-display {
   .hero-float-metric { font-size: 18px; }
   .hero-mini-map { height: 28px; }
   .nav-links-center { display: none; }
+  .nav-login-mobile { display: inline-flex; }
   .categories-grid, .categories-grid--8 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .search-view-nav { grid-template-columns: 1fr; gap: 10px; }
   .search-view-nav-right { justify-content: flex-start; }
   .search-view-body { grid-template-columns: 1fr; }
   .search-filters { display: none; }
   .search-results-grid { grid-template-columns: 1fr; }
-  .tracking-layout { grid-template-columns: 1fr; }
-  .tracking-sidebar { max-height: 50vh; }
+  .tracking-dashboard { height: auto; }
+  .tracking-layout { grid-template-columns: 1fr; grid-template-rows: 300px auto; flex: 0 0 auto; }
+  /* Móvil: mapa arriba con alto fijo; el panel fluye con la página (sin scroll interno ni hueco). */
+  .tracking-map-full { order: -1; min-height: 300px; border-bottom: 1px solid var(--border-dark); }
+  .tracking-sidebar { max-height: none; overflow: visible; border-right: 0; }
 }
 
 @media (max-width: 640px) {
@@ -2108,4 +2155,13 @@ h1, h2, h3, .brand-display {
   .chat-widget { width: calc(100% - 24px); right: 12px; bottom: 12px; height: 70vh; }
   .checkout-v2-form { grid-template-columns: 1fr; }
   .checkout-v2-dl { grid-template-columns: 1fr; }
+  .tracking-nav { padding: 10px 14px; }
+  .tracking-premium-badge, .tracking-nav-center { display: none; }
+  .tracking-nav-right { margin-left: auto; gap: 10px; }
+  .tracking-nav-user > div:not(.search-nav-avatar), .tracking-nav-user > svg { display: none; }
+  .nav-login-mobile { display: inline-flex; }
+  .checkout-v2-kicker { white-space: normal; text-align: center; letter-spacing: 0.04em; }
+  .checkout-v2-total-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .checkout-v2-total-row strong { font-size: 22px; white-space: nowrap; }
+  .guest-checkout-card { max-width: calc(100vw - 24px); }
 }

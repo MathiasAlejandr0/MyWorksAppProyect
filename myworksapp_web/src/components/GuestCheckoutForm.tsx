@@ -85,7 +85,7 @@ export function GuestCheckoutForm({
 
         <div className="checkout-v2-header">
           <p className="checkout-v2-kicker">
-            <Lock size={13} /> PEDIDO SIN SESIÓN · URGENCIA
+            <Lock size={13} /> Pedido sin sesión
           </p>
           <h2 id="guest-checkout-title">Datos para la visita</h2>
           <p className="guest-checkout-lead">

@@ -86,14 +86,22 @@ export function PremiumSearchMap({
     );
     mapRef.current = map;
 
+    // CARTO pide llave desde agosto de 2026: sin ella cada tile sale con «API KEY REQUIRED».
+    // Con VITE_CARTO_BASEMAPS_KEY se usa Voyager; si no, las tiles estándar de OpenStreetMap.
+    const cartoKey = (import.meta.env.VITE_CARTO_BASEMAPS_KEY ?? '').trim();
+    const osmAttribution =
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
     L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · &copy; <a href="https://carto.com/">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19,
-      },
+      cartoKey
+        ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(cartoKey)}`
+        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      cartoKey
+        ? {
+            attribution: `${osmAttribution} · &copy; <a href="https://carto.com/">CARTO</a>`,
+            subdomains: 'abcd',
+            maxZoom: 19,
+          }
+        : { attribution: osmAttribution, maxZoom: 19 },
     ).addTo(map);
 
     const resize = () => map.invalidateSize();

@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
+import { profileLabel } from '../profileLabel';
 
 const PremiumSearchMap = lazy(() =>
   import('./PremiumSearchMap').then((m) => ({ default: m.PremiumSearchMap })),
@@ -49,13 +50,6 @@ interface SearchResultsViewProps {
 function clp(amount: number): string {
   const value = Number.isFinite(amount) ? Math.round(amount) : 0;
   return value.toLocaleString('es-CL');
-}
-
-function profileLabel(profileName: string): string {
-  const parts = profileName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '';
-  if (parts.length === 1) return parts[0];
-  return `${parts[0]} ${parts[parts.length - 1].charAt(0).toUpperCase()}.`;
 }
 
 export function SearchResultsView({

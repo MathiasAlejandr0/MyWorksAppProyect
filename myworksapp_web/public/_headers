@@ -5,7 +5,7 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(self)
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://*.basemaps.cartocdn.com https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com; frame-src https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com; form-action https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://*.basemaps.cartocdn.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com; frame-src https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com; form-action https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
 
 /index.html
   Cache-Control: no-cache
@@ -14,7 +14,7 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(self)
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://*.basemaps.cartocdn.com https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com; frame-src https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com; form-action https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://*.basemaps.cartocdn.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com; frame-src https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com; form-action https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

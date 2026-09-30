@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Send, X } from 'lucide-react';
 import {
   fetchJobMessages,
+  formatDbDateTime,
   sendJobMessage,
   type JobMessage,
 } from '@myworksapp/shared';
@@ -138,10 +139,7 @@ export function LiveChatWidget({
             <div key={message.id} className={`chat-bubble-row chat-bubble-row--${mine ? 'user' : 'worker'}`}>
               <div className={`chat-bubble chat-bubble--${mine ? 'user' : 'worker'}`}>{message.content}</div>
               <div className="chat-bubble-meta">
-                {new Date(message.createdAt).toLocaleTimeString('es-CL', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                {formatDbDateTime(message.createdAt)}
               </div>
             </div>
           );

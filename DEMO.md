@@ -222,23 +222,43 @@ El commit deja el pago `retenido` en la base. **Recibo conforme** (web, en el se
 
 Clave publicable (no es la `service_role`): la misma que ya usa la app en debug. En release hay que pasarla con `--dart-define`. No la copies a un ticket.
 
-Web:
+Web, en bash:
 
 ```bash
 cd myworksapp_web
-printf '%s\n' 'VITE_SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co' 'VITE_SUPABASE_ANON_KEY=<clave-publicable>' > .env.local
+cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-Abre `http://localhost:5173`.
+Web, en Windows PowerShell (el retorno de Webpay tiene que ser el puerto **5173**):
 
-Escritorio (hace falta Rust estable; el Cargo 1.83 del sistema no compila crates `edition2024`):
+```powershell
+cd myworksapp_web
+Copy-Item .env.example .env.local
+npm install
+npm run dev
+```
+
+Abre `http://localhost:5173`. `.env.example` ya trae la URL del proyecto y la clave publicable.
+
+Escritorio, en bash (hace falta Rust estable; el Cargo 1.83 del sistema no compila crates `edition2024`):
 
 ```bash
 cd myworksapp_desktop
-printf '%s\n' 'VITE_SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co' 'VITE_SUPABASE_ANON_KEY=<clave-publicable>' > .env.local
+cp .env.example .env.local
 npm install
+npm run dev
+```
+
+Escritorio, en Windows PowerShell. El panel en el navegador queda en el puerto **3001**. `npm run tauri:dev` abre la ventana nativa en el mismo origen.
+
+```powershell
+cd myworksapp_desktop
+Copy-Item .env.example .env.local
+npm install
+npm run dev
+# o, con la ventana de escritorio:
 npm run tauri:dev
 ```
 
@@ -261,7 +281,7 @@ En debug, si omites los `dart-define`, la app usa el proyecto de demo y la clave
 1. Entra como Camila.
 2. **Buscar servicio** → **Plomería**. En el mapa está Pedro Rojas, pin en Providencia. La tarjeta dice **4.8**, **5 trabajos** y **Desde $35.000 / visita**. Con sesión, el encabezado usa el nombre real (Camila Soto se ve como **Camila S.**). Los horarios de la barra son **10:00**, **14:00** y **18:00**.
 3. Elige a Pedro → **Continuar con la reserva**. La barra repite **$35.000 / visita**. El diálogo **Confirmar pedido** muestra el total **35.000 CLP**. Con sesión y tarjeta inscrita en la app, se cobra Oneclick. Con sesión y sin tarjeta, el sitio abre Webpay Plus. Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
-4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña**. Con `demo_modo = 1` el correo queda confirmado y el texto es «Contraseña lista. Entra con tu correo en la próxima visita.» El invitado entra con el correo y la clave que acaba de crear.
+4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. Camila, que ya tenía sesión, ve **Ver mi pedido** y el seguimiento. Si recarga, la portada tiene **Mis pedidos** y vuelve a abrir ese trabajo desde la base. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña**. Con `demo_modo = 1` el correo queda confirmado y el texto es «Contraseña lista. Entra con tu correo en la próxima visita.» El invitado entra con el correo y la clave que acaba de crear.
 5. Si en Transbank se cancela, la vuelta es `http://localhost:5173/?pago=fail` y la portada muestra «Pago cancelado. No se realizó ningún cargo.» El pedido queda cancelado. Se elige de nuevo al profesional.
 
 En la app, una invitación por tarifa cobra el precio publicado en `niveles_precio` (por ejemplo «Arreglo menor» de Pedro, $28.000), el mismo que valida el servidor. Luis Contreras sigue `en_revision`: intentar pagarle responde «Este profesional todavía no está verificado para cobrar», no un aviso de tarifa faltante.
@@ -271,7 +291,7 @@ En la app, una invitación por tarifa cobra el precio publicado en `niveles_prec
 1. En el teléfono, entra como Pedro.
 2. Abre el pedido pendiente de Camila y acéptalo.
 3. **Voy en camino**. Acepta la ubicación solo en primer plano. El punto se publica como máximo cada 20 s o 40 m.
-4. En la web, Camila abre el seguimiento: el pin del profesional se mueve y la llegada es una estimación a 28 km/h.
+4. En la web, Camila abre **Mis pedidos** y elige el trabajo en camino. El mapa sigue el pin en vivo del profesional. La llegada en minutos (estimación a 28 km/h) solo aparece si el pedido ya tiene coordenadas, como `demo-job-en-camino`. Un pedido nuevo de la web guarda la dirección en texto y muestra el pin, sin esa llegada.
 5. En el teléfono, pasa el trabajo a **en curso**. El GPS sigue mientras la app está abierta.
 6. Escribe en el chat. Camila lo ve en la web (**Abrir chat**).
 
@@ -286,8 +306,8 @@ Para no depender del GPS del salón, el seed ya trae `demo-job-en-camino`: Camil
 ### Escritorio
 
 1. Entra como `admin.ops@demo.myworksapp.cl` y completa el segundo factor. Si quedó un QR a medias, el panel borra ese factor sin verificar y muestra un código nuevo.
-2. **Panel ejecutivo → Trabajadores.** Luis Contreras está **En revisión** y es el único con **Aprobar** y **Rechazar**. Las filas ya verificadas no traen esos botones. Ana Volt, Felipe Ensambla y el resto de pendientes que no son `@demo` no salen en la lista (el seed los dejó `rechazado`).
-3. **Soporte y disputas:** la tarjeta muestra **#DEMO-DIS** (los primeros 8 caracteres de `demo-disputa-1`, Camila, trabajo eléctrico a medias). Ciérrala desde el panel; el dinero no se mueve solo mientras sigue abierta.
+2. **Panel ejecutivo → Trabajadores.** Luis Contreras está **En revisión** y tiene **Aprobar** y **Rechazar**. Las filas ya verificadas no traen esos botones. La lista oculta a los `rechazado`. El seed deja así a Ana Volt, Felipe Ensambla y el resto de pendientes que no son `@demo`, así que Luis es el pendiente del guion.
+3. **Soporte y disputas:** la tarjeta muestra **#DEMO-DIS** (los primeros 8 caracteres de `demo-disputa-1`, Camila, trabajo eléctrico a medias). Con un solo ticket la paginación muestra solo **1**. La hora es la de Chile. Ciérrala desde el panel; el dinero no se mueve solo mientras sigue abierta.
 4. **Panel ejecutivo → Resumen.** El recuadro de arriba **GMV** usa el mismo monto que el período de **7 días** (retenido, liberado y autorizado). También se ven comisión 15 %, completados, ticket y CSAT. En un rango sin datos el texto es «Sin cobros» o «Sin calificaciones».
 5. **RRHH:** invita un correo de prueba. Si Auth no tiene SMTP, la pantalla muestra el error de la función; no inventa un envío.
 

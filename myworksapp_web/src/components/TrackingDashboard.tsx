@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { jobStatusDetail, jobStatusLabel, paymentStatusLabel } from '@myworksapp/shared';
 import { BrandLogo } from './BrandLogo';
+import { profileLabel } from '../profileLabel';
 import { JobLocationMap } from './JobLocationMap';
 
 interface TrackingDashboardProps {
@@ -108,9 +109,9 @@ export function TrackingDashboard({
             {unreadCount > 0 ? <span className="search-nav-badge">{unreadCount}</span> : null}
           </button>
           <div className="tracking-nav-user">
-            <div className="search-nav-avatar">{profileName?.charAt(0) ?? 'C'}</div>
+            <div className="search-nav-avatar">{profileName?.trim().charAt(0).toUpperCase() || 'C'}</div>
             <div>
-              <strong>{profileName ?? 'Invitado'}</strong>
+              <strong>{profileName ? profileLabel(profileName) : 'Invitado'}</strong>
               <span>Cuenta de cliente</span>
             </div>
             <ChevronDown size={14} />
@@ -139,14 +140,16 @@ export function TrackingDashboard({
             <div className="tracking-eta-main">
               <span className="tracking-eta-label">Llegada</span>
               <strong className="tracking-eta-value">
-                {etaMinutes == null ? 'Sin GPS' : `${etaMinutes} min`}
+                {etaMinutes != null ? `${etaMinutes} min` : hasWorker ? 'En vivo' : 'Sin GPS'}
               </strong>
             </div>
             <p className="tracking-eta-arrival">
               {gpsError
-                ?? (etaMinutes == null
-                  ? 'La llegada aparece cuando el profesional publica su ubicación en camino o en curso.'
-                  : `A ${distanceKm?.toFixed(1) ?? '—'} km. Estimación a 28 km/h, sin tráfico en vivo.`)}
+                ?? (etaMinutes != null
+                  ? `A ${distanceKm?.toFixed(1) ?? '—'} km. Estimación a 28 km/h, sin tráfico en vivo.`
+                  : hasWorker
+                    ? 'El profesional publicó su ubicación. El pedido no tiene coordenadas para estimar la llegada.'
+                    : 'La llegada aparece cuando el profesional publica su ubicación en camino o en curso.')}
             </p>
           </div>
 
@@ -306,6 +309,13 @@ export function TrackingDashboard({
                 longitude: workerLongitude,
                 label: workerName,
               } : null}
+            />
+          ) : hasWorker ? (
+            <JobLocationMap
+              latitude={workerLatitude as number}
+              longitude={workerLongitude as number}
+              label={workerName}
+              worker={null}
             />
           ) : (
             <div className="tracking-map-empty">

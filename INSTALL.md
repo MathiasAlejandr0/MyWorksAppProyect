@@ -102,23 +102,27 @@ Para que un profesor o financista instale escaneando un QR:
 
 Versión web para **clientes** (rol `user` en Supabase). Usa el módulo compartido `shared/` para auth y datos reales.
 
+El retorno de Webpay usa solo el puerto **5173**. Copia `.env.example` a `.env.local` (ya trae la URL y la clave publicable).
+
 ```bash
 cd myworksapp_web
-copy .env.example .env
+cp .env.example .env.local
 npm install
-npm run dev -- --port 3000
+npm run dev
 ```
 
-Variables en `.env`:
+En Windows PowerShell:
 
-```env
-VITE_SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co
-VITE_SUPABASE_ANON_KEY=tu_anon_key
+```powershell
+cd myworksapp_web
+Copy-Item .env.example .env.local
+npm install
+npm run dev
 ```
 
-Acceso: `http://127.0.0.1:3000`
+Acceso: `http://localhost:5173`
 
-Cuenta demo: `usuario@demo.com` / `demo123`
+Cuentas de la demo (contraseña `Demo2026!`): `camila.soto@demo.myworksapp.cl` y el resto de `DEMO.md`. No uses `usuario@demo.com` ni `demo123`.
 
 ---
 
@@ -128,16 +132,27 @@ Hub de **administración** (rol `admin` en Supabase). Soporte, métricas y DevSe
 
 ### Modo navegador (desarrollo)
 
+El panel en el navegador queda en el puerto **3001**.
+
 ```bash
 cd myworksapp_desktop
-copy .env.example .env
+cp .env.example .env.local
 npm install
-npm run dev -- --port 3001
+npm run dev
 ```
 
-Acceso: `http://127.0.0.1:3001`
+En Windows PowerShell:
 
-Cuenta admin demo: `admin@demo.com` / `demo123`
+```powershell
+cd myworksapp_desktop
+Copy-Item .env.example .env.local
+npm install
+npm run dev
+```
+
+Acceso: `http://localhost:3001`
+
+Cuenta admin de la demo: `admin.ops@demo.myworksapp.cl` / `Demo2026!` (Valentina Riquelme). El segundo factor pide un QR la primera vez.
 
 ### App nativa con Tauri (Windows / macOS / Linux)
 
@@ -145,8 +160,9 @@ Requisitos: [Rust](https://rustup.rs/) instalado.
 
 ```bash
 cd myworksapp_desktop
+Copy-Item .env.example .env.local   # en bash: cp .env.example .env.local
 npm install
-npm run tauri:dev      # desarrollo con ventana nativa
+npm run tauri:dev      # desarrollo con ventana nativa, mismo origen que el puerto 3001
 npm run tauri:build    # genera instalador en src-tauri/target/release/bundle/
 ```
 
