@@ -80,6 +80,7 @@ export async function fetchOpenDisputes(
     if (job.id_trabajador) userIds.add(job.id_trabajador);
   }
 
+  // Escritorio admin: is_admin() puede leer perfiles completos. Aquí solo el nombre.
   const { data: profiles, error: profilesError } = await supabase
     .from('perfiles')
     .select('id, nombre')

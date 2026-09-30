@@ -14,14 +14,13 @@ export type OneclickNeedsCard = {
   needsCard: true;
 };
 
-/** Invitado va a Webpay. Con sesión se cobra la tarjeta. Sin tarjeta, se inscribe en la app. */
+/** Invitado y sesión sin tarjeta van a Webpay Plus. Con tarjeta inscrita se cobra Oneclick. */
 export function checkoutLane(input: {
   signedIn: boolean;
   cardEnrolled: boolean;
-}): 'webpay' | 'charge' | 'enroll-in-app' {
-  if (!input.signedIn) return 'webpay';
-  if (input.cardEnrolled) return 'charge';
-  return 'enroll-in-app';
+}): 'webpay' | 'charge' {
+  if (input.signedIn && input.cardEnrolled) return 'charge';
+  return 'webpay';
 }
 
 export type OneclickChargeResult = OneclickCharged | OneclickNeedsCard;
@@ -90,7 +89,7 @@ async function errorMessage(error: { message?: string; context?: Response }): Pr
   return error.message || 'No se pudo cobrar la tarjeta';
 }
 
-/** Cobra la tarjeta inscrita. Si no hay tarjeta, needsCard: hay que inscribirla en la app. */
+/** Cobra la tarjeta inscrita. Si no hay tarjeta, needsCard y la web abre Webpay Plus. */
 export async function chargeSavedCard(
   supabase: AppSupabase,
   input: { jobId: string; amountClp: number },

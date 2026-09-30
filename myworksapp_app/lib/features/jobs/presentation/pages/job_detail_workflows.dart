@@ -613,6 +613,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
               isParticipant: isOwner,
               canOpenDispute: _canOpenDispute(_job!),
               onOpenDispute: _openDispute,
+              onAddComment: _addDisputeComment,
             ),
             JobDetailActionsSection(
               jobId: widget.jobId,

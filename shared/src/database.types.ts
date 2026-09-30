@@ -625,6 +625,7 @@ export type Database = {
           metodo_pago: string | null
           moneda: string
           monto: number
+          origen_retorno: string | null
           reembolsado_en: string | null
           tipo_pago: string
         }
@@ -1228,6 +1229,19 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      abrir_disputa: {
+        Args: {
+          p_id: string
+          p_id_trabajo: string
+          p_motivo: string
+          p_descripcion?: string
+        }
+        Returns: undefined
+      }
+      comentar_disputa: {
+        Args: { p_id: string; p_comentario: string }
+        Returns: undefined
       }
       es_parte_trabajo: { Args: { p_trabajo_id: string }; Returns: boolean }
       es_rol_trabajador: { Args: { p_usuario_id: string }; Returns: boolean }

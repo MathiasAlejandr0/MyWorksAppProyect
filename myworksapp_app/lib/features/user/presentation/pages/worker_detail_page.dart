@@ -72,7 +72,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
       await _workerRepository.enforceUnavailableWhileBusy(widget.workerId);
       final acceptingJobs =
           await _workerRepository.isWorkerAcceptingJobs(widget.workerId);
-      final user = await _userRepository.getUserById(widget.workerId);
+      final user = await _userRepository.getPublicProfile(widget.workerId);
       final portfolio =
           await _portfolioRepository.getPortfolioByWorkerId(widget.workerId);
       final reviews =

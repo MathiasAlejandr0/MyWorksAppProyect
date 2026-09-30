@@ -25,6 +25,29 @@ class UserRepository {
     return UserModel.fromMap(row);
   }
 
+  /// Nombre, rol y foto. Para catálogo, reseñas y fichas que no son la propia
+  /// ni la de la contraparte de un trabajo.
+  Future<Map<String, UserModel>> getPublicProfilesByIds(List<String> ids) async {
+    final unique = ids.where((id) => id.isNotEmpty).toSet().toList();
+    if (unique.isEmpty) return {};
+    final rows = await supabase.rpc(
+      'perfiles_publicos_por_ids',
+      params: {'p_ids': unique},
+    );
+    final out = <String, UserModel>{};
+    for (final row in rows as List) {
+      final map = Map<String, dynamic>.from(row as Map);
+      final model = UserModel.publicCard(map);
+      out[model.id] = model;
+    }
+    return out;
+  }
+
+  Future<UserModel?> getPublicProfile(String id) async {
+    final found = await getPublicProfilesByIds([id]);
+    return found[id];
+  }
+
   Future<UserModel?> getUserByEmail(String email) async {
     final row = await supabase
         .from(_table)

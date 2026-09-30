@@ -157,11 +157,11 @@ Hecho en esta rama, en este orden:
 10. Playwright del catálogo con Supabase simulado. Los clientes no llaman `liberar_escrow_manual` ni los otros RPC de `service_role`.
 11. `20261005000002_security_lockdown_rpc.sql` deja en el repo el cierre ya aplicado: `liberar_escrow_manual` solo para `service_role`, admin o conexión sin JWT. `20261006000002` saca la clave `pin` de los listados abiertos.
 12. Política de contraseña en registro y cambio de clave (app, web y aceptación de invitación en escritorio): 8 caracteres, una letra y un número, mensajes en español. `config.toml` repite el mínimo; hay que guardarlo también en Authentication → Password del proyecto.
-13. El repo queda alineado con lo ya aplicado en vivo (guard de `liberar_escrow_manual` con `auth.role()`, índices de FK en base 1, RPC de trabajador en uuid, rol por service role, índices `_fkey` repetidos, seed). `20261008000001_cerrar_brechas_rls.sql` es la única migración nueva por aplicar: pagos sin escritura de cliente, estado del trabajo solo por RPC, correo fuera del listado público.
+13. El repo queda alineado con lo ya aplicado en vivo, incluido `20261008000001` (contraparte en `perfiles_select`, vista sin escritura anónima, políticas de trabajadores, impulsos y errores). Falta aplicar `20261008000002` (RPC `perfiles_publicos_por_ids`), `20261008000003` (`pagos.origen_retorno`) y `20261008000004` (disputas de las partes).
 
 Sigue fuera de este código, porque depende del dueño:
 
-- Aplicar `20261008000001_cerrar_brechas_rls.sql` y correr `docs/PRUEBAS_RLS_20261008.sql`. El resto de migraciones de esta rama y el seed ya están en la base. Volver a desplegar `invitar-colaborador`. Antes de un `db push`, `supabase migration repair` como dice `DEMO.md`.
+- Aplicar `20261008000002`, `20261008000003` y `20261008000004`, volver a correr el seed y `docs/PRUEBAS_RLS_20261008.sql`. Redesplegar `webpay-handoff`, `oneclick-handoff`, `webpay-commit`, `webpay-create`, `guest-checkout` y `definir-clave-invitado`. `invitar-colaborador` sigue pendiente si no se desplegó. Antes de un `db push`, `supabase migration repair` como dice `DEMO.md`.
 - SMTP de Supabase Auth, o `RESEND_API_KEY`, `RESEND_FROM` e `INVITE_PROVIDER=resend`, para que el correo de RRHH salga. `INVITE_REDIRECT_URL=http://127.0.0.1:3001`.
 - Guardar en el proyecto la política de contraseña (mínimo 8, letras y dígitos). El `config.toml` solo la deja escrita para el CLI.
 - Comercio Transbank de producción y secretos `TBK_*` cuando exista la empresa.

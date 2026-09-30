@@ -125,7 +125,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
 
   Future<void> _loadSelectedWorker(String workerId) async {
     final worker = await _workerRepository.getWorkerByUserId(workerId);
-    final user = await _userRepository.getUserById(workerId);
+    final user = await _userRepository.getPublicProfile(workerId);
     if (mounted) {
       setState(() {
         _selectedWorker = worker;

@@ -6,7 +6,11 @@ import {
   rateLimitExceededMessage,
 } from "../_shared/rate_limit.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
-import { resolveReturnUrl, signHandoffTicket } from "../_shared/security.ts";
+import {
+  resolveCallerReturnOrigin,
+  resolveReturnUrl,
+  signHandoffTicket,
+} from "../_shared/security.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 import { tbkConfig, tbkCreateTransaction } from "../_shared/tbk.ts";
 
@@ -83,6 +87,7 @@ Deno.serve(async (req) => {
         url_tbk: url,
         ambiente: env,
         id_transaccion: buyOrder,
+        origen_retorno: resolveCallerReturnOrigin(req),
         actualizado_en: new Date().toISOString(),
       })
       .eq("id", paymentId);

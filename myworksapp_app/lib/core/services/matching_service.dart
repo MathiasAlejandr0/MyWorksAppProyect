@@ -197,7 +197,7 @@ class MatchingService {
   }) async {
     try {
       // 1. Obtener datos del usuario trabajador
-      final user = await _userRepository.getUserById(worker.userId);
+      final user = await _userRepository.getPublicProfile(worker.userId);
       if (user == null) return null;
 
       final jobLat = job.latitude ?? userLatitude;

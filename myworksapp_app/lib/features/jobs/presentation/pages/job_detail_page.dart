@@ -172,6 +172,24 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   bool _canOpenDispute(JobModel job) =>
       JobDetailHelpers.canOpenDispute(job, _dispute);
 
+  Future<void> _addDisputeComment(String comment) async {
+    final dispute = _dispute;
+    if (dispute == null) return;
+    try {
+      await DisputeService.instance.addComment(
+        disputeId: dispute.id,
+        comment: comment,
+      );
+      await _loadDispute(dispute.jobId);
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is AppError ? e.message : 'No se pudo agregar el comentario';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
   Future<void> _openDispute(String reason, String? description) async {
     final user = ref.read(authProvider).user;
     final job = _job;
@@ -231,7 +249,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     _rejectionDialogShown = true;
     final rejectedWorkerId = job.serviceMetadata?['rejected_by_worker_id'] as String?;
     final rejectedUser = rejectedWorkerId != null
-        ? await _userRepository.getUserById(rejectedWorkerId)
+        ? await _userRepository.getPublicProfile(rejectedWorkerId)
         : null;
     final alternatives =
         await WorkerJobRejectionService.instance.alternativesForJob(job);
@@ -251,7 +269,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       if (mounted) setState(() => _invitedWorkerName = null);
       return;
     }
-    final user = await _userRepository.getUserById(invitedId);
+    final user = await _userRepository.getPublicProfile(invitedId);
     if (mounted) setState(() => _invitedWorkerName = user?.name);
   }
 

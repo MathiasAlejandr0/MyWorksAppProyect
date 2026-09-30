@@ -7,7 +7,13 @@ export type CheckoutReturn =
       amount: number;
       last4: string | null;
     }
-  | { kind: 'verify'; jobId: string | null; paymentId: string | null }
+  | {
+      kind: 'verify';
+      jobId: string | null;
+      paymentId: string | null;
+      guest: boolean;
+      passwordToken: string | null;
+    }
   | { kind: 'failed'; message: string }
   | { kind: 'none' };
 
@@ -34,6 +40,8 @@ export function parseCheckoutReturn(search: string): CheckoutReturn {
       kind: 'verify',
       jobId,
       paymentId: params.get('paymentId'),
+      guest: params.get('invitado') === '1',
+      passwordToken: params.get('alta'),
     };
   }
   if (pago === 'fail') {

@@ -179,8 +179,27 @@ BEGIN
   SET disponible = 0
   FROM public.perfiles p
   WHERE p.id = t.id_usuario
-    AND p.nombre IN ('Luis Cañería', 'Pedro Gasfiter')
     AND COALESCE(p.correo, '') NOT ILIKE '%@demo.myworksapp.cl';
+
+  IF EXISTS (
+    SELECT 1
+    FROM (
+      VALUES ('plomeria'), ('electricidad'), ('pintura'), ('construccion'), ('limpieza')
+    ) AS c(categoria)
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM public.trabajadores t
+      JOIN public.perfiles p ON p.id = t.id_usuario
+      WHERE t.categoria_servicio = c.categoria
+        AND COALESCE(t.disponible, 0) = 1
+        AND t.estado_verificacion = 'verificado'
+        AND p.correo ILIKE '%@demo.myworksapp.cl'
+        AND t.latitud_base IS NOT NULL
+        AND t.longitud_base IS NOT NULL
+    )
+  ) THEN
+    RAISE EXCEPTION 'Falta un profesional demo verificado y disponible en Santiago para alguna categoría.';
+  END IF;
 
   INSERT INTO public.servicios (
     id, nombre, descripcion, categoria, activo,

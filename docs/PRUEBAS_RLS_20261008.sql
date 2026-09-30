@@ -147,4 +147,38 @@ BEGIN
   END IF;
 END $$;
 
+-- 7) Después de 20261008000002, 000003 y 000004.
+DO $$
+BEGIN
+  IF to_regprocedure('public.perfiles_publicos_por_ids(uuid[])') IS NULL THEN
+    RAISE EXCEPTION 'falta perfiles_publicos_por_ids';
+  END IF;
+  IF has_function_privilege('anon', 'public.perfiles_publicos_por_ids(uuid[])', 'EXECUTE') THEN
+    RAISE EXCEPTION 'anon puede ejecutar perfiles_publicos_por_ids';
+  END IF;
+  IF NOT has_function_privilege('anon', 'public.listar_cuentas_demo_acceso()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'el login de la demo necesita listar_cuentas_demo_acceso en anon';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'pagos' AND column_name = 'origen_retorno'
+  ) THEN
+    RAISE EXCEPTION 'falta pagos.origen_retorno';
+  END IF;
+  IF to_regprocedure('public.abrir_disputa(text,text,text,text)') IS NULL
+     OR to_regprocedure('public.comentar_disputa(text,text)') IS NULL THEN
+    RAISE EXCEPTION 'faltan las RPC de disputa para las partes';
+  END IF;
+  IF to_regclass('public.perfiles_publicos') IS NOT NULL THEN
+    RAISE EXCEPTION 'perfiles_publicos sigue siendo una vista security definer';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policy p
+    JOIN pg_class c ON c.oid = p.polrelid
+    WHERE c.relname = 'trabajadores' AND p.polname = 'trabajadores_select_contraparte'
+  ) THEN
+    RAISE EXCEPTION 'falta trabajadores_select_contraparte';
+  END IF;
+END $$;
+
 SELECT 'RLS 20261008 ok' AS resultado;

@@ -95,10 +95,13 @@ CREATE POLICY trabajos_insert ON public.trabajos
   );
 
 -- -----------------------------------------------------------------------------
--- 3) perfiles: fila completa solo propia o de admin.
---    Nombre y foto van por la vista. El correo de la contraparte, por RPC,
---    y solo si comparten un trabajo que no está cerrado.
+-- 3) perfiles: fila completa propia, de admin o de la contraparte de un
+--    trabajo (Flutter getUserById en chat, detalle y conformidad).
+--    Nombre y foto del resto van por la vista, solo para autenticados.
+--    El correo de contacto fuera de esa fila, por RPC, y solo con trabajo activo.
 --    El selector de la demo solo ve correos @demo.myworksapp.cl.
+--    anon conserva listar_cuentas_demo_acceso: el login de la app llama
+--    esa RPC antes de tener sesión.
 -- -----------------------------------------------------------------------------
 DROP POLICY IF EXISTS perfiles_select ON public.perfiles;
 CREATE POLICY perfiles_select ON public.perfiles
@@ -106,6 +109,12 @@ CREATE POLICY perfiles_select ON public.perfiles
   USING (
     id = (SELECT auth.uid())
     OR public.is_admin()
+    OR EXISTS (
+      SELECT 1
+      FROM public.trabajos t
+      WHERE (t.id_usuario = (SELECT auth.uid()) AND t.id_trabajador = perfiles.id)
+         OR (t.id_trabajador = (SELECT auth.uid()) AND t.id_usuario = perfiles.id)
+    )
   );
 
 DROP VIEW IF EXISTS public.perfiles_publicos;
@@ -114,7 +123,10 @@ WITH (security_invoker = false) AS
 SELECT id, nombre, rol, ruta_foto_perfil
 FROM public.perfiles;
 
-GRANT SELECT ON public.perfiles_publicos TO anon, authenticated;
+-- La vista con security_invoker = false es actualizable y heredaba
+-- UPDATE/DELETE de PUBLIC. Solo lectura, y solo con sesión.
+REVOKE ALL ON public.perfiles_publicos FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.perfiles_publicos TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.perfil_contacto_si_trabajo_activo(p_perfil_id uuid)
 RETURNS TABLE (id uuid, nombre text, correo text)
@@ -218,6 +230,31 @@ CREATE POLICY propuestas_all ON public.propuestas_cotizacion
         AND j.id_usuario = (SELECT auth.uid())
     )
   );
+
+-- El cliente ve la ficha del profesional de su trabajo aunque ya no esté
+-- disponible en el catálogo. El catálogo público sigue en las otras políticas.
+DROP POLICY IF EXISTS trabajadores_select_contraparte ON public.trabajadores;
+CREATE POLICY trabajadores_select_contraparte ON public.trabajadores
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.trabajos t
+      WHERE t.id_trabajador = trabajadores.id_usuario
+        AND t.id_usuario = (SELECT auth.uid())
+    )
+  );
+
+DROP POLICY IF EXISTS impulsos_select ON public.impulsos;
+CREATE POLICY impulsos_select ON public.impulsos
+  FOR SELECT TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS registros_error_app_update_admin ON public.registros_error_app;
+CREATE POLICY registros_error_app_update_admin ON public.registros_error_app
+  FOR UPDATE TO authenticated
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
 
 -- Nombres ingleses. Las españolas ya cubren el permiso que hacía falta.
 DO $$

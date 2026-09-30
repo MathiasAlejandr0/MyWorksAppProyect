@@ -5,6 +5,10 @@ import {
   type OneclickChargeResult,
 } from '@myworksapp/shared';
 
+export type CheckoutPayResult =
+  | OneclickChargeResult
+  | { charged: false; redirected: true };
+
 interface PaymentCheckoutModalProps {
   workerName: string;
   profession: string;
@@ -12,8 +16,8 @@ interface PaymentCheckoutModalProps {
   serviceDescription?: string;
   jobId?: string | null;
   onClose: () => void;
-  /** Cobra la tarjeta guardada. Si no hay tarjeta, el pedido no abre Webpay. */
-  onPayWithWebpay: () => Promise<OneclickChargeResult>;
+  /** Cobra la tarjeta guardada. Si no hay, redirige a Webpay Plus. */
+  onPayWithWebpay: () => Promise<CheckoutPayResult>;
   onSuccess: (details: { notice: string }) => void;
 }
 
@@ -37,6 +41,7 @@ export function PaymentCheckoutModal({
     setError(null);
     try {
       const result = await onPayWithWebpay();
+      if ('redirected' in result && result.redirected) return;
       if (result.charged) {
         setIsDone(true);
         onSuccess({
@@ -48,9 +53,7 @@ export function PaymentCheckoutModal({
         });
         return;
       }
-      setError(
-        'Con tu cuenta el cobro sale de la tarjeta inscrita en la app. Entra a la app e inscribe la tarjeta la primera vez. Sin cuenta, este pedido se paga en Webpay.',
-      );
+      setError('No se pudo abrir Webpay. Intenta de nuevo.');
       setIsProcessing(false);
     } catch (e) {
       setError(
@@ -95,11 +98,11 @@ export function PaymentCheckoutModal({
               <div className="checkout-v2-escrow-copy">
                 <ShieldCheck size={22} color="var(--orange-accent)" />
                 <div>
-                  <strong>Se cobra la tarjeta de tu cuenta</strong>
+                  <strong>El pago queda retenido</strong>
                   <p>
-                    Como iniciaste sesión, no vas a Webpay. Se descuenta la
-                    tarjeta que inscribiste la primera vez que entraste a la
-                    app, y vuelves al mapa con el pedido confirmado.
+                    Si ya inscribiste una tarjeta en la app, se cobra esa. Si
+                    no, Transbank pide la tarjeta en Webpay Plus. El monto queda
+                    retenido hasta que recibas el trabajo.
                   </p>
                 </div>
               </div>

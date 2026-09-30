@@ -13,7 +13,7 @@ class WebpayTransactionResponse {
   final String buyOrder;
   final String? paymentId;
 
-  /// Handoff GET para web, donde el comercio exige POST de `token_ws`.
+  /// Handoff GET. Transbank recibe token_ws en la query.
   final String? redirectUrl;
 
   factory WebpayTransactionResponse.fromMap(Map<String, dynamic> map) {

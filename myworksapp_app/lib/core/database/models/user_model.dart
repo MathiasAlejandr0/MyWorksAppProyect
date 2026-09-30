@@ -34,6 +34,18 @@ class UserModel {
     };
   }
 
+  /// Nombre y foto públicos. No trae correo ni fecha real.
+  factory UserModel.publicCard(Map<String, dynamic> map) {
+    return UserModel(
+      id: map['id'] as String,
+      name: (map['nombre'] as String?) ?? '',
+      email: '',
+      role: (map['rol'] as String?) ?? 'usuario',
+      profilePhotoPath: map['ruta_foto_perfil'] as String?,
+      createdAt: DateTime.utc(2020),
+    );
+  }
+
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       id: map['id'] as String,

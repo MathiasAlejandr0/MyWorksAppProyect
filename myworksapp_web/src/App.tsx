@@ -16,6 +16,7 @@ import {
   chargeSavedCard,
   createGuestWebpayCheckout,
   createPendingJob,
+  createWebpaySession,
   fetchActiveServices,
   orderConfirmedMessage,
   openJobForWorker,
@@ -314,6 +315,7 @@ export function App() {
   const [loadingMoreWorkers, setLoadingMoreWorkers] = useState(false);
   const [paidVerifying, setPaidVerifying] = useState(false);
   const [paidVerifyError, setPaidVerifyError] = useState<string | null>(null);
+  const [guestPasswordToken, setGuestPasswordToken] = useState<string | null>(null);
   const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
   const [jobSnapshot, setJobSnapshot] = useState<JobTrackingSnapshot | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -499,6 +501,9 @@ export function App() {
       const jobIdParam = returned.jobId;
       const paymentId = returned.paymentId;
       if (jobIdParam) setCheckoutJobId(jobIdParam);
+      if (returned.guest && returned.passwordToken) {
+        setGuestPasswordToken(returned.passwordToken);
+      }
 
       setView('paid');
       setBookingError(null);
@@ -701,8 +706,15 @@ export function App() {
     });
     if (charged.charged) {
       await openJobForWorker(supabase, checkoutJobId);
+      return charged;
     }
-    return charged;
+    const session = await createWebpaySession(supabase, {
+      jobId: checkoutJobId,
+      amountClp: selectedWorker.pricePerVisit,
+      presentMode: 'redirect',
+    });
+    window.location.assign(session.redirectUrl);
+    return { charged: false, redirected: true } as const;
   };
 
   const submitGuestCheckout = async (data: {
@@ -753,6 +765,7 @@ export function App() {
           jobId={checkoutJobId}
           verifying={paidVerifying}
           verifyError={paidVerifyError}
+          passwordToken={guestPasswordToken}
           onContinueTracking={() => setView('tracking')}
           onGoHome={() => setView('landing')}
         />
@@ -819,6 +832,36 @@ export function App() {
           confirmBusy={confirmBusy}
 
           confirmError={confirmError}
+
+          onOpenDispute={profile ? async (reason, detail) => {
+            if (!checkoutJobId) throw new Error('Falta el trabajo.');
+            const { error } = await supabase.rpc('abrir_disputa', {
+              p_id: crypto.randomUUID(),
+              p_id_trabajo: checkoutJobId,
+              p_motivo: reason,
+              p_descripcion: detail,
+            });
+            if (error) throw new Error(error.message);
+          } : undefined}
+
+          onAddDisputeComment={profile ? async (comment) => {
+            if (!checkoutJobId) throw new Error('Falta el trabajo.');
+            const { data, error } = await supabase
+              .from('disputas')
+              .select('id')
+              .eq('id_trabajo', checkoutJobId)
+              .in('estado', ['abierta', 'en_revision'])
+              .order('creado_en', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (error) throw new Error(error.message);
+            if (!data?.id) throw new Error('No hay una disputa abierta en este trabajo.');
+            const { error: commentError } = await supabase.rpc('comentar_disputa', {
+              p_id: data.id,
+              p_comentario: comment,
+            });
+            if (commentError) throw new Error(commentError.message);
+          } : undefined}
 
         />
 

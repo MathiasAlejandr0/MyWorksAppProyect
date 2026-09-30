@@ -48,6 +48,10 @@ verify_jwt = false
 [functions.invitar-colaborador]
 verify_jwt = true
 
+# El invitado aún no tiene sesión. El token firmado reemplaza al correo.
+[functions.definir-clave-invitado]
+verify_jwt = false
+
 # Local hasta que se publique en el proyecto (Authentication → Password).
 [auth]
 minimum_password_length = 8

@@ -310,7 +310,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     // Cargar información de usuarios
     final users = <String, UserModel>{};
     for (var worker in workers) {
-      final user = await _userRepository.getUserById(worker.userId);
+      final user = await _userRepository.getPublicProfile(worker.userId);
       if (user != null) {
         users[worker.userId] = user;
       }

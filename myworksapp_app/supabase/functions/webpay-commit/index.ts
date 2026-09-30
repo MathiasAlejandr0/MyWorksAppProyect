@@ -1,39 +1,106 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { openJobAfterHold } from "../_shared/open_job_after_hold.ts";
+import {
+  fallbackWebReturnOrigin,
+  signGuestPasswordTicket,
+} from "../_shared/security.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { tbkCommit } from "../_shared/tbk.ts";
-import { webPostMessageOrigins } from "../_shared/security.ts";
+import { readCommitTokens, webReturnLocation } from "../_shared/webpay_return.ts";
+
+function browserRedirect(location: string): Response {
+  return new Response(null, {
+    status: 303,
+    headers: {
+      Location: location,
+      "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer",
+    },
+  });
+}
+
+function returnOrigin(stored: string | null | undefined): string {
+  const value = (stored || "").trim();
+  if (value) return value;
+  return fallbackWebReturnOrigin();
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeadersFor(req) });
   }
 
-  try {
-    let token = "";
-    const reqUrl = new URL(req.url);
-    token = reqUrl.searchParams.get("token_ws") || "";
+  const wantsJson = (req.headers.get("content-type") || "").includes(
+    "application/json",
+  );
 
+  try {
+    const reqUrl = new URL(req.url);
+    let bodyTokenWs = "";
+    let bodyTbkToken = "";
     if (req.method === "POST") {
       const ct = req.headers.get("content-type") || "";
       if (ct.includes("application/json")) {
         const body = await req.json();
-        token = String(body.token_ws || body.token || token);
+        bodyTokenWs = String(body.token_ws || body.token || "");
+        bodyTbkToken = String(body.TBK_TOKEN || "");
       } else {
         const form = await req.formData();
-        token = String(form.get("token_ws") || token);
+        bodyTokenWs = String(form.get("token_ws") || "");
+        bodyTbkToken = String(form.get("TBK_TOKEN") || "");
       }
     }
 
-    if (!token) {
-      return jsonResponse(req, { error: "token_ws ausente" }, 400);
-    }
+    const { tokenWs, tbkToken } = readCommitTokens({
+      queryTokenWs: reqUrl.searchParams.get("token_ws"),
+      queryTbkToken: reqUrl.searchParams.get("TBK_TOKEN"),
+      bodyTokenWs,
+      bodyTbkToken,
+    });
 
     const admin = serviceClient();
+
+    if (!tokenWs && tbkToken) {
+      const { data: abandoned } = await admin
+        .from("pagos")
+        .select("id, id_trabajo, origen_retorno")
+        .eq("token_tbk", tbkToken)
+        .maybeSingle();
+      if (wantsJson) {
+        return jsonResponse(req, {
+          approved: false,
+          ok: false,
+          paymentStatus: "REJECTED",
+          paymentId: abandoned?.id ?? null,
+          jobId: abandoned?.id_trabajo ?? null,
+        });
+      }
+      return browserRedirect(
+        webReturnLocation({
+          origin: returnOrigin(abandoned?.origen_retorno),
+          pago: "fail",
+          paymentId: abandoned?.id ? String(abandoned.id) : undefined,
+          jobId: abandoned?.id_trabajo ? String(abandoned.id_trabajo) : undefined,
+        }),
+      );
+    }
+
+    if (!tokenWs) {
+      if (wantsJson) {
+        return jsonResponse(req, { error: "token_ws ausente" }, 400);
+      }
+      return browserRedirect(
+        webReturnLocation({
+          origin: fallbackWebReturnOrigin(),
+          pago: "fail",
+        }),
+      );
+    }
+
     const { data: payment } = await admin
       .from("pagos")
-      .select("id, id_trabajo, monto, estado, metodo_pago")
-      .eq("token_tbk", token)
+      .select("id, id_trabajo, monto, estado, metodo_pago, origen_retorno")
+      .eq("token_tbk", tokenWs)
       .maybeSingle();
 
     if (!payment) {
@@ -43,15 +110,11 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "Este pago no es Webpay" }, 409);
     }
 
-    const wantsJson = (req.headers.get("content-type") || "").includes(
-      "application/json",
-    );
-
     const alreadyHeld = payment.estado === "retenido" ||
       payment.estado === "liberado";
     let commit: Record<string, unknown> = {};
     if (!alreadyHeld) {
-      commit = await tbkCommit(token);
+      commit = await tbkCommit(tokenWs);
     }
     const responseCode = Number(commit.response_code ?? (alreadyHeld ? 0 : -1));
     const status = String(commit.status || (alreadyHeld ? "AUTHORIZED" : ""));
@@ -66,14 +129,15 @@ Deno.serve(async (req) => {
           estado: approved ? "retenido" : "pendiente",
           autorizado_en: approved ? new Date().toISOString() : null,
           id_transaccion: String(
-            commit.authorization_code || buyOrder || token,
+            commit.authorization_code || buyOrder || tokenWs,
           ),
           actualizado_en: new Date().toISOString(),
         })
         .eq("id", payment.id);
     }
 
-    let passwordSetupUrl = "";
+    let guest = false;
+    let alta = "";
     if (approved && payment.estado !== "liberado") {
       await openJobAfterHold(admin, payment.id_trabajo);
 
@@ -86,15 +150,14 @@ Deno.serve(async (req) => {
       if (ownerId) {
         const { data: owner } = await admin.auth.admin.getUserById(ownerId);
         const meta = owner.user?.user_metadata ?? {};
-        const guest = meta.guest_checkout === true || meta.guest_checkout === "true";
-        const email = owner.user?.email ?? "";
-        if (guest && email) {
+        guest = meta.guest_checkout === true || meta.guest_checkout === "true";
+        if (guest) {
           await admin.auth.admin.updateUserById(ownerId, { email_confirm: true });
-          const link = await admin.auth.admin.generateLink({
-            type: "recovery",
-            email,
-          });
-          passwordSetupUrl = link.data?.properties?.action_link ?? "";
+          try {
+            alta = await signGuestPasswordTicket(ownerId);
+          } catch (e) {
+            console.error("alta invitado", e instanceof Error ? e.message : e);
+          }
         }
       }
     }
@@ -109,88 +172,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    const passwordHref = passwordSetupUrl
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;");
-
-    const webBase =
-      Deno.env.get("WEBPAY_WEB_RETURN_URL") || "http://localhost:5173/";
-    const webUrl = new URL(webBase);
-    webUrl.searchParams.set("pago", approved ? "ok" : "fail");
-    webUrl.searchParams.set("paymentId", payment.id);
-    webUrl.searchParams.set("jobId", payment.id_trabajo);
-    const webReturn = webUrl.toString();
-
-    const appReturn =
-      Deno.env.get("WEBPAY_APP_RETURN_URL") || "myworksapp://pago/retorno";
-
-    const payload = JSON.stringify({
-      type: "mwa-webpay",
-      ok: approved,
-      paymentId: payment.id,
-      jobId: payment.id_trabajo,
-    });
-
-    const origins = webPostMessageOrigins();
-    const originsJs = JSON.stringify(origins);
-
-    const html = `<!DOCTYPE html>
-<html lang="es"><head>
-<meta charset="utf-8"/>
-<title>Pago Webpay</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<style>
-  body{font-family:system-ui,sans-serif;background:#0b1220;color:#f8fafc;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;padding:24px;text-align:center}
-  a{color:#FF5E03}
-</style>
-</head><body>
-<h1>${approved ? "Pago autorizado y retenido" : "Pago no autorizado"}</h1>
-<p>Puedes volver a My Works App.</p>
-${passwordHref ? `<p><a href="${passwordHref}">Crea tu contraseña para entrar después</a></p>` : ""}
-<p><a id="web" href="${webReturn}">Volver a la web</a> · <a id="app" href="${appReturn}?ok=${approved ? "1" : "0"}&paymentId=${payment.id}&jobId=${payment.id_trabajo}">Abrir app</a></p>
-<script>
-(function(){
-  var msg = ${payload};
-  var origins = ${originsJs};
-  function post(target) {
-    if (!target) return;
-    if (!origins.length) {
-      try { target.postMessage(msg, "*"); } catch (e) {}
-      return;
-    }
-    for (var i = 0; i < origins.length; i++) {
-      try { target.postMessage(msg, origins[i]); } catch (e) {}
-    }
-  }
-  try {
-    if (window.opener && !window.opener.closed) {
-      post(window.opener);
-      setTimeout(function(){ window.close(); }, 400);
-      return;
-    }
-  } catch (e) {}
-  try {
-    if (window.parent && window.parent !== window) {
-      post(window.parent);
-      return;
-    }
-  } catch (e) {}
-  if (${passwordHref ? "false" : "true"}) {
-    setTimeout(function(){ location.replace(${JSON.stringify(webReturn)}); }, 1200);
-  }
-})();
-</script>
-</body></html>`;
-
-    return new Response(html, {
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        ...corsHeadersFor(req),
-        "Cache-Control": "no-store",
-      },
-    });
+    return browserRedirect(
+      webReturnLocation({
+        origin: returnOrigin(payment.origen_retorno),
+        pago: approved ? "ok" : "fail",
+        paymentId: String(payment.id),
+        jobId: String(payment.id_trabajo),
+        guest: guest && approved,
+        alta: guest && approved ? alta : undefined,
+      }),
+    );
   } catch (e) {
     return jsonResponse(
       req,

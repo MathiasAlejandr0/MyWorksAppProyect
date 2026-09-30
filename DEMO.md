@@ -16,10 +16,14 @@ En el SQL Editor del proyecto. Ya están aplicadas, con otros nombres de versió
 - `perfiles_rol_service_role` (`20261007000003`)
 - `quitar_indices_fk_duplicados` (`20261007000004`)
 - el seed `scripts/demo/seed_demo.sql`
+- `20261008000001_cerrar_brechas_rls.sql` (ya en vivo, con la política de contraparte, la vista sin escritura anónima y las políticas de trabajadores, impulsos y errores)
 
-Falta aplicar, y solo esta, antes de la demo de las brechas:
+Falta aplicar, en este orden, antes de la demo:
 
-1. `myworksapp_app/supabase/migrations/20261008000001_cerrar_brechas_rls.sql`
+1. `myworksapp_app/supabase/migrations/20261008000002_perfiles_publicos_rpc.sql`
+2. `myworksapp_app/supabase/migrations/20261008000003_origen_retorno_pago.sql`
+3. `myworksapp_app/supabase/migrations/20261008000004_disputas_partes.sql`
+4. Volver a correr `scripts/demo/seed_demo.sql` (deja no disponibles a Ana Volt, Marcelo Rivas, Pablo Maestro, Carolina Brillo y María Limpieza, y exige un demo verificado por categoría).
 
 Después corre `docs/PRUEBAS_RLS_20261008.sql` en el SQL Editor. Tiene que terminar en `RLS 20261008 ok`.
 
@@ -46,7 +50,7 @@ npx supabase migration repair --status applied 20261007000003 --project-ref wxqr
 npx supabase migration repair --status applied 20261007000004 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
-`20261008000001` se repara solo después de aplicarla. Si el dashboard muestra otra cadena de versión, usa esa en `migration repair` y no la de esta lista. No hagas push a `main`.
+`20261008000001` ya está aplicada: no la vuelvas a correr. Repara `20261008000002`, `20261008000003` y `20261008000004` solo después de aplicarlas. Si el dashboard muestra otra cadena de versión, usa esa en `migration repair` y no la de esta lista. No hagas push a `main`.
 
 ## 2. Edge Functions
 
@@ -78,9 +82,23 @@ npx supabase secrets set WEBPAY_ALLOWED_RETURN_ORIGINS=http://localhost:5173,htt
 
 Si `TBK_COMMERCE_CODE` y `TBK_API_KEY` no están definidos y `TBK_ENV=integration` (o la variable no está definida), la función usa el comercio público de integración de Transbank (`597055555532`). Oneclick Mall usa `597055555541` y la tienda `597055555542` (la tienda 2 oficial es `597055555543`). En `production`, si falta un secreto, la función falla. No pongas esas claves en la web, el escritorio ni Flutter.
 
-Tras corregir la llave de integración hay que volver a desplegar las funciones que empaquetan `functions/_shared/tbk.ts`: `webpay-create`, `webpay-commit`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-resolve-dispute`, `guest-checkout`, `oneclick-charge`, `oneclick-return`.
+`WEBPAY_WEB_RETURN_URL` no hace falta para la demo. `webpay-create` y `guest-checkout` guardan el Origin del navegador (`http://localhost:5173` o `http://127.0.0.1:5173` en integración, o lo que esté en `WEBPAY_ALLOWED_RETURN_ORIGINS` / `CORS_ALLOWED_ORIGINS`) y `webpay-commit` vuelve ahí.
 
-Funciones de pago que ya deben estar desplegadas (volver a desplegar solo si cambiaste su código): `webpay-create`, `webpay-commit`, `webpay-handoff`, `webpay-status`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-release`, `webpay-resolve-dispute`, `guest-checkout`, `oneclick-charge`, `oneclick-return`, `oneclick-handoff`.
+El handoff ya no manda un HTML con auto-POST: Transbank recibe el token por GET (303). Hay que volver a desplegar:
+
+`webpay-handoff`, `oneclick-handoff`, `webpay-commit`, `webpay-create`, `guest-checkout`, `definir-clave-invitado`.
+
+```bash
+cd myworksapp_app
+npx supabase functions deploy webpay-handoff --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy oneclick-handoff --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy webpay-commit --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy webpay-create --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy guest-checkout --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy definir-clave-invitado --project-ref wxqrfcqifkfgawrnqmnj
+```
+
+`definir-clave-invitado` no pide JWT. Firma el alta con `WEBPAY_HANDOFF_SECRET` y guarda la clave con la API de admin, sin SMTP.
 
 ## 3. Cuentas (contraseña `Demo2026!` en todas)
 
@@ -159,8 +177,8 @@ En debug, si omites los `dart-define`, la app usa el proyecto de demo y la clave
 
 1. Entra como Camila.
 2. **Buscar servicio** → **Plomería**. En el mapa está Pedro Rojas, pin en Providencia (no un punto inventado en Las Condes).
-3. Elige a Pedro → **Continuar con la reserva**. Con sesión, el cobro usa la tarjeta inscrita o Webpay. Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
-4. Paga con la Visa de prueba. Al volver, el trabajo queda pendiente y el pago `retenido`.
+3. Elige a Pedro → **Continuar con la reserva**. Con sesión y tarjeta inscrita en la app, se cobra Oneclick. Con sesión y sin tarjeta, el sitio abre Webpay Plus (la tarjeta se escribe en Transbank, el mismo escrow retenido). Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
+4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña** (mínimo 8, letra y número) sin correo.
 
 ### Profesional en la app — aceptar y GPS
 
@@ -199,4 +217,20 @@ Para no depender del GPS del salón, el seed ya trae `demo-job-en-camino`: Camil
 | `demo-job-cerrado` | completado, pago liberado, nota 5 | Métricas |
 | `demo-job-disputa` | en curso + disputa abierta | Escritorio |
 
-Volver a correr `scripts/demo/seed_demo.sql` repone esos pedidos y la contraseña `Demo2026!`. No borra otras filas.
+Volver a correr `scripts/demo/seed_demo.sql` repone esos pedidos y la contraseña `Demo2026!`. No borra otras filas. Deja `disponible = 0` en todo trabajador cuyo correo no termina en `@demo.myworksapp.cl`.
+
+## 8. Plan B
+
+Si algo del pago en vivo se traba, no improvises producción.
+
+| Qué falló | Qué hacer |
+|---|---|
+| La página de Transbank muestra HTML crudo | Falta redesplegar `webpay-handoff` y `oneclick-handoff`. El 303 tiene que ir a `webpay3gint.transbank.cl` con `token_ws` o `TBK_TOKEN` en la query. |
+| Al volver caes en otro puerto o en una página en blanco | El checkout tiene que abrirse en `http://localhost:5173` o `http://127.0.0.1:5173`. Esos orígenes se guardan en `pagos.origen_retorno` después de `20261008000003`. |
+| 401 de Transbank | `TBK_ENV=integration` y sin secretos de comercio: la llave pública oficial ya está en el código. Redesplega las funciones de pago si el 401 sigue. |
+| Camila no puede pagar sin tarjeta en la app | Con sesión, **Confirmar pedido** abre Webpay Plus. No hace falta inscribir la tarjeta antes. |
+| El invitado no ve «Crea tu contraseña» | La URL tiene que traer `invitado=1` y `alta`. Hace falta `WEBPAY_HANDOFF_SECRET` y la función `definir-clave-invitado`. Sin ese secreto, el pago igual queda retenido; la cuenta entra después solo si Auth tiene SMTP de recuperación. |
+| El catálogo muestra Ana Volt u otros nombres que no son `@demo` | Vuelve a correr el seed. Esos perfiles quedan no disponibles. |
+| La disputa no se abre | Aplica `20261008000004`. Cliente y profesional usan **Abrir disputa**; el comentario va por `comentar_disputa`. Resolver solo desde el escritorio admin. |
+| El mapa no tiene GPS del salón | Abre en la app el pedido `demo-job-en-camino` (Camila y Pedro, Irarrázaval). |
+| El segundo factor del escritorio no está a mano | Entra con el dispositivo que ya escaneó el QR. No desactives MFA en la demo. |

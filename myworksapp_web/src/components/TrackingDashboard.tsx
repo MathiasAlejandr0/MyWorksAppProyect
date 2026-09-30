@@ -38,6 +38,8 @@ interface TrackingDashboardProps {
   onConfirmReceipt?: () => void;
   confirmBusy?: boolean;
   confirmError?: string | null;
+  onOpenDispute?: (reason: string, detail: string) => Promise<void>;
+  onAddDisputeComment?: (comment: string) => Promise<void>;
 }
 
 export function TrackingDashboard({
@@ -67,8 +69,15 @@ export function TrackingDashboard({
   onConfirmReceipt,
   confirmBusy = false,
   confirmError = null,
+  onOpenDispute,
+  onAddDisputeComment,
 }: TrackingDashboardProps) {
   const [showPayment, setShowPayment] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('calidad');
+  const [disputeDetail, setDisputeDetail] = useState('');
+  const [disputeComment, setDisputeComment] = useState('');
+  const [disputeBusy, setDisputeBusy] = useState(false);
+  const [disputeNote, setDisputeNote] = useState<string | null>(null);
   const hasPoint = typeof latitude === 'number' && typeof longitude === 'number'
     && Number.isFinite(latitude) && Number.isFinite(longitude);
   const hasWorker = typeof workerLatitude === 'number' && typeof workerLongitude === 'number'
@@ -179,6 +188,79 @@ export function TrackingDashboard({
           <button type="button" className="btn-primary tracking-chat-btn" onClick={onOpenChat}>
             <MessageCircle size={18} /> Abrir chat
           </button>
+
+          {onOpenDispute ? (
+            <form
+              className="tracking-escrow-card"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setDisputeBusy(true);
+                setDisputeNote(null);
+                void onOpenDispute(disputeReason, disputeDetail)
+                  .then(() => setDisputeNote('Disputa abierta. El pago sigue retenido.'))
+                  .catch((error: unknown) => {
+                    setDisputeNote(error instanceof Error ? error.message : 'No se pudo abrir la disputa.');
+                  })
+                  .finally(() => setDisputeBusy(false));
+              }}
+            >
+              <div>
+                <strong>Abrir disputa</strong>
+                <p>Solo atención al cliente la resuelve. Tú puedes dejar el motivo y un comentario.</p>
+                <label>
+                  Motivo
+                  <select value={disputeReason} onChange={(event) => setDisputeReason(event.target.value)}>
+                    <option value="calidad">Calidad del trabajo</option>
+                    <option value="pago">Pago</option>
+                    <option value="conducta">Conducta</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </label>
+                <textarea
+                  value={disputeDetail}
+                  onChange={(event) => setDisputeDetail(event.target.value)}
+                  placeholder="Qué pasó"
+                  rows={3}
+                />
+                <button type="submit" className="btn-primary" disabled={disputeBusy}>
+                  {disputeBusy ? 'Enviando…' : 'Enviar disputa'}
+                </button>
+              </div>
+            </form>
+          ) : null}
+          {onAddDisputeComment ? (
+            <form
+              className="tracking-escrow-card"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setDisputeBusy(true);
+                setDisputeNote(null);
+                void onAddDisputeComment(disputeComment)
+                  .then(() => {
+                    setDisputeComment('');
+                    setDisputeNote('Comentario agregado a la disputa.');
+                  })
+                  .catch((error: unknown) => {
+                    setDisputeNote(error instanceof Error ? error.message : 'No se pudo agregar el comentario.');
+                  })
+                  .finally(() => setDisputeBusy(false));
+              }}
+            >
+              <div>
+                <strong>Comentario en la disputa</strong>
+                <textarea
+                  value={disputeComment}
+                  onChange={(event) => setDisputeComment(event.target.value)}
+                  placeholder="Agrega un detalle"
+                  rows={2}
+                />
+                <button type="submit" className="btn-primary" disabled={disputeBusy || !disputeComment.trim()}>
+                  Agregar comentario
+                </button>
+              </div>
+            </form>
+          ) : null}
+          {disputeNote ? <p className="tracking-status-detail" role="status">{disputeNote}</p> : null}
 
           <div className="tracking-escrow-card">
             <ShieldCheck size={22} className="tracking-escrow-icon" />

@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { passwordPolicyMessage } from '@myworksapp/shared';
+import { supabase } from '../supabaseClient';
 import { BrandLogo } from './BrandLogo';
 
 type PaidReturnViewProps = {
@@ -5,6 +8,7 @@ type PaidReturnViewProps = {
   jobId?: string | null;
   verifying?: boolean;
   verifyError?: string | null;
+  passwordToken?: string | null;
   onContinueTracking: () => void;
   onGoHome: () => void;
 };
@@ -15,9 +19,15 @@ export function PaidReturnView({
   jobId,
   verifying = false,
   verifyError = null,
+  passwordToken = null,
   onContinueTracking,
   onGoHome,
 }: PaidReturnViewProps) {
+  const [password, setPassword] = useState('');
+  const [passwordAgain, setPasswordAgain] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordReady, setPasswordReady] = useState(false);
   if (verifying) {
     return (
       <div className="min-h-screen app-shell paid-return">
@@ -56,6 +66,58 @@ export function PaidReturnView({
           {jobId ? ` Referencia ${jobId.slice(0, 8)}…` : ''} Te contactaremos
           para coordinar la visita.
         </p>
+        {passwordToken && !passwordReady ? (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              const policy = passwordPolicyMessage(password);
+              if (policy) {
+                setPasswordError(policy);
+                return;
+              }
+              if (password !== passwordAgain) {
+                setPasswordError('Las contraseñas no coinciden');
+                return;
+              }
+              setPasswordBusy(true);
+              setPasswordError(null);
+              void supabase.functions.invoke('definir-clave-invitado', {
+                body: { token: passwordToken, password },
+              }).then(({ data, error }) => {
+                const payload = data as { error?: string; ok?: boolean } | null;
+                if (error || payload?.error || !payload?.ok) {
+                  setPasswordError(payload?.error || error?.message || 'No se pudo guardar la contraseña');
+                  setPasswordBusy(false);
+                  return;
+                }
+                setPasswordReady(true);
+                setPasswordBusy(false);
+              });
+            }}
+          >
+            <h2>Crea tu contraseña</h2>
+            <p>Así entras después sin depender de un correo.</p>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Mínimo 8, con letra y número"
+            />
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={passwordAgain}
+              onChange={(event) => setPasswordAgain(event.target.value)}
+              placeholder="Repite la contraseña"
+            />
+            {passwordError ? <p role="alert">{passwordError}</p> : null}
+            <button type="submit" className="btn-primary" disabled={passwordBusy}>
+              {passwordBusy ? 'Guardando…' : 'Crea tu contraseña'}
+            </button>
+          </form>
+        ) : null}
+        {passwordReady ? <p role="status">Contraseña lista. Entra con tu correo en la próxima visita.</p> : null}
         <button
           type="button"
           className="btn-primary"

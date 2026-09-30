@@ -31,6 +31,7 @@ class JobDetailHelpers {
       return false;
     }
     return job.status == AppConstants.jobStatusAccepted ||
+        job.status == AppConstants.jobStatusEnRoute ||
         job.status == AppConstants.jobStatusInProgress ||
         job.status == PricingConstants.jobAwaitingClientApproval ||
         job.status == AppConstants.jobStatusCompleted;
