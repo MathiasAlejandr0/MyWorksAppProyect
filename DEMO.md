@@ -76,7 +76,9 @@ npx supabase secrets set WEBPAY_RETURN_URL=https://wxqrfcqifkfgawrnqmnj.supabase
 npx supabase secrets set WEBPAY_ALLOWED_RETURN_ORIGINS=http://localhost:5173,http://127.0.0.1:5173 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
-Si `TBK_COMMERCE_CODE` y `TBK_API_KEY` no están definidos y `TBK_ENV` no es `production`, la función usa el comercio público de integración de Transbank (`597055555532`). No pongas esas claves en la web, el escritorio ni Flutter.
+Si `TBK_COMMERCE_CODE` y `TBK_API_KEY` no están definidos y `TBK_ENV=integration` (o la variable no está definida), la función usa el comercio público de integración de Transbank (`597055555532`). Oneclick Mall usa `597055555541` y la tienda `597055555542` (la tienda 2 oficial es `597055555543`). En `production`, si falta un secreto, la función falla. No pongas esas claves en la web, el escritorio ni Flutter.
+
+Tras corregir la llave de integración hay que volver a desplegar las funciones que empaquetan `functions/_shared/tbk.ts`: `webpay-create`, `webpay-commit`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-resolve-dispute`, `guest-checkout`, `oneclick-charge`, `oneclick-return`.
 
 Funciones de pago que ya deben estar desplegadas (volver a desplegar solo si cambiaste su código): `webpay-create`, `webpay-commit`, `webpay-handoff`, `webpay-status`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-release`, `webpay-resolve-dispute`, `guest-checkout`, `oneclick-charge`, `oneclick-return`, `oneclick-handoff`.
 

@@ -34,29 +34,83 @@ async function tbkFetch(
 
 export type TbkEnv = "integration" | "production";
 
-export function tbkConfig() {
-  const env = (Deno.env.get("TBK_ENV") || "integration").toLowerCase() as TbkEnv;
+/**
+ * Credenciales públicas de integración (Transbank, “Cómo empezar”).
+ * La misma llave sirve para todos los códigos de comercio de integración.
+ * https://www.transbankdevelopers.cl/documentacion/como_empezar#codigos-de-comercio
+ */
+export const TBK_INTEGRATION_API_KEY =
+  "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C";
+export const TBK_WEBPAY_PLUS_COMMERCE = "597055555532";
+export const TBK_ONECLICK_MALL_COMMERCE = "597055555541";
+/** Tienda 1. Comercio hijo por defecto del cobro Oneclick. */
+export const TBK_ONECLICK_CHILD_COMMERCE = "597055555542";
+/** Tienda 2. Código oficial; el cobro de un solo local sigue usando la tienda 1. */
+export const TBK_ONECLICK_CHILD_COMMERCE_2 = "597055555543";
+
+const TBK_PUBLIC_KEY_PREFIX =
+  "579B532A7440BB0C9079DED94D31EA1615BACEB566103322646";
+
+export type TbkEnvMap = {
+  TBK_ENV?: string;
+  TBK_COMMERCE_CODE?: string;
+  TBK_API_KEY?: string;
+  TBK_ONECLICK_COMMERCE_CODE?: string;
+  TBK_ONECLICK_API_KEY?: string;
+  TBK_ONECLICK_CHILD_CODE?: string;
+};
+
+function envValue(value: string | undefined): string {
+  return (value ?? "").trim();
+}
+
+/** Sin variable, el demo queda en integración. Cualquier otro valor que no sea production falla. */
+export function resolveTbkEnv(raw: string | undefined): TbkEnv {
+  const env = envValue(raw).toLowerCase() || "integration";
+  if (env === "integration" || env === "production") return env;
+  throw new Error(
+    `TBK_ENV=${raw} no es válido. Usa integration o production. El fallback público solo aplica con TBK_ENV=integration.`,
+  );
+}
+
+function fallbackOrFail(
+  env: TbkEnv,
+  explicit: string,
+  integrationValue: string,
+  missingMessage: string,
+): string {
+  if (explicit) return explicit;
+  if (env === "integration") return integrationValue;
+  throw new Error(missingMessage);
+}
+
+function isPublicIntegrationKey(apiKey: string): boolean {
+  return apiKey.startsWith(TBK_PUBLIC_KEY_PREFIX);
+}
+
+export function resolveTbkConfig(envMap: TbkEnvMap) {
+  const env = resolveTbkEnv(envMap.TBK_ENV);
   const isProd = env === "production";
-  // Credenciales oficiales de integración Transbank (documentación pública).
-  const commerceCode =
-    Deno.env.get("TBK_COMMERCE_CODE") ||
-    (isProd ? "" : "597055555532");
-  const apiKey =
-    Deno.env.get("TBK_API_KEY") ||
-    (isProd
-      ? ""
-      : "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264625D42D0A1428");
+  const missing = "TBK_COMMERCE_CODE / TBK_API_KEY requeridos en production";
+  const commerceCode = fallbackOrFail(
+    env,
+    envValue(envMap.TBK_COMMERCE_CODE),
+    TBK_WEBPAY_PLUS_COMMERCE,
+    missing,
+  );
+  const apiKey = fallbackOrFail(
+    env,
+    envValue(envMap.TBK_API_KEY),
+    TBK_INTEGRATION_API_KEY,
+    missing,
+  );
   const host = isProd
     ? "https://webpay3g.transbank.cl"
     : "https://webpay3gint.transbank.cl";
 
-  if (!commerceCode || !apiKey) {
-    throw new Error("TBK_COMMERCE_CODE / TBK_API_KEY requeridos en production");
-  }
   if (
     isProd &&
-    (commerceCode === "597055555532" ||
-      apiKey.startsWith("579B532A7440BB0C9079DED94D31EA1615BACEB566103322646"))
+    (commerceCode === TBK_WEBPAY_PLUS_COMMERCE || isPublicIntegrationKey(apiKey))
   ) {
     throw new Error(
       "TBK_ENV=production no acepta las claves públicas de integración",
@@ -64,6 +118,21 @@ export function tbkConfig() {
   }
 
   return { env, commerceCode, apiKey, host };
+}
+
+function denoEnv(): TbkEnvMap {
+  return {
+    TBK_ENV: Deno.env.get("TBK_ENV"),
+    TBK_COMMERCE_CODE: Deno.env.get("TBK_COMMERCE_CODE"),
+    TBK_API_KEY: Deno.env.get("TBK_API_KEY"),
+    TBK_ONECLICK_COMMERCE_CODE: Deno.env.get("TBK_ONECLICK_COMMERCE_CODE"),
+    TBK_ONECLICK_API_KEY: Deno.env.get("TBK_ONECLICK_API_KEY"),
+    TBK_ONECLICK_CHILD_CODE: Deno.env.get("TBK_ONECLICK_CHILD_CODE"),
+  };
+}
+
+export function tbkConfig() {
+  return resolveTbkConfig(denoEnv());
 }
 
 export async function tbkCreateTransaction(input: {
@@ -155,37 +224,46 @@ export async function tbkRefund(
 }
 
 /** Oneclick Mall: cobro sin redirigir al portal, con tarjeta ya inscrita. */
-export function oneclickConfig() {
-  const { env, host } = tbkConfig();
+export function resolveOneclickConfig(envMap: TbkEnvMap) {
+  const { env, host } = resolveTbkConfig(envMap);
   const isProd = env === "production";
-  const commerceCode =
-    Deno.env.get("TBK_ONECLICK_COMMERCE_CODE") ||
-    (isProd ? "" : "597055555541");
-  const apiKey =
-    Deno.env.get("TBK_ONECLICK_API_KEY") ||
-    (isProd
-      ? ""
-      : "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A1438");
-  const childCommerceCode =
-    Deno.env.get("TBK_ONECLICK_CHILD_CODE") ||
-    (isProd ? "" : "597055555542");
+  const missing =
+    "TBK_ONECLICK_COMMERCE_CODE / TBK_ONECLICK_API_KEY / TBK_ONECLICK_CHILD_CODE requeridos en production";
+  const commerceCode = fallbackOrFail(
+    env,
+    envValue(envMap.TBK_ONECLICK_COMMERCE_CODE),
+    TBK_ONECLICK_MALL_COMMERCE,
+    missing,
+  );
+  const apiKey = fallbackOrFail(
+    env,
+    envValue(envMap.TBK_ONECLICK_API_KEY),
+    TBK_INTEGRATION_API_KEY,
+    missing,
+  );
+  const childCommerceCode = fallbackOrFail(
+    env,
+    envValue(envMap.TBK_ONECLICK_CHILD_CODE),
+    TBK_ONECLICK_CHILD_COMMERCE,
+    missing,
+  );
 
-  if (!commerceCode || !apiKey || !childCommerceCode) {
-    throw new Error(
-      "TBK_ONECLICK_COMMERCE_CODE / TBK_ONECLICK_API_KEY / TBK_ONECLICK_CHILD_CODE requeridos en production",
-    );
-  }
   if (
     isProd &&
-    (commerceCode === "597055555541" ||
-      childCommerceCode === "597055555542" ||
-      apiKey.startsWith("579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630"))
+    (commerceCode === TBK_ONECLICK_MALL_COMMERCE ||
+      childCommerceCode === TBK_ONECLICK_CHILD_COMMERCE ||
+      childCommerceCode === TBK_ONECLICK_CHILD_COMMERCE_2 ||
+      isPublicIntegrationKey(apiKey))
   ) {
     throw new Error(
       "TBK_ENV=production no acepta las claves públicas de integración Oneclick",
     );
   }
   return { env, host, commerceCode, apiKey, childCommerceCode };
+}
+
+export function oneclickConfig() {
+  return resolveOneclickConfig(denoEnv());
 }
 
 function oneclickHeaders() {
