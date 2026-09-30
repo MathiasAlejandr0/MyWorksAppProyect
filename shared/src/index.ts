@@ -36,6 +36,7 @@ export * from './repositories/workers';
 export * from './repositories/jobs';
 export * from './repositories/notifications';
 export * from './jobs/statusCopy';
+export * from './jobs/bookingSlot';
 export * from './chat/messages';
 export * from './verification';
 export * from './repositories/disputes';

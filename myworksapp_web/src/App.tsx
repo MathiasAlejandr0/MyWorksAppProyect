@@ -311,6 +311,7 @@ export function App() {
   const [showGuestCheckout, setShowGuestCheckout] = useState(false);
 
   const [checkoutJobId, setCheckoutJobId] = useState<string | null>(null);
+  const [scheduledAt, setScheduledAt] = useState<string | null>(null);
 
   const [showChat, setShowChat] = useState(false);
 
@@ -449,6 +450,18 @@ export function App() {
             pricePerVisit: Number(data.tarifa_visita ?? 0),
           };
         }
+      }
+      if (worker.category && snapshot.workerId) {
+        // Mismo conteo que la tarjeta del catálogo (trabajos completados reales).
+        const catalog = await supabase.rpc('listar_profesionales_catalogo', {
+          p_categoria: worker.category,
+          p_limit: 40,
+        });
+        const rows = Array.isArray(catalog.data)
+          ? (catalog.data as { id_usuario: string; trabajos_completados?: number | null }[])
+          : [];
+        const row = rows.find((r) => String(r.id_usuario) === String(snapshot.workerId));
+        if (row) worker = { ...worker, jobsDone: Number(row.trabajos_completados ?? 0) };
       }
       setSelectedWorker(worker);
       setServiceMatch((prev) => prev ?? {
@@ -615,7 +628,7 @@ export function App() {
     }
 
     if (returned.kind === 'verify') {
-      restorePending();
+      const pending = restorePending();
       const jobIdParam = returned.jobId;
       const paymentId = returned.paymentId;
       if (jobIdParam) setCheckoutJobId(jobIdParam);
@@ -639,7 +652,10 @@ export function App() {
               setPaidVerifyError(
                 'Aún no confirmamos el pago con Transbank. Si ya pagaste, espera un momento y recarga.',
               );
+              return;
             }
+            if (jobIdParam) sessionStorage.setItem('mwa-active-job', jobIdParam);
+            if (!returned.guest && pending.workerName) setView('tracking');
           })
           .catch(() => {
             setPaidVerifyError(
@@ -769,12 +785,14 @@ export function App() {
     setBookingError(null);
   };
 
-  const startCheckout = async () => {
+  const startCheckout = async (slotIso?: string) => {
     if (!selectedWorker) return;
     if (!selectedServiceId) {
       setBookingError('No hay un servicio activo en Supabase para esta categoría.');
       return;
     }
+    const when = slotIso ?? scheduledAt ?? undefined;
+    if (slotIso) setScheduledAt(slotIso);
     setBookingError(null);
 
     // Sin sesión: datos + Webpay. Con sesión: cobro a la tarjeta de la app.
@@ -790,6 +808,7 @@ export function App() {
         serviceId: selectedServiceId,
         description: serviceMatch?.problem ?? query,
         pricingMode: 'precio_fijo',
+        scheduledAt: when,
       });
       setCheckoutJobId(job.id);
       sessionStorage.setItem('mwa-active-job', job.id);
@@ -852,6 +871,7 @@ export function App() {
       serviceId: selectedServiceId,
       description: serviceMatch?.problem ?? query,
       amountClp: selectedWorker.pricePerVisit,
+      scheduledAt: scheduledAt ?? undefined,
       turnstileToken: data.turnstileToken,
     });
     if (session.nonce) {
@@ -891,7 +911,6 @@ export function App() {
           verifying={paidVerifying}
           verifyError={paidVerifyError}
           passwordToken={guestPasswordToken}
-          canOpenOrder={Boolean(profile && checkoutJobId)}
           onContinueTracking={() => {
             if (checkoutJobId && profile) {
               void openJobTracking(checkoutJobId);
@@ -953,7 +972,11 @@ export function App() {
 
           unreadCount={unreadCount}
 
-          onBack={() => setView('search')}
+          onBack={() => {
+            // Un pedido abierto desde Mis pedidos o tras recargar no trae resultados de búsqueda.
+            sessionStorage.removeItem('mwa-active-job');
+            setView(serviceMatch && serviceMatch.workers.length > 0 ? 'search' : 'landing');
+          }}
 
           onOpenChat={() => setShowChat(true)}
 
@@ -1101,7 +1124,7 @@ export function App() {
 
             pricePerHour={selectedWorker.pricePerVisit}
 
-            onContinue={() => void startCheckout()}
+            onContinue={(slotIso) => void startCheckout(slotIso)}
 
             onClose={() => setSelectedWorker(null)}
 

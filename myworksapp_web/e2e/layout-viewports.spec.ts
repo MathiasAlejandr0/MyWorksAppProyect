@@ -76,6 +76,7 @@ test('a 1280 la barra de reserva queda dentro de la ventana', async ({ page }) =
   await page.setViewportSize({ width: 1280, height: 800 });
   await mockCatalog(page);
   await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Ingresar' })).toHaveCount(1);
   await page.getByRole('button', { name: /buscar servicio/i }).click();
   await page.getByRole('button', { name: /plomería/i }).click();
   await page.locator('.pro-card', { hasText: 'Pedro Rojas' }).click();

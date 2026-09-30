@@ -95,7 +95,7 @@ export function AuditTrailViewer() {
               Auditoría de liquidaciones
             </h3>
             <p style={{ fontSize: '12px', color: '#98989D', marginTop: '4px' }}>
-              Registros reales de `liquidaciones` (liberaciones de escrow).
+              Registros reales de `liquidaciones` (liberaciones de garantía).
             </p>
           </div>
         </div>

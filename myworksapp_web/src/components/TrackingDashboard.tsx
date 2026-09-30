@@ -85,6 +85,15 @@ export function TrackingDashboard({
     && Number.isFinite(workerLatitude) && Number.isFinite(workerLongitude);
   const statusLabel = jobStatusLabel(jobStatus);
   const statusDetail = jobStatusDetail(jobStatus);
+  const closedJob = jobStatus === 'completado' || jobStatus === 'cancelado';
+  const arrivalHint = gpsError
+    ?? (etaMinutes != null
+      ? `A ${distanceKm?.toFixed(1) ?? '—'} km. Estimación a 28 km/h, sin tráfico en vivo.`
+      : hasWorker
+        ? 'El profesional publicó su ubicación. El pedido no tiene coordenadas para estimar la llegada.'
+        : closedJob
+          ? null
+          : 'La llegada aparece cuando el profesional publica su ubicación en camino o en curso.');
 
   return (
     <div className="tracking-dashboard">
@@ -140,17 +149,10 @@ export function TrackingDashboard({
             <div className="tracking-eta-main">
               <span className="tracking-eta-label">Llegada</span>
               <strong className="tracking-eta-value">
-                {etaMinutes != null ? `${etaMinutes} min` : hasWorker ? 'En vivo' : 'Sin GPS'}
+                {etaMinutes != null ? `${etaMinutes} min` : hasWorker ? 'En vivo' : closedJob ? '—' : 'Sin GPS'}
               </strong>
             </div>
-            <p className="tracking-eta-arrival">
-              {gpsError
-                ?? (etaMinutes != null
-                  ? `A ${distanceKm?.toFixed(1) ?? '—'} km. Estimación a 28 km/h, sin tráfico en vivo.`
-                  : hasWorker
-                    ? 'El profesional publicó su ubicación. El pedido no tiene coordenadas para estimar la llegada.'
-                    : 'La llegada aparece cuando el profesional publica su ubicación en camino o en curso.')}
-            </p>
+            {arrivalHint ? <p className="tracking-eta-arrival">{arrivalHint}</p> : null}
           </div>
 
           <div className="tracking-worker-block">

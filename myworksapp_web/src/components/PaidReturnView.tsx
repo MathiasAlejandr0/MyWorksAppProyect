@@ -9,7 +9,6 @@ type PaidReturnViewProps = {
   verifying?: boolean;
   verifyError?: string | null;
   passwordToken?: string | null;
-  canOpenOrder?: boolean;
   onContinueTracking: () => void;
   onGoHome: () => void;
 };
@@ -21,7 +20,6 @@ export function PaidReturnView({
   verifying = false,
   verifyError = null,
   passwordToken = null,
-  canOpenOrder = false,
   onContinueTracking,
   onGoHome,
 }: PaidReturnViewProps) {
@@ -50,12 +48,12 @@ export function PaidReturnView({
           <BrandLogo size={40} />
           <h1>No pudimos confirmar el pago</h1>
           <p>{verifyError}</p>
-          {canOpenOrder ? (
+          {passwordToken ? (
             <button type="button" className="btn-primary" onClick={onContinueTracking}>
               Ver mi pedido
             </button>
           ) : null}
-          <button type="button" className={canOpenOrder ? 'btn-ghost' : 'btn-primary'} onClick={onGoHome}>
+          <button type="button" className={passwordToken ? 'btn-ghost' : 'btn-primary'} onClick={onGoHome}>
             Volver al inicio
           </button>
         </div>
@@ -69,7 +67,7 @@ export function PaidReturnView({
         <BrandLogo size={40} />
         <h1>Pago recibido</h1>
         <p>
-          Tu pago quedó retenido en escrow
+          Tu pago quedó retenido en garantía
           {workerName ? ` para ${workerName}` : ''}.
           {jobId ? ` Referencia ${jobId.slice(0, 8)}…` : ''} Te contactaremos
           para coordinar la visita.
@@ -147,14 +145,14 @@ export function PaidReturnView({
               : 'Te enviamos un correo para confirmar.'}
           </p>
         ) : null}
-        {canOpenOrder || workerName ? (
+        {passwordToken ? (
           <button type="button" className="btn-primary" onClick={onContinueTracking}>
             Ver mi pedido
           </button>
         ) : null}
         <button
           type="button"
-          className={canOpenOrder || workerName ? 'btn-ghost' : 'btn-primary'}
+          className={passwordToken ? 'btn-ghost' : 'btn-primary'}
           onClick={onGoHome}
         >
           Volver al inicio

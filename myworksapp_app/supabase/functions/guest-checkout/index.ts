@@ -25,6 +25,7 @@ type GuestBody = {
   serviceId?: string;
   description?: string;
   amountClp?: number;
+  scheduledAt?: string;
   returnUrl?: string;
   turnstileToken?: string;
 };
@@ -35,6 +36,14 @@ function clean(s: unknown, max = 200): string {
 
 function isEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+function scheduledOrNull(value: unknown): string | null {
+  const raw = clean(value, 40);
+  if (!raw) return null;
+  const parsed = Date.parse(raw);
+  if (!Number.isFinite(parsed)) return null;
+  return new Date(parsed).toISOString();
 }
 
 const GUEST_WINDOW_MS = 60_000;
@@ -241,6 +250,7 @@ Deno.serve(async (req) => {
       estado: "esperando_pago",
       descripcion: description,
       direccion: address,
+      fecha_programada: scheduledOrNull(body.scheduledAt),
       modalidad_cobro: "precio_fijo",
       estado_pago: "pendiente",
       metadatos_servicio: meta,

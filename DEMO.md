@@ -162,9 +162,9 @@ npx supabase functions deploy webpay-resolve-dispute --project-ref wxqrfcqifkfga
 
 Con `app_config.demo_modo = 1` (la demo y la integración) esa función marca el correo como confirmado. La pantalla dice «Contraseña lista. Entra con tu correo en la próxima visita.» Con `demo_modo = 0` el correo sigue sin confirmar, se dispara el correo de alta y la pantalla dice «Te enviamos un correo para confirmar.» En el login, si el correo no está confirmado, el aviso está en español y aparece **Reenviar correo de confirmación**.
 
-`webpay-commit` (v21), `definir-clave-invitado` (v5) y `guest-checkout` (v16) ya están en vivo. Esta ronda no cambia esas funciones: no hace falta redesplegarlas. Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita. Un error de la función (por ejemplo «Este profesional todavía no está verificado para cobrar») se muestra tal cual; la web ya no lo reemplaza por «Edge Function returned a non-2xx status code».
+`webpay-commit` (v21) y `definir-clave-invitado` (v5) ya están en vivo y esta ronda no los cambia. `guest-checkout` ahora guarda en `fecha_programada` la hora elegida en la barra: hay que volver a desplegarlo. Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita. Un error de la función (por ejemplo «Este profesional todavía no está verificado para cobrar») se muestra tal cual; la web ya no lo reemplaza por «Edge Function returned a non-2xx status code».
 
-Un pago con tarjeta de prueba y la liberación del escrow ya se probaron de punta a punta en vivo: Webpay autorizó, el cobro quedó `retenido` y la conformidad lo pasó a `liberado`. Ese camino no se anula.
+Un pago con tarjeta de prueba y la liberación de la garantía ya se probaron de punta a punta en vivo: Webpay autorizó, el cobro quedó `retenido` y la conformidad lo pasó a `liberado`. Ese camino no se anula.
 
 ## 3. Cuentas (contraseña `Demo2026!` en todas)
 
@@ -251,7 +251,7 @@ npm install
 npm run dev
 ```
 
-Escritorio, en Windows PowerShell. El panel en el navegador queda en el puerto **3001**. `npm run tauri:dev` abre la ventana nativa en el mismo origen.
+Escritorio, en Windows PowerShell. El panel en el navegador queda en `http://127.0.0.1:3001`. `npm run tauri:dev` abre la ventana nativa en el mismo origen.
 
 ```powershell
 cd myworksapp_desktop
@@ -281,7 +281,7 @@ En debug, si omites los `dart-define`, la app usa el proyecto de demo y la clave
 1. Entra como Camila.
 2. **Buscar servicio** → **Plomería**. En el mapa está Pedro Rojas, pin en Providencia. La tarjeta dice **4.8**, **5 trabajos** y **Desde $35.000 / visita**. Con sesión, el encabezado usa el nombre real (Camila Soto se ve como **Camila S.**). Los horarios de la barra son **10:00**, **14:00** y **18:00**.
 3. Elige a Pedro → **Continuar con la reserva**. La barra repite **$35.000 / visita**. El diálogo **Confirmar pedido** muestra el total **35.000 CLP**. Con sesión y tarjeta inscrita en la app, se cobra Oneclick. Con sesión y sin tarjeta, el sitio abre Webpay Plus. Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
-4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. Camila, que ya tenía sesión, ve **Ver mi pedido** y el seguimiento. Si recarga, la portada tiene **Mis pedidos** y vuelve a abrir ese trabajo desde la base. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña**. Con `demo_modo = 1` el correo queda confirmado y el texto es «Contraseña lista. Entra con tu correo en la próxima visita.» El invitado entra con el correo y la clave que acaba de crear.
+4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. La hora de la barra (10:00, 14:00 o 18:00 del próximo viernes) queda en `fecha_programada`. Camila, que ya tenía sesión, entra directo al seguimiento. **Ver mi pedido** solo aparece en el retorno del invitado. Si recarga, la portada tiene **Mis pedidos** y vuelve a abrir ese trabajo desde la base. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña** y **Ver mi pedido**. Con `demo_modo = 1` el correo queda confirmado y el texto es «Contraseña lista. Entra con tu correo en la próxima visita.» El invitado entra con el correo y la clave que acaba de crear.
 5. Si en Transbank se cancela, la vuelta es `http://localhost:5173/?pago=fail` y la portada muestra «Pago cancelado. No se realizó ningún cargo.» El pedido queda cancelado. Se elige de nuevo al profesional.
 
 En la app, una invitación por tarifa cobra el precio publicado en `niveles_precio` (por ejemplo «Arreglo menor» de Pedro, $28.000), el mismo que valida el servidor. Luis Contreras sigue `en_revision`: intentar pagarle responde «Este profesional todavía no está verificado para cobrar», no un aviso de tarifa faltante.
@@ -291,7 +291,7 @@ En la app, una invitación por tarifa cobra el precio publicado en `niveles_prec
 1. En el teléfono, entra como Pedro.
 2. Abre el pedido pendiente de Camila y acéptalo.
 3. **Voy en camino**. Acepta la ubicación solo en primer plano. El punto se publica como máximo cada 20 s o 40 m.
-4. En la web, Camila abre **Mis pedidos** y elige el trabajo en camino. El mapa sigue el pin en vivo del profesional. La llegada en minutos (estimación a 28 km/h) solo aparece si el pedido ya tiene coordenadas, como `demo-job-en-camino`. Un pedido nuevo de la web guarda la dirección en texto y muestra el pin, sin esa llegada.
+4. En la web, Camila abre **Mis pedidos** y elige el trabajo en camino. El mapa sigue el pin en vivo del profesional. La llegada en minutos (estimación a 28 km/h) solo aparece si el pedido ya tiene coordenadas, como `demo-job-en-camino`. Un pedido nuevo de la web guarda la dirección en texto y la hora en `fecha_programada`. No guarda latitud ni longitud: el formulario no trae un punto y no hay geocodificación. El mapa muestra el pin del profesional, sin esa llegada. En un trabajo completado o cancelado no aparece el aviso de GPS «en camino o en curso».
 5. En el teléfono, pasa el trabajo a **en curso**. El GPS sigue mientras la app está abierta.
 6. Escribe en el chat. Camila lo ve en la web (**Abrir chat**).
 

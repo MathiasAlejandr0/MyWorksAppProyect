@@ -9,6 +9,8 @@ export interface CreateJobInput {
   address?: string;
   latitude?: number;
   longitude?: number;
+  /** ISO del horario elegido en la barra (próximo viernes 10, 14 o 18). */
+  scheduledAt?: string;
   /** Alineado a PricingModes Flutter — default precio_fijo (visita). */
   pricingMode?: 'precio_fijo' | 'bloque_horas' | 'cotizacion_abierta' | 'legado';
 }
@@ -29,6 +31,7 @@ export async function createPendingJob(
     direccion: input.address ?? 'Solicitud desde web',
     latitud: input.latitude ?? null,
     longitud: input.longitude ?? null,
+    fecha_programada: input.scheduledAt ?? null,
     modalidad_cobro: modalidad,
     estado_pago: 'pendiente',
     creado_en: now,

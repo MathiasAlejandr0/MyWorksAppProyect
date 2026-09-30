@@ -10,6 +10,8 @@ export interface GuestCheckoutInput {
   serviceId: string;
   description?: string;
   amountClp: number;
+  /** ISO del horario elegido en la barra. */
+  scheduledAt?: string;
   /** Solo para el return_url de Transbank (commit Edge o allowlist). */
   returnUrl?: string;
   turnstileToken?: string;
@@ -44,6 +46,7 @@ export async function createGuestWebpayCheckout(
       serviceId: input.serviceId,
       description: input.description,
       amountClp: input.amountClp,
+      scheduledAt: input.scheduledAt,
       returnUrl: input.returnUrl,
       turnstileToken: input.turnstileToken,
     },

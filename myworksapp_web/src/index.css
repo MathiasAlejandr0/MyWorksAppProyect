@@ -165,7 +165,7 @@ h1, h2, h3, .brand-display {
 }
 .nav-link:hover, .nav-link-btn:hover { color: var(--orange-accent); opacity: 1; }
 .nav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.nav-login-mobile { display: none; }
+.nav-actions .nav-login-mobile { display: none; }
 .nav-hello { font-size: 13px; font-weight: 700; }
 
 /* —— Buttons —— */
@@ -2132,7 +2132,7 @@ h1, h2, h3, .brand-display {
   .hero-float-metric { font-size: 18px; }
   .hero-mini-map { height: 28px; }
   .nav-links-center { display: none; }
-  .nav-login-mobile { display: inline-flex; }
+  .nav-actions .nav-login-mobile { display: inline-flex; }
   .categories-grid, .categories-grid--8 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .search-view-nav { grid-template-columns: 1fr; gap: 10px; }
   .search-view-nav-right { justify-content: flex-start; }
@@ -2159,9 +2159,22 @@ h1, h2, h3, .brand-display {
   .tracking-premium-badge, .tracking-nav-center { display: none; }
   .tracking-nav-right { margin-left: auto; gap: 10px; }
   .tracking-nav-user > div:not(.search-nav-avatar), .tracking-nav-user > svg { display: none; }
-  .nav-login-mobile { display: inline-flex; }
+  .nav-actions .nav-login-mobile { display: inline-flex; }
   .checkout-v2-kicker { white-space: normal; text-align: center; letter-spacing: 0.04em; }
   .checkout-v2-total-row { flex-direction: column; align-items: flex-start; gap: 4px; }
   .checkout-v2-total-row strong { font-size: 22px; white-space: nowrap; }
   .guest-checkout-card { max-width: calc(100vw - 24px); }
+}
+
+/* Móvil angosto: la marca y los botones del header no se tapan. */
+@media (max-width: 480px) {
+  .glass-nav .nav-inner { gap: 8px; }
+  .glass-nav .nav-actions { gap: 6px; }
+  .glass-nav .nav-actions .btn-ghost,
+  .glass-nav .nav-actions .btn-outline-orange { padding: 8px 12px; font-size: 13px; }
+  .glass-nav .nav-hello { display: none; }
+  .glass-nav .brand-logo-name { font-size: 15px; }
+}
+@media (max-width: 360px) {
+  .glass-nav .brand-logo-name { display: none; }
 }

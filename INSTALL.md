@@ -132,7 +132,7 @@ Hub de **administración** (rol `admin` en Supabase). Soporte, métricas y DevSe
 
 ### Modo navegador (desarrollo)
 
-El panel en el navegador queda en el puerto **3001**.
+El panel en el navegador queda en `http://127.0.0.1:3001`.
 
 ```bash
 cd myworksapp_desktop
@@ -150,7 +150,7 @@ npm install
 npm run dev
 ```
 
-Acceso: `http://localhost:3001`
+Acceso: `http://127.0.0.1:3001`
 
 Cuenta admin de la demo: `admin.ops@demo.myworksapp.cl` / `Demo2026!` (Valentina Riquelme). El segundo factor pide un QR la primera vez.
 
@@ -162,7 +162,7 @@ Requisitos: [Rust](https://rustup.rs/) instalado.
 cd myworksapp_desktop
 Copy-Item .env.example .env.local   # en bash: cp .env.example .env.local
 npm install
-npm run tauri:dev      # desarrollo con ventana nativa, mismo origen que el puerto 3001
+npm run tauri:dev      # desarrollo con ventana nativa, mismo origen que http://127.0.0.1:3001
 npm run tauri:build    # genera instalador en src-tauri/target/release/bundle/
 ```
 

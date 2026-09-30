@@ -452,7 +452,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
                   <strong>{selectedTicket.client}</strong>
 
-                  <span>Representante legal</span>
+                  <span>Cliente</span>
 
                 </div>
 

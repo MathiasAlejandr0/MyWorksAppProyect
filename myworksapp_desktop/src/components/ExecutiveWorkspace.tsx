@@ -144,6 +144,8 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
       ? 'Sin cobros en el período'
       : 'Retenido, liberado y autorizado';
 
+  const csat = businessQuery.data?.csat ?? null;
+
   const kpis = [
 
     {
@@ -204,9 +206,11 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       label: 'CSAT',
 
-      value: '—',
+      value: csat == null ? '—' : `${csat.toFixed(1)} / 5`,
 
-      trend: 'Sin encuesta',
+      trend: csat == null
+        ? (businessQuery.isError ? 'No se pudieron leer las calificaciones' : 'Sin calificaciones en 7 días')
+        : `${businessQuery.data?.ratingCount ?? 0} reseñas`,
 
       up: true,
 
