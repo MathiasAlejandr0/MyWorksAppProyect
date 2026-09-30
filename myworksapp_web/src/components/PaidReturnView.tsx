@@ -81,8 +81,14 @@ export function PaidReturnView({
               }
               setPasswordBusy(true);
               setPasswordError(null);
+              const nonce = sessionStorage.getItem('mwa-guest-alta-nonce') || '';
+              if (!nonce) {
+                setPasswordError('Abre esta página en el mismo navegador donde pagaste.');
+                setPasswordBusy(false);
+                return;
+              }
               void supabase.functions.invoke('definir-clave-invitado', {
-                body: { token: passwordToken, password },
+                body: { token: passwordToken, password, nonce },
               }).then(({ data, error }) => {
                 const payload = data as { error?: string; ok?: boolean } | null;
                 if (error || payload?.error || !payload?.ok) {
@@ -96,7 +102,10 @@ export function PaidReturnView({
             }}
           >
             <h2>Crea tu contraseña</h2>
-            <p>Así entras después sin depender de un correo.</p>
+            <p>
+              Así entras después en este navegador. El correo queda sin confirmar
+              hasta que lo verifiques; el pago no lo confirma.
+            </p>
             <input
               type="password"
               autoComplete="new-password"

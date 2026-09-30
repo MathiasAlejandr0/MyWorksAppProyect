@@ -45,7 +45,6 @@ class WorkerModel {
       'id_usuario': userId,
       'profesion': profession,
       'descripcion': description,
-      'calificacion': rating,
       'disponible': isAvailable ? 1 : 0,
       'tarifa_visita': visitFee,
       'categoria_servicio': serviceCategory,
@@ -53,7 +52,6 @@ class WorkerModel {
       'servicios_personalizados': customServices.map((s) => s.toMap()).toList(),
       'precios_configurados': pricingConfigured ? 1 : 0,
       'zona_trabajo': workZone,
-      'conteo_rechazos': rejectionCount,
     };
   }
 

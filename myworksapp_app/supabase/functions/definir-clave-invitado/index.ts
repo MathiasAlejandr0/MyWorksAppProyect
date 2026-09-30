@@ -4,6 +4,7 @@ import {
   clientIp,
   rateLimitExceededMessage,
 } from "../_shared/rate_limit.ts";
+import { sha256Hex } from "../_shared/guest_ticket.ts";
 import { verifyGuestPasswordTicket } from "../_shared/security.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 
@@ -35,13 +36,39 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const token = String(body.token || body.alta || "").trim();
     const password = String(body.password || "");
+    const nonce = String(body.nonce || "").trim();
     const policy = passwordError(password);
     if (policy) return jsonResponse(req, { error: policy }, 400);
+    if (!nonce) {
+      return jsonResponse(req, { error: "Falta la sesión del navegador que pagó" }, 400);
+    }
 
     const verified = await verifyGuestPasswordTicket(token);
     if (!verified.ok) return jsonResponse(req, { error: verified.error }, 403);
 
     const admin = serviceClient();
+    const { data: pago } = await admin
+      .from("pagos")
+      .select("id, alta_nonce_hash, alta_consumido_en")
+      .eq("alta_jti", verified.jti)
+      .maybeSingle();
+    if (!pago?.alta_nonce_hash || pago.alta_consumido_en) {
+      return jsonResponse(req, { error: "Este enlace ya no sirve" }, 403);
+    }
+    const nonceHash = await sha256Hex(nonce);
+    if (nonceHash !== String(pago.alta_nonce_hash)) {
+      return jsonResponse(req, { error: "Este enlace no corresponde a este navegador" }, 403);
+    }
+    const consumed = await admin
+      .from("pagos")
+      .update({ alta_consumido_en: new Date().toISOString() })
+      .eq("id", pago.id)
+      .is("alta_consumido_en", null)
+      .select("id");
+    if (consumed.error || !consumed.data?.length) {
+      return jsonResponse(req, { error: "Este enlace ya no sirve" }, 403);
+    }
+
     const { data: owner, error: readErr } = await admin.auth.admin.getUserById(
       verified.userId,
     );
@@ -56,7 +83,6 @@ Deno.serve(async (req) => {
 
     const { error: updErr } = await admin.auth.admin.updateUserById(verified.userId, {
       password,
-      email_confirm: true,
       user_metadata: { ...meta, guest_checkout: false },
     });
     if (updErr) {

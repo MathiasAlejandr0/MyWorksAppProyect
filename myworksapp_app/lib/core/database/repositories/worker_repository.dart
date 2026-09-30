@@ -175,10 +175,9 @@ class WorkerRepository {
     required String userId,
     required String note,
   }) async {
-    await supabase.from(_table).update({
-      'estado_verificacion': 'en_revision',
-      'nota_verificacion': note,
-    }).eq('id_usuario', userId);
+    await supabase.rpc('enviar_verificacion_profesional', params: {
+      'p_nota': note,
+    });
   }
 
   Future<void> updateBaseLocation({

@@ -1,4 +1,6 @@
+import { assessWebpayCommit } from "../_shared/commit_guard.ts";
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { shouldIssueGuestPasswordTicket } from "../_shared/guest_ticket.ts";
 import { openJobAfterHold } from "../_shared/open_job_after_hold.ts";
 import {
   fallbackWebReturnOrigin,
@@ -99,7 +101,7 @@ Deno.serve(async (req) => {
 
     const { data: payment } = await admin
       .from("pagos")
-      .select("id, id_trabajo, monto, estado, metodo_pago, origen_retorno")
+      .select("id, id_trabajo, monto, estado, metodo_pago, origen_retorno, buy_order")
       .eq("token_tbk", tokenWs)
       .maybeSingle();
 
@@ -116,29 +118,41 @@ Deno.serve(async (req) => {
     if (!alreadyHeld) {
       commit = await tbkCommit(tokenWs);
     }
-    const responseCode = Number(commit.response_code ?? (alreadyHeld ? 0 : -1));
+    const responseCode = alreadyHeld
+      ? 0
+      : Number(commit.response_code ?? -1);
     const status = String(commit.status || (alreadyHeld ? "AUTHORIZED" : ""));
-    const buyOrder = String(commit.buy_order || "");
-    const approved = alreadyHeld ||
-      responseCode === 0 || status.toUpperCase() === "AUTHORIZED";
+    const decision = assessWebpayCommit({
+      estado: String(payment.estado || ""),
+      responseCode: Number.isFinite(responseCode) ? responseCode : null,
+      status,
+      commitAmount: alreadyHeld ? Number(payment.monto) : Number(commit.amount),
+      expectedAmount: Number(payment.monto),
+      commitBuyOrder: alreadyHeld
+        ? String(payment.buy_order || "")
+        : String(commit.buy_order || ""),
+      storedBuyOrder: String(payment.buy_order || ""),
+    });
+    const approved = decision.action === "hold" || decision.action === "replay";
 
-    if (payment.estado !== "liberado") {
+    if (decision.action === "hold") {
+      const jti = crypto.randomUUID().replace(/-/g, "");
       await admin
         .from("pagos")
         .update({
-          estado: approved ? "retenido" : "pendiente",
-          autorizado_en: approved ? new Date().toISOString() : null,
-          id_transaccion: String(
-            commit.authorization_code || buyOrder || tokenWs,
-          ),
+          estado: "retenido",
+          autorizado_en: new Date().toISOString(),
+          id_transaccion: String(commit.authorization_code || commit.buy_order || ""),
+          alta_jti: jti,
           actualizado_en: new Date().toISOString(),
         })
-        .eq("id", payment.id);
+        .eq("id", payment.id)
+        .eq("estado", "pendiente");
     }
 
     let guest = false;
     let alta = "";
-    if (approved && payment.estado !== "liberado") {
+    if (decision.action === "hold") {
       await openJobAfterHold(admin, payment.id_trabajo);
 
       const { data: job } = await admin
@@ -151,15 +165,45 @@ Deno.serve(async (req) => {
         const { data: owner } = await admin.auth.admin.getUserById(ownerId);
         const meta = owner.user?.user_metadata ?? {};
         guest = meta.guest_checkout === true || meta.guest_checkout === "true";
-        if (guest) {
-          await admin.auth.admin.updateUserById(ownerId, { email_confirm: true });
-          try {
-            alta = await signGuestPasswordTicket(ownerId);
-          } catch (e) {
-            console.error("alta invitado", e instanceof Error ? e.message : e);
+        if (shouldIssueGuestPasswordTicket({
+          alreadyHeld: false,
+          approved: true,
+          guest,
+        })) {
+          const { data: stamped } = await admin
+            .from("pagos")
+            .select("alta_jti")
+            .eq("id", payment.id)
+            .maybeSingle();
+          const jti = stamped?.alta_jti ? String(stamped.alta_jti) : "";
+          if (jti) {
+            try {
+              alta = await signGuestPasswordTicket(ownerId, jti);
+            } catch (e) {
+              console.error("alta invitado", e instanceof Error ? e.message : e);
+            }
           }
         }
       }
+    }
+
+    if (decision.action === "replay") {
+      await openJobAfterHold(admin, payment.id_trabajo);
+    }
+
+    if (decision.action === "mismatch") {
+      const message = decision.reason === "monto"
+        ? "El monto autorizado no coincide con el cobro"
+        : "La orden de compra no coincide";
+      if (wantsJson) return jsonResponse(req, { error: message, approved: false }, 409);
+      return browserRedirect(
+        webReturnLocation({
+          origin: returnOrigin(payment.origen_retorno),
+          pago: "fail",
+          paymentId: String(payment.id),
+          jobId: String(payment.id_trabajo),
+        }),
+      );
     }
 
     if (wantsJson) {

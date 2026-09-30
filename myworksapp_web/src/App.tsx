@@ -722,6 +722,7 @@ export function App() {
     email: string;
     phone: string;
     address: string;
+    turnstileToken?: string;
   }) => {
     if (!selectedWorker || !selectedServiceId) {
       throw new Error('Falta profesional o servicio.');
@@ -732,7 +733,11 @@ export function App() {
       serviceId: selectedServiceId,
       description: serviceMatch?.problem ?? query,
       amountClp: selectedWorker.pricePerVisit,
+      turnstileToken: data.turnstileToken,
     });
+    if (session.nonce) {
+      sessionStorage.setItem('mwa-guest-alta-nonce', session.nonce);
+    }
     setCheckoutJobId(session.jobId);
     sessionStorage.setItem(
       'mwa-pending-checkout',

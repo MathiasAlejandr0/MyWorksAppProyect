@@ -34,6 +34,7 @@ export async function signUpUser(
   email: string,
   password: string,
   name: string,
+  captchaToken?: string,
 ): Promise<Profile> {
   const policy = passwordPolicyMessage(password);
   if (policy) throw new AuthError(policy);
@@ -41,7 +42,10 @@ export async function signUpUser(
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { name, role: 'usuario' } },
+    options: {
+      data: { name, role: 'usuario' },
+      ...(captchaToken ? { captchaToken } : {}),
+    },
   });
   if (error) throw new AuthError(error.message);
   if (!data.user) throw new AuthError('No se pudo registrar la cuenta.');

@@ -70,11 +70,16 @@ Deno.serve(async (req) => {
       typeof body.returnUrl === "string" ? body.returnUrl : undefined,
     );
 
+    const expectedAmount = Number(payment.monto);
+    if (!Number.isFinite(expectedAmount) || expectedAmount <= 0) {
+      return jsonResponse(req, { error: "El cobro no tiene un monto de servidor" }, 400);
+    }
+
     const { env } = tbkConfig();
     const { token, url } = await tbkCreateTransaction({
       buyOrder,
       sessionId: user.id,
-      amount: amountClp,
+      amount: expectedAmount,
       returnUrl,
     });
 

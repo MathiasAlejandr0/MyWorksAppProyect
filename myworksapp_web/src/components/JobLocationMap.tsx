@@ -18,6 +18,12 @@ const workerIcon = L.divIcon({
 
 type Point = { latitude: number; longitude: number; label: string };
 
+function textPopup(text: string): HTMLElement {
+  const node = document.createElement('div');
+  node.textContent = text;
+  return node;
+}
+
 /** Domicilio del pedido y, si existe, el pin en vivo del profesional. */
 export function JobLocationMap({
   latitude,
@@ -43,7 +49,7 @@ export function JobLocationMap({
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap',
     }).addTo(map);
-    homeRef.current = L.marker([latitude, longitude], { icon: homeIcon }).addTo(map).bindPopup(label);
+    homeRef.current = L.marker([latitude, longitude], { icon: homeIcon }).addTo(map).bindPopup(textPopup(label));
     const frame = window.requestAnimationFrame(() => map.invalidateSize());
     return () => {
       window.cancelAnimationFrame(frame);
@@ -64,10 +70,10 @@ export function JobLocationMap({
     }
     const at: L.LatLngExpression = [worker.latitude, worker.longitude];
     if (!workerRef.current) {
-      workerRef.current = L.marker(at, { icon: workerIcon }).addTo(map).bindPopup(worker.label);
+      workerRef.current = L.marker(at, { icon: workerIcon }).addTo(map).bindPopup(textPopup(worker.label));
     } else {
       workerRef.current.setLatLng(at);
-      workerRef.current.setPopupContent(worker.label);
+      workerRef.current.setPopupContent(textPopup(worker.label));
     }
     const bounds = L.latLngBounds([
       [latitude, longitude],

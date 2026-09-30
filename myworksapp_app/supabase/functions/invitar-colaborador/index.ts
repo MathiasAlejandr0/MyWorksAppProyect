@@ -91,13 +91,24 @@ Deno.serve(async (req) => {
     const redirectTo = Deno.env.get("INVITE_REDIRECT_URL")?.trim() || undefined;
     const admin = serviceClient();
 
+    const panelRole = parsed.role === "Admin"
+      ? "administrador"
+      : parsed.role === "Soporte"
+        ? "soporte"
+        : parsed.role === "QA"
+          ? "qa"
+          : "";
+    if (!panelRole) {
+      return jsonResponse(req, { error: "Rol no permitido" }, 400);
+    }
+
     const promote = async (userId: string | undefined) => {
       if (!userId) {
         return jsonResponse(req, { error: "La invitación no devolvió el usuario" }, 400);
       }
       const updated = await admin
         .from("perfiles")
-        .update({ rol: "administrador", nombre: parsed.name })
+        .update({ rol: panelRole, nombre: parsed.name })
         .eq("id", userId)
         .select("id");
       if (updated.error) {
@@ -106,7 +117,7 @@ Deno.serve(async (req) => {
       if (!updated.data?.length) {
         return jsonResponse(
           req,
-          { error: "No se pudo asignar el rol administrador. El perfil no existe o el trigger lo rechazó." },
+          { error: "No se pudo asignar el rol del panel. El perfil no existe o el trigger lo rechazó." },
           400,
         );
       }

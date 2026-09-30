@@ -162,13 +162,14 @@ export function fallbackWebReturnOrigin(): string {
   );
 }
 
-/** Alta de contraseña del invitado, sin correo. Caduca en 30 minutos. */
+/** Alta de contraseña del invitado, sin correo. Caduca en 15 minutos y trae jti. */
 export async function signGuestPasswordTicket(
   userId: string,
-  ttlSec = 30 * 60,
+  jti: string,
+  ttlSec = 15 * 60,
 ): Promise<string> {
   const exp = Math.floor(Date.now() / 1000) + ttlSec;
-  const payload = `pwd.${userId}.${exp}`;
+  const payload = `pwd.${userId}.${exp}.${jti}`;
   const key = await hmacKey();
   const sig = toHex(
     await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload)),
@@ -178,20 +179,20 @@ export async function signGuestPasswordTicket(
 
 export async function verifyGuestPasswordTicket(
   ticket: string,
-): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; userId: string; jti: string } | { ok: false; error: string }> {
   const parts = ticket.split(".");
-  if (parts.length !== 4 || parts[0] !== "pwd") {
+  if (parts.length !== 5 || parts[0] !== "pwd") {
     return { ok: false, error: "enlace inválido" };
   }
-  const [, userId, expStr, sig] = parts;
+  const [, userId, expStr, jti, sig] = parts;
   const exp = Number(expStr);
-  if (!userId || !Number.isFinite(exp)) {
+  if (!userId || !jti || !Number.isFinite(exp)) {
     return { ok: false, error: "enlace inválido" };
   }
   if (exp < Math.floor(Date.now() / 1000)) {
     return { ok: false, error: "el enlace para crear la contraseña expiró" };
   }
-  const payload = `pwd.${userId}.${expStr}`;
+  const payload = `pwd.${userId}.${expStr}.${jti}`;
   const key = await hmacKey();
   const expected = toHex(
     await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload)),
@@ -199,7 +200,7 @@ export async function verifyGuestPasswordTicket(
   if (!timingSafeEqualHex(expected, sig)) {
     return { ok: false, error: "enlace inválido" };
   }
-  return { ok: true, userId };
+  return { ok: true, userId, jti };
 }
 
 /** Orígenes permitidos para postMessage (web return). */

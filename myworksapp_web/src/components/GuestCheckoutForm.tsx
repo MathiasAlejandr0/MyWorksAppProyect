@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { Lock, MapPin, Phone, User, Mail, X, ExternalLink } from 'lucide-react';
+import { TurnstileWidget } from './TurnstileWidget';
+import { turnstileSiteKey } from './turnstileSite';
 
 export type GuestCheckoutPayload = {
   name: string;
   email: string;
   phone: string;
   address: string;
+  turnstileToken?: string;
 };
 
 interface GuestCheckoutFormProps {
@@ -33,12 +36,17 @@ export function GuestCheckoutForm({
   const [address, setAddress] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!name.trim() || !email.trim() || !phone.trim() || !address.trim()) {
       setError('Completa tus datos personales y la dirección del trabajo.');
+      return;
+    }
+    if (turnstileSiteKey() && !captchaToken) {
+      setError('Confirma que no eres un robot');
       return;
     }
     setBusy(true);
@@ -48,6 +56,7 @@ export function GuestCheckoutForm({
         email: email.trim(),
         phone: phone.trim(),
         address: address.trim(),
+        turnstileToken: captchaToken || undefined,
       });
     } catch (err) {
       setError(
@@ -146,6 +155,8 @@ export function GuestCheckoutForm({
               disabled={busy}
             />
           </label>
+
+          <TurnstileWidget onToken={setCaptchaToken} />
 
           {error ? (
             <p className="toast-error" role="alert">

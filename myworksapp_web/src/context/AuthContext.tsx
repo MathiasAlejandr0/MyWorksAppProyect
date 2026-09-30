@@ -29,7 +29,7 @@ interface AuthContextValue {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   loginWithOAuth: (provider: OAuthProviderId) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, captchaToken?: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -106,9 +106,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithOAuthProvider(supabase, provider, window.location.origin);
   }, []);
 
-  const register = useCallback(async (name: string, email: string, password: string) => {
+  const register = useCallback(async (
+    name: string,
+    email: string,
+    password: string,
+    captchaToken?: string,
+  ) => {
     setError(null);
-    const nextProfile = await signUpUser(supabase, email, password, name);
+    const nextProfile = await signUpUser(supabase, email, password, name, captchaToken);
     const allowed = await enforceWebClientRole(nextProfile);
     setProfile(allowed);
   }, []);

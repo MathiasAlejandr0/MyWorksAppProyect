@@ -23,9 +23,19 @@ Falta aplicar, en este orden, antes de la demo:
 1. `myworksapp_app/supabase/migrations/20261008000002_perfiles_publicos_rpc.sql`
 2. `myworksapp_app/supabase/migrations/20261008000003_origen_retorno_pago.sql`
 3. `myworksapp_app/supabase/migrations/20261008000004_disputas_partes.sql`
-4. Volver a correr `scripts/demo/seed_demo.sql` (deja no disponibles a Ana Volt, Marcelo Rivas, Pablo Maestro, Carolina Brillo y María Limpieza, y exige un demo verificado por categoría).
+4. `myworksapp_app/supabase/migrations/20261008000005_precios_cotizaciones_privacidad.sql`
+5. Volver a correr `scripts/demo/seed_demo.sql` (deja no disponibles a Ana Volt, Marcelo Rivas, Pablo Maestro, Carolina Brillo y María Limpieza, y exige un demo verificado por categoría).
 
-Después corre `docs/PRUEBAS_RLS_20261008.sql` en el SQL Editor. Tiene que terminar en `RLS 20261008 ok`.
+Después corre `docs/PRUEBAS_RLS_20261008.sql` y `docs/PRUEBAS_RLS_20261009.sql` en el SQL Editor. Tienen que terminar en `RLS 20261008 ok` y `RLS 20261009 ok`. El archivo de 20261009 hace `ROLLBACK`: no deja datos de prueba.
+
+`20261008000005` deja dos interruptores en `public.app_config`:
+
+| clave | valor que sale | antes del lanzamiento |
+|---|---|---|
+| `demo_modo` | `1` (el login de la app sigue listando correos `@demo.myworksapp.cl`) | `UPDATE public.app_config SET valor = '0', actualizado_en = now() WHERE clave = 'demo_modo';` y luego `REVOKE EXECUTE ON FUNCTION public.listar_cuentas_demo_acceso() FROM anon;` |
+| `admin_requiere_aal2` | `0` (el panel no exige `aal2` en SQL, para que la demo de mañana no se trabe) | `UPDATE public.app_config SET valor = '1', actualizado_en = now() WHERE clave = 'admin_requiere_aal2';` después de que `admin.ops` tenga un TOTP verificado |
+
+El escritorio ya pide el segundo factor antes de mostrar el panel (`AdminMfaGate`). El primer ingreso de `admin.ops` muestra el QR: escanéalo y confirma el código de 6 dígitos. Con el interruptor en `0` el panel funciona aunque esa sesión todavía no sea `aal2`. En producción el interruptor tiene que quedar en `1`: `is_admin()` solo es verdadero para `rol = administrador` y, con el flag, JWT `aal = aal2`. Soporte y QA invitados quedan en `soporte` y `qa`; no entran al hub ni pasan `is_admin()`.
 
 ### Antes de un `supabase db push`
 
@@ -48,15 +58,32 @@ npx supabase migration repair --status applied 20261007000001 --project-ref wxqr
 npx supabase migration repair --status applied 20261007000002 --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase migration repair --status applied 20261007000003 --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase migration repair --status applied 20261007000004 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261008000001 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
-`20261008000001` ya está aplicada: no la vuelvas a correr. Repara `20261008000002`, `20261008000003` y `20261008000004` solo después de aplicarlas. Si el dashboard muestra otra cadena de versión, usa esa en `migration repair` y no la de esta lista. No hagas push a `main`.
+`20261008000001` ya está aplicada: no la vuelvas a correr. El `repair` de esa versión solo marca el historial local; no ejecuta el SQL. Repara `20261008000002`, `20261008000003`, `20261008000004` y `20261008000005` **solo después** de aplicar cada archivo en el SQL Editor:
+
+```bash
+cd myworksapp_app
+npx supabase migration repair --status applied 20261008000002 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261008000003 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261008000004 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261008000005 --project-ref wxqrfcqifkfgawrnqmnj
+```
+
+Si el dashboard muestra otra cadena de versión, usa esa en `migration repair` y no la de esta lista. No borres las filas de nombre corto. No hagas push a `main`.
 
 ## 2. Edge Functions
 
-No desplegar `webpay-create-transaction` ni `webpay-commit-transaction`. No están en el repo y ningún cliente las llama. El camino vigente es `webpay-create` y `webpay-commit`.
+`webpay-create-transaction` y `webpay-commit-transaction` siguen vivas y el MCP no las puede borrar. En el repo hay un stub con el mismo nombre que responde **410 Gone**. Despliégalos para pisar las viejas. El camino vigente sigue siendo `webpay-create` y `webpay-commit`.
 
-Volver a desplegar `invitar-colaborador`: ahora muestra el error si no puede dejar el perfil en `administrador`.
+```bash
+cd myworksapp_app
+npx supabase functions deploy webpay-create-transaction --project-ref wxqrfcqifkfgawrnqmnj --no-verify-jwt
+npx supabase functions deploy webpay-commit-transaction --project-ref wxqrfcqifkfgawrnqmnj --no-verify-jwt
+```
+
+Volver a desplegar `invitar-colaborador`: Admin queda `administrador`; Soporte queda `soporte` y QA queda `qa`. Esos dos no entran al hub.
 
 ```bash
 cd myworksapp_app
@@ -80,25 +107,40 @@ npx supabase secrets set WEBPAY_RETURN_URL=https://wxqrfcqifkfgawrnqmnj.supabase
 npx supabase secrets set WEBPAY_ALLOWED_RETURN_ORIGINS=http://localhost:5173,http://127.0.0.1:5173 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
+Turnstile, para la demo de mañana, **no hace falta**. Si `TURNSTILE_SECRET_KEY` no está y `TBK_ENV=integration`, `guest-checkout` no pide captcha. Si falta `VITE_TURNSTILE_SITE_KEY` en la web, el widget no se muestra. En `production`, sin el secreto, el checkout de invitado responde 503.
+
+```bash
+# Solo cuando haya un sitio de Turnstile. No hace falta para la demo.
+npx supabase secrets set TURNSTILE_SECRET_KEY=<secreto-del-widget> --project-ref wxqrfcqifkfgawrnqmnj
+```
+
+En la web, el mismo sitio va en `VITE_TURNSTILE_SITE_KEY` al construir. `CORS_ALLOWED_ORIGINS` es opcional en integración: ya se aceptan `localhost` y `127.0.0.1` en los puertos 5173 y 3001. Un origen `*.supabase.co` ya no se refleja.
+
 Si `TBK_COMMERCE_CODE` y `TBK_API_KEY` no están definidos y `TBK_ENV=integration` (o la variable no está definida), la función usa el comercio público de integración de Transbank (`597055555532`). Oneclick Mall usa `597055555541` y la tienda `597055555542` (la tienda 2 oficial es `597055555543`). En `production`, si falta un secreto, la función falla. No pongas esas claves en la web, el escritorio ni Flutter.
 
 `WEBPAY_WEB_RETURN_URL` no hace falta para la demo. `webpay-create` y `guest-checkout` guardan el Origin del navegador (`http://localhost:5173` o `http://127.0.0.1:5173` en integración, o lo que esté en `WEBPAY_ALLOWED_RETURN_ORIGINS` / `CORS_ALLOWED_ORIGINS`) y `webpay-commit` vuelve ahí.
 
-El handoff ya no manda un HTML con auto-POST: Transbank recibe el token por GET (303). Hay que volver a desplegar:
-
-`webpay-handoff`, `oneclick-handoff`, `webpay-commit`, `webpay-create`, `guest-checkout`, `definir-clave-invitado`.
+Hay que volver a desplegar las funciones que comparten CORS o el ticket de invitado, y `oneclick-charge` porque el monto sale de la cotización elegida o de la tarifa:
 
 ```bash
 cd myworksapp_app
 npx supabase functions deploy webpay-handoff --project-ref wxqrfcqifkfgawrnqmnj
-npx supabase functions deploy oneclick-handoff --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase functions deploy webpay-commit --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase functions deploy webpay-create --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase functions deploy guest-checkout --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase functions deploy definir-clave-invitado --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy invitar-colaborador --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy oneclick-charge --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy oneclick-return --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy webpay-status --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy webpay-release --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy webpay-refund --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy webpay-refund-cancellation --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy webpay-refund-rejection --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase functions deploy webpay-resolve-dispute --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
-`definir-clave-invitado` no pide JWT. Firma el alta con `WEBPAY_HANDOFF_SECRET` y guarda la clave con la API de admin, sin SMTP.
+`definir-clave-invitado` no pide JWT. El enlace dura 15 minutos, se usa una vez y exige el nonce que quedó en el `sessionStorage` del navegador que pagó. Guarda la clave con la API de admin y **no** marca el correo como confirmado. Si en Authentication está activo "Confirm email", el invitado puede crear la contraseña en esa sesión pero no entra hasta verificar el correo. Para la demo el camino principal es Camila, que ya está confirmada. Si quieres que el invitado entre al tiro, deja "Confirm email" apagado en el proyecto de prueba. Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita.
 
 ## 3. Cuentas (contraseña `Demo2026!` en todas)
 

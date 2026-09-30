@@ -52,6 +52,13 @@ verify_jwt = true
 [functions.definir-clave-invitado]
 verify_jwt = false
 
+# Funciones viejas desplegadas. Responden 410 para poder pisarlas: el MCP no las borra.
+[functions.webpay-create-transaction]
+verify_jwt = false
+
+[functions.webpay-commit-transaction]
+verify_jwt = false
+
 # Local hasta que se publique en el proyecto (Authentication → Password).
 [auth]
 minimum_password_length = 8

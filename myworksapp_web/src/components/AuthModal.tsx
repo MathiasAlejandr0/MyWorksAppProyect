@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { LogIn, UserPlus, X } from 'lucide-react';
 import { AuthError, passwordPolicyMessage } from '@myworksapp/shared';
 import { useAuth } from '../context/AuthContext';
+import { TurnstileWidget } from './TurnstileWidget';
+import { turnstileSiteKey } from './turnstileSite';
 
 interface AuthModalProps {
   open: boolean;
@@ -18,6 +20,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState('');
 
   if (!open) return null;
 
@@ -45,7 +48,11 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           setLocalError(policy);
           return;
         }
-        await register(name, email, password);
+        if (turnstileSiteKey() && !captchaToken) {
+          setLocalError('Confirma que no eres un robot');
+          return;
+        }
+        await register(name, email, password, captchaToken || undefined);
       }
       onClose();
     } catch (e) {
@@ -104,6 +111,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               Mínimo 8 caracteres, con al menos una letra y un número.
             </p>
           )}
+          {mode === 'register' ? <TurnstileWidget onToken={setCaptchaToken} /> : null}
 
           {localError && (
             <div className="auth-modal-error" role="alert">

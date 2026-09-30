@@ -11,6 +11,7 @@ export interface GuestCheckoutInput {
   amountClp: number;
   /** Solo para el return_url de Transbank (commit Edge o allowlist). */
   returnUrl?: string;
+  turnstileToken?: string;
 }
 
 export interface GuestCheckoutResult {
@@ -20,6 +21,8 @@ export interface GuestCheckoutResult {
   redirectUrl: string;
   ambiente?: string;
   mode: 'guest_redirect';
+  /** Nonce del navegador. Se guarda en sessionStorage; no va en la URL. */
+  nonce?: string;
 }
 
 /**
@@ -41,6 +44,7 @@ export async function createGuestWebpayCheckout(
       description: input.description,
       amountClp: input.amountClp,
       returnUrl: input.returnUrl,
+      turnstileToken: input.turnstileToken,
     },
   });
 
@@ -77,5 +81,6 @@ export async function createGuestWebpayCheckout(
     redirectUrl,
     ambiente: payload.ambiente ? String(payload.ambiente) : undefined,
     mode: 'guest_redirect',
+    nonce: payload.nonce ? String(payload.nonce) : undefined,
   };
 }

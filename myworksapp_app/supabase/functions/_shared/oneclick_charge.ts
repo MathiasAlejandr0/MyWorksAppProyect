@@ -201,23 +201,31 @@ export async function expectedJobAmount(
   admin: Admin,
   jobId: string,
 ): Promise<number> {
-  const { data: quote } = await admin
-    .from("propuestas_cotizacion")
-    .select("monto_total_clp")
-    .eq("id_trabajo", jobId)
-    .in("estado", ["seleccionada", "aceptada"])
-    .order("creado_en", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const quoted = Number(quote?.monto_total_clp || 0);
-  if (quoted > 0) return quoted;
-
   const { data: job } = await admin
     .from("trabajos")
-    .select("id_trabajador")
+    .select("id_trabajador, id_cotizacion_seleccionada, modalidad_cobro")
     .eq("id", jobId)
     .maybeSingle();
-  if (!job?.id_trabajador) return 0;
+  if (!job) return 0;
+
+  if (job.id_cotizacion_seleccionada && job.id_trabajador) {
+    const { data: quote } = await admin
+      .from("propuestas_cotizacion")
+      .select("monto_total_clp")
+      .eq("id", job.id_cotizacion_seleccionada)
+      .eq("id_trabajador", job.id_trabajador)
+      .in("estado", ["seleccionada", "aceptada"])
+      .maybeSingle();
+    return Number(quote?.monto_total_clp || 0);
+  }
+
+  if (
+    job.modalidad_cobro === "cotizacion_abierta" ||
+    job.modalidad_cobro === "cotizacion"
+  ) {
+    return 0;
+  }
+  if (!job.id_trabajador) return 0;
   const { data: worker } = await admin
     .from("trabajadores")
     .select("tarifa_visita")

@@ -32,12 +32,17 @@ const pinIconActive = L.divIcon({
   iconAnchor: [18, 18],
 });
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+function workerPopup(name: string, profession: string, detail: string): HTMLElement {
+  const root = document.createElement('div');
+  root.className = 'mwa-map-popup';
+  const title = document.createElement('strong');
+  title.textContent = name;
+  const role = document.createElement('span');
+  role.textContent = profession;
+  const meta = document.createElement('span');
+  meta.textContent = detail;
+  root.append(title, role, meta);
+  return root;
 }
 
 type PremiumSearchMapProps = {
@@ -123,7 +128,7 @@ export function PremiumSearchMap({
       const price = Math.round(worker.pricePerVisit).toLocaleString('es-CL');
       const marker = L.marker(position, { icon: pinIcon });
       marker.bindPopup(
-        `<div class="mwa-map-popup"><strong>${escapeHtml(worker.name)}</strong><span>${escapeHtml(worker.profession)}</span><span>★ ${worker.rating.toFixed(1)} · desde $${price}</span></div>`,
+        workerPopup(worker.name, worker.profession, `★ ${worker.rating.toFixed(1)} · desde $${price}`),
       );
       marker.on('click', () => onSelectRef.current(worker));
       marker.addTo(map);

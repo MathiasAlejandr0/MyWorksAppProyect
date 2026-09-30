@@ -177,15 +177,11 @@ export async function setWorkerVerification(
   status: 'pendiente' | 'en_revision' | 'verificado' | 'rechazado',
   note?: string | null,
 ): Promise<void> {
-  const patch: {
-    estado_verificacion: typeof status;
-    nota_verificacion?: string | null;
-  } = { estado_verificacion: status };
-  if (note !== undefined) patch.nota_verificacion = note;
-  const { error } = await supabase
-    .from('trabajadores')
-    .update(patch)
-    .eq('id_usuario', userId);
+  const { error } = await supabase.rpc('fijar_verificacion_profesional', {
+    p_id_usuario: userId,
+    p_estado: status,
+    p_nota: note ?? null,
+  });
   if (error) throw error;
 }
 
