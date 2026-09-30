@@ -111,7 +111,7 @@ CREATE POLICY ubicacion_select_cliente_admin ON public.ubicacion_en_vivo
       SELECT 1
       FROM public.trabajos t
       WHERE t.id::text = ubicacion_en_vivo.id_trabajo
-        AND t.id_usuario = auth.uid()
+        AND t.id_usuario = (select auth.uid())
     )
   );
 
@@ -273,6 +273,10 @@ $$;
 REVOKE ALL ON FUNCTION public.listar_profesionales_catalogo(text, text, numeric, uuid, integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.listar_profesionales_catalogo(text, text, numeric, uuid, integer) TO anon, authenticated;
 
+-- Misma matriz que 20260930000001 (ya aplicada) y solo se suman
+-- aceptado -> en_camino y en_camino -> en_curso.
+-- Se mantiene esperando_pago -> pendiente (el hold deja el trabajo pendiente)
+-- y en_curso -> esperando_aprobacion_cliente (la conformidad no es un completado directo).
 CREATE OR REPLACE FUNCTION public.transicion_trabajo_permitida(
   p_desde text,
   p_hacia text,
@@ -286,10 +290,7 @@ AS $$
 DECLARE
   v_mode text := COALESCE(NULLIF(trim(p_modalidad), ''), 'legado');
 BEGIN
-  IF p_desde IS NULL OR p_hacia IS NULL THEN
-    RETURN false;
-  END IF;
-  IF p_desde = p_hacia THEN
+  IF p_desde IS NULL OR p_hacia IS NULL OR p_desde = p_hacia THEN
     RETURN false;
   END IF;
 
@@ -304,11 +305,12 @@ BEGIN
   CASE v_mode
     WHEN 'precio_fijo', 'bloque_horas' THEN
       RETURN (p_desde, p_hacia) IN (
-        ('esperando_pago', 'aceptado'),
+        ('esperando_pago', 'pendiente'),
+        ('pendiente', 'aceptado'),
         ('aceptado', 'en_camino'),
         ('aceptado', 'en_curso'),
         ('en_camino', 'en_curso'),
-        ('en_curso', 'completado'),
+        ('en_curso', 'esperando_aprobacion_cliente'),
         ('en_curso', 'no_asistio'),
         ('en_curso', 'pausado_orden_cambio'),
         ('pausado_orden_cambio', 'en_curso')
@@ -318,11 +320,12 @@ BEGIN
         ('esperando_cotizaciones', 'cotizacion_seleccionada'),
         ('esperando_cotizaciones', 'expirado'),
         ('cotizacion_seleccionada', 'esperando_pago'),
-        ('esperando_pago', 'aceptado'),
+        ('esperando_pago', 'pendiente'),
+        ('pendiente', 'aceptado'),
         ('aceptado', 'en_camino'),
         ('aceptado', 'en_curso'),
         ('en_camino', 'en_curso'),
-        ('en_curso', 'completado'),
+        ('en_curso', 'esperando_aprobacion_cliente'),
         ('en_curso', 'no_asistio'),
         ('en_curso', 'pausado_orden_cambio'),
         ('pausado_orden_cambio', 'en_curso')
@@ -335,12 +338,9 @@ BEGIN
         ('aceptado', 'en_curso'),
         ('aceptado', 'pendiente'),
         ('en_camino', 'en_curso'),
-        ('en_curso', 'completado'),
         ('en_curso', 'esperando_aprobacion_cliente'),
         ('en_curso', 'no_asistio'),
         ('en_curso', 'pausado_orden_cambio'),
-        ('esperando_aprobacion_cliente', 'completado'),
-        ('esperando_aprobacion_cliente', 'en_curso'),
         ('pausado_orden_cambio', 'en_curso')
       );
   END CASE;

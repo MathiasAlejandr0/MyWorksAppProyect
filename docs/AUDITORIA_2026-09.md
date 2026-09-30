@@ -88,7 +88,7 @@ Estados: **terminada** (flujo real y estados de carga/vacío/error), **falta pul
 | `/admin` y subrutas (usuarios, trabajadores, trabajos, disputas, reportes, errores, servicios, banderas) | terminada | terminada | Operan contra Supabase. El admin de teléfono no reemplaza al escritorio. |
 | `/admin/desktop-hub` | terminada | terminada | Explica que la operación vive en el programa de escritorio. No es un panel falso. |
 
-El matching ahora suma puntaje si la zona del profesional aparece en la dirección. No inventa kilómetros: el profesional no tiene latitud y longitud.
+El matching usa la base del profesional: fuera del radio no entra, y la distancia suma puntaje. Sin coordenadas sigue valiendo la zona escrita.
 
 ### Sitio web (vistas, no hay router)
 
@@ -121,8 +121,8 @@ El matching ahora suma puntaje si la zona del profesional aparece en la direcci�
 | Capacidad | Cliente | Especialista | Admin | Estado |
 |---|---|---|---|---|
 | Alta y sesión | App y web | App | Escritorio (+ MFA) | Hecho |
-| Verificación de identidad y antecedentes | — | Nota + foto; un admin aprueba | Aprueba o rechaza en el escritorio | Parcial. Falta aplicar la migración. No hay consulta a un registro de antecedentes. |
-| Ubicación base y GPS | Ve el pin en la web y en el detalle | Publica en primer plano en camino/en curso y fija su base | Lee el punto por RLS | Hecho en código. Hay que aplicar `20261006000001`. |
+| Verificación de identidad y antecedentes | — | Nota + foto; un admin aprueba | Aprueba o rechaza en el escritorio | Parcial. La migración de verificación ya está en la base. No hay consulta a un registro de antecedentes. |
+| Ubicación base y GPS | Ve el pin en la web y en el detalle | Publica en primer plano en camino/en curso y fija su base | Lee el punto por RLS | Hecho en código. `20261006000001` conserva las transiciones de pago y suma `en_camino`. Hay que aplicarla. |
 | Catálogo | Web y app | Oficios y tarifas | Servicios en el admin móvil | Hecho |
 | Pedido con lugar | Dirección y coordenadas en el trabajo | La ve al aceptar | La ve en el trabajo | Hecho. Fotos del problema al crear el pedido: la evidencia fuerte es la del profesional al terminar. |
 | Matching cercano | Elige en el catálogo; la app excluye fuera del radio y puntúa por distancia | Recibe el pendiente | — | Parcial. No hay dispatch automático. Sin base, sigue la zona de texto. |
@@ -150,10 +150,15 @@ Hecho en esta rama, en este orden:
 4. Tarjeta de verificación en el perfil del especialista, migración y trigger para que no se autoapruebe.
 5. Matching por zona, sincronización de banderas ya leídas desde Supabase, y pruebas de estados, mensajes y verificación.
 6. GPS en vivo (`en_camino` / `en_curso`), ubicación base, métricas reales del escritorio e invitación por Edge Function.
+7. La matriz de `transicion_trabajo_permitida` en `20261006000001` vuelve a ser la de producción (`esperando_pago` → `pendiente` → `aceptado`, y `en_curso` → `esperando_aprobacion_cliente`) y solo agrega `aceptado` → `en_camino` → `en_curso`.
+8. Migración `20261007000001_rls_indices_asesores.sql`: `(select auth.uid())`, políticas inglesas duplicadas, índices duplicados y FKs sin índice.
+9. Seed de demo (`scripts/demo/seed_demo.sql`) y guion en `DEMO.md`. En la web, el seguimiento ofrece **Recibo conforme** y se refresca solo.
+10. Playwright del catálogo con Supabase simulado. Los clientes no llaman `liberar_escrow_manual` ni los otros RPC de `service_role`.
 
 Sigue fuera de este código, porque depende del dueño:
 
-- Aplicar `20261005000001_verificacion_profesional.sql` y `20261006000001_gps_y_base_profesional.sql` (`supabase db push`).
+- Aplicar `20261006000001_gps_y_base_profesional.sql` y después `20261007000001_rls_indices_asesores.sql`. `20261005000001` ya está en la base. El seed de demo va aparte.
+- El SQL de revocación de `EXECUTE` a `anon` (incluido `liberar_escrow_manual`) lo aplica el dueño; no está duplicado aquí.
 - SMTP de Supabase Auth, o `RESEND_API_KEY`, `RESEND_FROM` e `INVITE_PROVIDER=resend`, para que el correo de RRHH salga.
 - Comercio Transbank de producción y secretos `TBK_*` cuando exista la empresa.
 - Cuenta de Firebase / APNs para push, y un proveedor de correo si se quieren avisos fuera de la app.

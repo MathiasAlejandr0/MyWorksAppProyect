@@ -19,6 +19,7 @@ import {
   fetchActiveServices,
   orderConfirmedMessage,
   openJobForWorker,
+  closeJobOnClientApproval,
   parseCheckoutReturn,
   fetchPaymentStatus,
   fetchServiceByCategory,
@@ -318,6 +319,8 @@ export function App() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationLines, setNotificationLines] = useState<string[]>([]);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
 
   const [activeNav, setActiveNav] = useState<'servicios' | 'como-funciona'>('servicios');
 
@@ -340,17 +343,40 @@ export function App() {
   useEffect(() => {
     if (view !== 'tracking' || !checkoutJobId) return;
     let cancelled = false;
-    void fetchJobTrackingSnapshot(supabase, checkoutJobId)
-      .then((snapshot) => {
-        if (!cancelled) setJobSnapshot(snapshot);
-      })
-      .catch(() => {
-        if (!cancelled) setJobSnapshot(null);
-      });
+    const load = () => {
+      void fetchJobTrackingSnapshot(supabase, checkoutJobId)
+        .then((snapshot) => {
+          if (!cancelled && snapshot) setJobSnapshot(snapshot);
+        })
+        .catch(() => {
+          // Se conserva el último estado visible si el refresco falla.
+        });
+    };
+    load();
+    const timer = window.setInterval(load, 8000);
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
     };
   }, [view, checkoutJobId]);
+
+  const confirmReceipt = async () => {
+    if (!checkoutJobId) return;
+    setConfirmBusy(true);
+    setConfirmError(null);
+    try {
+      await closeJobOnClientApproval(supabase, checkoutJobId);
+      const snapshot = await fetchJobTrackingSnapshot(supabase, checkoutJobId);
+      setJobSnapshot(snapshot);
+      setPaymentNotice('Recibiste conforme. El pago retenido quedó liberado.');
+    } catch (err) {
+      setConfirmError(
+        err instanceof Error ? err.message : 'No se pudo recibir conforme.',
+      );
+    } finally {
+      setConfirmBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!profile) {
@@ -787,6 +813,12 @@ export function App() {
           onOpenChat={() => setShowChat(true)}
 
           onOpenNotifications={() => setShowNotifications(true)}
+
+          onConfirmReceipt={() => void confirmReceipt()}
+
+          confirmBusy={confirmBusy}
+
+          confirmError={confirmError}
 
         />
 

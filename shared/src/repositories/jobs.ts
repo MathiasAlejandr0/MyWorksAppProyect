@@ -126,3 +126,14 @@ export async function openJobForWorker(
   if (/transicion no permitida/i.test(message)) return;
   throw new Error(message);
 }
+
+/** El cliente recibe conforme. El RPC libera el pago retenido y completa el trabajo. */
+export async function closeJobOnClientApproval(
+  supabase: AppSupabase,
+  jobId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('cerrar_trabajo_conforme', {
+    p_trabajo_id: jobId,
+  });
+  if (error) throw new Error(error.message || 'No se pudo recibir conforme');
+}

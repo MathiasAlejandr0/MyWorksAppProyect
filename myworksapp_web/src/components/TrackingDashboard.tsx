@@ -35,6 +35,9 @@ interface TrackingDashboardProps {
   onBack: () => void;
   onOpenChat: () => void;
   onOpenNotifications?: () => void;
+  onConfirmReceipt?: () => void;
+  confirmBusy?: boolean;
+  confirmError?: string | null;
 }
 
 export function TrackingDashboard({
@@ -61,6 +64,9 @@ export function TrackingDashboard({
   onBack,
   onOpenChat,
   onOpenNotifications,
+  onConfirmReceipt,
+  confirmBusy = false,
+  confirmError = null,
 }: TrackingDashboardProps) {
   const [showPayment, setShowPayment] = useState(false);
   const hasPoint = typeof latitude === 'number' && typeof longitude === 'number'
@@ -155,6 +161,20 @@ export function TrackingDashboard({
             </div>
             <p className="tracking-status-detail">{statusDetail}</p>
           </div>
+
+          {jobStatus === 'esperando_aprobacion_cliente' && onConfirmReceipt ? (
+            <button
+              type="button"
+              className="btn-primary tracking-chat-btn"
+              onClick={onConfirmReceipt}
+              disabled={confirmBusy}
+            >
+              {confirmBusy ? 'Liberando el pago…' : 'Recibo conforme'}
+            </button>
+          ) : null}
+          {confirmError ? (
+            <p className="tracking-status-detail" role="alert">{confirmError}</p>
+          ) : null}
 
           <button type="button" className="btn-primary tracking-chat-btn" onClick={onOpenChat}>
             <MessageCircle size={18} /> Abrir chat

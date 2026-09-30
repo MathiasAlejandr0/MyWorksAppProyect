@@ -1,138 +1,162 @@
-# Guía de demostración — MyWorksApp
+# Demo en vivo — MyWorksApp
 
-Documento para presentar la demo a **financistas**, **profesores**, **jurados** o **inversores**. La app es un **MVP funcional offline** en un solo dispositivo.
+Guion para mostrar el marketplace con datos de prueba en el proyecto Supabase `wxqrfcqifkfgawrnqmnj`. Transbank queda en **integración**. No hay datos de producción.
 
-## Qué es (mensaje de 30 segundos)
+El flujo de un pedido nuevo (pagar, aceptar, ir en camino, conformidad) se hace el día de la demo. El seed deja pedidos ya avanzados para que el mapa, el chat, las métricas y la disputa no partan vacíos.
 
-> MyWorksApp conecta usuarios con trabajadores de oficios del hogar. Esta versión demuestra el flujo completo del marketplace — descubrimiento, reserva, ejecución, chat y reputación — en una app móvil real. Los datos viven en el teléfono (SQLite). Para escalar se necesita backend, pagos reales y sincronización en la nube.
+## 1. Qué aplicar en la base, en este orden
 
----
+En el SQL Editor del proyecto (no hace falta repetir migraciones ya aplicadas; la última aplicada es `20261005000001_verificacion_profesional`):
 
-## Credenciales demo
+1. `myworksapp_app/supabase/migrations/20261006000001_gps_y_base_profesional.sql`
+2. `myworksapp_app/supabase/migrations/20261007000001_rls_indices_asesores.sql`
+3. `scripts/demo/seed_demo.sql`
 
-| Rol | Email | Contraseña |
-|-----|-------|------------|
-| Usuario | `usuario@demo.com` | `demo123` |
-| Trabajador | `trabajador@demo.com` | `demo123` |
+`20261007` no revoca `EXECUTE`. Ese cierre lo estás aplicando aparte; cuando pases el SQL, se commitea tal cual, sin duplicarlo.
 
-Otros trabajadores precargados: `pedro@demo.com`, `maria@demo.com` (misma contraseña).
+## 2. Edge Functions
 
-En login: botón **Entrar con demo** o selector **Usuario / Trabajador**.
+No desplegar `webpay-create-transaction` ni `webpay-commit-transaction`. No están en el repo y ningún cliente las llama. El camino vigente es `webpay-create` y `webpay-commit`.
 
----
+Desplegar la que aún no está en el proyecto:
 
-## Qué funciona en la demo
+```bash
+cd myworksapp_app
+npx supabase functions deploy invitar-colaborador --project-ref wxqrfcqifkfgawrnqmnj
+```
 
-| Funcionalidad | Estado |
-|---------------|--------|
-| Registro e inicio de sesión (usuario / trabajador) | ✅ Local |
-| 16 trabajadores demo con perfil, portafolio y tarifa | ✅ |
-| Catálogo de 8 categorías de servicio | ✅ |
-| Listado y filtro de trabajadores | ✅ |
-| Perfil del trabajador + agendar visita | ✅ |
-| Solicitud de servicio (mapa, fecha, descripción) | ✅ |
-| Aceptar / iniciar / completar trabajo | ✅ |
-| Chat por trabajo | ✅ |
-| Calificaciones y estadísticas | ✅ |
-| Notificaciones locales | ✅ |
+Secretos de esa función:
 
----
+| Secreto | Para la demo |
+|---|---|
+| `INVITE_PROVIDER` | `supabase` (por defecto). El correo sale por el SMTP de Auth. |
+| `RESEND_API_KEY` y `RESEND_FROM` | Solo si `INVITE_PROVIDER=resend`. |
+| `INVITE_REDIRECT_URL` | Opcional. Ej. `http://localhost:5173`. |
 
-## Limitaciones (decirlas con transparencia)
+Secretos de pago (integración, no producción):
 
-| Limitación | Explicación para la audiencia |
-|------------|-------------------------------|
-| **Un solo dispositivo** | Usuario y trabajador se demuestran cerrando sesión en el mismo teléfono |
-| **Sin backend** | No hay sync entre dos teléfonos distintos |
-| **Pagos mock (sin Webpay)** | Escrow simulado: garantía, liberación y reembolso en la app; no hay cobro bancario (Webpay en Chile requiere empresa constituida) |
-| **Trabajador nuevo registrado** | Puede crear perfil, pero **no aparece** en listados por categoría como los 16 demos |
-| **Videos del portafolio** | Miniaturas con icono play, no reproductor de video real |
-| **Mapas** | Requieren clave Google Maps configurada localmente |
+```bash
+npx supabase secrets set TBK_ENV=integration --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase secrets set WEBPAY_HANDOFF_SECRET=<cadena-aleatoria-de-32-o-mas> --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase secrets set WEBPAY_RETURN_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co/functions/v1/webpay-commit --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase secrets set WEBPAY_ALLOWED_RETURN_ORIGINS=http://localhost:5173,http://127.0.0.1:5173 --project-ref wxqrfcqifkfgawrnqmnj
+```
 
-**Recomendación:** usa cuentas demo y trabajadores precargados (ej. **Tomás IKEA Pro** en Armado de muebles).
+Si `TBK_COMMERCE_CODE` y `TBK_API_KEY` no están definidos y `TBK_ENV` no es `production`, la función usa el comercio público de integración de Transbank (`597055555532`). No pongas esas claves en la web, el escritorio ni Flutter.
 
----
+Funciones de pago que ya deben estar desplegadas (volver a desplegar solo si cambiaste su código): `webpay-create`, `webpay-commit`, `webpay-handoff`, `webpay-status`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-release`, `webpay-resolve-dispute`, `guest-checkout`, `oneclick-charge`, `oneclick-return`, `oneclick-handoff`.
 
-## Guión de demo (5–7 minutos)
+## 3. Cuentas (contraseña `Demo2026!` en todas)
 
-### Parte 1 — Cliente (3 min)
+| Quién | Correo | Rol |
+|---|---|---|
+| Cliente | `camila.soto@demo.myworksapp.cl` | usuario |
+| Cliente | `andres.pizarro@demo.myworksapp.cl` | usuario |
+| Gasfíter, Providencia | `pedro.rojas@demo.myworksapp.cl` | trabajador verificado |
+| Electricista, Las Condes | `maria.fuentes@demo.myworksapp.cl` | trabajador verificado |
+| Pintor, La Florida | `jose.munoz@demo.myworksapp.cl` | trabajador verificado |
+| Maestro, Maipú | `tomas.herrera@demo.myworksapp.cl` | trabajador verificado |
+| Aseo, Ñuñoa | `ana.vidal@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter en revisión, Santiago | `luis.contreras@demo.myworksapp.cl` | trabajador, no disponible |
+| Admin escritorio | `admin.ops@demo.myworksapp.cl` | administrador |
 
-1. Abre la app → **Login** → `usuario@demo.com` / `demo123`.
-2. En el home elige **Armado de muebles** (u otra categoría).
-3. Abre el perfil **Tomás IKEA Pro**.
-4. Muestra: foto, rating, tarifa de visita, descripción, **trabajos anteriores** (portafolio).
-5. Toca **Agendar visita** → confirma dirección y fecha.
-   - Alternativa: **Solicitar servicio** con mapa y descripción detallada.
-6. Menciona: *“El usuario ve precio de visita antes de confirmar.”*
+El escritorio pide un segundo factor la primera vez: escanea el QR con una app de códigos (Authenticator o similar) y guarda ese dispositivo para la demo.
 
-### Parte 2 — Trabajador (3 min)
+## 4. Tarjetas Transbank (integración)
 
-1. **Ajustes → Cerrar sesión**.
-2. Login → `trabajador@demo.com` / `demo123`.
-3. Pestaña **Pendientes** → acepta la solicitud creada (o la demo precargada).
-4. Avanza: **Iniciar trabajo** → **Completar**.
-5. Abre **Chat** con el cliente.
-6. Muestra **Estadísticas** del trabajador.
+En `https://webpay3gint.transbank.cl` cualquier fecha futura sirve. CVV `123` (American Express `1234`).
 
-### Parte 3 — Cierre (1 min)
+| Resultado | Marca | Número |
+|---|---|---|
+| Aprobada | Visa | `4051885600446623` |
+| Aprobada | Mastercard | `5186059559590568` |
+| Aprobada | Redcompra | `4051884239937763` |
+| Aprobada | American Express | `370000000002032` |
 
-1. Cierra sesión → vuelve como **usuario**.
-2. **Califica** el trabajo completado.
-3. Revisa **Historial** y **Notificaciones**.
+En la página de autenticación de prueba: RUT `11.111.111-1`, clave `123`.
 
-**Frase de cierre:**
+El commit deja el pago `retenido` en la base. **Recibo conforme** (web, en el seguimiento, o app) llama a `cerrar_trabajo_conforme` y el ledger pasa a `liberado`. Eso no es un segundo cargo. El reembolso de una disputa lo hace el admin con la función `webpay-resolve-dispute`.
 
-> “Hoy mostramos producto, modalidades de cobro y pago en garantía simulado. La siguiente fase es backend en la nube y, con empresa constituida, pasarela real (Webpay u otra).”
+## 5. Cómo levantar cada cliente
 
----
+Clave publicable (no es la `service_role`): la misma que ya usa la app en debug. En release hay que pasarla con `--dart-define`. No la copies a un ticket.
 
-## Demo para financista (puntos clave)
+Web:
 
-Enfatiza el **modelo de negocio implícito**:
+```bash
+cd myworksapp_web
+printf '%s\n' 'VITE_SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co' 'VITE_SUPABASE_ANON_KEY=<clave-publicable>' > .env.local
+npm install
+npm run dev
+```
 
-- **Tarifa de visita** visible antes de agendar (monetización por lead/visita).
-- **Marketplace bilateral** (demanda + oferta en una app).
-- **Reputación** (ratings, portafolio) como barrera de confianza.
-- **Datos locales** = prototipo; en producción → métricas, retención, GMV.
+Abre `http://localhost:5173`.
 
-No prometas: ingresos reales, usuarios activos en la nube, pagos procesados.
+Escritorio (hace falta Rust estable; el Cargo 1.83 del sistema no compila crates `edition2024`):
 
----
+```bash
+cd myworksapp_desktop
+printf '%s\n' 'VITE_SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co' 'VITE_SUPABASE_ANON_KEY=<clave-publicable>' > .env.local
+npm install
+npm run tauri:dev
+```
 
-## Demo para universidad
+Android (emulador o dispositivo con depuración USB):
 
-| Opción | Cómo |
-|--------|------|
-| **Proyectar tu teléfono** | AirPlay / cable HDMI — más fiable |
-| **QR Android** | Enlace al APK en GitHub Releases (ver [INSTALL.md](INSTALL.md)) |
-| **QR iPhone** | TestFlight (requiere Apple Developer ~99 USD/año) |
-| **Emulador en Mac** | `./scripts/run_ios.sh` proyectado |
+```bash
+cd myworksapp_app
+flutter pub get
+flutter run \
+  --dart-define=SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<clave-publicable>
+```
 
-Lleva una diapositiva con credenciales demo y el guión de arriba.
+En debug, si omites los `dart-define`, la app usa el proyecto de demo y la clave publicable que ya está en `lib/core/config/supabase_config.dart`. Un release sin esos defines se detiene a propósito.
 
----
+## 6. Guion (unos 20 minutos)
 
-## Registro de cuentas nuevas
+### Cliente en la web — pedido nuevo
 
-**Usuario nuevo:** funciona bien para mostrar onboarding. Tras registrarse, puede solicitar servicios y ver trabajadores demo.
+1. Entra como Camila.
+2. **Buscar servicio** → **Plomería**. En el mapa está Pedro Rojas, pin en Providencia (no un punto inventado en Las Condes).
+3. Elige a Pedro → **Continuar con la reserva**. Con sesión, el cobro usa la tarjeta inscrita o Webpay. Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
+4. Paga con la Visa de prueba. Al volver, el trabajo queda pendiente y el pago `retenido`.
 
-**Trabajador nuevo:** completa profesión y descripción → entra al dashboard. Para la demo en vivo, **prefiere `trabajador@demo.com`** (perfil completo, trabajos de ejemplo).
+### Profesional en la app — aceptar y GPS
 
----
+1. En el teléfono, entra como Pedro.
+2. Abre el pedido pendiente de Camila y acéptalo.
+3. **Voy en camino**. Acepta la ubicación solo en primer plano. El punto se publica como máximo cada 20 s o 40 m.
+4. En la web, Camila abre el seguimiento: el pin del profesional se mueve y la llegada es una estimación a 28 km/h.
+5. En el teléfono, pasa el trabajo a **en curso**. El GPS sigue mientras la app está abierta.
+6. Escribe en el chat. Camila lo ve en la web (**Abrir chat**).
 
-## Checklist antes de la presentación
+Para no depender del GPS del salón, el seed ya trae `demo-job-en-camino`: Camila puede abrir ese pedido en la app y ver a Pedro sobre el mapa, cerca de Irarrázaval.
 
-- [ ] App instalada y probada una vez completa
-- [ ] Credenciales demo funcionando
-- [ ] Batería del teléfono cargada
-- [ ] Modo avión desactivado (portafolio usa imágenes de red)
-- [ ] (Opcional) Clave Google Maps si mostrarás mapas
-- [ ] Diapositiva o tarjeta con emails/contraseñas demo
+### Conformidad y liberación
 
----
+1. El pedido `demo-job-conforme` (Ana Vidal, aseo en Ñuñoa) está en `esperando_aprobacion_cliente` con pago retenido.
+2. Camila lo abre en la app y toca **Recibo conforme**. En la web, el mismo botón aparece en el seguimiento cuando el pedido actual está en ese estado (el panel se refresca cada 8 s).
+3. El trabajo pasa a completado y el pago a `liberado`.
 
-## Más información
+### Escritorio
 
-- Qué tiene y qué falta: [ESTADO_DEL_PROYECTO.md](ESTADO_DEL_PROYECTO.md)
-- Instalación APK / iPhone: [INSTALL.md](INSTALL.md)
-- Documentación técnica: [README.md](README.md)
+1. Entra como `admin.ops@demo.myworksapp.cl` y completa el segundo factor.
+2. **Verificación:** Luis Contreras está `en_revision`. Apruébalo.
+3. **Soporte:** disputa `demo-disputa-1` (Camila, trabajo eléctrico a medias). Ciérrala desde el panel; el dinero no se mueve solo mientras sigue abierta.
+4. **Panel ejecutivo:** hay cobros retenidos y uno liberado (el muro de Tomás). Se ven GMV, comisión 15 %, completados, ticket y CSAT. En un rango sin datos el texto es «Sin cobros» o «Sin calificaciones».
+5. **RRHH:** invita un correo de prueba. Si Auth no tiene SMTP, la pantalla muestra el error de la función; no inventa un envío.
+
+## 7. Pedidos que deja el seed
+
+| Id | Estado | Para mostrar |
+|---|---|---|
+| `demo-job-pendiente` | pendiente | Pedro recibe el pedido de Camila |
+| `demo-job-aceptado` | aceptado | María ya aceptó a Andrés |
+| `demo-job-en-camino` | en camino + GPS | Pin en vivo sin caminar de verdad |
+| `demo-job-en-curso` | en curso + chat | Andrés y José |
+| `demo-job-conforme` | esperando conformidad | Botón Recibo conforme |
+| `demo-job-cerrado` | completado, pago liberado, nota 5 | Métricas |
+| `demo-job-disputa` | en curso + disputa abierta | Escritorio |
+
+Volver a correr `scripts/demo/seed_demo.sql` repone esos pedidos y la contraseña `Demo2026!`. No borra otras filas.

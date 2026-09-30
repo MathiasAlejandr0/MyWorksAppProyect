@@ -135,7 +135,7 @@ export function SearchResultsView({
             <label className="filter-label">
               <MapPin size={14} /> Ubicación
             </label>
-            <select className="filter-select" defaultValue="condes">
+            <select className="filter-select" defaultValue="all" aria-label="Ubicación">
               <option value="all">Todas las ubicaciones</option>
               <option value="condes">Las Condes, Santiago</option>
               <option value="providencia">Providencia</option>

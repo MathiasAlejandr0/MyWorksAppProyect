@@ -177,7 +177,7 @@ cd myworksapp_app
 supabase db push
 ```
 
-La migración `20261005000001_verificacion_profesional.sql` agrega `estado_verificacion` y el bucket privado `verificacion-profesional`. La `20261006000001_gps_y_base_profesional.sql` agrega la ubicación base del profesional, el estado `en_camino` y la tabla `ubicacion_en_vivo`. Sin aplicarlas, el resto de la app sigue funcionando y esas pantallas muestran el error. No hace falta una variable de entorno nueva para el mapa: el cliente usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (web y escritorio) o `--dart-define=SUPABASE_URL` y `SUPABASE_ANON_KEY` (Flutter). Pagos reales: `TBK_COMMERCE_CODE`, `TBK_API_KEY` y `TBK_ENV` solo en los secretos de las Edge Functions, nunca en el cliente.
+`20261005000001_verificacion_profesional.sql` ya está aplicada en el proyecto `wxqrfcqifkfgawrnqmnj`. Falta aplicar, en este orden, `20261006000001_gps_y_base_profesional.sql` (ubicación base, `en_camino`, GPS; la matriz de estados conserva el flujo de pago y solo agrega en camino) y `20261007000001_rls_indices_asesores.sql` (initplan, políticas duplicadas e índices). El guion y las cuentas de la demo están en `DEMO.md`. El SQL de datos de prueba es `scripts/demo/seed_demo.sql` y no forma parte de las migraciones. El cliente usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (web y escritorio) o `--dart-define=SUPABASE_URL` y `SUPABASE_ANON_KEY` (Flutter). Pagos de integración: `TBK_ENV=integration`; `TBK_COMMERCE_CODE` y `TBK_API_KEY` solo en secretos de Edge Functions. `WEBPAY_HANDOFF_SECRET` es obligatorio.
 
 Invitaciones de RRHH (función `invitar-colaborador`, solo un administrador):
 
