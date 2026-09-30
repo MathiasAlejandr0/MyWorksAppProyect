@@ -29,6 +29,8 @@ type LandingHomeProps = {
   openCategory: (cat: ServiceCategory) => void;
   showAuth: boolean;
   availableCategoryIds: ReadonlySet<string> | null;
+  checkoutNotice?: string | null;
+  clearCheckoutNotice?: () => void;
 };
 
 export function LandingHome({
@@ -43,6 +45,8 @@ export function LandingHome({
   openCategory,
   showAuth,
   availableCategoryIds,
+  checkoutNotice = null,
+  clearCheckoutNotice,
 }: LandingHomeProps) {
   const featuredCategories = categoriesWithPros(
     FEATURED_CATEGORIES,
@@ -141,6 +145,19 @@ export function LandingHome({
       </nav>
 
 
+
+      {checkoutNotice && (
+        <div className="auth-banner container page-fade-in" role="alert">
+          <p>{checkoutNotice}</p>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => clearCheckoutNotice?.()}
+          >
+            Entendido
+          </button>
+        </div>
+      )}
 
       {authError && (
 

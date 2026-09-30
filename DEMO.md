@@ -20,20 +20,16 @@ En el SQL Editor del proyecto. Ya están aplicadas, con otros nombres de versió
 - `20261008000002` a `20261008000006` (ya en vivo: perfiles públicos, origen de retorno, disputas, precios, pagos abandonados)
 - `20261008000007_trabajadores_update_por_columna.sql` (ya en vivo: `REVOKE UPDATE` de tabla y `GRANT UPDATE` por columna, salvo calificación y verificación)
 - `20261008000008_trabajos_insert_sin_recursion.sql` (ya en vivo: `trabajador_reservable` y `trabajos_insert` sin la recursión 42P17; `texto_a_timestamptz` con `search_path = public`)
+- `20261008000009_catalogo_verificado_y_pago_bloqueado.sql` (ya en vivo) y el `REVOKE INSERT, DELETE, TRUNCATE` de `anon` sobre `trabajadores`
 
-No vuelvas a correr `000007` ni `000008`. El archivo `000007` del repo incluye un `REVOKE` que todavía no está en vivo. Aplícalo solo:
-
-```sql
-REVOKE INSERT, DELETE, TRUNCATE ON TABLE public.trabajadores FROM anon;
-```
+No vuelvas a correr `000007`, `000008` ni `000009`.
 
 Falta aplicar, en el SQL Editor, antes de la demo:
 
-1. Ese `REVOKE` de anon, si la base todavía deja a `anon` insertar, borrar o truncar `trabajadores`.
-2. `myworksapp_app/supabase/migrations/20261008000009_catalogo_verificado_y_pago_bloqueado.sql` (el catálogo y las categorías exigen `estado_verificacion = 'verificado'`; `crear_intencion_pago` y `crear_intencion_pago_servicio` hacen `SELECT … FOR UPDATE` sobre el trabajo).
-3. Volver a correr `scripts/demo/seed_demo.sql`. El conflicto ya no pisa `calificacion` con el número fijo. Después de insertar las notas, el promedio sale de `calificaciones` con la misma fórmula que `refrescar_calificacion_trabajador`.
+1. `myworksapp_app/supabase/migrations/20261008000010_anon_referencias_y_tarifa_publicada.sql`. Quita `REFERENCES` y `TRIGGER` de `anon` en `trabajadores`. El catálogo devuelve `trabajos_completados`. `monto_esperado_trabajo` dice «Este profesional todavía no está verificado para cobrar» si el profesional no está verificado, y si el pedido es una invitación por tarifa cobra el precio publicado en `niveles_precio`.
+2. Volver a correr `scripts/demo/seed_demo.sql`. Restaura la calificación del seed y, si hay notas, la pisa con el promedio real. Cada profesional verificado de la demo queda con trabajos `completado` y notas que promedian su tarjeta (Pedro, 4.8 en 5 trabajos). También deja `niveles_precio` con las tarifas que muestra la app.
 
-Después corre `docs/PRUEBAS_RLS_20261008.sql`, `docs/PRUEBAS_RLS_20261009.sql`, `docs/PRUEBAS_RLS_20261010.sql` y `docs/PRUEBAS_RLS_20261011.sql`. Tienen que terminar en `RLS 20261008 ok`, `RLS 20261009 ok`, `RLS 20261010 ok` y `RLS 20261011 ok`. Los de 20261009, 20261010 y 20261011 hacen `ROLLBACK`. El de 20261011 falla si falta el `REVOKE` de anon o si falta `000009`.
+Después corre `docs/PRUEBAS_RLS_20261008.sql`, `docs/PRUEBAS_RLS_20261009.sql`, `docs/PRUEBAS_RLS_20261010.sql` y `docs/PRUEBAS_RLS_20261011.sql`. Tienen que terminar en `RLS 20261008 ok`, `RLS 20261009 ok`, `RLS 20261010 ok` y `RLS 20261011 ok`. Los de 20261009, 20261010 y 20261011 hacen `ROLLBACK`. El de 20261011 falla si falta `000010`.
 
 `20261008000005` deja dos interruptores en `public.app_config`:
 
@@ -80,7 +76,7 @@ npx supabase migration repair --status applied 20261007000004 --project-ref wxqr
 npx supabase migration repair --status applied 20261008000001 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
-`20261008000001` a `20261008000008` ya están aplicadas: no las vuelvas a correr. El `repair` solo marca el historial local; no ejecuta el SQL. Repara `20261008000007` y `20261008000008` para alinear el historial con lo que ya está en vivo. Repara `20261008000009` **solo después** de aplicar ese archivo en el SQL Editor:
+`20261008000001` a `20261008000009` ya están aplicadas: no las vuelvas a correr. El `repair` solo marca el historial local; no ejecuta el SQL. Repara `20261008000010` **solo después** de aplicar ese archivo en el SQL Editor:
 
 ```bash
 cd myworksapp_app
@@ -92,6 +88,7 @@ npx supabase migration repair --status applied 20261008000006 --project-ref wxqr
 npx supabase migration repair --status applied 20261008000007 --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase migration repair --status applied 20261008000008 --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase migration repair --status applied 20261008000009 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261008000010 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
 Si el dashboard muestra otra cadena de versión, usa esa en `migration repair` y no la de esta lista. No borres las filas de nombre corto. No hagas push a `main`.
@@ -163,11 +160,11 @@ npx supabase functions deploy webpay-refund-rejection --project-ref wxqrfcqifkfg
 npx supabase functions deploy webpay-resolve-dispute --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
-`definir-clave-invitado` no pide JWT. El enlace dura 15 minutos, exige el nonce del `sessionStorage` del navegador que pagó y solo se quema cuando la cuenta ya se cargó y la clave quedó guardada. Un error al leer la cuenta no consume el ticket.
+`definir-clave-invitado` no pide JWT. El enlace dura 15 minutos y exige el nonce del `sessionStorage` del navegador que pagó. La cuenta se lee antes de tocar el ticket. Después un solo `UPDATE` con `alta_consumido_en` vacío se queda el enlace: dos pedidos a la vez no pueden guardar dos claves. Si guardar la clave o el correo de alta falla, ese `UPDATE` se revierte y el enlace sigue sirviendo.
 
-Con `app_config.demo_modo = 1` (la demo y la integración) esa función marca el correo como confirmado: el ticket de un solo uso, atado al nonce, prueba el navegador que pagó. La pantalla dice «Contraseña lista. Entra con tu correo en la próxima visita.» Con `demo_modo = 0` el correo sigue sin confirmar, se dispara el correo de alta de Auth (`auth.resend` tipo `signup`) y la pantalla dice «Te enviamos un correo para confirmar.» Si ese envío falla, el ticket sigue válido. En el login de la web, si Auth responde `Email not confirmed`, aparece **Reenviar correo de confirmación**.
+Con `app_config.demo_modo = 1` (la demo y la integración) esa función marca el correo como confirmado. La pantalla dice «Contraseña lista. Entra con tu correo en la próxima visita.» Con `demo_modo = 0` el correo sigue sin confirmar, se dispara el correo de alta y la pantalla dice «Te enviamos un correo para confirmar.» En el login, si el correo no está confirmado, el aviso está en español y aparece **Reenviar correo de confirmación**.
 
-Hay que redesplegar `webpay-commit` (el ticket de invitado solo sale si este request pasó el pago de `pendiente` a `retenido`) y `definir-clave-invitado` con los comandos de arriba. Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita.
+`webpay-commit` ya está en vivo (el ticket solo sale si este request retuvo el pago). Antes de la demo redesplega `definir-clave-invitado` y `guest-checkout` (este último dice en español cuando el profesional no está verificado). Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita.
 
 Un pago con tarjeta de prueba y la liberación del escrow ya se probaron de punta a punta en vivo: Webpay autorizó, el cobro quedó `retenido` y la conformidad lo pasó a `liberado`. Ese camino no se anula.
 
@@ -264,9 +261,12 @@ En debug, si omites los `dart-define`, la app usa el proyecto de demo y la clave
 ### Cliente en la web — pedido nuevo
 
 1. Entra como Camila.
-2. **Buscar servicio** → **Plomería**. En el mapa está Pedro Rojas, pin en Providencia (no un punto inventado en Las Condes).
-3. Elige a Pedro → **Continuar con la reserva**. Con sesión y tarjeta inscrita en la app, se cobra Oneclick. Con sesión y sin tarjeta, el sitio abre Webpay Plus (la tarjeta se escribe en Transbank, el mismo escrow retenido). Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
-4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña** (mínimo 8, letra y número). Con `demo_modo = 1` el correo queda confirmado y el texto es «Contraseña lista. Entra con tu correo en la próxima visita.»
+2. **Buscar servicio** → **Plomería**. En el mapa está Pedro Rojas, pin en Providencia. La tarjeta dice **4.8** y **5 trabajos** (el promedio de sus visitas cerradas en el seed, no un cero).
+3. Elige a Pedro → **Continuar con la reserva**. El monto es la tarifa de visita, $35.000. Con sesión y tarjeta inscrita en la app, se cobra Oneclick. Con sesión y sin tarjeta, el sitio abre Webpay Plus. Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
+4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña**. Con `demo_modo = 1` el correo queda confirmado y el texto es «Contraseña lista. Entra con tu correo en la próxima visita.» El invitado entra con el correo y la clave que acaba de crear.
+5. Si en Transbank se cancela, la vuelta es `http://localhost:5173/?pago=fail` y la portada muestra «Pago cancelado. No se realizó ningún cargo.» El pedido queda cancelado. Se elige de nuevo al profesional.
+
+En la app, una invitación por tarifa cobra el precio publicado en `niveles_precio` (por ejemplo «Arreglo menor» de Pedro, $28.000), el mismo que valida el servidor. Luis Contreras sigue `en_revision`: intentar pagarle responde «Este profesional todavía no está verificado para cobrar», no un aviso de tarifa faltante.
 
 ### Profesional en la app — aceptar y GPS
 
@@ -322,7 +322,10 @@ Si algo del pago en vivo se traba, no improvises producción.
 | La app rechaza el pedido con profesional | El alta con profesional va en `esperando_pago` (o `esperando_cotizaciones`) y después el pago. `pendiente` con profesional lo niega `trabajos_insert`. Hace falta `20261008000008` en vivo y esta rama de la app. |
 | El catálogo muestra Ana Volt u otros nombres que no son `@demo` | Vuelve a correr el seed. Esos perfiles quedan no disponibles. |
 | Armado, Gasfitería u otro oficio sale vacío | Vuelve a correr el seed después de `20261008000006`. Tiene que haber un profesional verificado por cada categoría de la web. Si una categoría queda en cero, la portada la oculta; al abrirla, el texto es «Todavía no hay profesionales». |
-| Al cancelar en Webpay el pedido sigue en esperando pago | Redesplega `webpay-commit` y aplica `20261008000006`. El cobro pendiente pasa a `anulado` o `fallido` y el trabajo a `cancelado`. |
+| Al cancelar en Webpay no aparece ningún aviso | La portada tiene que mostrar «Pago cancelado. No se realizó ningún cargo.» Hace falta esta rama de la web. El cobro queda `anulado` y el trabajo `cancelado` con `webpay-commit` ya desplegado. |
+| Pagar a Luis dice que no hay tarifa | Aplica `20261008000010` y redesplega `guest-checkout`. El texto es «Este profesional todavía no está verificado para cobrar». |
+| La app rechaza el pago de una tarifa publicada | Aplica `20261008000010` y vuelve a correr el seed, que llena `niveles_precio`. El monto del checkout es esa tarifa, sin recargo de comuna. |
+| Pedro sale con 0 trabajos o la nota no es 4.8 | Vuelve a correr el seed. Tiene 5 trabajos completados y notas que promedian 4.8. |
 | `definir-clave-invitado` responde 503 | Esa función en el proyecto es el stub viejo. Redesplega la de esta rama. |
 | La disputa no se abre | Aplica `20261008000004`. Cliente y profesional usan **Abrir disputa**; el comentario va por `comentar_disputa`. Resolver solo desde el escritorio admin. |
 | El mapa no tiene GPS del salón | Abre en la app el pedido `demo-job-en-camino` (Camila y Pedro, Irarrázaval). |

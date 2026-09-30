@@ -80,9 +80,10 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_policy p
     JOIN pg_class c ON c.oid = p.polrelid
-    WHERE c.relname = 'propuestas_cotizacion' AND p.polname = 'propuestas_all'
+    WHERE c.relname = 'propuestas_cotizacion' AND p.polname = 'propuestas_insert'
   ) THEN
-    RAISE EXCEPTION 'falta propuestas_all';
+    -- 20261008000005 reemplazó propuestas_all por propuestas_insert (solo trabajador).
+    RAISE EXCEPTION 'falta propuestas_insert';
   END IF;
 
   SELECT string_agg(p.polname, ', ') INTO faltan

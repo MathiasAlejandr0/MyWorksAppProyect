@@ -14,6 +14,7 @@ const pedro = {
   longitud_base: -70.6093,
   radio_servicio_km: 12,
   origen_base: 'mapa',
+  trabajos_completados: 5,
 };
 
 const servicio = {
@@ -102,6 +103,7 @@ test('demo web: catálogo con coordenada real y pedido sin tarjeta en el sitio',
 
   const card = page.locator('.pro-card', { hasText: 'Pedro Rojas' });
   await expect(card).toBeVisible({ timeout: 15_000 });
+  await expect(card).toContainText('5 trabajos');
   await expect(page.locator('.mwa-map-pin')).toHaveCount(1);
 
   await card.click();

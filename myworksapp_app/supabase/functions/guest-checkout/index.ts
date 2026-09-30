@@ -143,10 +143,16 @@ Deno.serve(async (req) => {
     if (workerErr || !worker) {
       return jsonResponse(req, { error: "Profesional no encontrado" }, 404);
     }
+    if (worker.estado_verificacion !== "verificado") {
+      return jsonResponse(
+        req,
+        { error: "Este profesional todavía no está verificado para cobrar" },
+        400,
+      );
+    }
     if (
       Number(worker.disponible) !== 1 ||
-      Number(worker.precios_configurados) !== 1 ||
-      worker.estado_verificacion !== "verificado"
+      Number(worker.precios_configurados) !== 1
     ) {
       return jsonResponse(req, { error: "El profesional no está disponible" }, 400);
     }

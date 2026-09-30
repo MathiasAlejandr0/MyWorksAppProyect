@@ -51,7 +51,7 @@ export function parseCheckoutReturn(search: string): CheckoutReturn {
         ? 'No se guardó la tarjeta. Puedes confirmar el pedido de nuevo.'
         : motivo === 'cobro'
           ? 'La tarjeta quedó guardada, pero el banco no autorizó este cobro. Confirma el pedido otra vez.'
-          : 'El pago no se completó y el pedido quedó cancelado. Puedes elegir de nuevo un profesional desde la búsqueda.';
+          : 'Pago cancelado. No se realizó ningún cargo.';
     return { kind: 'failed', message };
   }
   return { kind: 'none' };

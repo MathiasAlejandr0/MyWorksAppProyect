@@ -170,6 +170,8 @@ BEGIN
   ON CONFLICT (id_usuario) DO UPDATE SET
     profesion = EXCLUDED.profesion,
     descripcion = EXCLUDED.descripcion,
+    -- Vuelve al número del seed. Más abajo se pisa con el promedio si hay notas reales.
+    calificacion = EXCLUDED.calificacion,
     disponible = EXCLUDED.disponible,
     tarifa_visita = EXCLUDED.tarifa_visita,
     categoria_servicio = EXCLUDED.categoria_servicio,
@@ -193,6 +195,28 @@ BEGIN
   FROM public.perfiles p
   WHERE p.id = t.id_usuario
     AND COALESCE(p.correo, '') NOT ILIKE '%@demo.myworksapp.cl';
+
+  -- Tarifas que la app muestra y que monto_esperado_trabajo lee del servidor.
+  UPDATE public.trabajadores t
+  SET niveles_precio = v.tiers::jsonb
+  FROM (
+    VALUES
+      ('plomeria', '{"plumbing_minor":28000,"plumbing_install":48000,"plumbing_project":90000}'),
+      ('electricidad', '{"electrical_point":24000,"electrical_multiple":48000,"electrical_major":85000,"electrical_per_sqm":18000}'),
+      ('limpieza', '{"cleaning_one_room":22000,"cleaning_apartment":45000,"cleaning_deep":65000}'),
+      ('jardineria', '{"garden_small":35000,"garden_medium":65000,"garden_large":95000}'),
+      ('construccion', '{"construction_patch":38000,"construction_half_day":62000,"construction_project":120000,"construction_per_sqm":45000}'),
+      ('ensamblaje', '{"small_furniture":25000,"medium_furniture":45000,"large_furniture":75000}'),
+      ('soporte_tecnico', '{"tech_single":25000,"tech_multi":45000,"tech_network":70000}'),
+      ('mudanza', '{"moving_few":35000,"moving_apartment":85000,"moving_house":150000}'),
+      ('pintura', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}'),
+      ('gasfiteria', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}'),
+      ('cerrajeria', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}'),
+      ('climatizacion', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}')
+  ) AS v(categoria, tiers)
+  JOIN public.perfiles p ON p.id = t.id_usuario
+  WHERE p.correo ILIKE '%@demo.myworksapp.cl'
+    AND t.categoria_servicio = v.categoria;
 
   IF EXISTS (
     SELECT 1
@@ -394,6 +418,90 @@ BEGIN
     'El muro quedó parejo y se llevó los escombros.',
     v_now
   );
+
+  -- Cada nota publicada sale de trabajos completados. n_cincos son 5 y el resto 4,
+  -- para que el promedio coincida con la calificación del seed (Tomás suma la nota 5 de arriba).
+  CREATE TEMP TABLE demo_notas (
+    slug text,
+    email text,
+    categoria text,
+    n_notas int,
+    n_cincos int,
+    lat float8,
+    lng float8
+  ) ON COMMIT DROP;
+
+  INSERT INTO demo_notas (slug, email, categoria, n_notas, n_cincos, lat, lng)
+  VALUES
+    ('pedro', 'pedro.rojas@demo.myworksapp.cl', 'plomeria', 5, 4, -33.4314, -70.6093),
+    ('maria', 'maria.fuentes@demo.myworksapp.cl', 'electricidad', 10, 9, -33.4172, -70.5476),
+    ('jose', 'jose.munoz@demo.myworksapp.cl', 'pintura', 5, 3, -33.5225, -70.5980),
+    ('tomas', 'tomas.herrera@demo.myworksapp.cl', 'construccion', 9, 6, -33.5111, -70.7580),
+    ('ana', 'ana.vidal@demo.myworksapp.cl', 'limpieza', 10, 9, -33.4569, -70.5978),
+    ('diego', 'diego.salazar@demo.myworksapp.cl', 'ensamblaje', 10, 7, -33.4489, -70.6506),
+    ('carmen', 'carmen.lagos@demo.myworksapp.cl', 'gasfiteria', 5, 4, -33.4969, -70.6514),
+    ('felipe', 'felipe.araya@demo.myworksapp.cl', 'jardineria', 5, 3, -33.4455, -70.5410),
+    ('rodrigo', 'rodrigo.pena@demo.myworksapp.cl', 'cerrajeria', 10, 7, -33.4518, -70.6793),
+    ('isabel', 'isabel.campos@demo.myworksapp.cl', 'soporte_tecnico', 10, 9, -33.4265, -70.6148),
+    ('hugo', 'hugo.vargas@demo.myworksapp.cl', 'mudanza', 2, 1, -33.4330, -70.6900),
+    ('paula', 'paula.riquelme@demo.myworksapp.cl', 'climatizacion', 5, 4, -33.4100, -70.5750);
+
+  INSERT INTO public.trabajos (
+    id, id_usuario, id_trabajador, id_servicio, estado, estado_pago, direccion,
+    descripcion, latitud, longitud, modalidad_cobro, creado_en, actualizado_en
+  )
+  SELECT
+    'demo-job-nota-' || n.slug || '-' || g.i,
+    (SELECT uid FROM demo_cuentas WHERE email = CASE WHEN g.i % 2 = 0
+      THEN 'camila.soto@demo.myworksapp.cl'
+      ELSE 'andres.pizarro@demo.myworksapp.cl' END),
+    (SELECT uid FROM demo_cuentas WHERE email = n.email),
+    (
+      SELECT s.id FROM public.servicios s
+      WHERE s.categoria = n.categoria AND COALESCE(s.activo, 0) = 1
+      ORDER BY s.creado_en NULLS LAST
+      LIMIT 1
+    ),
+    'completado',
+    'liberado',
+    'Trabajo cerrado de la demo, Santiago',
+    'Visita cerrada para la calificación publicada.',
+    n.lat,
+    n.lng,
+    'precio_fijo',
+    v_now,
+    v_now
+  FROM demo_notas n
+  JOIN LATERAL generate_series(1, n.n_notas) AS g(i) ON true;
+
+  INSERT INTO public.pagos (
+    id, id_trabajo, monto, moneda, estado, tipo_pago, metodo_pago, creado_en, actualizado_en
+  )
+  SELECT
+    'demo-pago-nota-' || n.slug || '-' || g.i,
+    'demo-job-nota-' || n.slug || '-' || g.i,
+    25000,
+    'CLP',
+    'liberado',
+    'principal',
+    'webpay',
+    v_now,
+    v_now
+  FROM demo_notas n
+  JOIN LATERAL generate_series(1, n.n_notas) AS g(i) ON true;
+
+  INSERT INTO public.calificaciones (id, id_trabajo, id_usuario, puntaje, comentario, creado_en)
+  SELECT
+    'demo-rating-' || n.slug || '-' || g.i,
+    'demo-job-nota-' || n.slug || '-' || g.i,
+    (SELECT uid FROM demo_cuentas WHERE email = CASE WHEN g.i % 2 = 0
+      THEN 'camila.soto@demo.myworksapp.cl'
+      ELSE 'andres.pizarro@demo.myworksapp.cl' END),
+    CASE WHEN g.i <= n.n_cincos THEN 5 ELSE 4 END,
+    'Trabajo de la demo.',
+    v_now
+  FROM demo_notas n
+  JOIN LATERAL generate_series(1, n.n_notas) AS g(i) ON true;
 
   -- Misma fórmula que refrescar_calificacion_trabajador. Si hay notas reales,
   -- no se pisa el promedio con el número fijo del seed.

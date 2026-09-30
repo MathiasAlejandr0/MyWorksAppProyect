@@ -32,6 +32,14 @@ describe('parseCheckoutReturn', () => {
     }
   });
 
+  it('avisa en español cuando el invitado cancela en Webpay', () => {
+    const result = parseCheckoutReturn('?pago=fail');
+    assert.equal(result.kind, 'failed');
+    if (result.kind === 'failed') {
+      assert.equal(result.message, 'Pago cancelado. No se realizó ningún cargo.');
+    }
+  });
+
   it('explica un cobro rechazado', () => {
     const result = parseCheckoutReturn('?pago=fail&motivo=cobro');
     assert.equal(result.kind, 'failed');

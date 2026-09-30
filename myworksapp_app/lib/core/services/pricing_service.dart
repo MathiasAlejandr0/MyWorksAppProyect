@@ -167,7 +167,8 @@ class PricingService {
     final baseTotal = unit == WorkerPriceUnit.perSqm && (squareMeters ?? 0) > 0
         ? rate * squareMeters!
         : amountClp;
-    final subtotal = (baseTotal * factor).round();
+    // El servidor cobra la tarifa publicada en niveles_precio, sin recargo de comuna.
+    final subtotal = baseTotal;
     final fee = serviceFeeFor(subtotal);
     final unitLabel = unit == WorkerPriceUnit.perSqm ? 'por m²' : 'precio fijo';
     final m2 = squareMeters ?? 0;

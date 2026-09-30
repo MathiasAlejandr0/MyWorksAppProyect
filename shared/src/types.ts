@@ -43,6 +43,8 @@ export interface WorkerWithProfile extends WorkerRow {
   name: string;
   profilePhotoPath?: string | null;
   email?: string;
+  /** Trabajos completados que devuelve el catálogo. */
+  completedJobs?: number;
 }
 
 export interface JobRow {

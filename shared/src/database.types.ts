@@ -1272,6 +1272,7 @@ export type Database = {
           longitud_base: number | null
           radio_servicio_km: number | null
           origen_base: string | null
+          trabajos_completados: number | null
         }[]
       }
       publicar_ubicacion_trabajo: {

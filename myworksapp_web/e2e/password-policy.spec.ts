@@ -89,7 +89,7 @@ test('el login reenvía la confirmación si el correo no está confirmado', asyn
   await page.getByPlaceholder('Email').fill('invitado@demo.myworksapp.cl');
   await page.getByPlaceholder('Contraseña').fill('Demo2026!');
   await page.getByRole('button', { name: 'Entrar' }).click();
-  await expect(page.getByRole('alert')).toContainText(/email not confirmed/i);
+  await expect(page.getByRole('alert')).toContainText(/confirma tu correo/i);
   await page.getByRole('button', { name: 'Reenviar correo de confirmación' }).click();
   await expect.poll(() => resendCalls).toBe(1);
   await expect(page.getByRole('status')).toHaveText('Te enviamos un correo para confirmar.');

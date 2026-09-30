@@ -1,8 +1,8 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import {
   guestPasswordConfirmPlan,
+  paymentHoldTransitioned,
   sha256Hex,
-  shouldConsumeGuestTicket,
 } from "../_shared/guest_ticket.ts";
 import {
   allowRate,
@@ -83,11 +83,31 @@ Deno.serve(async (req) => {
       .maybeSingle();
     const plan = guestPasswordConfirmPlan(String(modeRow?.valor || "") === "1");
 
+    const claimedAt = new Date().toISOString();
+    const claimed = await admin
+      .from("pagos")
+      .update({ alta_consumido_en: claimedAt })
+      .eq("id", pago.id)
+      .is("alta_consumido_en", null)
+      .select("id");
+    if (!paymentHoldTransitioned(claimed)) {
+      return jsonResponse(req, { error: "Este enlace ya no sirve" }, 403);
+    }
+
+    const releaseClaim = async () => {
+      await admin
+        .from("pagos")
+        .update({ alta_consumido_en: null })
+        .eq("id", pago.id)
+        .eq("alta_consumido_en", claimedAt);
+    };
+
     const { error: updErr } = await admin.auth.admin.updateUserById(verified.userId, {
       password,
       email_confirm: plan.emailConfirmed,
     });
-    if (updErr || !shouldConsumeGuestTicket({ userLoaded: true, passwordSaved: !updErr })) {
+    if (updErr) {
+      await releaseClaim();
       return jsonResponse(req, { error: "No se pudo guardar la contraseña" }, 400);
     }
 
@@ -97,6 +117,7 @@ Deno.serve(async (req) => {
         email: owner.user.email,
       });
       if (resendErr) {
+        await releaseClaim();
         return jsonResponse(req, { error: "No se pudo enviar el correo de confirmación" }, 502);
       }
     }
@@ -105,17 +126,8 @@ Deno.serve(async (req) => {
       user_metadata: { ...meta, guest_checkout: false },
     });
     if (metaErr) {
+      await releaseClaim();
       return jsonResponse(req, { error: "No se pudo guardar la contraseña" }, 400);
-    }
-
-    const consumed = await admin
-      .from("pagos")
-      .update({ alta_consumido_en: new Date().toISOString() })
-      .eq("id", pago.id)
-      .is("alta_consumido_en", null)
-      .select("id");
-    if (consumed.error || !consumed.data?.length) {
-      return jsonResponse(req, { error: "Este enlace ya no sirve" }, 403);
     }
 
     return jsonResponse(req, { ok: true, emailConfirmed: plan.emailConfirmed });

@@ -24,6 +24,7 @@ type WorkerQueryRow = {
   longitud_base?: number | null;
   radio_servicio_km?: number | null;
   origen_base?: string | null;
+  trabajos_completados?: number | null;
   nombre?: string | null;
   ruta_foto_perfil?: string | null;
   perfiles?:
@@ -70,6 +71,7 @@ function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
     baseOrigin: row.origen_base ?? null,
     name: row.nombre ?? profileRow?.nombre ?? 'Profesional',
     profilePhotoPath: row.ruta_foto_perfil ?? profileRow?.ruta_foto_perfil,
+    completedJobs: Number(row.trabajos_completados ?? 0),
   };
 }
 
@@ -210,7 +212,7 @@ export function toWebWorkerCard(worker: WorkerWithProfile, jobsDone = 0): WebWor
     profession: worker.profession,
     category: worker.serviceCategory,
     rating: worker.rating,
-    jobsDone,
+    jobsDone: jobsDone || worker.completedJobs || 0,
     photoUrl: listPhotoUrl(worker.profilePhotoPath),
     pricePerVisit: worker.visitFee,
     latitude: worker.baseLatitude ?? null,

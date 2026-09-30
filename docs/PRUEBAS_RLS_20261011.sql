@@ -1,8 +1,8 @@
--- Afirmaciones de 20261008000009 y del REVOKE extra de anon en trabajadores.
+-- Afirmaciones de 20261008000009, 20261008000010 y del REVOKE extra de anon.
 -- 000007 y 000008 ya están en vivo. Este archivo no las vuelve a aplicar.
 -- Corre en una transacción que hace ROLLBACK: no deja filas de prueba.
 -- Si algo falla, el bloque DO lanza y no aparece la línea OK.
--- Aplicar antes 20261008000009 y:
+-- Aplicar antes 20261008000009, 20261008000010 y:
 --   REVOKE INSERT, DELETE, TRUNCATE ON TABLE public.trabajadores FROM anon;
 
 BEGIN;
@@ -18,6 +18,10 @@ BEGIN
   IF position('estado_verificacion' in v_def) = 0
      OR position('verificado' in v_def) = 0 THEN
     RAISE EXCEPTION 'el catálogo no filtra estado_verificacion = verificado';
+  END IF;
+  IF position('trabajos_completados' in v_def) = 0
+     OR position('completado' in v_def) = 0 THEN
+    RAISE EXCEPTION 'el catálogo no cuenta trabajos completados';
   END IF;
 
   SELECT pg_get_functiondef('public.categorias_con_disponibles()'::regprocedure)
@@ -72,6 +76,21 @@ BEGIN
      OR has_table_privilege('anon', 'public.trabajadores', 'TRUNCATE')
   THEN
     RAISE EXCEPTION 'anon conserva INSERT, DELETE o TRUNCATE en trabajadores';
+  END IF;
+
+  SELECT pg_get_functiondef('public.monto_esperado_trabajo(public.trabajos)'::regprocedure)
+  INTO v_def;
+  IF position('no está verificado' in v_def) = 0 THEN
+    RAISE EXCEPTION 'monto_esperado no distingue un profesional sin verificar';
+  END IF;
+  IF position('niveles_precio' in v_def) = 0 THEN
+    RAISE EXCEPTION 'monto_esperado no lee la tarifa publicada';
+  END IF;
+
+  IF has_table_privilege('anon', 'public.trabajadores', 'REFERENCES')
+     OR has_table_privilege('anon', 'public.trabajadores', 'TRIGGER')
+  THEN
+    RAISE EXCEPTION 'anon conserva REFERENCES o TRIGGER en trabajadores';
   END IF;
 
   IF EXISTS (

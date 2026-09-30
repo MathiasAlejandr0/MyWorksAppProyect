@@ -39,7 +39,7 @@ final class EmailAlreadyRegisteredException extends AppAuthException {
 final class EmailConfirmationRequiredException extends AppAuthException {
   const EmailConfirmationRequiredException([Object? cause])
       : super(
-          'Cuenta creada. Revisa tu correo para confirmarla antes de iniciar sesión.',
+          'Confirma tu correo antes de entrar. Revisa la bandeja o reenvía el correo.',
           cause: cause,
         );
 }

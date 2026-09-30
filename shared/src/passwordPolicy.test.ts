@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { isEmailNotConfirmed, signUpUser, updateAccountPassword } from './auth.ts';
+import {
+  isEmailNotConfirmed,
+  signUpUser,
+  translateAuthError,
+  updateAccountPassword,
+} from './auth.ts';
 import {
   authLinkRequiresPassword,
   passwordPolicyMessage,
@@ -74,6 +79,20 @@ describe('isEmailNotConfirmed', () => {
   it('reconoce el error de Auth y deja pasar el resto', () => {
     assert.equal(isEmailNotConfirmed('Email not confirmed'), true);
     assert.equal(isEmailNotConfirmed('email not confirmed'), true);
+    assert.equal(isEmailNotConfirmed('Confirma tu correo antes de entrar.'), true);
     assert.equal(isEmailNotConfirmed('Invalid login credentials'), false);
+  });
+});
+
+describe('translateAuthError', () => {
+  it('traduce los errores de Auth que ve el usuario', () => {
+    assert.match(translateAuthError('Email not confirmed'), /confirma tu correo/i);
+    assert.equal(
+      translateAuthError('Invalid login credentials'),
+      'Correo o contraseña incorrectos.',
+    );
+    assert.match(translateAuthError('email rate limit exceeded'), /demasiados intentos/i);
+    assert.match(translateAuthError('Password should be at least 8 characters'), /débil/i);
+    assert.equal(translateAuthError('Perfil no encontrado.'), 'Perfil no encontrado.');
   });
 });

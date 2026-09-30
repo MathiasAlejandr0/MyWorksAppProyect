@@ -261,6 +261,7 @@ export function SearchResultsView({
                       <Star size={13} fill="var(--orange-accent)" color="var(--orange-accent)" />
                       <strong>{w.rating.toFixed(1)}</strong>
                       <span className="pro-card-stars">★★★★★</span>
+                      <span>{w.jobsDone} trabajos</span>
                     </div>
                     <div className="pro-card-footer">
                       <span className="pro-card-price">

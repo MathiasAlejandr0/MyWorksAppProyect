@@ -1089,6 +1089,8 @@ export function App() {
       openCategory={openCategory}
       showAuth={showAuth}
       availableCategoryIds={availableCategoryIds}
+      checkoutNotice={bookingError}
+      clearCheckoutNotice={() => setBookingError(null)}
     />
   );
 
