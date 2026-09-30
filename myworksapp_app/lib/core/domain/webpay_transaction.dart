@@ -25,7 +25,7 @@ class WebpayTransactionResponse {
     final redirect = map['redirectUrl']?.toString();
     final handoff = redirect != null && redirect.isNotEmpty ? redirect : null;
     if (buyOrder.isEmpty || (handoff == null && (token.isEmpty || url.isEmpty))) {
-      throw FormatException('Respuesta Webpay incompleta');
+      throw const FormatException('Respuesta Webpay incompleta');
     }
     return WebpayTransactionResponse(
       token: token,

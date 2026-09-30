@@ -166,6 +166,35 @@ class WorkerRepository {
         .eq('id_usuario', worker.userId);
   }
 
+  Future<({String status, String? note})?> fetchVerification(String userId) async {
+    try {
+      final row = await supabase
+          .from(_table)
+          .select('estado_verificacion, nota_verificacion')
+          .eq('id_usuario', userId)
+          .maybeSingle();
+      if (row == null) return null;
+      final rawNote = row['nota_verificacion'] as String?;
+      final visibleNote = rawNote?.split('\nDocumento:').first.trim();
+      return (
+        status: row['estado_verificacion'] as String? ?? 'pendiente',
+        note: visibleNote,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> submitVerificationReview({
+    required String userId,
+    required String note,
+  }) async {
+    await supabase.from(_table).update({
+      'estado_verificacion': 'en_revision',
+      'nota_verificacion': note,
+    }).eq('id_usuario', userId);
+  }
+
   Future<void> updateAvailability(String userId, bool isAvailable) async {
     await supabase
         .from(_table)

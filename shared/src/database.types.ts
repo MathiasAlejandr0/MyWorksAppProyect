@@ -1006,7 +1006,9 @@ export type Database = {
           conteo_rechazos: number
           descripcion: string | null
           disponible: number
+          estado_verificacion: string
           id_usuario: string
+          nota_verificacion: string | null
           niveles_precio: Json
           precios_configurados: number
           profesion: string
@@ -1020,8 +1022,10 @@ export type Database = {
           conteo_rechazos?: number
           descripcion?: string | null
           disponible?: number
+          estado_verificacion?: string
           id_usuario: string
           niveles_precio?: Json
+          nota_verificacion?: string | null
           precios_configurados?: number
           profesion?: string
           servicios_personalizados?: Json
@@ -1034,8 +1038,10 @@ export type Database = {
           conteo_rechazos?: number
           descripcion?: string | null
           disponible?: number
+          estado_verificacion?: string
           id_usuario?: string
           niveles_precio?: Json
+          nota_verificacion?: string | null
           precios_configurados?: number
           profesion?: string
           servicios_personalizados?: Json

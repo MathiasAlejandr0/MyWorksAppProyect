@@ -50,7 +50,7 @@ export function QuickBookingBar({
         <div className="quick-booking-worker">
           <strong>{workerName}</strong>
           <span>{profession}</span>
-          <span className="quick-booking-price">${pricePerHour.toLocaleString('es-CL')} / hora</span>
+          <span className="quick-booking-price">${pricePerHour.toLocaleString('es-CL')} / visita</span>
         </div>
 
         <button type="button" className="btn-primary quick-booking-cta" onClick={onContinue}>

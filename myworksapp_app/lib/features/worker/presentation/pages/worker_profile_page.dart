@@ -24,6 +24,7 @@ import '../../../../core/database/models/portfolio_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/domain/worker_custom_service.dart';
 import '../../../../core/domain/worker_service_options_catalog.dart';
+import '../widgets/worker_verification_card.dart';
 import '../widgets/worker_custom_services_editor.dart';
 import '../widgets/worker_work_zone_field.dart';
 import '../widgets/worker_pricing_tiers_editor.dart';
@@ -433,6 +434,8 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              WorkerVerificationCard(userId: user.id),
               const SizedBox(height: 24),
               // Información personal
               TextFormField(

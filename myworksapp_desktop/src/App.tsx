@@ -15,7 +15,9 @@ import { ExecutiveWorkspace } from './components/ExecutiveWorkspace';
 import { DesktopLoginScreen } from './components/DesktopLoginScreen';
 import { AdminMfaGate } from './components/AdminMfaGate';
 import { SessionLoadingShell } from './components/LoadingState';
+import { AdminInboxPanel } from './components/AdminInboxPanel';
 import { useAuth } from './context/AuthContext';
+import { supabaseConfigStatus } from './supabaseClient';
 
 const SupportWorkspace = lazy(() =>
   import('./components/SupportWorkspace').then((m) => ({
@@ -44,6 +46,8 @@ export function App() {
   const { profile, loading, logout, needsMfa } = useAuth();
   const [activeRoleWorkspace, setActiveRoleWorkspace] = useState<number>(0);
   const [showProfile, setShowProfile] = useState(false);
+  const [showInbox, setShowInbox] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   if (loading) {
     return <SessionLoadingShell />;
@@ -130,10 +134,10 @@ export function App() {
                     </svg>
                   </div>
                   <span className="shell-divider" aria-hidden />
-                  <button type="button" className="icon-btn" aria-label="Notificaciones">
+                  <button type="button" className="icon-btn" aria-label="Notificaciones" onClick={() => setShowInbox(true)}>
                     <Bell size={20} />
                   </button>
-                  <button type="button" className="icon-btn" aria-label="Ajustes">
+                  <button type="button" className="icon-btn" aria-label="Ajustes" onClick={() => setShowSettings(true)}>
                     <SlidersHorizontal size={20} />
                   </button>
                 </div>
@@ -141,11 +145,57 @@ export function App() {
             />
           )}
           {activeRoleWorkspace === 1 && <SupportWorkspace adminId={profile.id} />}
-          {activeRoleWorkspace === 2 && <DevSecOpsWorkspace />}
-          {activeRoleWorkspace === 3 && <HumanResourcesWorkspace />}
+          {activeRoleWorkspace === 2 && <DevSecOpsWorkspace operatorEmail={profile.email} />}
+          {activeRoleWorkspace === 3 && (
+            <HumanResourcesWorkspace onOpenNotifications={() => setShowInbox(true)} />
+          )}
           </Suspense>
         </div>
       </main>
+      {showInbox && (
+        <AdminInboxPanel userId={profile.id} onClose={() => setShowInbox(false)} />
+      )}
+      {showSettings && (
+        <div
+          role="presentation"
+          onClick={() => setShowSettings(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(8, 16, 32, 0.55)',
+            display: 'grid',
+            placeItems: 'center',
+            zIndex: 40,
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-settings-title"
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              background: '#0B1F3A',
+              color: '#fff',
+              padding: 24,
+              borderRadius: 16,
+              minWidth: 320,
+              maxWidth: 460,
+            }}
+          >
+            <h2 id="admin-settings-title" style={{ margin: '0 0 8px' }}>Ajustes de la sesión</h2>
+            <p style={{ margin: '0 0 4px' }}>{profile.email}</p>
+            <p style={{ margin: '0 0 8px' }}>Rol: {profile.role}</p>
+            <p style={{ margin: '0 0 16px' }}>
+              Supabase: {supabaseConfigStatus.urlConfigured ? 'URL configurada' : 'falta VITE_SUPABASE_URL'}.
+              {' '}
+              Clave publicable: {supabaseConfigStatus.anonKeyConfigured ? 'configurada' : 'falta VITE_SUPABASE_ANON_KEY'}.
+            </p>
+            <button type="button" className="sidebar-logout-btn" onClick={() => setShowSettings(false)}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
       {showProfile && (
         <div
           role="presentation"

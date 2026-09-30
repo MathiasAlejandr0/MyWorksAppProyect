@@ -1398,6 +1398,19 @@ h1, h2, h3, .brand-display {
   overflow: hidden;
   background: #0a1018;
 }
+.job-location-map,
+.tracking-map-empty {
+  position: absolute;
+  inset: 0;
+}
+.tracking-map-empty {
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #e2e8f0;
+}
 .tracking-payment-banner {
   position: absolute;
   top: 16px;

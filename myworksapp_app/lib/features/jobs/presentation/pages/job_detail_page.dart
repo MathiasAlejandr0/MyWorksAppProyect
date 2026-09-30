@@ -59,6 +59,9 @@ class JobDetailPage extends ConsumerStatefulWidget {
 }
 
 class _JobDetailPageState extends ConsumerState<JobDetailPage> {
+  /// Las extensiones de este archivo no pueden llamar [setState] directo.
+  void refreshView(VoidCallback update) => setState(update);
+
   final JobRepository _jobRepository = JobRepository();
   final UserRepository _userRepository = UserRepository();
   final JobPhotoRepository _jobPhotoRepository = JobPhotoRepository();

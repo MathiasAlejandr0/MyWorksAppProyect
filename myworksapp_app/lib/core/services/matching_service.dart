@@ -5,6 +5,7 @@ import '../database/repositories/user_repository.dart';
 import '../database/models/worker_model.dart';
 import '../database/models/job_model.dart';
 import '../database/models/user_model.dart';
+import '../domain/zone_match.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 import 'worker_reputation_service.dart';
@@ -56,6 +57,7 @@ class MatchingService {
   static const double _weightAvailability = 0.20;
   static const double _weightCancellations = 0.15;
   static const double _weightActivity = 0.05;
+  static const double _weightZone = 0.25;
 
   /// Matching automático - Selecciona los mejores trabajadores
   /// 
@@ -224,9 +226,10 @@ class MatchingService {
         score += _weightAvailability;
       }
 
-      // Score por distancia (menor distancia = mayor score)
-      // Por ahora, no penalizamos por distancia
-      // TODO: Implementar cuando tengamos coordenadas
+      // La zona declarada se compara con la dirección. Sin lat/lng del
+      // profesional no se calcula una distancia inventada.
+      final zoneScore = zoneMatchScore(worker.workZone, job.address);
+      score += _weightZone * zoneScore;
 
       // Score por cancelaciones (menos cancelaciones = mayor score)
       final cancellationPenalty = math.min(cancellationCount * 0.1, 1.0);
@@ -243,7 +246,12 @@ class MatchingService {
       score = math.min(1.0, math.max(0.0, score));
 
       // Generar razón de selección
-      final reason = _generateReason(worker, cancellationCount, lastActivity);
+      final reason = _generateReason(
+        worker,
+        cancellationCount,
+        lastActivity,
+        zoneScore > 0,
+      );
 
       return MatchResult(
         worker: worker,
@@ -288,8 +296,17 @@ class MatchingService {
   }
 
   /// Genera una razón de selección legible
-  String _generateReason(WorkerModel worker, int cancellationCount, DateTime? lastActivity) {
+  String _generateReason(
+    WorkerModel worker,
+    int cancellationCount,
+    DateTime? lastActivity,
+    bool sameZone,
+  ) {
     final reasons = <String>[];
+
+    if (sameZone) {
+      reasons.add('Trabaja en la misma zona');
+    }
 
     if (worker.rating >= 4.5) {
       reasons.add('Excelente calificación');

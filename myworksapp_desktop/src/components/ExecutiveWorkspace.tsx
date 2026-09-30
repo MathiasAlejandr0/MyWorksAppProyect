@@ -18,7 +18,7 @@ import { AuditTrailViewer } from './AuditTrailViewer';
 import { FinancialSettlementModal } from './FinancialSettlementModal';
 import { DigitalContractModal } from './DigitalContractModal';
 import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
-import { fetchAdminMetrics, fetchWorkersForAdmin } from '@myworksapp/shared';
+import { fetchAdminMetrics, fetchWorkersForAdmin, setWorkerVerification, verificationLabel } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 import { queryKeys } from '../queryClient';
 
@@ -27,7 +27,8 @@ interface WorkerApproval {
   name: string;
   profession: string;
   rut: string;
-  status: 'Verified' | 'Pending';
+  visitFee: number;
+  verification: string;
 }
 
 
@@ -114,7 +115,7 @@ function AreaChart() {
 
         </svg>
 
-        <div className="area-chart-tooltip">$14.8M · 23:40</div>
+        <div className="area-chart-tooltip">Ejemplo · no es un dato real</div>
 
         <div className="area-chart-x">
 
@@ -186,7 +187,7 @@ function DonutChart() {
 
       </ul>
 
-      <a className="donut-report-link" href="#">Ver reporte completo →</a>
+      <p className="donut-report-link">Gráfico ilustrativo. No sale de la base.</p>
 
     </div>
 
@@ -234,13 +235,25 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
         name: worker.name,
         profession: worker.profession,
         rut: worker.email ?? '—',
-        status: worker.pricingConfigured === 1 ? 'Verified' : 'Pending',
+        visitFee: worker.visitFee,
+        verification: worker.verificationStatus ?? 'pendiente',
       })),
     [workersQuery.data],
   );
 
-  const activeJobs = metrics.activeJobsCount || 1246;
-  const disputes = metrics.openDisputesCount || 32;
+  const activeJobs = metrics.activeJobsCount;
+  const disputes = metrics.openDisputesCount;
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+
+  const reviewWorker = async (userId: string, status: 'verificado' | 'rechazado') => {
+    try {
+      await setWorkerVerification(supabase, userId, status);
+      await workersQuery.refetch();
+      setVerifyError(null);
+    } catch {
+      setVerifyError('No se pudo guardar. Aplica la migración de verificación en Supabase.');
+    }
+  };
 
 
 
@@ -250,9 +263,9 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       label: 'GMV',
 
-      value: '$14.8M',
+      value: '—',
 
-      trend: '+12.6% vs ayer',
+      trend: 'No medido en la base',
 
       up: true,
 
@@ -270,7 +283,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       value: activeJobs.toLocaleString('es-CL'),
 
-      trend: '+8.3% vs ayer',
+      trend: 'Conteo en vivo',
 
       up: true,
 
@@ -288,7 +301,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       value: String(disputes),
 
-      trend: '-11.4% vs ayer',
+      trend: 'Conteo en vivo',
 
       up: false,
 
@@ -304,9 +317,9 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       label: 'CSAT',
 
-      value: '4.78 / 5',
+      value: '—',
 
-      trend: '+2.7% vs ayer',
+      trend: 'Sin encuesta',
 
       up: true,
 
@@ -324,13 +337,13 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
   const opsSummary = [
 
-    { label: 'Trabajos completados', value: '1,932', trend: '+9.7% vs ayer', up: true },
+    { label: 'Trabajos en la base', value: String(metrics.jobsCount), trend: 'Conteo en vivo', up: true },
 
-    { label: 'Tiempo promedio de resolución', value: '4.6h', trend: '-6.1% vs ayer', up: true },
+    { label: 'Trabajos activos', value: String(activeJobs), trend: 'Conteo en vivo', up: true },
 
-    { label: 'Disputas abiertas', value: String(disputes), trend: '+6.7% vs ayer', up: false },
+    { label: 'Disputas abiertas', value: String(disputes), trend: 'Conteo en vivo', up: false },
 
-    { label: 'Nuevos trabajos', value: '287', trend: '+14.3% vs ayer', up: true },
+    { label: 'Tiempo promedio', value: '—', trend: 'Sin medición', up: true },
 
   ];
 
@@ -500,7 +513,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
                   <span className="chart-live-dot" aria-hidden />
 
-                  <h3 className="chart-card-title">GMV en tiempo real</h3>
+                  <h3 className="chart-card-title">GMV ilustrativo</h3>
 
                   <span className="chart-card-caption">Últimas 24 horas</span>
 
@@ -570,7 +583,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
                   <Activity size={14} />
 
-                  Excelente
+                  {metricsQuery.isError ? 'Sin datos' : 'Conectado'}
 
                 </div>
 
@@ -611,22 +624,23 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
                   <th>NOMBRE</th>
                   <th>ESPECIALIDAD</th>
                   <th>CONTACTO</th>
-                  <th>PRECIO</th>
+                  <th>VISITA</th>
+                  <th>VERIFICACIÓN</th>
                 </tr>
               </thead>
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={5} style={{ padding: 0 }}>
+                    <td colSpan={6} style={{ padding: 0 }}>
                       <div className="table-skeleton-wrap">
-                        <TableRowsSkeleton rows={4} columns={5} />
+                        <TableRowsSkeleton rows={4} columns={6} />
                       </div>
                     </td>
                   </tr>
                 )}
                 {!loading && workers.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="cell-empty">Sin trabajadores visibles.</td>
+                    <td colSpan={6} className="cell-empty">Sin trabajadores visibles.</td>
                   </tr>
                 )}
                 {!loading && workers.map((w) => (
@@ -635,16 +649,22 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
                     <td style={{ fontWeight: 600 }}>{w.name}</td>
                     <td className="cell-muted">{w.profession}</td>
                     <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{w.rut}</td>
+                    <td>${Math.round(w.visitFee).toLocaleString('es-CL')}</td>
                     <td>
-                      <span className={w.status === 'Verified' ? 'badge badge-success' : 'badge badge-error'}>
-                        {w.status === 'Verified' ? 'Configurado' : 'Pendiente'}
+                      <span className={w.verification === 'verificado' ? 'badge badge-success' : 'badge badge-error'}>
+                        {verificationLabel(w.verification)}
                       </span>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <button type="button" onClick={() => void reviewWorker(w.id, 'verificado')}>Aprobar</button>
+                        <button type="button" onClick={() => void reviewWorker(w.id, 'rechazado')}>Rechazar</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {verifyError && <p role="alert" style={{ padding: 16 }}>{verifyError}</p>}
         </div>
 
       )}

@@ -50,6 +50,45 @@ export async function createPendingJob(
   };
 }
 
+export interface JobTrackingSnapshot {
+  id: string;
+  status: string;
+  paymentStatus: string | null;
+  address: string | null;
+  description: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  workerId: string | null;
+  userId: string;
+}
+
+export async function fetchJobTrackingSnapshot(
+  supabase: AppSupabase,
+  jobId: string,
+): Promise<JobTrackingSnapshot | null> {
+  const { data, error } = await supabase
+    .from('trabajos')
+    .select(
+      'id, estado, estado_pago, direccion, descripcion, latitud, longitud, id_trabajador, id_usuario',
+    )
+    .eq('id', jobId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const row = data as Record<string, unknown>;
+  return {
+    id: String(row.id),
+    status: String(row.estado ?? ''),
+    paymentStatus: row.estado_pago ? String(row.estado_pago) : null,
+    address: row.direccion ? String(row.direccion) : null,
+    description: row.descripcion ? String(row.descripcion) : null,
+    latitude: row.latitud == null ? null : Number(row.latitud),
+    longitude: row.longitud == null ? null : Number(row.longitud),
+    workerId: row.id_trabajador ? String(row.id_trabajador) : null,
+    userId: String(row.id_usuario),
+  };
+}
+
 export async function fetchUserJobs(
   supabase: AppSupabase,
   userId: string,

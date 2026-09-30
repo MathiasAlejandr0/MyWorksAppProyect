@@ -64,7 +64,11 @@ const DEMO_COLLABORATORS: Collaborator[] = [
 
 
 
-export function HumanResourcesWorkspace() {
+export function HumanResourcesWorkspace({
+  onOpenNotifications,
+}: {
+  onOpenNotifications?: () => void;
+}) {
 
   // Colaboradores ficticios solo en DEV — en build de producto la lista parte vacía.
   const [collaborators] = useState<Collaborator[]>(
@@ -80,6 +84,7 @@ export function HumanResourcesWorkspace() {
   const [inviteName, setInviteName] = useState('');
 
   const [inviteMessage, setInviteMessage] = useState('');
+  const [inviteNotice, setInviteNotice] = useState<string | null>(null);
 
 
 
@@ -96,15 +101,10 @@ export function HumanResourcesWorkspace() {
 
 
   const handleInvite = (e: React.FormEvent) => {
-
     e.preventDefault();
-
-    setInviteEmail('');
-
-    setInviteName('');
-
-    setInviteMessage('');
-
+    setInviteNotice(
+      'Las invitaciones por correo no están conectadas. Crea el usuario en Supabase Auth y asígnale el rol administrador en perfiles.',
+    );
   };
 
 
@@ -125,12 +125,13 @@ export function HumanResourcesWorkspace() {
 
         <div className="hr-header-actions">
 
-          <button type="button" className="icon-btn hr-notify" aria-label="Notificaciones">
-
+          <button
+            type="button"
+            className="icon-btn hr-notify"
+            aria-label="Notificaciones"
+            onClick={onOpenNotifications}
+          >
             <Bell size={20} />
-
-            <span className="notify-badge">3</span>
-
           </button>
 
         </div>
@@ -409,6 +410,8 @@ export function HumanResourcesWorkspace() {
 
             </button>
 
+            {inviteNotice && <p role="status">{inviteNotice}</p>}
+
           </form>
 
         </aside>
@@ -421,7 +424,7 @@ export function HumanResourcesWorkspace() {
 
         <span>Área: RRHH · Rol: Admin</span>
 
-        <span><Shield size={12} /> Seguro y encriptado · Versión 1.4.0</span>
+        <span><Shield size={12} /> Sesión de administrador</span>
 
       </footer>
 

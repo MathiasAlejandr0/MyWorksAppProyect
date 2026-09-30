@@ -31,6 +31,8 @@ export interface WorkerRow {
   serviceCategory: string;
   pricingConfigured: number;
   workZone?: string | null;
+  verificationStatus?: string | null;
+  verificationNote?: string | null;
 }
 
 export interface WorkerWithProfile extends WorkerRow {

@@ -1,5 +1,7 @@
 part of 'job_detail_page.dart';
 
+// El estado es privado de la página; la extensión se invoca por nombre.
+// ignore: library_private_types_in_public_api
 extension JobDetailStatusActions on _JobDetailPageState {
   Future<void> _updateJobStatus(String newStatus) async {
     try {
@@ -328,6 +330,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
       return;
     }
 
+    if (!mounted) return;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

@@ -185,7 +185,7 @@ export function LandingHome({
 
             <p className="hero-lead">
 
-              Conectamos tu hogar con técnicos verificados, calificados y cercanos. Rápido, seguro y sin complicaciones.
+              Conectamos tu hogar con gasfíteres, electricistas, pintores y otros oficios. Rápido y con el pago retenido hasta tu conformidad.
 
             </p>
 
@@ -337,7 +337,7 @@ export function LandingHome({
 
               <p className="how-section-v2-lead">
 
-                My Works App conecta tu hogar con profesionales verificados, con pago protegido y seguimiento en tiempo real.
+                My Works App conecta tu hogar con profesionales del catálogo, con el pago retenido hasta tu conformidad.
 
               </p>
 
@@ -345,7 +345,7 @@ export function LandingHome({
 
                 <ShieldCheck size={16} color="var(--orange-accent)" />
 
-                <span>Profesionales verificados • Pago protegido • Tú tienes el control</span>
+                <span>Catálogo de oficios • Pago retenido • Tú das la conformidad</span>
 
               </div>
 
@@ -365,7 +365,7 @@ export function LandingHome({
 
                   title: 'CREA TU CUENTA',
 
-                  text: 'Regístrate en segundos y accede a profesionales verificados del catálogo.',
+                  text: 'Regístrate en segundos y accede al catálogo de oficios.',
 
                 },
 

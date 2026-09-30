@@ -1,5 +1,7 @@
 part of 'job_detail_page.dart';
 
+// El estado es privado de la página; la extensión se invoca por nombre.
+// ignore: library_private_types_in_public_api
 extension JobDetailWorkflows on _JobDetailPageState {
   Future<void> _submitQuoteProposal() async {
     final job = _job;
@@ -424,7 +426,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
   }
 
   Future<void> _loadAddress(JobModel job) async {
-    setState(() {
+    refreshView(() {
       _isLoadingAddress = true;
     });
 
@@ -437,7 +439,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
       );
 
       if (mounted) {
-        setState(() {
+        refreshView(() {
           _displayAddress = address;
           _isLoadingAddress = false;
         });
@@ -451,7 +453,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
               longitude: job.longitude,
             );
       if (mounted) {
-        setState(() {
+        refreshView(() {
           _displayAddress = fallback;
           _isLoadingAddress = false;
         });

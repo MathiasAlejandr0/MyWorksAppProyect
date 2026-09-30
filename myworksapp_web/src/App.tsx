@@ -22,7 +22,10 @@ import {
   fetchPaymentStatus,
   fetchServiceByCategory,
   fetchWorkersCatalog,
+  fetchJobTrackingSnapshot,
+  fetchMyNotifications,
   toWebWorkerCard,
+  type JobTrackingSnapshot,
   type CatalogCursor,
   type WorkerWithProfile,
 } from '@myworksapp/shared';
@@ -109,7 +112,14 @@ interface ServiceMatch {
 
 
 
-function resolveCategory(text: string) {
+function resolveCategory(text: string): {
+  category: string;
+  categoryName: string;
+  problem: string;
+  minPrice: number;
+  maxPrice: number;
+  urgency: 'Media' | 'Alta';
+} | null {
   const lower = text.toLowerCase();
 
   if (
@@ -121,7 +131,7 @@ function resolveCategory(text: string) {
   ) {
     return {
       category: 'plomeria',
-      categoryName: 'Gásfiter / Plomero SEC',
+      categoryName: 'Plomería',
       problem: 'Reparación de fuga de agua y cambio de llaves o grifería',
       minPrice: 30000,
       maxPrice: 75000,
@@ -202,7 +212,11 @@ function resolveCategory(text: string) {
     };
   }
 
-  if (lower.includes('construc') || lower.includes('remodel')) {
+  if (
+    lower.includes('construc') ||
+    lower.includes('remodel') ||
+    lower.includes('maestro')
+  ) {
     return {
       category: 'construccion',
       categoryName: 'Construcción',
@@ -253,7 +267,7 @@ function resolveCategory(text: string) {
   if (lower.includes('electric') || lower.includes('electricista')) {
     return {
       category: 'electricidad',
-      categoryName: 'Electricista Certificado',
+      categoryName: 'Electricidad',
       problem: 'Instalaciones y reparaciones eléctricas',
       minPrice: 25000,
       maxPrice: 60000,
@@ -261,15 +275,7 @@ function resolveCategory(text: string) {
     };
   }
 
-  // Sin match claro: no forzar electricistas
-  return {
-    category: 'electricidad',
-    categoryName: 'Profesional verificado',
-    problem: 'Servicio a domicilio',
-    minPrice: 25000,
-    maxPrice: 60000,
-    urgency: 'Media' as const,
-  };
+  return null;
 }
 
 
@@ -307,6 +313,10 @@ export function App() {
   const [paidVerifying, setPaidVerifying] = useState(false);
   const [paidVerifyError, setPaidVerifyError] = useState<string | null>(null);
   const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
+  const [jobSnapshot, setJobSnapshot] = useState<JobTrackingSnapshot | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationLines, setNotificationLines] = useState<string[]>([]);
 
   const [activeNav, setActiveNav] = useState<'servicios' | 'como-funciona'>('servicios');
 
@@ -319,6 +329,37 @@ export function App() {
     localStorage.setItem('mwa-dark-mode', '1');
 
   }, []);
+
+  useEffect(() => {
+    if (view !== 'tracking' || !checkoutJobId) return;
+    let cancelled = false;
+    void fetchJobTrackingSnapshot(supabase, checkoutJobId)
+      .then((snapshot) => {
+        if (!cancelled) setJobSnapshot(snapshot);
+      })
+      .catch(() => {
+        if (!cancelled) setJobSnapshot(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [view, checkoutJobId]);
+
+  useEffect(() => {
+    if (!profile) {
+      setUnreadCount(0);
+      return;
+    }
+    void fetchMyNotifications(supabase, profile.id)
+      .then((rows) => {
+        setUnreadCount(rows.filter((row) => !row.read).length);
+        setNotificationLines(rows.map((row) => `${row.title}: ${row.body}`));
+      })
+      .catch(() => {
+        setUnreadCount(0);
+        setNotificationLines([]);
+      });
+  }, [profile, view]);
 
   useEffect(() => {
     void queryClient.prefetchQuery({
@@ -482,6 +523,12 @@ export function App() {
     setCatalogError(null);
 
     const meta = resolveCategory(text);
+
+    if (!meta) {
+      setCatalogError('No reconocimos el oficio. Elige una categoría del catálogo.');
+      setIsSearching(false);
+      return;
+    }
 
 
 
@@ -698,21 +745,42 @@ export function App() {
 
           workerJobs={selectedWorker.jobsDone}
 
-          serviceTitle={serviceMatch?.categoryName ?? 'Instalación Eléctrica'}
+          serviceTitle={serviceMatch?.categoryName ?? jobSnapshot?.description ?? 'Servicio'}
 
-          serviceLocation="La dirección queda guardada en el trabajo"
+          serviceLocation={jobSnapshot?.address ?? 'La dirección queda guardada en el trabajo'}
 
           orderId={checkoutJobId ?? 'sin-pedido'}
+
+          jobStatus={jobSnapshot?.status}
+
+          paymentStatus={jobSnapshot?.paymentStatus}
+
+          latitude={jobSnapshot?.latitude}
+
+          longitude={jobSnapshot?.longitude}
 
           profileName={profile?.name}
 
           paymentNotice={paymentNotice}
 
+          unreadCount={unreadCount}
+
           onBack={() => setView('search')}
 
           onOpenChat={() => setShowChat(true)}
 
+          onOpenNotifications={() => setShowNotifications(true)}
+
         />
+
+        {showNotifications && (
+          <div className="toast-error" role="status">
+            {notificationLines.length === 0
+              ? 'No tienes notificaciones.'
+              : notificationLines.slice(0, 5).join(' · ')}
+            <button type="button" onClick={() => setShowNotifications(false)}>Cerrar</button>
+          </div>
+        )}
 
         {showChat && (
 
@@ -721,6 +789,12 @@ export function App() {
             workerName={selectedWorker.name}
 
             workerPhoto={selectedWorker.photoUrl}
+
+            jobId={checkoutJobId}
+
+            senderId={profile?.id ?? null}
+
+            receiverId={selectedWorker.id}
 
             onClose={() => setShowChat(false)}
 
@@ -801,7 +875,7 @@ export function App() {
 
             profession={selectedWorker.profession}
 
-            pricePerHour={Math.round(selectedWorker.pricePerVisit / 1000) * 1000 || 35000}
+            pricePerHour={selectedWorker.pricePerVisit}
 
             onContinue={() => void startCheckout()}
 

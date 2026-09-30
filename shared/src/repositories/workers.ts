@@ -18,6 +18,8 @@ type WorkerQueryRow = {
   categoria_servicio: string;
   precios_configurados?: number | null;
   zona_trabajo?: string | null;
+  estado_verificacion?: string | null;
+  nota_verificacion?: string | null;
   nombre?: string | null;
   ruta_foto_perfil?: string | null;
   perfiles?:
@@ -55,6 +57,8 @@ function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
     serviceCategory: row.categoria_servicio,
     pricingConfigured: Number(row.precios_configurados ?? 1),
     workZone: row.zona_trabajo,
+    verificationStatus: row.estado_verificacion ?? null,
+    verificationNote: row.nota_verificacion ?? null,
     name: row.nombre ?? profileRow?.nombre ?? 'Profesional',
     profilePhotoPath: row.ruta_foto_perfil ?? profileRow?.ruta_foto_perfil,
   };
@@ -133,19 +137,47 @@ export async function fetchWorkersByCategory(
   return page.workers;
 }
 
+const ADMIN_WORKER_COLUMNS =
+  'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)';
+
 export async function fetchWorkersForAdmin(
   supabase: AppSupabase,
 ): Promise<WorkerWithProfile[]> {
-  const { data, error } = await supabase
+  const withVerification = await supabase
     .from('trabajadores')
-    .select(
-      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)',
-    )
+    .select(`${ADMIN_WORKER_COLUMNS}, estado_verificacion, nota_verificacion`)
     .order('calificacion', { ascending: false })
     .limit(200);
 
+  if (!withVerification.error) {
+    return ((withVerification.data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);
+  }
+
+  const fallback = await supabase
+    .from('trabajadores')
+    .select(ADMIN_WORKER_COLUMNS)
+    .order('calificacion', { ascending: false })
+    .limit(200);
+  if (fallback.error) throw fallback.error;
+  return ((fallback.data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);
+}
+
+export async function setWorkerVerification(
+  supabase: AppSupabase,
+  userId: string,
+  status: 'pendiente' | 'en_revision' | 'verificado' | 'rechazado',
+  note?: string | null,
+): Promise<void> {
+  const patch: {
+    estado_verificacion: typeof status;
+    nota_verificacion?: string | null;
+  } = { estado_verificacion: status };
+  if (note !== undefined) patch.nota_verificacion = note;
+  const { error } = await supabase
+    .from('trabajadores')
+    .update(patch)
+    .eq('id_usuario', userId);
   if (error) throw error;
-  return ((data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);
 }
 
 export function toWebWorkerCard(worker: WorkerWithProfile, jobsDone = 0): WebWorkerCard {
