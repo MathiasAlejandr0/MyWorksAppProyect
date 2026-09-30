@@ -1,7 +1,10 @@
 import { abandonedCheckoutUpdate } from "../_shared/abandon_payment.ts";
 import { assessWebpayCommit } from "../_shared/commit_guard.ts";
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
-import { shouldIssueGuestPasswordTicket } from "../_shared/guest_ticket.ts";
+import {
+  paymentHoldTransitioned,
+  shouldIssueGuestPasswordTicket,
+} from "../_shared/guest_ticket.ts";
 import { openJobAfterHold } from "../_shared/open_job_after_hold.ts";
 import {
   fallbackWebReturnOrigin,
@@ -209,9 +212,10 @@ Deno.serve(async (req) => {
       );
     }
 
+    let transitioned = false;
     if (decision.action === "hold") {
       const jti = crypto.randomUUID().replace(/-/g, "");
-      await admin
+      const held = await admin
         .from("pagos")
         .update({
           estado: "retenido",
@@ -221,7 +225,9 @@ Deno.serve(async (req) => {
           actualizado_en: new Date().toISOString(),
         })
         .eq("id", payment.id)
-        .eq("estado", "pendiente");
+        .eq("estado", "pendiente")
+        .select("id");
+      transitioned = paymentHoldTransitioned(held);
     }
 
     let guest = false;
@@ -240,7 +246,7 @@ Deno.serve(async (req) => {
         const meta = owner.user?.user_metadata ?? {};
         guest = meta.guest_checkout === true || meta.guest_checkout === "true";
         if (shouldIssueGuestPasswordTicket({
-          alreadyHeld: false,
+          alreadyHeld: !transitioned,
           approved: true,
           guest,
         })) {

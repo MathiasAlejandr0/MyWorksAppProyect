@@ -3,17 +3,15 @@ import 'dart:convert';
 import '../../utils/app_error.dart';
 import '../../utils/constants.dart';
 import '../../utils/worker_job_status.dart';
+import '../job_insert_policy.dart';
 import '../models/job_model.dart';
 import '../supabase_db.dart';
+
 class JobRepository {
   static const String _table = 'trabajos';
 
   Future<String> createJob(JobModel job) async {
-    final open = job.workerId == null || job.workerId!.isEmpty;
-    final allowed = open
-        ? {'pendiente', 'esperando_cotizaciones'}
-        : {'esperando_pago', 'esperando_cotizaciones'};
-    if (!allowed.contains(job.status)) {
+    if (!jobInsertMatchesPolicy(workerId: job.workerId, status: job.status)) {
       throw AppError.validation(
         'Un trabajo nuevo empieza pendiente sin profesional, esperando pago o esperando cotizaciones.',
       );

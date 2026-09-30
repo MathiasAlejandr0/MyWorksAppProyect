@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { signUpUser, updateAccountPassword } from './auth.ts';
+import { isEmailNotConfirmed, signUpUser, updateAccountPassword } from './auth.ts';
 import {
   authLinkRequiresPassword,
   passwordPolicyMessage,
@@ -67,5 +67,13 @@ describe('authLinkRequiresPassword', () => {
     assert.equal(authLinkRequiresPassword('?code=abc&type=recovery'), true);
     assert.equal(authLinkRequiresPassword('#type=signup'), false);
     assert.equal(authLinkRequiresPassword(''), false);
+  });
+});
+
+describe('isEmailNotConfirmed', () => {
+  it('reconoce el error de Auth y deja pasar el resto', () => {
+    assert.equal(isEmailNotConfirmed('Email not confirmed'), true);
+    assert.equal(isEmailNotConfirmed('email not confirmed'), true);
+    assert.equal(isEmailNotConfirmed('Invalid login credentials'), false);
   });
 });

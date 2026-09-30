@@ -4,6 +4,18 @@ import type { Profile, UserRole } from './types';
 
 export { authLinkRequiresPassword, passwordPolicyMessage, PASSWORD_SETUP_STORAGE_KEY } from './passwordPolicy';
 
+export function isEmailNotConfirmed(message: string): boolean {
+  return /email not confirmed/i.test(message);
+}
+
+export async function resendSignupConfirmation(
+  supabase: AppSupabase,
+  email: string,
+): Promise<void> {
+  const { error } = await supabase.auth.resend({ type: 'signup', email });
+  if (error) throw new AuthError(error.message);
+}
+
 export class AuthError extends Error {
   constructor(message: string) {
     super(message);

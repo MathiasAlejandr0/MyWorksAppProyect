@@ -16,18 +16,24 @@ En el SQL Editor del proyecto. Ya están aplicadas, con otros nombres de versió
 - `perfiles_rol_service_role` (`20261007000003`)
 - `quitar_indices_fk_duplicados` (`20261007000004`)
 - el seed `scripts/demo/seed_demo.sql`
-- `20261008000001_cerrar_brechas_rls.sql` (ya en vivo, con la política de contraparte, la vista sin escritura anónima y las políticas de trabajadores, impulsos y errores)
+- `20261008000001_cerrar_brechas_rls.sql` (ya en vivo)
+- `20261008000002` a `20261008000006` (ya en vivo: perfiles públicos, origen de retorno, disputas, precios, pagos abandonados)
+- `20261008000007_trabajadores_update_por_columna.sql` (ya en vivo: `REVOKE UPDATE` de tabla y `GRANT UPDATE` por columna, salvo calificación y verificación)
+- `20261008000008_trabajos_insert_sin_recursion.sql` (ya en vivo: `trabajador_reservable` y `trabajos_insert` sin la recursión 42P17; `texto_a_timestamptz` con `search_path = public`)
 
-Falta aplicar, en este orden, antes de la demo:
+No vuelvas a correr `000007` ni `000008`. El archivo `000007` del repo incluye un `REVOKE` que todavía no está en vivo. Aplícalo solo:
 
-1. `myworksapp_app/supabase/migrations/20261008000002_perfiles_publicos_rpc.sql`
-2. `myworksapp_app/supabase/migrations/20261008000003_origen_retorno_pago.sql`
-3. `myworksapp_app/supabase/migrations/20261008000004_disputas_partes.sql`
-4. `myworksapp_app/supabase/migrations/20261008000005_precios_cotizaciones_privacidad.sql`
-5. `myworksapp_app/supabase/migrations/20261008000006_pagos_abandonados_y_catalogo.sql`
-6. Volver a correr `scripts/demo/seed_demo.sql` (deja no disponibles a Ana Volt, Marcelo Rivas, Pablo Maestro, Carolina Brillo y María Limpieza, y exige un demo verificado, disponible y con coordenadas de Santiago en las 12 categorías de la web, con su fila en `servicios`).
+```sql
+REVOKE INSERT, DELETE, TRUNCATE ON TABLE public.trabajadores FROM anon;
+```
 
-Después corre `docs/PRUEBAS_RLS_20261008.sql`, `docs/PRUEBAS_RLS_20261009.sql` y `docs/PRUEBAS_RLS_20261010.sql` en el SQL Editor. Tienen que terminar en `RLS 20261008 ok`, `RLS 20261009 ok` y `RLS 20261010 ok`. Los de 20261009 y 20261010 hacen `ROLLBACK`: no dejan datos de prueba.
+Falta aplicar, en el SQL Editor, antes de la demo:
+
+1. Ese `REVOKE` de anon, si la base todavía deja a `anon` insertar, borrar o truncar `trabajadores`.
+2. `myworksapp_app/supabase/migrations/20261008000009_catalogo_verificado_y_pago_bloqueado.sql` (el catálogo y las categorías exigen `estado_verificacion = 'verificado'`; `crear_intencion_pago` y `crear_intencion_pago_servicio` hacen `SELECT … FOR UPDATE` sobre el trabajo).
+3. Volver a correr `scripts/demo/seed_demo.sql`. El conflicto ya no pisa `calificacion` con el número fijo. Después de insertar las notas, el promedio sale de `calificaciones` con la misma fórmula que `refrescar_calificacion_trabajador`.
+
+Después corre `docs/PRUEBAS_RLS_20261008.sql`, `docs/PRUEBAS_RLS_20261009.sql`, `docs/PRUEBAS_RLS_20261010.sql` y `docs/PRUEBAS_RLS_20261011.sql`. Tienen que terminar en `RLS 20261008 ok`, `RLS 20261009 ok`, `RLS 20261010 ok` y `RLS 20261011 ok`. Los de 20261009, 20261010 y 20261011 hacen `ROLLBACK`. El de 20261011 falla si falta el `REVOKE` de anon o si falta `000009`.
 
 `20261008000005` deja dos interruptores en `public.app_config`:
 
@@ -37,6 +43,18 @@ Después corre `docs/PRUEBAS_RLS_20261008.sql`, `docs/PRUEBAS_RLS_20261009.sql` 
 | `admin_requiere_aal2` | `0` (el panel no exige `aal2` en SQL, para que la demo de mañana no se trabe) | `UPDATE public.app_config SET valor = '1', actualizado_en = now() WHERE clave = 'admin_requiere_aal2';` después de que `admin.ops` tenga un TOTP verificado |
 
 El escritorio ya pide el segundo factor antes de mostrar el panel (`AdminMfaGate`). El primer ingreso de `admin.ops` muestra el QR: escanéalo y confirma el código de 6 dígitos. Con el interruptor en `0` el panel funciona aunque esa sesión todavía no sea `aal2`. En producción el interruptor tiene que quedar en `1`: `is_admin()` solo es verdadero para `rol = administrador` y, con el flag, JWT `aal = aal2`. Soporte y QA invitados quedan en `soporte` y `qa`; no entran al hub ni pasan `is_admin()`.
+
+### Checklist antes del lanzamiento
+
+La demo de mañana se corre con Transbank en integración y `demo_modo = 1`. Esto se hace **después** de la demo, cuando el sitio público deje de ser de prueba:
+
+1. `UPDATE public.app_config SET valor = '0', actualizado_en = now() WHERE clave = 'demo_modo';` Con eso el invitado que crea su clave **no** queda con el correo confirmado: recibe el correo de alta y el login ofrece reenviar la confirmación.
+2. `REVOKE EXECUTE ON FUNCTION public.listar_cuentas_demo_acceso() FROM anon;` El login deja de listar los correos `@demo.myworksapp.cl`.
+3. `UPDATE public.app_config SET valor = '1', actualizado_en = now() WHERE clave = 'admin_requiere_aal2';` Solo después de que `admin.ops` haya verificado el TOTP. Si se enciende antes, el panel deja de reconocer al admin.
+4. `CORS_ALLOWED_ORIGINS` con el origen real de la web (y el del escritorio, si se publica). En integración ya se aceptan `localhost` y `127.0.0.1` en los puertos 5173 y 3001.
+5. `TURNSTILE_SECRET_KEY` en las funciones y `VITE_TURNSTILE_SITE_KEY` al construir la web. En `production`, sin el secreto, el checkout de invitado responde 503.
+6. Secretos de Transbank de producción: `TBK_ENV=production`, `TBK_COMMERCE_CODE` y `TBK_API_KEY` del comercio real. Producción rechaza los códigos de integración `597055555532`, `597055555541`, `597055555542` y `597055555543`, y una llave que empiece por `579B532A7440BB0C9079DED94D31EA1615BACEB566103322646`.
+7. En el plan Pro de Supabase, activar la protección de contraseñas filtradas (leaked-password protection). El plan de la demo no la incluye.
 
 ### Antes de un `supabase db push`
 
@@ -62,7 +80,7 @@ npx supabase migration repair --status applied 20261007000004 --project-ref wxqr
 npx supabase migration repair --status applied 20261008000001 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
-`20261008000001` ya está aplicada: no la vuelvas a correr. El `repair` de esa versión solo marca el historial local; no ejecuta el SQL. Repara `20261008000002`, `20261008000003`, `20261008000004`, `20261008000005` y `20261008000006` **solo después** de aplicar cada archivo en el SQL Editor:
+`20261008000001` a `20261008000008` ya están aplicadas: no las vuelvas a correr. El `repair` solo marca el historial local; no ejecuta el SQL. Repara `20261008000007` y `20261008000008` para alinear el historial con lo que ya está en vivo. Repara `20261008000009` **solo después** de aplicar ese archivo en el SQL Editor:
 
 ```bash
 cd myworksapp_app
@@ -71,6 +89,9 @@ npx supabase migration repair --status applied 20261008000003 --project-ref wxqr
 npx supabase migration repair --status applied 20261008000004 --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase migration repair --status applied 20261008000005 --project-ref wxqrfcqifkfgawrnqmnj
 npx supabase migration repair --status applied 20261008000006 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261008000007 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261008000008 --project-ref wxqrfcqifkfgawrnqmnj
+npx supabase migration repair --status applied 20261008000009 --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
 Si el dashboard muestra otra cadena de versión, usa esa en `migration repair` y no la de esta lista. No borres las filas de nombre corto. No hagas push a `main`.
@@ -142,9 +163,11 @@ npx supabase functions deploy webpay-refund-rejection --project-ref wxqrfcqifkfg
 npx supabase functions deploy webpay-resolve-dispute --project-ref wxqrfcqifkfgawrnqmnj
 ```
 
-`definir-clave-invitado` no pide JWT. El enlace dura 15 minutos, se usa una vez y exige el nonce que quedó en el `sessionStorage` del navegador que pagó. Guarda la clave con la API de admin y **no** marca el correo como confirmado. Si en Authentication está activo "Confirm email", el invitado puede crear la contraseña en esa sesión pero no entra hasta verificar el correo. Para la demo el camino principal es Camila, que ya está confirmada. Si quieres que el invitado entre al tiro, deja "Confirm email" apagado en el proyecto de prueba. Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita.
+`definir-clave-invitado` no pide JWT. El enlace dura 15 minutos, exige el nonce del `sessionStorage` del navegador que pagó y solo se quema cuando la cuenta ya se cargó y la clave quedó guardada. Un error al leer la cuenta no consume el ticket.
 
-En el proyecto, `definir-clave-invitado` sigue desplegada como un stub que responde **503** hasta que se publique el código de esta rama (ticket de un solo uso y nonce del navegador). Hay que redesplegarla con el comando de arriba. El repo no deja ese 503.
+Con `app_config.demo_modo = 1` (la demo y la integración) esa función marca el correo como confirmado: el ticket de un solo uso, atado al nonce, prueba el navegador que pagó. La pantalla dice «Contraseña lista. Entra con tu correo en la próxima visita.» Con `demo_modo = 0` el correo sigue sin confirmar, se dispara el correo de alta de Auth (`auth.resend` tipo `signup`) y la pantalla dice «Te enviamos un correo para confirmar.» Si ese envío falla, el ticket sigue válido. En el login de la web, si Auth responde `Email not confirmed`, aparece **Reenviar correo de confirmación**.
+
+Hay que redesplegar `webpay-commit` (el ticket de invitado solo sale si este request pasó el pago de `pendiente` a `retenido`) y `definir-clave-invitado` con los comandos de arriba. Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita.
 
 Un pago con tarjeta de prueba y la liberación del escrow ya se probaron de punta a punta en vivo: Webpay autorizó, el cobro quedó `retenido` y la conformidad lo pasó a `liberado`. Ese camino no se anula.
 
@@ -243,7 +266,7 @@ En debug, si omites los `dart-define`, la app usa el proyecto de demo y la clave
 1. Entra como Camila.
 2. **Buscar servicio** → **Plomería**. En el mapa está Pedro Rojas, pin en Providencia (no un punto inventado en Las Condes).
 3. Elige a Pedro → **Continuar con la reserva**. Con sesión y tarjeta inscrita en la app, se cobra Oneclick. Con sesión y sin tarjeta, el sitio abre Webpay Plus (la tarjeta se escribe en Transbank, el mismo escrow retenido). Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
-4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña** (mínimo 8, letra y número) sin correo.
+4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña** (mínimo 8, letra y número). Con `demo_modo = 1` el correo queda confirmado y el texto es «Contraseña lista. Entra con tu correo en la próxima visita.»
 
 ### Profesional en la app — aceptar y GPS
 
@@ -295,6 +318,8 @@ Si algo del pago en vivo se traba, no improvises producción.
 | 401 de Transbank | `TBK_ENV=integration` y sin secretos de comercio: la llave pública oficial ya está en el código. Redesplega las funciones de pago si el 401 sigue. |
 | Camila no puede pagar sin tarjeta en la app | Con sesión, **Confirmar pedido** abre Webpay Plus. No hace falta inscribir la tarjeta antes. |
 | El invitado no ve «Crea tu contraseña» | La URL tiene que traer `invitado=1` y `alta`. Hace falta `WEBPAY_HANDOFF_SECRET` y la función `definir-clave-invitado`. Sin ese secreto, el pago igual queda retenido; la cuenta entra después solo si Auth tiene SMTP de recuperación. |
+| Tras crear la clave, el login dice `Email not confirmed` | En la demo `demo_modo` tiene que estar en `1` y hay que redesplegar `definir-clave-invitado`. Con ese valor el correo queda confirmado. En producción (`demo_modo = 0`) el login ofrece **Reenviar correo de confirmación**. |
+| La app rechaza el pedido con profesional | El alta con profesional va en `esperando_pago` (o `esperando_cotizaciones`) y después el pago. `pendiente` con profesional lo niega `trabajos_insert`. Hace falta `20261008000008` en vivo y esta rama de la app. |
 | El catálogo muestra Ana Volt u otros nombres que no son `@demo` | Vuelve a correr el seed. Esos perfiles quedan no disponibles. |
 | Armado, Gasfitería u otro oficio sale vacío | Vuelve a correr el seed después de `20261008000006`. Tiene que haber un profesional verificado por cada categoría de la web. Si una categoría queda en cero, la portada la oculta; al abrirla, el texto es «Todavía no hay profesionales». |
 | Al cancelar en Webpay el pedido sigue en esperando pago | Redesplega `webpay-commit` y aplica `20261008000006`. El cobro pendiente pasa a `anulado` o `fallido` y el trabajo a `cancelado`. |

@@ -188,8 +188,8 @@ class JobBookingService {
     return result;
   }
 
-  /// Invitación al profesional con tarifa publicada (sin pago anticipado).
-  Future<JobModel> createWorkerTierInvitation({
+  /// Pedido con tarifa publicada. Nace esperando el pago, con el profesional ya elegido.
+  Future<({JobModel job, PriceQuote quote})> createWorkerTierInvitation({
     required String userId,
     required String workerId,
     required String serviceId,
@@ -237,7 +237,7 @@ class JobBookingService {
       userId: userId,
       workerId: workerId,
       serviceId: serviceId,
-      status: AppConstants.jobStatusPending,
+      status: PricingConstants.jobAwaitingPayment,
       address: address,
       description: (description != null && description.trim().isNotEmpty)
           ? description.trim()
@@ -247,7 +247,7 @@ class JobBookingService {
       scheduledDate: scheduledDate,
       serviceMetadata: meta,
       pricingMode: PricingConstants.modeLegacy,
-      paymentStatus: PricingConstants.paymentNone,
+      paymentStatus: PricingConstants.paymentPending,
       pricingSnapshot: quote.toJson(),
       serviceSkuId: 'tier_$tierOptionId',
       comunaId: comunaKey,
@@ -256,7 +256,7 @@ class JobBookingService {
     );
     await _jobs.createJob(job);
     AppLogger.i('Invitación worker_tier: ${job.id}');
-    return job;
+    return (job: job, quote: quote);
   }
 
   /// Cotización abierta: el cliente elige un profesional y este envía su propuesta.
@@ -338,28 +338,7 @@ class JobBookingService {
       createdAt: now,
       updatedAt: now,
     );
-    final draft = JobModel(
-      id: job.id,
-      userId: job.userId,
-      serviceId: job.serviceId,
-      status: job.status,
-      address: job.address,
-      description: job.description,
-      latitude: job.latitude,
-      longitude: job.longitude,
-      scheduledDate: job.scheduledDate,
-      serviceMetadata: job.serviceMetadata,
-      pricingMode: job.pricingMode,
-      paymentStatus: job.paymentStatus,
-      comunaId: job.comunaId,
-      pricingSnapshot: job.pricingSnapshot,
-      serviceSkuId: job.serviceSkuId,
-      hourlyBlockHours: job.hourlyBlockHours,
-      createdAt: job.createdAt,
-      updatedAt: job.updatedAt,
-    );
-    await _jobs.createJob(draft);
-    await _jobs.requestWorker(jobId: job.id, workerId: workerId);
+    await _jobs.createJob(job);
     AppLogger.i('Job escrow $pricingMode: ${job.id}');
     return (job: job, quote: quote);
   }

@@ -28,6 +28,7 @@ export function PaidReturnView({
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordReady, setPasswordReady] = useState(false);
+  const [emailConfirmed, setEmailConfirmed] = useState(true);
   if (verifying) {
     return (
       <div className="min-h-screen app-shell paid-return">
@@ -90,12 +91,13 @@ export function PaidReturnView({
               void supabase.functions.invoke('definir-clave-invitado', {
                 body: { token: passwordToken, password, nonce },
               }).then(({ data, error }) => {
-                const payload = data as { error?: string; ok?: boolean } | null;
+                const payload = data as { error?: string; ok?: boolean; emailConfirmed?: boolean } | null;
                 if (error || payload?.error || !payload?.ok) {
                   setPasswordError(payload?.error || error?.message || 'No se pudo guardar la contraseña');
                   setPasswordBusy(false);
                   return;
                 }
+                setEmailConfirmed(payload.emailConfirmed !== false);
                 setPasswordReady(true);
                 setPasswordBusy(false);
               });
@@ -103,8 +105,8 @@ export function PaidReturnView({
           >
             <h2>Crea tu contraseña</h2>
             <p>
-              Así entras después en este navegador. El correo queda sin confirmar
-              hasta que lo verifiques; el pago no lo confirma.
+              Así entras después. En la demo el correo queda listo para entrar.
+              Fuera de la demo te llega un correo para confirmarlo.
             </p>
             <input
               type="password"
@@ -126,7 +128,13 @@ export function PaidReturnView({
             </button>
           </form>
         ) : null}
-        {passwordReady ? <p role="status">Contraseña lista. Entra con tu correo en la próxima visita.</p> : null}
+        {passwordReady ? (
+          <p role="status">
+            {emailConfirmed
+              ? 'Contraseña lista. Entra con tu correo en la próxima visita.'
+              : 'Te enviamos un correo para confirmar.'}
+          </p>
+        ) : null}
         <button
           type="button"
           className="btn-primary"

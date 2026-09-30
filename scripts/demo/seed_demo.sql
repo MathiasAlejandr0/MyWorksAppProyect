@@ -170,7 +170,6 @@ BEGIN
   ON CONFLICT (id_usuario) DO UPDATE SET
     profesion = EXCLUDED.profesion,
     descripcion = EXCLUDED.descripcion,
-    calificacion = EXCLUDED.calificacion,
     disponible = EXCLUDED.disponible,
     tarifa_visita = EXCLUDED.tarifa_visita,
     categoria_servicio = EXCLUDED.categoria_servicio,
@@ -395,6 +394,20 @@ BEGIN
     'El muro quedó parejo y se llevó los escombros.',
     v_now
   );
+
+  -- Misma fórmula que refrescar_calificacion_trabajador. Si hay notas reales,
+  -- no se pisa el promedio con el número fijo del seed.
+  UPDATE public.trabajadores w
+  SET calificacion = src.promedio
+  FROM (
+    SELECT t.id_trabajador AS id_usuario,
+           round(avg(c.puntaje)::numeric, 2) AS promedio
+    FROM public.calificaciones c
+    JOIN public.trabajos t ON t.id::text = c.id_trabajo::text
+    WHERE t.id_trabajador IS NOT NULL
+    GROUP BY t.id_trabajador
+  ) src
+  WHERE w.id_usuario::text = src.id_usuario::text;
 
   INSERT INTO public.disputas (
     id, id_trabajo, abierta_por, motivo, descripcion, estado, creado_en, actualizado_en

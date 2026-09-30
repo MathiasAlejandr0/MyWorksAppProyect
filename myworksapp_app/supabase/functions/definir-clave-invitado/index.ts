@@ -1,10 +1,14 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import {
+  guestPasswordConfirmPlan,
+  sha256Hex,
+  shouldConsumeGuestTicket,
+} from "../_shared/guest_ticket.ts";
+import {
   allowRate,
   clientIp,
   rateLimitExceededMessage,
 } from "../_shared/rate_limit.ts";
-import { sha256Hex } from "../_shared/guest_ticket.ts";
 import { verifyGuestPasswordTicket } from "../_shared/security.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 
@@ -19,7 +23,7 @@ function passwordError(password: string): string | null {
   return null;
 }
 
-/** El invitado elige clave sin SMTP. El token lo firma webpay-commit. */
+/** El invitado elige clave. El token lo firma webpay-commit. */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeadersFor(req) });
@@ -59,15 +63,6 @@ Deno.serve(async (req) => {
     if (nonceHash !== String(pago.alta_nonce_hash)) {
       return jsonResponse(req, { error: "Este enlace no corresponde a este navegador" }, 403);
     }
-    const consumed = await admin
-      .from("pagos")
-      .update({ alta_consumido_en: new Date().toISOString() })
-      .eq("id", pago.id)
-      .is("alta_consumido_en", null)
-      .select("id");
-    if (consumed.error || !consumed.data?.length) {
-      return jsonResponse(req, { error: "Este enlace ya no sirve" }, 403);
-    }
 
     const { data: owner, error: readErr } = await admin.auth.admin.getUserById(
       verified.userId,
@@ -81,15 +76,49 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "Esta cuenta ya no es de invitado" }, 403);
     }
 
+    const { data: modeRow } = await admin
+      .from("app_config")
+      .select("valor")
+      .eq("clave", "demo_modo")
+      .maybeSingle();
+    const plan = guestPasswordConfirmPlan(String(modeRow?.valor || "") === "1");
+
     const { error: updErr } = await admin.auth.admin.updateUserById(verified.userId, {
       password,
-      user_metadata: { ...meta, guest_checkout: false },
+      email_confirm: plan.emailConfirmed,
     });
-    if (updErr) {
+    if (updErr || !shouldConsumeGuestTicket({ userLoaded: true, passwordSaved: !updErr })) {
       return jsonResponse(req, { error: "No se pudo guardar la contraseña" }, 400);
     }
 
-    return jsonResponse(req, { ok: true });
+    if (plan.resendSignup && owner.user.email) {
+      const { error: resendErr } = await admin.auth.resend({
+        type: "signup",
+        email: owner.user.email,
+      });
+      if (resendErr) {
+        return jsonResponse(req, { error: "No se pudo enviar el correo de confirmación" }, 502);
+      }
+    }
+
+    const { error: metaErr } = await admin.auth.admin.updateUserById(verified.userId, {
+      user_metadata: { ...meta, guest_checkout: false },
+    });
+    if (metaErr) {
+      return jsonResponse(req, { error: "No se pudo guardar la contraseña" }, 400);
+    }
+
+    const consumed = await admin
+      .from("pagos")
+      .update({ alta_consumido_en: new Date().toISOString() })
+      .eq("id", pago.id)
+      .is("alta_consumido_en", null)
+      .select("id");
+    if (consumed.error || !consumed.data?.length) {
+      return jsonResponse(req, { error: "Este enlace ya no sirve" }, 403);
+    }
+
+    return jsonResponse(req, { ok: true, emailConfirmed: plan.emailConfirmed });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "No se pudo guardar la contraseña";
     const status = msg.includes("WEBPAY_HANDOFF_SECRET") ? 503 : 500;

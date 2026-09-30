@@ -4,8 +4,11 @@ import { abandonedCheckoutUpdate } from "./abandon_payment.ts";
 import { assessWebpayCommit } from "./commit_guard.ts";
 import { resolveCorsAllowOrigin } from "./cors_origin.ts";
 import {
+  guestPasswordConfirmPlan,
   parseGuestTicket,
+  paymentHoldTransitioned,
   sha256Hex,
+  shouldConsumeGuestTicket,
   shouldIssueGuestPasswordTicket,
 } from "./guest_ticket.ts";
 import { turnstileDecision } from "./turnstile_gate.ts";
@@ -28,6 +31,45 @@ describe("ticket de contraseña del invitado", () => {
       shouldIssueGuestPasswordTicket({ alreadyHeld: false, approved: true, guest: false }),
       false,
     );
+  });
+
+  it("el ticket de invitado solo sale si este request pasó el pago a retenido", () => {
+    const moved = paymentHoldTransitioned({ error: null, data: [{ id: "pay-1" }] });
+    const lostRace = paymentHoldTransitioned({ error: null, data: [] });
+    const failed = paymentHoldTransitioned({ error: { message: "no" }, data: [{ id: "pay-1" }] });
+    assert.equal(moved, true);
+    assert.equal(lostRace, false);
+    assert.equal(failed, false);
+    assert.equal(
+      shouldIssueGuestPasswordTicket({
+        alreadyHeld: !moved,
+        approved: true,
+        guest: true,
+      }),
+      true,
+    );
+    assert.equal(
+      shouldIssueGuestPasswordTicket({
+        alreadyHeld: !lostRace,
+        approved: true,
+        guest: true,
+      }),
+      false,
+    );
+  });
+
+  it("en la demo confirma el correo y en producción pide el correo de alta", () => {
+    assert.deepEqual(guestPasswordConfirmPlan(true), {
+      emailConfirmed: true,
+      resendSignup: false,
+    });
+    assert.deepEqual(guestPasswordConfirmPlan(false), {
+      emailConfirmed: false,
+      resendSignup: true,
+    });
+    assert.equal(shouldConsumeGuestTicket({ userLoaded: false, passwordSaved: true }), false);
+    assert.equal(shouldConsumeGuestTicket({ userLoaded: true, passwordSaved: false }), false);
+    assert.equal(shouldConsumeGuestTicket({ userLoaded: true, passwordSaved: true }), true);
   });
 
   it("exige jti y rechaza el formato viejo de cuatro partes", () => {

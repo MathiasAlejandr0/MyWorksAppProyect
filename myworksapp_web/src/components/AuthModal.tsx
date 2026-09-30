@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { LogIn, UserPlus, X } from 'lucide-react';
-import { AuthError, passwordPolicyMessage } from '@myworksapp/shared';
+import {
+  AuthError,
+  isEmailNotConfirmed,
+  passwordPolicyMessage,
+  resendSignupConfirmation,
+} from '@myworksapp/shared';
+import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { TurnstileWidget } from './TurnstileWidget';
 import { turnstileSiteKey } from './turnstileSite';
@@ -20,6 +26,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [resendNote, setResendNote] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState('');
 
   if (!open) return null;
@@ -39,6 +46,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     event.preventDefault();
     setSubmitting(true);
     setLocalError(null);
+    setResendNote(null);
     try {
       if (mode === 'login') {
         await login(email, password);
@@ -118,6 +126,26 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               {localError}
             </div>
           )}
+          {mode === 'login' && localError && isEmailNotConfirmed(localError) ? (
+            <button
+              type="button"
+              className="auth-modal-switch"
+              disabled={submitting}
+              onClick={() => {
+                setSubmitting(true);
+                setResendNote(null);
+                void resendSignupConfirmation(supabase, email.trim())
+                  .then(() => setResendNote('Te enviamos un correo para confirmar.'))
+                  .catch((e: unknown) => {
+                    setLocalError(e instanceof AuthError ? e.message : 'No se pudo reenviar el correo.');
+                  })
+                  .finally(() => setSubmitting(false));
+              }}
+            >
+              Reenviar correo de confirmación
+            </button>
+          ) : null}
+          {resendNote ? <p role="status">{resendNote}</p> : null}
 
           <button type="submit" className="btn-primary auth-modal-submit" disabled={submitting}>
             {mode === 'login' ? <LogIn size={16} /> : <UserPlus size={16} />}

@@ -67,8 +67,19 @@ BEGIN
   JOIN pg_class c ON c.oid = p.polrelid
   WHERE c.relname = 'trabajos'
     AND p.polname = 'trabajos_insert';
-  IF v_insert IS NULL OR position('verificado' in v_insert) = 0 THEN
+  IF v_insert IS NULL
+     OR (
+       position('verificado' in v_insert) = 0
+       AND position('trabajador_reservable' in v_insert) = 0
+     ) THEN
     RAISE EXCEPTION 'trabajos_insert no exige un profesional verificado';
+  END IF;
+  IF position('trabajador_reservable' in v_insert) > 0 THEN
+    SELECT pg_get_functiondef('public.trabajador_reservable(uuid)'::regprocedure)
+    INTO v_def;
+    IF position('verificado' in v_def) = 0 THEN
+      RAISE EXCEPTION 'trabajador_reservable no exige un profesional verificado';
+    END IF;
   END IF;
   IF position('pendiente' in v_insert) > 0
      AND position('id_trabajador IS NULL' in v_insert) = 0 THEN
