@@ -29,6 +29,7 @@ export * from './payments/webpay';
 export * from './payments/oneclick';
 export * from './payments/checkoutReturn';
 export * from './payments/guestCheckout';
+export * from './payments/edgeError';
 export * from './payments/payout';
 export * from './repositories/services';
 export * from './repositories/workers';

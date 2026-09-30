@@ -26,6 +26,19 @@ export function AdminMfaGate() {
         setFactorId(verified.id);
         return;
       }
+      // Un QR abandonado deja un factor sin verificar con el mismo nombre y el
+      // siguiente enroll falla. Se borra antes de pedir un QR nuevo.
+      const pending = listed.data.all.filter(
+        (factor) => factor.factor_type === 'totp' && factor.status !== 'verified',
+      );
+      for (const factor of pending) {
+        const removed = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+        if (cancelled) return;
+        if (removed.error) {
+          setError('No se pudo preparar la aplicación de autenticación.');
+          return;
+        }
+      }
       const enrolled = await supabase.auth.mfa.enroll({
         factorType: 'totp',
         friendlyName: 'Consola administrador',

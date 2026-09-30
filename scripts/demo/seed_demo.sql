@@ -213,10 +213,30 @@ BEGIN
       ('gasfiteria', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}'),
       ('cerrajeria', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}'),
       ('climatizacion', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}')
-  ) AS v(categoria, tiers)
-  JOIN public.perfiles p ON p.id = t.id_usuario
-  WHERE p.correo ILIKE '%@demo.myworksapp.cl'
+  ) AS v(categoria, tiers),
+  public.perfiles p
+  WHERE p.id = t.id_usuario
+    AND p.correo ILIKE '%@demo.myworksapp.cl'
     AND t.categoria_servicio = v.categoria;
+
+  -- Perfiles de prueba ajenos a la demo (Ana Volt, Felipe Ensambla, …) dejan
+  -- de salir como Pendiente. Luis Contreras sigue en_revision.
+  BEGIN
+    ALTER TABLE public.trabajadores DISABLE TRIGGER trabajadores_proteger_verificacion;
+    UPDATE public.trabajadores t
+    SET estado_verificacion = 'rechazado',
+        nota_verificacion = 'Archivado para la demo. No forma parte del guion.',
+        disponible = 0
+    FROM public.perfiles p
+    WHERE p.id = t.id_usuario
+      AND COALESCE(p.correo, '') NOT ILIKE '%@demo.myworksapp.cl'
+      AND t.estado_verificacion = 'pendiente';
+    ALTER TABLE public.trabajadores ENABLE TRIGGER trabajadores_proteger_verificacion;
+  EXCEPTION
+    WHEN OTHERS THEN
+      ALTER TABLE public.trabajadores ENABLE TRIGGER trabajadores_proteger_verificacion;
+      RAISE;
+  END;
 
   IF EXISTS (
     SELECT 1

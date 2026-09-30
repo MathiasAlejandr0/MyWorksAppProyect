@@ -21,13 +21,11 @@ En el SQL Editor del proyecto. Ya están aplicadas, con otros nombres de versió
 - `20261008000007_trabajadores_update_por_columna.sql` (ya en vivo: `REVOKE UPDATE` de tabla y `GRANT UPDATE` por columna, salvo calificación y verificación)
 - `20261008000008_trabajos_insert_sin_recursion.sql` (ya en vivo: `trabajador_reservable` y `trabajos_insert` sin la recursión 42P17; `texto_a_timestamptz` con `search_path = public`)
 - `20261008000009_catalogo_verificado_y_pago_bloqueado.sql` (ya en vivo) y el `REVOKE INSERT, DELETE, TRUNCATE` de `anon` sobre `trabajadores`
+- `20261008000010_anon_referencias_y_tarifa_publicada.sql` (ya en vivo: `REFERENCES`/`TRIGGER` fuera de `anon`, `trabajos_completados`, tarifa publicada y el aviso de profesional sin verificar)
 
-No vuelvas a correr `000007`, `000008` ni `000009`.
+No vuelvas a correr `000007` a `000010`. Esta ronda no trae migración nueva ni función nueva.
 
-Falta aplicar, en el SQL Editor, antes de la demo:
-
-1. `myworksapp_app/supabase/migrations/20261008000010_anon_referencias_y_tarifa_publicada.sql`. Quita `REFERENCES` y `TRIGGER` de `anon` en `trabajadores`. El catálogo devuelve `trabajos_completados`. `monto_esperado_trabajo` dice «Este profesional todavía no está verificado para cobrar» si el profesional no está verificado, y si el pedido es una invitación por tarifa cobra el precio publicado en `niveles_precio`.
-2. Volver a correr `scripts/demo/seed_demo.sql`. Restaura la calificación del seed y, si hay notas, la pisa con el promedio real. Cada profesional verificado de la demo queda con trabajos `completado` y notas que promedian su tarjeta (Pedro, 4.8 en 5 trabajos). También deja `niveles_precio` con las tarifas que muestra la app.
+Antes de la demo, vuelve a correr `scripts/demo/seed_demo.sql`. El `UPDATE` de `niveles_precio` ya no referencia la tabla de afuera dentro del `JOIN` (eso daba `42P01` y cortaba el seed). Restaura la calificación del seed y, si hay notas, la pisa con el promedio real. Pedro queda en 4.8 con 5 trabajos. Los perfiles ajenos a `@demo.myworksapp.cl` que estaban `pendiente` pasan a `rechazado` con la nota «Archivado para la demo»; Luis Contreras sigue `en_revision`.
 
 Después corre `docs/PRUEBAS_RLS_20261008.sql`, `docs/PRUEBAS_RLS_20261009.sql`, `docs/PRUEBAS_RLS_20261010.sql` y `docs/PRUEBAS_RLS_20261011.sql`. Tienen que terminar en `RLS 20261008 ok`, `RLS 20261009 ok`, `RLS 20261010 ok` y `RLS 20261011 ok`. Los de 20261009, 20261010 y 20261011 hacen `ROLLBACK`. El de 20261011 falla si falta `000010`.
 
@@ -164,7 +162,7 @@ npx supabase functions deploy webpay-resolve-dispute --project-ref wxqrfcqifkfga
 
 Con `app_config.demo_modo = 1` (la demo y la integración) esa función marca el correo como confirmado. La pantalla dice «Contraseña lista. Entra con tu correo en la próxima visita.» Con `demo_modo = 0` el correo sigue sin confirmar, se dispara el correo de alta y la pantalla dice «Te enviamos un correo para confirmar.» En el login, si el correo no está confirmado, el aviso está en español y aparece **Reenviar correo de confirmación**.
 
-`webpay-commit` ya está en vivo (el ticket solo sale si este request retuvo el pago). Antes de la demo redesplega `definir-clave-invitado` y `guest-checkout` (este último dice en español cuando el profesional no está verificado). Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita.
+`webpay-commit` (v21), `definir-clave-invitado` (v5) y `guest-checkout` (v16) ya están en vivo. Esta ronda no cambia esas funciones: no hace falta redesplegarlas. Si se pierde la pestaña, el nonce no se puede recuperar: se vuelve a pedir la visita. Un error de la función (por ejemplo «Este profesional todavía no está verificado para cobrar») se muestra tal cual; la web ya no lo reemplaza por «Edge Function returned a non-2xx status code».
 
 Un pago con tarjeta de prueba y la liberación del escrow ya se probaron de punta a punta en vivo: Webpay autorizó, el cobro quedó `retenido` y la conformidad lo pasó a `liberado`. Ese camino no se anula.
 
@@ -261,8 +259,8 @@ En debug, si omites los `dart-define`, la app usa el proyecto de demo y la clave
 ### Cliente en la web — pedido nuevo
 
 1. Entra como Camila.
-2. **Buscar servicio** → **Plomería**. En el mapa está Pedro Rojas, pin en Providencia. La tarjeta dice **4.8** y **5 trabajos** (el promedio de sus visitas cerradas en el seed, no un cero).
-3. Elige a Pedro → **Continuar con la reserva**. El monto es la tarifa de visita, $35.000. Con sesión y tarjeta inscrita en la app, se cobra Oneclick. Con sesión y sin tarjeta, el sitio abre Webpay Plus. Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
+2. **Buscar servicio** → **Plomería**. En el mapa está Pedro Rojas, pin en Providencia. La tarjeta dice **4.8**, **5 trabajos** y **Desde $35.000 / visita**. Con sesión, el encabezado usa el nombre real (Camila Soto se ve como **Camila S.**). Los horarios de la barra son **10:00**, **14:00** y **18:00**.
+3. Elige a Pedro → **Continuar con la reserva**. La barra repite **$35.000 / visita**. El diálogo **Confirmar pedido** muestra el total **35.000 CLP**. Con sesión y tarjeta inscrita en la app, se cobra Oneclick. Con sesión y sin tarjeta, el sitio abre Webpay Plus. Sin sesión, el formulario pide nombre, correo, teléfono y dirección, y no pide el número de tarjeta.
 4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña**. Con `demo_modo = 1` el correo queda confirmado y el texto es «Contraseña lista. Entra con tu correo en la próxima visita.» El invitado entra con el correo y la clave que acaba de crear.
 5. Si en Transbank se cancela, la vuelta es `http://localhost:5173/?pago=fail` y la portada muestra «Pago cancelado. No se realizó ningún cargo.» El pedido queda cancelado. Se elige de nuevo al profesional.
 
@@ -287,10 +285,10 @@ Para no depender del GPS del salón, el seed ya trae `demo-job-en-camino`: Camil
 
 ### Escritorio
 
-1. Entra como `admin.ops@demo.myworksapp.cl` y completa el segundo factor.
-2. **Verificación:** Luis Contreras está `en_revision`. Apruébalo.
-3. **Soporte:** disputa `demo-disputa-1` (Camila, trabajo eléctrico a medias). Ciérrala desde el panel; el dinero no se mueve solo mientras sigue abierta.
-4. **Panel ejecutivo:** hay cobros retenidos y uno liberado (el muro de Tomás). Se ven GMV, comisión 15 %, completados, ticket y CSAT. En un rango sin datos el texto es «Sin cobros» o «Sin calificaciones».
+1. Entra como `admin.ops@demo.myworksapp.cl` y completa el segundo factor. Si quedó un QR a medias, el panel borra ese factor sin verificar y muestra un código nuevo.
+2. **Panel ejecutivo → Trabajadores.** Luis Contreras está **En revisión** y es el único con **Aprobar** y **Rechazar**. Las filas ya verificadas no traen esos botones. Ana Volt, Felipe Ensambla y el resto de pendientes que no son `@demo` no salen en la lista (el seed los dejó `rechazado`).
+3. **Soporte y disputas:** la tarjeta muestra **#DEMO-DIS** (los primeros 8 caracteres de `demo-disputa-1`, Camila, trabajo eléctrico a medias). Ciérrala desde el panel; el dinero no se mueve solo mientras sigue abierta.
+4. **Panel ejecutivo → Resumen.** El recuadro de arriba **GMV** usa el mismo monto que el período de **7 días** (retenido, liberado y autorizado). También se ven comisión 15 %, completados, ticket y CSAT. En un rango sin datos el texto es «Sin cobros» o «Sin calificaciones».
 5. **RRHH:** invita un correo de prueba. Si Auth no tiene SMTP, la pantalla muestra el error de la función; no inventa un envío.
 
 ## 7. Pedidos que deja el seed
@@ -305,7 +303,7 @@ Para no depender del GPS del salón, el seed ya trae `demo-job-en-camino`: Camil
 | `demo-job-cerrado` | completado, pago liberado, nota 5 | Métricas |
 | `demo-job-disputa` | en curso + disputa abierta | Escritorio |
 
-Volver a correr `scripts/demo/seed_demo.sql` repone esos pedidos y la contraseña `Demo2026!`. No borra otras filas. Deja `disponible = 0` en todo trabajador cuyo correo no termina en `@demo.myworksapp.cl`.
+Volver a correr `scripts/demo/seed_demo.sql` repone esos pedidos y la contraseña `Demo2026!`. No borra otras filas. Deja `disponible = 0` en todo trabajador cuyo correo no termina en `@demo.myworksapp.cl`, y pasa a `rechazado` los que seguían `pendiente`.
 
 ## 8. Plan B
 
@@ -321,6 +319,8 @@ Si algo del pago en vivo se traba, no improvises producción.
 | Tras crear la clave, el login dice `Email not confirmed` | En la demo `demo_modo` tiene que estar en `1` y hay que redesplegar `definir-clave-invitado`. Con ese valor el correo queda confirmado. En producción (`demo_modo = 0`) el login ofrece **Reenviar correo de confirmación**. |
 | La app rechaza el pedido con profesional | El alta con profesional va en `esperando_pago` (o `esperando_cotizaciones`) y después el pago. `pendiente` con profesional lo niega `trabajos_insert`. Hace falta `20261008000008` en vivo y esta rama de la app. |
 | El catálogo muestra Ana Volt u otros nombres que no son `@demo` | Vuelve a correr el seed. Esos perfiles quedan no disponibles. |
+| En Trabajadores salen muchos Pendiente (Ana Volt, Felipe Ensambla) | Vuelve a correr el seed de esta rama. Esos perfiles pasan a `rechazado` y la lista del escritorio los oculta. Luis queda **En revisión**. |
+| El seed se cae con `42P01` al guardar `niveles_precio` | Corre el `scripts/demo/seed_demo.sql` de esta rama. El `UPDATE` ya no mete la tabla de afuera dentro del `JOIN`. |
 | Armado, Gasfitería u otro oficio sale vacío | Vuelve a correr el seed después de `20261008000006`. Tiene que haber un profesional verificado por cada categoría de la web. Si una categoría queda en cero, la portada la oculta; al abrirla, el texto es «Todavía no hay profesionales». |
 | Al cancelar en Webpay no aparece ningún aviso | La portada tiene que mostrar «Pago cancelado. No se realizó ningún cargo.» Hace falta esta rama de la web. El cobro queda `anulado` y el trabajo `cancelado` con `webpay-commit` ya desplegado. |
 | Pagar a Luis dice que no hay tarifa | Aplica `20261008000010` y redesplega `guest-checkout`. El texto es «Este profesional todavía no está verificado para cobrar». |

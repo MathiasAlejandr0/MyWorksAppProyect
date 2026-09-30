@@ -104,6 +104,7 @@ test('demo web: catálogo con coordenada real y pedido sin tarjeta en el sitio',
   const card = page.locator('.pro-card', { hasText: 'Pedro Rojas' });
   await expect(card).toBeVisible({ timeout: 15_000 });
   await expect(card).toContainText('5 trabajos');
+  await expect(card).toContainText('Desde $35.000 / visita');
   await expect(page.locator('.mwa-map-pin')).toHaveCount(1);
 
   await card.click();

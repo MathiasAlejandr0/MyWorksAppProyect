@@ -265,9 +265,9 @@ export function LandingHome({
 
               </div>
 
-              <strong className="hero-float-metric">99.4%</strong>
+              <strong className="hero-float-metric">Verificados</strong>
 
-              <p>Calificación promedio de profesionales</p>
+              <p>Cédula revisada antes de cobrar</p>
 
               <div className="hero-progress"><span /></div>
 
@@ -281,9 +281,9 @@ export function LandingHome({
 
               </div>
 
-              <strong className="hero-float-metric white">18 min</strong>
+              <strong className="hero-float-metric white">En vivo</strong>
 
-              <p>Técnico en camino</p>
+              <p>El mapa sigue al profesional en camino</p>
 
               <div className="hero-mini-map" aria-hidden>
 

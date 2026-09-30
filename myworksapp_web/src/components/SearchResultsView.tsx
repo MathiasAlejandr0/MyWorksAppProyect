@@ -46,6 +46,18 @@ interface SearchResultsViewProps {
   onLoadMore?: () => void;
 }
 
+function clp(amount: number): string {
+  const value = Number.isFinite(amount) ? Math.round(amount) : 0;
+  return value.toLocaleString('es-CL');
+}
+
+function profileLabel(profileName: string): string {
+  const parts = profileName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '';
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1].charAt(0).toUpperCase()}.`;
+}
+
 export function SearchResultsView({
   query,
   workers,
@@ -104,13 +116,12 @@ export function SearchResultsView({
           </button>
           <button type="button" className="search-nav-bell" aria-label="Notificaciones">
             <Bell size={18} />
-            <span className="search-nav-badge">3</span>
           </button>
           {profileName ? (
             <div className="search-nav-profile">
-              <div className="search-nav-avatar">{profileName.charAt(0)}</div>
+              <div className="search-nav-avatar">{profileName.trim().charAt(0).toUpperCase()}</div>
               <div>
-                <strong>{profileName.split(' ')[0]} R.</strong>
+                <strong>{profileLabel(profileName)}</strong>
                 <span>Ver perfil</span>
               </div>
             </div>
@@ -141,15 +152,6 @@ export function SearchResultsView({
               <option value="providencia">Providencia</option>
               <option value="nunoa">Ñuñoa</option>
             </select>
-          </div>
-
-          <div className="filter-group">
-            <label className="filter-label">Precio por hora</label>
-            <div className="filter-range-labels">
-              <span>$10</span>
-              <span>$80</span>
-            </div>
-            <input type="range" min={10} max={80} defaultValue={45} className="filter-range" />
           </div>
 
           <div className="filter-group">
@@ -265,7 +267,7 @@ export function SearchResultsView({
                     </div>
                     <div className="pro-card-footer">
                       <span className="pro-card-price">
-                        Desde ${Math.round(w.pricePerVisit / 1000) * 1000 || 35} / hora
+                        Desde ${clp(w.pricePerVisit)} / visita
                       </span>
                       {w.availableNow !== false && (
                         <span className="pro-card-badge">Disponible ahora</span>

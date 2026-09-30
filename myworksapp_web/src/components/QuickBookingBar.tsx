@@ -41,9 +41,9 @@ export function QuickBookingBar({
         <div className="quick-booking-datetime">
           <Calendar size={18} className="quick-booking-cal-icon" aria-hidden />
           <select className="quick-booking-select" defaultValue="slot1" aria-label="Fecha y hora">
-            <option value="slot1">{dateLabel} | 10:00 AM</option>
-            <option value="slot2">{dateLabel} | 14:00 PM</option>
-            <option value="slot3">{dateLabel} | 18:00 PM</option>
+            <option value="slot1">{dateLabel} | 10:00</option>
+            <option value="slot2">{dateLabel} | 14:00</option>
+            <option value="slot3">{dateLabel} | 18:00</option>
           </select>
         </div>
 

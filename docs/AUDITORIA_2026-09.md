@@ -157,11 +157,11 @@ Hecho en esta rama, en este orden:
 10. Playwright del catálogo con Supabase simulado. Los clientes no llaman `liberar_escrow_manual` ni los otros RPC de `service_role`.
 11. `20261005000002_security_lockdown_rpc.sql` deja en el repo el cierre ya aplicado: `liberar_escrow_manual` solo para `service_role`, admin o conexión sin JWT. `20261006000002` saca la clave `pin` de los listados abiertos.
 12. Política de contraseña en registro y cambio de clave (app, web y aceptación de invitación en escritorio): 8 caracteres, una letra y un número, mensajes en español. `config.toml` repite el mínimo; hay que guardarlo también en Authentication → Password del proyecto.
-13. El repo queda alineado con lo ya aplicado en vivo hasta `20261008000009`, incluido el `REVOKE` de `anon` sobre `trabajadores`. Falta aplicar `20261008000010` (REFERENCES/TRIGGER, conteo de trabajos y tarifa publicada) y volver a correr el seed. El guion y el checklist de lanzamiento están en `DEMO.md`. Un pago con tarjeta de prueba y la liberación del escrow ya se probaron en vivo.
+13. El repo queda alineado con lo ya aplicado en vivo hasta `20261008000010` (`definir-clave-invitado` v5 y `guest-checkout` v16). Antes de la demo hay que volver a correr el seed: arregla el `JOIN` de `niveles_precio` y archiva los pendientes que no son `@demo`. El guion y el checklist de lanzamiento están en `DEMO.md`. Un pago con tarjeta de prueba y la liberación del escrow ya se probaron en vivo.
 
 Sigue fuera de este código, porque depende del dueño:
 
-- Aplicar `20261008000010`, volver a correr el seed y `docs/PRUEBAS_RLS_20261008.sql` a `docs/PRUEBAS_RLS_20261011.sql`. Redesplegar `definir-clave-invitado` y `guest-checkout`. Antes de un `db push`, `supabase migration repair` como dice `DEMO.md`. Si `pg_cron` no quedó programado, corre `SELECT public.expirar_pagos_abandonados();` cada 10 minutos.
+- Volver a correr `scripts/demo/seed_demo.sql` (el `JOIN` de `niveles_precio` y el archivo de pendientes ajenos a la demo). No hay migración ni función nueva en esta ronda. Si `pg_cron` no quedó programado, corre `SELECT public.expirar_pagos_abandonados();` cada 10 minutos.
 - SMTP de Supabase Auth, o `RESEND_API_KEY`, `RESEND_FROM` e `INVITE_PROVIDER=resend`, para que el correo de RRHH salga. `INVITE_REDIRECT_URL=http://127.0.0.1:3001`.
 - Guardar en el proyecto la política de contraseña (mínimo 8, letras y dígitos). El `config.toml` solo la deja escrita para el CLI.
 - Comercio Transbank de producción y secretos `TBK_*` cuando exista la empresa.

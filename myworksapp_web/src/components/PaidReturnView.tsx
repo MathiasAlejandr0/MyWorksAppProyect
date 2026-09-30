@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { passwordPolicyMessage } from '@myworksapp/shared';
+import { edgeFunctionErrorMessage, passwordPolicyMessage } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 import { BrandLogo } from './BrandLogo';
 
@@ -90,10 +90,15 @@ export function PaidReturnView({
               }
               void supabase.functions.invoke('definir-clave-invitado', {
                 body: { token: passwordToken, password, nonce },
-              }).then(({ data, error }) => {
+              }).then(async ({ data, error }) => {
                 const payload = data as { error?: string; ok?: boolean; emailConfirmed?: boolean } | null;
                 if (error || payload?.error || !payload?.ok) {
-                  setPasswordError(payload?.error || error?.message || 'No se pudo guardar la contraseña');
+                  setPasswordError(
+                    payload?.error ||
+                      (error
+                        ? await edgeFunctionErrorMessage(error, 'No se pudo guardar la contraseña')
+                        : 'No se pudo guardar la contraseña'),
+                  );
                   setPasswordBusy(false);
                   return;
                 }

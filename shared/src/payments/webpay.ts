@@ -1,4 +1,5 @@
 import type { AppSupabase } from '../client';
+import { edgeFunctionErrorMessage } from './edgeError';
 
 export type PaymentsMode = 'integration' | 'production' | 'off';
 
@@ -50,7 +51,7 @@ export async function createWebpaySession(
   });
 
   if (error) {
-    throw new Error(error.message || 'No se pudo iniciar Webpay');
+    throw new Error(await edgeFunctionErrorMessage(error, 'No se pudo iniciar Webpay'));
   }
 
   const payload = data as Record<string, unknown> | null;

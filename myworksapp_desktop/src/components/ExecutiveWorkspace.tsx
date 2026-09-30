@@ -19,7 +19,7 @@ import { ExecutivePeriodPanel } from './ExecutivePeriodPanel';
 import { FinancialSettlementModal } from './FinancialSettlementModal';
 import { DigitalContractModal } from './DigitalContractModal';
 import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
-import { fetchAdminMetrics, fetchWorkersForAdmin, setWorkerVerification, verificationLabel } from '@myworksapp/shared';
+import { fetchAdminMetrics, fetchBusinessPeriod, fetchWorkersForAdmin, periodRange, setWorkerVerification, verificationLabel } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 import { queryKeys } from '../queryClient';
 
@@ -76,6 +76,12 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
     queryFn: () => fetchWorkersForAdmin(supabase),
   });
 
+  const businessRange = periodRange('7d');
+  const businessQuery = useQuery({
+    queryKey: ['business-period', '7d'],
+    queryFn: () => fetchBusinessPeriod(supabase, businessRange.fromIso, businessRange.toIso),
+  });
+
   const loading = metricsQuery.isPending || workersQuery.isPending;
 
   const metrics = useMemo(() => {
@@ -91,18 +97,25 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
     };
   }, [metricsQuery.data]);
 
-  const workers: WorkerApproval[] = useMemo(
-    () =>
-      (workersQuery.data ?? []).map((worker) => ({
+  const workers: WorkerApproval[] = useMemo(() => {
+    const rank = (status: string) =>
+      status === 'en_revision' || status === 'pendiente' ? 0 : 1;
+    return (workersQuery.data ?? [])
+      .filter((worker) => {
+        const demo = (worker.email ?? '').toLowerCase().endsWith('@demo.myworksapp.cl');
+        if (demo) return true;
+        return (worker.verificationStatus ?? 'pendiente') === 'verificado';
+      })
+      .map((worker) => ({
         id: worker.userId,
         name: worker.name,
         profession: worker.profession,
         rut: worker.email ?? '—',
         visitFee: worker.visitFee,
         verification: worker.verificationStatus ?? 'pendiente',
-      })),
-    [workersQuery.data],
-  );
+      }))
+      .sort((a, b) => rank(a.verification) - rank(b.verification) || a.name.localeCompare(b.name, 'es'));
+  }, [workersQuery.data]);
 
   const activeJobs = metrics.activeJobsCount;
   const disputes = metrics.openDisputesCount;
@@ -120,15 +133,23 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
 
 
+  const gmv = businessQuery.data?.gmv;
+  const gmvLabel = gmv == null ? '—' : `$${Math.round(gmv).toLocaleString('es-CL')}`;
+  const gmvTrend = gmv == null
+    ? (businessQuery.isError ? 'No se pudieron leer los pagos' : 'Leyendo pagos')
+    : gmv === 0
+      ? 'Sin cobros en el período'
+      : 'Retenido, liberado y autorizado';
+
   const kpis = [
 
     {
 
       label: 'GMV',
 
-      value: '—',
+      value: gmvLabel,
 
-      trend: 'No medido en la base',
+      trend: gmvTrend,
 
       up: true,
 
@@ -378,19 +399,9 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
                   <h3 className="chart-card-title">Periodo de negocio</h3>
 
-                  <span className="chart-card-caption">Últimas 24 horas</span>
-
                 </div>
 
               </div>
-
-              <select className="chart-select" defaultValue="24h" aria-label="Rango temporal">
-
-                <option value="24h">24 horas</option>
-
-                <option value="7d">7 días</option>
-
-              </select>
 
             </div>
 
@@ -517,10 +528,12 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
                       <span className={w.verification === 'verificado' ? 'badge badge-success' : 'badge badge-error'}>
                         {verificationLabel(w.verification)}
                       </span>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                        <button type="button" onClick={() => void reviewWorker(w.id, 'verificado')}>Aprobar</button>
-                        <button type="button" onClick={() => void reviewWorker(w.id, 'rechazado')}>Rechazar</button>
-                      </div>
+                      {(w.verification === 'pendiente' || w.verification === 'en_revision') && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <button type="button" onClick={() => void reviewWorker(w.id, 'verificado')}>Aprobar</button>
+                          <button type="button" onClick={() => void reviewWorker(w.id, 'rechazado')}>Rechazar</button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

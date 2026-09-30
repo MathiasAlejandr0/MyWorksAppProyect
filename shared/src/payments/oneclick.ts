@@ -1,4 +1,5 @@
 import type { AppSupabase } from '../client';
+import { edgeFunctionErrorMessage } from './edgeError';
 
 export type OneclickCharged = {
   charged: true;
@@ -78,15 +79,7 @@ export function parseOneclickCharge(payload: unknown): OneclickChargeResult {
 }
 
 async function errorMessage(error: { message?: string; context?: Response }): Promise<string> {
-  try {
-    const body = await error.context?.json();
-    if (body && typeof body === 'object' && 'error' in body && body.error) {
-      return String(body.error);
-    }
-  } catch {
-    // el cuerpo ya se leyó o no es JSON
-  }
-  return error.message || 'No se pudo cobrar la tarjeta';
+  return edgeFunctionErrorMessage(error, 'No se pudo cobrar la tarjeta');
 }
 
 /** Cobra la tarjeta inscrita. Si no hay tarjeta, needsCard y la web abre Webpay Plus. */

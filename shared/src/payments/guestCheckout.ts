@@ -1,4 +1,5 @@
 import type { AppSupabase } from '../client';
+import { edgeFunctionErrorMessage } from './edgeError';
 
 export interface GuestCheckoutInput {
   name: string;
@@ -49,7 +50,9 @@ export async function createGuestWebpayCheckout(
   });
 
   if (error) {
-    throw new Error(error.message || 'No se pudo iniciar el checkout invitado');
+    throw new Error(
+      await edgeFunctionErrorMessage(error, 'No se pudo iniciar el checkout invitado'),
+    );
   }
 
   const payload = data as Record<string, unknown> | null;
