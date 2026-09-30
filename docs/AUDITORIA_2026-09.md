@@ -155,6 +155,7 @@ Hecho en esta rama, en este orden:
 8. Migración `20261007000001_rls_indices_asesores.sql`: `(select auth.uid())`, políticas inglesas duplicadas, índices duplicados y FKs sin índice.
 9. Seed de demo (`scripts/demo/seed_demo.sql`) y guion en `DEMO.md`. En la web, el seguimiento ofrece **Recibo conforme** y se refresca solo.
 10. Playwright del catálogo con Supabase simulado. Los clientes no llaman `liberar_escrow_manual` ni los otros RPC de `service_role`.
+11. `20261005000002_security_lockdown_rpc.sql` deja en el repo el cierre ya aplicado: `liberar_escrow_manual` solo para `service_role`, admin o conexión sin JWT. `20261006000002` saca la clave `pin` de los listados abiertos.
 
 Sigue fuera de este código, porque depende del dueño:
 
