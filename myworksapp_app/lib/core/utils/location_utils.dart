@@ -264,8 +264,16 @@ class LocationUtils {
   static String _formatApproximateAddress(Placemark place) {
     final parts = <String>[];
 
-    if (place.street != null && place.street!.isNotEmpty) {
-      final street = place.street!.replaceAll(RegExp(r'\d+'), '').trim();
+    // `street` en Android trae la línea completa; se usa thoroughfare o solo
+    // el primer segmento para no duplicar comuna/región.
+    final rawStreet = (place.thoroughfare?.trim().isNotEmpty ?? false)
+        ? place.thoroughfare!
+        : (place.street ?? '').split(',').first;
+    if (rawStreet.trim().isNotEmpty) {
+      final street = rawStreet
+          .replaceAll(RegExp(r'[\d#-]+'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
       if (street.isNotEmpty) {
         parts.add(street);
       }
