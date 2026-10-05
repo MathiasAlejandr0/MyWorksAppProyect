@@ -142,10 +142,21 @@ class _AppGuidedTourState extends State<AppGuidedTour>
     }
   }
 
+  /// Solo vuelve a medir el hueco (sin ensureVisible ni resetear el tooltip).
+  /// Antes se relanzaba _prepareStep en cada rebuild/scroll: ensureVisible
+  /// generaba otro ScrollEnd y el padre (ubicación detectada) otro rebuild,
+  /// dejando un bucle que ocultaba el tooltip y bloqueaba el scroll.
+  bool _remeasureScheduled = false;
+
   void _scheduleMeasure() {
+    if (_remeasureScheduled) return;
+    _remeasureScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_visible) {
-        unawaited(_prepareStep(_step));
+      _remeasureScheduled = false;
+      if (!mounted || !_visible || !_anchorReady) return;
+      final rect = _measureTarget(_step);
+      if (rect != _targetRect) {
+        setState(() => _targetRect = rect);
       }
     });
   }
@@ -254,8 +265,9 @@ class _AppGuidedTourState extends State<AppGuidedTour>
                   final size = Size(constraints.maxWidth, constraints.maxHeight);
                   final step = widget.steps[_step];
                   final hole = _targetRect;
-                  final showTooltip = _anchorReady &&
-                      (step.targetKey == null || hole != null);
+                  // Siempre mostrar el tooltip (centrado si no hay hueco) para
+                  // que el usuario pueda Omitir y nunca quede la barrera sola.
+                  final showTooltip = _anchorReady;
 
                   return Stack(
                     clipBehavior: Clip.none,
