@@ -537,6 +537,45 @@ BEGIN
   ) src
   WHERE w.id_usuario::text = src.id_usuario::text;
 
+  -- Los pagos liberados de la demo quedan igual que uno liberado por conformidad real
+  -- (marcar_pago_liberado): con liberado_en y su fila en liquidaciones. Sin esto la
+  -- auditoría de liquidaciones del escritorio aparecía vacía (auditoría 2026-10-05).
+  UPDATE public.pagos
+  SET liberado_en = COALESCE(
+    public.texto_a_timestamptz(actualizado_en::text),
+    public.texto_a_timestamptz(creado_en::text),
+    now()
+  )
+  WHERE id LIKE 'demo-%'
+    AND estado = 'liberado'
+    AND liberado_en IS NULL;
+
+  IF to_regclass('public.liquidaciones') IS NOT NULL THEN
+    INSERT INTO public.liquidaciones (
+      id, id_pago, id_trabajo, id_trabajador, monto_clp,
+      proveedor, referencia_transferencia, notas, id_operador, creado_en
+    )
+    SELECT
+      'demo-liq-' || p.id,
+      p.id,
+      p.id_trabajo,
+      t.id_trabajador::text,
+      p.monto,
+      'conformidad',
+      'CONFORME-' || left(replace(p.id_trabajo, '-', ''), 16),
+      'Pago de la demo liberado al recibir conforme',
+      COALESCE(t.id_usuario::text, 'seed-demo'),
+      COALESCE(public.texto_a_timestamptz(p.liberado_en::text), now())
+    FROM public.pagos p
+    JOIN public.trabajos t ON t.id = p.id_trabajo
+    WHERE p.id LIKE 'demo-%'
+      AND p.estado = 'liberado'
+      AND p.monto > 0
+      AND NOT EXISTS (
+        SELECT 1 FROM public.liquidaciones l WHERE l.id_pago = p.id
+      );
+  END IF;
+
   INSERT INTO public.disputas (
     id, id_trabajo, abierta_por, motivo, descripcion, estado, creado_en, actualizado_en
   ) VALUES (
