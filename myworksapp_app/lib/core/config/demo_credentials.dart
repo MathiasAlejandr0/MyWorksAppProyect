@@ -4,7 +4,7 @@
 /// `scripts/demo/seed_demo.sql` (ver DEMO.md); producción no debe tenerlas.
 ///
 /// Las cuentas antiguas `@demo.com` / `demo123` quedaron fuera: el administrador
-/// legado está suspendido (migración 20261009000001) y la contraseña estaba
+/// legado está suspendido (migración 20261008000012) y la contraseña estaba
 /// publicada en el repo.
 class DemoCredentials {
   static const demoPassword = 'Demo2026!';

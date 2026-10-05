@@ -34,8 +34,8 @@ Auditoría del 27 sep 2026. No incluye lo ya cerrado: token de Transbank oculto 
 - [x] Quitar o marcar como demo las cifras de `ExecutiveWorkspace` y las personas de `HumanResourcesWorkspace`.
 - [x] El mapa no es cercanía real. Los pines salen de un hash alrededor de Las Condes. Guardar coordenadas o no decir “cerca de ti”.
 - [x] Confirmar que `demo123` y los correos `@demo.com` no entran en un build de release.
-  - Auditoría 2026-10-05: solo estaba resuelto en el cliente. En la BD de la demo `admin@demo.com` seguía activo como `administrador` con la contraseña publicada. Quedó suspendido y baneado (migración `20261009000001`). El autocompletado de depuración ya usa las cuentas `@demo.myworksapp.cl`.
-- [ ] Banear las otras 17 cuentas `@demo.com` (no administradoras) cuando termine la grabación de la demo. Ver `docs/AUDITORIA_2026-10-05.md`.
+  - Auditoría 2026-10-05: solo estaba resuelto en el cliente. En la BD de la demo `admin@demo.com` seguía activo como `administrador` con la contraseña publicada. Quedó suspendido y baneado (migración `20261008000012`, antes `20261009000001`). El autocompletado de depuración ya usa las cuentas `@demo.myworksapp.cl`.
+- [x] Banear las otras 17 cuentas `@demo.com` (no administradoras) cuando termine la grabación de la demo. Hecho el 2026-10-05 junto con `demo_modo=0` y `admin_requiere_aal2=1`. Ver `docs/AUDITORIA_2026-10-05.md`.
 
 ## Antes de salir de la demo
 
