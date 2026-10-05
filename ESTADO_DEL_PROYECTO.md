@@ -6,6 +6,8 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 **Versión de producto:** 1.0.0 (MVP con backend Supabase)  
 **Repositorio:** https://github.com/MathiasAlejandr0/MyWorksAppProyect
 
+> **Auditoría 2026-10-05:** ver [`docs/AUDITORIA_2026-10-05.md`](docs/AUDITORIA_2026-10-05.md) (backlog P0/P1/P2 y correcciones).
+>
 > **Nota de remediación (sep 2026):** Sprints 1–6: honestidad; SoT/codegen; tokens+colores generados; DI Riverpod; Playwright; stubs FCM/Webpay. Completa el código de `npx supabase login` en tu terminal para el db pull. Ver [`docs/REMEDIACION_AUDITORIA.md`](docs/REMEDIACION_AUDITORIA.md).
 ---
 
@@ -205,8 +207,11 @@ Detalle en [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADE
 
 | Rol | Email | Contraseña |
 |-----|-------|------------|
-| Usuario | `usuario@demo.com` | `demo123` |
-| Trabajadores | `*@demo.com` (ej. armadores IKEA) | `demo123` |
+| Cliente | `camila.soto@demo.myworksapp.cl` | `Demo2026!` |
+| Trabajadores | `*@demo.myworksapp.cl` (ej. `carmen.lagos@…`) | `Demo2026!` |
+| Administración | `admin.ops@demo.myworksapp.cl` | `Demo2026!` |
+
+Las cuentas `@demo.com` / `demo123` son legado: el administrador `admin@demo.com` está suspendido (auditoría 2026-10-05).
 
 ---
 
@@ -512,7 +517,7 @@ Presentar en **tabla** con ID, descripción, prioridad (Alta/Media/Baja).
 | P-04 | Aprobar y pagar | Usuario | `completed` + pago mock | ✅ |
 
 **Señales ✓**
-- [ ] Honestidad: indicar que no hay `flutter test` automatizado aún.
+- [x] Honestidad: hay `flutter test` automatizado (84 pruebas en `myworksapp_app/test/`, octubre 2026) y E2E Playwright en la web; no cubren pagos reales.
 - [ ] Evidencia: capturas o fotos de la app en uso.
 
 ---
