@@ -1,4 +1,13 @@
 import { expect, test } from '@playwright/test';
+import { loadEnv } from 'vite';
+
+// El preview sirve el build con la URL de Supabase que haya en .env/.env.local o en CI.
+// La sesión simulada debe quedar bajo la misma llave que usa supabase-js
+// (sb-<ref>-auth-token) y los mocks deben capturar ese host, sea cual sea.
+const supabaseUrl =
+  loadEnv('production', process.cwd(), 'VITE_').VITE_SUPABASE_URL || 'https://example.supabase.co';
+const authStorageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
+const isSupabaseApi = (url: URL) => /^\/(rest|auth|realtime|storage|functions)\/v1\//.test(url.pathname);
 
 const pedro = {
   id_usuario: '11111111-1111-4111-8111-000000000101',
@@ -140,7 +149,7 @@ const trackingJobId = '33333333-3333-4333-8333-333333333333';
 
 async function mockSignedInTracking(page: import('@playwright/test').Page) {
   await page.addInitScript(
-    ({ userId, jobId }) => {
+    ({ userId, jobId, storageKey }) => {
       const session = JSON.stringify({
         access_token: 'demo-access-token',
         token_type: 'bearer',
@@ -157,10 +166,10 @@ async function mockSignedInTracking(page: import('@playwright/test').Page) {
           created_at: '2026-01-01T00:00:00.000Z',
         },
       });
-      localStorage.setItem('sb-example-auth-token', session);
+      localStorage.setItem(storageKey, session);
       sessionStorage.setItem('mwa-active-job', jobId);
     },
-    { userId: trackingUserId, jobId: trackingJobId },
+    { userId: trackingUserId, jobId: trackingJobId, storageKey: authStorageKey },
   );
 
   const cors = {
@@ -169,7 +178,7 @@ async function mockSignedInTracking(page: import('@playwright/test').Page) {
     'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
   };
 
-  await page.route('**/*example.supabase.co/**', async (route) => {
+  await page.route(isSupabaseApi, async (route) => {
     const request = route.request();
     if (request.method() === 'OPTIONS') {
       await route.fulfill({ status: 204, headers: cors });
@@ -235,6 +244,9 @@ async function expectChatAboveMap(page: import('@playwright/test').Page, viewpor
   const map = page.locator('.leaflet-container');
   await expect(chat).toBeVisible();
   await expect(map).toBeVisible();
+  // El chat es fixed; el clic en «Abrir chat» puede dejar el mapa fuera de pantalla
+  // según el scroll. Se trae el mapa a la vista para medir siempre el mismo caso.
+  await map.scrollIntoViewIfNeeded();
   const covered = await page.evaluate(() => {
     const chatEl = document.querySelector('.chat-widget');
     const mapEl = document.querySelector('.leaflet-container');

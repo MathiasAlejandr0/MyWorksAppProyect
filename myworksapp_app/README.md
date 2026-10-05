@@ -68,9 +68,11 @@ Solo visibles en **modo debug** (`kDebugMode`) en la pantalla de login.
 
 | Rol | Email | Contraseña |
 |-----|-------|------------|
-| Usuario | `usuario@demo.com` | `demo123` |
-| Administrador | `admin@demo.com` | `demo123` |
-| Trabajador | `trabajador@demo.com` | `demo123` |
+| Cliente | `camila.soto@demo.myworksapp.cl` | `Demo2026!` |
+| Administrador | `admin.ops@demo.myworksapp.cl` | `Demo2026!` |
+| Trabajadora | `carmen.lagos@demo.myworksapp.cl` | `Demo2026!` |
+
+Las cuentas `@demo.com` / `demo123` ya no se usan (ver `DEMO.md`).
 
 ## Tests y CI
 
