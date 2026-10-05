@@ -1,25 +1,44 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LogIn, UserPlus, X } from 'lucide-react';
-import { AuthError } from '@myworksapp/shared';
+import {
+  AuthError,
+  isEmailNotConfirmed,
+  passwordPolicyMessage,
+  resendSignupConfirmation,
+} from '@myworksapp/shared';
+import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { TurnstileWidget } from './TurnstileWidget';
+import { turnstileSiteKey } from './turnstileSite';
 
 interface AuthModalProps {
   open: boolean;
   onClose: () => void;
+  /** Correo del invitado, solo cuando el diálogo se abre desde «Ver mi pedido». */
+  initialEmail?: string;
 }
 
-export function AuthModal({ open, onClose }: AuthModalProps) {
+export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) {
   const { login, loginWithOAuth, register } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState(
-    import.meta.env.DEV ? 'usuario@demo.com' : '',
-  );
-  const [password, setPassword] = useState(
-    import.meta.env.DEV ? 'demo123' : '',
-  );
+  const [email, setEmail] = useState(() => initialEmail.trim());
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [resendNote, setResendNote] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const wasOpen = useRef(false);
+
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      setEmail(initialEmail.trim());
+      setPassword('');
+      setLocalError(null);
+      setResendNote(null);
+    }
+    wasOpen.current = open;
+  }, [open, initialEmail]);
 
   if (!open) return null;
 
@@ -38,11 +57,21 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     event.preventDefault();
     setSubmitting(true);
     setLocalError(null);
+    setResendNote(null);
     try {
       if (mode === 'login') {
         await login(email, password);
       } else {
-        await register(name, email, password);
+        const policy = passwordPolicyMessage(password);
+        if (policy) {
+          setLocalError(policy);
+          return;
+        }
+        if (turnstileSiteKey() && !captchaToken) {
+          setLocalError('Confirma que no eres un robot');
+          return;
+        }
+        await register(name, email, password, captchaToken || undefined);
       }
       onClose();
     } catch (e) {
@@ -91,10 +120,43 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Contraseña"
             required
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            aria-invalid={localError ? true : undefined}
+            aria-describedby={mode === 'register' ? 'auth-password-policy' : undefined}
             className="auth-modal-input"
           />
+          {mode === 'register' && (
+            <p id="auth-password-policy" className="auth-modal-hint">
+              Mínimo 8 caracteres, con al menos una letra y un número.
+            </p>
+          )}
+          {mode === 'register' ? <TurnstileWidget onToken={setCaptchaToken} /> : null}
 
-          {localError && <div className="auth-modal-error">{localError}</div>}
+          {localError && (
+            <div className="auth-modal-error" role="alert">
+              {localError}
+            </div>
+          )}
+          {mode === 'login' && localError && isEmailNotConfirmed(localError) ? (
+            <button
+              type="button"
+              className="auth-modal-switch"
+              disabled={submitting}
+              onClick={() => {
+                setSubmitting(true);
+                setResendNote(null);
+                void resendSignupConfirmation(supabase, email.trim())
+                  .then(() => setResendNote('Te enviamos un correo para confirmar.'))
+                  .catch((e: unknown) => {
+                    setLocalError(e instanceof AuthError ? e.message : 'No se pudo reenviar el correo.');
+                  })
+                  .finally(() => setSubmitting(false));
+              }}
+            >
+              Reenviar correo de confirmación
+            </button>
+          ) : null}
+          {resendNote ? <p role="status">{resendNote}</p> : null}
 
           <button type="submit" className="btn-primary auth-modal-submit" disabled={submitting}>
             {mode === 'login' ? <LogIn size={16} /> : <UserPlus size={16} />}

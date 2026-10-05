@@ -56,10 +56,10 @@ class RatingRepository {
 
     final namesByUserId = <String, String>{};
     if (reviewerIds.isNotEmpty) {
-      final profiles = await supabase
-          .from('perfiles')
-          .select('id, nombre')
-          .inFilter('id', reviewerIds);
+      final profiles = await supabase.rpc(
+        'perfiles_publicos_por_ids',
+        params: {'p_ids': reviewerIds},
+      );
       for (final profile in profiles) {
         final id = profile['id'] as String?;
         final name = profile['nombre'] as String?;

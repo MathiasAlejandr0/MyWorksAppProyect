@@ -125,7 +125,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
 
   Future<void> _loadSelectedWorker(String workerId) async {
     final worker = await _workerRepository.getWorkerByUserId(workerId);
-    final user = await _userRepository.getUserById(workerId);
+    final user = await _userRepository.getPublicProfile(workerId);
     if (mounted) {
       setState(() {
         _selectedWorker = worker;
@@ -356,7 +356,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           squareMeters: _parsedSquareMeters,
         );
         final bookingService = ref.read(jobBookingServiceProvider);
-        final job = await bookingService.createWorkerTierInvitation(
+        final booking = await bookingService.createWorkerTierInvitation(
           userId: user.id,
           workerId: _selectedWorkerId!,
           serviceId: _selectedServiceId!,
@@ -374,27 +374,30 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           squareMeters: _parsedSquareMeters,
           unitRateClp: unitRate,
         );
-
-        try {
-          await OpenQuoteNotificationService.instance.notifyInvitedWorker(
-            jobId: job.id,
-            workerId: _selectedWorkerId!,
-            jobLabel: _selectedWorkerOption!.title,
-            isTierInvitation: true,
-          );
-        } catch (_) {
-          // La solicitud ya fue creada; la notificación no debe bloquear al usuario.
-        }
-
         if (!mounted) return;
-        final workerName = _selectedWorkerUser?.name ?? 'el profesional';
-        final action = await ServiceRequestSubmittedDialog.show(
+        final paid = await EscrowCheckoutSheet.show(
           context,
-          workerName: workerName,
-          jobLabel: _selectedWorkerOption!.title,
+          jobId: booking.job.id,
+          quote: booking.quote,
         );
+        if (paid) {
+          await bookingService.confirmEscrowAndAccept(
+            jobId: booking.job.id,
+            userId: user.id,
+          );
+          try {
+            await OpenQuoteNotificationService.instance.notifyInvitedWorker(
+              jobId: booking.job.id,
+              workerId: _selectedWorkerId!,
+              jobLabel: _selectedWorkerOption!.title,
+              isTierInvitation: true,
+            );
+          } catch (_) {
+            // El pago ya quedó; la notificación no debe bloquear al usuario.
+          }
+        }
         if (!mounted) return;
-        _navigateAfterJobCreated(job.id, action: action);
+        _navigateAfterJobCreated(booking.job.id);
         return;
       }
 

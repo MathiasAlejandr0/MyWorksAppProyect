@@ -1,11 +1,8 @@
 import { allowRate, clientIp } from "../_shared/rate_limit.ts";
 import { serviceClient } from "../_shared/supabase.ts";
-import {
-  transbankAutoPostHtml,
-  transbankFormResponse,
-} from "../_shared/transbank_form.ts";
+import { transbankRedirectResponse } from "../_shared/transbank_form.ts";
 
-/** La app abre esta página. El TBK_TOKEN se lee en el servidor y se hace POST a Transbank. */
+/** La app abre esta URL. Transbank recibe TBK_TOKEN por GET. */
 Deno.serve(async (req) => {
   if (req.method !== "GET" && req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -34,14 +31,11 @@ Deno.serve(async (req) => {
       return new Response("La inscripción ya no está disponible", { status: 404 });
     }
 
-    const html = transbankAutoPostHtml({
+    return transbankRedirectResponse({
       action: String(data.url_inscripcion),
       fieldName: "TBK_TOKEN",
       token: String(data.token_inscripcion),
-      title: "Guardar tarjeta",
-      message: "Guardando tu tarjeta en Transbank. Solo esta vez.",
     });
-    return transbankFormResponse(html);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "No se pudo abrir Transbank";
     const safe = msg === "URL de pago inválida" ? msg : "No se pudo abrir Transbank";

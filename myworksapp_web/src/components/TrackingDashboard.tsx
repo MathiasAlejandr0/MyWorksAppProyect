@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   ArrowLeft,
   Bell,
@@ -5,12 +6,11 @@ import {
   Lock,
   MessageCircle,
   ShieldCheck,
-  Navigation,
-  Plus,
-  Minus,
-  Crosshair,
 } from 'lucide-react';
+import { jobStatusDetail, jobStatusLabel, paymentStatusLabel } from '@myworksapp/shared';
 import { BrandLogo } from './BrandLogo';
+import { profileLabel } from '../profileLabel';
+import { JobLocationMap } from './JobLocationMap';
 
 interface TrackingDashboardProps {
   workerName: string;
@@ -21,63 +21,107 @@ interface TrackingDashboardProps {
   serviceTitle: string;
   serviceLocation: string;
   orderId: string;
+  jobStatus?: string | null;
+  paymentStatus?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  workerLatitude?: number | null;
+  workerLongitude?: number | null;
   etaMinutes?: number | null;
   distanceKm?: number | null;
+  gpsError?: string | null;
   profileName?: string;
   paymentNotice?: string | null;
+  unreadCount?: number;
   onBack: () => void;
   onOpenChat: () => void;
+  onOpenNotifications?: () => void;
+  onConfirmReceipt?: () => void;
+  confirmBusy?: boolean;
+  confirmError?: string | null;
+  onOpenDispute?: (reason: string, detail: string) => Promise<void>;
+  onAddDisputeComment?: (comment: string) => Promise<void>;
 }
 
 export function TrackingDashboard({
   workerName,
-  workerProfession: _workerProfession,
+  workerProfession,
   workerPhoto,
   workerRating,
   workerJobs,
   serviceTitle,
   serviceLocation,
   orderId,
+  jobStatus,
+  paymentStatus,
+  latitude,
+  longitude,
+  workerLatitude,
+  workerLongitude,
   etaMinutes,
   distanceKm,
+  gpsError,
   profileName,
   paymentNotice,
+  unreadCount = 0,
   onBack,
   onOpenChat,
+  onOpenNotifications,
+  onConfirmReceipt,
+  confirmBusy = false,
+  confirmError = null,
+  onOpenDispute,
+  onAddDisputeComment,
 }: TrackingDashboardProps) {
-  const hasRoute =
-    typeof etaMinutes === 'number' && typeof distanceKm === 'number';
-  const arrival = new Date();
-  if (hasRoute) arrival.setMinutes(arrival.getMinutes() + etaMinutes);
-  const arrivalTime = hasRoute
-    ? arrival.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
-    : null;
+  const [showPayment, setShowPayment] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('calidad');
+  const [disputeDetail, setDisputeDetail] = useState('');
+  const [disputeComment, setDisputeComment] = useState('');
+  const [disputeBusy, setDisputeBusy] = useState(false);
+  const [disputeNote, setDisputeNote] = useState<string | null>(null);
+  const hasPoint = typeof latitude === 'number' && typeof longitude === 'number'
+    && Number.isFinite(latitude) && Number.isFinite(longitude);
+  const hasWorker = typeof workerLatitude === 'number' && typeof workerLongitude === 'number'
+    && Number.isFinite(workerLatitude) && Number.isFinite(workerLongitude);
+  const statusLabel = jobStatusLabel(jobStatus);
+  const statusDetail = jobStatusDetail(jobStatus);
+  const closedJob = jobStatus === 'completado' || jobStatus === 'cancelado';
+  const arrivalHint = gpsError
+    ?? (etaMinutes != null
+      ? `A ${distanceKm?.toFixed(1) ?? '—'} km. Estimación a 28 km/h, sin tráfico en vivo.`
+      : hasWorker
+        ? 'El profesional publicó su ubicación. El pedido no tiene coordenadas para estimar la llegada.'
+        : closedJob
+          ? null
+          : 'La llegada aparece cuando el profesional publica su ubicación en camino o en curso.');
 
   return (
     <div className="tracking-dashboard">
       <header className="tracking-nav">
         <BrandLogo size={32} />
-        <span className="tracking-premium-badge">PREMIUM</span>
+        <span className="tracking-premium-badge">CLIENTE</span>
 
         <div className="tracking-nav-center">
-          <span className="tracking-secure-item">
-            <Lock size={13} /> Dark Web Access
-          </span>
           <span className="tracking-secure-item tracking-secure-live">
-            <span className="tracking-live-dot" /> Conexión segura
+            <span className="tracking-live-dot" /> Sesión del sitio
           </span>
         </div>
 
         <div className="tracking-nav-right">
-          <button type="button" className="search-nav-bell" aria-label="Notificaciones">
+          <button
+            type="button"
+            className="search-nav-bell"
+            aria-label="Notificaciones"
+            onClick={onOpenNotifications}
+          >
             <Bell size={18} />
-            <span className="search-nav-badge">3</span>
+            {unreadCount > 0 ? <span className="search-nav-badge">{unreadCount}</span> : null}
           </button>
           <div className="tracking-nav-user">
-            <div className="search-nav-avatar">{profileName?.charAt(0) ?? 'A'}</div>
+            <div className="search-nav-avatar">{profileName?.trim().charAt(0).toUpperCase() || 'C'}</div>
             <div>
-              <strong>{profileName ?? 'Tu cuenta'}</strong>
-              <span>Plan de la cuenta</span>
+              <strong>{profileName ? profileLabel(profileName) : 'Invitado'}</strong>
+              <span>Cuenta de cliente</span>
             </div>
             <ChevronDown size={14} />
           </div>
@@ -91,28 +135,24 @@ export function TrackingDashboard({
           </button>
 
           <div className="tracking-status-pill">
-            <span className="tracking-status-dot" /> Trabajo en progreso
+            <span className="tracking-status-dot" /> {statusLabel}
           </div>
 
           <div className="tracking-service-head">
             <h1>{serviceTitle}</h1>
-            <span className="tracking-order-id">ID: #{orderId}</span>
+            <span className="tracking-order-id">ID: {orderId}</span>
           </div>
           <p className="tracking-service-loc">{serviceLocation}</p>
+          <p className="tracking-service-loc">{workerProfession}</p>
 
           <div className="tracking-eta-block">
             <div className="tracking-eta-main">
               <span className="tracking-eta-label">Llegada</span>
               <strong className="tracking-eta-value">
-                {hasRoute ? `${etaMinutes} min` : 'Sin estimación'}
+                {etaMinutes != null ? `${etaMinutes} min` : hasWorker ? 'En vivo' : closedJob ? '—' : 'Sin GPS'}
               </strong>
-              {hasRoute ? <span className="tracking-eta-km">~ {distanceKm} km</span> : null}
             </div>
-            <p className="tracking-eta-arrival">
-              {arrivalTime
-                ? `Llegada estimada: ${arrivalTime}`
-                : 'Todavía no hay una ruta real del profesional.'}
-            </p>
+            {arrivalHint ? <p className="tracking-eta-arrival">{arrivalHint}</p> : null}
           </div>
 
           <div className="tracking-worker-block">
@@ -124,7 +164,6 @@ export function TrackingDashboard({
                 <div className="tracking-worker-rating">
                   ★ {workerRating.toFixed(1)} ({workerJobs} trabajos)
                 </div>
-                <span className="tracking-verified-badge">VERIFICADO</span>
               </div>
             </div>
           </div>
@@ -132,32 +171,127 @@ export function TrackingDashboard({
           <div className="tracking-status-block">
             <p className="tracking-block-label">ESTADO ACTUAL</p>
             <div className="tracking-current-status">
-              <span className="tracking-status-dot" /> En camino
+              <span className="tracking-status-dot" /> {statusLabel}
             </div>
-            <p className="tracking-status-detail">
-              {arrivalTime
-                ? `Salió del último punto a las ${arrivalTime}`
-                : 'El estado en vivo se conecta cuando el profesional actualiza el trabajo.'}
-            </p>
+            <p className="tracking-status-detail">{statusDetail}</p>
           </div>
 
+          {jobStatus === 'esperando_aprobacion_cliente' && onConfirmReceipt ? (
+            <button
+              type="button"
+              className="btn-primary tracking-chat-btn"
+              onClick={onConfirmReceipt}
+              disabled={confirmBusy}
+            >
+              {confirmBusy ? 'Liberando el pago…' : 'Recibo conforme'}
+            </button>
+          ) : null}
+          {confirmError ? (
+            <p className="tracking-status-detail" role="alert">{confirmError}</p>
+          ) : null}
+
           <button type="button" className="btn-primary tracking-chat-btn" onClick={onOpenChat}>
-            <MessageCircle size={18} /> Abrir Chat
+            <MessageCircle size={18} /> Abrir chat
           </button>
+
+          {onOpenDispute ? (
+            <form
+              className="tracking-escrow-card"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setDisputeBusy(true);
+                setDisputeNote(null);
+                void onOpenDispute(disputeReason, disputeDetail)
+                  .then(() => setDisputeNote('Disputa abierta. El pago sigue retenido.'))
+                  .catch((error: unknown) => {
+                    setDisputeNote(error instanceof Error ? error.message : 'No se pudo abrir la disputa.');
+                  })
+                  .finally(() => setDisputeBusy(false));
+              }}
+            >
+              <div>
+                <strong>Abrir disputa</strong>
+                <p>Solo atención al cliente la resuelve. Tú puedes dejar el motivo y un comentario.</p>
+                <label>
+                  Motivo
+                  <select value={disputeReason} onChange={(event) => setDisputeReason(event.target.value)}>
+                    <option value="calidad">Calidad del trabajo</option>
+                    <option value="pago">Pago</option>
+                    <option value="conducta">Conducta</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </label>
+                <textarea
+                  value={disputeDetail}
+                  onChange={(event) => setDisputeDetail(event.target.value)}
+                  placeholder="Qué pasó"
+                  rows={3}
+                />
+                <button type="submit" className="btn-primary" disabled={disputeBusy}>
+                  {disputeBusy ? 'Enviando…' : 'Enviar disputa'}
+                </button>
+              </div>
+            </form>
+          ) : null}
+          {onAddDisputeComment ? (
+            <form
+              className="tracking-escrow-card"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setDisputeBusy(true);
+                setDisputeNote(null);
+                void onAddDisputeComment(disputeComment)
+                  .then(() => {
+                    setDisputeComment('');
+                    setDisputeNote('Comentario agregado a la disputa.');
+                  })
+                  .catch((error: unknown) => {
+                    setDisputeNote(error instanceof Error ? error.message : 'No se pudo agregar el comentario.');
+                  })
+                  .finally(() => setDisputeBusy(false));
+              }}
+            >
+              <div>
+                <strong>Comentario en la disputa</strong>
+                <textarea
+                  value={disputeComment}
+                  onChange={(event) => setDisputeComment(event.target.value)}
+                  placeholder="Agrega un detalle"
+                  rows={2}
+                />
+                <button type="submit" className="btn-primary" disabled={disputeBusy || !disputeComment.trim()}>
+                  Agregar comentario
+                </button>
+              </div>
+            </form>
+          ) : null}
+          {disputeNote ? <p className="tracking-status-detail" role="status">{disputeNote}</p> : null}
 
           <div className="tracking-escrow-card">
             <ShieldCheck size={22} className="tracking-escrow-icon" />
             <div>
               <strong>Pago protegido</strong>
-              <p>Fondos retenidos. Se liberan cuando recibes conforme el trabajo. Si abres una disputa, solo atención al cliente puede liberarlos o devolverlos a tu tarjeta.</p>
-              <button type="button" className="tracking-escrow-link">
-                Ver detalles del pago
+              <p>
+                {paymentStatusLabel(paymentStatus)}. Se libera cuando das tu conformidad.
+                Si abres una disputa, solo el equipo de atención puede liberarlo o devolverlo.
+              </p>
+              <button
+                type="button"
+                className="tracking-escrow-link"
+                onClick={() => setShowPayment((open) => !open)}
+              >
+                {showPayment ? 'Ocultar detalles del pago' : 'Ver detalles del pago'}
               </button>
+              {showPayment && (
+                <p>
+                  Pedido {orderId}. Estado del trabajo: {statusLabel}. Estado del pago: {paymentStatusLabel(paymentStatus)}.
+                </p>
+              )}
             </div>
           </div>
 
           <p className="tracking-footer-note">
-            <Lock size={12} /> Conexión enrutada • Encriptación E2E
+            <Lock size={12} /> Conexión HTTPS con Supabase. El chat no usa cifrado de extremo a extremo aparte del transporte.
           </p>
         </aside>
 
@@ -167,52 +301,30 @@ export function TrackingDashboard({
               {paymentNotice}
             </p>
           ) : null}
-          <div className="tracking-map-bg">
-            <div className="tracking-map-labels">
-              <span style={{ top: '22%', left: '38%' }}>PROVIDENCIA</span>
-              <span style={{ top: '35%', left: '52%' }}>VITACURA</span>
-              <span style={{ top: '48%', left: '42%' }}>LAS CONDES</span>
+          {hasPoint ? (
+            <JobLocationMap
+              latitude={latitude}
+              longitude={longitude}
+              label={serviceLocation}
+              worker={hasWorker ? {
+                latitude: workerLatitude,
+                longitude: workerLongitude,
+                label: workerName,
+              } : null}
+            />
+          ) : hasWorker ? (
+            <JobLocationMap
+              latitude={workerLatitude as number}
+              longitude={workerLongitude as number}
+              label={workerName}
+              worker={null}
+            />
+          ) : (
+            <div className="tracking-map-empty">
+              <p>Este pedido no tiene coordenadas.</p>
+              <p>La dirección queda en el panel de la izquierda.</p>
             </div>
-            <svg className="tracking-route-svg" viewBox="0 0 800 600" preserveAspectRatio="none">
-              <path
-                d="M 120 480 Q 280 380 420 320 T 620 180"
-                fill="none"
-                stroke="url(#routeGlow)"
-                strokeWidth="6"
-                strokeLinecap="round"
-              />
-              <defs>
-                <linearGradient id="routeGlow" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#F0782A" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#F0782A" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="tracking-route-start" />
-            <div className="tracking-worker-marker">
-              <img src={workerPhoto} alt="" />
-              <div className="tracking-worker-tooltip">
-                <span className="tracking-live-dot" /> {workerName}
-                <small>Velocidad: 32 km/h</small>
-              </div>
-            </div>
-          </div>
-
-          <button type="button" className="tracking-compass" aria-label="Brújula">
-            <Navigation size={18} />
-          </button>
-          <div className="tracking-scale">2 km</div>
-          <div className="tracking-map-zoom">
-            <button type="button" aria-label="Acercar">
-              <Plus size={16} />
-            </button>
-            <button type="button" aria-label="Alejar">
-              <Minus size={16} />
-            </button>
-            <button type="button" aria-label="Mi ubicación">
-              <Crosshair size={16} />
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -31,12 +31,20 @@ export interface WorkerRow {
   serviceCategory: string;
   pricingConfigured: number;
   workZone?: string | null;
+  verificationStatus?: string | null;
+  verificationNote?: string | null;
+  baseLatitude?: number | null;
+  baseLongitude?: number | null;
+  serviceRadiusKm?: number | null;
+  baseOrigin?: string | null;
 }
 
 export interface WorkerWithProfile extends WorkerRow {
   name: string;
   profilePhotoPath?: string | null;
   email?: string;
+  /** Trabajos completados que devuelve el catálogo. */
+  completedJobs?: number;
 }
 
 export interface JobRow {
@@ -90,4 +98,7 @@ export interface WebWorkerCard {
   jobsDone: number;
   photoUrl: string;
   pricePerVisit: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  serviceRadiusKm?: number | null;
 }

@@ -8,6 +8,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -16,6 +19,9 @@ updates:
     directory: /myworksapp_web
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -29,6 +35,9 @@ updates:
     directory: /myworksapp_desktop
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -42,6 +51,9 @@ updates:
     directory: /shared
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -55,6 +67,9 @@ updates:
     directory: /myworksapp_app
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -68,6 +83,9 @@ updates:
     directory: /myworksapp_desktop/src-tauri
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies

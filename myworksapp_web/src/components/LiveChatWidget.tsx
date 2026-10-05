@@ -1,48 +1,110 @@
-import { useState } from 'react';
-import { Send, CheckCheck, X } from 'lucide-react';
-
-interface Message {
-  id: string;
-  sender: 'user' | 'worker';
-  text: string;
-  timestamp: string;
-}
+import { useEffect, useState } from 'react';
+import { Send, X } from 'lucide-react';
+import {
+  fetchJobMessages,
+  formatDbDateTime,
+  sendJobMessage,
+  type JobMessage,
+} from '@myworksapp/shared';
+import { supabase } from '../supabaseClient';
 
 interface LiveChatWidgetProps {
   workerName: string;
   workerPhoto: string;
+  jobId: string | null;
+  senderId: string | null;
+  receiverId: string | null;
   onClose: () => void;
 }
 
-export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWidgetProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'm1',
-      sender: 'worker',
-      text: 'La conversación con el profesional está en la app. Este panel no le envía mensajes.',
-      timestamp: '',
-    },
-  ]);
+export function LiveChatWidget({
+  workerName,
+  workerPhoto,
+  jobId,
+  senderId,
+  receiverId,
+  onClose,
+}: LiveChatWidgetProps) {
+  const canSend = Boolean(jobId && senderId && receiverId);
+  const [messages, setMessages] = useState<JobMessage[]>([]);
   const [inputText, setInputText] = useState('');
+  const [loading, setLoading] = useState(canSend);
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
-  const quickReplies = [
-    'Estoy en la dirección indicada',
-    '¿A qué hora estimas llegar?',
-    'Necesito cotización adicional',
-    'Perfecto, quedo atento',
-  ];
+  useEffect(() => {
+    if (!jobId || !senderId) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    void fetchJobMessages(supabase, jobId)
+      .then((rows) => {
+        if (!cancelled) {
+          setMessages(rows);
+          setError(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError('No se pudieron cargar los mensajes.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return;
-    const newMsg: Message = {
-      id: Date.now().toString(),
-      sender: 'user',
-      text,
-      timestamp: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
+    const channel = supabase
+      .channel(`mensajes-${jobId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'mensajes', filter: `id_trabajo=eq.${jobId}` },
+        () => {
+          void fetchJobMessages(supabase, jobId)
+            .then((rows) => {
+              if (!cancelled) setMessages(rows);
+            })
+            .catch(() => undefined);
+        },
+      )
+      .subscribe();
+
+    const poll = window.setInterval(() => {
+      void fetchJobMessages(supabase, jobId)
+        .then((rows) => {
+          if (!cancelled) setMessages(rows);
+        })
+        .catch(() => undefined);
+    }, 12000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(poll);
+      void supabase.removeChannel(channel);
     };
+  }, [jobId, senderId]);
 
-    setMessages((prev) => [...prev, newMsg]);
-    setInputText('');
+  const sendMessage = async (text: string) => {
+    if (!canSend || !jobId || !senderId || !receiverId) return;
+    const content = text.trim();
+    if (!content || sending) return;
+    setSending(true);
+    setError(null);
+    try {
+      await sendJobMessage(supabase, {
+        id: crypto.randomUUID(),
+        jobId,
+        senderId,
+        receiverId,
+        content,
+      });
+      setInputText('');
+      const rows = await fetchJobMessages(supabase, jobId);
+      setMessages(rows);
+    } catch {
+      setError('No se envió. Inicia sesión con la cuenta del pedido.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -52,7 +114,9 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
           <img src={workerPhoto} alt="" />
           <div>
             <strong>{workerName}</strong>
-            <span className="chat-widget-online">No llega al profesional</span>
+            <span className="chat-widget-online">
+              {canSend ? 'Llega al profesional de este trabajo' : 'Inicia sesión para escribir'}
+            </span>
           </div>
         </div>
         <button type="button" onClick={onClose} className="chat-widget-close" aria-label="Cerrar chat">
@@ -61,34 +125,47 @@ export function LiveChatWidget({ workerName, workerPhoto, onClose }: LiveChatWid
       </div>
 
       <div className="chat-widget-body">
-        {messages.map((m) => (
-          <div key={m.id} className={`chat-bubble-row chat-bubble-row--${m.sender}`}>
-            <div className={`chat-bubble chat-bubble--${m.sender}`}>{m.text}</div>
-            <div className="chat-bubble-meta">
-              {m.timestamp}
-              {m.sender === 'user' && <CheckCheck size={12} color="var(--orange-accent)" />}
+        {loading && <p>Cargando mensajes…</p>}
+        {!loading && messages.length === 0 && (
+          <p>
+            {canSend
+              ? 'Todavía no hay mensajes en este trabajo.'
+              : 'El chat del sitio guarda mensajes en el pedido. Entra con tu cuenta de cliente para escribirle al profesional.'}
+          </p>
+        )}
+        {messages.map((message) => {
+          const mine = message.senderId === senderId;
+          return (
+            <div key={message.id} className={`chat-bubble-row chat-bubble-row--${mine ? 'user' : 'worker'}`}>
+              <div className={`chat-bubble chat-bubble--${mine ? 'user' : 'worker'}`}>{message.content}</div>
+              <div className="chat-bubble-meta">
+                {formatDbDateTime(message.createdAt)}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="chat-widget-quick">
-        {quickReplies.map((qr) => (
-          <button key={qr} type="button" onClick={() => sendMessage(qr)} className="chat-quick-btn">
-            {qr}
-          </button>
-        ))}
+          );
+        })}
+        {error && <p role="alert">{error}</p>}
       </div>
 
       <div className="chat-widget-input">
         <input
           type="text"
           value={inputText}
+          disabled={!canSend || sending}
           onChange={(e) => setInputText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputText)}
-          placeholder="Escribe un mensaje..."
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void sendMessage(inputText);
+          }}
+          placeholder={canSend ? 'Escribe un mensaje...' : 'Disponible al iniciar sesión'}
+          maxLength={2000}
         />
-        <button type="button" onClick={() => sendMessage(inputText)} className="chat-send-btn" aria-label="Enviar">
+        <button
+          type="button"
+          onClick={() => void sendMessage(inputText)}
+          className="chat-send-btn"
+          aria-label="Enviar"
+          disabled={!canSend || sending}
+        >
           <Send size={16} />
         </button>
       </div>

@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { ArrowRight, Lock, LogOut, Play, Search as SearchIcon, ShieldCheck, UserPlus } from 'lucide-react';
 import { CategoryCard } from '../components/CategoryCard';
 import { BrandLogo } from '../components/BrandLogo';
+import { categoriesWithPros, jobStatusLabel } from '@myworksapp/shared';
 import {
   ALL_SERVICE_CATEGORIES,
   FEATURED_CATEGORIES,
@@ -27,6 +28,15 @@ type LandingHomeProps = {
   goToCategories: () => void;
   openCategory: (cat: ServiceCategory) => void;
   showAuth: boolean;
+  authInitialEmail?: string;
+  availableCategoryIds: ReadonlySet<string> | null;
+  checkoutNotice?: string | null;
+  clearCheckoutNotice?: () => void;
+  onShowOrders?: () => void;
+  orders?: { id: string; status: string; address: string | null; description: string | null }[] | null;
+  ordersError?: string | null;
+  onOpenOrder?: (jobId: string) => void;
+  onCloseOrders?: () => void;
 };
 
 export function LandingHome({
@@ -40,7 +50,24 @@ export function LandingHome({
   goToCategories,
   openCategory,
   showAuth,
+  authInitialEmail = '',
+  availableCategoryIds,
+  checkoutNotice = null,
+  clearCheckoutNotice,
+  onShowOrders,
+  orders = null,
+  ordersError = null,
+  onOpenOrder,
+  onCloseOrders,
 }: LandingHomeProps) {
+  const featuredCategories = categoriesWithPros(
+    FEATURED_CATEGORIES,
+    availableCategoryIds,
+  );
+  const gridCategories = categoriesWithPros(
+    ALL_SERVICE_CATEGORIES.slice(0, 8),
+    availableCategoryIds,
+  );
   return (
 
     <div className="min-h-screen app-shell">
@@ -103,11 +130,17 @@ export function LandingHome({
 
               <>
 
+                <span className="nav-avatar" title={`Hola, ${profile.name.split(' ')[0]}`}>
+                  {profile.name.trim().charAt(0).toUpperCase() || 'C'}
+                </span>
                 <span className="nav-hello">Hola, {profile.name.split(' ')[0]}</span>
+                <button type="button" className="btn-ghost" onClick={() => onShowOrders?.()}>
+                  Mis pedidos
+                </button>
 
-                <button type="button" className="btn-ghost" onClick={() => void logout()}>
+                <button type="button" className="btn-ghost" aria-label="Salir" onClick={() => void logout()}>
 
-                  <LogOut size={16} /> Salir
+                  <LogOut size={16} /> <span className="nav-btn-label">Salir</span>
 
                 </button>
 
@@ -115,11 +148,14 @@ export function LandingHome({
 
             ) : (
 
-              <button type="button" className="btn-outline-orange" onClick={() => setShowAuth(true)}>
-
-                Registrarse
-
-              </button>
+              <>
+                <button type="button" className="btn-ghost nav-login-mobile" onClick={() => setShowAuth(true)}>
+                  Ingresar
+                </button>
+                <button type="button" className="btn-outline-orange" onClick={() => setShowAuth(true)}>
+                  Registrarse
+                </button>
+              </>
 
             )}
 
@@ -130,6 +166,54 @@ export function LandingHome({
       </nav>
 
 
+
+      {orders && (
+        <div className="container">
+          <section className="orders-panel" aria-label="Mis pedidos">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>Mis pedidos</h2>
+              <button type="button" className="btn-ghost" onClick={() => onCloseOrders?.()}>Cerrar</button>
+            </div>
+            {ordersError ? <p role="alert">{ordersError}</p> : null}
+            {orders.length === 0 ? <p>No tienes pedidos todavía.</p> : null}
+            {(['activo', 'completado'] as const).map((group) => {
+              const rows = orders.filter((order) =>
+                group === 'completado' ? order.status === 'completado' : order.status !== 'completado',
+              );
+              if (rows.length === 0) return null;
+              return (
+                <div key={group} className="orders-group">
+                  <h3>{group === 'completado' ? 'Completados' : 'En curso'}</h3>
+                  {rows.map((order) => (
+                    <button
+                      key={order.id}
+                      type="button"
+                      className="orders-row"
+                      onClick={() => onOpenOrder?.(order.id)}
+                    >
+                      <strong>{jobStatusLabel(order.status)}</strong>
+                      <span>{order.address || order.description || order.id.slice(0, 8)}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+          </section>
+        </div>
+      )}
+
+      {checkoutNotice && (
+        <div className="auth-banner container page-fade-in" role="alert">
+          <p>{checkoutNotice}</p>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => clearCheckoutNotice?.()}
+          >
+            Entendido
+          </button>
+        </div>
+      )}
 
       {authError && (
 
@@ -185,7 +269,7 @@ export function LandingHome({
 
             <p className="hero-lead">
 
-              Conectamos tu hogar con técnicos verificados, calificados y cercanos. Rápido, seguro y sin complicaciones.
+              Conectamos tu hogar con gasfíteres, electricistas, pintores y otros oficios. Rápido y con el pago retenido hasta tu conformidad.
 
             </p>
 
@@ -237,9 +321,9 @@ export function LandingHome({
 
               </div>
 
-              <strong className="hero-float-metric">99.4%</strong>
+              <strong className="hero-float-metric">Verificados</strong>
 
-              <p>Calificación promedio de profesionales</p>
+              <p>Cédula revisada antes de cobrar</p>
 
               <div className="hero-progress"><span /></div>
 
@@ -253,9 +337,9 @@ export function LandingHome({
 
               </div>
 
-              <strong className="hero-float-metric white">18 min</strong>
+              <strong className="hero-float-metric white">En vivo</strong>
 
-              <p>Técnico en camino</p>
+              <p>El mapa sigue al profesional en camino</p>
 
               <div className="hero-mini-map" aria-hidden>
 
@@ -289,7 +373,11 @@ export function LandingHome({
 
           <div className="categories-grid">
 
-            {FEATURED_CATEGORIES.map((cat) => (
+            {featuredCategories.length === 0 ? (
+              <p className="categories-empty" role="status">
+                Por ahora no hay profesionales disponibles en estas categorías.
+              </p>
+            ) : featuredCategories.map((cat) => (
 
               <CategoryCard
 
@@ -337,7 +425,7 @@ export function LandingHome({
 
               <p className="how-section-v2-lead">
 
-                My Works App conecta tu hogar con profesionales verificados, con pago protegido y seguimiento en tiempo real.
+                My Works App conecta tu hogar con profesionales del catálogo, con el pago retenido hasta tu conformidad.
 
               </p>
 
@@ -345,7 +433,7 @@ export function LandingHome({
 
                 <ShieldCheck size={16} color="var(--orange-accent)" />
 
-                <span>Profesionales verificados • Pago protegido • Tú tienes el control</span>
+                <span>Catálogo de oficios • Pago retenido • Tú das la conformidad</span>
 
               </div>
 
@@ -365,7 +453,7 @@ export function LandingHome({
 
                   title: 'CREA TU CUENTA',
 
-                  text: 'Regístrate en segundos y accede a profesionales verificados del catálogo.',
+                  text: 'Regístrate en segundos y accede al catálogo de oficios.',
 
                 },
 
@@ -449,7 +537,11 @@ export function LandingHome({
 
           <div className="categories-grid categories-grid--8">
 
-            {ALL_SERVICE_CATEGORIES.slice(0, 8).map((cat) => (
+            {gridCategories.length === 0 ? (
+              <p className="categories-empty" role="status">
+                Por ahora no hay profesionales disponibles en estas categorías.
+              </p>
+            ) : gridCategories.map((cat) => (
 
               <CategoryCard
 
@@ -478,7 +570,11 @@ export function LandingHome({
 
 
       <Suspense fallback={null}>
-        <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+        <AuthModal
+          open={showAuth}
+          initialEmail={authInitialEmail}
+          onClose={() => setShowAuth(false)}
+        />
       </Suspense>
 
     </div>

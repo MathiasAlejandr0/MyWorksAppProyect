@@ -25,6 +25,7 @@ export const USER_ROLES = [
 export const JobStatuses = {
   pending: 'pendiente',
   accepted: 'aceptado',
+  enRoute: 'en_camino',
   inProgress: 'en_curso',
   completed: 'completado',
   cancelled: 'cancelado',
@@ -47,6 +48,7 @@ export const JOB_STATUSES = Object.values(JobStatuses);
  */
 export const WORKER_ACTIVE_JOB_STATUSES: readonly JobStatus[] = [
   JobStatuses.accepted,
+  JobStatuses.enRoute,
   JobStatuses.inProgress,
   JobStatuses.awaitingClientApproval,
   JobStatuses.awaitingPayment,
@@ -66,6 +68,8 @@ export const PaymentStatuses = {
   held: 'retenido',
   released: 'liberado',
   refunded: 'reembolsado',
+  voided: 'anulado',
+  failed: 'fallido',
 } as const;
 
 export type PaymentStatus = (typeof PaymentStatuses)[keyof typeof PaymentStatuses];

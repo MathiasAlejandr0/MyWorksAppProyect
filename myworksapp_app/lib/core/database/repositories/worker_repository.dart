@@ -120,35 +120,21 @@ class WorkerRepository {
     return workers;
   }
 
-  /// Lista trabajadores con nombre y correo para el selector de login demo.
+  /// Correos solo de cuentas @demo.myworksapp.cl. El resto de perfiles no se lista.
   Future<List<WorkerLoginItem>> getWorkersForLogin() async {
-    final workerRows = await supabase
-        .from(_table)
-        .select('id_usuario, profesion, categoria_servicio')
-        .limit(80);
-
-    final profileRows = await supabase
-        .from('perfiles')
-        .select('id, nombre, correo, rol')
-        .eq('rol', 'trabajador')
-        .limit(80);
-
-    final profilesById = <String, Map<String, dynamic>>{
-      for (final row in profileRows)
-        row['id'] as String: Map<String, dynamic>.from(row),
-    };
-
+    final rows = await supabase.rpc('listar_cuentas_demo_acceso');
     final items = <WorkerLoginItem>[];
-    for (final row in workerRows) {
-      final userId = row['id_usuario'] as String;
-      final profile = profilesById[userId];
-      if (profile == null) continue;
-
+    if (rows is! List) return items;
+    for (final raw in rows) {
+      if (raw is! Map) continue;
+      final row = Map<String, dynamic>.from(raw);
+      final userId = row['id'] as String?;
+      if (userId == null || userId.isEmpty) continue;
       items.add(
         WorkerLoginItem(
           userId: userId,
-          name: profile['nombre'] as String? ?? 'Trabajador',
-          email: profile['correo'] as String? ?? '',
+          name: row['nombre'] as String? ?? 'Trabajador',
+          email: row['correo'] as String? ?? '',
           profession: row['profesion'] as String? ?? '',
           serviceCategory: row['categoria_servicio'] as String? ?? 'general',
         ),
@@ -164,6 +150,48 @@ class WorkerRepository {
         .from(_table)
         .update(worker.toMap())
         .eq('id_usuario', worker.userId);
+  }
+
+  Future<({String status, String? note})?> fetchVerification(String userId) async {
+    try {
+      final row = await supabase
+          .from(_table)
+          .select('estado_verificacion, nota_verificacion')
+          .eq('id_usuario', userId)
+          .maybeSingle();
+      if (row == null) return null;
+      final rawNote = row['nota_verificacion'] as String?;
+      final visibleNote = rawNote?.split('\nDocumento:').first.trim();
+      return (
+        status: row['estado_verificacion'] as String? ?? 'pendiente',
+        note: visibleNote,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> submitVerificationReview({
+    required String userId,
+    required String note,
+  }) async {
+    await supabase.rpc('enviar_verificacion_profesional', params: {
+      'p_nota': note,
+    });
+  }
+
+  Future<void> updateBaseLocation({
+    required String userId,
+    required double latitude,
+    required double longitude,
+    required double radiusKm,
+  }) async {
+    await supabase.from(_table).update({
+      'latitud_base': latitude,
+      'longitud_base': longitude,
+      'radio_servicio_km': radiusKm,
+      'origen_base': 'mapa',
+    }).eq('id_usuario', userId);
   }
 
   Future<void> updateAvailability(String userId, bool isAvailable) async {

@@ -123,7 +123,7 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> {
         approved: true,
         title: 'Pago retenido en garantía',
         message:
-            'El cobro fue aprobado y los fondos quedan en escrow hasta que el especialista ejecute el servicio.',
+            'El cobro fue aprobado y los fondos quedan en garantía hasta que el especialista ejecute el servicio.',
         onHistory: _goToHistory,
       );
     }

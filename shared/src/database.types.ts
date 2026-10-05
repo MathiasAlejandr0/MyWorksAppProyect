@@ -625,6 +625,7 @@ export type Database = {
           metodo_pago: string | null
           moneda: string
           monto: number
+          origen_retorno: string | null
           reembolsado_en: string | null
           tipo_pago: string
         }
@@ -999,6 +1000,33 @@ export type Database = {
           },
         ]
       }
+      ubicacion_en_vivo: {
+        Row: {
+          actualizado_en: string
+          id_trabajo: string
+          id_trabajador: string
+          latitud: number
+          longitud: number
+          precision_metros: number | null
+        }
+        Insert: {
+          actualizado_en?: string
+          id_trabajo: string
+          id_trabajador: string
+          latitud: number
+          longitud: number
+          precision_metros?: number | null
+        }
+        Update: {
+          actualizado_en?: string
+          id_trabajo?: string
+          id_trabajador?: string
+          latitud?: number
+          longitud?: number
+          precision_metros?: number | null
+        }
+        Relationships: []
+      }
       trabajadores: {
         Row: {
           calificacion: number
@@ -1006,13 +1034,19 @@ export type Database = {
           conteo_rechazos: number
           descripcion: string | null
           disponible: number
+          estado_verificacion: string
           id_usuario: string
+          nota_verificacion: string | null
           niveles_precio: Json
           precios_configurados: number
           profesion: string
           servicios_personalizados: Json
           tarifa_visita: number
           zona_trabajo: string | null
+          latitud_base: number | null
+          longitud_base: number | null
+          radio_servicio_km: number
+          origen_base: string | null
         }
         Insert: {
           calificacion?: number
@@ -1020,13 +1054,19 @@ export type Database = {
           conteo_rechazos?: number
           descripcion?: string | null
           disponible?: number
+          estado_verificacion?: string
           id_usuario: string
           niveles_precio?: Json
+          nota_verificacion?: string | null
           precios_configurados?: number
           profesion?: string
           servicios_personalizados?: Json
           tarifa_visita?: number
           zona_trabajo?: string | null
+          latitud_base?: number | null
+          longitud_base?: number | null
+          radio_servicio_km?: number
+          origen_base?: string | null
         }
         Update: {
           calificacion?: number
@@ -1034,13 +1074,19 @@ export type Database = {
           conteo_rechazos?: number
           descripcion?: string | null
           disponible?: number
+          estado_verificacion?: string
           id_usuario?: string
           niveles_precio?: Json
+          nota_verificacion?: string | null
           precios_configurados?: number
           profesion?: string
           servicios_personalizados?: Json
           tarifa_visita?: number
           zona_trabajo?: string | null
+          latitud_base?: number | null
+          longitud_base?: number | null
+          radio_servicio_km?: number
+          origen_base?: string | null
         }
         Relationships: [
           {
@@ -1184,9 +1230,26 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      abrir_disputa: {
+        Args: {
+          p_id: string
+          p_id_trabajo: string
+          p_motivo: string
+          p_descripcion?: string
+        }
+        Returns: undefined
+      }
+      comentar_disputa: {
+        Args: { p_id: string; p_comentario: string }
+        Returns: undefined
+      }
       es_parte_trabajo: { Args: { p_trabajo_id: string }; Returns: boolean }
       es_rol_trabajador: { Args: { p_usuario_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      categorias_con_disponibles: {
+        Args: never
+        Returns: string[]
+      }
       listar_profesionales_catalogo: {
         Args: {
           p_categoria?: string
@@ -1205,7 +1268,21 @@ export type Database = {
           ruta_foto_perfil: string | null
           tarifa_visita: number | null
           zona_trabajo: string | null
+          latitud_base: number | null
+          longitud_base: number | null
+          radio_servicio_km: number | null
+          origen_base: string | null
+          trabajos_completados: number | null
         }[]
+      }
+      publicar_ubicacion_trabajo: {
+        Args: {
+          p_trabajo_id: string
+          p_lat: number
+          p_lng: number
+          p_precision?: number
+        }
+        Returns: undefined
       }
       rechazar_trabajo_pendiente: {
         Args: { p_metadatos?: string; p_trabajo_id: string }

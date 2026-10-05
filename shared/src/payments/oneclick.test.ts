@@ -48,12 +48,9 @@ describe('oneclick', () => {
     assert.deepEqual(result, { charged: false, needsCard: true });
   });
 
-  it('separa invitado, cobro con tarjeta e inscripción en la app', () => {
+  it('manda a Webpay Plus a quien no tiene tarjeta inscrita', () => {
     assert.equal(checkoutLane({ signedIn: false, cardEnrolled: false }), 'webpay');
+    assert.equal(checkoutLane({ signedIn: true, cardEnrolled: false }), 'webpay');
     assert.equal(checkoutLane({ signedIn: true, cardEnrolled: true }), 'charge');
-    assert.equal(
-      checkoutLane({ signedIn: true, cardEnrolled: false }),
-      'enroll-in-app',
-    );
   });
 });

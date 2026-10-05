@@ -5,7 +5,19 @@ class DisputeRepository {
   static const String _table = 'disputas';
 
   Future<void> createDispute(DisputeModel dispute) async {
-    await supabase.from(_table).insert(dispute.toMap());
+    await supabase.rpc('abrir_disputa', params: {
+      'p_id': dispute.id,
+      'p_id_trabajo': dispute.jobId,
+      'p_motivo': dispute.reason,
+      'p_descripcion': dispute.description,
+    });
+  }
+
+  Future<void> addComment(String disputeId, String comment) async {
+    await supabase.rpc('comentar_disputa', params: {
+      'p_id': disputeId,
+      'p_comentario': comment,
+    });
   }
 
   Future<DisputeModel?> getDisputeById(String id) async {

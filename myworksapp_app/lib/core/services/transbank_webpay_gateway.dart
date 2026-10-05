@@ -4,7 +4,7 @@ import 'payment_gateway_port.dart';
 /// Gateway Webpay Plus vía Edge Function `webpay-create`.
 ///
 /// Secretos de comercio solo en el servidor. El cliente recibe una URL de
-/// handoff que hace POST `token_ws` a Transbank (sin capturar PAN).
+/// handoff que redirige a Transbank con token_ws (sin capturar PAN).
 class TransbankWebpayGateway implements PaymentGatewayPort {
   TransbankWebpayGateway({this.returnUrl});
 

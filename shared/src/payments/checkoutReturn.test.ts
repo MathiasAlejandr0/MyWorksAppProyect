@@ -20,11 +20,24 @@ describe('parseCheckoutReturn', () => {
     );
   });
 
-  it('deja el Webpay del invitado para verificar', () => {
-    assert.equal(
-      parseCheckoutReturn('?pago=ok&paymentId=pay-1').kind,
-      'verify',
+  it('deja el Webpay del invitado para verificar y crear clave', () => {
+    const result = parseCheckoutReturn(
+      '?pago=ok&paymentId=pay-1&jobId=job-1&invitado=1&alta=pwd.token',
     );
+    assert.equal(result.kind, 'verify');
+    if (result.kind === 'verify') {
+      assert.equal(result.guest, true);
+      assert.equal(result.passwordToken, 'pwd.token');
+      assert.equal(result.paymentId, 'pay-1');
+    }
+  });
+
+  it('avisa en español cuando el invitado cancela en Webpay', () => {
+    const result = parseCheckoutReturn('?pago=fail');
+    assert.equal(result.kind, 'failed');
+    if (result.kind === 'failed') {
+      assert.equal(result.message, 'Pago cancelado. No se realizó ningún cargo.');
+    }
   });
 
   it('explica un cobro rechazado', () => {

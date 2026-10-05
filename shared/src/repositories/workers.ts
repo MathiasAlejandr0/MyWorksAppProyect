@@ -18,6 +18,13 @@ type WorkerQueryRow = {
   categoria_servicio: string;
   precios_configurados?: number | null;
   zona_trabajo?: string | null;
+  estado_verificacion?: string | null;
+  nota_verificacion?: string | null;
+  latitud_base?: number | null;
+  longitud_base?: number | null;
+  radio_servicio_km?: number | null;
+  origen_base?: string | null;
+  trabajos_completados?: number | null;
   nombre?: string | null;
   ruta_foto_perfil?: string | null;
   perfiles?:
@@ -55,8 +62,16 @@ function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
     serviceCategory: row.categoria_servicio,
     pricingConfigured: Number(row.precios_configurados ?? 1),
     workZone: row.zona_trabajo,
+    verificationStatus: row.estado_verificacion ?? null,
+    verificationNote: row.nota_verificacion ?? null,
+    baseLatitude: row.latitud_base == null ? null : Number(row.latitud_base),
+    baseLongitude: row.longitud_base == null ? null : Number(row.longitud_base),
+    serviceRadiusKm:
+      row.radio_servicio_km == null ? null : Number(row.radio_servicio_km),
+    baseOrigin: row.origen_base ?? null,
     name: row.nombre ?? profileRow?.nombre ?? 'Profesional',
     profilePhotoPath: row.ruta_foto_perfil ?? profileRow?.ruta_foto_perfil,
+    completedJobs: Number(row.trabajos_completados ?? 0),
   };
 }
 
@@ -104,7 +119,7 @@ export async function fetchWorkersCatalog(
   let query = supabase
     .from('trabajadores')
     .select(
-      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo',
+      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, latitud_base, longitud_base, radio_servicio_km, origen_base',
     )
     .eq('categoria_servicio', opts.category)
     .eq('disponible', 1)
@@ -124,6 +139,24 @@ export async function fetchWorkersCatalog(
   return pageFromRows((data ?? []) as WorkerQueryRow[], limit);
 }
 
+/** Oficios con al menos un profesional disponible y con precio. Null si la RPC no está. */
+export async function fetchCategoriesWithPros(
+  supabase: AppSupabase,
+): Promise<string[] | null> {
+  const rpc = await supabase.rpc('categorias_con_disponibles');
+  if (rpc.error || !Array.isArray(rpc.data)) return null;
+  const ids = (rpc.data as unknown[])
+    .map((row: unknown) => {
+      if (typeof row === 'string') return row.trim();
+      if (row && typeof row === 'object' && 'categoria' in row) {
+        return String((row as { categoria: unknown }).categoria).trim();
+      }
+      return '';
+    })
+    .filter((id: string) => id.length > 0);
+  return ids;
+}
+
 /** Primera página del catálogo (compat). No incluye correo. */
 export async function fetchWorkersByCategory(
   supabase: AppSupabase,
@@ -133,19 +166,43 @@ export async function fetchWorkersByCategory(
   return page.workers;
 }
 
+const ADMIN_WORKER_COLUMNS =
+  'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)';
+
 export async function fetchWorkersForAdmin(
   supabase: AppSupabase,
 ): Promise<WorkerWithProfile[]> {
-  const { data, error } = await supabase
+  const withVerification = await supabase
     .from('trabajadores')
-    .select(
-      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)',
-    )
+    .select(`${ADMIN_WORKER_COLUMNS}, estado_verificacion, nota_verificacion`)
     .order('calificacion', { ascending: false })
     .limit(200);
 
+  if (!withVerification.error) {
+    return ((withVerification.data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);
+  }
+
+  const fallback = await supabase
+    .from('trabajadores')
+    .select(ADMIN_WORKER_COLUMNS)
+    .order('calificacion', { ascending: false })
+    .limit(200);
+  if (fallback.error) throw fallback.error;
+  return ((fallback.data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);
+}
+
+export async function setWorkerVerification(
+  supabase: AppSupabase,
+  userId: string,
+  status: 'pendiente' | 'en_revision' | 'verificado' | 'rechazado',
+  note?: string | null,
+): Promise<void> {
+  const { error } = await supabase.rpc('fijar_verificacion_profesional', {
+    p_id_usuario: userId,
+    p_estado: status,
+    p_nota: note ?? null,
+  });
   if (error) throw error;
-  return ((data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);
 }
 
 export function toWebWorkerCard(worker: WorkerWithProfile, jobsDone = 0): WebWorkerCard {
@@ -155,8 +212,11 @@ export function toWebWorkerCard(worker: WorkerWithProfile, jobsDone = 0): WebWor
     profession: worker.profession,
     category: worker.serviceCategory,
     rating: worker.rating,
-    jobsDone,
+    jobsDone: jobsDone || worker.completedJobs || 0,
     photoUrl: listPhotoUrl(worker.profilePhotoPath),
     pricePerVisit: worker.visitFee,
+    latitude: worker.baseLatitude ?? null,
+    longitude: worker.baseLongitude ?? null,
+    serviceRadiusKm: worker.serviceRadiusKm ?? null,
   };
 }

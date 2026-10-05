@@ -5,6 +5,8 @@ import '../database/repositories/user_repository.dart';
 import '../database/models/worker_model.dart';
 import '../database/models/job_model.dart';
 import '../database/models/user_model.dart';
+import '../domain/distance_match.dart';
+import '../domain/zone_match.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
 import 'worker_reputation_service.dart';
@@ -56,6 +58,7 @@ class MatchingService {
   static const double _weightAvailability = 0.20;
   static const double _weightCancellations = 0.15;
   static const double _weightActivity = 0.05;
+  static const double _weightZone = 0.25;
 
   /// Matching automático - Selecciona los mejores trabajadores
   /// 
@@ -194,14 +197,20 @@ class MatchingService {
   }) async {
     try {
       // 1. Obtener datos del usuario trabajador
-      final user = await _userRepository.getUserById(worker.userId);
+      final user = await _userRepository.getPublicProfile(worker.userId);
       if (user == null) return null;
 
-      // 2. Calcular distancia (si tenemos coordenadas del trabajador)
-      // Nota: Por ahora, asumimos que no tenemos coordenadas del trabajador
-      // En producción, esto requeriría agregar lat/lng al WorkerModel
-      double? distanceKm;
-      // TODO: Calcular distancia real cuando tengamos coordenadas del trabajador
+      final jobLat = job.latitude ?? userLatitude;
+      final jobLng = job.longitude ?? userLongitude;
+      final distance = matchByDistance(
+        workerLat: worker.baseLatitude,
+        workerLng: worker.baseLongitude,
+        jobLat: jobLat,
+        jobLng: jobLng,
+        radiusKm: worker.serviceRadiusKm,
+      );
+      if (distance != null && distance.outsideRadius) return null;
+      final double? distanceKm = distance?.distanceKm;
 
       // 3. Obtener cancelaciones previas (solo del trabajador, no del usuario)
       final cancellationCount = await _getCancellationCount(worker.userId);
@@ -224,9 +233,9 @@ class MatchingService {
         score += _weightAvailability;
       }
 
-      // Score por distancia (menor distancia = mayor score)
-      // Por ahora, no penalizamos por distancia
-      // TODO: Implementar cuando tengamos coordenadas
+      final zoneScore = distance?.score ??
+          zoneMatchScore(worker.workZone, job.address);
+      score += _weightZone * zoneScore;
 
       // Score por cancelaciones (menos cancelaciones = mayor score)
       final cancellationPenalty = math.min(cancellationCount * 0.1, 1.0);
@@ -243,7 +252,13 @@ class MatchingService {
       score = math.min(1.0, math.max(0.0, score));
 
       // Generar razón de selección
-      final reason = _generateReason(worker, cancellationCount, lastActivity);
+      final reason = _generateReason(
+        worker,
+        cancellationCount,
+        lastActivity,
+        zoneScore > 0,
+        distanceKm,
+      );
 
       return MatchResult(
         worker: worker,
@@ -288,8 +303,20 @@ class MatchingService {
   }
 
   /// Genera una razón de selección legible
-  String _generateReason(WorkerModel worker, int cancellationCount, DateTime? lastActivity) {
+  String _generateReason(
+    WorkerModel worker,
+    int cancellationCount,
+    DateTime? lastActivity,
+    bool sameZone,
+    double? distanceKm,
+  ) {
     final reasons = <String>[];
+
+    if (distanceKm != null) {
+      reasons.add('A ${distanceKm.toStringAsFixed(1)} km de la base');
+    } else if (sameZone) {
+      reasons.add('Trabaja en la misma zona');
+    }
 
     if (worker.rating >= 4.5) {
       reasons.add('Excelente calificación');

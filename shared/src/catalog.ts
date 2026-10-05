@@ -9,3 +9,15 @@ export type CatalogCursor = {
   rating: number;
   id: string;
 };
+
+/**
+ * Si availableIds es null, el catálogo todavía no respondió: se muestran todas.
+ * Si es un conjunto, se ocultan los oficios sin profesionales.
+ */
+export function categoriesWithPros<T extends { id: string }>(
+  categories: readonly T[],
+  availableIds: ReadonlySet<string> | null,
+): T[] {
+  if (availableIds == null) return [...categories];
+  return categories.filter((category) => availableIds.has(category.id));
+}

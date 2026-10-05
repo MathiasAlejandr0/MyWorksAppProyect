@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -8,6 +11,7 @@ import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/models/message_model.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/user_model.dart';
+import '../../../../core/database/supabase_db.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/design_system/app_radius.dart';
 import '../../../../core/design_system/app_spacing.dart';
@@ -36,50 +40,102 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   JobModel? _job;
   UserModel? _otherUser;
   bool _isLoading = true;
+  String? _loadError;
+  Timer? _poll;
+  RealtimeChannel? _channel;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _poll = Timer.periodic(const Duration(seconds: 12), (_) {
+      if (mounted && !_isLoading) {
+        _refreshMessages();
+      }
+    });
+    _channel = supabase
+        .channel('mensajes-${widget.jobId}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'mensajes',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id_trabajo',
+            value: widget.jobId,
+          ),
+          callback: (payload) {
+            final row = payload.newRecord;
+            if (row.isEmpty || !mounted) return;
+            final message = MessageModel.fromMap(Map<String, dynamic>.from(row));
+            setState(() {
+              if (_messages.every((item) => item.id != message.id)) {
+                _messages = [..._messages, message];
+              }
+            });
+            _scrollToBottom();
+          },
+        )
+        .subscribe();
   }
 
   @override
   void dispose() {
+    _poll?.cancel();
+    final channel = _channel;
+    if (channel != null) {
+      supabase.removeChannel(channel);
+    }
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
+  Future<void> _refreshMessages() async {
+    try {
+      final messages = await _messageRepository.getMessagesByJobId(widget.jobId);
+      if (!mounted) return;
+      setState(() => _messages = messages);
+    } catch (_) {}
+  }
+
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
 
     try {
       final job = await _jobRepository.getJobById(widget.jobId);
       final messages = await _messageRepository.getMessagesByJobId(widget.jobId);
-      
+
       final authState = ref.read(authProvider);
       final currentUser = authState.user;
-      
+
+      UserModel? otherUser;
       if (job != null && currentUser != null) {
         final otherUserId = currentUser.id == job.userId ? job.workerId : job.userId;
         if (otherUserId != null) {
-          final otherUser = await _userRepository.getUserById(otherUserId);
-          
-          // Marcar mensajes como leídos
+          otherUser = await _userRepository.getUserById(otherUserId);
           await _messageRepository.markAllAsRead(widget.jobId, currentUser.id);
-
-          setState(() {
-            _job = job;
-            _messages = messages;
-            _otherUser = otherUser;
-            _isLoading = false;
-          });
-
-          _scrollToBottom();
         }
       }
+
+      if (!mounted) return;
+      setState(() {
+        _job = job;
+        _messages = messages;
+        _otherUser = otherUser;
+        _isLoading = false;
+        _loadError = job == null ? 'No encontramos este trabajo.' : null;
+      });
+      _scrollToBottom();
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _loadError = 'No se pudieron cargar los mensajes.';
+      });
     }
   }
 
@@ -166,11 +222,17 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       body: Column(
         children: [
           Expanded(
-            child: _messages.isEmpty
+            child: _loadError != null
+                ? EmptyStateWidget(
+                    icon: Icons.error_outline,
+                    title: 'Chat no disponible',
+                    message: _loadError!,
+                  )
+                : _messages.isEmpty
                 ? const EmptyStateWidget(
                     icon: Icons.chat_bubble_outline,
                     title: 'No hay mensajes aún',
-                    message: '¡Envía el primer mensaje para comenzar la conversación!',
+                    message: 'Envía el primer mensaje para comenzar la conversación.',
                   )
                 : ListView.builder(
                     controller: _scrollController,

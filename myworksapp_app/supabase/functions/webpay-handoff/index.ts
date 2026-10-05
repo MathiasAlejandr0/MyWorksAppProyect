@@ -1,9 +1,6 @@
 import { verifyHandoffTicket } from "../_shared/security.ts";
 import { serviceClient } from "../_shared/supabase.ts";
-import {
-  transbankAutoPostHtml,
-  transbankFormResponse,
-} from "../_shared/transbank_form.ts";
+import { transbankRedirectResponse } from "../_shared/transbank_form.ts";
 
 /** Handoff Webpay: ticket HMAC de un solo uso (marca handoff_consumido_en). */
 Deno.serve(async (req) => {
@@ -49,14 +46,11 @@ Deno.serve(async (req) => {
       return new Response("Ticket ya utilizado", { status: 409 });
     }
 
-    const html = transbankAutoPostHtml({
+    return transbankRedirectResponse({
       action: String(data.url_tbk),
       fieldName: "token_ws",
       token: String(data.token_tbk),
-      title: "Redirigiendo a Webpay",
-      message: "Redirigiendo a Transbank Webpay de forma segura.",
     });
-    return transbankFormResponse(html);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     const status = msg.includes("WEBPAY_HANDOFF_SECRET") ? 503 : 500;

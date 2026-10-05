@@ -31,6 +31,8 @@ class PricingConstants {
     return status == paymentAuthorized || status == paymentHeld;
   }
   static const String paymentRefunded = 'reembolsado';
+  static const String paymentVoided = 'anulado';
+  static const String paymentFailed = 'fallido';
 
   static const String paymentTypePrimary = 'principal';
   static const String paymentTypeChangeOrder = 'orden_cambio';

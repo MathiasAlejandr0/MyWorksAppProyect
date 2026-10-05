@@ -102,23 +102,27 @@ Para que un profesor o financista instale escaneando un QR:
 
 Versión web para **clientes** (rol `user` en Supabase). Usa el módulo compartido `shared/` para auth y datos reales.
 
+El retorno de Webpay usa solo el puerto **5173**. Copia `.env.example` a `.env.local` (ya trae la URL y la clave publicable).
+
 ```bash
 cd myworksapp_web
-copy .env.example .env
+cp .env.example .env.local
 npm install
-npm run dev -- --port 3000
+npm run dev
 ```
 
-Variables en `.env`:
+En Windows PowerShell:
 
-```env
-VITE_SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co
-VITE_SUPABASE_ANON_KEY=tu_anon_key
+```powershell
+cd myworksapp_web
+Copy-Item .env.example .env.local
+npm install
+npm run dev
 ```
 
-Acceso: `http://127.0.0.1:3000`
+Acceso: `http://localhost:5173`
 
-Cuenta demo: `usuario@demo.com` / `demo123`
+Cuentas de la demo (contraseña `Demo2026!`): `camila.soto@demo.myworksapp.cl` y el resto de `DEMO.md`. No uses `usuario@demo.com` ni `demo123`.
 
 ---
 
@@ -128,16 +132,27 @@ Hub de **administración** (rol `admin` en Supabase). Soporte, métricas y DevSe
 
 ### Modo navegador (desarrollo)
 
+El panel en el navegador queda en `http://127.0.0.1:3001`.
+
 ```bash
 cd myworksapp_desktop
-copy .env.example .env
+cp .env.example .env.local
 npm install
-npm run dev -- --port 3001
+npm run dev
+```
+
+En Windows PowerShell:
+
+```powershell
+cd myworksapp_desktop
+Copy-Item .env.example .env.local
+npm install
+npm run dev
 ```
 
 Acceso: `http://127.0.0.1:3001`
 
-Cuenta admin demo: `admin@demo.com` / `demo123`
+Cuenta admin de la demo: `admin.ops@demo.myworksapp.cl` / `Demo2026!` (Valentina Riquelme). El segundo factor pide un QR la primera vez.
 
 ### App nativa con Tauri (Windows / macOS / Linux)
 
@@ -145,8 +160,9 @@ Requisitos: [Rust](https://rustup.rs/) instalado.
 
 ```bash
 cd myworksapp_desktop
+Copy-Item .env.example .env.local   # en bash: cp .env.example .env.local
 npm install
-npm run tauri:dev      # desarrollo con ventana nativa
+npm run tauri:dev      # desarrollo con ventana nativa, mismo origen que http://127.0.0.1:3001
 npm run tauri:build    # genera instalador en src-tauri/target/release/bundle/
 ```
 
@@ -176,6 +192,16 @@ Proyecto: `https://supabase.com/dashboard/project/wxqrfcqifkfgawrnqmnj`
 cd myworksapp_app
 supabase db push
 ```
+
+`20261005000001_verificacion_profesional.sql` y `20261005000002_security_lockdown_rpc.sql` (el cierre de EXECUTE ya corrido en la base) están en el proyecto `wxqrfcqifkfgawrnqmnj`. Falta aplicar, en este orden, `20261006000001_gps_y_base_profesional.sql` (ubicación base, `en_camino`, GPS; la matriz de estados conserva el flujo de pago y solo agrega en camino), `20261006000002_ocultar_pin_listados.sql` y `20261007000001_rls_indices_asesores.sql` (initplan, políticas duplicadas e índices). El guion y las cuentas de la demo están en `DEMO.md`. El SQL de datos de prueba es `scripts/demo/seed_demo.sql` y no forma parte de las migraciones. El cliente usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (web y escritorio) o `--dart-define=SUPABASE_URL` y `SUPABASE_ANON_KEY` (Flutter). Pagos de integración: `TBK_ENV=integration`; `TBK_COMMERCE_CODE` y `TBK_API_KEY` solo en secretos de Edge Functions. `WEBPAY_HANDOFF_SECRET` es obligatorio.
+
+Invitaciones de RRHH (función `invitar-colaborador`, solo un administrador):
+
+- `INVITE_PROVIDER=supabase` (por defecto) usa `inviteUserByEmail`. Hace falta el SMTP del proyecto Auth.
+- `INVITE_PROVIDER=resend` exige `RESEND_API_KEY` y `RESEND_FROM`.
+- `INVITE_REDIRECT_URL` es opcional (a dónde vuelve quien acepta).
+
+Esos secretos viven en las Edge Functions, no en el escritorio.
 
 ### 2. Google Cloud Console
 

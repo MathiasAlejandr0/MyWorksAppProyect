@@ -9,6 +9,8 @@ typedef OpenDisputeCallback = Future<void> Function(
   String? description,
 );
 
+typedef AddDisputeCommentCallback = Future<void> Function(String comment);
+
 class DisputeSection extends StatelessWidget {
   const DisputeSection({
     super.key,
@@ -16,19 +18,24 @@ class DisputeSection extends StatelessWidget {
     required this.canOpenDispute,
     required this.isParticipant,
     this.onOpenDispute,
+    this.onAddComment,
   });
 
   final DisputeModel? dispute;
   final bool canOpenDispute;
   final bool isParticipant;
   final OpenDisputeCallback? onOpenDispute;
+  final AddDisputeCommentCallback? onAddComment;
 
   @override
   Widget build(BuildContext context) {
     if (!isParticipant) return const SizedBox.shrink();
 
     if (dispute != null) {
-      return _DisputeStatusCard(dispute: dispute!);
+      return _DisputeStatusCard(
+        dispute: dispute!,
+        onAddComment: onAddComment,
+      );
     }
 
     if (!canOpenDispute || onOpenDispute == null) {
@@ -112,10 +119,27 @@ class DisputeSection extends StatelessWidget {
   }
 }
 
-class _DisputeStatusCard extends StatelessWidget {
-  const _DisputeStatusCard({required this.dispute});
+class _DisputeStatusCard extends StatefulWidget {
+  const _DisputeStatusCard({required this.dispute, this.onAddComment});
 
   final DisputeModel dispute;
+  final AddDisputeCommentCallback? onAddComment;
+
+  @override
+  State<_DisputeStatusCard> createState() => _DisputeStatusCardState();
+}
+
+class _DisputeStatusCardState extends State<_DisputeStatusCard> {
+  final _commentCtrl = TextEditingController();
+  var _sending = false;
+
+  @override
+  void dispose() {
+    _commentCtrl.dispose();
+    super.dispose();
+  }
+
+  DisputeModel get dispute => widget.dispute;
 
   String _reasonLabel(String reason) {
     switch (reason) {
@@ -163,6 +187,31 @@ class _DisputeStatusCard extends StatelessWidget {
               Text(
                 'Resolución: ${dispute.resolution}',
                 style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
+            if (isOpen && widget.onAddComment != null) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: _commentCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Agregar comentario',
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: _sending
+                    ? null
+                    : () async {
+                        final text = _commentCtrl.text.trim();
+                        if (text.isEmpty) return;
+                        setState(() => _sending = true);
+                        await widget.onAddComment!(text);
+                        if (!mounted) return;
+                        _commentCtrl.clear();
+                        setState(() => _sending = false);
+                      },
+                child: Text(_sending ? 'Enviando…' : 'Agregar comentario'),
               ),
             ],
             if (isOpen)

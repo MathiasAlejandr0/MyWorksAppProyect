@@ -17,6 +17,7 @@ import {
   Shield,
 
 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 
 
@@ -64,7 +65,11 @@ const DEMO_COLLABORATORS: Collaborator[] = [
 
 
 
-export function HumanResourcesWorkspace() {
+export function HumanResourcesWorkspace({
+  onOpenNotifications,
+}: {
+  onOpenNotifications?: () => void;
+}) {
 
   // Colaboradores ficticios solo en DEV — en build de producto la lista parte vacía.
   const [collaborators] = useState<Collaborator[]>(
@@ -80,6 +85,7 @@ export function HumanResourcesWorkspace() {
   const [inviteName, setInviteName] = useState('');
 
   const [inviteMessage, setInviteMessage] = useState('');
+  const [inviteNotice, setInviteNotice] = useState<string | null>(null);
 
 
 
@@ -95,16 +101,32 @@ export function HumanResourcesWorkspace() {
 
 
 
-  const handleInvite = (e: React.FormEvent) => {
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    setInviteEmail('');
-
-    setInviteName('');
-
-    setInviteMessage('');
-
+    setInviteBusy(true);
+    setInviteNotice(null);
+    setInviteError(null);
+    const { data, error } = await supabase.functions.invoke('invitar-colaborador', {
+      body: {
+        email: inviteEmail,
+        name: inviteName,
+        role: inviteRole,
+        message: inviteMessage,
+      },
+    });
+    const payload = data as { error?: string; message?: string } | null;
+    if (error || payload?.error) {
+      setInviteError(payload?.error || error?.message || 'No se pudo enviar la invitación.');
+    } else {
+      setInviteNotice(payload?.message || 'Invitación enviada.');
+      setInviteEmail('');
+      setInviteName('');
+      setInviteMessage('');
+    }
+    setInviteBusy(false);
   };
 
 
@@ -125,12 +147,13 @@ export function HumanResourcesWorkspace() {
 
         <div className="hr-header-actions">
 
-          <button type="button" className="icon-btn hr-notify" aria-label="Notificaciones">
-
+          <button
+            type="button"
+            className="icon-btn hr-notify"
+            aria-label="Notificaciones"
+            onClick={onOpenNotifications}
+          >
             <Bell size={20} />
-
-            <span className="notify-badge">3</span>
-
           </button>
 
         </div>
@@ -279,7 +302,11 @@ export function HumanResourcesWorkspace() {
 
           <div className="hr-pagination">
 
-            <span>Mostrando 1 a {filtered.length} de 24 colaboradores</span>
+            <span>
+              {filtered.length === 0
+                ? 'Sin colaboradores en esta vista'
+                : `Mostrando ${filtered.length} colaborador${filtered.length === 1 ? '' : 'es'}`}
+            </span>
 
             <div className="hr-pagination-controls">
 
@@ -403,11 +430,14 @@ export function HumanResourcesWorkspace() {
 
             </label>
 
-            <button type="submit" className="hr-invite-submit">
+            <button type="submit" className="hr-invite-submit" disabled={inviteBusy}>
 
-              <Send size={16} /> Enviar invitación
+              <Send size={16} /> {inviteBusy ? 'Enviando…' : 'Enviar invitación'}
 
             </button>
+
+            {inviteError && <p role="alert">{inviteError}</p>}
+            {inviteNotice && <p role="status">{inviteNotice}</p>}
 
           </form>
 
@@ -421,7 +451,7 @@ export function HumanResourcesWorkspace() {
 
         <span>Área: RRHH · Rol: Admin</span>
 
-        <span><Shield size={12} /> Seguro y encriptado · Versión 1.4.0</span>
+        <span><Shield size={12} /> Sesión de administrador</span>
 
       </footer>
 

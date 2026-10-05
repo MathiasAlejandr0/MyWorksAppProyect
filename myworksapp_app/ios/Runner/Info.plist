@@ -48,9 +48,9 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Necesitamos tu ubicación para mostrar el mapa y seleccionar la dirección del servicio</string>
+	<string>Mientras un trabajo está en camino o en curso, compartimos tu ubicación en primer plano con el cliente de ese pedido. También sirve para fijar tu zona de trabajo.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Necesitamos tu ubicación para mostrar el mapa y seleccionar la dirección del servicio</string>
+	<string>MyWorksApp no sigue tu ubicación en segundo plano. El GPS del pedido solo corre con la app abierta.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Necesitamos acceso a la cámara para tomar fotos de los trabajos</string>
 	<key>NSPhotoLibraryUsageDescription</key>

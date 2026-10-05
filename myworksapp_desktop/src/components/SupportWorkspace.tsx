@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { JobScopeAdjustmentModal } from './JobScopeAdjustmentModal';
 import { TableRowsSkeleton } from './LoadingState';
-import { fetchOpenDisputes } from '@myworksapp/shared';
+import { fetchOpenDisputes, formatDbDateTime } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 import { queryKeys } from '../queryClient';
 
@@ -41,7 +41,7 @@ function mapDisputesToTickets(
     worker: dispute.workerName,
     issue: dispute.description ?? dispute.reason,
     escrowAmount: dispute.escrowAmount,
-    date: new Date(dispute.createdAt).toLocaleString('es-CL'),
+    date: formatDbDateTime(dispute.createdAt),
     status: dispute.status === 'resuelta' ? ('Resolved' as const) : ('Pending' as const),
   }));
 }
@@ -53,6 +53,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
   const [scopeModalTicket, setScopeModalTicket] = useState<Ticket | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
 
   const ticketsQuery = useQuery({
     queryKey: queryKeys.openDisputes,
@@ -112,6 +113,10 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
       t.client.toLowerCase().includes(search.toLowerCase()) ||
       t.worker.toLowerCase().includes(search.toLowerCase()),
   );
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageRows = filtered.slice(safePage * pageSize, safePage * pageSize + pageSize);
 
   const resolveTicket = async (ticketId: string, decision: 'liberar' | 'reembolsar') => {
     const resolution =
@@ -293,7 +298,10 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
                 value={search}
 
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
 
                 placeholder="Buscar…"
 
@@ -327,7 +335,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
             )}
 
-            {!loading && filtered.map((ticket) => (
+            {!loading && pageRows.map((ticket) => (
 
               <button
 
@@ -380,19 +388,24 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
 
           <div className="support-pagination">
-
-            <button type="button" disabled>‹</button>
-
-            <button type="button" className="active">1</button>
-
-            <button type="button">2</button>
-
-            <button type="button">3</button>
-
-            <span>…</span>
-
-            <button type="button">›</button>
-
+            <button type="button" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>‹</button>
+            {Array.from({ length: pageCount }, (_, index) => (
+              <button
+                key={index}
+                type="button"
+                className={index === safePage ? 'active' : undefined}
+                onClick={() => setPage(index)}
+              >
+                {index + 1}
+              </button>
+            ))}
+            <button
+              type="button"
+              disabled={safePage >= pageCount - 1}
+              onClick={() => setPage(safePage + 1)}
+            >
+              ›
+            </button>
           </div>
 
         </section>
@@ -439,7 +452,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
                   <strong>{selectedTicket.client}</strong>
 
-                  <span>Representante legal</span>
+                  <span>Cliente</span>
 
                 </div>
 

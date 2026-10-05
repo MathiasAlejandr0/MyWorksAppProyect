@@ -1,5 +1,7 @@
 part of 'job_detail_page.dart';
 
+// El estado es privado de la página; la extensión se invoca por nombre.
+// ignore: library_private_types_in_public_api
 extension JobDetailStatusActions on _JobDetailPageState {
   Future<void> _updateJobStatus(String newStatus) async {
     try {
@@ -43,6 +45,10 @@ extension JobDetailStatusActions on _JobDetailPageState {
             case AppConstants.jobStatusAccepted:
               title = 'Trabajo Aceptado';
               body = 'Tu solicitud ha sido aceptada por el trabajador';
+              break;
+            case AppConstants.jobStatusEnRoute:
+              title = 'Profesional en camino';
+              body = 'El especialista va hacia el domicilio. Puedes ver su ubicación.';
               break;
             case AppConstants.jobStatusInProgress:
               title = 'Trabajo Iniciado';
@@ -130,14 +136,9 @@ extension JobDetailStatusActions on _JobDetailPageState {
     }
 
     try {
-      // Usar JobStateMachine para la transición
-      await _stateMachine.transitionTo(
-        jobId: widget.jobId,
-        newStatus: AppConstants.jobStatusAccepted,
-        userId: user.id,
-      );
-
-      // Asignar trabajador
+      // asignar_trabajador_trabajo asigna al profesional y deja el trabajo
+      // en 'aceptado' en una sola llamada. Llamarlo después de
+      // transicionar_trabajo falla con «estado no permite asignacion: aceptado».
       await _jobRepository.assignWorker(_job!.id, user.id);
       
       final WorkerRepository workerRepository = WorkerRepository();
@@ -328,6 +329,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
       return;
     }
 
+    if (!mounted) return;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

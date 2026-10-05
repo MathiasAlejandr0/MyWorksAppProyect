@@ -77,12 +77,22 @@ h1, h2, h3, .brand-display {
 }
 
 .hero-rise { animation: riseIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.page-fade-in { animation: pageFadeIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-.app-shell { animation: pageFadeIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* "backwards" y no "both": al terminar no queda transform en el contenedor. Con
+   translateY(0) retenido, .app-shell pasaba a ser el bloque contenedor de los
+   position: fixed y el diálogo Ingresar se centraba en toda la página (en 390 no se veía). */
+.page-fade-in { animation: pageFadeIn 240ms cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.app-shell { animation: pageFadeIn 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 .app-shell--search { animation: none; background: var(--bg-dominant-dark); }
-.section-fade-in { animation: pageFadeIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: 40ms; }
+.section-fade-in { animation: pageFadeIn 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: 40ms; }
 .modal-fade-in { animation: modalFadeIn 220ms ease-out both; }
 .modal-rise { animation: modalRise 260ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+/* La barra de reserva se centra con translateX(-50%). modalRise deja transform en
+   translateY(0) scale(1) y la corría media pantalla a la derecha. */
+@keyframes quickBookingRise {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+.quick-booking-bar.modal-rise { animation-name: quickBookingRise; }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-rise, .page-fade-in, .section-fade-in, .modal-fade-in, .modal-rise, .glass-nav, .app-shell, .skeleton-block {
@@ -158,7 +168,20 @@ h1, h2, h3, .brand-display {
 }
 .nav-link:hover, .nav-link-btn:hover { color: var(--orange-accent); opacity: 1; }
 .nav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nav-actions .nav-login-mobile { display: none; }
 .nav-hello { font-size: 13px; font-weight: 700; }
+.nav-avatar {
+  display: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange-accent), var(--orange-vibrant));
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  place-items: center;
+  flex-shrink: 0;
+}
 
 /* —— Buttons —— */
 .btn-primary {
@@ -832,11 +855,12 @@ h1, h2, h3, .brand-display {
 .pro-card-stars { color: var(--orange-accent); font-size: 11px; letter-spacing: 1px; }
 .pro-card-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
 }
-.pro-card-price { font-size: 13px; font-weight: 700; }
+.pro-card-price { font-size: 13px; font-weight: 700; white-space: nowrap; }
 .pro-card-badge {
   font-size: 10px;
   font-weight: 800;
@@ -873,9 +897,14 @@ h1, h2, h3, .brand-display {
 }
 .search-page-dots { color: var(--text-muted-dark); padding: 0 4px; }
 .search-empty { padding: 40px; text-align: center; color: var(--text-muted-dark); }
+.search-empty h2 { margin: 0 0 8px; color: var(--text-dark, inherit); font-size: 1.25rem; }
+.search-empty p { margin: 0 0 16px; }
+.categories-empty { margin: 24px 0; text-align: center; color: var(--text-muted-dark); }
 
 .search-map-panel {
   position: relative;
+  /* Los controles del mapa (z-index 400-450) quedan dentro del panel y no tapan la barra de reserva. */
+  isolation: isolate;
   border-left: 1px solid var(--border-dark);
   background: var(--bg-canvas-dark-alt);
   display: flex;
@@ -1001,6 +1030,10 @@ h1, h2, h3, .brand-display {
   background: var(--orange-accent);
   border: 3px solid #fff;
   box-shadow: 0 4px 14px rgba(255, 94, 3, 0.55);
+}
+.mwa-map-pin--worker .mwa-map-pin-dot {
+  background: #2563eb;
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.25);
 }
 .mwa-map-pin--active .mwa-map-pin-dot {
   width: 28px;
@@ -1211,6 +1244,7 @@ h1, h2, h3, .brand-display {
 /* —— Tracking dashboard (mockup 03) —— */
 .tracking-dashboard {
   min-height: 100vh;
+  height: 100vh; /* escritorio: panel con scroll propio y mapa del alto de la ventana */
   display: flex;
   flex-direction: column;
   background: var(--bg-dominant-dark);
@@ -1375,6 +1409,40 @@ h1, h2, h3, .brand-display {
 .tracking-escrow-icon { color: var(--emerald-success); flex-shrink: 0; }
 .tracking-escrow-card strong { display: block; font-size: 14px; color: var(--emerald-success); margin-bottom: 4px; }
 .tracking-escrow-card p { font-size: 12px; color: var(--text-muted-dark); line-height: 1.45; margin-bottom: 8px; }
+.tracking-escrow-card > div { flex: 1; min-width: 0; }
+.tracking-escrow-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted-dark);
+}
+.tracking-escrow-card select,
+.tracking-escrow-card textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-dark);
+  background: var(--bg-canvas-dark);
+  color: var(--text-main-dark);
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  outline: none;
+}
+.tracking-escrow-card select:focus,
+.tracking-escrow-card textarea:focus {
+  border-color: rgba(240, 120, 42, 0.55);
+  box-shadow: 0 0 0 3px rgba(240, 120, 42, 0.15);
+}
+.tracking-escrow-card textarea { resize: vertical; min-height: 72px; }
+.tracking-escrow-card .btn-primary { margin-top: 12px; }
 .tracking-escrow-link {
   background: none;
   border: none;
@@ -1397,6 +1465,19 @@ h1, h2, h3, .brand-display {
   position: relative;
   overflow: hidden;
   background: #0a1018;
+}
+.job-location-map,
+.tracking-map-empty {
+  position: absolute;
+  inset: 0;
+}
+.tracking-map-empty {
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #e2e8f0;
 }
 .tracking-payment-banner {
   position: absolute;
@@ -1540,8 +1621,11 @@ h1, h2, h3, .brand-display {
 .checkout-v2-header { text-align: center; margin-bottom: 20px; }
 .checkout-v2-kicker {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -1551,6 +1635,8 @@ h1, h2, h3, .brand-display {
 .checkout-v2-header h2 { font-size: 26px; font-weight: 800; }
 .checkout-v2-total-row {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: space-between;
   align-items: baseline;
   padding: 16px 0;
@@ -1558,7 +1644,42 @@ h1, h2, h3, .brand-display {
   margin-bottom: 18px;
 }
 .checkout-v2-total-row span { font-size: 14px; color: var(--text-muted-dark); }
-.checkout-v2-total-row strong { font-size: 28px; font-weight: 900; color: var(--orange-accent); }
+.checkout-v2-total-row strong { font-size: 28px; font-weight: 900; color: var(--orange-accent); white-space: nowrap; }
+.orders-panel {
+  margin: 12px auto 0;
+  max-width: 720px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface-dark);
+}
+.orders-panel h2 { margin: 0 0 8px; font-size: 18px; }
+.orders-group { margin-top: 14px; }
+.orders-group h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted-dark);
+}
+.orders-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-dark);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.orders-row strong { font-size: 14px; }
+.orders-row span { color: var(--text-muted-dark); font-size: 13px; }
 .checkout-v2-escrow-banner {
   display: flex;
   justify-content: space-between;
@@ -1961,6 +2082,12 @@ h1, h2, h3, .brand-display {
   border-color: rgba(240, 120, 42, 0.55);
   box-shadow: 0 0 0 3px rgba(240, 120, 42, 0.15);
 }
+.auth-modal-hint {
+  margin: -4px 0 0;
+  color: var(--text-muted-dark);
+  font-size: 12px;
+  line-height: 1.4;
+}
 .auth-modal-error { color: var(--crimson-error); font-size: 13px; font-weight: 600; }
 .auth-modal-submit { justify-content: center; width: 100%; }
 .auth-modal-divider {
@@ -2030,6 +2157,18 @@ h1, h2, h3, .brand-display {
   font-size: 13px;
   font-weight: 600;
 }
+/* Dentro de un diálogo el aviso sigue el formulario. Si queda fixed, modal-rise
+   (que conserva el transform) lo saca del viewport. */
+.checkout-card-v2 .toast-error,
+.auth-modal-card .toast-error {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  width: 100%;
+  margin: 0 0 12px;
+  z-index: auto;
+}
 .skeleton-block {
   border-radius: 8px;
   background: linear-gradient(90deg, rgba(120, 130, 145, 0.12) 0%, rgba(120, 130, 145, 0.22) 45%, rgba(120, 130, 145, 0.12) 90%);
@@ -2063,14 +2202,18 @@ h1, h2, h3, .brand-display {
   .hero-float-metric { font-size: 18px; }
   .hero-mini-map { height: 28px; }
   .nav-links-center { display: none; }
+  .nav-actions .nav-login-mobile { display: inline-flex; }
   .categories-grid, .categories-grid--8 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .search-view-nav { grid-template-columns: 1fr; gap: 10px; }
   .search-view-nav-right { justify-content: flex-start; }
   .search-view-body { grid-template-columns: 1fr; }
   .search-filters { display: none; }
   .search-results-grid { grid-template-columns: 1fr; }
-  .tracking-layout { grid-template-columns: 1fr; }
-  .tracking-sidebar { max-height: 50vh; }
+  .tracking-dashboard { height: auto; }
+  .tracking-layout { grid-template-columns: 1fr; grid-template-rows: 300px auto; flex: 0 0 auto; }
+  /* Móvil: mapa arriba con alto fijo; el panel fluye con la página (sin scroll interno ni hueco). */
+  .tracking-map-full { order: -1; min-height: 300px; border-bottom: 1px solid var(--border-dark); }
+  .tracking-sidebar { max-height: none; overflow: visible; border-right: 0; }
 }
 
 @media (max-width: 640px) {
@@ -2082,4 +2225,33 @@ h1, h2, h3, .brand-display {
   .chat-widget { width: calc(100% - 24px); right: 12px; bottom: 12px; height: 70vh; }
   .checkout-v2-form { grid-template-columns: 1fr; }
   .checkout-v2-dl { grid-template-columns: 1fr; }
+  .tracking-nav { padding: 10px 14px; }
+  .tracking-premium-badge, .tracking-nav-center { display: none; }
+  .tracking-nav-right { margin-left: auto; gap: 10px; }
+  .tracking-nav-user > div:not(.search-nav-avatar), .tracking-nav-user > svg { display: none; }
+  .nav-actions .nav-login-mobile { display: inline-flex; }
+  .checkout-v2-kicker { white-space: normal; text-align: center; letter-spacing: 0.04em; }
+  .checkout-v2-total-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .checkout-v2-total-row strong { font-size: 22px; white-space: nowrap; }
+  .guest-checkout-card { max-width: calc(100vw - 24px); }
 }
+
+/* Móvil angosto: la marca y los botones del header no se tapan. */
+@media (max-width: 480px) {
+  .glass-nav .nav-inner { gap: 8px; }
+  .glass-nav .nav-actions { gap: 6px; }
+  .glass-nav .nav-actions .btn-ghost,
+  .glass-nav .nav-actions .btn-outline-orange { padding: 8px 12px; font-size: 13px; }
+  .glass-nav .nav-hello { display: none; }
+  .glass-nav .nav-avatar { display: grid; }
+  /* Con la inicial a la vista, Salir queda solo con el ícono para no tapar la marca. */
+  .glass-nav .nav-actions .nav-btn-label { display: none; }
+  .glass-nav .brand-logo-name { font-size: 15px; }
+}
+@media (max-width: 360px) {
+  .glass-nav .brand-logo-name { display: none; }
+}
+
+/* Los paneles de Leaflet usan z-index 400-1000. Sin un contexto propio competían con los
+   paneles fijos de la página: el mapa del seguimiento tapaba el chat (z-index 250). */
+.leaflet-container { isolation: isolate; }

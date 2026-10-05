@@ -1,5 +1,7 @@
 part of 'job_detail_page.dart';
 
+// El estado es privado de la página; la extensión se invoca por nombre.
+// ignore: library_private_types_in_public_api
 extension JobDetailWorkflows on _JobDetailPageState {
   Future<void> _submitQuoteProposal() async {
     final job = _job;
@@ -424,7 +426,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
   }
 
   Future<void> _loadAddress(JobModel job) async {
-    setState(() {
+    refreshView(() {
       _isLoadingAddress = true;
     });
 
@@ -437,7 +439,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
       );
 
       if (mounted) {
-        setState(() {
+        refreshView(() {
           _displayAddress = address;
           _isLoadingAddress = false;
         });
@@ -451,7 +453,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
               longitude: job.longitude,
             );
       if (mounted) {
-        setState(() {
+        refreshView(() {
           _displayAddress = fallback;
           _isLoadingAddress = false;
         });
@@ -510,6 +512,8 @@ extension JobDetailWorkflows on _JobDetailPageState {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             JobDetailStatusHeader(job: _job!),
+            const SizedBox(height: 12),
+            JobStatusTimeline(status: _job!.status),
             if (_job!.scheduledDate != null && !workerShowsLocationCard) ...[
               const SizedBox(height: 12),
               JobDetailScheduledDateRow(scheduledDate: _job!.scheduledDate!),
@@ -539,6 +543,20 @@ extension JobDetailWorkflows on _JobDetailPageState {
             const SizedBox(height: 16),
             JobDetailDescriptionSection(job: _job!),
             const SizedBox(height: 16),
+            if (!isWorker && currentUser?.id == _job!.userId) ...[
+              const SizedBox(height: 12),
+              ClientLiveTracking(
+                jobId: _job!.id,
+                jobStatus: _job!.status,
+                destinationLat: _job!.latitude,
+                destinationLng: _job!.longitude,
+              ),
+            ],
+            if (isWorker && currentUser?.id == _job!.workerId)
+              WorkerGpsPublisher(
+                jobId: _job!.id,
+                active: publishesLiveGps(_job!.status),
+              ),
             if (clientShowsLocationPreview) ...[
               JobLocationPreviewSection(
                 address: _isLoadingAddress
@@ -595,6 +613,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
               isParticipant: isOwner,
               canOpenDispute: _canOpenDispute(_job!),
               onOpenDispute: _openDispute,
+              onAddComment: _addDisputeComment,
             ),
             JobDetailActionsSection(
               jobId: widget.jobId,
@@ -606,6 +625,10 @@ extension JobDetailWorkflows on _JobDetailPageState {
               onCancelJob: () => JobDetailStatusActions(this)._cancelJob(),
               onAcceptJob: () => JobDetailStatusActions(this)._acceptJob(),
               onRejectJob: () => JobDetailStatusActions(this)._rejectJob(),
+              onMarkEnRoute: () =>
+                  JobDetailStatusActions(this)._updateJobStatus(
+                    AppConstants.jobStatusEnRoute,
+                  ),
               onStartJob: () =>
                   JobDetailStatusActions(this)._updateJobStatus(
                     AppConstants.jobStatusInProgress,

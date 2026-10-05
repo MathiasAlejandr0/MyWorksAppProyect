@@ -1,4 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { sha256Hex } from "../_shared/guest_ticket.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import {
   allowRate,
@@ -6,9 +7,14 @@ import {
   rateLimitExceededMessage,
 } from "../_shared/rate_limit.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
-import { resolveReturnUrl, signHandoffTicket } from "../_shared/security.ts";
+import {
+  resolveCallerReturnOrigin,
+  resolveReturnUrl,
+  signHandoffTicket,
+} from "../_shared/security.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { tbkConfig, tbkCreateTransaction } from "../_shared/tbk.ts";
+import { turnstileDecision } from "../_shared/turnstile_gate.ts";
 
 type GuestBody = {
   name?: string;
@@ -19,7 +25,9 @@ type GuestBody = {
   serviceId?: string;
   description?: string;
   amountClp?: number;
+  scheduledAt?: string;
   returnUrl?: string;
+  turnstileToken?: string;
 };
 
 function clean(s: unknown, max = 200): string {
@@ -28,6 +36,14 @@ function clean(s: unknown, max = 200): string {
 
 function isEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+function scheduledOrNull(value: unknown): string | null {
+  const raw = clean(value, 40);
+  if (!raw) return null;
+  const parsed = Date.parse(raw);
+  if (!Number.isFinite(parsed)) return null;
+  return new Date(parsed).toISOString();
 }
 
 const GUEST_WINDOW_MS = 60_000;
@@ -53,7 +69,33 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
+    const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY")?.trim() ?? "";
+    const turnstile = turnstileDecision(Deno.env.get("TBK_ENV"), turnstileSecret.length > 0);
+    if (turnstile === "fail_closed") {
+      return jsonResponse(req, { error: "Falta TURNSTILE_SECRET_KEY" }, 503);
+    }
+
     const body = (await req.json()) as GuestBody;
+    if (turnstile === "verify") {
+      const token = clean(body.turnstileToken, 2048);
+      if (!token) {
+        return jsonResponse(req, { error: "Confirma que no eres un robot" }, 400);
+      }
+      const verifyBody = new URLSearchParams({
+        secret: turnstileSecret,
+        response: token,
+      });
+      if (ip) verifyBody.set("remoteip", ip);
+      const verify = await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        { method: "POST", body: verifyBody },
+      );
+      const verdict = await verify.json().catch(() => ({ success: false }));
+      if (!verify.ok || verdict?.success !== true) {
+        return jsonResponse(req, { error: "No se pudo verificar el captcha" }, 400);
+      }
+    }
+
     const name = clean(body.name, 120);
     const email = clean(body.email, 160).toLowerCase();
     const phone = clean(body.phone, 40);
@@ -103,12 +145,25 @@ Deno.serve(async (req) => {
 
     const { data: worker, error: workerErr } = await admin
       .from("trabajadores")
-      .select("id_usuario, tarifa_visita, disponible")
+      .select("id_usuario, tarifa_visita, disponible, precios_configurados, estado_verificacion")
       .eq("id_usuario", workerId)
       .maybeSingle();
 
     if (workerErr || !worker) {
       return jsonResponse(req, { error: "Profesional no encontrado" }, 404);
+    }
+    if (worker.estado_verificacion !== "verificado") {
+      return jsonResponse(
+        req,
+        { error: "Este profesional todavía no está verificado para cobrar" },
+        400,
+      );
+    }
+    if (
+      Number(worker.disponible) !== 1 ||
+      Number(worker.precios_configurados) !== 1
+    ) {
+      return jsonResponse(req, { error: "El profesional no está disponible" }, 400);
     }
 
     const expected = Number(worker.tarifa_visita);
@@ -195,6 +250,7 @@ Deno.serve(async (req) => {
       estado: "esperando_pago",
       descripcion: description,
       direccion: address,
+      fecha_programada: scheduledOrNull(body.scheduledAt),
       modalidad_cobro: "precio_fijo",
       estado_pago: "pendiente",
       metadatos_servicio: meta,
@@ -221,6 +277,8 @@ Deno.serve(async (req) => {
       returnUrl,
     });
 
+    const altaNonce = crypto.randomUUID().replace(/-/g, "") +
+      crypto.randomUUID().replace(/-/g, "");
     const { error: payErr } = await admin.from("pagos").insert({
       id: paymentId,
       id_trabajo: jobId,
@@ -234,6 +292,8 @@ Deno.serve(async (req) => {
       url_tbk: url,
       ambiente: env,
       id_transaccion: buyOrder,
+      origen_retorno: resolveCallerReturnOrigin(req),
+      alta_nonce_hash: await sha256Hex(altaNonce),
       creado_en: now,
       actualizado_en: now,
     });
@@ -256,6 +316,7 @@ Deno.serve(async (req) => {
       redirectUrl: handoff,
       ambiente: env,
       mode: "guest_redirect",
+      nonce: altaNonce,
     });
   } catch (e) {
     if (guestUserId) {

@@ -1,4 +1,5 @@
 import type { AppSupabase } from '../client';
+import { edgeFunctionErrorMessage } from './edgeError';
 
 export interface GuestCheckoutInput {
   name: string;
@@ -9,8 +10,11 @@ export interface GuestCheckoutInput {
   serviceId: string;
   description?: string;
   amountClp: number;
+  /** ISO del horario elegido en la barra. */
+  scheduledAt?: string;
   /** Solo para el return_url de Transbank (commit Edge o allowlist). */
   returnUrl?: string;
+  turnstileToken?: string;
 }
 
 export interface GuestCheckoutResult {
@@ -20,6 +24,8 @@ export interface GuestCheckoutResult {
   redirectUrl: string;
   ambiente?: string;
   mode: 'guest_redirect';
+  /** Nonce del navegador. Se guarda en sessionStorage; no va en la URL. */
+  nonce?: string;
 }
 
 /**
@@ -40,12 +46,16 @@ export async function createGuestWebpayCheckout(
       serviceId: input.serviceId,
       description: input.description,
       amountClp: input.amountClp,
+      scheduledAt: input.scheduledAt,
       returnUrl: input.returnUrl,
+      turnstileToken: input.turnstileToken,
     },
   });
 
   if (error) {
-    throw new Error(error.message || 'No se pudo iniciar el checkout invitado');
+    throw new Error(
+      await edgeFunctionErrorMessage(error, 'No se pudo iniciar el checkout invitado'),
+    );
   }
 
   const payload = data as Record<string, unknown> | null;
@@ -77,5 +87,6 @@ export async function createGuestWebpayCheckout(
     redirectUrl,
     ambiente: payload.ambiente ? String(payload.ambiente) : undefined,
     mode: 'guest_redirect',
+    nonce: payload.nonce ? String(payload.nonce) : undefined,
   };
 }

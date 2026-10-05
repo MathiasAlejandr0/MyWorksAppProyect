@@ -39,7 +39,7 @@ final class EmailAlreadyRegisteredException extends AppAuthException {
 final class EmailConfirmationRequiredException extends AppAuthException {
   const EmailConfirmationRequiredException([Object? cause])
       : super(
-          'Cuenta creada. Revisa tu correo para confirmarla antes de iniciar sesión.',
+          'Confirma tu correo antes de entrar. Revisa la bandeja o reenvía el correo.',
           cause: cause,
         );
 }
@@ -74,6 +74,10 @@ final class SessionExpiredException extends AppAuthException {
           'Tu sesión expiró. Inicia sesión nuevamente.',
           cause: cause,
         );
+}
+
+final class WeakPasswordException extends AppAuthException {
+  const WeakPasswordException(super.userMessage);
 }
 
 final class AuthUnexpectedException extends AppAuthException {

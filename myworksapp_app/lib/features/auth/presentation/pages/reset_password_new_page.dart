@@ -104,7 +104,7 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Tu contraseña debe tener al menos 6 caracteres',
+                'Tu contraseña debe tener al menos 8 caracteres, con una letra y un número',
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),

@@ -44,3 +44,22 @@ verify_jwt = false
 # La app abre esta URL. El token de Transbank no sale en el JSON del cliente.
 [functions.oneclick-handoff]
 verify_jwt = false
+
+[functions.invitar-colaborador]
+verify_jwt = true
+
+# El invitado aún no tiene sesión. El token firmado reemplaza al correo.
+[functions.definir-clave-invitado]
+verify_jwt = false
+
+# Funciones viejas desplegadas. Responden 410 para poder pisarlas: el MCP no las borra.
+[functions.webpay-create-transaction]
+verify_jwt = false
+
+[functions.webpay-commit-transaction]
+verify_jwt = false
+
+# Local hasta que se publique en el proyecto (Authentication → Password).
+[auth]
+minimum_password_length = 8
+password_requirements = "letters_digits"

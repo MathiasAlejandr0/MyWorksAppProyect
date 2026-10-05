@@ -15,10 +15,11 @@ import {
 import { useQuery } from '@tanstack/react-query';
 
 import { AuditTrailViewer } from './AuditTrailViewer';
+import { ExecutivePeriodPanel } from './ExecutivePeriodPanel';
 import { FinancialSettlementModal } from './FinancialSettlementModal';
 import { DigitalContractModal } from './DigitalContractModal';
 import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
-import { fetchAdminMetrics, fetchWorkersForAdmin } from '@myworksapp/shared';
+import { fetchAdminMetrics, fetchBusinessPeriod, fetchWorkersForAdmin, periodRange, setWorkerVerification, verificationLabel } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 import { queryKeys } from '../queryClient';
 
@@ -27,7 +28,8 @@ interface WorkerApproval {
   name: string;
   profession: string;
   rut: string;
-  status: 'Verified' | 'Pending';
+  visitFee: number;
+  verification: string;
 }
 
 
@@ -56,144 +58,6 @@ function Sparkline({ color, points }: { color: string; points: string }) {
 
 
 
-function AreaChart() {
-
-  const hours = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
-
-  return (
-
-    <div className="area-chart-wrap">
-
-      <div className="area-chart-y">
-
-        {['$16M', '$12M', '$8M', '$4M', '$0'].map((label) => (
-
-          <span key={label}>{label}</span>
-
-        ))}
-
-      </div>
-
-      <div className="area-chart-body">
-
-        <svg className="area-chart-svg" viewBox="0 0 600 180" preserveAspectRatio="none">
-
-          <defs>
-
-            <linearGradient id="gmvFill" x1="0" y1="0" x2="0" y2="1">
-
-              <stop offset="0%" stopColor="#F0782A" stopOpacity="0.35" />
-
-              <stop offset="100%" stopColor="#F0782A" stopOpacity="0" />
-
-            </linearGradient>
-
-          </defs>
-
-          <path
-
-            d="M0,140 L60,120 L120,130 L180,90 L240,100 L300,70 L360,85 L420,55 L480,65 L540,40 L600,35 L600,180 L0,180 Z"
-
-            fill="url(#gmvFill)"
-
-          />
-
-          <polyline
-
-            points="0,140 60,120 120,130 180,90 240,100 300,70 360,85 420,55 480,65 540,40 600,35"
-
-            fill="none"
-
-            stroke="#F0782A"
-
-            strokeWidth="2.5"
-
-          />
-
-          <circle cx="600" cy="35" r="5" fill="#F0782A" />
-
-        </svg>
-
-        <div className="area-chart-tooltip">$14.8M · 23:40</div>
-
-        <div className="area-chart-x">
-
-          {hours.map((h) => (
-
-            <span key={h}>{h}</span>
-
-          ))}
-
-        </div>
-
-      </div>
-
-    </div>
-
-  );
-
-}
-
-
-
-function DonutChart() {
-
-  return (
-
-    <div className="donut-chart-wrap">
-
-      <div
-
-        className="donut-chart-ring"
-
-        style={{
-
-          background: `conic-gradient(
-
-            #F0782A 0% 41.4%,
-
-            #8B5CF6 41.4% 71%,
-
-            #3B82F6 71% 88.8%,
-
-            #2F9E64 88.8% 100%
-
-          )`,
-
-        }}
-
-      >
-
-        <div className="donut-chart-center">
-
-          <strong>$14.8M</strong>
-
-          <span>GMV total</span>
-
-        </div>
-
-      </div>
-
-      <ul className="donut-legend">
-
-        <li><span className="donut-dot donut-dot--orange" /> Servicios Profesionales <em>$6.12M (41.4%)</em></li>
-
-        <li><span className="donut-dot donut-dot--purple" /> Desarrollo de Software <em>$4.38M (29.6%)</em></li>
-
-        <li><span className="donut-dot donut-dot--blue" /> Infraestructura y Cloud <em>$2.64M (17.8%)</em></li>
-
-        <li><span className="donut-dot donut-dot--green" /> Soporte y Operaciones <em>$1.66M (11.2%)</em></li>
-
-      </ul>
-
-      <a className="donut-report-link" href="#">Ver reporte completo →</a>
-
-    </div>
-
-  );
-
-}
-
 
 
 export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
@@ -212,6 +76,12 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
     queryFn: () => fetchWorkersForAdmin(supabase),
   });
 
+  const businessRange = periodRange('7d');
+  const businessQuery = useQuery({
+    queryKey: ['business-period', '7d'],
+    queryFn: () => fetchBusinessPeriod(supabase, businessRange.fromIso, businessRange.toIso),
+  });
+
   const loading = metricsQuery.isPending || workersQuery.isPending;
 
   const metrics = useMemo(() => {
@@ -227,22 +97,54 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
     };
   }, [metricsQuery.data]);
 
-  const workers: WorkerApproval[] = useMemo(
-    () =>
-      (workersQuery.data ?? []).map((worker) => ({
+  const workers: WorkerApproval[] = useMemo(() => {
+    const rank = (status: string) =>
+      status === 'en_revision' || status === 'pendiente' ? 0 : 1;
+    return (workersQuery.data ?? [])
+      .filter((worker) => {
+        // fetchWorkersForAdmin no trae el correo, así que no sirve para detectar
+        // cuentas demo. Se ocultan solo los rechazados: quedan los verificados y
+        // la cola por aprobar (pendiente / en revisión), que es lo que el admin revisa.
+        const demo = (worker.email ?? '').toLowerCase().endsWith('@demo.myworksapp.cl');
+        if (demo) return true;
+        return (worker.verificationStatus ?? 'pendiente') !== 'rechazado';
+      })
+      .map((worker) => ({
         id: worker.userId,
         name: worker.name,
         profession: worker.profession,
         rut: worker.email ?? '—',
-        status: worker.pricingConfigured === 1 ? 'Verified' : 'Pending',
-      })),
-    [workersQuery.data],
-  );
+        visitFee: worker.visitFee,
+        verification: worker.verificationStatus ?? 'pendiente',
+      }))
+      .sort((a, b) => rank(a.verification) - rank(b.verification) || a.name.localeCompare(b.name, 'es'));
+  }, [workersQuery.data]);
 
-  const activeJobs = metrics.activeJobsCount || 1246;
-  const disputes = metrics.openDisputesCount || 32;
+  const activeJobs = metrics.activeJobsCount;
+  const disputes = metrics.openDisputesCount;
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+
+  const reviewWorker = async (userId: string, status: 'verificado' | 'rechazado') => {
+    try {
+      await setWorkerVerification(supabase, userId, status);
+      await workersQuery.refetch();
+      setVerifyError(null);
+    } catch {
+      setVerifyError('No se pudo guardar. Aplica la migración de verificación en Supabase.');
+    }
+  };
 
 
+
+  const gmv = businessQuery.data?.gmv;
+  const gmvLabel = gmv == null ? '—' : `$${Math.round(gmv).toLocaleString('es-CL')}`;
+  const gmvTrend = gmv == null
+    ? (businessQuery.isError ? 'No se pudieron leer los pagos' : 'Leyendo pagos')
+    : gmv === 0
+      ? 'Sin cobros en el período'
+      : 'Retenido, liberado y autorizado';
+
+  const csat = businessQuery.data?.csat ?? null;
 
   const kpis = [
 
@@ -250,9 +152,9 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       label: 'GMV',
 
-      value: '$14.8M',
+      value: gmvLabel,
 
-      trend: '+12.6% vs ayer',
+      trend: gmvTrend,
 
       up: true,
 
@@ -270,7 +172,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       value: activeJobs.toLocaleString('es-CL'),
 
-      trend: '+8.3% vs ayer',
+      trend: 'Conteo en vivo',
 
       up: true,
 
@@ -288,7 +190,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       value: String(disputes),
 
-      trend: '-11.4% vs ayer',
+      trend: 'Conteo en vivo',
 
       up: false,
 
@@ -304,9 +206,11 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       label: 'CSAT',
 
-      value: '4.78 / 5',
+      value: csat == null ? '—' : `${csat.toFixed(1)} / 5`,
 
-      trend: '+2.7% vs ayer',
+      trend: csat == null
+        ? (businessQuery.isError ? 'No se pudieron leer las calificaciones' : 'Sin calificaciones en 7 días')
+        : `${businessQuery.data?.ratingCount ?? 0} reseñas`,
 
       up: true,
 
@@ -324,13 +228,13 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
   const opsSummary = [
 
-    { label: 'Trabajos completados', value: '1,932', trend: '+9.7% vs ayer', up: true },
+    { label: 'Trabajos en la base', value: String(metrics.jobsCount), trend: 'Conteo en vivo', up: true },
 
-    { label: 'Tiempo promedio de resolución', value: '4.6h', trend: '-6.1% vs ayer', up: true },
+    { label: 'Trabajos activos', value: String(activeJobs), trend: 'Conteo en vivo', up: true },
 
-    { label: 'Disputas abiertas', value: String(disputes), trend: '+6.7% vs ayer', up: false },
+    { label: 'Disputas abiertas', value: String(disputes), trend: 'Conteo en vivo', up: false },
 
-    { label: 'Nuevos trabajos', value: '287', trend: '+14.3% vs ayer', up: true },
+    { label: 'Tiempo promedio', value: '—', trend: 'Sin medición', up: true },
 
   ];
 
@@ -352,7 +256,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
           </p>
 
-          <p className="executive-subtitle">Datos de demostración. El GMV y los porcentajes no salen de la base.</p>
+          <p className="executive-subtitle">GMV, comisión, ticket y CSAT salen de pagos, trabajos completados y calificaciones.</p>
 
         </div>
 
@@ -402,7 +306,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
         >
 
-          <FileText size={15} /> Audit trail
+          <FileText size={15} /> Auditoría
 
         </button>
 
@@ -416,7 +320,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
         {import.meta.env.DEV ? (
           <button type="button" className="executive-demo-link" onClick={() => setShowContractModal(true)}>
-            Contrato (solo DEV)
+            Contrato (solo desarrollo)
           </button>
         ) : null}
 
@@ -500,25 +404,15 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
                   <span className="chart-live-dot" aria-hidden />
 
-                  <h3 className="chart-card-title">GMV en tiempo real</h3>
-
-                  <span className="chart-card-caption">Últimas 24 horas</span>
+                  <h3 className="chart-card-title">Periodo de negocio</h3>
 
                 </div>
 
               </div>
 
-              <select className="chart-select" defaultValue="24h" aria-label="Rango temporal">
-
-                <option value="24h">24 horas</option>
-
-                <option value="7d">7 días</option>
-
-              </select>
-
             </div>
 
-            <AreaChart />
+            <ExecutivePeriodPanel activeJobs={activeJobs} />
 
           </div>
 
@@ -528,9 +422,9 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
             <div className="card-surface exec-panel">
 
-              <h3 className="exec-panel-title">Desglose por categoría</h3>
+              <h3 className="exec-panel-title">Conteos en vivo</h3>
 
-              <DonutChart />
+              <p className="cell-empty">El desglose de cobros está en el período de arriba.</p>
 
             </div>
 
@@ -570,7 +464,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
                   <Activity size={14} />
 
-                  Excelente
+                  {metricsQuery.isError ? 'Sin datos' : 'Conectado'}
 
                 </div>
 
@@ -611,22 +505,23 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
                   <th>NOMBRE</th>
                   <th>ESPECIALIDAD</th>
                   <th>CONTACTO</th>
-                  <th>PRECIO</th>
+                  <th>VISITA</th>
+                  <th>VERIFICACIÓN</th>
                 </tr>
               </thead>
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={5} style={{ padding: 0 }}>
+                    <td colSpan={6} style={{ padding: 0 }}>
                       <div className="table-skeleton-wrap">
-                        <TableRowsSkeleton rows={4} columns={5} />
+                        <TableRowsSkeleton rows={4} columns={6} />
                       </div>
                     </td>
                   </tr>
                 )}
                 {!loading && workers.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="cell-empty">Sin trabajadores visibles.</td>
+                    <td colSpan={6} className="cell-empty">Sin trabajadores visibles.</td>
                   </tr>
                 )}
                 {!loading && workers.map((w) => (
@@ -635,16 +530,24 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
                     <td style={{ fontWeight: 600 }}>{w.name}</td>
                     <td className="cell-muted">{w.profession}</td>
                     <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{w.rut}</td>
+                    <td>${Math.round(w.visitFee).toLocaleString('es-CL')}</td>
                     <td>
-                      <span className={w.status === 'Verified' ? 'badge badge-success' : 'badge badge-error'}>
-                        {w.status === 'Verified' ? 'Configurado' : 'Pendiente'}
+                      <span className={w.verification === 'verificado' ? 'badge badge-success' : 'badge badge-error'}>
+                        {verificationLabel(w.verification)}
                       </span>
+                      {(w.verification === 'pendiente' || w.verification === 'en_revision') && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <button type="button" onClick={() => void reviewWorker(w.id, 'verificado')}>Aprobar</button>
+                          <button type="button" onClick={() => void reviewWorker(w.id, 'rechazado')}>Rechazar</button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {verifyError && <p role="alert" style={{ padding: 16 }}>{verifyError}</p>}
         </div>
 
       )}

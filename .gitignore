@@ -122,6 +122,7 @@ Thumbs.db
 .pub/
 build/
 *.lock
+!myworksapp_app/pubspec.lock
 
 # Firebase
 google-services.json

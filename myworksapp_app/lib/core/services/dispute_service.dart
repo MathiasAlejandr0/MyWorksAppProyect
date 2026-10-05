@@ -2,7 +2,6 @@ import 'package:uuid/uuid.dart';
 import '../database/repositories/dispute_repository.dart';
 import '../database/repositories/job_repository.dart';
 import '../database/models/dispute_model.dart';
-import '../domain/pricing_constants.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 import 'payment_service.dart';
@@ -66,17 +65,7 @@ class DisputeService {
       );
 
       await _disputeRepository.createDispute(dispute);
-
-      // El cobro de Webpay ya está retenido. Si solo quedó autorizado, se retiene.
-      final payment = await _paymentService.getPaymentByJobId(jobId);
-      if (payment != null &&
-          payment.status == PricingConstants.paymentAuthorized) {
-        await _paymentService.holdPayment(payment.id);
-        AppLogger.i('Pago retenido por disputa: ${payment.id}');
-      } else if (payment != null &&
-          payment.status == PricingConstants.paymentHeld) {
-        AppLogger.i('Disputa abierta; el pago ${payment.id} ya estaba retenido');
-      }
+      // El cliente no escribe pagos. El commit de Webpay ya dejó el cobro retenido.
 
       AppLogger.i('Disputa abierta: ${dispute.id}');
       return dispute;
@@ -127,6 +116,17 @@ class DisputeService {
       AppLogger.e('Error resolviendo disputa', e);
       throw AppError.database('Error al resolver disputa: ${e.toString()}');
     }
+  }
+
+  Future<void> addComment({
+    required String disputeId,
+    required String comment,
+  }) async {
+    final text = comment.trim();
+    if (text.isEmpty) {
+      throw AppError.validation('El comentario es requerido');
+    }
+    await _disputeRepository.addComment(disputeId, text);
   }
 
   /// Verifica si un job tiene disputa abierta

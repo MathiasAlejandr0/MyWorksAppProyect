@@ -6,7 +6,11 @@ import {
   rateLimitExceededMessage,
 } from "../_shared/rate_limit.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
-import { resolveReturnUrl, signHandoffTicket } from "../_shared/security.ts";
+import {
+  resolveCallerReturnOrigin,
+  resolveReturnUrl,
+  signHandoffTicket,
+} from "../_shared/security.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 import { tbkConfig, tbkCreateTransaction } from "../_shared/tbk.ts";
 
@@ -66,11 +70,16 @@ Deno.serve(async (req) => {
       typeof body.returnUrl === "string" ? body.returnUrl : undefined,
     );
 
+    const expectedAmount = Number(payment.monto);
+    if (!Number.isFinite(expectedAmount) || expectedAmount <= 0) {
+      return jsonResponse(req, { error: "El cobro no tiene un monto de servidor" }, 400);
+    }
+
     const { env } = tbkConfig();
     const { token, url } = await tbkCreateTransaction({
       buyOrder,
       sessionId: user.id,
-      amount: amountClp,
+      amount: expectedAmount,
       returnUrl,
     });
 
@@ -83,6 +92,7 @@ Deno.serve(async (req) => {
         url_tbk: url,
         ambiente: env,
         id_transaccion: buyOrder,
+        origen_retorno: resolveCallerReturnOrigin(req),
         actualizado_en: new Date().toISOString(),
       })
       .eq("id", paymentId);

@@ -56,7 +56,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
 
   Future<void> _load() async {
     final worker = await _workerRepository.getWorkerByUserId(widget.workerId);
-    final user = await _userRepository.getUserById(widget.workerId);
+    final user = await _userRepository.getPublicProfile(widget.workerId);
     final service = await _serviceRepository.getServiceById(widget.serviceId);
     if (mounted) {
       setState(() {

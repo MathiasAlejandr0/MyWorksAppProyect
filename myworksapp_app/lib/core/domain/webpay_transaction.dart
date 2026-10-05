@@ -13,7 +13,7 @@ class WebpayTransactionResponse {
   final String buyOrder;
   final String? paymentId;
 
-  /// Handoff GET para web, donde el comercio exige POST de `token_ws`.
+  /// Handoff GET. Transbank recibe token_ws en la query.
   final String? redirectUrl;
 
   factory WebpayTransactionResponse.fromMap(Map<String, dynamic> map) {
@@ -25,7 +25,7 @@ class WebpayTransactionResponse {
     final redirect = map['redirectUrl']?.toString();
     final handoff = redirect != null && redirect.isNotEmpty ? redirect : null;
     if (buyOrder.isEmpty || (handoff == null && (token.isEmpty || url.isEmpty))) {
-      throw FormatException('Respuesta Webpay incompleta');
+      throw const FormatException('Respuesta Webpay incompleta');
     }
     return WebpayTransactionResponse(
       token: token,

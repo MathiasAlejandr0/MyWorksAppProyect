@@ -13,7 +13,7 @@ class AdminMetricsRepository {
       supabase
           .from('trabajos')
           .select('id')
-          .inFilter('estado', ['pendiente', 'aceptado', 'en_curso']),
+          .inFilter('estado', ['pendiente', 'aceptado', 'en_camino', 'en_curso']),
       supabase.from('registros_error_app').select('id').eq('estado', 'nuevo'),
       supabase.from('eventos_abuso').select('id').eq('resuelto', 0),
       supabase.from('acciones_pendientes').select('id').eq('estado', 'fallido'),

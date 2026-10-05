@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
+import { profileLabel } from '../profileLabel';
 
 const PremiumSearchMap = lazy(() =>
   import('./PremiumSearchMap').then((m) => ({ default: m.PremiumSearchMap })),
@@ -25,6 +26,8 @@ export interface SearchWorker {
   photoUrl: string;
   pricePerVisit: number;
   availableNow?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface SearchResultsViewProps {
@@ -42,6 +45,11 @@ interface SearchResultsViewProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+}
+
+function clp(amount: number): string {
+  const value = Number.isFinite(amount) ? Math.round(amount) : 0;
+  return value.toLocaleString('es-CL');
 }
 
 export function SearchResultsView({
@@ -102,13 +110,12 @@ export function SearchResultsView({
           </button>
           <button type="button" className="search-nav-bell" aria-label="Notificaciones">
             <Bell size={18} />
-            <span className="search-nav-badge">3</span>
           </button>
           {profileName ? (
             <div className="search-nav-profile">
-              <div className="search-nav-avatar">{profileName.charAt(0)}</div>
+              <div className="search-nav-avatar">{profileName.trim().charAt(0).toUpperCase()}</div>
               <div>
-                <strong>{profileName.split(' ')[0]} R.</strong>
+                <strong>{profileLabel(profileName)}</strong>
                 <span>Ver perfil</span>
               </div>
             </div>
@@ -133,21 +140,12 @@ export function SearchResultsView({
             <label className="filter-label">
               <MapPin size={14} /> Ubicación
             </label>
-            <select className="filter-select" defaultValue="condes">
+            <select className="filter-select" defaultValue="all" aria-label="Ubicación">
               <option value="all">Todas las ubicaciones</option>
               <option value="condes">Las Condes, Santiago</option>
               <option value="providencia">Providencia</option>
               <option value="nunoa">Ñuñoa</option>
             </select>
-          </div>
-
-          <div className="filter-group">
-            <label className="filter-label">Precio por hora</label>
-            <div className="filter-range-labels">
-              <span>$10</span>
-              <span>$80</span>
-            </div>
-            <input type="range" min={10} max={80} defaultValue={45} className="filter-range" />
           </div>
 
           <div className="filter-group">
@@ -221,8 +219,15 @@ export function SearchResultsView({
               ))}
             </div>
           ) : workers.length === 0 ? (
-            <div className="search-empty">
-              <p>No hay profesionales disponibles para esta búsqueda.</p>
+            <div className="search-empty" role="status">
+              <h2>Todavía no hay profesionales en esta categoría</h2>
+              <p>
+                No hay visitas publicadas ahora. Elige otro oficio del catálogo
+                o vuelve más tarde.
+              </p>
+              <button type="button" className="btn-outline-orange" onClick={onBack}>
+                Ver otras categorías
+              </button>
             </div>
           ) : (
             <div className="search-results-grid">
@@ -252,10 +257,11 @@ export function SearchResultsView({
                       <Star size={13} fill="var(--orange-accent)" color="var(--orange-accent)" />
                       <strong>{w.rating.toFixed(1)}</strong>
                       <span className="pro-card-stars">★★★★★</span>
+                      <span>{w.jobsDone} trabajos</span>
                     </div>
                     <div className="pro-card-footer">
                       <span className="pro-card-price">
-                        Desde ${Math.round(w.pricePerVisit / 1000) * 1000 || 35} / hora
+                        Desde ${clp(w.pricePerVisit)} / visita
                       </span>
                       {w.availableNow !== false && (
                         <span className="pro-card-badge">Disponible ahora</span>

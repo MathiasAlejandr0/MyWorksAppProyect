@@ -1,10 +1,12 @@
+import { useState } from 'react';
+import { visitSlotIso } from '@myworksapp/shared';
 import { Calendar, X } from 'lucide-react';
 
 interface QuickBookingBarProps {
   workerName: string;
   profession: string;
   pricePerHour: number;
-  onContinue: () => void;
+  onContinue: (scheduledAt: string) => void;
   onClose: () => void;
 }
 
@@ -24,6 +26,7 @@ export function QuickBookingBar({
     day: 'numeric',
     month: 'long',
   });
+  const [hour, setHour] = useState<'10' | '14' | '18'>('10');
 
   return (
     <div className="quick-booking-bar modal-rise" role="region" aria-label="Reserva rápida">
@@ -40,20 +43,29 @@ export function QuickBookingBar({
 
         <div className="quick-booking-datetime">
           <Calendar size={18} className="quick-booking-cal-icon" aria-hidden />
-          <select className="quick-booking-select" defaultValue="slot1" aria-label="Fecha y hora">
-            <option value="slot1">{dateLabel} | 10:00 AM</option>
-            <option value="slot2">{dateLabel} | 14:00 PM</option>
-            <option value="slot3">{dateLabel} | 18:00 PM</option>
+          <select
+            className="quick-booking-select"
+            value={hour}
+            aria-label="Fecha y hora"
+            onChange={(event) => setHour(event.target.value as '10' | '14' | '18')}
+          >
+            <option value="10">{dateLabel} | 10:00</option>
+            <option value="14">{dateLabel} | 14:00</option>
+            <option value="18">{dateLabel} | 18:00</option>
           </select>
         </div>
 
         <div className="quick-booking-worker">
           <strong>{workerName}</strong>
           <span>{profession}</span>
-          <span className="quick-booking-price">${pricePerHour.toLocaleString('es-CL')} / hora</span>
+          <span className="quick-booking-price">${pricePerHour.toLocaleString('es-CL')} / visita</span>
         </div>
 
-        <button type="button" className="btn-primary quick-booking-cta" onClick={onContinue}>
+        <button
+          type="button"
+          className="btn-primary quick-booking-cta"
+          onClick={() => onContinue(visitSlotIso(hour))}
+        >
           Continuar con la reserva →
         </button>
       </div>

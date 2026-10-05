@@ -8,7 +8,7 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "test": "node --import tsx --test src/repositories/metrics.test.ts src/domain.node.test.ts src/payments/webpay.test.ts src/payments/webpay.contract.test.ts src/payments/oneclick.test.ts src/payments/checkoutReturn.test.ts src/payments/buyOrder.test.ts src/payments/payout.test.ts",
+    "test": "node --import tsx --test src/repositories/metrics.test.ts src/domain.node.test.ts src/catalog.test.ts src/payments/webpay.test.ts src/payments/webpay.contract.test.ts src/payments/oneclick.test.ts src/payments/edgeError.test.ts src/payments/checkoutReturn.test.ts src/payments/buyOrder.test.ts src/payments/payout.test.ts src/jobs/statusCopy.test.ts src/jobs/bookingSlot.test.ts src/chat/messages.test.ts src/verification.test.ts src/geo/distance.test.ts src/metrics/period.test.ts src/invites/parseInvite.test.ts src/security/clientRpcGuard.test.ts src/passwordPolicy.test.ts ../myworksapp_app/supabase/functions/_shared/tbk.config.test.ts ../myworksapp_app/supabase/functions/_shared/transbank_form.test.ts ../myworksapp_app/supabase/functions/_shared/webpay_return.test.ts ../myworksapp_app/supabase/functions/_shared/security_round6.test.ts",
     "check:domain": "node ../scripts/check-domain-drift.mjs",
     "generate:domain": "node ../scripts/generate-domain-dart.mjs",
     "gen:db-types": "node ../scripts/gen-supabase-types.mjs",

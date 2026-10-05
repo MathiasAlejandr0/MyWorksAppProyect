@@ -7,7 +7,6 @@ import '../database/repositories/quote_proposal_repository.dart';
 import '../domain/pricing_constants.dart';
 import '../utils/app_error.dart';
 import '../utils/app_logger.dart';
-import 'job_state_machine.dart';
 import 'notification_service.dart';
 import '../utils/open_quote_utils.dart';
 
@@ -18,7 +17,6 @@ class QuoteProposalService {
 
   final QuoteProposalRepository _proposals = QuoteProposalRepository();
   final JobRepository _jobs = JobRepository();
-  final JobStateMachine _stateMachine = JobStateMachine.instance;
 
   Future<List<QuoteProposalModel>> listForJob(String jobId) =>
       _proposals.getByJobId(jobId);
@@ -139,38 +137,10 @@ class QuoteProposalService {
       throw AppError.validation('Esta cotización ya no está disponible');
     }
 
-    await _rejectOtherProposals(jobId, proposalId);
-
-    if (job.status == PricingConstants.jobAwaitingQuotes) {
-      await _stateMachine.transitionTo(
-        jobId: jobId,
-        newStatus: PricingConstants.jobQuoteSelected,
-        userId: clientUserId,
-      );
-    }
-
-    await _jobs.linkQuotedWorker(
-      jobId: jobId,
-      workerId: proposal.workerId,
-    );
-
-    await _proposals.update(QuoteProposalModel(
-      id: proposal.id,
-      jobId: proposal.jobId,
-      workerId: proposal.workerId,
-      montoTotalClp: proposal.montoTotalClp,
-      descripcion: proposal.descripcion,
-      validezHasta: proposal.validezHasta,
-      desglose: proposal.desglose,
-      estado: PricingConstants.quoteAccepted,
-      createdAt: proposal.createdAt,
-    ));
-
-    return _stateMachine.transitionTo(
-      jobId: jobId,
-      newStatus: PricingConstants.jobAwaitingPayment,
-      userId: clientUserId,
-    );
+    await _proposals.selectAsClient(proposalId);
+    final updated = await _jobs.getJobById(jobId);
+    if (updated == null) throw AppError.notFound('Trabajo no encontrado');
+    return updated;
   }
 
   Future<void> withdraw({
@@ -197,21 +167,4 @@ class QuoteProposalService {
     ));
   }
 
-  Future<void> _rejectOtherProposals(String jobId, String acceptedId) async {
-    final all = await _proposals.getByJobId(jobId);
-    for (final p in all) {
-      if (p.id == acceptedId || p.estado != PricingConstants.quoteSubmitted) continue;
-      await _proposals.update(QuoteProposalModel(
-        id: p.id,
-        jobId: p.jobId,
-        workerId: p.workerId,
-        montoTotalClp: p.montoTotalClp,
-        descripcion: p.descripcion,
-        validezHasta: p.validezHasta,
-        desglose: p.desglose,
-        estado: PricingConstants.quoteRejected,
-        createdAt: p.createdAt,
-      ));
-    }
-  }
 }

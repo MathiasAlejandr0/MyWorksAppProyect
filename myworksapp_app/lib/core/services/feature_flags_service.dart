@@ -12,7 +12,7 @@ import 'session_manager.dart';
 /// - Flags por rol (user/worker)
 /// - Flags por usuario específico
 /// - Evaluación en runtime
-/// - Persistencia en SQLite
+/// - Persistencia en Supabase (`banderas_funcionalidad`)
 class FeatureFlagsService {
   static final FeatureFlagsService instance = FeatureFlagsService._();
   FeatureFlagsService._();
@@ -272,15 +272,11 @@ class FeatureFlagsService {
     }
   }
 
-  /// Sincroniza flags desde servidor (preparado para futuro)
+  /// Recarga las banderas que ya viven en Supabase.
   Future<void> syncFromServer() async {
     try {
-      // TODO: Implementar cuando tengamos backend
-      // final flags = await apiClient.getFeatureFlags();
-      // for (final flag in flags) {
-      //   await _repository.upsertFlag(flag);
-      // }
-      AppLogger.i('Sync de feature flags desde servidor (no implementado aún)');
+      final flags = await _repository.getAllFlags();
+      AppLogger.i('Feature flags leídas desde Supabase: ${flags.length}');
     } catch (e) {
       AppLogger.e('Error sincronizando feature flags', e);
     }

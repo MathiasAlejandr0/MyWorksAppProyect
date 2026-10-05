@@ -53,7 +53,7 @@ class _WorkerUnavailableDialogState extends State<WorkerUnavailableDialog> {
 
   Future<void> _loadUsers() async {
     for (final worker in widget.alternatives) {
-      _users[worker.userId] = await _userRepository.getUserById(worker.userId);
+      _users[worker.userId] = await _userRepository.getPublicProfile(worker.userId);
     }
     if (mounted) setState(() {});
   }

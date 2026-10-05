@@ -31,6 +31,7 @@ test.describe('Home smoke', () => {
 
     const email = page.locator('input[type="email"]');
     await expect(email).toBeVisible();
+    await expect(email).toHaveValue('');
   });
 });
 

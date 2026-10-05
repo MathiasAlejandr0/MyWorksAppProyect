@@ -45,6 +45,10 @@ import '../widgets/job_detail_actions_section.dart';
 import '../widgets/job_detail_payment_escrow_section.dart';
 import '../widgets/job_detail_scheduled_date_row.dart';
 import '../widgets/job_detail_description_section.dart';
+import '../widgets/job_status_timeline.dart';
+import '../widgets/worker_gps_publisher.dart';
+import '../widgets/client_live_tracking.dart';
+import '../../../../core/services/gps_publish_gate.dart';
 
 part 'job_detail_workflows.dart';
 part 'job_detail_status.dart';
@@ -59,6 +63,9 @@ class JobDetailPage extends ConsumerStatefulWidget {
 }
 
 class _JobDetailPageState extends ConsumerState<JobDetailPage> {
+  /// Las extensiones de este archivo no pueden llamar [setState] directo.
+  void refreshView(VoidCallback update) => setState(update);
+
   final JobRepository _jobRepository = JobRepository();
   final UserRepository _userRepository = UserRepository();
   final JobPhotoRepository _jobPhotoRepository = JobPhotoRepository();
@@ -131,6 +138,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       PricingConstants.jobAwaitingPayment,
       PricingConstants.jobAwaitingClientApproval,
       AppConstants.jobStatusAccepted,
+      AppConstants.jobStatusEnRoute,
       AppConstants.jobStatusInProgress,
       AppConstants.jobStatusCompleted,
       AppConstants.jobStatusCancelled,
@@ -163,6 +171,24 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
 
   bool _canOpenDispute(JobModel job) =>
       JobDetailHelpers.canOpenDispute(job, _dispute);
+
+  Future<void> _addDisputeComment(String comment) async {
+    final dispute = _dispute;
+    if (dispute == null) return;
+    try {
+      await DisputeService.instance.addComment(
+        disputeId: dispute.id,
+        comment: comment,
+      );
+      await _loadDispute(dispute.jobId);
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is AppError ? e.message : 'No se pudo agregar el comentario';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: AppColors.error),
+      );
+    }
+  }
 
   Future<void> _openDispute(String reason, String? description) async {
     final user = ref.read(authProvider).user;
@@ -223,7 +249,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     _rejectionDialogShown = true;
     final rejectedWorkerId = job.serviceMetadata?['rejected_by_worker_id'] as String?;
     final rejectedUser = rejectedWorkerId != null
-        ? await _userRepository.getUserById(rejectedWorkerId)
+        ? await _userRepository.getPublicProfile(rejectedWorkerId)
         : null;
     final alternatives =
         await WorkerJobRejectionService.instance.alternativesForJob(job);
@@ -243,7 +269,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       if (mounted) setState(() => _invitedWorkerName = null);
       return;
     }
-    final user = await _userRepository.getUserById(invitedId);
+    final user = await _userRepository.getPublicProfile(invitedId);
     if (mounted) setState(() => _invitedWorkerName = user?.name);
   }
 

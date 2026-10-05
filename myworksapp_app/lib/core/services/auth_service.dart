@@ -8,6 +8,7 @@ import '../database/repositories/user_repository.dart';
 import '../database/supabase_db.dart';
 import '../domain/user_role.dart';
 import '../exceptions/auth_exceptions.dart';
+import '../utils/validators.dart';
 import 'session_manager.dart';
 
 /// Resultado de un registro. [user] es null si hace falta confirmar el correo.
@@ -219,6 +220,8 @@ class SupabaseAuthService implements AuthService {
   @override
   Future<void> changePassword(String newPassword) async {
     try {
+      final policyError = Validators.validateSecurePassword(newPassword);
+      if (policyError != null) throw WeakPasswordException(policyError);
       await _client.auth.updateUser(UserAttributes(password: newPassword));
     } catch (e) {
       throw _mapError(e);
@@ -296,14 +299,29 @@ class SupabaseAuthService implements AuthService {
 
     if (error is AuthException) {
       final message = error.message.toLowerCase();
+      if (message.contains('email not confirmed')) {
+        return EmailConfirmationRequiredException(error);
+      }
+      if (message.contains('rate limit') ||
+          message.contains('too many requests') ||
+          message.contains('only request this after')) {
+        return const AuthUnexpectedException(
+          'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
+        );
+      }
+      if (message.contains('weak password') ||
+          message.contains('password should be at least') ||
+          message.contains('password should contain') ||
+          message.contains('password is known')) {
+        return const WeakPasswordException(
+          'La contraseña es débil. Usa al menos 8 caracteres, con una letra y un número.',
+        );
+      }
       if (message.contains('invalid login') ||
           message.contains('invalid credentials') ||
           message.contains('invalid email or password') ||
           error.statusCode == '400') {
         return InvalidCredentialsException(error);
-      }
-      if (message.contains('email not confirmed')) {
-        return EmailConfirmationRequiredException(error);
       }
       if (message.contains('already registered') ||
           message.contains('user already')) {
@@ -314,7 +332,9 @@ class SupabaseAuthService implements AuthService {
           message.contains('socket')) {
         return AuthNetworkException(error);
       }
-      return AuthUnexpectedException(error.message, error);
+      return const AuthUnexpectedException(
+        'No se pudo iniciar sesión. Intenta de nuevo.',
+      );
     }
 
     if (error is TimeoutException) {

@@ -38,7 +38,7 @@ void main() async {
   try {
     await Supabase.initialize(
       url: SupabaseConfig.url,
-      anonKey: SupabaseConfig.publishableKey,
+      publishableKey: SupabaseConfig.publishableKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
       ),

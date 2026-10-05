@@ -24,6 +24,9 @@ import '../../../../core/database/models/portfolio_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/domain/worker_custom_service.dart';
 import '../../../../core/domain/worker_service_options_catalog.dart';
+import '../widgets/worker_verification_card.dart';
+import '../widgets/worker_base_location_card.dart';
+import '../../../../core/widgets/design_system/error_state_widget.dart';
 import '../widgets/worker_custom_services_editor.dart';
 import '../widgets/worker_work_zone_field.dart';
 import '../widgets/worker_pricing_tiers_editor.dart';
@@ -49,6 +52,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
   final ImagePicker _imagePicker = ImagePicker();
   
   bool _isLoading = false;
+  String? _loadError;
   bool _photoLoading = false;
   bool _isEditing = false;
   WorkerModel? _worker;
@@ -80,7 +84,10 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
     final user = authState.user;
     if (user == null || !mounted) return;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
 
     try {
       final workerFuture = _workerRepository.getWorkerByUserId(user.id);
@@ -117,7 +124,10 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _loadError = 'No se pudo cargar el perfil. Revisa la conexión e inténtalo de nuevo.';
+      });
     }
   }
 
@@ -433,6 +443,53 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              if (_loadError != null)
+                ErrorStateWidget(
+                  title: 'Perfil no disponible',
+                  message: _loadError!,
+                  actionLabel: 'Reintentar',
+                  onRetry: _loadData,
+                )
+              else if (_worker == null && !_isLoading)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Aún no tienes ficha de especialista.'),
+                        const SizedBox(height: 8),
+                        FilledButton(
+                          onPressed: () => context.push(AppConstants.routeWorkerRegister),
+                          child: const Text('Completar registro'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              WorkerVerificationCard(userId: user.id),
+              if (_worker != null)
+                WorkerBaseLocationCard(
+                  latitude: _worker!.baseLatitude,
+                  longitude: _worker!.baseLongitude,
+                  radiusKm: _worker!.serviceRadiusKm,
+                  origin: _worker!.baseOrigin,
+                  enabled: _isEditing,
+                  onSave: (latitude, longitude, radiusKm) async {
+                    await _workerRepository.updateBaseLocation(
+                      userId: user.id,
+                      latitude: latitude,
+                      longitude: longitude,
+                      radiusKm: radiusKm,
+                    );
+                    await _loadData();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Ubicación base guardada')),
+                    );
+                  },
+                ),
               const SizedBox(height: 24),
               // Información personal
               TextFormField(
@@ -474,6 +531,13 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                   prefixIcon: Icon(Icons.description),
                 ),
                 maxLines: 4,
+                maxLength: 500,
+                validator: (value) {
+                  if ((value ?? '').trim().length > 500) {
+                    return 'La descripción no puede superar 500 caracteres';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               if (_isEditing)

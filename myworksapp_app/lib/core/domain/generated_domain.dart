@@ -18,6 +18,7 @@ class GeneratedJobStatuses {
 
   static const String pending = 'pendiente';
   static const String accepted = 'aceptado';
+  static const String enRoute = 'en_camino';
   static const String inProgress = 'en_curso';
   static const String completed = 'completado';
   static const String cancelled = 'cancelado';
@@ -40,6 +41,8 @@ class GeneratedPaymentStatuses {
   static const String held = 'retenido';
   static const String released = 'liberado';
   static const String refunded = 'reembolsado';
+  static const String voided = 'anulado';
+  static const String failed = 'fallido';
 }
 
 /// Pricing modes - generated from shared/src/domain.ts
@@ -67,6 +70,7 @@ class GeneratedWorkerActiveJobStatuses {
 
   static const List<String> values = [
     'aceptado',
+    'en_camino',
     'en_curso',
     'esperando_aprobacion_cliente',
     'esperando_pago',

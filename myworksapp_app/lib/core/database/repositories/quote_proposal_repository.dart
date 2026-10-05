@@ -26,6 +26,13 @@ class QuoteProposalRepository {
     return QuoteProposalModel.fromMap(row);
   }
 
+  Future<void> selectAsClient(String proposalId) async {
+    await supabase.rpc(
+      'seleccionar_cotizacion',
+      params: {'p_id_cotizacion': proposalId},
+    );
+  }
+
   Future<void> update(QuoteProposalModel proposal) async {
     await supabase.from(_table).update(proposal.toMap()).eq('id', proposal.id);
   }

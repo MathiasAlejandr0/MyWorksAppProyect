@@ -109,6 +109,100 @@ export function resolveReturnUrl(requested: string | undefined): string {
   return base;
 }
 
+const INTEGRATION_WEB_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+
+function listedOrigins(raw: string | undefined): string[] {
+  return (raw || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0 && s !== "*");
+}
+
+/** Orígenes a los que puede volver el navegador después de Transbank. */
+export function allowedWebReturnOrigins(): string[] {
+  const allowed = new Set<string>([
+    ...listedOrigins(Deno.env.get("WEBPAY_ALLOWED_RETURN_ORIGINS")),
+    ...listedOrigins(Deno.env.get("CORS_ALLOWED_ORIGINS")),
+  ]);
+  const env = (Deno.env.get("TBK_ENV") || "integration").toLowerCase();
+  if (env === "integration") {
+    for (const origin of INTEGRATION_WEB_ORIGINS) allowed.add(origin);
+  }
+  return [...allowed];
+}
+
+/**
+ * Origin del navegador que llamó a webpay-create o guest-checkout.
+ * Solo entra si está en la allowlist. En integración también localhost:5173.
+ */
+export function resolveCallerReturnOrigin(req: Request): string | null {
+  const origin = (req.headers.get("Origin") || "").trim();
+  if (!origin) return null;
+  try {
+    const parsed = new URL(origin);
+    if (parsed.origin !== origin) return null;
+  } catch {
+    return null;
+  }
+  if (allowedWebReturnOrigins().includes(origin)) return origin;
+  return null;
+}
+
+/** Si el pago no guardó origen, integración vuelve a localhost. Producción exige secreto o fila. */
+export function fallbackWebReturnOrigin(): string {
+  const explicit = Deno.env.get("WEBPAY_WEB_RETURN_URL")?.trim();
+  if (explicit) return explicit;
+  const env = (Deno.env.get("TBK_ENV") || "integration").toLowerCase();
+  if (env === "integration") return "http://localhost:5173/";
+  throw new Error(
+    "origen de retorno ausente. Guarda el Origin del checkout o define WEBPAY_WEB_RETURN_URL.",
+  );
+}
+
+/** Alta de contraseña del invitado, sin correo. Caduca en 15 minutos y trae jti. */
+export async function signGuestPasswordTicket(
+  userId: string,
+  jti: string,
+  ttlSec = 15 * 60,
+): Promise<string> {
+  const exp = Math.floor(Date.now() / 1000) + ttlSec;
+  const payload = `pwd.${userId}.${exp}.${jti}`;
+  const key = await hmacKey();
+  const sig = toHex(
+    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload)),
+  );
+  return `${payload}.${sig}`;
+}
+
+export async function verifyGuestPasswordTicket(
+  ticket: string,
+): Promise<{ ok: true; userId: string; jti: string } | { ok: false; error: string }> {
+  const parts = ticket.split(".");
+  if (parts.length !== 5 || parts[0] !== "pwd") {
+    return { ok: false, error: "enlace inválido" };
+  }
+  const [, userId, expStr, jti, sig] = parts;
+  const exp = Number(expStr);
+  if (!userId || !jti || !Number.isFinite(exp)) {
+    return { ok: false, error: "enlace inválido" };
+  }
+  if (exp < Math.floor(Date.now() / 1000)) {
+    return { ok: false, error: "el enlace para crear la contraseña expiró" };
+  }
+  const payload = `pwd.${userId}.${expStr}.${jti}`;
+  const key = await hmacKey();
+  const expected = toHex(
+    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload)),
+  );
+  if (!timingSafeEqualHex(expected, sig)) {
+    return { ok: false, error: "enlace inválido" };
+  }
+  return { ok: true, userId, jti };
+}
+
 /** Orígenes permitidos para postMessage (web return). */
 export function webPostMessageOrigins(): string[] {
   const fromEnv = (Deno.env.get("WEBPAY_ALLOWED_RETURN_ORIGINS") || "")

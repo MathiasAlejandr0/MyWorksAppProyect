@@ -263,7 +263,7 @@ export function FinancialSettlementModal({ onClose }: FinancialSettlementModalPr
                 </>
               ) : (
                 <>
-                  <CheckCircle2 size={16} /> Confirmar transferencia y liberar escrow
+                  <CheckCircle2 size={16} /> Confirmar transferencia y liberar la garantía
                 </>
               )}
             </button>

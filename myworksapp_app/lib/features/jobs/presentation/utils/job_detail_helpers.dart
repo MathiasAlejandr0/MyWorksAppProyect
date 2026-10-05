@@ -31,6 +31,7 @@ class JobDetailHelpers {
       return false;
     }
     return job.status == AppConstants.jobStatusAccepted ||
+        job.status == AppConstants.jobStatusEnRoute ||
         job.status == AppConstants.jobStatusInProgress ||
         job.status == PricingConstants.jobAwaitingClientApproval ||
         job.status == AppConstants.jobStatusCompleted;
@@ -41,6 +42,8 @@ class JobDetailHelpers {
       case AppConstants.jobStatusPending:
         return AppColors.warning;
       case AppConstants.jobStatusAccepted:
+        return AppColors.brandOrange;
+      case AppConstants.jobStatusEnRoute:
         return AppColors.brandOrange;
       case AppConstants.jobStatusInProgress:
         return AppColors.brandOrangeDark;
@@ -84,6 +87,8 @@ class JobDetailHelpers {
         return Icons.pending;
       case AppConstants.jobStatusAccepted:
         return Icons.check_circle_outline;
+      case AppConstants.jobStatusEnRoute:
+        return Icons.directions_car_outlined;
       case AppConstants.jobStatusInProgress:
         return Icons.work;
       case AppConstants.jobStatusCompleted:
@@ -111,6 +116,8 @@ class JobDetailHelpers {
         return 'Pendiente';
       case AppConstants.jobStatusAccepted:
         return 'Aceptado';
+      case AppConstants.jobStatusEnRoute:
+        return 'En camino';
       case AppConstants.jobStatusInProgress:
         return 'En Curso';
       case AppConstants.jobStatusCompleted:

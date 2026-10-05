@@ -151,14 +151,8 @@ class JobService {
         throw AppError.validation('El trabajo ya no está disponible');
       }
 
-      // Actualizar trabajo
-      final updatedJob = job.copyWith(
-        workerId: workerId,
-        status: AppConstants.jobStatusAccepted,
-        updatedAt: DateTime.now(),
-      );
-
-      await _jobRepository.updateJob(updatedJob);
+      // El RPC asigna al profesional y deja el trabajo aceptado.
+      await _jobRepository.assignWorker(jobId, workerId);
 
       // Crear notificación para el usuario
       await _createJobAcceptedNotification(job, workerId);

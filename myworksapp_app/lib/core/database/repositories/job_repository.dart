@@ -3,23 +3,23 @@ import 'dart:convert';
 import '../../utils/app_error.dart';
 import '../../utils/constants.dart';
 import '../../utils/worker_job_status.dart';
+import '../job_insert_policy.dart';
 import '../models/job_model.dart';
 import '../supabase_db.dart';
+
 class JobRepository {
   static const String _table = 'trabajos';
 
   Future<String> createJob(JobModel job) async {
-    const initial = {
-      'pendiente',
-      'esperando_cotizaciones',
-      'esperando_pago',
-    };
-    if (job.workerId != null || !initial.contains(job.status)) {
+    if (!jobInsertMatchesPolicy(workerId: job.workerId, status: job.status)) {
       throw AppError.validation(
-        'Un trabajo nuevo empieza sin profesional y en un estado inicial.',
+        'Un trabajo nuevo empieza pendiente sin profesional, esperando pago o esperando cotizaciones.',
       );
     }
-    await supabase.from(_table).insert(job.toMap());
+    final data = job.toMap();
+    data['instantanea_precio'] = null;
+    data['id_cotizacion_seleccionada'] = null;
+    await supabase.from(_table).insert(data);
     return job.id;
   }
 

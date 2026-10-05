@@ -7,7 +7,13 @@ export type CheckoutReturn =
       amount: number;
       last4: string | null;
     }
-  | { kind: 'verify'; jobId: string | null; paymentId: string | null }
+  | {
+      kind: 'verify';
+      jobId: string | null;
+      paymentId: string | null;
+      guest: boolean;
+      passwordToken: string | null;
+    }
   | { kind: 'failed'; message: string }
   | { kind: 'none' };
 
@@ -34,6 +40,8 @@ export function parseCheckoutReturn(search: string): CheckoutReturn {
       kind: 'verify',
       jobId,
       paymentId: params.get('paymentId'),
+      guest: params.get('invitado') === '1',
+      passwordToken: params.get('alta'),
     };
   }
   if (pago === 'fail') {
@@ -43,7 +51,7 @@ export function parseCheckoutReturn(search: string): CheckoutReturn {
         ? 'No se guardó la tarjeta. Puedes confirmar el pedido de nuevo.'
         : motivo === 'cobro'
           ? 'La tarjeta quedó guardada, pero el banco no autorizó este cobro. Confirma el pedido otra vez.'
-          : 'El pago no se completó. Puedes reintentar desde la búsqueda.';
+          : 'Pago cancelado. No se realizó ningún cargo.';
     return { kind: 'failed', message };
   }
   return { kind: 'none' };

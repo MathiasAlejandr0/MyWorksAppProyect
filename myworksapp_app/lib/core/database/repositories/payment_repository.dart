@@ -8,7 +8,7 @@ class PaymentRepository {
   /// Columnas visibles al cliente (sin token_tbk / url_tbk).
   static const String clientSelect =
       'id, id_trabajo, id_orden_cambio, tipo_pago, monto, moneda, estado, '
-      'metodo_pago, id_transaccion, buy_order, ambiente, autorizado_en, '
+      'metodo_pago, buy_order, ambiente, autorizado_en, '
       'liberado_en, reembolsado_en, creado_en, actualizado_en';
 
   /// Insert directo prohibido en flujos comerciales (RLS).

@@ -51,22 +51,28 @@ export function CategoriesCatalogView({
         <p className="section-kicker">CATÁLOGO</p>
         <h1>Todas las categorías</h1>
         <p className="categories-catalog-lead">
-          Elige un oficio. El mapa muestra profesionales de referencia, sin usar tu
-          ubicación, con disponibilidad y precio de visita.
+          Elige un oficio. El mapa muestra a quienes publicaron su base, con
+          disponibilidad y precio de visita.
         </p>
 
-        <div className="categories-grid categories-grid--catalog">
-          {categories.map((cat) => (
-            <CategoryCard
-              key={cat.id}
-              title={cat.title}
-              subtitle={cat.subtitle}
-              photo={cat.photo}
-              variant="grid"
-              onClick={() => onSelectCategory(cat)}
-            />
-          ))}
-        </div>
+        {categories.length === 0 ? (
+          <p className="categories-empty" role="status">
+            Por ahora no hay profesionales disponibles. Vuelve más tarde.
+          </p>
+        ) : (
+          <div className="categories-grid categories-grid--catalog">
+            {categories.map((cat) => (
+              <CategoryCard
+                key={cat.id}
+                title={cat.title}
+                subtitle={cat.subtitle}
+                photo={cat.photo}
+                variant="grid"
+                onClick={() => onSelectCategory(cat)}
+              />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
