@@ -1,4 +1,4 @@
--- Pruebas de las migraciones 20261009000001 a 20261009000005 (auditoría 2026-10-05).
+-- Pruebas de las migraciones 20261008000012 (antes 20261009000001) y 20261009000002 a 20261009000005 (auditoría 2026-10-05).
 -- Corre dentro de una transacción con ROLLBACK: no deja filas ni cambios.
 -- Se hace pasar por usuarios de la demo con request.jwt.claims y el rol authenticated.
 -- Si algo falla, el bloque DO lanza «FALLO: ...» y no aparece la línea OK.
