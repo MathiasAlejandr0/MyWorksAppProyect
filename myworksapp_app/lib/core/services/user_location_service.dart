@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -36,11 +35,12 @@ class UserLocationService {
       return current;
     }
 
+    // Sin GPS ni caché: ciudad de la demo (misma que en debug).
     const fallback = UserLocationContext(
-      city: 'Santiago',
-      region: 'Región Metropolitana',
-      latitude: -33.4489,
-      longitude: -70.6693,
+      city: _demoFallbackCity,
+      region: _demoFallbackRegion,
+      latitude: _demoFallbackLat,
+      longitude: _demoFallbackLng,
     );
     await persist(fallback);
     return fallback;
@@ -152,21 +152,17 @@ class UserLocationService {
 
     AppLogger.w('Ciudad fuera de cobertura: ${ctx.city}');
 
-    if (kDebugMode) {
-      const fallback = UserLocationContext(
-        city: _demoFallbackCity,
-        region: _demoFallbackRegion,
-        latitude: _demoFallbackLat,
-        longitude: _demoFallbackLng,
-      );
-      await persist(fallback);
-      AppLogger.i(
-        'Modo debug: usando $_demoFallbackCity (GPS del emulador ignorado)',
-      );
-      return fallback;
-    }
-
-    return null;
+    // Debug y release: GPS fuera de cobertura (p. ej. emulador en
+    // Mountain View) usa la ciudad de la demo.
+    const fallback = UserLocationContext(
+      city: _demoFallbackCity,
+      region: _demoFallbackRegion,
+      latitude: _demoFallbackLat,
+      longitude: _demoFallbackLng,
+    );
+    await persist(fallback);
+    AppLogger.i('Fuera de cobertura: usando $_demoFallbackCity');
+    return fallback;
   }
 
   Future<UserLocationContext?> setManualCity(String city, {String? region}) async {

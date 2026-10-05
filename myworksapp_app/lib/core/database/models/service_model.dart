@@ -99,7 +99,7 @@ class ServiceCategories {
   static const String cleaning = 'limpieza';
   static const String assembly = 'ensamblaje';
   static const String techSupport = 'soporte_tecnico';
-  static const String gardening = 'jardinera';
+  static const String gardening = 'jardineria';
   static const String moving = 'mudanza';
 }
 
