@@ -1,3 +1,4 @@
+import '../../domain/distance_match.dart';
 import '../../domain/user_location_context.dart';
 import '../../domain/worker_login_item.dart';
 import '../../services/worker_reputation_service.dart';
@@ -55,6 +56,27 @@ class WorkerRepository {
     return _filterListedWorkers(workers, near: near);
   }
 
+  /// Con coordenadas del cliente y base del profesional se usa la distancia
+  /// real contra `radio_servicio_km`. Si falta alguna, se compara la zona por
+  /// nombre de ciudad/comuna como antes.
+  static bool _servesLocation(WorkerModel worker, UserLocationContext near) {
+    final lat = near.latitude;
+    final lng = near.longitude;
+    if (lat != null && lng != null) {
+      final match = matchByDistance(
+        workerLat: worker.baseLatitude,
+        workerLng: worker.baseLongitude,
+        jobLat: lat,
+        jobLng: lng,
+        radiusKm: worker.serviceRadiusKm,
+      );
+      if (match != null) return !match.outsideRadius;
+    }
+    final zone = worker.workZone;
+    if (zone == null || zone.isEmpty) return true;
+    return WorkerZoneMatcher.serves(workZone: zone, userLocation: near);
+  }
+
   /// Solo trabajadores disponibles y ordenados por reputación
   Future<List<WorkerModel>> _filterListedWorkers(
     List<WorkerModel> workers, {
@@ -70,14 +92,7 @@ class WorkerRepository {
     for (final worker in workers) {
       if (!worker.isAvailable) continue;
       if (busyIds.contains(worker.userId)) continue;
-      if (near != null && worker.workZone != null && worker.workZone!.isNotEmpty) {
-        if (!WorkerZoneMatcher.serves(
-          workZone: worker.workZone,
-          userLocation: near,
-        )) {
-          continue;
-        }
-      }
+      if (near != null && !_servesLocation(worker, near)) continue;
       listed.add(worker);
     }
 

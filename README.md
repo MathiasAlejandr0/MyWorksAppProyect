@@ -149,6 +149,35 @@ graph TD
 
 ---
 
+## Arranque rápido para el equipo (app móvil)
+
+Si al clonar o hacer `git pull` ves una versión vieja de la app (consulta la tabla `profiles`, sesión expirada, no aparecen trabajadores), casi siempre es porque **la compilación nueva falló** y el emulador sigue abriendo la app vieja instalada.
+
+**Requisitos:** Flutter **3.47.x stable** (`flutter --version`) y Android Studio actual. El proyecto Android usa **Gradle 9.3.1 + AGP 9.1.0 + Kotlin 2.3.20**, que funcionan con el JDK 21 o el JDK 25 que trae Android Studio.
+
+```bash
+cd myworksapp_app
+flutter doctor -v              # revisa que "Java version" sea 21 o 25
+flutter clean
+flutter pub get
+adb uninstall com.example.myworksapp   # borra la app vieja del emulador/teléfono (si no está, da error y no pasa nada)
+flutter run                    # debug: usa el Supabase de la demo, no requiere .env
+```
+
+- **No hace falta `.env` para la app en debug:** `lib/core/config/supabase_config.dart` trae la URL y la clave **publicable** del proyecto `wxqrfcqifkfgawrnqmnj`.
+- **Release (APK para instalar o `--release`) sí exige los `--dart-define`** (si faltan, la app se cierra al abrir):
+
+```bash
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_WN_cTANRJ4nCuPw_6HWd7w_iDJjRA8O
+# APK: build/app/outputs/flutter-apk/app-release.apk
+```
+
+- **Ver la app móvil en el navegador rápido:** `flutter run -d chrome --release` con los mismos dos `--dart-define`. En debug (`flutter run -d chrome` o `-d web-server --web-port 8080`) la primera carga tarda mucho; eso no es la web del proyecto. La web de clientes es `myworksapp_web` (Vite) en `http://localhost:5173` (el retorno de Webpay solo funciona en 5173).
+- **Si la compilación falla con un error que solo dice `25.0.x`:** tu copia todavía tiene Gradle 8.14. Haz `git pull`. Como alternativa temporal, `flutter config --jdk-dir=<ruta a un JDK 21>`.
+- **Login demo:** el atajo de cuentas demo solo aparece en debug. Cuentas y contraseña en `DEMO.md`.
+
 ## Ejecución local
 
 ### Variables de entorno
