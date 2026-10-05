@@ -136,14 +136,9 @@ extension JobDetailStatusActions on _JobDetailPageState {
     }
 
     try {
-      // Usar JobStateMachine para la transición
-      await _stateMachine.transitionTo(
-        jobId: widget.jobId,
-        newStatus: AppConstants.jobStatusAccepted,
-        userId: user.id,
-      );
-
-      // Asignar trabajador
+      // asignar_trabajador_trabajo asigna al profesional y deja el trabajo
+      // en 'aceptado' en una sola llamada. Llamarlo después de
+      // transicionar_trabajo falla con «estado no permite asignacion: aceptado».
       await _jobRepository.assignWorker(_job!.id, user.id);
       
       final WorkerRepository workerRepository = WorkerRepository();
