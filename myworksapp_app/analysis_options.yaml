@@ -13,6 +13,7 @@ analyzer:
     - web/**
     - windows/**
     - macos/**
+    - third_party/**
 include: package:flutter_lints/flutter.yaml
 
 linter:

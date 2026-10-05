@@ -78,6 +78,12 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.1
 
+# geolocator_android con el listener NMEA desactivado (evita el ANR al pedir el
+# GPS en el emulador). Ver third_party/geolocator_android/MYWORKSAPP_PATCH.md.
+dependency_overrides:
+  geolocator_android:
+    path: third_party/geolocator_android
+
 flutter:
   uses-material-design: true
 

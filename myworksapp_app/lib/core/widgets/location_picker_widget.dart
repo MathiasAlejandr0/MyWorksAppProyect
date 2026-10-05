@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -27,6 +29,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   String? _lastEmittedAddress;
   double? _latitude;
   double? _longitude;
+  bool _fetching = false;
 
   void _emitLocation(String address, double latitude, double longitude) {
     if (_lastEmittedAddress == address) return;
@@ -41,7 +44,8 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   }
 
   Future<void> _getCurrentLocation() async {
-    if (!mounted) return;
+    if (!mounted || _fetching) return;
+    _fetching = true;
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -51,13 +55,16 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     });
 
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      const quick = Duration(seconds: 3);
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled()
+          .timeout(quick, onTimeout: () => false);
       if (!serviceEnabled) {
         _useFallbackLocation();
         return;
       }
 
-      LocationPermission permission = await Geolocator.checkPermission();
+      LocationPermission permission = await Geolocator.checkPermission()
+          .timeout(quick, onTimeout: () => LocationPermission.denied);
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
@@ -71,26 +78,29 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         return;
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
-        ),
+      // GPS con límite de tiempo; si no responde, última conocida o la demo.
+      final position = await UserLocationService.instance.currentPosition(
+        accuracy: LocationAccuracy.high,
       );
-
       if (!mounted) return;
+      if (position == null) {
+        _useFallbackLocation();
+        return;
+      }
       await _getAddressFromCoordinates(position.latitude, position.longitude);
     } catch (e) {
       if (!mounted) return;
       _useFallbackLocation();
+    } finally {
+      _fetching = false;
     }
   }
 
   void _useFallbackLocation() {
     if (!mounted) return;
-    const fallbackAddr = 'Providencia, Región Metropolitana (Santiago)';
-    const lat = -33.4263;
-    const lng = -70.6133;
+    const fallbackAddr = UserLocationService.demoFallbackLabel;
+    const lat = UserLocationService.demoFallbackLatitude;
+    const lng = UserLocationService.demoFallbackLongitude;
     setState(() {
       _currentAddress = fallbackAddr;
       _latitude = lat;
@@ -98,13 +108,14 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
       _isLoading = false;
       _hasError = false;
     });
-    widget.onLocationSelected(fallbackAddr, lat, lng);
+    _emitLocation(fallbackAddr, lat, lng);
   }
 
   Future<void> _getAddressFromCoordinates(double latitude, double longitude) async {
     try {
       final placemarks = await Geocoding(locale: const Locale('es'))
-          .placemarkFromCoordinates(latitude, longitude);
+          .placemarkFromCoordinates(latitude, longitude)
+          .timeout(const Duration(seconds: 5));
 
       if (placemarks.isNotEmpty) {
         final place = placemarks[0];
@@ -118,7 +129,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           _hasError = false;
         });
         _emitLocation(address, latitude, longitude);
-        await _cacheLocation(latitude, longitude);
+        unawaited(_cacheLocation(latitude, longitude));
       } else {
         if (!mounted) return;
         setState(() {
@@ -133,7 +144,7 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
           latitude,
           longitude,
         );
-        await _cacheLocation(latitude, longitude);
+        unawaited(_cacheLocation(latitude, longitude));
       }
     } catch (e) {
       if (!mounted) return;
@@ -149,17 +160,21 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
         latitude,
         longitude,
       );
-      await _cacheLocation(latitude, longitude);
+      unawaited(_cacheLocation(latitude, longitude));
     }
   }
 
   Future<void> _cacheLocation(double latitude, double longitude) async {
-    final ctx = await UserLocationService.instance.fromCoordinates(
-      latitude,
-      longitude,
-    );
-    if (ctx != null) {
-      await UserLocationService.instance.persist(ctx);
+    try {
+      final ctx = await UserLocationService.instance.fromCoordinates(
+        latitude,
+        longitude,
+      );
+      if (ctx != null) {
+        await UserLocationService.instance.persist(ctx);
+      }
+    } catch (_) {
+      // El caché es opcional: la ubicación ya se mostró y se emitió.
     }
   }
 
