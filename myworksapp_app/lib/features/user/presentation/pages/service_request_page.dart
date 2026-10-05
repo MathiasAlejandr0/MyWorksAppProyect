@@ -806,6 +806,9 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                                       .format(_selectedDate!),
                             ),
                             onTap: () async {
+                              // Sin esto, al cerrar el selector el foco vuelve
+                              // a la descripcion y se reabre el teclado.
+                              FocusManager.instance.primaryFocus?.unfocus();
                               final date = await showDatePicker(
                                 context: context,
                                 initialDate: DateTime.now(),
@@ -828,6 +831,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                                   : _selectedTime!.format(context),
                             ),
                             onTap: () async {
+                              FocusManager.instance.primaryFocus?.unfocus();
                               final time = await showTimePicker(
                                 context: context,
                                 initialTime: TimeOfDay.now(),

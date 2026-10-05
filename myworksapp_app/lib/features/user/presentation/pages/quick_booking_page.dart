@@ -76,6 +76,8 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
   }
 
   Future<void> _pickDate() async {
+    // Evita que el teclado se reabra en direccion/notas al cerrar el selector.
+    FocusManager.instance.primaryFocus?.unfocus();
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
