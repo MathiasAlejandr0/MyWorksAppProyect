@@ -12,6 +12,7 @@ import '../../../../core/database/models/user_model.dart';
 import '../../../../core/domain/user_location_context.dart';
 import '../../../../core/services/matching_service.dart';
 import '../../../../core/services/user_location_service.dart';
+import '../../../../core/domain/worker_highlight.dart';
 import '../../../../core/services/worker_reputation_service.dart';
 import '../../../../core/utils/chile_comunas.dart';
 import '../../../../core/utils/platform_support.dart';
@@ -57,7 +58,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   bool _isLoading = true;
   bool _isAutomaticMode = false; // false = Manual, true = Inteligente
   String _sortBy = 'rating';
-  double _minRating = 0.0;
+  double _minRating = lowRatingFloor;
   String? _serviceName;
   final _workerListKey = GlobalKey();
   final _firstWorkerKey = GlobalKey();
@@ -114,7 +115,11 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       }).toList();
 
       if (_sortBy == 'rating') {
-        WorkerReputationService.instance.sortForListing(_filteredWorkers);
+        WorkerReputationService.instance.sortForListing(
+          _filteredWorkers,
+          clientLatitude: _userLocation?.latitude,
+          clientLongitude: _userLocation?.longitude,
+        );
       } else {
         _filteredWorkers.sort((a, b) {
           final nameA = _users[a.userId]?.name ?? '';
@@ -514,9 +519,16 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                         _busyWorkerIds.contains(worker.userId);
                                     final isRecommended =
                                         _isAutomaticMode && score != null;
+                                    final elite = isEliteWorker(worker);
+                                    final coverage = coverageNotice(
+                                      worker: worker,
+                                      clientLatitude: _userLocation?.latitude,
+                                      clientLongitude: _userLocation?.longitude,
+                                    );
                                     final card = WorkerCard(
                                       name: user?.name ?? 'Trabajador',
                                       profession: worker.profession,
+                                      footnote: coverage.text,
                                       leading: ProfileAvatarView(
                                         displayName: user?.name ?? 'Trabajador',
                                         photoPath: user?.profilePhotoPath,
@@ -525,10 +537,21 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                             Theme.of(context).brightness ==
                                                 Brightness.dark,
                                       ),
-                                      headerBadge: isRecommended
-                                          ? 'Recomendado ${(score * 100).toStringAsFixed(0)}%'
+                                      headerBadge: elite
+                                          ? 'Élite del mes'
+                                          : isRecommended
+                                              ? 'Recomendado ${(score * 100).toStringAsFixed(0)}%'
+                                              : null,
+                                      headerBadgeColor: elite
+                                          ? const Color(0xFFB45309)
                                           : null,
                                       badges: [
+                                        if (elite)
+                                          const WorkerCardBadge(
+                                            icon: Icons.workspace_premium,
+                                            label: 'Destacado',
+                                            color: Color(0xFFB45309),
+                                          ),
                                         WorkerCardBadge(
                                           icon: Icons.star_rounded,
                                           label: worker.rating.toStringAsFixed(1),
@@ -540,6 +563,12 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                             label: worker.workZone!,
                                             color: AppColors.grayMedium,
                                           ),
+                                        WorkerCardBadge(
+                                          icon: Icons.radar_rounded,
+                                          label:
+                                              '${worker.serviceRadiusKm.round()} km sin extra',
+                                          color: AppColors.brandOrange,
+                                        ),
                                         if (isBusy)
                                           const WorkerCardBadge(
                                             icon: Icons.schedule,

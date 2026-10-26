@@ -1,10 +1,19 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import {
+  resolveServiceRadiusKm,
+  transportSurcharge,
+} from '@myworksapp/shared';
 import type { SearchWorker } from './SearchResultsView';
 
 /** Vista inicial si ningún profesional tiene coordenada propia. */
-export const SANTIAGO_CENTER: [number, number] = [-33.45, -70.66];
+const SANTIAGO_CENTER: [number, number] = [-33.45, -70.66];
+
+export type ClientMapLocation = {
+  latitude: number;
+  longitude: number;
+};
 
 function mapBadge(workers: SearchWorker[], categoryLabel?: string): string {
   const placed = workers.filter((worker) => workerLatLng(worker)).length;
@@ -12,14 +21,25 @@ function mapBadge(workers: SearchWorker[], categoryLabel?: string): string {
   return categoryLabel ? `${placed} en el mapa · ${categoryLabel}` : `${placed} en el mapa`;
 }
 
-export function workerLatLng(worker: SearchWorker): [number, number] | null {
+function workerLatLng(worker: SearchWorker): [number, number] | null {
   if (typeof worker.latitude !== 'number' || typeof worker.longitude !== 'number') return null;
   if (!Number.isFinite(worker.latitude) || !Number.isFinite(worker.longitude)) return null;
   return [worker.latitude, worker.longitude];
 }
 
+function clp(amount: number): string {
+  return Math.round(amount).toLocaleString('es-CL');
+}
+
 const pinIcon = L.divIcon({
   className: 'mwa-map-pin',
+  html: '<span class="mwa-map-pin-dot"></span>',
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+});
+
+const pinIconElite = L.divIcon({
+  className: 'mwa-map-pin mwa-map-pin--elite',
   html: '<span class="mwa-map-pin-dot"></span>',
   iconSize: [28, 28],
   iconAnchor: [14, 14],
@@ -32,16 +52,47 @@ const pinIconActive = L.divIcon({
   iconAnchor: [18, 18],
 });
 
-function workerPopup(name: string, profession: string, detail: string): HTMLElement {
+const clientIcon = L.divIcon({
+  className: 'mwa-map-pin mwa-map-pin--client',
+  html: '<span class="mwa-map-pin-dot"></span>',
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+});
+
+function workerPopup(
+  worker: SearchWorker,
+  clientLocation: ClientMapLocation | null,
+): HTMLElement {
   const root = document.createElement('div');
   root.className = 'mwa-map-popup';
   const title = document.createElement('strong');
-  title.textContent = name;
+  title.textContent = worker.name;
   const role = document.createElement('span');
-  role.textContent = profession;
+  role.textContent = worker.isElite ? `${worker.profession} · Élite` : worker.profession;
   const meta = document.createElement('span');
-  meta.textContent = detail;
-  root.append(title, role, meta);
+  const price = clp(worker.pricePerVisit);
+  meta.textContent = `★ ${worker.rating.toFixed(1)} · desde $${price}`;
+  const radar = document.createElement('span');
+  radar.className = 'mwa-map-radar';
+  const radiusKm = resolveServiceRadiusKm(worker.serviceRadiusKm);
+  const quote = transportSurcharge({
+    workerLat: worker.latitude,
+    workerLng: worker.longitude,
+    jobLat: clientLocation?.latitude,
+    jobLng: clientLocation?.longitude,
+    radiusKm,
+  });
+  if (quote.insideRadar === true) {
+    radar.classList.add('is-near');
+    radar.textContent = `Dentro de ${radiusKm} km: sin extra de traslado`;
+  } else if (quote.insideRadar === false) {
+    radar.classList.add('is-extra');
+    const km = quote.distanceKm?.toFixed(1) ?? '?';
+    radar.textContent = `Fuera del área (${km} km): +$${clp(quote.extraClp)} de traslado`;
+  } else {
+    radar.textContent = `Hasta ${radiusKm} km cubre sin extra de traslado`;
+  }
+  root.append(title, role, meta, radar);
   return root;
 }
 
@@ -50,28 +101,38 @@ type PremiumSearchMapProps = {
   selectedWorkerId: string | null;
   onSelectWorker: (worker: SearchWorker) => void;
   categoryLabel?: string;
+  clientLocation?: ClientMapLocation | null;
+  onPickClientLocation?: (location: ClientMapLocation) => void;
 };
 
 type StampedEl = HTMLElement & { _leaflet_id?: number };
 
 /**
  * Mapa realista (OpenStreetMap + estilo Carto Voyager) — sin API key.
- * Solo muestra profesionales con latitud y longitud guardadas.
- *
- * Leaflet se crea una sola vez. Elegir un profesional solo cambia el pin,
- * sin volver a montar el mapa (eso dejaba la página en negro).
+ * Al elegir un profesional muestra su punto y el radar de trabajo cercano.
  */
 export function PremiumSearchMap({
   workers,
   selectedWorkerId,
   onSelectWorker,
   categoryLabel,
+  clientLocation = null,
+  onPickClientLocation,
 }: PremiumSearchMapProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const eliteRef = useRef<Set<string>>(new Set());
+  const radarRef = useRef<L.Circle | null>(null);
+  const clientMarkerRef = useRef<L.Marker | null>(null);
   const onSelectRef = useRef(onSelectWorker);
+  const selectedIdRef = useRef(selectedWorkerId);
+  const clientLocRef = useRef(clientLocation);
+  const onPickRef = useRef(onPickClientLocation);
   onSelectRef.current = onSelectWorker;
+  selectedIdRef.current = selectedWorkerId;
+  clientLocRef.current = clientLocation;
+  onPickRef.current = onPickClientLocation;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -86,8 +147,6 @@ export function PremiumSearchMap({
     );
     mapRef.current = map;
 
-    // CARTO pide llave desde agosto de 2026: sin ella cada tile sale con «API KEY REQUIRED».
-    // Con VITE_CARTO_BASEMAPS_KEY se usa Voyager; si no, las tiles estándar de OpenStreetMap.
     const cartoKey = (import.meta.env.VITE_CARTO_BASEMAPS_KEY ?? '').trim();
     const osmAttribution =
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
@@ -104,14 +163,46 @@ export function PremiumSearchMap({
         : { attribution: osmAttribution, maxZoom: 19 },
     ).addTo(map);
 
-    const resize = () => map.invalidateSize();
+    let resizeQueued = false;
+    const resize = () => {
+      if (resizeQueued) return;
+      resizeQueued = true;
+      window.requestAnimationFrame(() => {
+        resizeQueued = false;
+        map.invalidateSize();
+        const circle = radarRef.current;
+        if (circle) map.fitBounds(circle.getBounds().pad(0.18));
+      });
+    };
     const timer = window.setTimeout(resize, 0);
     window.addEventListener('resize', resize);
+    const observer = new ResizeObserver(resize);
+    observer.observe(host);
+
+    const onMapClick = (event: L.LeafletMouseEvent) => {
+      if (!onPickRef.current) return;
+      const target = event.originalEvent.target;
+      if (
+        target instanceof Element &&
+        target.closest('.leaflet-marker-icon, .leaflet-popup, .mwa-map-pin')
+      ) {
+        return;
+      }
+      onPickRef.current({
+        latitude: event.latlng.lat,
+        longitude: event.latlng.lng,
+      });
+    };
+    map.on('click', onMapClick);
 
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener('resize', resize);
+      observer.disconnect();
+      map.off('click', onMapClick);
       markersRef.current.clear();
+      radarRef.current = null;
+      clientMarkerRef.current = null;
       mapRef.current = null;
       try {
         map.remove();
@@ -127,21 +218,23 @@ export function PremiumSearchMap({
 
     for (const marker of markersRef.current.values()) marker.remove();
     markersRef.current.clear();
+    eliteRef.current = new Set(workers.filter((worker) => worker.isElite).map((worker) => worker.id));
 
     const positions: L.LatLngExpression[] = [];
     for (const worker of workers) {
       const position = workerLatLng(worker);
       if (!position) continue;
       positions.push(position);
-      const price = Math.round(worker.pricePerVisit).toLocaleString('es-CL');
-      const marker = L.marker(position, { icon: pinIcon });
-      marker.bindPopup(
-        workerPopup(worker.name, worker.profession, `★ ${worker.rating.toFixed(1)} · desde $${price}`),
-      );
+      const elite = worker.isElite === true;
+      const marker = L.marker(position, { icon: elite ? pinIconElite : pinIcon });
+      marker.bindPopup(workerPopup(worker, clientLocRef.current));
       marker.on('click', () => onSelectRef.current(worker));
       marker.addTo(map);
       markersRef.current.set(worker.id, marker);
     }
+
+    map.invalidateSize();
+    if (selectedIdRef.current) return;
 
     if (!positions.length) {
       map.setView(SANTIAGO_CENTER, 13);
@@ -153,12 +246,95 @@ export function PremiumSearchMap({
   }, [workers]);
 
   useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
     for (const [id, marker] of markersRef.current) {
-      marker.setIcon(id === selectedWorkerId ? pinIconActive : pinIcon);
+      const elite = eliteRef.current.has(id);
+      marker.setIcon(
+        id === selectedWorkerId ? pinIconActive : elite ? pinIconElite : pinIcon,
+      );
     }
-    const timer = window.setTimeout(() => mapRef.current?.invalidateSize(), 50);
+
+    radarRef.current?.remove();
+    radarRef.current = null;
+
+    const selected = workers.find((worker) => worker.id === selectedWorkerId);
+    const position = selected ? workerLatLng(selected) : null;
+    if (selected && position) {
+      const radiusKm = resolveServiceRadiusKm(selected.serviceRadiusKm);
+      const circle = L.circle(position, {
+        radius: radiusKm * 1000,
+        color: '#ff5e03',
+        weight: 2,
+        fillColor: '#ff5e03',
+        fillOpacity: 0.12,
+        className: 'mwa-map-radar-circle',
+      }).addTo(map);
+      radarRef.current = circle;
+      const marker = markersRef.current.get(selected.id);
+      marker?.setPopupContent(workerPopup(selected, clientLocation));
+      marker?.openPopup();
+      const frameRadar = () => {
+        map.invalidateSize();
+        map.fitBounds(circle.getBounds().pad(0.18));
+      };
+      frameRadar();
+      const timer = window.setTimeout(frameRadar, 80);
+      return () => window.clearTimeout(timer);
+    }
+
+    const timer = window.setTimeout(() => map.invalidateSize(), 50);
     return () => window.clearTimeout(timer);
-  }, [selectedWorkerId]);
+  }, [selectedWorkerId, workers]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    clientMarkerRef.current?.remove();
+    clientMarkerRef.current = null;
+    if (!clientLocation) return;
+    const selected = workers.find((worker) => worker.id === selectedWorkerId);
+    const quote = selected
+      ? transportSurcharge({
+          workerLat: selected.latitude,
+          workerLng: selected.longitude,
+          jobLat: clientLocation.latitude,
+          jobLng: clientLocation.longitude,
+          radiusKm: selected.serviceRadiusKm,
+        })
+      : null;
+    let clientText = 'Tu trabajo. Arrástralo si quieres corregirlo.';
+    if (quote?.insideRadar === true) {
+      clientText = 'Estás dentro del área: sin extra de traslado';
+    } else if (quote?.insideRadar === false) {
+      const km = quote.distanceKm?.toFixed(1) ?? '?';
+      clientText = `Fuera del área (${km} km): +$${clp(quote.extraClp)} de traslado`;
+    }
+    const marker = L.marker([clientLocation.latitude, clientLocation.longitude], {
+      icon: clientIcon,
+      draggable: true,
+      zIndexOffset: 400,
+    });
+    marker.bindPopup(clientText);
+    marker.on('dragend', () => {
+      const point = marker.getLatLng();
+      onPickRef.current?.({ latitude: point.lat, longitude: point.lng });
+    });
+    marker.addTo(map);
+    clientMarkerRef.current = marker;
+    const point = L.latLng(clientLocation.latitude, clientLocation.longitude);
+    if (!map.getBounds().contains(point)) {
+      map.panTo(point);
+    }
+    if (selected) {
+      markersRef.current
+        .get(selected.id)
+        ?.setPopupContent(workerPopup(selected, clientLocation));
+    }
+  }, [clientLocation, selectedWorkerId, workers]);
+
+  const selected = workers.find((worker) => worker.id === selectedWorkerId) ?? workers[0];
 
   return (
     <div className="premium-search-map">
@@ -168,16 +344,21 @@ export function PremiumSearchMap({
         <div className="premium-search-map-badge">
           {mapBadge(workers, categoryLabel)}
         </div>
-        {workers[0] && (
+        {selected && (
           <button
             type="button"
             className="premium-search-map-card"
-            onClick={() => onSelectWorker(workers[0])}
+            onClick={() => onSelectWorker(selected)}
           >
-            <img src={workers[0].photoUrl} alt="" />
+            <img src={selected.photoUrl} alt="" />
             <div>
-              <strong>{workers[0].name}</strong>
-              <span>{workers[0].profession}</span>
+              <strong>{selected.name}</strong>
+              <span>
+                {selected.profession}
+                {selected.id === selectedWorkerId
+                  ? ` · ${resolveServiceRadiusKm(selected.serviceRadiusKm)} km sin extra`
+                  : ''}
+              </span>
             </div>
           </button>
         )}

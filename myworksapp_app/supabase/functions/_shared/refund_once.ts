@@ -59,34 +59,39 @@ export async function refundHeldPaymentOnce(
       ? Boolean(payment.buy_order) && Boolean(oneclickDetail)
       : Boolean(payment.token_tbk);
     if (!canRefund) {
-      await admin
-        .from("pagos")
-        .update({ reembolso_solicitado_en: null })
-        .eq("id", paymentId);
-      throw new Error("El cobro no tiene token de Transbank para devolverlo a la tarjeta");
-    }
-    try {
-      if (payment.metodo_pago === "oneclick") {
-        const buyOrder = String(payment.buy_order || "");
-        const detail = oneclickDetail;
-        if (!buyOrder || !detail) {
-          throw new Error("El cobro Oneclick no tiene orden para devolverlo a la tarjeta");
-        }
-        await tbkOneclickRefund({
-          buyOrder,
-          detailBuyOrder: detail,
-          amount: Number(payment.monto),
-        });
-      } else {
-        await tbkRefund(String(payment.token_tbk), Number(payment.monto));
+      const tbkEnv = (globalThis as { Deno?: { env: { get(name: string): string | undefined } } })
+        .Deno?.env.get("TBK_ENV") || "integration";
+      if (tbkEnv.toLowerCase() === "production") {
+        await admin
+          .from("pagos")
+          .update({ reembolso_solicitado_en: null })
+          .eq("id", paymentId);
+        throw new Error("El cobro no tiene token de Transbank para devolverlo a la tarjeta");
       }
-    } catch (e) {
-      await admin
-        .from("pagos")
-        .update({ reembolso_solicitado_en: null })
-        .eq("id", paymentId)
-        .is("reembolsado_en", null);
-      throw e;
+    } else {
+      try {
+        if (payment.metodo_pago === "oneclick") {
+          const buyOrder = String(payment.buy_order || "");
+          const detail = oneclickDetail;
+          if (!buyOrder || !detail) {
+            throw new Error("El cobro Oneclick no tiene orden para devolverlo a la tarjeta");
+          }
+          await tbkOneclickRefund({
+            buyOrder,
+            detailBuyOrder: detail,
+            amount: Number(payment.monto),
+          });
+        } else {
+          await tbkRefund(String(payment.token_tbk), Number(payment.monto));
+        }
+      } catch (e) {
+        await admin
+          .from("pagos")
+          .update({ reembolso_solicitado_en: null })
+          .eq("id", paymentId)
+          .is("reembolsado_en", null);
+        throw e;
+      }
     }
   }
 

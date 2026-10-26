@@ -4,7 +4,8 @@
 **Módulo:** Perfil profesional del trabajador  
 **Versión:** 1.0  
 **Fecha:** 2026-10-04  
-**Alcance:** alta de cuenta, onboarding, oferta de precios y reputación
+**Alcance:** alta de cuenta, onboarding, oferta de precios y reputación  
+**Documento hermano:** [AUTOMATIZACION_RANKING_Y_RESENAS.md](AUTOMATIZACION_RANKING_Y_RESENAS.md) (quién aparece primero en el listado y reseñas dudosas)
 
 ---
 
@@ -164,7 +165,7 @@ La tarjeta `WorkerOnboardingCard` se oculta al 100 %. Mientras falte algo, muest
 - checklist completo,
 - y, en el repositorio, que el profesional no esté ocupado en un trabajo activo.
 
-La reputación de listado **no se guarda** en el perfil público. `WorkerReputationService` resta hasta 1,75 puntos internos por rechazos (`0,35` por rechazo) solo para ordenar resultados. El cliente ve `calificacion`, no la penalización.
+La reputación de listado **sí se guarda** en `trabajadores.score_listado` (migración de ranking). `WorkerReputationService` usa esa columna si existe; si no, resta hasta 1,75 puntos internos por rechazos. El cliente ve `calificacion`, no el score interno.
 
 ---
 
@@ -268,7 +269,7 @@ La app no llama a `trabajador_precios`. Si el JSON es válido, las filas existen
 1. El checklist corre **en el cliente** (tres lecturas: perfil, trabajador, portafolio). Un RPC `estado_onboarding_trabajador(id)` unificaría la regla y evitaría que una versión vieja de la app liste con criterios distintos.
 2. `handle_new_user` no crea `trabajadores`; un flujo “quiero ser trabajador” en un solo paso podría insertar la fila con categoría `general` y forzar el registro igual. Hoy se prefiere no crear filas vacías.
 3. `trabajador_servicios` se llena con la categoría principal; servicios extra N:M más ricos siguen en JSON/filas de extras, no en el catálogo `servicios.id`.
-4. La penalización por rechazos no está en SQL: dos clientes distintos podrían ordenar distinto si uno no usa `WorkerReputationService`. Conviene bajar el score de listado a una columna generada o a una vista.
+4. ~~La penalización por rechazos no está en SQL~~ **Hecho en v ranking:** `score_listado` se calcula en Postgres (`20261010000001_ranking_y_resenas.sql`). Ver `AUTOMATIZACION_RANKING_Y_RESENAS.md`.
 5. `liquidaciones.id_trabajador` es `text` y no es FK real a `trabajadores.id_usuario` (`uuid`). La automatización de perfil no cubre ese desajuste; está documentado en el modelo ER.
 
 ---
@@ -285,7 +286,8 @@ La app no llama a `trabajador_precios`. Si el JSON es válido, las filas existen
 | Checklist | `lib/core/services/worker_onboarding_checklist_service.dart` |
 | Tarjeta de progreso | `lib/features/worker/presentation/widgets/worker_onboarding_card.dart` |
 | Repositorio | `lib/core/database/repositories/worker_repository.dart` |
-| Ranking interno | `lib/core/services/worker_reputation_service.dart` |
+| Ranking interno (cliente, respaldo) | `lib/core/services/worker_reputation_service.dart` |
+| Ranking y reseñas (servidor + panel) | [AUTOMATIZACION_RANKING_Y_RESENAS.md](AUTOMATIZACION_RANKING_Y_RESENAS.md) |
 
 ---
 

@@ -46,6 +46,7 @@ import '../../features/admin/presentation/pages/admin_disputes_page.dart';
 import '../../features/admin/presentation/pages/admin_errors_page.dart';
 import '../../features/admin/presentation/pages/admin_services_page.dart';
 import '../../features/admin/presentation/pages/admin_feature_flags_page.dart';
+import '../../features/admin/presentation/pages/admin_ranking_page.dart';
 import '../../features/admin/presentation/pages/admin_desktop_management_page.dart';
 import '../../core/utils/constants.dart';
 import '../../core/utils/app_logger.dart';
@@ -388,6 +389,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppConstants.routeAdminFeatureFlags,
         builder: (context, state) => const AdminFeatureFlagsPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminRanking,
+        builder: (context, state) => const AdminRankingPage(),
       ),
       GoRoute(
         path: AppConstants.routeAdminDesktopHub,

@@ -9,6 +9,15 @@ export default defineConfig({
       '@myworksapp/shared': path.resolve(__dirname, '../shared/src'),
     },
   },
+  server: {
+    proxy: {
+      '/api/photon': {
+        target: 'https://photon.komoot.io',
+        changeOrigin: true,
+        rewrite: (pathname) => pathname.replace(/^\/api\/photon/, '/api'),
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {

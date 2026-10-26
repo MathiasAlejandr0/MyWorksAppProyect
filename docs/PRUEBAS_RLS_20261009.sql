@@ -54,8 +54,9 @@ BEGIN
 
   SELECT pg_get_functiondef('public.listar_profesionales_catalogo(text, text, numeric, uuid, integer)'::regprocedure)
   INTO v_def;
-  IF position('round(' in v_def) = 0 THEN
-    RAISE EXCEPTION 'el catálogo no redondea coordenadas';
+  IF position('round(t.latitud_base' in v_def) > 0
+     OR position('round(t.longitud_base' in v_def) > 0 THEN
+    RAISE EXCEPTION 'el catálogo redondea coordenadas y el cobro de traslado no coincide';
   END IF;
   IF position('nota_verificacion' in v_def) > 0 THEN
     RAISE EXCEPTION 'el catálogo devuelve nota_verificacion';

@@ -37,14 +37,17 @@ export interface WorkerRow {
   baseLongitude?: number | null;
   serviceRadiusKm?: number | null;
   baseOrigin?: string | null;
+  completedJobs?: number;
+  listingScore?: number | null;
+  urbanRadiusKm?: number | null;
+  outsideMobilizationFeeClp?: number | null;
+  isElite?: boolean;
 }
 
 export interface WorkerWithProfile extends WorkerRow {
   name: string;
   profilePhotoPath?: string | null;
   email?: string;
-  /** Trabajos completados que devuelve el catálogo. */
-  completedJobs?: number;
 }
 
 export interface JobRow {
@@ -101,4 +104,7 @@ export interface WebWorkerCard {
   latitude?: number | null;
   longitude?: number | null;
   serviceRadiusKm?: number | null;
+  urbanRadiusKm?: number | null;
+  outsideMobilizationFeeClp?: number | null;
+  isElite?: boolean;
 }

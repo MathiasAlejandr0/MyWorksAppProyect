@@ -19,6 +19,17 @@ class AdminMetricsRepository {
       supabase.from('acciones_pendientes').select('id').eq('estado', 'fallido'),
     ]);
 
+    var pendingSignals = 0;
+    try {
+      final rows = await supabase
+          .from('senales_resena')
+          .select('id')
+          .eq('estado', 'pendiente');
+      pendingSignals = (rows as List).length;
+    } catch (_) {
+      pendingSignals = 0;
+    }
+
     return AdminMetrics(
       usersCount: (results[0] as List).length,
       workersCount: (results[1] as List).length,
@@ -30,6 +41,7 @@ class AdminMetricsRepository {
       newErrorsCount: (results[7] as List).length,
       unresolvedAbuseCount: (results[8] as List).length,
       failedSyncCount: (results[9] as List).length,
+      pendingReviewSignalsCount: pendingSignals,
     );
   }
 }

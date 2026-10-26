@@ -95,6 +95,7 @@ class RatingRepository {
         .from(_table)
         .select()
         .inFilter('id_trabajo', jobIds)
+        .neq('estado_revision', 'excluida')
         .order('creado_en', ascending: false);
 
     if (limit != null) {

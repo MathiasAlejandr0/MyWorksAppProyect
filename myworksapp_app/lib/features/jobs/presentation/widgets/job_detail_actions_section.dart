@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/services/dispute_service.dart';
+import '../../../ratings/presentation/widgets/client_reputation_card.dart';
+import '../../../ratings/presentation/widgets/rate_client_button.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../utils/job_detail_helpers.dart';
@@ -117,6 +119,14 @@ class JobDetailActionsSection extends StatelessWidget {
                     color: AppColors.grayMedium,
                   ),
             ),
+          if (isWorker) ...[
+            ClientReputationCard(clientId: job.userId),
+            if (job.status == AppConstants.jobStatusCompleted) ...[
+              const SizedBox(height: 8),
+              RateClientButton(jobId: jobId),
+            ],
+            const SizedBox(height: 8),
+          ],
           if (!isWorker && job.status == AppConstants.jobStatusCompleted)
             FutureBuilder<bool>(
               future: DisputeService.instance.canRateJob(jobId),

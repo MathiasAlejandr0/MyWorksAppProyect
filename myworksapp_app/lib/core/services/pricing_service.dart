@@ -161,20 +161,25 @@ class PricingService {
     WorkerPriceUnit unit = WorkerPriceUnit.fixed,
     int? squareMeters,
     int? unitRateClp,
+    int transportExtraClp = 0,
   }) {
     final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
     final rate = unitRateClp ?? amountClp;
     final baseTotal = unit == WorkerPriceUnit.perSqm && (squareMeters ?? 0) > 0
         ? rate * squareMeters!
         : amountClp;
-    // El servidor cobra la tarifa publicada en niveles_precio, sin recargo de comuna.
-    final subtotal = baseTotal;
+    final extra = transportExtraClp < 0 ? 0 : transportExtraClp;
+    // El servidor cobra la tarifa publicada más traslado si el trabajo queda fuera del radar.
+    final subtotal = baseTotal + extra;
     final fee = serviceFeeFor(subtotal);
     final unitLabel = unit == WorkerPriceUnit.perSqm ? 'por m²' : 'precio fijo';
     final m2 = squareMeters ?? 0;
+    final transferNote = extra > 0
+        ? ' Incluye ${_formatClp(extra)} de traslado porque el trabajo queda fuera del área cercana.'
+        : ' Sin extra de traslado: el trabajo queda dentro del radar.';
     final message = unit == WorkerPriceUnit.perSqm && m2 > 0
-        ? 'Proyecto de $m2 m² × ${_formatClp(rate)}/m². La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.'
-        : 'Tarifa del profesional ($unitLabel). La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.';
+        ? 'Proyecto de $m2 m² × ${_formatClp(rate)}/m².$transferNote La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.'
+        : 'Tarifa del profesional ($unitLabel).$transferNote La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.';
     return PriceQuote(
       pricingMode: PricingConstants.modeFixedPrice,
       subtotalClp: subtotal,
@@ -188,6 +193,7 @@ class PricingService {
         'unit_rate_clp': rate,
         if (m2 > 0) 'square_meters': m2,
         'price_unit': unit.name,
+        'transport_extra_clp': extra,
         'comuna_factor': factor,
         'service_fee_rate': serviceFeeRate,
         'service_fee_clp': fee,
@@ -271,9 +277,11 @@ class PricingService {
   PriceQuote calculateVisitBooking({
     required int visitFeeClp,
     String? comunaKey,
+    int transportExtraClp = 0,
   }) {
     final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
-    final subtotal = (visitFeeClp * factor).round();
+    final extra = transportExtraClp < 0 ? 0 : transportExtraClp;
+    final subtotal = (visitFeeClp * factor).round() + extra;
     const feePercent = 0.10;
     final fee = (subtotal * feePercent).round();
     return PriceQuote(
@@ -283,9 +291,12 @@ class PricingService {
       totalClp: subtotal + fee,
       breakdown: {
         'visit_fee_clp': visitFeeClp,
+        'transport_extra_clp': extra,
         'comuna_factor': factor,
       },
-      message: 'Pago de visita con fondos en garantía hasta completar el servicio.',
+      message: extra > 0
+          ? 'Pago de visita más ${_formatClp(extra)} de traslado (fuera del área cercana).'
+          : 'Pago de visita con fondos en garantía. Sin extra de traslado.',
     );
   }
 

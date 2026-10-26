@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:myworksapp/utils/content_filter.dart';
 
 /// Formulario del trabajador: materiales, mano de obra, tiempo y alcance.
 class WorkerQuoteFormResult {
@@ -144,8 +145,12 @@ class _WorkerQuoteFormDialogState extends State<WorkerQuoteFormDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: () {
+          onPressed: () async {
             if (!_formKey.currentState!.validate()) return;
+            if (ContentFilter.hasSensitiveData(_alcanceCtrl.text)) {
+              await ContentFilter.showBlockedDialog(context);
+              return;
+            }
             final total = _total;
             if (total < 5000) {
               ScaffoldMessenger.of(context).showSnackBar(

@@ -11,6 +11,7 @@ import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/domain/user_role.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/services/profile_photo_service.dart';
+import '../../../ratings/presentation/widgets/client_reputation_card.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
@@ -301,6 +302,8 @@ class _ClienteSection extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        ClientReputationCard(clientId: user.id),
         const SizedBox(height: 16),
         _SectionCard(
           title: 'Historial de servicios',

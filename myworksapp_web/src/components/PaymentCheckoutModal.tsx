@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { ShieldCheck, CheckCircle2, Lock, X, CreditCard } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { ShieldCheck, CheckCircle2, Lock, X, CreditCard, MapPin } from 'lucide-react';
 import {
   orderConfirmedMessage,
+  transportCheckoutCopy,
   type OneclickChargeResult,
 } from '@myworksapp/shared';
 
@@ -13,8 +14,12 @@ interface PaymentCheckoutModalProps {
   workerName: string;
   profession: string;
   basePrice: number;
+  transportExtraClp?: number;
+  insideRadar?: boolean | null;
   serviceDescription?: string;
   jobId?: string | null;
+  onUseAddress?: (query: string) => Promise<unknown>;
+  locatingAddress?: boolean;
   onClose: () => void;
   /** Cobra la tarjeta guardada. Si no hay, redirige a Webpay Plus. */
   onPayWithWebpay: () => Promise<CheckoutPayResult>;
@@ -25,8 +30,12 @@ export function PaymentCheckoutModal({
   workerName,
   profession: _profession,
   basePrice,
+  transportExtraClp = 0,
+  insideRadar = null,
   serviceDescription = 'Servicio a domicilio',
   jobId,
+  onUseAddress,
+  locatingAddress = false,
   onClose,
   onPayWithWebpay,
   onSuccess,
@@ -34,9 +43,27 @@ export function PaymentCheckoutModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const totalAmount = basePrice;
+  const [addressQuery, setAddressQuery] = useState('');
+  const totalAmount = basePrice + Math.max(0, transportExtraClp);
+  const needsManualSite = insideRadar == null && transportExtraClp <= 0 && Boolean(onUseAddress);
+
+  const submitAddress = async (event: FormEvent) => {
+    event.preventDefault();
+    const text = addressQuery.trim();
+    if (!text || !onUseAddress) return;
+    setError(null);
+    try {
+      await onUseAddress(text);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No encontramos esa dirección.');
+    }
+  };
 
   const handlePay = async () => {
+    if (needsManualSite) {
+      setError('Indica la dirección del trabajo o marca el punto en el mapa.');
+      return;
+    }
     setIsProcessing(true);
     setError(null);
     try {
@@ -119,6 +146,15 @@ export function PaymentCheckoutModal({
                   <dt>Profesional</dt>
                   <dd>{workerName}</dd>
                 </div>
+                <div>
+                  <dt>Traslado</dt>
+                  <dd>
+                    {transportCheckoutCopy({
+                      extraClp: transportExtraClp,
+                      insideRadar,
+                    })}
+                  </dd>
+                </div>
                 {jobId ? (
                   <div>
                     <dt>Trabajo</dt>
@@ -126,6 +162,28 @@ export function PaymentCheckoutModal({
                   </div>
                 ) : null}
               </dl>
+              {needsManualSite ? (
+                <form className="checkout-v2-address" onSubmit={(event) => void submitAddress(event)}>
+                  <label htmlFor="checkout-job-address">
+                    <MapPin size={14} /> Dirección del trabajo
+                  </label>
+                  <div>
+                    <input
+                      id="checkout-job-address"
+                      value={addressQuery}
+                      onChange={(event) => setAddressQuery(event.target.value)}
+                      placeholder="Calle, barrio o ciudad"
+                      disabled={isProcessing || locatingAddress}
+                    />
+                    <button
+                      type="submit"
+                      disabled={isProcessing || locatingAddress || addressQuery.trim().length < 3}
+                    >
+                      {locatingAddress ? 'Buscando…' : 'Usar dirección'}
+                    </button>
+                  </div>
+                </form>
+              ) : null}
             </div>
 
             {error ? (
@@ -137,13 +195,15 @@ export function PaymentCheckoutModal({
             <button
               type="button"
               onClick={() => void handlePay()}
-              disabled={isProcessing}
+              disabled={isProcessing || needsManualSite || locatingAddress}
               className="btn-primary checkout-v2-pay"
             >
               <CreditCard size={16} />
               {isProcessing
                 ? 'Confirmando pedido…'
-                : `Confirmar pedido · CLP ${totalAmount.toLocaleString('es-CL')}`}
+                : needsManualSite
+                  ? 'Indica la ubicación del trabajo'
+                  : `Confirmar pedido · CLP ${totalAmount.toLocaleString('es-CL')}`}
             </button>
 
             <div className="checkout-v2-footer">

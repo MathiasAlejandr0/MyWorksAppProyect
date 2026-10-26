@@ -1,4 +1,5 @@
 import type { AppSupabase } from '../client';
+import { contactBlockedMessage, containsContactData } from './contactFilter';
 
 export interface JobMessage {
   id: string;
@@ -63,6 +64,7 @@ export async function sendJobMessage(
   const content = input.content.trim();
   if (!content) throw new Error('Escribe un mensaje.');
   if (content.length > 2000) throw new Error('El mensaje es demasiado largo.');
+  if (containsContactData(content)) throw new Error(contactBlockedMessage);
   const { error } = await supabase.from('mensajes').insert(buildJobMessageInsert({
     ...input,
     content,

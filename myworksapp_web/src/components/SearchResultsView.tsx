@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, type FormEvent } from 'react';
 import {
   Heart,
   Bell,
@@ -7,6 +7,7 @@ import {
   SlidersHorizontal,
   ChevronLeft,
   Navigation,
+  Search,
   X,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
@@ -28,6 +29,10 @@ export interface SearchWorker {
   availableNow?: boolean;
   latitude?: number | null;
   longitude?: number | null;
+  serviceRadiusKm?: number | null;
+  urbanRadiusKm?: number | null;
+  outsideMobilizationFeeClp?: number | null;
+  isElite?: boolean;
 }
 
 interface SearchResultsViewProps {
@@ -45,11 +50,24 @@ interface SearchResultsViewProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  clientLocation?: { latitude: number; longitude: number } | null;
+  onUseMyLocation?: () => void;
+  onPickClientLocation?: (location: { latitude: number; longitude: number }) => void;
+  onSearchAddress?: (query: string) => Promise<unknown>;
+  locating?: boolean;
+  locatingAddress?: boolean;
 }
 
 function clp(amount: number): string {
   const value = Number.isFinite(amount) ? Math.round(amount) : 0;
   return value.toLocaleString('es-CL');
+}
+
+function coverageLine(worker: SearchWorker): string {
+  const km = worker.urbanRadiusKm ?? 5;
+  const fee = worker.outsideMobilizationFeeClp ?? 0;
+  const feeLabel = fee <= 0 ? 'sin recargo' : `$${clp(fee)}`;
+  return `Radio urbano ${km} km: movilización $0 dentro. Fuera, ${feeLabel}.`;
 }
 
 export function SearchResultsView({
@@ -66,9 +84,23 @@ export function SearchResultsView({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  clientLocation = null,
+  onUseMyLocation,
+  onPickClientLocation,
+  onSearchAddress,
+  locating = false,
+  locatingAddress = false,
 }: SearchResultsViewProps) {
   const displayQuery = query.trim() || 'profesionales';
   const total = workers.length;
+  const [addressQuery, setAddressQuery] = useState('');
+
+  const submitAddress = (event: FormEvent) => {
+    event.preventDefault();
+    const text = addressQuery.trim();
+    if (!text || !onSearchAddress) return;
+    void onSearchAddress(text);
+  };
 
   return (
     <div className="search-view">
@@ -250,7 +282,11 @@ export function SearchResultsView({
                   <div className="pro-card-body">
                     <div className="pro-card-top">
                       <strong>{w.name}</strong>
-                      <Heart size={16} className="pro-card-heart" />
+                      {w.isElite ? (
+                        <span className="pro-card-elite">Élite</span>
+                      ) : (
+                        <Heart size={16} className="pro-card-heart" />
+                      )}
                     </div>
                     <span className="pro-card-role">{w.profession}</span>
                     <div className="pro-card-rating">
@@ -259,6 +295,7 @@ export function SearchResultsView({
                       <span className="pro-card-stars">★★★★★</span>
                       <span>{w.jobsDone} trabajos</span>
                     </div>
+                    <p className="pro-card-coverage">{coverageLine(w)}</p>
                     <div className="pro-card-footer">
                       <span className="pro-card-price">
                         Desde ${clp(w.pricePerVisit)} / visita
@@ -294,13 +331,48 @@ export function SearchResultsView({
               selectedWorkerId={selectedWorkerId}
               onSelectWorker={onSelectWorker}
               categoryLabel={displayQuery}
+              clientLocation={clientLocation}
+              onPickClientLocation={onPickClientLocation}
             />
           </Suspense>
-          <button type="button" className="search-map-locate">
-            <Navigation size={14} /> Usar mi ubicación actual
-          </button>
+          <div className="search-map-location">
+            <form className="search-map-address" onSubmit={submitAddress}>
+              <MapPin size={14} aria-hidden />
+              <input
+                type="text"
+                value={addressQuery}
+                onChange={(event) => setAddressQuery(event.target.value)}
+                placeholder="Calle, barrio o ciudad"
+                aria-label="Dirección del trabajo"
+                disabled={locatingAddress}
+              />
+              <button type="submit" disabled={locatingAddress || addressQuery.trim().length < 3}>
+                <Search size={14} />
+                {locatingAddress ? 'Buscando…' : 'Buscar'}
+              </button>
+            </form>
+            <div className="search-map-location-actions">
+              <button
+                type="button"
+                className="search-map-locate"
+                onClick={onUseMyLocation}
+                disabled={locating}
+              >
+                <Navigation size={14} />
+                {locating
+                  ? 'Leyendo GPS…'
+                  : clientLocation
+                    ? 'Ubicación lista'
+                    : 'Usar GPS'}
+              </button>
+              <span>o marca el punto en el mapa</span>
+            </div>
+          </div>
           <div className="search-map-legend">
             <span className="search-map-legend-dot" /> Profesionales cerca
+            <span className="search-map-legend-dot search-map-legend-dot--elite" /> Élite del mes
+            <span className="search-map-legend-dot search-map-legend-dot--client" /> Tu trabajo
+            <span className="search-map-legend-radar" /> Área sin extra de traslado
           </div>
         </aside>
       </div>

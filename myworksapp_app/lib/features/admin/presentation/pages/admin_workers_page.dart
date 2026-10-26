@@ -66,6 +66,25 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
     }
   }
 
+  Future<void> _setPriority(AdminWorkerEntry entry, int delta) async {
+    await _setPriorityTo(
+      entry,
+      (entry.worker.manualPriority + delta).clamp(-50, 50).toInt(),
+    );
+  }
+
+  Future<void> _setPriorityTo(AdminWorkerEntry entry, int value) async {
+    try {
+      await _repo.setWorkerPriority(entry.worker.userId, value);
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
   Future<void> _setAccountStatus(AdminWorkerEntry entry, String status) async {
     try {
       await _repo.updateAccountStatus(entry.worker.userId, status);
@@ -163,7 +182,8 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
                                     '${entry.email ?? ''}\n'
                                     '${w.isAvailable ? 'Disponible' : 'No disponible'} · '
                                     '★ ${w.rating.toStringAsFixed(1)} · '
-                                    '${entry.accountStatus}'
+                                    'ranking ${(w.listingScore ?? 0).toStringAsFixed(1)} · '
+                                    'prioridad ${w.manualPriority}'
                                     '${w.workZone != null ? ' · ${w.workZone}' : ''}',
                                   ),
                                   isThreeLine: true,
@@ -171,6 +191,12 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
                                     onSelected: (v) {
                                       if (v == 'toggle_avail') {
                                         _toggleAvailability(entry);
+                                      } else if (v == 'rank_up') {
+                                        _setPriority(entry, 5);
+                                      } else if (v == 'rank_down') {
+                                        _setPriority(entry, -5);
+                                      } else if (v == 'rank_reset') {
+                                        _setPriorityTo(entry, 0);
                                       } else {
                                         _setAccountStatus(entry, v);
                                       }
@@ -183,6 +209,18 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
                                               ? 'Marcar no disponible'
                                               : 'Marcar disponible',
                                         ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'rank_up',
+                                        child: Text('Mostrar más arriba'),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'rank_down',
+                                        child: Text('Mostrar más abajo'),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'rank_reset',
+                                        child: Text('Quitar prioridad manual'),
                                       ),
                                       const PopupMenuItem(
                                         value: AppConstants.accountStatusActive,

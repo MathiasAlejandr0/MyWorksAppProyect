@@ -9,7 +9,7 @@ void main() {
     expect(km, lessThan(120));
   });
 
-  test('excluye al profesional fuera de su radio y puntúa dentro', () {
+  test('marca fuera de radio para recargo y puntúa dentro', () {
     final far = matchByDistance(
       workerLat: -33.45,
       workerLng: -70.66,

@@ -13,6 +13,9 @@ import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/comuna_utils.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/mock_reserved_slots.dart';
+import '../../../../utils/content_filter.dart';
+import '../widgets/time_slot_selector.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/escrow_checkout_sheet.dart';
 import '../../../../core/widgets/loading_widget.dart';
@@ -45,6 +48,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
   UserModel? _workerUser;
   String? _serviceName;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  TimeOfDay? _selectedTime;
   bool _loading = true;
   bool _submitting = false;
 
@@ -99,6 +103,30 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
       );
       return;
     }
+    if (ContentFilter.hasSensitiveData(_notesController.text)) {
+      await ContentFilter.showBlockedDialog(context);
+      return;
+    }
+    if (_selectedTime == null || MockReservedSlots.isReserved(_selectedTime!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _selectedTime == null
+                ? 'Selecciona un horario disponible'
+                : MockReservedSlots.reservedMessage,
+          ),
+        ),
+      );
+      return;
+    }
+
+    final scheduledDate = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
 
     setState(() => _submitting = true);
     try {
@@ -114,7 +142,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
         serviceId: widget.serviceId,
         address: address,
         visitFeeClp: _worker!.visitFee.round(),
-        scheduledDate: _selectedDate,
+        scheduledDate: scheduledDate,
         description: description,
         comunaKey: inferComunaKey(address),
       );
@@ -206,6 +234,11 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
               subtitle: Text(dateFmt.format(_selectedDate)),
               trailing: TextButton(onPressed: _pickDate, child: const Text('Cambiar')),
               onTap: _pickDate,
+            ),
+            const SizedBox(height: 8),
+            TimeSlotSelector(
+              selected: _selectedTime,
+              onChanged: (time) => setState(() => _selectedTime = time),
             ),
             const SizedBox(height: 8),
             TextField(

@@ -142,6 +142,14 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
                     onTap: () => context.push(AppConstants.routeAdminWorkers),
                   ),
                   AdminNavTile(
+                    icon: Icons.leaderboard_outlined,
+                    title: 'Ranking y reseñas',
+                    subtitle:
+                        'Pesos del listado, prioridad y cola de reseñas dudosas',
+                    badge: m.pendingReviewSignalsCount,
+                    onTap: () => context.push(AppConstants.routeAdminRanking),
+                  ),
+                  AdminNavTile(
                     icon: Icons.work_outline,
                     title: 'Trabajos',
                     subtitle: '${m.activeJobsCount} activos de ${m.jobsCount}',

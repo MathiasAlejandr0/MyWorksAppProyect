@@ -36,10 +36,12 @@ class JobBookingService {
     String? comunaKey,
     double? latitude,
     double? longitude,
+    int transportExtraClp = 0,
   }) async {
     final quote = PricingService.instance.calculateVisitBooking(
       visitFeeClp: visitFeeClp,
       comunaKey: comunaKey,
+      transportExtraClp: transportExtraClp,
     );
     return _createEscrowJob(
       userId: userId,
@@ -110,6 +112,7 @@ class JobBookingService {
     String priceUnit = 'fixed',
     int? squareMeters,
     int? unitRateClp,
+    int transportExtraClp = 0,
   }) async {
     final unit = priceUnit == 'perSqm'
         ? WorkerPriceUnit.perSqm
@@ -122,6 +125,7 @@ class JobBookingService {
       unit: unit,
       squareMeters: squareMeters,
       unitRateClp: unitRateClp,
+      transportExtraClp: transportExtraClp,
     );
     final metadata = {
       ...?serviceMetadata,
@@ -206,6 +210,7 @@ class JobBookingService {
     String priceUnit = 'fixed',
     int? squareMeters,
     int? unitRateClp,
+    int transportExtraClp = 0,
   }) async {
     final unit = priceUnit == 'perSqm'
         ? WorkerPriceUnit.perSqm
@@ -218,6 +223,7 @@ class JobBookingService {
       unit: unit,
       squareMeters: squareMeters,
       unitRateClp: unitRateClp,
+      transportExtraClp: transportExtraClp,
     );
     final meta = <String, dynamic>{
       if (serviceMetadata != null) ...serviceMetadata,
@@ -230,6 +236,7 @@ class JobBookingService {
         'worker_tier_square_meters': squareMeters,
       'worker_tier_unit': priceUnit,
       'request_type': 'worker_tier_invitation',
+      'traslado_extra_clp': quote.breakdown['transport_extra_clp'] ?? 0,
     };
     final now = DateTime.now();
     final job = JobModel(

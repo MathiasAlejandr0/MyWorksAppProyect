@@ -25,6 +25,10 @@ type WorkerQueryRow = {
   radio_servicio_km?: number | null;
   origen_base?: string | null;
   trabajos_completados?: number | null;
+  score_listado?: number | null;
+  radio_urbano_km?: number | null;
+  tarifa_fuera_radio_clp?: number | null;
+  es_elite?: boolean | null;
   nombre?: string | null;
   ruta_foto_perfil?: string | null;
   perfiles?:
@@ -72,6 +76,11 @@ function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
     name: row.nombre ?? profileRow?.nombre ?? 'Profesional',
     profilePhotoPath: row.ruta_foto_perfil ?? profileRow?.ruta_foto_perfil,
     completedJobs: Number(row.trabajos_completados ?? 0),
+    listingScore: row.score_listado == null ? null : Number(row.score_listado),
+    urbanRadiusKm: row.radio_urbano_km == null ? null : Number(row.radio_urbano_km),
+    outsideMobilizationFeeClp:
+      row.tarifa_fuera_radio_clp == null ? null : Number(row.tarifa_fuera_radio_clp),
+    isElite: row.es_elite === true,
   };
 }
 
@@ -86,7 +95,7 @@ function pageFromRows(
   const last = workers[workers.length - 1];
   return {
     workers,
-    nextCursor: { rating: last.rating, id: last.userId },
+    nextCursor: { rating: last.listingScore ?? last.rating, id: last.userId },
   };
 }
 
@@ -218,5 +227,9 @@ export function toWebWorkerCard(worker: WorkerWithProfile, jobsDone = 0): WebWor
     latitude: worker.baseLatitude ?? null,
     longitude: worker.baseLongitude ?? null,
     serviceRadiusKm: worker.serviceRadiusKm ?? null,
+    urbanRadiusKm: worker.urbanRadiusKm ?? null,
+    outsideMobilizationFeeClp: worker.outsideMobilizationFeeClp ?? null,
+    isElite: worker.isElite === true
+      || (worker.rating >= 4.7 && (jobsDone || worker.completedJobs || 0) >= 5),
   };
 }

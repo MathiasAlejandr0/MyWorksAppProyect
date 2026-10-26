@@ -9,6 +9,7 @@ import {
   tbkOneclickAuthorize,
   tbkOneclickStatus,
 } from "./tbk.ts";
+import { asCoord, transportExtraClp } from "./transport.ts";
 
 type Admin = ReturnType<typeof serviceClient>;
 
@@ -203,7 +204,7 @@ export async function expectedJobAmount(
 ): Promise<number> {
   const { data: job } = await admin
     .from("trabajos")
-    .select("id_trabajador, id_cotizacion_seleccionada, modalidad_cobro")
+    .select("id_trabajador, id_cotizacion_seleccionada, modalidad_cobro, latitud, longitud")
     .eq("id", jobId)
     .maybeSingle();
   if (!job) return 0;
@@ -228,8 +229,16 @@ export async function expectedJobAmount(
   if (!job.id_trabajador) return 0;
   const { data: worker } = await admin
     .from("trabajadores")
-    .select("tarifa_visita")
+    .select("tarifa_visita, latitud_base, longitud_base, radio_servicio_km")
     .eq("id_usuario", job.id_trabajador)
     .maybeSingle();
-  return Number(worker?.tarifa_visita || 0);
+  const visit = Number(worker?.tarifa_visita || 0);
+  const extra = transportExtraClp({
+    workerLat: asCoord(worker?.latitud_base),
+    workerLng: asCoord(worker?.longitud_base),
+    jobLat: asCoord(job.latitud),
+    jobLng: asCoord(job.longitud),
+    radiusKm: asCoord(worker?.radio_servicio_km),
+  });
+  return visit + extra;
 }

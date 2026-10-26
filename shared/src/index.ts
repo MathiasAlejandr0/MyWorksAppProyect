@@ -42,6 +42,7 @@ export * from './verification';
 export * from './repositories/disputes';
 export * from './repositories/metrics';
 export * from './geo/distance';
+export * from './geo/transport';
 export * from './metrics/period';
 export * from './metrics/fetchPeriod';
 export * from './invites/parseInvite';
