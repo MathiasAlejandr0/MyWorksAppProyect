@@ -8,6 +8,53 @@ import 'job_transition_matrix.dart';
 import 'payment_guard.dart';
 import 'payment_service.dart';
 
+/// Quién puede pedir cada cambio de estado.
+/// El cliente cancela sus solicitudes. El profesional asignado también puede
+/// rechazar una oferta que sigue pendiente.
+bool actorMayTransition({
+  required String? jobWorkerId,
+  required String jobClientId,
+  required String jobStatus,
+  required String newStatus,
+  required String actorId,
+}) {
+  final workerRejectsPendingOffer = jobWorkerId == actorId &&
+      jobStatus == AppConstants.jobStatusPending &&
+      newStatus == AppConstants.jobStatusCancelled;
+  if (newStatus == AppConstants.jobStatusCancelled &&
+      (jobClientId == actorId || workerRejectsPendingOffer)) {
+    return true;
+  }
+
+  if (jobWorkerId == actorId) {
+    const workerActions = [
+      AppConstants.jobStatusAccepted,
+      AppConstants.jobStatusEnRoute,
+      AppConstants.jobStatusInProgress,
+      AppConstants.jobStatusCompleted,
+      PricingConstants.jobAwaitingClientApproval,
+      AppConstants.jobStatusNoShow,
+      PricingConstants.jobPausedChangeOrder,
+    ];
+    return workerActions.contains(newStatus);
+  }
+
+  if (jobClientId == actorId) {
+    const clientActions = [
+      PricingConstants.jobQuoteSelected,
+      PricingConstants.jobAwaitingPayment,
+      AppConstants.jobStatusPending,
+      AppConstants.jobStatusAccepted,
+      AppConstants.jobStatusCompleted,
+      AppConstants.jobStatusInProgress,
+      AppConstants.jobStatusCancelled,
+    ];
+    return clientActions.contains(newStatus);
+  }
+
+  return false;
+}
+
 /// Máquina de estados para jobs con validación por modalidad de cobro y escrow.
 class JobStateMachine {
   static final JobStateMachine instance = JobStateMachine._();
@@ -51,7 +98,13 @@ class JobStateMachine {
       }
 
       if (userId != null) {
-        final hasPermission = _validatePermission(job, newStatus, userId);
+        final hasPermission = actorMayTransition(
+          jobWorkerId: job.workerId,
+          jobClientId: job.userId,
+          jobStatus: job.status,
+          newStatus: newStatus,
+          actorId: userId,
+        );
         if (!hasPermission) {
           throw AppError.permission('No tienes permiso para realizar esta acción');
         }
@@ -91,37 +144,13 @@ class JobStateMachine {
   }
 
   bool _validatePermission(JobModel job, String newStatus, String userId) {
-    if (newStatus == AppConstants.jobStatusCancelled && job.userId == userId) {
-      return true;
-    }
-
-    if (job.workerId == userId) {
-      const workerActions = [
-        AppConstants.jobStatusAccepted,
-        AppConstants.jobStatusEnRoute,
-        AppConstants.jobStatusInProgress,
-        AppConstants.jobStatusCompleted,
-        PricingConstants.jobAwaitingClientApproval,
-        AppConstants.jobStatusNoShow,
-        PricingConstants.jobPausedChangeOrder,
-      ];
-      return workerActions.contains(newStatus);
-    }
-
-    if (job.userId == userId) {
-      const clientActions = [
-        PricingConstants.jobQuoteSelected,
-        PricingConstants.jobAwaitingPayment,
-        AppConstants.jobStatusPending,
-        AppConstants.jobStatusAccepted,
-        AppConstants.jobStatusCompleted,
-        AppConstants.jobStatusInProgress,
-        AppConstants.jobStatusCancelled,
-      ];
-      return clientActions.contains(newStatus);
-    }
-
-    return false;
+    return actorMayTransition(
+      jobWorkerId: job.workerId,
+      jobClientId: job.userId,
+      jobStatus: job.status,
+      newStatus: newStatus,
+      actorId: userId,
+    );
   }
 
   Future<void> processTimeouts() async {

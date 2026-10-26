@@ -423,11 +423,11 @@
       <p class="brand">MyWorksApp · Fase 2</p>
       <h1>Modelo entidad-relación</h1>
       <div class="meta">
-        <span class="chip"><strong>28</strong> tablas</span>
+        <span class="chip"><strong>37</strong> tablas</span>
         <span class="chip">PostgreSQL <strong>public</strong></span>
         <span class="chip">Supabase</span>
         <span class="chip">español + snake_case</span>
-        <span class="chip">15 sep 2026</span>
+        <span class="chip">v2.2 · 4NF + geo · 5 oct 2026</span>
       </div>
     </div>
     <div class="tools">
@@ -479,7 +479,7 @@
           {
             title: "Cuenta",
             tables: [
-              { id: "perfiles", pk: "id", role: "Identidad de app = Auth de Supabase", note: "perfiles.id coincide con auth.users.id, fuera de las 28 tablas public.", fks: [] }
+              { id: "perfiles", pk: "id", role: "Identidad de app = Auth de Supabase", note: "perfiles.id coincide con auth.users.id, fuera de las 37 tablas public.", fks: [] }
             ]
           },
           {
@@ -521,11 +521,25 @@
         domain: "catalogo",
         groups: [
           {
-            title: "Profesional",
+            title: "Profesional (4NF)",
             tables: [
-              { id: "trabajadores", pk: "id_usuario", role: "Ficha profesional 1:1", note: "La PK es a la vez FK 1:1 hacia perfiles.id.", fks: [{ col: "id_usuario", to: "perfiles", toCol: "id", card: "1:1" }] },
+              { id: "trabajadores", pk: "id_usuario", role: "Ficha 1:1. JSON solo escritura.", note: "Oferta 4NF en hijas. calificacion es promedio. id_comuna / id_region son FK al catálogo geográfico. zona_trabajo es texto de UI.", fks: [
+                { col: "id_usuario", to: "perfiles", toCol: "id", card: "1:1" },
+                { col: "id_comuna", to: "comunas", toCol: "id", nullable: true, card: "N:0..1" },
+                { col: "id_region", to: "regiones", toCol: "id", nullable: true, card: "N:0..1" }
+              ] },
+              { id: "trabajador_precios", pk: "(id_usuario, codigo)", role: "4NF · tarifa por código", note: "Forma normal de niveles_precio. FK a trabajadores. En Postgres vivo id_usuario es text; aquí uuid.", fks: [{ col: "id_usuario", to: "trabajadores", toCol: "id_usuario", card: "N:1" }] },
+              { id: "trabajador_servicios_extra", pk: "(id_usuario, id)", role: "4NF · extras tarifados", note: "Forma normal de servicios_personalizados. Unidad fijo | por_m2.", fks: [{ col: "id_usuario", to: "trabajadores", toCol: "id_usuario", card: "N:1" }] },
               { id: "portafolio_trabajador", pk: "id", role: "Galería del profesional", fks: [{ col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" }] },
               { id: "impulsos", pk: "id", role: "Boost de visibilidad", fks: [{ col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" }] }
+            ]
+          },
+          {
+            title: "Territorio",
+            tables: [
+              { id: "paises", pk: "id", role: "País operativo", note: "Hoy solo CL.", fks: [] },
+              { id: "regiones", pk: "id", role: "Región chilena", fks: [{ col: "id_pais", to: "paises", toCol: "id", card: "N:1" }] },
+              { id: "comunas", pk: "id", role: "Comuna / ciudad de cobertura", note: "PK slug. Es el destino de trabajos.id_comuna y trabajadores.id_comuna.", fks: [{ col: "id_region", to: "regiones", toCol: "id", card: "N:1" }] }
             ]
           },
           {
@@ -548,10 +562,11 @@
           {
             title: "Hub",
             tables: [
-              { id: "trabajos", pk: "id", role: "Pedido y expediente", fks: [
+              { id: "trabajos", pk: "id", role: "Pedido y expediente", note: "estado_pago es copia del pago principal (trigger), no fuente.", fks: [
                 { col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" },
                 { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", nullable: true, card: "N:0..1" },
-                { col: "id_servicio", to: "servicios", toCol: "id", card: "N:1" },
+                { col: "id_servicio", to: "servicios", toCol: "id", nullable: true, card: "N:0..1" },
+                { col: "id_comuna", to: "comunas", toCol: "id", nullable: true, card: "N:0..1" },
                 { col: "id_cotizacion_seleccionada", to: "propuestas_cotizacion", toCol: "id", nullable: true, card: "N:0..1" }
               ]}
             ]
@@ -565,9 +580,9 @@
                 { col: "id_destinatario", to: "perfiles", toCol: "id", card: "N:1" }
               ]},
               { id: "fotos_trabajo", pk: "id", role: "Evidencia del servicio", fks: [{ col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" }] },
-              { id: "calificaciones", pk: "id", role: "Puntaje 1–5 del trabajo", fks: [
+              { id: "calificaciones", pk: "id", role: "Fuente de la nota 1–5", fks: [
                 { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
-                { col: "id_usuario", to: "perfiles", toCol: "id", card: "N:1" }
+                { col: "id_usuario", to: "perfiles", toCol: "id", nullable: true, card: "N:0..1" }
               ]},
               { id: "disputas", pk: "id", role: "Conflicto sobre un trabajo", fks: [
                 { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
@@ -578,7 +593,11 @@
                 { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
                 { col: "cancelado_por", to: "perfiles", toCol: "id", card: "N:1" }
               ]},
-              { id: "tickets_soporte", pk: "id", role: "Mesa de ayuda", fks: [{ col: "id_trabajo", to: "trabajos", toCol: "id", nullable: true, card: "N:0..1" }] }
+              { id: "tickets_soporte", pk: "id", role: "Mesa de ayuda", fks: [{ col: "id_trabajo", to: "trabajos", toCol: "id", nullable: true, card: "N:0..1" }] },
+              { id: "ubicacion_en_vivo", pk: "id_trabajo", role: "GPS en vivo del pedido", fks: [
+                { col: "id_trabajo", to: "trabajos", toCol: "id", card: "1:1" },
+                { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" }
+              ]}
             ]
           }
         ]
@@ -594,7 +613,7 @@
                 { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
                 { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" }
               ]},
-              { id: "pagos", pk: "id", role: "Escrow / cobro", fks: [
+              { id: "pagos", pk: "id", role: "Escrow Webpay / Oneclick", note: "monto numeric(12,0). token_tbk y url_tbk no salen al cliente. Un solo principal vivo por trabajo.", fks: [
                 { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
                 { col: "id_orden_cambio", to: "ordenes_cambio", toCol: "id", nullable: true, card: "N:0..1" }
               ]},
@@ -602,7 +621,16 @@
                 { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
                 { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", card: "N:1" },
                 { col: "id_pago", to: "pagos", toCol: "id", nullable: true, card: "N:0..1" }
-              ]}
+              ]},
+              { id: "liquidaciones", pk: "id", role: "Pago al profesional (manual hoy)", note: "Un pago → una liquidación. id_trabajador es text: sin FK a trabajadores (uuid).", fks: [
+                { col: "id_pago", to: "pagos", toCol: "id", card: "1:0..1" },
+                { col: "id_trabajo", to: "trabajos", toCol: "id", card: "N:1" },
+                { col: "id_trabajador", to: "trabajadores", toCol: "id_usuario", nullable: true, logical: true, card: "N:0..1" }
+              ]},
+              { id: "metodos_pago_oneclick", pk: "id_usuario", role: "Tarjeta inscrita Oneclick", note: "PK text = auth.uid. tbk_user solo service_role. Sin FK física a perfiles.", fks: [
+                { col: "id_usuario", to: "perfiles", toCol: "id", logical: true, card: "1:0..1" }
+              ]},
+              { id: "app_config", pk: "clave", role: "Interruptores de producto", note: "demo_modo, admin_requiere_aal2. Sin FK.", fks: [] }
             ]
           }
         ]
@@ -644,7 +672,11 @@
       disputas: ["abierta_por", "resuelta_por"],
       cancelaciones_trabajo: ["cancelado_por"],
       propuestas_cotizacion: ["id_trabajador"],
-      ordenes_cambio: ["id_trabajador"]
+      ordenes_cambio: ["id_trabajador"],
+      liquidaciones: ["id_trabajador"],
+      metodos_pago_oneclick: ["id_usuario"],
+      ubicacion_en_vivo: ["id_trabajador"],
+      trabajadores: ["id_region"]
     };
 
     let selected = "trabajos";
@@ -688,7 +720,8 @@
         trabajos: "--hub-trabajos",
         propuestas_cotizacion: "--hub-cobro",
         pagos: "--hub-cobro",
-        ordenes_cambio: "--hub-cobro"
+        ordenes_cambio: "--hub-cobro",
+        liquidaciones: "--hub-cobro"
       };
       return cssVar(map[toId] || "--edge");
     }
@@ -696,7 +729,7 @@
     function markerId(toId) {
       const known = {
         perfiles: 1, trabajadores: 1, servicios: 1, trabajos: 1,
-        propuestas_cotizacion: 1, pagos: 1, ordenes_cambio: 1
+        propuestas_cotizacion: 1, pagos: 1, ordenes_cambio: 1, liquidaciones: 1
       };
       return known[toId] ? "arr-" + toId : "arr-default";
     }
@@ -767,7 +800,7 @@
         m.appendChild(p);
         defs.appendChild(m);
       }
-      ["perfiles", "trabajadores", "servicios", "trabajos", "propuestas_cotizacion", "pagos", "ordenes_cambio"].forEach((k) => {
+      ["perfiles", "trabajadores", "servicios", "trabajos", "propuestas_cotizacion", "pagos", "ordenes_cambio", "liquidaciones"].forEach((k) => {
         marker("arr-" + k, colorFor(k));
       });
       marker("arr-default", cssVar("--edge"));
@@ -901,7 +934,7 @@
         toParent(tr, sv, laneX(1, 1, 2), eTrabajoServicio, midY(tr), midY(sv));
       }
 
-      const cobroKids = ["propuestas_cotizacion", "pagos", "ordenes_cambio"];
+      const cobroKids = ["propuestas_cotizacion", "pagos", "ordenes_cambio", "liquidaciones"];
       const gxCobro = laneX(2, 0, 2);
       cobroKids.forEach((id) => {
         const child = boxes[id];

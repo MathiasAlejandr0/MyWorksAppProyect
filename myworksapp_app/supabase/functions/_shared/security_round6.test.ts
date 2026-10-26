@@ -258,10 +258,45 @@ describe("CORS", () => {
     );
   });
 
+  it("en integración acepta el puerto que elige Flutter web", () => {
+    assert.equal(
+      resolveCorsAllowOrigin({
+        origin: "http://localhost:56843",
+        allowlist: [],
+        tbkEnv: "integration",
+      }),
+      "http://localhost:56843",
+    );
+    assert.equal(
+      resolveCorsAllowOrigin({
+        origin: "http://127.0.0.1:8080",
+        allowlist: [],
+        tbkEnv: "integration",
+      }),
+      "http://127.0.0.1:8080",
+    );
+    assert.equal(
+      resolveCorsAllowOrigin({
+        origin: "http://localhost.evil.com:56843",
+        allowlist: [],
+        tbkEnv: "integration",
+      }),
+      "null",
+    );
+  });
+
   it("en producción no abre localhost salvo allowlist", () => {
     assert.equal(
       resolveCorsAllowOrigin({
         origin: "http://localhost:5173",
+        allowlist: [],
+        tbkEnv: "production",
+      }),
+      "null",
+    );
+    assert.equal(
+      resolveCorsAllowOrigin({
+        origin: "http://localhost:56843",
         allowlist: [],
         tbkEnv: "production",
       }),

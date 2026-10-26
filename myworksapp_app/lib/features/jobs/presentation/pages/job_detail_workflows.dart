@@ -279,6 +279,8 @@ extension JobDetailWorkflows on _JobDetailPageState {
           controller: descriptionCtrl,
           decoration: const InputDecoration(
             labelText: 'Qué no quedó bien',
+            helperText:
+                'El pago sigue retenido. Soporte revisa la evidencia y el chat.',
           ),
           maxLines: 4,
         ),

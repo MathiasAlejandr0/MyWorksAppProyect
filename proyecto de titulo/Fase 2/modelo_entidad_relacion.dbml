@@ -1,0 +1,662 @@
+Table perfiles {
+  id uuid [pk]
+  nombre text [not null, default: '']
+  correo text
+  rol text [not null, default: 'usuario']
+  estado_cuenta text [not null, default: 'activo']
+  ruta_foto_perfil text
+  creado_en text [not null]
+
+  Note: 'Identidad de app = auth.users.id'
+}
+
+Table paises {
+  id text [pk]
+  nombre text [not null]
+  iso2 text [not null, unique]
+  Note: 'Hoy solo CL'
+}
+
+Table regiones {
+  id text [pk]
+  id_pais text [not null]
+  nombre text [not null]
+  codigo_oficial text
+}
+
+Table comunas {
+  id text [pk, note: 'slug = trabajos.id_comuna']
+  id_region text [not null]
+  nombre text [not null]
+  latitud double
+  longitud double
+  activa integer [not null, default: 1]
+}
+
+Table notificaciones {
+  id text [pk]
+  id_usuario uuid [not null]
+  tipo text [not null]
+  titulo text [not null]
+  cuerpo text [not null]
+  id_relacionado text
+  leido integer [not null, default: 0]
+  creado_en text [not null]
+}
+
+Table suscripciones {
+  id text [pk]
+  id_usuario uuid [not null]
+  tipo_plan text [not null]
+  estado text [not null]
+  fecha_inicio text [not null]
+  fecha_fin text
+  creado_en text [not null]
+  actualizado_en text [not null]
+}
+
+Table codigos_restablecimiento {
+  id text [pk]
+  id_usuario uuid [not null]
+  codigo text [not null]
+  correo text [not null]
+  expira_en text [not null]
+  usado integer [default: 0]
+  creado_en text [not null]
+}
+
+Table consentimientos_usuario {
+  id text [pk]
+  id_usuario uuid [not null]
+  version_consentimiento text [not null]
+  aceptado integer [not null, default: 0]
+  aceptado_en text [not null]
+  direccion_ip text
+  agente_usuario text
+}
+
+Table bloqueos_usuario {
+  id text [pk]
+  id_bloqueador uuid [not null]
+  id_bloqueado uuid [not null]
+  creado_en text [not null]
+
+  indexes {
+    (id_bloqueador, id_bloqueado) [unique]
+  }
+}
+
+Table reportes {
+  id text [pk]
+  id_reportante uuid [not null]
+  id_usuario_reportado uuid [not null]
+  motivo text [not null]
+  descripcion text
+  estado text [not null, default: 'pendiente']
+  creado_en text [not null]
+}
+
+Table eventos_abuso {
+  id text [pk]
+  id_usuario uuid [not null]
+  tipo_abuso text [not null]
+  conteo integer [not null]
+  detectado_en text [not null]
+  accion_tomada text
+  accion_tomada_en text
+  resuelto integer [default: 0]
+}
+
+Table acciones_pendientes {
+  id text [pk]
+  id_usuario uuid [not null]
+  tipo_accion text [not null]
+  tipo_entidad text [not null]
+  id_entidad text
+  datos text [not null]
+  estado text [not null, default: 'pendiente_sync']
+  conteo_reintentos integer [default: 0]
+  mensaje_error text
+  creado_en text [not null]
+  actualizado_en text [not null]
+}
+
+Table registros_error_app {
+  id text [pk]
+  id_usuario uuid
+  tipo_error text [not null, default: 'error']
+  mensaje text [not null]
+  traza_pila text
+  metadatos jsonb
+  estado text [not null, default: 'nuevo']
+  version_app text
+  plataforma text
+  creado_en text [not null]
+}
+
+Table eventos_analitica {
+  id text [pk]
+  nombre_evento text [not null]
+  id_usuario uuid
+  rol text
+  marca_tiempo text [not null]
+  metadatos text
+}
+
+Table banderas_funcionalidad {
+  id text [pk]
+  nombre_bandera text [not null]
+  habilitada integer [not null, default: 0]
+  version_app text
+  rol text
+  id_usuario uuid
+  creado_en text [not null]
+  actualizado_en text [not null]
+}
+
+// ---------------------------------------------------------------------------
+// Catálogo y profesional (4NF)
+// ---------------------------------------------------------------------------
+
+Table trabajadores {
+  id_usuario uuid [pk]
+  profesion text [not null, default: '']
+  descripcion text
+  calificacion numeric [not null, default: 0, note: 'Derivada: promedio ponderado']
+  disponible integer [not null, default: 1]
+  tarifa_visita numeric [not null, default: 15000]
+  categoria_servicio text [not null, default: 'general']
+  niveles_precio jsonb [not null, default: '{}', note: 'Escritura. 4NF: trabajador_precios']
+  servicios_personalizados jsonb [not null, default: '[]', note: 'Escritura. 4NF: trabajador_servicios_extra']
+  precios_configurados integer [not null, default: 0]
+  zona_trabajo text [note: 'Texto de UI; la FK es id_comuna / id_region']
+  conteo_rechazos integer [not null, default: 0]
+  estado_verificacion text [not null, default: 'pendiente']
+  nota_verificacion text
+  latitud_base double
+  longitud_base double
+  radio_servicio_km numeric [not null, default: 15]
+  origen_base text
+  id_comuna text
+  id_region text
+  score_listado numeric [not null, default: 0, note: 'Orden marketplace']
+  prioridad_manual integer [not null, default: 0, note: 'Override admin -50..50']
+  score_desglose jsonb [not null, default: '{}']
+  ranking_actualizado_en timestamptz
+
+  Note: 'Ficha 1:1. Oferta 4NF en tablas hijas; JSON solo escritura.'
+}
+
+Table trabajador_precios {
+  id_usuario uuid [not null]
+  codigo text [not null]
+  monto_clp numeric [not null]
+
+  indexes {
+    (id_usuario, codigo) [pk]
+  }
+
+  Note: '4NF: un monto por código de tarifa'
+}
+
+Table trabajador_servicios_extra {
+  id text [not null]
+  id_usuario uuid [not null]
+  titulo text [not null]
+  subtitulo text [not null, default: '']
+  monto_clp numeric [not null]
+  unidad text [not null, default: 'fijo']
+
+  indexes {
+    (id_usuario, id) [pk]
+  }
+
+  Note: '4NF: extras tarifados (fijo | por_m2)'
+}
+
+Table trabajador_servicios {
+  id_trabajador uuid [not null]
+  categoria_servicio text [not null]
+
+  indexes {
+    (id_trabajador, categoria_servicio) [pk]
+  }
+
+  Note: 'N:M por slug categoria, no por servicios.id'
+}
+
+Table portafolio_trabajador {
+  id text [pk]
+  id_trabajador uuid [not null]
+  ruta_foto text [not null]
+  descripcion text
+  tipo_medio text [default: 'foto']
+  creado_en text [not null]
+}
+
+Table impulsos {
+  id text [pk]
+  id_trabajador uuid [not null]
+  tipo_impulso text [not null]
+  fecha_inicio text [not null]
+  fecha_fin text [not null]
+  creado_en text [not null]
+}
+
+Table servicios {
+  id text [pk]
+  nombre text [not null]
+  descripcion text
+  categoria text [not null, default: 'general']
+  activo integer [not null, default: 1]
+  requiere_certificacion integer [not null, default: 0]
+  modelo_precio text [not null, default: 'por_hora']
+  aviso_legal text
+  creado_en text
+  actualizado_en text
+}
+
+Table configuraciones_servicio {
+  id text [pk]
+  id_servicio text [not null, unique]
+  esquema_config text [not null]
+  creado_en text [not null]
+  actualizado_en text [not null]
+}
+
+// ---------------------------------------------------------------------------
+// Pedido
+// ---------------------------------------------------------------------------
+
+Table trabajos {
+  id text [pk]
+  id_usuario uuid [not null]
+  id_trabajador uuid
+  id_servicio text
+  estado text [not null]
+  direccion text [not null, default: '']
+  latitud double
+  longitud double
+  descripcion text
+  fecha_programada text
+  metadatos_servicio text
+  modalidad_cobro text
+  estado_pago text [note: 'Derivada: estado del pago principal']
+  id_comuna text
+  instantanea_precio text
+  id_sku_servicio text
+  horas_bloque integer
+  id_cotizacion_seleccionada text
+  creado_en text [not null]
+  actualizado_en text [not null]
+
+  Note: 'Pedido. id_trabajador e id_servicio opcionales.'
+}
+
+Table mensajes {
+  id text [pk]
+  id_trabajo text [not null]
+  id_remitente uuid [not null]
+  id_destinatario uuid [not null]
+  contenido text [not null]
+  tipo text [not null, default: 'texto']
+  ruta_imagen text
+  leido integer [not null, default: 0]
+  creado_en text [not null]
+}
+
+Table fotos_trabajo {
+  id text [pk]
+  id_trabajo text [not null]
+  ruta_foto text [not null]
+  tipo_medio text [not null, default: 'foto']
+  creado_en text [not null]
+}
+
+Table calificaciones {
+  id text [pk]
+  id_trabajo text [not null]
+  id_usuario uuid
+  puntaje integer [not null]
+  comentario text
+  creado_en text [not null]
+  peso_confianza numeric [not null, default: 1]
+  estado_revision text [not null, default: 'vigente']
+  motivo_revision text
+
+  Note: 'Fuente de trabajadores.calificacion (promedio ponderado)'
+}
+
+Table disputas {
+  id text [pk]
+  id_trabajo text [not null]
+  abierta_por uuid [not null]
+  motivo text [not null]
+  descripcion text
+  estado text [not null]
+  resolucion text
+  resuelta_por uuid
+  resuelta_en text
+  creado_en text [not null]
+  actualizado_en text [not null]
+}
+
+Table cancelaciones_trabajo {
+  id text [pk]
+  id_trabajo text [not null, unique]
+  cancelado_por uuid [not null]
+  motivo text [not null]
+  cancelado_en text [not null]
+
+  Note: 'Como máximo una cancelación por trabajo'
+}
+
+Table tickets_soporte {
+  id text [pk]
+  id_trabajo text
+  nombre_cliente text [not null]
+  nombre_trabajador text [not null]
+  asunto text [not null]
+  monto_escrow integer [not null]
+  estado text [default: 'pendiente']
+  creado_en timestamptz
+}
+
+// ---------------------------------------------------------------------------
+// Cobro
+// ---------------------------------------------------------------------------
+
+Table propuestas_cotizacion {
+  id text [pk]
+  id_trabajo text [not null]
+  id_trabajador uuid [not null]
+  monto_total_clp integer [not null]
+  descripcion text [not null]
+  validez_hasta text
+  desglose text
+  estado text [not null]
+  creado_en text [not null]
+}
+
+Table pagos {
+  id text [pk]
+  id_trabajo text [not null]
+  id_orden_cambio text
+  tipo_pago text [not null, default: 'principal']
+  monto numeric [not null]
+  moneda text [not null, default: 'CLP']
+  estado text [not null]
+  metodo_pago text
+  id_transaccion text
+  autorizado_en text
+  liberado_en text
+  reembolsado_en text
+  creado_en text [not null]
+  actualizado_en text [not null]
+  ambiente text
+  token_tbk text [note: 'No sale al cliente']
+  url_tbk text [note: 'No sale al cliente']
+  buy_order text
+  handoff_consumido_en timestamptz
+  reembolso_solicitado_en timestamptz
+  orden_detalle_oneclick text
+  cobro_reclamado_en timestamptz
+
+  Note: 'Escrow. Un principal vivo por trabajo (índice único parcial).'
+}
+
+Table ordenes_cambio {
+  id text [pk]
+  id_trabajo text [not null]
+  id_trabajador uuid [not null]
+  tipo text [not null]
+  titulo text [not null]
+  descripcion text [not null]
+  monto_clp integer [not null]
+  estado text [not null, default: 'pendiente_cliente']
+  id_pago text
+  creado_en text [not null]
+  respondido_en text
+}
+
+Table liquidaciones {
+  id text [pk]
+  id_pago text [not null, unique]
+  id_trabajo text [not null]
+  id_trabajador text [note: 'text en la BD viva; no FK uuid']
+  monto_clp numeric [not null]
+  proveedor text [not null, default: 'manual']
+  referencia_transferencia text [not null]
+  notas text
+  id_operador text [not null]
+  creado_en timestamptz [not null]
+
+  Note: 'Un pago → una liquidación'
+}
+
+Table metodos_pago_oneclick {
+  id_usuario text [pk, note: 'auth.uid en text; sin FK a perfiles']
+  username text [not null]
+  tbk_user text [note: 'Solo service_role']
+  tipo_tarjeta text
+  ultimos4 text
+  estado text [not null, default: 'pendiente']
+  token_inscripcion text
+  id_trabajo_pendiente text
+  url_inscripcion text
+  ticket_handoff text
+  creado_en timestamptz [not null]
+  actualizado_en timestamptz [not null]
+
+  Note: 'Tarjeta inscrita Oneclick. Solo service_role.'
+}
+
+Table ubicacion_en_vivo {
+  id_trabajo text [pk]
+  id_trabajador uuid [not null]
+  latitud double [not null]
+  longitud double [not null]
+  precision_metros double
+  actualizado_en timestamptz [not null]
+
+  Note: 'GPS en vivo. 1:1 con el trabajo.'
+}
+
+Table app_config {
+  clave text [pk]
+  valor text [not null]
+  actualizado_en timestamptz [not null]
+
+  Note: 'demo_modo, admin_requiere_aal2'
+}
+
+Table ranking_config {
+  id text [pk, default: 'default']
+  peso_calificacion numeric [not null, default: 0.32]
+  peso_completados numeric [not null, default: 0.18]
+  peso_rechazos numeric [not null, default: 0.12]
+  peso_verificacion numeric [not null, default: 0.10]
+  peso_impulso numeric [not null, default: 0.08]
+  peso_recencia numeric [not null, default: 0.08]
+  peso_confianza numeric [not null, default: 0.12]
+  prior_bayes numeric [not null, default: 3.80]
+  n_bayes numeric [not null, default: 8]
+  umbral_revision numeric [not null, default: 0.55]
+  umbral_auto_excluir numeric [not null, default: 0.90]
+  aprendizaje_activo integer [not null, default: 1]
+  tasa_aprendizaje numeric [not null, default: 0.15]
+  pesos_senal jsonb [not null]
+  actualizado_en timestamptz [not null]
+
+  Note: 'Una fila default. Pesos del listado.'
+}
+
+Table senales_resena {
+  id text [pk]
+  id_calificacion text [not null]
+  tipo_senal text [not null]
+  puntaje numeric [not null]
+  detalle text
+  estado text [not null, default: 'pendiente']
+  resuelto_por uuid
+  resuelto_en timestamptz
+  creado_en timestamptz [not null]
+
+  Note: 'Cola de reseñas dudosas. Falso positivo baja el peso de la señal.'
+}
+
+Table ranking_aprendizaje {
+  id text [pk]
+  motivo text [not null]
+  pesos_antes jsonb [not null]
+  pesos_despues jsonb [not null]
+  metricas jsonb
+  creado_en timestamptz [not null]
+}
+
+Table eventos_ranking {
+  id text [pk]
+  id_trabajador uuid [not null]
+  id_trabajo text
+  tipo_evento text [not null]
+  factores jsonb [not null]
+  creado_en timestamptz [not null]
+}
+
+// ---------------------------------------------------------------------------
+// Relaciones
+// ---------------------------------------------------------------------------
+
+Ref: trabajadores.id_usuario - perfiles.id [delete: cascade]
+Ref: trabajadores.id_comuna > comunas.id [delete: set null]
+Ref: trabajadores.id_region > regiones.id [delete: set null]
+Ref: regiones.id_pais > paises.id
+Ref: comunas.id_region > regiones.id
+
+Ref: trabajador_precios.id_usuario > trabajadores.id_usuario [delete: cascade]
+Ref: trabajador_servicios_extra.id_usuario > trabajadores.id_usuario [delete: cascade]
+Ref: trabajador_servicios.id_trabajador > trabajadores.id_usuario [delete: cascade]
+Ref: portafolio_trabajador.id_trabajador > trabajadores.id_usuario [delete: cascade]
+Ref: impulsos.id_trabajador > trabajadores.id_usuario [delete: cascade]
+
+Ref: configuraciones_servicio.id_servicio - servicios.id [delete: cascade]
+
+Ref: trabajos.id_usuario > perfiles.id [delete: cascade]
+Ref: trabajos.id_trabajador > trabajadores.id_usuario [delete: set null]
+Ref: trabajos.id_servicio > servicios.id [delete: set null]
+Ref: trabajos.id_comuna > comunas.id [delete: set null]
+Ref: trabajos.id_cotizacion_seleccionada > propuestas_cotizacion.id
+
+Ref: propuestas_cotizacion.id_trabajo > trabajos.id [delete: cascade]
+Ref: propuestas_cotizacion.id_trabajador > trabajadores.id_usuario [delete: cascade]
+
+Ref: pagos.id_trabajo > trabajos.id [delete: cascade]
+Ref: pagos.id_orden_cambio > ordenes_cambio.id
+
+Ref: ordenes_cambio.id_trabajo > trabajos.id [delete: cascade]
+Ref: ordenes_cambio.id_trabajador > trabajadores.id_usuario
+Ref: ordenes_cambio.id_pago > pagos.id
+
+Ref: liquidaciones.id_pago - pagos.id
+Ref: liquidaciones.id_trabajo > trabajos.id
+
+Ref: mensajes.id_trabajo > trabajos.id [delete: cascade]
+Ref: mensajes.id_remitente > perfiles.id
+Ref: mensajes.id_destinatario > perfiles.id
+
+Ref: fotos_trabajo.id_trabajo > trabajos.id [delete: cascade]
+
+Ref: calificaciones.id_trabajo > trabajos.id [delete: cascade]
+Ref: calificaciones.id_usuario > perfiles.id
+
+Ref: disputas.id_trabajo > trabajos.id [delete: cascade]
+Ref: disputas.abierta_por > perfiles.id
+Ref: disputas.resuelta_por > perfiles.id
+
+Ref: cancelaciones_trabajo.id_trabajo - trabajos.id [delete: cascade]
+Ref: cancelaciones_trabajo.cancelado_por > perfiles.id
+
+Ref: tickets_soporte.id_trabajo > trabajos.id
+
+Ref: ubicacion_en_vivo.id_trabajo - trabajos.id [delete: cascade]
+Ref: ubicacion_en_vivo.id_trabajador > trabajadores.id_usuario [delete: cascade]
+
+Ref: notificaciones.id_usuario > perfiles.id [delete: cascade]
+Ref: suscripciones.id_usuario > perfiles.id [delete: cascade]
+Ref: codigos_restablecimiento.id_usuario > perfiles.id
+Ref: consentimientos_usuario.id_usuario > perfiles.id [delete: cascade]
+Ref: bloqueos_usuario.id_bloqueador > perfiles.id
+Ref: bloqueos_usuario.id_bloqueado > perfiles.id
+Ref: reportes.id_reportante > perfiles.id
+Ref: reportes.id_usuario_reportado > perfiles.id
+Ref: eventos_abuso.id_usuario > perfiles.id [delete: cascade]
+Ref: acciones_pendientes.id_usuario > perfiles.id [delete: cascade]
+Ref: registros_error_app.id_usuario > perfiles.id
+Ref: eventos_analitica.id_usuario > perfiles.id
+Ref: banderas_funcionalidad.id_usuario > perfiles.id
+
+Ref: senales_resena.id_calificacion > calificaciones.id [delete: cascade]
+Ref: senales_resena.resuelto_por > perfiles.id
+Ref: eventos_ranking.id_trabajador > trabajadores.id_usuario
+Ref: eventos_ranking.id_trabajo > trabajos.id
+
+// Grupos para el lienzo de dbdiagram.io
+
+TableGroup identidad {
+  perfiles
+  notificaciones
+  suscripciones
+  codigos_restablecimiento
+  consentimientos_usuario
+  bloqueos_usuario
+  reportes
+  eventos_abuso
+  acciones_pendientes
+  registros_error_app
+  eventos_analitica
+  banderas_funcionalidad
+}
+
+TableGroup territorio {
+  paises
+  regiones
+  comunas
+}
+
+TableGroup catalogo_4nf {
+  trabajadores
+  trabajador_precios
+  trabajador_servicios_extra
+  trabajador_servicios
+  portafolio_trabajador
+  impulsos
+  servicios
+  configuraciones_servicio
+}
+
+TableGroup pedido {
+  trabajos
+  mensajes
+  fotos_trabajo
+  calificaciones
+  disputas
+  cancelaciones_trabajo
+  tickets_soporte
+  ubicacion_en_vivo
+}
+
+TableGroup cobro {
+  propuestas_cotizacion
+  pagos
+  ordenes_cambio
+  liquidaciones
+  metodos_pago_oneclick
+  app_config
+}
+
+TableGroup ranking {
+  ranking_config
+  senales_resena
+  ranking_aprendizaje
+  eventos_ranking
+}

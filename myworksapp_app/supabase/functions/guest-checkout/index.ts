@@ -15,6 +15,11 @@ import {
 import { serviceClient } from "../_shared/supabase.ts";
 import { tbkConfig, tbkCreateTransaction } from "../_shared/tbk.ts";
 import { turnstileDecision } from "../_shared/turnstile_gate.ts";
+import {
+  asCoord,
+  transportQuote,
+  withinTravelRange,
+} from "../_shared/transport.ts";
 
 type GuestBody = {
   name?: string;
@@ -25,6 +30,8 @@ type GuestBody = {
   serviceId?: string;
   description?: string;
   amountClp?: number;
+  latitude?: number;
+  longitude?: number;
   scheduledAt?: string;
   returnUrl?: string;
   turnstileToken?: string;
@@ -145,7 +152,7 @@ Deno.serve(async (req) => {
 
     const { data: worker, error: workerErr } = await admin
       .from("trabajadores")
-      .select("id_usuario, tarifa_visita, disponible, precios_configurados, estado_verificacion")
+      .select("id_usuario, tarifa_visita, disponible, precios_configurados, estado_verificacion, latitud_base, longitud_base, radio_servicio_km")
       .eq("id_usuario", workerId)
       .maybeSingle();
 
@@ -166,10 +173,35 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "El profesional no está disponible" }, 400);
     }
 
-    const expected = Number(worker.tarifa_visita);
-    if (!Number.isFinite(expected) || expected <= 0) {
+    const visitFee = Number(worker.tarifa_visita);
+    if (!Number.isFinite(visitFee) || visitFee <= 0) {
       return jsonResponse(req, { error: "El profesional no tiene tarifa de visita" }, 400);
     }
+    const jobLat = asCoord(body.latitude);
+    const jobLng = asCoord(body.longitude);
+    if (jobLat == null || jobLng == null) {
+      return jsonResponse(
+        req,
+        { error: "Indica la ubicación del trabajo para calcular el traslado" },
+        400,
+      );
+    }
+    const quote = transportQuote({
+      workerLat: asCoord(worker.latitud_base),
+      workerLng: asCoord(worker.longitud_base),
+      jobLat,
+      jobLng,
+      radiusKm: asCoord(worker.radio_servicio_km),
+    });
+    if (!withinTravelRange(quote.distanceKm)) {
+      return jsonResponse(
+        req,
+        { error: "Este profesional queda a más de 30 km del trabajo" },
+        400,
+      );
+    }
+    const extra = quote.extraClp;
+    const expected = visitFee + extra;
     if (Math.abs(amountClp - expected) > 1) {
       return jsonResponse(
         req,
@@ -240,6 +272,7 @@ Deno.serve(async (req) => {
       guest: true,
       phone,
       source: "web_guest_urgency",
+      traslado_extra_clp: extra,
     });
 
     const { error: jobErr } = await admin.from("trabajos").insert({
@@ -250,6 +283,8 @@ Deno.serve(async (req) => {
       estado: "esperando_pago",
       descripcion: description,
       direccion: address,
+      latitud: jobLat,
+      longitud: jobLng,
       fecha_programada: scheduledOrNull(body.scheduledAt),
       modalidad_cobro: "precio_fijo",
       estado_pago: "pendiente",

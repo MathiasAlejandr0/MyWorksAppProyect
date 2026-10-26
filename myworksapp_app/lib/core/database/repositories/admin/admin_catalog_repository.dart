@@ -23,7 +23,7 @@ class AdminCatalogRepository {
     } else if (availableOnly == false) {
       query = query.eq('disponible', 0);
     }
-    final rows = await query.order('profesion', ascending: true).limit(limit);
+    final rows = await query.order('score_listado', ascending: false).limit(limit);
 
     var entries = rows.map<AdminWorkerEntry>((row) {
       final map = Map<String, dynamic>.from(row);

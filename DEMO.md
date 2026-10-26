@@ -179,6 +179,15 @@ Un pago con tarjeta de prueba y la liberación de la garantía ya se probaron de
 | Aseo, Ñuñoa | `ana.vidal@demo.myworksapp.cl` | trabajador verificado |
 | Armado, Santiago centro | `diego.salazar@demo.myworksapp.cl` | trabajador verificado |
 | Gasfitería, San Miguel | `carmen.lagos@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter, Puerto Montt centro (nota 2.5) | `oscar.nunez@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter, Angelmó (nota 3.0) | `beatriz.soto@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter, Pelluco (nota 3.4) | `manuel.almonacid@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter, Mirasol (nota 4.0) | `lorena.cayun@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter, Cardonal (nota 4.1) | `claudio.barria@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter, Puerto Montt Alto (nota 4.2) | `patricia.oyarzun@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter, Alerce (nota 4.6) | `ignacio.mansilla@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter, Piedra Azul (nota 4.8) | `valeria.antillanca@demo.myworksapp.cl` | trabajador verificado |
+| Gasfíter, Chamiza (nota 4.9) | `ricardo.cheuquepan@demo.myworksapp.cl` | trabajador verificado |
 | Jardinería, La Reina | `felipe.araya@demo.myworksapp.cl` | trabajador verificado |
 | Cerrajería, Estación Central | `rodrigo.pena@demo.myworksapp.cl` | trabajador verificado |
 | Soporte técnico, Providencia | `isabel.campos@demo.myworksapp.cl` | trabajador verificado |

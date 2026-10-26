@@ -15,6 +15,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/domain/worker_highlight.dart';
 import '../../../../core/utils/service_worker_mapper.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/design_system/before_after_slider.dart';
@@ -365,6 +366,21 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
             maxLines: 4,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.4),
+          ),
+          if (isEliteWorker(_worker!)) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Élite del mes · ${_worker!.completedJobs} trabajos · ${_worker!.rating.toStringAsFixed(1)}',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: const Color(0xFFB45309),
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            coverageNotice(worker: _worker!).text,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.35),
           ),
           const SizedBox(height: 10),
           Text(

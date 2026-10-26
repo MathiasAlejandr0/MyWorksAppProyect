@@ -31,6 +31,7 @@ class WorkerCard extends StatelessWidget {
   final String? headerBadge;
   final Color? headerBadgeColor;
   final List<WorkerCardBadge>? badges;
+  final String? footnote;
   final bool showChevron;
   final EdgeInsetsGeometry? margin;
 
@@ -46,6 +47,7 @@ class WorkerCard extends StatelessWidget {
     this.headerBadge,
     this.headerBadgeColor,
     this.badges,
+    this.footnote,
     this.showChevron = false,
     this.margin,
   });
@@ -169,6 +171,16 @@ class WorkerCard extends StatelessWidget {
                             ),
                       ),
                     ],
+                  ),
+                ],
+                if (footnote != null && footnote!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    footnote!,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          height: 1.3,
+                        ),
                   ),
                 ],
               ],

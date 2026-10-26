@@ -1,0 +1,492 @@
+Table "perfiles" {
+  "id" uuid [pk]
+  "nombre" text [not null, default: '']
+  "correo" text
+  "rol" text [not null, default: 'usuario']
+  "estado_cuenta" text [not null, default: 'activo']
+  "ruta_foto_perfil" text
+  "creado_en" text [not null]
+  Note: 'Identidad de app = auth.users.id'
+}
+
+Table "trabajadores" {
+  "id_usuario" uuid [pk]
+  "profesion" text [not null, default: '']
+  "descripcion" text
+  "calificacion" numeric(4,2) [not null, default: 0]
+  "disponible" integer [not null, default: 1]
+  "tarifa_visita" numeric(12,0) [not null, default: 15000]
+  "categoria_servicio" text [not null, default: 'general']
+  "niveles_precio" jsonb [not null, default: `'{}'::jsonb`]
+  "servicios_personalizados" jsonb [not null, default: `'[]'::jsonb`]
+  "precios_configurados" integer [not null, default: 0]
+  "zona_trabajo" text
+  "conteo_rechazos" integer [not null, default: 0]
+  Note: 'Ficha 1:1. Oferta 4NF en tablas hijas; JSON solo escritura.'
+}
+
+Table "servicios" {
+  "id" text [pk]
+  "nombre" text [not null]
+  "descripcion" text
+  "categoria" text [not null, default: 'general']
+  "activo" integer [not null, default: 1]
+  "requiere_certificacion" integer [not null, default: 0]
+  "modelo_precio" text [not null, default: 'por_hora']
+  "aviso_legal" text
+  "creado_en" text
+  "actualizado_en" text
+}
+
+Table "trabajador_servicios" {
+  "id_trabajador" uuid [not null]
+  "categoria_servicio" text [not null]
+
+  Indexes {
+    (id_trabajador, categoria_servicio) [pk]
+  }
+  Note: 'N:M por slug categoria, no por servicios.id'
+}
+
+Table "trabajador_precios" {
+  "id_usuario" uuid [not null]
+  "codigo" text [not null]
+  "monto_clp" numeric(12,0) [not null, check: `monto_clp >= 0`]
+
+  Indexes {
+    (id_usuario, codigo) [pk]
+  }
+  Note: '4NF: un monto por código de tarifa. FK lógica a trabajadores.'
+}
+
+Table "trabajador_servicios_extra" {
+  "id" text [not null]
+  "id_usuario" uuid [not null]
+  "titulo" text [not null]
+  "subtitulo" text [not null, default: '']
+  "monto_clp" numeric(12,0) [not null, check: `monto_clp >= 0`]
+  "unidad" text [not null, check: `unidad IN ('fijo', 'por_m2')`, default: 'fijo']
+
+  Indexes {
+    (id_usuario, id) [pk]
+  }
+  Note: '4NF: extras tarifados (fijo | por_m2). FK lógica a trabajadores.'
+}
+
+Table "portafolio_trabajador" {
+  "id" text [pk]
+  "id_trabajador" uuid [not null]
+  "ruta_foto" text [not null]
+  "descripcion" text
+  "tipo_medio" text [default: 'foto']
+  "creado_en" text [not null]
+}
+
+Table "impulsos" {
+  "id" text [pk]
+  "id_trabajador" uuid [not null]
+  "tipo_impulso" text [not null]
+  "fecha_inicio" text [not null]
+  "fecha_fin" text [not null]
+  "creado_en" text [not null]
+}
+
+Table "configuraciones_servicio" {
+  "id" text [pk]
+  "id_servicio" text [unique, not null]
+  "esquema_config" text [not null]
+  "creado_en" text [not null]
+  "actualizado_en" text [not null]
+}
+
+Table "trabajos" {
+  "id" text [pk]
+  "id_usuario" uuid [not null]
+  "id_trabajador" uuid
+  "id_servicio" text
+  "estado" text [not null]
+  "direccion" text [not null, default: '']
+  "latitud" doubleprecision
+  "longitud" doubleprecision
+  "descripcion" text
+  "fecha_programada" text
+  "metadatos_servicio" text
+  "modalidad_cobro" text
+  "estado_pago" text
+  "id_comuna" text
+  "instantanea_precio" text
+  "id_sku_servicio" text
+  "horas_bloque" integer
+  "id_cotizacion_seleccionada" text
+  "creado_en" text [not null]
+  "actualizado_en" text [not null]
+  Note: 'Pedido y ciclo de vida. id_trabajador e id_servicio opcionales.'
+}
+
+Table "propuestas_cotizacion" {
+  "id" text [pk]
+  "id_trabajo" text [not null]
+  "id_trabajador" uuid [not null]
+  "monto_total_clp" integer [not null]
+  "descripcion" text [not null]
+  "validez_hasta" text
+  "desglose" text
+  "estado" text [not null]
+  "creado_en" text [not null]
+}
+
+Table "pagos" {
+  "id" text [pk]
+  "id_trabajo" text [not null]
+  "id_orden_cambio" text
+  "tipo_pago" text [not null, default: 'principal']
+  "monto" numeric(12,0) [not null]
+  "moneda" text [not null, default: 'CLP']
+  "estado" text [not null]
+  "metodo_pago" text
+  "id_transaccion" text
+  "autorizado_en" text
+  "liberado_en" text
+  "reembolsado_en" text
+  "creado_en" text [not null]
+  "actualizado_en" text [not null]
+  "ambiente" text
+  "token_tbk" text
+  "url_tbk" text
+  "buy_order" text
+  "handoff_consumido_en" timestamptz
+  "reembolso_solicitado_en" timestamptz
+  "orden_detalle_oneclick" text
+  "cobro_reclamado_en" timestamptz
+
+  Indexes {
+    id_trabajo [unique, name: "pagos_un_principal_activo_uidx"]
+  }
+  Note: 'Escrow Webpay/Oneclick; token_tbk/url_tbk/tbk_user no salen al cliente.'
+}
+
+Table "ordenes_cambio" {
+  "id" text [pk]
+  "id_trabajo" text [not null]
+  "id_trabajador" uuid [not null]
+  "tipo" text [not null]
+  "titulo" text [not null]
+  "descripcion" text [not null]
+  "monto_clp" integer [not null]
+  "estado" text [not null, default: 'pendiente_cliente']
+  "id_pago" text
+  "creado_en" text [not null]
+  "respondido_en" text
+}
+
+Table "liquidaciones" {
+  "id" text [pk]
+  "id_pago" text [not null]
+  "id_trabajo" text [not null]
+  "id_trabajador" text [note: 'text; no FK a trabajadores.id_usuario (uuid)']
+  "monto_clp" numeric [not null, check: `monto_clp > 0`]
+  "proveedor" text [not null, check: `proveedor IN ('manual', 'khipu', 'fintoc')`, default: 'manual']
+  "referencia_transferencia" text [not null]
+  "notas" text
+  "id_operador" text [not null]
+  "creado_en" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    id_pago [unique, name: "liquidaciones_pago_uidx"]
+  }
+  Note: 'Comprobante de pago al profesional (manual hoy). Un pago → una liquidación.'
+}
+
+Table "metodos_pago_oneclick" {
+  "id_usuario" text [pk]
+  "username" text [not null]
+  "tbk_user" text
+  "tipo_tarjeta" text
+  "ultimos4" text
+  "estado" text [not null, check: `estado IN ('pendiente', 'activa', 'rechazada')`, default: 'pendiente']
+  "token_inscripcion" text
+  "id_trabajo_pendiente" text
+  "url_inscripcion" text
+  "ticket_handoff" text
+  "creado_en" timestamptz [not null, default: `now()`]
+  "actualizado_en" timestamptz [not null, default: `now()`]
+
+  Indexes {
+    ticket_handoff [unique, name: "metodos_pago_oneclick_ticket_handoff_uidx"]
+  }
+  Note: 'Tarjeta inscrita Oneclick; PK text = auth.uid. Solo service_role.'
+}
+
+Table "mensajes" {
+  "id" text [pk]
+  "id_trabajo" text [not null]
+  "id_remitente" uuid [not null]
+  "id_destinatario" uuid [not null]
+  "contenido" text [not null]
+  "tipo" text [not null, default: 'texto']
+  "ruta_imagen" text
+  "leido" integer [not null, default: 0]
+  "creado_en" text [not null]
+}
+
+Table "fotos_trabajo" {
+  "id" text [pk]
+  "id_trabajo" text [not null]
+  "ruta_foto" text [not null]
+  "tipo_medio" text [not null, default: 'foto']
+  "creado_en" text [not null]
+}
+
+Table "calificaciones" {
+  "id" text [pk]
+  "id_trabajo" text [not null]
+  "id_usuario" uuid
+  "puntaje" integer [not null]
+  "comentario" text
+  "creado_en" text [not null]
+}
+
+Table "disputas" {
+  "id" text [pk]
+  "id_trabajo" text [not null]
+  "abierta_por" uuid [not null]
+  "motivo" text [not null]
+  "descripcion" text
+  "estado" text [not null]
+  "resolucion" text
+  "resuelta_por" uuid
+  "resuelta_en" text
+  "creado_en" text [not null]
+  "actualizado_en" text [not null]
+}
+
+Table "cancelaciones_trabajo" {
+  "id" text [pk]
+  "id_trabajo" text [unique, not null]
+  "cancelado_por" uuid [not null]
+  "motivo" text [not null]
+  "cancelado_en" text [not null]
+  Note: 'Como máximo una cancelación por trabajo (UNIQUE id_trabajo).'
+}
+
+Table "tickets_soporte" {
+  "id" text [pk]
+  "id_trabajo" text
+  "nombre_cliente" text [not null]
+  "nombre_trabajador" text [not null]
+  "asunto" text [not null]
+  "monto_escrow" integer [not null]
+  "estado" text [check: `estado IN ('pendiente', 'resuelto')`, default: 'pendiente']
+  "creado_en" timestamptz [default: `now()`]
+}
+
+Table "notificaciones" {
+  "id" text [pk]
+  "id_usuario" uuid [not null]
+  "tipo" text [not null]
+  "titulo" text [not null]
+  "cuerpo" text [not null]
+  "id_relacionado" text
+  "leido" integer [not null, default: 0]
+  "creado_en" text [not null]
+}
+
+Table "suscripciones" {
+  "id" text [pk]
+  "id_usuario" uuid [not null]
+  "tipo_plan" text [not null]
+  "estado" text [not null]
+  "fecha_inicio" text [not null]
+  "fecha_fin" text
+  "creado_en" text [not null]
+  "actualizado_en" text [not null]
+}
+
+Table "codigos_restablecimiento" {
+  "id" text [pk]
+  "id_usuario" uuid [not null]
+  "codigo" text [not null]
+  "correo" text [not null]
+  "expira_en" text [not null]
+  "usado" integer [default: 0]
+  "creado_en" text [not null]
+}
+
+Table "consentimientos_usuario" {
+  "id" text [pk]
+  "id_usuario" uuid [not null]
+  "version_consentimiento" text [not null]
+  "aceptado" integer [not null, default: 0]
+  "aceptado_en" text [not null]
+  "direccion_ip" text
+  "agente_usuario" text
+}
+
+Table "bloqueos_usuario" {
+  "id" text [pk]
+  "id_bloqueador" uuid [not null]
+  "id_bloqueado" uuid [not null]
+  "creado_en" text [not null]
+
+  Indexes {
+    (id_bloqueador, id_bloqueado) [unique]
+  }
+}
+
+Table "reportes" {
+  "id" text [pk]
+  "id_reportante" uuid [not null]
+  "id_usuario_reportado" uuid [not null]
+  "motivo" text [not null]
+  "descripcion" text
+  "estado" text [not null, default: 'pendiente']
+  "creado_en" text [not null]
+}
+
+Table "eventos_abuso" {
+  "id" text [pk]
+  "id_usuario" uuid [not null]
+  "tipo_abuso" text [not null]
+  "conteo" integer [not null]
+  "detectado_en" text [not null]
+  "accion_tomada" text
+  "accion_tomada_en" text
+  "resuelto" integer [default: 0]
+}
+
+Table "acciones_pendientes" {
+  "id" text [pk]
+  "id_usuario" uuid [not null]
+  "tipo_accion" text [not null]
+  "tipo_entidad" text [not null]
+  "id_entidad" text
+  "datos" text [not null]
+  "estado" text [not null, default: 'pendiente_sync']
+  "conteo_reintentos" integer [default: 0]
+  "mensaje_error" text
+  "creado_en" text [not null]
+  "actualizado_en" text [not null]
+}
+
+Table "registros_error_app" {
+  "id" text [pk]
+  "id_usuario" uuid
+  "tipo_error" text [not null, default: 'error']
+  "mensaje" text [not null]
+  "traza_pila" text
+  "metadatos" jsonb
+  "estado" text [not null, default: 'nuevo']
+  "version_app" text
+  "plataforma" text
+  "creado_en" text [not null]
+}
+
+Table "eventos_analitica" {
+  "id" text [pk]
+  "nombre_evento" text [not null]
+  "id_usuario" uuid
+  "rol" text
+  "marca_tiempo" text [not null]
+  "metadatos" text
+}
+
+Table "banderas_funcionalidad" {
+  "id" text [pk]
+  "nombre_bandera" text [not null]
+  "habilitada" integer [not null, default: 0]
+  "version_app" text
+  "rol" text
+  "id_usuario" uuid
+  "creado_en" text [not null]
+  "actualizado_en" text [not null]
+}
+
+Ref:"perfiles"."id" <? "trabajadores"."id_usuario" [delete: cascade]
+
+Ref:"trabajadores"."id_usuario" <? "trabajador_servicios"."id_trabajador" [delete: cascade]
+
+Ref:"trabajadores"."id_usuario" <? "trabajador_precios"."id_usuario" [delete: cascade]
+
+Ref:"trabajadores"."id_usuario" <? "trabajador_servicios_extra"."id_usuario" [delete: cascade]
+
+Ref:"trabajadores"."id_usuario" <? "portafolio_trabajador"."id_trabajador" [delete: cascade]
+
+Ref:"trabajadores"."id_usuario" <? "impulsos"."id_trabajador" [delete: cascade]
+
+Ref:"servicios"."id" <? "configuraciones_servicio"."id_servicio" [delete: cascade]
+
+Ref:"perfiles"."id" <? "trabajos"."id_usuario" [delete: cascade]
+
+Ref:"trabajadores"."id_usuario" ?<? "trabajos"."id_trabajador" [delete: set null]
+
+Ref:"servicios"."id" ?<? "trabajos"."id_servicio" [delete: set null]
+
+Ref:"trabajos"."id" <? "propuestas_cotizacion"."id_trabajo" [delete: cascade]
+
+Ref:"trabajadores"."id_usuario" <? "propuestas_cotizacion"."id_trabajador" [delete: cascade]
+
+Ref:"trabajos"."id" <? "pagos"."id_trabajo" [delete: cascade]
+
+Ref:"trabajos"."id" <? "ordenes_cambio"."id_trabajo" [delete: cascade]
+
+Ref:"trabajadores"."id_usuario" <? "ordenes_cambio"."id_trabajador"
+
+Ref:"pagos"."id" <? "liquidaciones"."id_pago"
+
+Ref:"trabajos"."id" <? "liquidaciones"."id_trabajo"
+
+Ref:"trabajos"."id" <? "mensajes"."id_trabajo" [delete: cascade]
+
+Ref:"perfiles"."id" <? "mensajes"."id_remitente"
+
+Ref:"perfiles"."id" <? "mensajes"."id_destinatario"
+
+Ref:"trabajos"."id" <? "fotos_trabajo"."id_trabajo" [delete: cascade]
+
+Ref:"trabajos"."id" <? "calificaciones"."id_trabajo" [delete: cascade]
+
+Ref:"perfiles"."id" ?<? "calificaciones"."id_usuario"
+
+Ref:"trabajos"."id" <? "disputas"."id_trabajo" [delete: cascade]
+
+Ref:"perfiles"."id" <? "disputas"."abierta_por"
+
+Ref:"perfiles"."id" ?<? "disputas"."resuelta_por"
+
+Ref:"trabajos"."id" <? "cancelaciones_trabajo"."id_trabajo" [delete: cascade]
+
+Ref:"perfiles"."id" <? "cancelaciones_trabajo"."cancelado_por"
+
+Ref:"trabajos"."id" ?<? "tickets_soporte"."id_trabajo"
+
+Ref:"perfiles"."id" <? "notificaciones"."id_usuario" [delete: cascade]
+
+Ref:"perfiles"."id" <? "suscripciones"."id_usuario" [delete: cascade]
+
+Ref:"perfiles"."id" <? "codigos_restablecimiento"."id_usuario"
+
+Ref:"perfiles"."id" <? "consentimientos_usuario"."id_usuario" [delete: cascade]
+
+Ref:"perfiles"."id" <? "bloqueos_usuario"."id_bloqueador"
+
+Ref:"perfiles"."id" <? "bloqueos_usuario"."id_bloqueado"
+
+Ref:"perfiles"."id" <? "reportes"."id_reportante"
+
+Ref:"perfiles"."id" <? "reportes"."id_usuario_reportado"
+
+Ref:"perfiles"."id" <? "eventos_abuso"."id_usuario" [delete: cascade]
+
+Ref:"perfiles"."id" <? "acciones_pendientes"."id_usuario" [delete: cascade]
+
+Ref:"perfiles"."id" ?<? "registros_error_app"."id_usuario"
+
+Ref:"perfiles"."id" ?<? "eventos_analitica"."id_usuario"
+
+Ref:"perfiles"."id" ?<? "banderas_funcionalidad"."id_usuario"
+
+Ref "trabajos_cotizacion_seleccionada_fkey":"propuestas_cotizacion"."id" ?<? "trabajos"."id_cotizacion_seleccionada"
+
+Ref "pagos_orden_cambio_fkey":"ordenes_cambio"."id" ?<? "pagos"."id_orden_cambio"
+
+Ref "ordenes_cambio_pago_fkey":"pagos"."id" ?<? "ordenes_cambio"."id_pago"

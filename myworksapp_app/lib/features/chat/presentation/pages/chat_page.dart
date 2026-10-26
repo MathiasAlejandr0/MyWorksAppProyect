@@ -18,6 +18,7 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../utils/content_filter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
@@ -152,7 +153,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   Future<void> _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    if (ContentFilter.hasSensitiveData(text)) {
+      await ContentFilter.showBlockedDialog(context);
+      return;
+    }
 
     final authState = ref.read(authProvider);
     final currentUser = authState.user;
@@ -167,7 +174,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         jobId: widget.jobId,
         senderId: currentUser.id,
         receiverId: otherUserId,
-        content: _messageController.text.trim(),
+        content: text,
         createdAt: DateTime.now(),
       );
 

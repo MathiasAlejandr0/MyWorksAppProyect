@@ -61,6 +61,15 @@ BEGIN
     ('isabel.campos@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000111', 'Isabel Campos', 'trabajador', 'especialista'),
     ('hugo.vargas@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000112', 'Hugo Vargas', 'trabajador', 'especialista'),
     ('paula.riquelme@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000113', 'Paula Riquelme', 'trabajador', 'especialista'),
+    ('oscar.nunez@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000201', 'Óscar Núñez', 'trabajador', 'especialista'),
+    ('beatriz.soto@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000202', 'Beatriz Soto', 'trabajador', 'especialista'),
+    ('manuel.almonacid@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000203', 'Manuel Almonacid', 'trabajador', 'especialista'),
+    ('lorena.cayun@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000204', 'Lorena Cayún', 'trabajador', 'especialista'),
+    ('claudio.barria@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000205', 'Claudio Barría', 'trabajador', 'especialista'),
+    ('patricia.oyarzun@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000206', 'Patricia Oyarzún', 'trabajador', 'especialista'),
+    ('ignacio.mansilla@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000207', 'Ignacio Mansilla', 'trabajador', 'especialista'),
+    ('valeria.antillanca@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000208', 'Valeria Antillanca', 'trabajador', 'especialista'),
+    ('ricardo.cheuquepan@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000209', 'Ricardo Cheuquepán', 'trabajador', 'especialista'),
     ('admin.ops@demo.myworksapp.cl', '11111111-1111-4111-8111-000000000901', 'Valentina Riquelme', 'administrador', 'usuario');
 
   INSERT INTO auth.users (
@@ -159,6 +168,15 @@ BEGIN
       ('ana.vidal@demo.myworksapp.cl', 'Aseo hogar', 'Limpieza de departamentos y casas.', 4.9, 1, 25000, 'limpieza', 'Ñuñoa', 'verificado', 'Cédula revisada para la demo.', -33.4569, -70.5978, 10),
       ('diego.salazar@demo.myworksapp.cl', 'Armador de muebles', 'Armado de muebles y estanterías en Santiago centro.', 4.7, 1, 22000, 'ensamblaje', 'Santiago', 'verificado', 'Cédula revisada para la demo.', -33.4489, -70.6506, 8),
       ('carmen.lagos@demo.myworksapp.cl', 'Gasfíter', 'Conexiones y revisiones de gas en el sur de Santiago.', 4.8, 1, 33000, 'gasfiteria', 'San Miguel', 'verificado', 'Cédula revisada para la demo.', -33.4969, -70.6514, 12),
+      ('oscar.nunez@demo.myworksapp.cl', 'Gasfíter', 'Fugas y llaves en el centro de Puerto Montt. Nota bajo la media, para probar filtros.', 2.5, 1, 28000, 'gasfiteria', 'Puerto Montt', 'verificado', 'Cédula revisada para la demo.', -41.4718, -72.9396, 7),
+      ('beatriz.soto@demo.myworksapp.cl', 'Gasfíter', 'Calefont y conexiones en Angelmó. Nota bajo la media, para probar filtros.', 3.0, 1, 29000, 'gasfiteria', 'Puerto Montt', 'verificado', 'Cédula revisada para la demo.', -41.4788, -72.9615, 7),
+      ('manuel.almonacid@demo.myworksapp.cl', 'Gasfíter', 'Reparaciones de agua en Pelluco. Nota bajo la media, para probar filtros.', 3.4, 1, 30000, 'gasfiteria', 'Puerto Montt', 'verificado', 'Cédula revisada para la demo.', -41.4874, -72.8993, 7),
+      ('lorena.cayun@demo.myworksapp.cl', 'Gasfíter', 'Gasfitería domiciliaria en Mirasol. Nota en la media.', 4.0, 1, 32000, 'gasfiteria', 'Puerto Montt', 'verificado', 'Cédula revisada para la demo.', -41.4824, -72.9707, 7),
+      ('claudio.barria@demo.myworksapp.cl', 'Gasfíter', 'Llaves y desagües en Cardonal. Nota en la media.', 4.1, 1, 33000, 'gasfiteria', 'Puerto Montt', 'verificado', 'Cédula revisada para la demo.', -41.4623, -72.9925, 7),
+      ('patricia.oyarzun@demo.myworksapp.cl', 'Gasfíter', 'Instalaciones en Puerto Montt Alto. Nota en la media.', 4.2, 1, 34000, 'gasfiteria', 'Puerto Montt', 'verificado', 'Cédula revisada para la demo.', -41.4480, -72.9380, 7),
+      ('ignacio.mansilla@demo.myworksapp.cl', 'Gasfíter', 'Gasfitería en Alerce. Nota sobre la media.', 4.6, 1, 36000, 'gasfiteria', 'Puerto Montt', 'verificado', 'Cédula revisada para la demo.', -41.3997, -72.9085, 7),
+      ('valeria.antillanca@demo.myworksapp.cl', 'Gasfíter', 'Urgencias de agua en Piedra Azul. Nota sobre la media.', 4.8, 1, 37000, 'gasfiteria', 'Puerto Montt', 'verificado', 'Cédula revisada para la demo.', -41.4890, -72.8119, 7),
+      ('ricardo.cheuquepan@demo.myworksapp.cl', 'Gasfíter', 'Conexiones y calefont en Chamiza. Nota sobre la media.', 4.9, 1, 38000, 'gasfiteria', 'Puerto Montt', 'verificado', 'Cédula revisada para la demo.', -41.4499, -72.8148, 7),
       ('felipe.araya@demo.myworksapp.cl', 'Jardinero', 'Poda, riego y mantención de jardines.', 4.6, 1, 24000, 'jardineria', 'La Reina', 'verificado', 'Cédula revisada para la demo.', -33.4455, -70.5410, 14),
       ('rodrigo.pena@demo.myworksapp.cl', 'Cerrajero', 'Apertura y cambio de chapas en el poniente.', 4.7, 1, 28000, 'cerrajeria', 'Estación Central', 'verificado', 'Cédula revisada para la demo.', -33.4518, -70.6793, 16),
       ('isabel.campos@demo.myworksapp.cl', 'Soporte técnico', 'Diagnóstico de PC y redes domiciliarias.', 4.9, 1, 26000, 'soporte_tecnico', 'Providencia', 'verificado', 'Cédula revisada para la demo.', -33.4265, -70.6148, 10),
@@ -332,6 +350,13 @@ BEGIN
   END IF;
   DELETE FROM public.mensajes WHERE id LIKE 'demo-%';
   DELETE FROM public.calificaciones WHERE id LIKE 'demo-%';
+  IF to_regclass('public.calificaciones_cliente') IS NOT NULL THEN
+    DELETE FROM public.calificaciones_cliente WHERE id_trabajo LIKE 'demo-%';
+  END IF;
+  IF to_regclass('public.fotos_trabajo') IS NOT NULL THEN
+    DELETE FROM public.fotos_trabajo
+    WHERE id LIKE 'demo-%' OR id_trabajo LIKE 'demo-%';
+  END IF;
   DELETE FROM public.disputas WHERE id LIKE 'demo-%';
   DELETE FROM public.notificaciones WHERE id LIKE 'demo-%';
   DELETE FROM public.pagos WHERE id LIKE 'demo-%';
@@ -365,6 +390,16 @@ BEGIN
       ('demo-job-cerrado', 'andres.pizarro@demo.myworksapp.cl', 'tomas.herrera@demo.myworksapp.cl', COALESCE(v_svc_construccion, v_svc_plomeria), 'completado', 'Av. Pajaritos 2500, Maipú', 'Reparación de muro interior.', -33.5111, -70.7580),
       ('demo-job-disputa', 'camila.soto@demo.myworksapp.cl', 'maria.fuentes@demo.myworksapp.cl', v_svc_electricidad, 'en_curso', 'Av. Providencia 2100, Providencia', 'El automático salta al encender el horno.', -33.4314, -70.6093)
   ) AS v(id, cliente, pro, servicio, estado, direccion, descripcion, lat, lng);
+
+  -- Sin esta foto, cerrar_trabajo_conforme deja el pago retenido.
+  INSERT INTO public.fotos_trabajo (id, id_trabajo, ruta_foto, tipo_medio, creado_en)
+  VALUES (
+    'demo-foto-conforme',
+    'demo-job-conforme',
+    'demo/conforme-limpieza.jpg',
+    'foto',
+    v_now
+  );
 
   UPDATE public.trabajos
   SET estado_pago = 'liberado'
@@ -523,6 +558,84 @@ BEGIN
   FROM demo_notas n
   JOIN LATERAL generate_series(1, n.n_notas) AS g(i) ON true;
 
+  -- Gasfíteres de Puerto Montt: 3 bajo la media, 3 en la media, 3 sobre la media.
+  -- Las notas concretas dejan el promedio igual al número del seed (2.5 … 4.9).
+  CREATE TEMP TABLE demo_notas_pm (
+    slug text,
+    email text,
+    lat float8,
+    lng float8,
+    puntajes int[]
+  ) ON COMMIT DROP;
+
+  INSERT INTO demo_notas_pm (slug, email, lat, lng, puntajes) VALUES
+    ('oscar', 'oscar.nunez@demo.myworksapp.cl', -41.4718, -72.9396, ARRAY[2,2,3,3]),
+    ('beatriz', 'beatriz.soto@demo.myworksapp.cl', -41.4788, -72.9615, ARRAY[3,3,3,3]),
+    ('manuel', 'manuel.almonacid@demo.myworksapp.cl', -41.4874, -72.8993, ARRAY[3,3,3,4,4]),
+    ('lorena', 'lorena.cayun@demo.myworksapp.cl', -41.4824, -72.9707, ARRAY[4,4,4,4,4]),
+    ('claudio', 'claudio.barria@demo.myworksapp.cl', -41.4623, -72.9925, ARRAY[4,4,4,4,4,4,4,4,4,5]),
+    ('patricia', 'patricia.oyarzun@demo.myworksapp.cl', -41.4480, -72.9380, ARRAY[4,4,4,4,5]),
+    ('ignacio', 'ignacio.mansilla@demo.myworksapp.cl', -41.3997, -72.9085, ARRAY[5,5,5,4,4]),
+    ('valeria', 'valeria.antillanca@demo.myworksapp.cl', -41.4890, -72.8119, ARRAY[5,5,5,5,4]),
+    ('ricardo', 'ricardo.cheuquepan@demo.myworksapp.cl', -41.4499, -72.8148, ARRAY[5,5,5,5,5,5,5,5,5,4]);
+
+  INSERT INTO public.trabajos (
+    id, id_usuario, id_trabajador, id_servicio, estado, estado_pago, direccion,
+    descripcion, latitud, longitud, modalidad_cobro, creado_en, actualizado_en
+  )
+  SELECT
+    'demo-job-nota-' || n.slug || '-' || g.ord,
+    (SELECT uid FROM demo_cuentas WHERE email = CASE WHEN g.ord % 2 = 0
+      THEN 'camila.soto@demo.myworksapp.cl'
+      ELSE 'andres.pizarro@demo.myworksapp.cl' END),
+    (SELECT uid FROM demo_cuentas WHERE email = n.email),
+    (
+      SELECT s.id FROM public.servicios s
+      WHERE s.categoria = 'gasfiteria' AND COALESCE(s.activo, 0) = 1
+      ORDER BY s.creado_en NULLS LAST
+      LIMIT 1
+    ),
+    'completado',
+    'liberado',
+    'Trabajo cerrado de la demo, Puerto Montt',
+    'Visita cerrada para la calificación publicada.',
+    n.lat,
+    n.lng,
+    'precio_fijo',
+    v_now,
+    v_now
+  FROM demo_notas_pm n
+  JOIN LATERAL unnest(n.puntajes) WITH ORDINALITY AS g(puntaje, ord) ON true;
+
+  INSERT INTO public.pagos (
+    id, id_trabajo, monto, moneda, estado, tipo_pago, metodo_pago, creado_en, actualizado_en
+  )
+  SELECT
+    'demo-pago-nota-' || n.slug || '-' || g.ord,
+    'demo-job-nota-' || n.slug || '-' || g.ord,
+    25000,
+    'CLP',
+    'liberado',
+    'principal',
+    'webpay',
+    v_now,
+    v_now
+  FROM demo_notas_pm n
+  JOIN LATERAL unnest(n.puntajes) WITH ORDINALITY AS g(puntaje, ord) ON true;
+
+  INSERT INTO public.calificaciones (id, id_trabajo, id_usuario, puntaje, comentario, creado_en)
+  SELECT
+    'demo-rating-' || n.slug || '-' || g.ord,
+    'demo-job-nota-' || n.slug || '-' || g.ord,
+    (SELECT uid FROM demo_cuentas WHERE email = CASE WHEN g.ord % 2 = 0
+      THEN 'camila.soto@demo.myworksapp.cl'
+      ELSE 'andres.pizarro@demo.myworksapp.cl' END),
+    g.puntaje,
+    'Trabajo de la demo en Puerto Montt.',
+    v_now
+  FROM demo_notas_pm n
+  JOIN LATERAL unnest(n.puntajes) WITH ORDINALITY AS g(puntaje, ord) ON true;
+
   -- Misma fórmula que refrescar_calificacion_trabajador. Si hay notas reales,
   -- no se pisa el promedio con el número fijo del seed.
   UPDATE public.trabajadores w
@@ -536,6 +649,10 @@ BEGIN
     GROUP BY t.id_trabajador
   ) src
   WHERE w.id_usuario::text = src.id_usuario::text;
+
+  IF to_regprocedure('public.refrescar_ranking_todos()') IS NOT NULL THEN
+    PERFORM public.refrescar_ranking_todos();
+  END IF;
 
   -- Los pagos liberados de la demo quedan igual que uno liberado por conformidad real
   -- (marcar_pago_liberado): con liberado_en y su fila en liquidaciones. Sin esto la

@@ -102,5 +102,6 @@ class AppConstants {
   static const String routeAdminErrors = '/admin/errors';
   static const String routeAdminServices = '/admin/services';
   static const String routeAdminFeatureFlags = '/admin/feature-flags';
+  static const String routeAdminRanking = '/admin/ranking';
   static const String routeAdminDesktopHub = '/admin/desktop-hub';
 }

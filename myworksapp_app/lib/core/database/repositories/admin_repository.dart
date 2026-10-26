@@ -4,6 +4,7 @@ import '../models/dispute_model.dart';
 import '../models/feature_flag_model.dart';
 import '../models/job_model.dart';
 import '../models/pending_action_model.dart';
+import '../models/ranking_models.dart';
 import '../models/service_model.dart';
 import '../models/user_model.dart';
 import 'admin/admin_catalog_repository.dart';
@@ -12,6 +13,7 @@ import 'admin/admin_jobs_repository.dart';
 import 'admin/admin_metrics_repository.dart';
 import 'admin/admin_models.dart';
 import 'admin/admin_users_repository.dart';
+import 'ranking_repository.dart';
 
 export 'admin/admin_models.dart';
 
@@ -22,6 +24,7 @@ class AdminRepository {
   final AdminIncidentsRepository _incidents = AdminIncidentsRepository();
   final AdminJobsRepository _jobs = AdminJobsRepository();
   final AdminCatalogRepository _catalog = AdminCatalogRepository();
+  final RankingRepository _ranking = RankingRepository();
 
   Future<AdminMetrics> getMetrics() => _metrics.getMetrics();
 
@@ -135,4 +138,25 @@ class AdminRepository {
 
   Future<void> setServiceActive(String serviceId, bool active) =>
       _catalog.setServiceActive(serviceId, active);
+
+  Future<RankingConfig> fetchRankingConfig() => _ranking.fetchConfig();
+
+  Future<RankingConfig> saveRankingConfig(RankingConfig config) =>
+      _ranking.saveConfig(config);
+
+  Future<void> setWorkerPriority(String workerId, int priority) =>
+      _ranking.setWorkerPriority(workerId, priority);
+
+  Future<List<ReviewSignal>> listReviewSignals({
+    String status = 'pendiente',
+    int limit = 80,
+  }) =>
+      _ranking.listSignals(status: status, limit: limit);
+
+  Future<void> resolveReviewSignal(String signalId, String status) =>
+      _ranking.resolveSignal(signalId, status);
+
+  Future<Map<String, dynamic>> learnRankingWeights() => _ranking.learnWeights();
+
+  Future<int> refreshRanking() => _ranking.refreshAll();
 }

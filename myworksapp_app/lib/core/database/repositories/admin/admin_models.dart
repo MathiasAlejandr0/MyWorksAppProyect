@@ -17,6 +17,7 @@ class AdminMetrics {
   final int newErrorsCount;
   final int unresolvedAbuseCount;
   final int failedSyncCount;
+  final int pendingReviewSignalsCount;
 
   const AdminMetrics({
     required this.usersCount,
@@ -29,6 +30,7 @@ class AdminMetrics {
     required this.newErrorsCount,
     required this.unresolvedAbuseCount,
     required this.failedSyncCount,
+    this.pendingReviewSignalsCount = 0,
   });
 
   int get totalIncidents =>

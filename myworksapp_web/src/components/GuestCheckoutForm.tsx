@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Lock, MapPin, Phone, User, Mail, X, ExternalLink } from 'lucide-react';
+import { transportCheckoutCopy } from '@myworksapp/shared';
 import { TurnstileWidget } from './TurnstileWidget';
 import { turnstileSiteKey } from './turnstileSite';
 
@@ -15,20 +16,28 @@ interface GuestCheckoutFormProps {
   workerName: string;
   profession: string;
   basePrice: number;
+  transportExtraClp?: number;
+  insideRadar?: boolean | null;
   serviceDescription?: string;
   onClose: () => void;
   onSubmit: (data: GuestCheckoutPayload) => Promise<void>;
   onPreferLogin: () => void;
+  onPreviewAddress?: (query: string) => Promise<unknown>;
+  locatingAddress?: boolean;
 }
 
 export function GuestCheckoutForm({
   workerName,
   profession,
   basePrice,
+  transportExtraClp = 0,
+  insideRadar = null,
   serviceDescription = 'Visita / urgencia a domicilio',
   onClose,
   onSubmit,
   onPreferLogin,
+  onPreviewAddress,
+  locatingAddress = false,
 }: GuestCheckoutFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -37,6 +46,18 @@ export function GuestCheckoutForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState('');
+  const totalAmount = basePrice + Math.max(0, transportExtraClp);
+  const previewRef = useRef(onPreviewAddress);
+  previewRef.current = onPreviewAddress;
+
+  useEffect(() => {
+    const text = address.trim();
+    if (text.length < 3 || !previewRef.current) return;
+    const timer = window.setTimeout(() => {
+      void previewRef.current?.(text);
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [address]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -89,8 +110,8 @@ export function GuestCheckoutForm({
           </p>
           <h2 id="guest-checkout-title">Datos para la visita</h2>
           <p className="guest-checkout-lead">
-            Sin cuenta te enviamos a Webpay para pagar este pedido. Si inicias
-            sesión, el cobro sale de la tarjeta inscrita en la app.
+            Sin cuenta te enviamos a Webpay para pagar este pedido. La dirección
+            de abajo fija el punto del trabajo y el extra de traslado.
           </p>
         </div>
 
@@ -98,9 +119,15 @@ export function GuestCheckoutForm({
           <span>
             {profession} · {workerName}
           </span>
-          <strong>{basePrice.toLocaleString('es-CL')} CLP</strong>
+          <strong>
+            {totalAmount.toLocaleString('es-CL')} CLP
+            {locatingAddress ? ' · buscando dirección…' : ''}
+          </strong>
         </div>
-        <p className="guest-checkout-service">{serviceDescription}</p>
+        <p className="guest-checkout-service">
+          {serviceDescription}
+          {` · ${transportCheckoutCopy({ extraClp: transportExtraClp, insideRadar })}`}
+        </p>
 
         <form className="guest-checkout-form" onSubmit={(e) => void handleSubmit(e)}>
           <label>
@@ -168,7 +195,7 @@ export function GuestCheckoutForm({
             <ExternalLink size={16} />
             {busy
               ? 'Creando pedido y abriendo Webpay…'
-              : `Continuar a Webpay · CLP ${basePrice.toLocaleString('es-CL')}`}
+              : `Continuar a Webpay · CLP ${totalAmount.toLocaleString('es-CL')}`}
           </button>
         </form>
 

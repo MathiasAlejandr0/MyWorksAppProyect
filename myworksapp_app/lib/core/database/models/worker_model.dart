@@ -19,6 +19,18 @@ class WorkerModel {
   final String? baseOrigin;
   /// Rechazos de invitaciones; penaliza el orden en búsquedas (no se muestra en UI).
   final int rejectionCount;
+  /// Score de marketplace (0–100 + prioridad manual). Lo calcula el servidor.
+  final double? listingScore;
+  /// Override de admin: positivo = aparece antes, negativo = después.
+  final int manualPriority;
+  /// Trabajos en estado completado. Lo mantiene el servidor.
+  final int completedJobs;
+  /// Destacado del mes. Columna generada en Postgres.
+  final bool isElite;
+  /// Kilómetros con movilización en \$0.
+  final double urbanRadiusKm;
+  /// Cobro fijo de movilización fuera del radio urbano.
+  final int outsideMobilizationFeeClp;
 
   WorkerModel({
     required this.userId,
@@ -34,9 +46,15 @@ class WorkerModel {
     this.workZone,
     this.baseLatitude,
     this.baseLongitude,
-    this.serviceRadiusKm = 15,
+    this.serviceRadiusKm = 7,
     this.baseOrigin,
     this.rejectionCount = 0,
+    this.listingScore,
+    this.manualPriority = 0,
+    this.completedJobs = 0,
+    this.isElite = false,
+    this.urbanRadiusKm = 5,
+    this.outsideMobilizationFeeClp = 0,
   })  : pricingTiers = pricingTiers ?? const {},
         customServices = customServices ?? const [];
 
@@ -83,9 +101,16 @@ class WorkerModel {
       workZone: map['zona_trabajo'] as String?,
       baseLatitude: (map['latitud_base'] as num?)?.toDouble(),
       baseLongitude: (map['longitud_base'] as num?)?.toDouble(),
-      serviceRadiusKm: (map['radio_servicio_km'] as num?)?.toDouble() ?? 15,
+      serviceRadiusKm: (map['radio_servicio_km'] as num?)?.toDouble() ?? 7,
       baseOrigin: map['origen_base'] as String?,
       rejectionCount: (map['conteo_rechazos'] as num?)?.toInt() ?? 0,
+      listingScore: (map['score_listado'] as num?)?.toDouble(),
+      manualPriority: (map['prioridad_manual'] as num?)?.toInt() ?? 0,
+      completedJobs: (map['trabajos_completados'] as num?)?.toInt() ?? 0,
+      isElite: map['es_elite'] == true,
+      urbanRadiusKm: (map['radio_urbano_km'] as num?)?.toDouble() ?? 5,
+      outsideMobilizationFeeClp:
+          (map['tarifa_fuera_radio_clp'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -106,6 +131,12 @@ class WorkerModel {
     double? serviceRadiusKm,
     String? baseOrigin,
     int? rejectionCount,
+    double? listingScore,
+    int? manualPriority,
+    int? completedJobs,
+    bool? isElite,
+    double? urbanRadiusKm,
+    int? outsideMobilizationFeeClp,
   }) {
     return WorkerModel(
       userId: userId ?? this.userId,
@@ -124,6 +155,13 @@ class WorkerModel {
       serviceRadiusKm: serviceRadiusKm ?? this.serviceRadiusKm,
       baseOrigin: baseOrigin ?? this.baseOrigin,
       rejectionCount: rejectionCount ?? this.rejectionCount,
+      listingScore: listingScore ?? this.listingScore,
+      manualPriority: manualPriority ?? this.manualPriority,
+      completedJobs: completedJobs ?? this.completedJobs,
+      isElite: isElite ?? this.isElite,
+      urbanRadiusKm: urbanRadiusKm ?? this.urbanRadiusKm,
+      outsideMobilizationFeeClp:
+          outsideMobilizationFeeClp ?? this.outsideMobilizationFeeClp,
     );
   }
 }

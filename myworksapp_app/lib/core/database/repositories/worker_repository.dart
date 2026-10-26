@@ -1,4 +1,5 @@
 import '../../domain/distance_match.dart';
+import '../../domain/transport_surcharge.dart';
 import '../../domain/user_location_context.dart';
 import '../../domain/worker_login_item.dart';
 import '../../services/worker_reputation_service.dart';
@@ -36,7 +37,7 @@ class WorkerRepository {
         .from(_table)
         .select()
         .eq('categoria_servicio', category)
-        .order('calificacion', ascending: false)
+        .order('score_listado', ascending: false)
         .limit(40);
 
     if (rows.isEmpty) {
@@ -46,7 +47,7 @@ class WorkerRepository {
             .from(_table)
             .select()
             .ilike('categoria_servicio', '%$needle%')
-            .order('calificacion', ascending: false)
+            .order('score_listado', ascending: false)
             .limit(40);
       }
     }
@@ -56,9 +57,8 @@ class WorkerRepository {
     return _filterListedWorkers(workers, near: near);
   }
 
-  /// Con coordenadas del cliente y base del profesional se usa la distancia
-  /// real contra `radio_servicio_km`. Si falta alguna, se compara la zona por
-  /// nombre de ciudad/comuna como antes.
+  /// Con GPS se usa la distancia real. Fuera del radio cercano se puede pedir
+  /// con extra de traslado; más de 30 km se oculta. Sin GPS se compara la zona.
   static bool _servesLocation(WorkerModel worker, UserLocationContext near) {
     final lat = near.latitude;
     final lng = near.longitude;
@@ -70,7 +70,7 @@ class WorkerRepository {
         jobLng: lng,
         radiusKm: worker.serviceRadiusKm,
       );
-      if (match != null) return !match.outsideRadius;
+      if (match != null) return withinTravelRange(match.distanceKm);
     }
     final zone = worker.workZone;
     if (zone == null || zone.isEmpty) return true;
@@ -104,7 +104,11 @@ class WorkerRepository {
       }
     }
 
-    WorkerReputationService.instance.sortForListing(listed);
+    WorkerReputationService.instance.sortForListing(
+      listed,
+      clientLatitude: near?.latitude,
+      clientLongitude: near?.longitude,
+    );
     return listed;
   }
 
@@ -114,7 +118,7 @@ class WorkerRepository {
         .select()
         .eq('profesion', profession)
         .eq('disponible', 1)
-        .order('calificacion', ascending: false)
+        .order('score_listado', ascending: false)
         .limit(40);
     final workers = rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
     WorkerReputationService.instance.sortForListing(workers);
@@ -127,7 +131,7 @@ class WorkerRepository {
         .select()
         .eq('disponible', 1)
         .eq('precios_configurados', 1)
-        .order('calificacion', ascending: false)
+        .order('score_listado', ascending: false)
         .limit(40);
     final workers =
         rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();
@@ -209,6 +213,17 @@ class WorkerRepository {
     }).eq('id_usuario', userId);
   }
 
+  Future<void> updateUrbanCoverage({
+    required String userId,
+    required double urbanRadiusKm,
+    required int outsideFeeClp,
+  }) async {
+    await supabase.from(_table).update({
+      'radio_urbano_km': urbanRadiusKm,
+      'tarifa_fuera_radio_clp': outsideFeeClp,
+    }).eq('id_usuario', userId);
+  }
+
   Future<void> updateAvailability(String userId, bool isAvailable) async {
     await supabase
         .from(_table)
@@ -243,7 +258,7 @@ class WorkerRepository {
         .select()
         .eq('disponible', 1)
         .eq('precios_configurados', 1)
-        .order('calificacion', ascending: false)
+        .order('score_listado', ascending: false)
         .limit(40);
     final allWorkers =
         rows.map<WorkerModel>((m) => WorkerModel.fromMap(m)).toList();

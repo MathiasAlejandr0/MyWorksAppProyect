@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/mock_reserved_slots.dart';
+import '../../../../utils/content_filter.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/repositories/service_config_repository.dart';
 import '../../../../core/database/models/service_model.dart';
 import '../../../../core/domain/pricing_constants.dart';
+import '../../../../core/domain/transport_surcharge.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/services/open_quote_notification_service.dart';
@@ -18,6 +21,7 @@ import '../../../../core/utils/sku_utils.dart';
 import '../../../../core/domain/pricing_mode_recommendation.dart';
 import '../../../../core/domain/worker_service_options_catalog.dart';
 import '../widgets/pricing_mode_questionnaire.dart';
+import '../widgets/time_slot_selector.dart';
 import '../widgets/worker_service_option_picker.dart';
 import '../widgets/worker_square_meters_field.dart';
 import '../widgets/open_quote_submitted_dialog.dart';
@@ -154,13 +158,24 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     return parsed;
   }
 
+  TransportSurcharge get _traslado {
+    return transportSurcharge(
+      workerLat: _selectedWorker?.baseLatitude,
+      workerLng: _selectedWorker?.baseLongitude,
+      jobLat: _selectedLatitude,
+      jobLng: _selectedLongitude,
+      radiusKm: _selectedWorker?.serviceRadiusKm,
+    );
+  }
+
   int? _workerTierTotalClp() {
     if (_selectedWorker == null || _selectedWorkerOption == null) return null;
-    return WorkerServiceOptionsCatalog.totalPriceForWorker(
+    final base = WorkerServiceOptionsCatalog.totalPriceForWorker(
       worker: _selectedWorker!,
       option: _selectedWorkerOption!,
       squareMeters: _parsedSquareMeters,
     );
+    return base + _traslado.extraClp;
   }
 
   int? _chargeAmountClpForDisclaimer() {
@@ -256,6 +271,16 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     if (_selectedAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor selecciona una ubicación en el mapa')),
+      );
+      return;
+    }
+    if (ContentFilter.hasSensitiveData(_descriptionController.text)) {
+      await ContentFilter.showBlockedDialog(context);
+      return;
+    }
+    if (_selectedTime != null && MockReservedSlots.isReserved(_selectedTime!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(MockReservedSlots.reservedMessage)),
       );
       return;
     }
@@ -373,6 +398,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           priceUnit: _selectedWorkerOption!.unit.name,
           squareMeters: _parsedSquareMeters,
           unitRateClp: unitRate,
+          transportExtraClp: _traslado.extraClp,
         );
         if (!mounted) return;
         final paid = await EscrowCheckoutSheet.show(
@@ -697,6 +723,10 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                       },
                     ),
                   ),
+                  if (_selectedWorker != null) ...[
+                    const SizedBox(height: 12),
+                    _TrasladoRadarBanner(quote: _traslado),
+                  ],
                   const SizedBox(height: 20),
                   if (_usesWorkerTierPricing) ...[
                     WorkerServiceOptionPicker(
@@ -794,55 +824,37 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                       validator: Validators.validateDescription,
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ListTile(
-                            leading: const Icon(Icons.calendar_today),
-                            title: Text(
-                              _selectedDate == null
-                                  ? 'Seleccionar fecha'
-                                  : DateFormat('dd/MM/yyyy')
-                                      .format(_selectedDate!),
-                            ),
-                            onTap: () async {
-                              // Sin esto, al cerrar el selector el foco vuelve
-                              // a la descripcion y se reabre el teclado.
-                              FocusManager.instance.primaryFocus?.unfocus();
-                              final date = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime.now(),
-                                lastDate: DateTime.now()
-                                    .add(const Duration(days: 365)),
-                              );
-                              if (date != null) {
-                                setState(() => _selectedDate = date);
-                              }
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: ListTile(
-                            leading: const Icon(Icons.access_time),
-                            title: Text(
-                              _selectedTime == null
-                                  ? 'Seleccionar hora'
-                                  : _selectedTime!.format(context),
-                            ),
-                            onTap: () async {
-                              FocusManager.instance.primaryFocus?.unfocus();
-                              final time = await showTimePicker(
-                                context: context,
-                                initialTime: TimeOfDay.now(),
-                              );
-                              if (time != null) {
-                                setState(() => _selectedTime = time);
-                              }
-                            },
-                          ),
-                        ),
-                      ],
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.calendar_today),
+                      title: Text(
+                        _selectedDate == null
+                            ? 'Seleccionar fecha'
+                            : DateFormat('dd/MM/yyyy').format(_selectedDate!),
+                      ),
+                      onTap: () async {
+                        // Sin esto, al cerrar el selector el foco vuelve
+                        // a la descripcion y se reabre el teclado.
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate:
+                              DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (date != null) {
+                          setState(() => _selectedDate = date);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TimeSlotSelector(
+                      selected: _selectedTime,
+                      onChanged: (time) {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        setState(() => _selectedTime = time);
+                      },
                     ),
                     const SizedBox(height: 20),
                     const MyWorksGuaranteeBadge(),
@@ -926,5 +938,56 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     });
   }
 
+}
+
+class _TrasladoRadarBanner extends StatelessWidget {
+  const _TrasladoRadarBanner({required this.quote});
+
+  final TransportSurcharge quote;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = quote.radiusKm.round();
+    late final String text;
+    late final Color color;
+    if (quote.insideRadar == true) {
+      text = 'El trabajo queda dentro de $radius km: sin extra de traslado.';
+      color = AppColors.success;
+    } else if (quote.insideRadar == false) {
+      final km = quote.distanceKm?.toStringAsFixed(1) ?? '?';
+      text =
+          'Queda a $km km, fuera del área cercana. Traslado extra: \$${quote.extraClp}.';
+      color = AppColors.brandOrange;
+    } else {
+      text =
+          'Hasta $radius km cubre sin extra de traslado. Confirma tu ubicación para calcularlo.';
+      color = AppColors.grayMedium;
+    }
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.radar_rounded, color: color, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 

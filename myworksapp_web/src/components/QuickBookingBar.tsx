@@ -6,6 +6,8 @@ interface QuickBookingBarProps {
   workerName: string;
   profession: string;
   pricePerHour: number;
+  transportExtraClp?: number;
+  radarHint?: string;
   onContinue: (scheduledAt: string) => void;
   onClose: () => void;
 }
@@ -14,6 +16,8 @@ export function QuickBookingBar({
   workerName,
   profession,
   pricePerHour,
+  transportExtraClp = 0,
+  radarHint,
   onContinue,
   onClose,
 }: QuickBookingBarProps) {
@@ -58,7 +62,13 @@ export function QuickBookingBar({
         <div className="quick-booking-worker">
           <strong>{workerName}</strong>
           <span>{profession}</span>
-          <span className="quick-booking-price">${pricePerHour.toLocaleString('es-CL')} / visita</span>
+          <span className="quick-booking-price">
+            ${pricePerHour.toLocaleString('es-CL')} / visita
+            {transportExtraClp > 0
+              ? ` + $${transportExtraClp.toLocaleString('es-CL')} traslado`
+              : ''}
+          </span>
+          {radarHint ? <span className="quick-booking-radar">{radarHint}</span> : null}
         </div>
 
         <button

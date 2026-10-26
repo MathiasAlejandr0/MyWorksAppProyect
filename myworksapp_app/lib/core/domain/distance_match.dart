@@ -24,7 +24,7 @@ class DistanceMatch {
   final bool outsideRadius;
 }
 
-/// Null si el profesional no tiene base. Fuera del radio queda marcado para excluirlo.
+/// Null si el profesional no tiene base. Fuera del radio queda marcado para recargo de traslado.
 DistanceMatch? matchByDistance({
   double? workerLat,
   double? workerLng,
