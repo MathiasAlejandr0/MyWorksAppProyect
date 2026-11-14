@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/open_quote_utils.dart';
 import '../../../../core/utils/worker_job_status.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
@@ -136,11 +137,11 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
       if (!mounted) return;
       setState(() {
         _loadingDashboard = false;
-        _dashboardError = e.toString();
+        _dashboardError = ErrorHandler.getErrorMessage(e);
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo actualizar el panel: $e'),
+          content: Text(_dashboardError!),
           backgroundColor: AppColors.error,
         ),
       );
@@ -194,8 +195,8 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     }
   }
 
@@ -269,85 +270,83 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     return WorkerDemoTourOverlay(
       steps: _workerTourSteps(),
       child: Scaffold(
-          backgroundColor: AppDecorations.canvasOf(context),
-          body: AuthSoftBackground(
-            showDecorations: true,
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _WorkerTopBar(
-                    userName: user.name,
-                    photoPath: user.profilePhotoPath,
-                    profileTourKey: _profileKey,
-                    unreadNotifications: _dashboard?.unreadNotifications ?? 0,
-                    onNotifications: () =>
-                        context.push(AppConstants.routeNotifications),
-                    onProfile: () =>
-                        context.push(AppConstants.routeWorkerProfile),
-                    onSettings: () => context.push(AppConstants.routeSettings),
-                  ),
-                  WorkerHeader(
-                    firstName: firstName,
-                    worker: _dashboard?.worker,
-                    isAvailable: _isAvailable,
-                    hasActiveJobs: _hasActiveJobs,
-                    loading: _loadingDashboard,
-                    availabilityTourKey: _availabilityKey,
-                    onToggleAvailability: _toggleAvailability,
-                  ),
-                  WorkerOnboardingCard(
-                    workerId: user.id,
-                    onCompleted: _refresh,
-                  ),
-                  if (_dashboardError != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-                      child: Material(
-                        color: AppColors.error.withValues(alpha: 0.08),
+        backgroundColor: AppDecorations.canvasOf(context),
+        body: AuthSoftBackground(
+          showDecorations: true,
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _WorkerTopBar(
+                  userName: user.name,
+                  photoPath: user.profilePhotoPath,
+                  profileTourKey: _profileKey,
+                  unreadNotifications: _dashboard?.unreadNotifications ?? 0,
+                  onNotifications: () =>
+                      context.push(AppConstants.routeNotifications),
+                  onProfile: () =>
+                      context.push(AppConstants.routeWorkerProfile),
+                  onSettings: () => context.push(AppConstants.routeSettings),
+                ),
+                WorkerHeader(
+                  firstName: firstName,
+                  worker: _dashboard?.worker,
+                  isAvailable: _isAvailable,
+                  hasActiveJobs: _hasActiveJobs,
+                  loading: _loadingDashboard,
+                  availabilityTourKey: _availabilityKey,
+                  onToggleAvailability: _toggleAvailability,
+                ),
+                WorkerOnboardingCard(
+                  workerId: user.id,
+                  onCompleted: _refresh,
+                ),
+                if (_dashboardError != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    child: Material(
+                      color: AppColors.error.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        onTap: _refresh,
                         borderRadius: BorderRadius.circular(10),
-                        child: InkWell(
-                          onTap: _refresh,
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.error_outline,
-                                    color: AppColors.error, size: 18),
-                                const SizedBox(width: 8),
-                                const Expanded(
-                                  child: Text(
-                                    'Error al cargar. Toca para reintentar.',
-                                    style: TextStyle(
-                                      color: AppColors.error,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  color: AppColors.error, size: 18),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Error al cargar. Toca para reintentar.',
+                                  style: TextStyle(
+                                    color: AppColors.error,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                Icon(Icons.refresh,
-                                    color:
-                                        AppColors.error.withValues(alpha: 0.8),
-                                    size: 18),
-                              ],
-                            ),
+                              ),
+                              Icon(Icons.refresh,
+                                  color: AppColors.error.withValues(alpha: 0.8),
+                                  size: 18),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  if (_loadingDashboard)
-                    const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                      child: LinearProgressIndicator(
-                        minHeight: 2,
-                        color: AppColors.brandOrange,
-                        backgroundColor: AppColors.brandOrangeSoft,
-                      ),
-                    )
-                  else if (_dashboard != null) ...[
+                  ),
+                if (_loadingDashboard)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    child: LinearProgressIndicator(
+                      minHeight: 2,
+                      color: AppColors.brandOrange,
+                      backgroundColor: AppColors.brandOrangeSoft,
+                    ),
+                  )
+                else if (_dashboard != null) ...[
                   TourTarget(
                     tourKey: _statsKey,
                     width: double.infinity,
@@ -376,9 +375,9 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                       onNewJob: () => _tabController.animateTo(0),
                       onCalendar: () =>
                           context.push(AppConstants.routeJobSchedule),
-                      onJobMap: () =>
+                      onHistory: () =>
                           context.push(AppConstants.routeJobHistory),
-                      onInvoices: () =>
+                      onEarnings: () =>
                           context.push(AppConstants.routeStatistics),
                     ),
                   ),
@@ -413,8 +412,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                         ),
                       ),
                       boxShadow: AppDecorations.appleCardShadow(
-                        isDark:
-                            Theme.of(context).brightness == Brightness.dark,
+                        isDark: Theme.of(context).brightness == Brightness.dark,
                       ),
                     ),
                     child: Column(

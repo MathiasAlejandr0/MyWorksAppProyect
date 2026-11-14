@@ -13,6 +13,7 @@ import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/services/profile_photo_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../providers/auth_provider.dart';
@@ -50,9 +51,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     setState(() => _loadingExtras = true);
     try {
       if (user.userRole.isEspecialista) {
-        final worker = await ref
-            .read(workerRepositoryProvider)
-            .getWorkerByUserId(user.id);
+        final worker =
+            await ref.read(workerRepositoryProvider).getWorkerByUserId(user.id);
         final jobs =
             await ref.read(jobRepositoryProvider).getJobsByWorkerId(user.id);
         if (!mounted) return;
@@ -92,7 +92,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       await ref.read(userRepositoryProvider).updateUser(
             user.copyWith(profilePhotoPath: path),
           );
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Foto de perfil actualizada')),
@@ -100,7 +102,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo actualizar la foto: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     } finally {
       if (mounted) setState(() => _photoLoading = false);
@@ -117,7 +119,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       await ref.read(userRepositoryProvider).updateUser(
             user.copyWith(clearProfilePhoto: true),
           );
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Foto de perfil eliminada')),
@@ -125,7 +129,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     } finally {
       if (mounted) setState(() => _photoLoading = false);
@@ -244,14 +248,16 @@ class _ProfileIdentityCard extends StatelessWidget {
               user.email,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.onCanvasMuted(Theme.of(context).brightness),
+                    color:
+                        AppColors.onCanvasMuted(Theme.of(context).brightness),
                   ),
             ),
             const SizedBox(height: 12),
             Chip(
               avatar: Icon(role.icon, size: 18, color: AppColors.brandOrange),
               label: Text(role.label),
-              side: BorderSide(color: AppColors.brandOrange.withValues(alpha: 0.4)),
+              side: BorderSide(
+                  color: AppColors.brandOrange.withValues(alpha: 0.4)),
               backgroundColor: AppColors.brandOrange.withValues(alpha: 0.1),
             ),
             const SizedBox(height: 20),
@@ -289,9 +295,13 @@ class _ClienteSection extends StatelessWidget {
           title: 'Datos personales',
           child: Column(
             children: [
-              _InfoRow(icon: Icons.person_outline, label: 'Nombre', value: user.name),
+              _InfoRow(
+                  icon: Icons.person_outline,
+                  label: 'Nombre',
+                  value: user.name),
               const Divider(height: 20),
-              _InfoRow(icon: Icons.mail_outline, label: 'Correo', value: user.email),
+              _InfoRow(
+                  icon: Icons.mail_outline, label: 'Correo', value: user.email),
               const Divider(height: 20),
               _InfoRow(
                 icon: Icons.verified_user_outlined,
@@ -475,9 +485,8 @@ class _EspecialistaSection extends StatelessWidget {
                 child: _StatTile(
                   icon: Icons.star_outline,
                   label: 'Calificación',
-                  value: worker == null
-                      ? '—'
-                      : worker!.rating.toStringAsFixed(1),
+                  value:
+                      worker == null ? '—' : worker!.rating.toStringAsFixed(1),
                 ),
               ),
               const SizedBox(width: 12),

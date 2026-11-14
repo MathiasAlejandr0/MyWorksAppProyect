@@ -13,6 +13,7 @@ import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/comuna_utils.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/escrow_checkout_sheet.dart';
 import '../../../../core/widgets/loading_widget.dart';
@@ -35,7 +36,8 @@ class QuickBookingPage extends ConsumerStatefulWidget {
 }
 
 class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
-  final _addressController = TextEditingController(text: 'Av. Providencia 1234, Santiago');
+  final _addressController =
+      TextEditingController(text: 'Av. Providencia 1234, Santiago');
   final _notesController = TextEditingController();
   final _workerRepository = WorkerRepository();
   final _userRepository = UserRepository();
@@ -142,7 +144,8 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Reserva creada. Completa el pago desde el detalle del trabajo.'),
+            content: Text(
+                'Reserva creada. Completa el pago desde el detalle del trabajo.'),
           ),
         );
       }
@@ -151,7 +154,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -204,7 +207,8 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
               leading: const Icon(Icons.calendar_today_outlined),
               title: const Text('Fecha de visita'),
               subtitle: Text(dateFmt.format(_selectedDate)),
-              trailing: TextButton(onPressed: _pickDate, child: const Text('Cambiar')),
+              trailing: TextButton(
+                  onPressed: _pickDate, child: const Text('Cambiar')),
               onTap: _pickDate,
             ),
             const SizedBox(height: 8),

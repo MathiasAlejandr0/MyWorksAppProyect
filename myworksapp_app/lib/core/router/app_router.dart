@@ -23,6 +23,7 @@ import '../../features/jobs/presentation/pages/job_detail_page.dart';
 import '../../features/jobs/presentation/pages/job_history_page.dart';
 import '../../features/ratings/presentation/pages/rating_page.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
+import '../../features/chat/presentation/pages/conversations_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/jobs/presentation/pages/job_photos_page.dart';
 import '../../features/worker/presentation/pages/statistics_page.dart';
@@ -88,7 +89,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       try {
         final authUser = ref.read(authProvider).user;
         final isLoggedIn = authUser != null;
-        
+
         // Primera vez: el onboarding va antes que welcome o login
         // (en web el navegador puede reabrir /login de una sesión anterior).
         if (!isLoggedIn &&
@@ -100,18 +101,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             return AppConstants.routeOnboarding;
           }
         }
-        
-        final isOnWelcome = state.matchedLocation == AppConstants.routeWelcome ||
-            state.matchedLocation == AppConstants.routeOnboarding;
+
+        final isOnWelcome =
+            state.matchedLocation == AppConstants.routeWelcome ||
+                state.matchedLocation == AppConstants.routeOnboarding;
         final isOnAuth = state.matchedLocation == AppConstants.routeLogin ||
             state.matchedLocation == AppConstants.routeRegister ||
             state.matchedLocation == AppConstants.routeForgotPassword ||
             state.matchedLocation == AppConstants.routeResetPassword;
 
         // Rutas legales accesibles sin login (GDPR compliance)
-        final isLegalRoute = state.matchedLocation == AppConstants.routePrivacyPolicy ||
-            state.matchedLocation == AppConstants.routeTerms ||
-            state.matchedLocation == AppConstants.routeUserRights;
+        final isLegalRoute =
+            state.matchedLocation == AppConstants.routePrivacyPolicy ||
+                state.matchedLocation == AppConstants.routeTerms ||
+                state.matchedLocation == AppConstants.routeUserRights;
 
         // Si no está logueado y no está en welcome/auth/legal, redirigir a welcome
         if (!isLoggedIn && !isOnWelcome && !isOnAuth && !isLegalRoute) {
@@ -139,19 +142,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isLoggedIn &&
             authUser.userRole.isEspecialista &&
             state.matchedLocation == AppConstants.routeWorkerHome) {
-          final worker = await WorkerRepository().getWorkerByUserId(authUser.id);
+          final worker =
+              await WorkerRepository().getWorkerByUserId(authUser.id);
           if (worker != null && !worker.pricingConfigured) {
             return AppConstants.routeWorkerPricingSetup;
           }
         }
 
         final isAdminRoute = state.matchedLocation.startsWith('/admin');
-        if (isLoggedIn &&
-            isAdminRoute &&
-            !authUser.userRole.isAdministrador) {
+        if (isLoggedIn && isAdminRoute && !authUser.userRole.isAdministrador) {
           return homeRouteForRole(authUser.userRole);
         }
-
       } catch (e, st) {
         AppLogger.e('Error en redirect del router', e, st);
       }
@@ -299,6 +300,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: AppConstants.routeMessages,
+        builder: (context, state) => const ConversationsPage(),
+      ),
+      GoRoute(
         path: AppConstants.routeNotifications,
         builder: (context, state) => const NotificationsPage(),
       ),
@@ -396,4 +401,3 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-

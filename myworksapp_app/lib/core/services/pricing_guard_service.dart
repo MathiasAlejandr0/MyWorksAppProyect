@@ -2,9 +2,10 @@ import '../database/repositories/job_repository.dart';
 import '../database/repositories/service_repository.dart';
 import '../utils/app_logger.dart';
 import '../utils/constants.dart';
+import 'job_price.dart';
 
 /// Servicio de protección de precios
-/// 
+///
 /// Funciones:
 /// - Calcular rango recomendado por servicio
 /// - Detectar precios extremos
@@ -30,7 +31,7 @@ class PricingGuardService {
   };
 
   /// Verifica si un precio es extremo y retorna una alerta si es necesario
-  /// 
+  ///
   /// Retorna null si el precio está dentro del rango normal
   Future<PricingAlert?> checkPrice({
     required String serviceId,
@@ -39,10 +40,11 @@ class PricingGuardService {
     try {
       // Obtener rango recomendado para el servicio
       final priceRange = await _getPriceRangeForService(serviceId);
-      
+
       // Calcular desviación del promedio
-      final deviation = ((price - priceRange.average) / priceRange.average * 100).abs();
-      
+      final deviation =
+          ((price - priceRange.average) / priceRange.average * 100).abs();
+
       // Detectar precios extremos
       if (price < priceRange.min * 0.5) {
         return PricingAlert(
@@ -78,7 +80,7 @@ class PricingGuardService {
           );
         }
       }
-      
+
       // Precio dentro del rango normal
       return null;
     } catch (e) {
@@ -91,23 +93,30 @@ class PricingGuardService {
   Future<PriceRange> _getPriceRangeForService(String serviceId) async {
     try {
       // Intentar obtener datos históricos de trabajos completados
-      final allJobs = await _jobRepository.getJobsByStatus(AppConstants.jobStatusCompleted);
-      final completedJobs = allJobs.where((j) => j.serviceId == serviceId).toList();
-      
+      final allJobs =
+          await _jobRepository.getJobsByStatus(AppConstants.jobStatusCompleted);
+      final completedJobs =
+          allJobs.where((j) => j.serviceId == serviceId).toList();
+
       if (completedJobs.length >= 5) {
         // Calcular estadísticas basadas en datos reales
         final prices = completedJobs
-            .map((j) => _extractPriceFromJob(j))
+            .map(
+              (j) => agreedJobPriceClp(
+                pricingSnapshot: j.pricingSnapshot,
+                serviceMetadata: j.serviceMetadata,
+              ),
+            )
             .where((p) => p != null)
             .map((p) => p!)
             .toList();
-        
+
         if (prices.isNotEmpty) {
           prices.sort();
           final min = prices.first;
           final max = prices.last;
           final average = prices.reduce((a, b) => a + b) / prices.length;
-          
+
           return PriceRange(
             min: (min * 0.8).roundToDouble(), // 20% de margen inferior
             max: (max * 1.2).roundToDouble(), // 20% de margen superior
@@ -115,19 +124,20 @@ class PricingGuardService {
           );
         }
       }
-      
+
       // Si no hay suficientes datos, usar rango por defecto
       final service = await _serviceRepository.getServiceById(serviceId);
-      final serviceName = service?.name.toLowerCase() ?? serviceId.toLowerCase();
-      
+      final serviceName =
+          service?.name.toLowerCase() ?? serviceId.toLowerCase();
+
       // Buscar rango por nombre o categoría
       for (final entry in defaultPriceRanges.entries) {
-        if (serviceName.contains(entry.key) || 
+        if (serviceName.contains(entry.key) ||
             service?.category.toLowerCase().contains(entry.key) == true) {
           return entry.value;
         }
       }
-      
+
       // Rango genérico por defecto
       return const PriceRange(min: 20000, max: 100000, average: 50000);
     } catch (e) {
@@ -137,18 +147,11 @@ class PricingGuardService {
     }
   }
 
-  /// Extrae el precio de un trabajo (desde serviceMetadata o estimación)
-  double? _extractPriceFromJob(dynamic job) {
-    // TODO: Implementar extracción real del precio desde job.serviceMetadata
-    // Por ahora, retornar null para usar rangos por defecto
-    return null;
-  }
-
   String _formatPrice(double price) {
     return '\$${price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    )} CLP';
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        )} CLP';
   }
 }
 
@@ -189,4 +192,3 @@ enum PricingAlertSeverity {
   info,
   warning,
 }
-

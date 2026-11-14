@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/utils/constants.dart';
 import '../widgets/admin_search_field.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class AdminReportsPage extends ConsumerStatefulWidget {
   const AdminReportsPage({super.key});
@@ -51,7 +52,7 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
 
   void _showError(Object e) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
+      SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
     );
   }
 
@@ -172,7 +173,8 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
                                   if (r.description != null &&
                                       r.description!.isNotEmpty)
                                     Padding(
-                                      padding: const EdgeInsets.all(AppSpacing.md),
+                                      padding:
+                                          const EdgeInsets.all(AppSpacing.md),
                                       child: Align(
                                         alignment: Alignment.centerLeft,
                                         child: Text(r.description!),
@@ -188,7 +190,8 @@ class _AdminReportsPageState extends ConsumerState<AdminReportsPage> {
                                             entry,
                                             AppConstants.reportStatusReviewed,
                                           ),
-                                          child: const Text('Marcar en revisión'),
+                                          child:
+                                              const Text('Marcar en revisión'),
                                         ),
                                       if (r.status !=
                                           AppConstants.reportStatusResolved)

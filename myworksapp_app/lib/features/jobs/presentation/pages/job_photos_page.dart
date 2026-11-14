@@ -7,6 +7,7 @@ import '../../../../core/database/models/job_photo_model.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_snackbar.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 
@@ -67,7 +68,9 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
     if (!mounted) return;
     showAppSnackBar(
       context,
-      mediaType == JobPhotoModel.mediaVideo ? 'Video agregado' : 'Foto agregada',
+      mediaType == JobPhotoModel.mediaVideo
+          ? 'Video agregado'
+          : 'Foto agregada',
       type: AppSnackBarType.success,
     );
   }
@@ -85,7 +88,8 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      showAppSnackBar(context, 'Error: ${e.toString()}', type: AppSnackBarType.error);
+      showAppSnackBar(context, ErrorHandler.getErrorMessage(e),
+          type: AppSnackBarType.error);
     }
   }
 
@@ -102,7 +106,8 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      showAppSnackBar(context, 'Error: ${e.toString()}', type: AppSnackBarType.error);
+      showAppSnackBar(context, ErrorHandler.getErrorMessage(e),
+          type: AppSnackBarType.error);
     }
   }
 
@@ -148,7 +153,8 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Eliminar evidencia'),
-        content: const Text('¿Estás seguro de que quieres eliminar este archivo?'),
+        content:
+            const Text('¿Estás seguro de que quieres eliminar este archivo?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -189,7 +195,8 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
               ? const EmptyStateWidget(
                   icon: Icons.photo_library,
                   title: 'Sin evidencia',
-                  message: 'Sube al menos una foto o un video del trabajo realizado',
+                  message:
+                      'Sube al menos una foto o un video del trabajo realizado',
                 )
               : GridView.builder(
                   padding: const EdgeInsets.all(AppSpacing.lg),
@@ -250,7 +257,8 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.videocam, color: Colors.white, size: 14),
+                                    Icon(Icons.videocam,
+                                        color: Colors.white, size: 14),
                                     SizedBox(width: 4),
                                     Text(
                                       'Video',
@@ -268,7 +276,8 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                               top: 4,
                               right: 4,
                               child: IconButton(
-                                icon: const Icon(Icons.delete, color: AppColors.error),
+                                icon: const Icon(Icons.delete,
+                                    color: AppColors.error),
                                 onPressed: () => _deletePhoto(photo.id),
                                 iconSize: 20,
                                 padding: EdgeInsets.zero,
