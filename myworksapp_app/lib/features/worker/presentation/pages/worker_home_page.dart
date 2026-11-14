@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/repositories/job_repository.dart';
+import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/database/repositories/notification_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
@@ -21,6 +22,7 @@ import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../../../../core/widgets/app_guided_tour.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../ratings/domain/client_rating_label.dart';
 import '../providers/worker_home_refresh_provider.dart';
 import '../widgets/worker_active_job_banner.dart';
 import '../widgets/worker_demo_tour_overlay.dart';
@@ -721,6 +723,8 @@ class _JobsTab extends StatefulWidget {
 
 class _JobsTabState extends State<_JobsTab> {
   late Future<List<JobModel>> _future;
+  Future<Map<String, ClientRatingSummary>>? _ratings;
+  String? _ratingKey;
 
   @override
   void initState() {
@@ -732,6 +736,8 @@ class _JobsTabState extends State<_JobsTab> {
   void didUpdateWidget(covariant _JobsTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.reloadToken != widget.reloadToken) {
+      _ratings = null;
+      _ratingKey = null;
       setState(() {
         _future = widget.loader();
       });
@@ -793,14 +799,43 @@ class _JobsTabState extends State<_JobsTab> {
             );
           }
 
-          return ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-            itemCount: jobs.length,
-            itemBuilder: (context, index) => WorkerJobCard(
-              job: jobs[index],
-              onTap: () => widget.onJobTap(jobs[index]),
-            ),
+          final key = jobs.map((job) => job.userId).join('|');
+          if (_ratings == null || _ratingKey != key) {
+            _ratingKey = key;
+            _ratings = RatingRepository().clientSummaries(
+              jobs.map((job) => job.userId).toList(),
+            );
+          }
+          return FutureBuilder<Map<String, ClientRatingSummary>>(
+            future: _ratings,
+            builder: (context, ratingSnap) {
+              final ready =
+                  ratingSnap.connectionState == ConnectionState.done;
+              final known = ready && !ratingSnap.hasError;
+              final summaries = ratingSnap.data ?? {};
+              return ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                itemCount: jobs.length,
+                itemBuilder: (context, index) {
+                  final job = jobs[index];
+                  final summary = summaries[job.userId];
+                  final label = job.status == AppConstants.jobStatusPending &&
+                          ready
+                      ? clientRatingLabel(
+                          average: summary?.average,
+                          count: summary?.count ?? 0,
+                          known: known,
+                        )
+                      : null;
+                  return WorkerJobCard(
+                    job: job,
+                    clientRatingLabel: label,
+                    onTap: () => widget.onJobTap(job),
+                  );
+                },
+              );
+            },
           );
         },
       ),

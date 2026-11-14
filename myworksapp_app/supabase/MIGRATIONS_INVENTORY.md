@@ -7,6 +7,7 @@
 | 20261010000001 | `migrations/20261010000001_asesor_acuerdos_search_path_fk.sql` | Revoca EXECUTE de `acuerdo_pendiente`, `proponer_acuerdo` y `responder_acuerdo` a `anon`/`PUBLIC` y lo deja en `authenticated` + `service_role` (sin reescribir el cuerpo). Fija `search_path` de `slug_geo` y `disputa_esta_activa`. Crea índices de cobertura para las FKs de `public` que el asesor marca sin índice. Idempotente. **No está aplicada en la base viva.** |
 | 20261011000001 | `migrations/20261011000001_bucket_evidencias.sql` | Bucket privado `evidencias` y políticas: leen las partes del trabajo y un admin; inserta solo el usuario autenticado en `{trabajo}/{usuario}/…`. **No aplicada.** |
 | 20261011000002 | `migrations/20261011000002_pago_por_confirmar.sql` | Estado `pagado_por_confirmar`, confirmación idempotente y reembolso automático. No programa el cobro a Transbank: eso lo hace la función `webpay-reconcile`. **No aplicada.** |
+| 20261012000001 | `migrations/20261012000001_calificacion_bidireccional.sql` | Calificación cliente↔profesional, una por dirección, y RPC de promedio del cliente. **No aplicada.** |
 
 ## Snapshot CLI (2026-09-07)
 

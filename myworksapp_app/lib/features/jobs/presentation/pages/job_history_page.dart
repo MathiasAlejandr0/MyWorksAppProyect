@@ -109,10 +109,20 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
                       ),
                     ],
                   ),
-                  trailing: Icon(
-                    _getStatusIcon(job.status),
-                    color: _getStatusColor(job.status),
-                  ),
+                  trailing: user.role == AppConstants.roleWorker &&
+                          job.status == AppConstants.jobStatusCompleted
+                      ? TextButton(
+                          onPressed: () {
+                            context.push(
+                              '${AppConstants.routeRating}/${job.id}',
+                            );
+                          },
+                          child: const Text('Calificar'),
+                        )
+                      : Icon(
+                          _getStatusIcon(job.status),
+                          color: _getStatusColor(job.status),
+                        ),
                   onTap: () {
                     context.push('${AppConstants.routeJobDetail}/${job.id}');
                   },
@@ -180,5 +190,3 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
-
-

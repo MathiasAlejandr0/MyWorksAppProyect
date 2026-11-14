@@ -49,16 +49,24 @@ class _RatingPageState extends State<RatingPage> {
     try {
       final userId = supabase.auth.currentUser?.id;
       final job = await JobRepository().getJobById(widget.jobId);
-      final existing = await _ratingRepository.getRatingByJobId(widget.jobId);
+      final direction = userId != null && userId == job?.workerId
+          ? RatingDirection.workerToClient
+          : RatingDirection.clientToWorker;
+      final existing = await _ratingRepository.getRatingByJobId(
+        widget.jobId,
+        direction: direction,
+      );
       final disputeOpen =
           await DisputeService.instance.hasOpenDispute(widget.jobId);
       if (!mounted) return;
       final block = ratingBlockReason(
         currentUserId: userId,
         jobClientId: job?.userId,
+        jobWorkerId: job?.workerId,
         jobStatus: job?.status,
         alreadyRated: existing != null,
         disputeOpen: disputeOpen,
+        direction: direction,
       );
       if (block != null) {
         ScaffoldMessenger.of(context)
@@ -71,6 +79,10 @@ class _RatingPageState extends State<RatingPage> {
         id: const Uuid().v4(),
         jobId: widget.jobId,
         userId: userId,
+        ratedUserId: direction == RatingDirection.workerToClient
+            ? job?.userId
+            : job?.workerId,
+        direction: direction,
         score: _selectedRating,
         comment: _commentController.text.trim().isEmpty
             ? null
@@ -103,7 +115,7 @@ class _RatingPageState extends State<RatingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppGradientAppBar(
-        title: Text('Calificar Trabajo'),
+        title: const Text('Calificar'),
       ),
       body: SingleChildScrollView(
         padding: LayoutUtils.scrollPadding(context),

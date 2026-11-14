@@ -2,6 +2,20 @@ import '../models/rating_model.dart';
 import '../models/worker_review_model.dart';
 import '../supabase_db.dart';
 
+class ClientRatingSummary {
+  const ClientRatingSummary({
+    required this.userId,
+    required this.count,
+    this.average,
+    this.known = true,
+  });
+
+  final String userId;
+  final double? average;
+  final int count;
+  final bool known;
+}
+
 class RatingRepository {
   static const String _table = 'calificaciones';
 
@@ -9,11 +23,45 @@ class RatingRepository {
     await supabase.from(_table).insert(rating.toMap());
   }
 
-  Future<RatingModel?> getRatingByJobId(String jobId) async {
-    final row =
-        await supabase.from(_table).select().eq('id_trabajo', jobId).maybeSingle();
+  Future<RatingModel?> getRatingByJobId(
+    String jobId, {
+    String direction = 'cliente_a_trabajador',
+  }) async {
+    final row = await supabase
+        .from(_table)
+        .select()
+        .eq('id_trabajo', jobId)
+        .eq('direccion', direction)
+        .maybeSingle();
     if (row == null) return null;
     return RatingModel.fromMap(row);
+  }
+
+  /// Promedio y cantidad que otros profesionales dieron al cliente.
+  /// Si la RPC falla, el mapa queda vacío y la UI no inventa «Cliente nuevo».
+  Future<Map<String, ClientRatingSummary>> clientSummaries(
+    List<String> userIds,
+  ) async {
+    final ids = userIds.where((id) => id.isNotEmpty).toSet().toList();
+    if (ids.isEmpty) return {};
+    final rows = await supabase.rpc(
+      'resumen_calificacion_clientes',
+      params: {'p_ids': ids},
+    );
+    final result = <String, ClientRatingSummary>{};
+    for (final row in rows as List) {
+      final id = row['id_usuario'] as String?;
+      if (id == null) continue;
+      final count = (row['cantidad'] as num?)?.toInt() ?? 0;
+      final average = (row['promedio'] as num?)?.toDouble();
+      result[id] = ClientRatingSummary(
+        userId: id,
+        average: average,
+        count: count,
+        known: true,
+      );
+    }
+    return result;
   }
 
   Future<List<RatingModel>> getRatingsByWorkerId(String workerId) async {
@@ -48,11 +96,8 @@ class RatingRepository {
         rows.map<RatingModel>((m) => RatingModel.fromMap(m)).toList();
     if (ratings.isEmpty) return [];
 
-    final reviewerIds = ratings
-        .map((r) => r.userId)
-        .whereType<String>()
-        .toSet()
-        .toList();
+    final reviewerIds =
+        ratings.map((r) => r.userId).whereType<String>().toSet().toList();
 
     final namesByUserId = <String, String>{};
     if (reviewerIds.isNotEmpty) {
@@ -76,9 +121,8 @@ class RatingRepository {
             score: rating.score,
             comment: rating.comment,
             createdAt: rating.createdAt,
-            reviewerName: rating.userId != null
-                ? namesByUserId[rating.userId!]
-                : null,
+            reviewerName:
+                rating.userId != null ? namesByUserId[rating.userId!] : null,
           ),
         )
         .toList();
@@ -95,6 +139,7 @@ class RatingRepository {
         .from(_table)
         .select()
         .inFilter('id_trabajo', jobIds)
+        .eq('direccion', 'cliente_a_trabajador')
         .order('creado_en', ascending: false);
 
     if (limit != null) {
