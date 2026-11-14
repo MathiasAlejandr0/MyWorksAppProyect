@@ -284,7 +284,17 @@ extension JobDetailStatusActions on _JobDetailPageState {
           );
         }
         if (user.role == AppConstants.roleUser) {
+          final canRate =
+              await DisputeService.instance.canRateJob(widget.jobId);
           if (!mounted) return;
+          if (!canRate) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Calificación bloqueada por una disputa abierta'),
+              ),
+            );
+            return;
+          }
           context.push('${AppConstants.routeRating}/${widget.jobId}');
         }
       } else if (!mounted) {

@@ -428,7 +428,9 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
                   <h2>Disputa #{displayId}</h2>
 
-                  <span className={`status-badge status-badge--review`}>En revisión</span>
+                  <span className={`status-badge ${selectedTicket.status === 'Resolved' ? 'status-badge--resolved' : 'status-badge--review'}`}>
+                    {selectedTicket.status === 'Resolved' ? 'Resuelto' : 'En revisión'}
+                  </span>
 
                 </div>
 

@@ -12,6 +12,7 @@ import {
   LogIn,
 } from 'lucide-react';
 import { AuthError, useAuth } from '../context/AuthContext';
+import { supabase } from '../supabaseClient';
 
 export function DesktopLoginScreen() {
   const { login } = useAuth();
@@ -20,6 +21,7 @@ export function DesktopLoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -124,6 +126,7 @@ export function DesktopLoginScreen() {
             </div>
 
             {error && <p className="login-error">{error}</p>}
+            {notice && <p className="login-error">{notice}</p>}
 
             <button type="submit" className="login-submit" disabled={submitting}>
               <LogIn size={18} />
@@ -132,7 +135,32 @@ export function DesktopLoginScreen() {
           </form>
 
           <p className="login-forgot">
-            ¿Olvidaste tu contraseña? <a href="#">Recupérala aquí</a>
+            ¿Olvidaste tu contraseña?{' '}
+            <button
+              type="button"
+              className="login-forgot-btn"
+              onClick={() => {
+                void (async () => {
+                  setError(null);
+                  setNotice(null);
+                  if (!email.trim()) {
+                    setError('Escribe tu correo para recuperar la clave.');
+                    return;
+                  }
+                  const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+                    email.trim(),
+                    { redirectTo: window.location.origin },
+                  );
+                  if (resetError) {
+                    setError('No se pudo enviar el correo de recuperación.');
+                    return;
+                  }
+                  setNotice('Si el correo está registrado, te enviamos un enlace.');
+                })();
+              }}
+            >
+              Recupérala aquí
+            </button>
           </p>
 
           <div className="login-security-footer">

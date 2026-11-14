@@ -129,7 +129,10 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
     try {
       final authState = ref.read(authProvider);
       final user = authState.user;
-      if (user == null) return;
+      if (user == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
 
       final updatedUser = user.copyWith(
         name: _nameController.text.trim(),

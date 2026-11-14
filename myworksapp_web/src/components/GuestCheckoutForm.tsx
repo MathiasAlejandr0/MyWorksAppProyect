@@ -45,6 +45,10 @@ export function GuestCheckoutForm({
       setError('Completa tus datos personales y la dirección del trabajo.');
       return;
     }
+    if (import.meta.env.PROD && !turnstileSiteKey()) {
+      setError('El checkout no está configurado: falta la verificación anti-robots.');
+      return;
+    }
     if (turnstileSiteKey() && !captchaToken) {
       setError('Confirma que no eres un robot');
       return;

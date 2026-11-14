@@ -5,10 +5,13 @@ import '../../../../core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/database/models/rating_model.dart';
 import '../../../../core/database/supabase_db.dart';
+import '../../../../core/services/dispute_service.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../domain/rating_gate.dart';
 
 class RatingPage extends StatefulWidget {
   final String jobId;
@@ -45,8 +48,21 @@ class _RatingPageState extends State<RatingPage> {
 
     try {
       final userId = supabase.auth.currentUser?.id;
-      if (userId == null) {
-        ErrorHandler.showError(context, 'Debes iniciar sesión para calificar');
+      final job = await JobRepository().getJobById(widget.jobId);
+      final existing = await _ratingRepository.getRatingByJobId(widget.jobId);
+      final disputeOpen =
+          await DisputeService.instance.hasOpenDispute(widget.jobId);
+      if (!mounted) return;
+      final block = ratingBlockReason(
+        currentUserId: userId,
+        jobClientId: job?.userId,
+        jobStatus: job?.status,
+        alreadyRated: existing != null,
+        disputeOpen: disputeOpen,
+      );
+      if (block != null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(block)));
         setState(() => _isLoading = false);
         return;
       }

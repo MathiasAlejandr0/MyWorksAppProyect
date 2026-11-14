@@ -58,12 +58,19 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   }
 
   Future<void> _setStatus(UserModel user, String status) async {
-    await _repo.updateAccountStatus(user.id, status);
-    await _load();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${user.name}: $status')),
-    );
+    try {
+      await _repo.updateAccountStatus(user.id, status);
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${user.name}: $status')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
+      );
+    }
   }
 
   @override

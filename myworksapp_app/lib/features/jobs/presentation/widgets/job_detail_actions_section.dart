@@ -121,7 +121,14 @@ class JobDetailActionsSection extends StatelessWidget {
             FutureBuilder<bool>(
               future: DisputeService.instance.canRateJob(jobId),
               builder: (context, snapshot) {
-                final canRate = snapshot.data ?? true;
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                }
+                final canRate = snapshot.data ?? false;
                 if (!canRate) {
                   return const Text(
                     'Calificación bloqueada por disputa abierta.',

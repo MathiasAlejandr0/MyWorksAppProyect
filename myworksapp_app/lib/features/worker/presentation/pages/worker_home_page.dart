@@ -184,8 +184,8 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
         }
       }
       await _workerRepository.updateAvailability(user.id, newAvailability);
-      setState(() => _isAvailable = newAvailability);
       if (!mounted) return;
+      setState(() => _isAvailable = newAvailability);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(newAvailability

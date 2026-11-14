@@ -1,11 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import {
   Bell,
   Star,
-  MapPin,
-  SlidersHorizontal,
   ChevronLeft,
-  Navigation,
   X,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
@@ -73,7 +70,24 @@ export function SearchResultsView({
   onLoadMore,
 }: SearchResultsViewProps) {
   const displayQuery = query.trim() || 'profesionales';
-  const total = workers.length;
+  const [sort, setSort] = useState<'relevance' | 'price' | 'rating'>('relevance');
+  const [minRating, setMinRating] = useState(0);
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const visibleWorkers = useMemo(() => {
+    const filtered = workers.filter((worker) => {
+      if (worker.rating < minRating) return false;
+      if (onlyAvailable && worker.availableNow === false) return false;
+      return true;
+    });
+    if (sort === 'price') {
+      return [...filtered].sort((a, b) => a.pricePerVisit - b.pricePerVisit);
+    }
+    if (sort === 'rating') {
+      return [...filtered].sort((a, b) => b.rating - a.rating);
+    }
+    return filtered;
+  }, [workers, sort, minRating, onlyAvailable]);
+  const total = visibleWorkers.length;
 
   return (
     <div className="search-view">
@@ -138,35 +152,36 @@ export function SearchResultsView({
         <aside className="search-filters">
           <div className="search-filters-head">
             <h2>Filtros</h2>
-            <button type="button" className="search-filters-clear">
+            <button
+              type="button"
+              className="search-filters-clear"
+              onClick={() => {
+                setSort('relevance');
+                setMinRating(0);
+                setOnlyAvailable(false);
+              }}
+            >
               Limpiar todo
             </button>
           </div>
 
           <div className="filter-group">
-            <label className="filter-label">
-              <MapPin size={14} /> Ubicación
-            </label>
-            <select className="filter-select" defaultValue="all" aria-label="Ubicación">
-              <option value="all">Todas las ubicaciones</option>
-              <option value="condes">Las Condes, Santiago</option>
-              <option value="providencia">Providencia</option>
-              <option value="nunoa">Ñuñoa</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
             <label className="filter-label">Calificación mínima</label>
             <div className="filter-stars">
-              {['4.5 y más', '4.0 y más', '3.5 y más', '3.0 y más'].map((label, i) => (
-                <label key={label} className="filter-star-row">
-                  <input type="radio" name="rating" defaultChecked={i === 0} />
-                  <span className="filter-star-icons">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} size={12} fill={s <= 4 ? 'var(--orange-accent)' : 'none'} />
-                    ))}
-                  </span>
-                  <span>{label}</span>
+              {[
+                { label: 'Cualquiera', value: 0 },
+                { label: '4.5 y más', value: 4.5 },
+                { label: '4.0 y más', value: 4 },
+                { label: '3.5 y más', value: 3.5 },
+              ].map((item) => (
+                <label key={item.label} className="filter-star-row">
+                  <input
+                    type="radio"
+                    name="rating"
+                    checked={minRating === item.value}
+                    onChange={() => setMinRating(item.value)}
+                  />
+                  <span>{item.label}</span>
                 </label>
               ))}
             </div>
@@ -175,27 +190,14 @@ export function SearchResultsView({
           <div className="filter-group">
             <label className="filter-label">Disponibilidad</label>
             <label className="filter-check">
-              <input type="checkbox" defaultChecked /> Disponible ahora
-            </label>
-            <label className="filter-check">
-              <input type="checkbox" /> En las próximas 24h
+              <input
+                type="checkbox"
+                checked={onlyAvailable}
+                onChange={(event) => setOnlyAvailable(event.target.checked)}
+              />{' '}
+              Disponible ahora
             </label>
           </div>
-
-          <div className="filter-group">
-            <label className="filter-label">Servicios</label>
-            {['Instalaciones', 'Reparaciones', 'Mantenimiento', 'Emergencias'].map(
-              (svc, i) => (
-                <label key={svc} className="filter-check">
-                  <input type="checkbox" defaultChecked={i === 0} /> {svc}
-                </label>
-              ),
-            )}
-          </div>
-
-          <button type="button" className="filter-more-btn">
-            <SlidersHorizontal size={16} /> Más filtros
-          </button>
         </aside>
 
         <main className="search-results-main">
@@ -208,7 +210,12 @@ export function SearchResultsView({
                   : `Mostrando ${total} profesional${total === 1 ? '' : 'es'}${hasMore ? ' (hay más)' : ''}`}
               </p>
             </div>
-            <select className="search-sort" defaultValue="relevance" aria-label="Ordenar por">
+            <select
+              className="search-sort"
+              value={sort}
+              aria-label="Ordenar por"
+              onChange={(event) => setSort(event.target.value as 'relevance' | 'price' | 'rating')}
+            >
               <option value="relevance">Ordenar por: Relevancia</option>
               <option value="price">Precio</option>
               <option value="rating">Calificación</option>
@@ -236,9 +243,14 @@ export function SearchResultsView({
                 Ver otras categorías
               </button>
             </div>
+          ) : visibleWorkers.length === 0 ? (
+            <div className="search-empty" role="status">
+              <h2>Ningún profesional cumple esos filtros</h2>
+              <p>Prueba con otra calificación o limpia los filtros.</p>
+            </div>
           ) : (
             <div className="search-results-grid">
-              {workers.map((w) => (
+              {visibleWorkers.map((w) => (
                 <button
                   key={w.id}
                   type="button"
@@ -296,15 +308,12 @@ export function SearchResultsView({
         <aside className="search-map-panel">
           <Suspense fallback={<div className="search-map-skeleton" aria-hidden />}>
             <PremiumSearchMap
-              workers={workers}
+              workers={visibleWorkers}
               selectedWorkerId={selectedWorkerId}
               onSelectWorker={onSelectWorker}
               categoryLabel={displayQuery}
             />
           </Suspense>
-          <button type="button" className="search-map-locate">
-            <Navigation size={14} /> Usar mi ubicación actual
-          </button>
           <div className="search-map-legend">
             <span className="search-map-legend-dot" /> Profesionales cerca
           </div>

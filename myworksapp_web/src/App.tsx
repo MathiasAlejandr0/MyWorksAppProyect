@@ -291,7 +291,7 @@ function resolveCategory(text: string): {
 
 export function App() {
 
-  const { profile, logout, error: authError, clearError } = useAuth();
+  const { profile, loading: authLoading, logout, error: authError, clearError } = useAuth();
   const queryClient = useQueryClient();
 
   const [view, setView] = useState<AppView>('landing');
@@ -731,7 +731,7 @@ export function App() {
 
         ...toWebWorkerCard(worker),
 
-        availableNow: true,
+        availableNow: worker.isAvailable === 1,
 
       }));
 
@@ -769,7 +769,7 @@ export function App() {
       });
       const extra: SearchWorker[] = page.workers.map((worker: WorkerWithProfile) => ({
         ...toWebWorkerCard(worker),
-        availableNow: true,
+        availableNow: worker.isAvailable === 1,
       }));
       setServiceMatch({
         ...match,
@@ -797,6 +797,11 @@ export function App() {
     const when = slotIso ?? scheduledAt ?? undefined;
     if (slotIso) setScheduledAt(slotIso);
     setBookingError(null);
+
+    if (authLoading) {
+      setBookingError('Estamos confirmando tu sesión. Inténtalo en un momento.');
+      return;
+    }
 
     // Sin sesión: datos + Webpay. Con sesión: cobro a la tarjeta de la app.
     if (!profile) {
@@ -1011,7 +1016,7 @@ export function App() {
               p_motivo: reason,
               p_descripcion: detail,
             });
-            if (error) throw new Error(error.message);
+            if (error) throw new Error('No se pudo abrir la disputa.');
           } : undefined}
 
           onAddDisputeComment={profile ? async (comment) => {
@@ -1024,13 +1029,13 @@ export function App() {
               .order('creado_en', { ascending: false })
               .limit(1)
               .maybeSingle();
-            if (error) throw new Error(error.message);
+            if (error) throw new Error('No se pudo leer la disputa.');
             if (!data?.id) throw new Error('No hay una disputa abierta en este trabajo.');
             const { error: commentError } = await supabase.rpc('comentar_disputa', {
               p_id: data.id,
               p_comentario: comment,
             });
-            if (commentError) throw new Error(commentError.message);
+            if (commentError) throw new Error('No se pudo agregar el comentario.');
           } : undefined}
 
         />
