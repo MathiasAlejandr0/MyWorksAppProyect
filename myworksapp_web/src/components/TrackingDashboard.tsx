@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   Bell,
@@ -41,6 +41,7 @@ interface TrackingDashboardProps {
   confirmError?: string | null;
   onOpenDispute?: (reason: string, detail: string) => Promise<void>;
   onAddDisputeComment?: (comment: string) => Promise<void>;
+  evidence?: ReactNode;
 }
 
 export function TrackingDashboard({
@@ -73,6 +74,7 @@ export function TrackingDashboard({
   confirmError = null,
   onOpenDispute,
   onAddDisputeComment,
+  evidence,
 }: TrackingDashboardProps) {
   const [showPayment, setShowPayment] = useState(false);
   const [disputeReason, setDisputeReason] = useState('calidad');
@@ -195,6 +197,7 @@ export function TrackingDashboard({
             <p className="tracking-status-detail" role="alert">{confirmError}</p>
           ) : null}
 
+          {evidence}
           <button type="button" className="btn-primary tracking-chat-btn" onClick={onOpenChat}>
             <MessageCircle size={18} /> Abrir chat
           </button>

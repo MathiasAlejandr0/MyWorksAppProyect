@@ -76,6 +76,12 @@ const QuickBookingBar = lazy(() =>
   })),
 );
 
+const JobEvidencePanel = lazy(() =>
+  import('./components/JobEvidencePanel').then((m) => ({
+    default: m.JobEvidencePanel,
+  })),
+);
+
 const TrackingDashboard = lazy(() =>
   import('./components/TrackingDashboard').then((m) => ({
     default: m.TrackingDashboard,
@@ -999,6 +1005,10 @@ export function App() {
           }}
 
           onOpenChat={() => setShowChat(true)}
+
+          evidence={checkoutJobId && profile ? (
+            <JobEvidencePanel jobId={checkoutJobId} userId={profile.id} />
+          ) : null}
 
           onOpenNotifications={() => setShowNotifications(true)}
 
