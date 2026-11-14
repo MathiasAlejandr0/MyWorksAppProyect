@@ -1,5 +1,13 @@
 # Inventario de migraciones (snapshot CLI)
 
+## Pendiente de aplicar en `wxqrfcqifkfgawrnqmnj`
+
+| Version | Archivo | Qué hace |
+|---------|---------|----------|
+| 20261010000001 | `migrations/20261010000001_asesor_acuerdos_search_path_fk.sql` | Revoca EXECUTE de `acuerdo_pendiente`, `proponer_acuerdo` y `responder_acuerdo` a `anon`/`PUBLIC` y lo deja en `authenticated` + `service_role` (sin reescribir el cuerpo). Fija `search_path` de `slug_geo` y `disputa_esta_activa`. Crea índices de cobertura para las FKs de `public` que el asesor marca sin índice. Idempotente. **No está aplicada en la base viva.** |
+
+## Snapshot CLI (2026-09-07)
+
 Generado tras `npx supabase login` + `npx supabase link --project-ref wxqrfcqifkfgawrnqmnj`
 y `npx supabase migration list` (2026-09-07).
 
@@ -12,6 +20,7 @@ y `npx supabase migration list` (2026-09-07).
 | 20250607000003 | revoke trigger execute |
 | 20250819120000 | oauth profile names |
 | 20250907120000 | schema baseline documented |
+| 20261010000001 | asesor acuerdos, search_path e índices FK (pendiente de aplicar) |
 
 ## Remoto (historial en Supabase) sin archivo local
 
