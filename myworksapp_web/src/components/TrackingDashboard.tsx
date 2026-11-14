@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   ArrowLeft,
   Bell,
-  ChevronDown,
   Lock,
   MessageCircle,
   ShieldCheck,
@@ -36,6 +35,7 @@ interface TrackingDashboardProps {
   onBack: () => void;
   onOpenChat: () => void;
   onOpenNotifications?: () => void;
+  onLogout?: () => void;
   onConfirmReceipt?: () => void;
   confirmBusy?: boolean;
   confirmError?: string | null;
@@ -67,6 +67,7 @@ export function TrackingDashboard({
   onBack,
   onOpenChat,
   onOpenNotifications,
+  onLogout,
   onConfirmReceipt,
   confirmBusy = false,
   confirmError = null,
@@ -123,8 +124,12 @@ export function TrackingDashboard({
               <strong>{profileName ? profileLabel(profileName) : 'Invitado'}</strong>
               <span>Cuenta de cliente</span>
             </div>
-            <ChevronDown size={14} />
           </div>
+          {profileName && onLogout ? (
+            <button type="button" className="btn-ghost" onClick={() => onLogout()}>
+              Salir
+            </button>
+          ) : null}
         </div>
       </header>
 

@@ -985,6 +985,8 @@ export function App() {
 
           unreadCount={unreadCount}
 
+          onLogout={() => void logout()}
+
           onBack={() => {
             // Un pedido abierto desde Mis pedidos o tras recargar no trae resultados de búsqueda.
             sessionStorage.removeItem('mwa-active-job');
@@ -1125,13 +1127,23 @@ export function App() {
             setAuthInitialEmail('');
             setShowAuth(true);
           }}
+          onOpenNotifications={() => setShowNotifications(true)}
+          onLogout={() => void logout()}
+          unreadCount={unreadCount}
           hasMore={Boolean(serviceMatch?.nextCursor)}
           isLoadingMore={loadingMoreWorkers}
           onLoadMore={() => void loadMoreWorkers()}
 
         />
 
-
+        {showNotifications && (
+          <div className="toast-error" role="status">
+            {notificationLines.length === 0
+              ? 'No tienes notificaciones.'
+              : notificationLines.slice(0, 5).join(' · ')}
+            <button type="button" onClick={() => setShowNotifications(false)}>Cerrar</button>
+          </div>
+        )}
 
         {selectedWorker && (
 

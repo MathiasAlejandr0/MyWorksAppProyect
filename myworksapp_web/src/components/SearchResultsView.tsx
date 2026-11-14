@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react';
 import {
-  Heart,
   Bell,
   Star,
   MapPin,
@@ -42,6 +41,9 @@ interface SearchResultsViewProps {
   onSelectWorker: (worker: SearchWorker) => void;
   onBack: () => void;
   onShowAuth: () => void;
+  onOpenNotifications?: () => void;
+  onLogout?: () => void;
+  unreadCount?: number;
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
@@ -63,6 +65,9 @@ export function SearchResultsView({
   onSelectWorker,
   onBack,
   onShowAuth,
+  onOpenNotifications,
+  onLogout,
+  unreadCount = 0,
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
@@ -104,21 +109,23 @@ export function SearchResultsView({
         </div>
 
         <div className="search-view-nav-right">
-          <button type="button" className="search-nav-icon-btn" aria-label="Favoritos">
-            <Heart size={18} />
-            <span>Favoritos</span>
-          </button>
-          <button type="button" className="search-nav-bell" aria-label="Notificaciones">
+          <button
+            type="button"
+            className="search-nav-bell"
+            aria-label="Notificaciones"
+            onClick={onOpenNotifications}
+          >
             <Bell size={18} />
+            {unreadCount > 0 ? <span className="search-nav-badge">{unreadCount}</span> : null}
           </button>
           {profileName ? (
-            <div className="search-nav-profile">
+            <button type="button" className="search-nav-profile" onClick={() => onLogout?.()}>
               <div className="search-nav-avatar">{profileName.trim().charAt(0).toUpperCase()}</div>
               <div>
                 <strong>{profileLabel(profileName)}</strong>
-                <span>Ver perfil</span>
+                <span>Salir</span>
               </div>
-            </div>
+            </button>
           ) : (
             <button type="button" className="btn-outline-orange" onClick={onShowAuth}>
               Ingresar
@@ -250,7 +257,6 @@ export function SearchResultsView({
                   <div className="pro-card-body">
                     <div className="pro-card-top">
                       <strong>{w.name}</strong>
-                      <Heart size={16} className="pro-card-heart" />
                     </div>
                     <span className="pro-card-role">{w.profession}</span>
                     <div className="pro-card-rating">
