@@ -80,7 +80,7 @@ export function DigitalContractModal({
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <CheckCircle2 size={24} color="#34C759" />
               <div>
-                <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#34C759' }}>CONTRATO FIRMADO ELECTRÓNICAMENTE</div>
+                <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#34C759' }}>REVISIÓN DE DEMO REGISTRADA</div>
                 <div style={{ fontSize: '11px', color: '#CBD5E1', fontFamily: 'monospace' }}>Identificador de demo: {shaHash}</div>
               </div>
             </div>
@@ -90,9 +90,9 @@ export function DigitalContractModal({
           </div>
         ) : (
           <div style={{ marginBottom: '18px', textAlign: 'center' }}>
-            <p style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '12px' }}>Al presionar "Firmar Electrónicamente", ambas partes aceptan las cláusulas contractuales con validez legal.</p>
+            <p style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '12px' }}>Esto solo marca la revisión de la demo. No es una firma electrónica ni tiene validez legal.</p>
             <button onClick={handleSignContract} className="btn-action-primary" style={{ width: '100%', padding: '14px', justifyContent: 'center', fontSize: '14px' }}>
-              <FileCheck size={18} /> Firmar Electrónicamente (Ley 19.799)
+              <FileCheck size={18} /> Marcar como revisado (demo)
             </button>
           </div>
         )}
