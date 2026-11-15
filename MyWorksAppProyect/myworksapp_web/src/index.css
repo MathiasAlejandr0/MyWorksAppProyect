@@ -1,7 +1,7 @@
 @import '../../shared/design-tokens.css';
 
 :root {
-  --font-family: 'DM Sans', system-ui, sans-serif;
+  --font-family: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
   --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.35);
   --shadow-glow: 0 14px 42px rgba(255, 94, 3, 0.32);
   --transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease, opacity 0.2s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);

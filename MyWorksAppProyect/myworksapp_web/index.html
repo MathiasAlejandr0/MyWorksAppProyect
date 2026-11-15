@@ -3,12 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <!-- Conexiones tempranas: fuente e imagen principal (LCP) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Imagen principal (LCP) servida desde el mismo dominio. La fuente DM Sans
+         va en el bundle (@fontsource), sin hoja de Google Fonts que bloquee el render. -->
+    <link
+      rel="preload"
+      as="image"
+      href="/hero/tecnico-640.webp"
+      imagesrcset="/hero/tecnico-480.webp 480w, /hero/tecnico-640.webp 640w, /hero/tecnico-960.webp 960w"
+      imagesizes="(max-width: 900px) 100vw, 560px"
+      fetchpriority="high"
+    />
     <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <title>My Works App — Servicios del Hogar & Profesionales Verificados</title>
@@ -22,7 +27,7 @@
     <meta name="theme-color" content="#00205B" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com https://photon.komoot.io https://nominatim.openstreetmap.org https://tiles.openfreemap.org https://*.openfreemap.org; frame-src https://challenges.cloudflare.com https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; form-action https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; base-uri 'self'; worker-src 'self' blob:; object-src 'none'"
+      content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com https://photon.komoot.io https://nominatim.openstreetmap.org https://tiles.openfreemap.org https://*.openfreemap.org; frame-src https://challenges.cloudflare.com https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; form-action https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; base-uri 'self'; worker-src 'self' blob:; object-src 'none'"
     />
   </head>
   <body class="dark">

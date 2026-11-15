@@ -21,6 +21,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // El mapa (MapLibre + Leaflet, ~1,2 MB) solo se pide al abrir la
+        // búsqueda. React, Supabase y React Query van en chunks propios para
+        // descargarse en paralelo y quedar en caché entre despliegues.
         manualChunks(id) {
           if (
             id.includes('node_modules/leaflet') ||
@@ -29,6 +32,9 @@ export default defineConfig({
           ) {
             return 'map';
           }
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'vendor-react';
+          if (id.includes('node_modules/@supabase/')) return 'vendor-supabase';
+          if (id.includes('node_modules/@tanstack/')) return 'vendor-query';
         },
       },
     },
