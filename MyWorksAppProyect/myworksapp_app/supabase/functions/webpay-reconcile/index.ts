@@ -4,16 +4,27 @@ import {
   PAYMENT_AWAITING_JOB,
   UNCONFIRMED_WINDOW_MS,
 } from "../_shared/reconcile_hold.ts";
+import { reconcileAuthorized } from "../_shared/reconcile_auth.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { tbkRefund, tbkStatusAuthorized, tbkTransactionStatus } from "../_shared/tbk.ts";
 
-function authorized(req: Request): boolean {
-  const secret = Deno.env.get("RECONCILE_CRON_SECRET") || "";
-  const header = req.headers.get("x-reconcile-secret") || "";
-  const bearer = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  if (secret && header === secret) return true;
-  return Boolean(serviceKey) && bearer === serviceKey;
+async function authorized(req: Request): Promise<boolean> {
+  return await reconcileAuthorized({
+    header: req.headers.get("x-reconcile-secret") || "",
+    bearer: (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, ""),
+    envSecret: Deno.env.get("RECONCILE_CRON_SECRET") || "",
+    serviceKey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "",
+    vaultCheck: async (secret) => {
+      const { data, error } = await serviceClient().rpc("reconcile_secret_valido", {
+        p_secret: secret,
+      });
+      if (error) {
+        console.error("validar secreto cron", error.code ?? "rpc");
+        return false;
+      }
+      return data === true;
+    },
+  });
 }
 
 function capturedAtMs(value: string | null | undefined): number {
@@ -25,7 +36,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeadersFor(req) });
   }
-  if (!authorized(req)) {
+  if (!(await authorized(req))) {
     return jsonResponse(req, { error: "No autorizado" }, 401);
   }
 
