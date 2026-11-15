@@ -1,0 +1,592 @@
+{
+    "metrics": {
+        "mwa_errores": {
+            "passes": 0,
+            "fails": 3360,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "data_received": {
+            "count": 656577162,
+            "rate": 5204759.966556493
+        },
+        "vus_max": {
+            "max": 204,
+            "value": 204,
+            "min": 204
+        },
+        "group_duration": {
+            "med": 322.037973,
+            "p(90)": 918.2455045999999,
+            "p(95)": 1024.4764808,
+            "p(99)": 1884.05032112,
+            "max": 2962.807899,
+            "count": 9357,
+            "avg": 490.86120715047815,
+            "min": 164.324286
+        },
+        "mwa_http_429": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<1": false
+            }
+        },
+        "iteration_duration": {
+            "max": 9040.786121,
+            "count": 3360,
+            "avg": 5561.953161496433,
+            "min": 20.338138,
+            "med": 5874.5368425,
+            "p(90)": 6734.1982704,
+            "p(95)": 6979.0022311,
+            "p(99)": 7542.73787344
+        },
+        "http_req_duration{name:rest_servicios}": {
+            "min": 80.132479,
+            "med": 105.928771,
+            "p(90)": 125.41790680000001,
+            "p(95)": 135.48613419999998,
+            "p(99)": 241.1895935800001,
+            "max": 507.11383,
+            "count": 3119,
+            "avg": 109.90664357582551,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "http_req_connecting": {
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0.2552922399999993,
+            "max": 29.816329,
+            "count": 28312,
+            "avg": 0.008679539877083926
+        },
+        "http_req_duration": {
+            "max": 2848.552085,
+            "count": 28312,
+            "avg": 160.63344981954495,
+            "min": 20.174902,
+            "med": 124.155887,
+            "p(90)": 249.6266881,
+            "p(95)": 283.05581069999994,
+            "p(99)": 501.71513557,
+            "thresholds": {
+                "p(95)<800": false,
+                "p(99)<1500": false
+            }
+        },
+        "http_req_duration{name:rpc_catalogo}": {
+            "med": 105.834591,
+            "p(90)": 125.45555420000001,
+            "p(95)": 134.7777207,
+            "p(99)": 181.2946546200001,
+            "max": 503.050892,
+            "count": 3119,
+            "avg": 109.42342851170251,
+            "min": 81.869958,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "http_req_duration{name:web_portada}": {
+            "min": 121.77382,
+            "med": 165.500663,
+            "p(90)": 208.4337918,
+            "p(95)": 308.27670009999997,
+            "p(99)": 317.78033758000004,
+            "max": 1075.510179,
+            "count": 3119,
+            "avg": 176.90206334145554,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_duration{name:web_imagen_oficio}": {
+            "p(95)": 336.7556060999998,
+            "p(99)": 505.8952985,
+            "max": 807.291113,
+            "count": 3119,
+            "avg": 225.10344982045544,
+            "min": 132.509775,
+            "med": 207.288903,
+            "p(90)": 284.943794,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 18.99478643999998,
+            "max": 872.406699,
+            "count": 28312,
+            "avg": 2.9124203284119763,
+            "min": 0
+        },
+        "http_req_duration{name:web_js}": {
+            "med": 239.921499,
+            "p(90)": 349.91201100000006,
+            "p(95)": 592.8354307,
+            "p(99)": 610.4084047399999,
+            "max": 872.359267,
+            "count": 3119,
+            "avg": 265.6673904036545,
+            "min": 141.19854,
+            "thresholds": {
+                "p(95)<500": true
+            }
+        },
+        "mwa_rls_anon_denegado": {
+            "passes": 3119,
+            "fails": 0,
+            "thresholds": {
+                "rate==1": false
+            },
+            "value": 1
+        },
+        "http_req_receiving": {
+            "p(95)": 70.95631094999999,
+            "p(99)": 176.26835194999984,
+            "max": 410.216883,
+            "count": 28312,
+            "avg": 11.076495885631545,
+            "min": 0.012188,
+            "med": 0.0624835,
+            "p(90)": 54.457789700000035
+        },
+        "http_req_duration{name:rpc_horarios_libres}": {
+            "p(99)": 242.10008140000002,
+            "max": 546.639069,
+            "count": 3119,
+            "avg": 110.025401068291,
+            "min": 81.978004,
+            "med": 105.643935,
+            "p(90)": 125.41406800000001,
+            "p(95)": 135.4145747,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "http_req_duration{tipo:edge}": {
+            "max": 2848.552085,
+            "count": 241,
+            "avg": 186.5787248091287,
+            "min": 20.174902,
+            "med": 227.823503,
+            "p(90)": 310.280978,
+            "p(95)": 340.462505,
+            "p(99)": 694.0216365999989,
+            "thresholds": {
+                "p(95)<1500": false
+            }
+        },
+        "http_req_sending": {
+            "min": 0.007391,
+            "med": 0.035888,
+            "p(90)": 0.0556588,
+            "p(95)": 0.06221045,
+            "p(99)": 0.08189635999999986,
+            "max": 5.637945,
+            "count": 28312,
+            "avg": 0.038749587701327894
+        },
+        "http_req_duration{name:rest_trabajos_anon_rls}": {
+            "max": 528.008295,
+            "count": 3119,
+            "avg": 107.91067904360364,
+            "min": 80.001697,
+            "med": 103.791708,
+            "p(90)": 123.1699854,
+            "p(95)": 132.3727358,
+            "p(99)": 223.39804004000138,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "http_req_waiting": {
+            "med": 123.705448,
+            "p(90)": 224.4687178,
+            "p(95)": 259.6466732499995,
+            "p(99)": 472.8747256699999,
+            "max": 2848.423027,
+            "count": 28312,
+            "avg": 149.51820434621365,
+            "min": 20.094079
+        },
+        "http_reqs": {
+            "count": 28312,
+            "rate": 224.4323633254052
+        },
+        "http_req_blocked": {
+            "p(90)": 0.000544,
+            "p(95)": 0.000623,
+            "p(99)": 19.357619979999956,
+            "max": 872.625862,
+            "count": 28312,
+            "avg": 2.9226811601793727,
+            "min": 0.000118,
+            "med": 0.000358
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 28312,
+            "thresholds": {
+                "rate<0.01": false,
+                "rate<0.05": false
+            },
+            "value": 0
+        },
+        "checks": {
+            "passes": 72339,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "http_req_duration{name:web_css}": {
+            "avg": 229.49510109490248,
+            "min": 129.673801,
+            "med": 212.167952,
+            "p(90)": 253.9209794000001,
+            "p(95)": 475.6562097,
+            "p(99)": 490.40162226,
+            "max": 813.96167,
+            "count": 3119,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_duration{expected_response:true}": {
+            "min": 20.174902,
+            "med": 124.155887,
+            "p(90)": 249.6266881,
+            "p(95)": 283.05581069999994,
+            "p(99)": 501.71513557,
+            "max": 2848.552085,
+            "count": 28312,
+            "avg": 160.63344981954495
+        },
+        "data_sent": {
+            "rate": 55402.8712658484,
+            "count": 6989037
+        },
+        "http_req_duration{name:edge_status_get}": {
+            "avg": 280.6170209166666,
+            "min": 224.969878,
+            "med": 271.14378899999997,
+            "p(90)": 323.0550038,
+            "p(95)": 357.58382394999995,
+            "p(99)": 476.08444789000015,
+            "max": 581.580133,
+            "count": 120,
+            "thresholds": {
+                "p(95)<1500": false
+            }
+        },
+        "http_req_duration{name:edge_status_preflight}": {
+            "med": 42.242252,
+            "p(90)": 79.022838,
+            "p(95)": 98.69353,
+            "p(99)": 1269.7941237999983,
+            "max": 2848.552085,
+            "count": 121,
+            "avg": 93.31760470247934,
+            "min": 20.174902,
+            "thresholds": {
+                "p(95)<1500": false
+            }
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 202
+        },
+        "http_req_duration{tipo:supabase}": {
+            "med": 105.126502,
+            "p(90)": 124.737361,
+            "p(95)": 134.7827764,
+            "p(99)": 241.17721545999993,
+            "max": 719.929014,
+            "count": 15595,
+            "avg": 109.30565899814071,
+            "min": 78.916802,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "mwa_http_5xx": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count<1": false
+            }
+        },
+        "iterations": {
+            "count": 3360,
+            "rate": 26.63509256758129
+        },
+        "http_req_duration{tipo:web}": {
+            "max": 1075.510179,
+            "count": 12476,
+            "avg": 224.2920011651165,
+            "min": 121.77382,
+            "med": 206.61127850000003,
+            "p(90)": 283.903234,
+            "p(95)": 369.728314,
+            "p(99)": 594.5417685,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_duration{name:rpc_categorias}": {
+            "avg": 109.26214279127895,
+            "min": 78.916802,
+            "med": 104.720997,
+            "p(90)": 123.92506800000001,
+            "p(95)": 135.21490389999997,
+            "p(99)": 251.09689614,
+            "max": 719.929014,
+            "count": 3119,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "1_web_vercel": {
+                "checks": {
+                    "portada: status 200": {
+                        "name": "portada: status 200",
+                        "path": "::1_web_vercel::portada: status 200",
+                        "id": "8944a3ddc5a6c864e003baa4b4d1035d",
+                        "passes": 3119,
+                        "fails": 0
+                    },
+                    "portada: es HTML": {
+                        "name": "portada: es HTML",
+                        "path": "::1_web_vercel::portada: es HTML",
+                        "id": "50f298012408545e9d68ebf7c09fcf1c",
+                        "passes": 3119,
+                        "fails": 0
+                    },
+                    "portada: contiene <div id=\"root\">": {
+                        "passes": 3119,
+                        "fails": 0,
+                        "name": "portada: contiene <div id=\"root\">",
+                        "path": "::1_web_vercel::portada: contiene <div id=\"root\">",
+                        "id": "a6c7dae53a9d38a575045b186d7c4649"
+                    },
+                    "portada: referencia bundle JS y CSS": {
+                        "name": "portada: referencia bundle JS y CSS",
+                        "path": "::1_web_vercel::portada: referencia bundle JS y CSS",
+                        "id": "c21ca8488dd3a5acf0b0761950ebd04d",
+                        "passes": 3119,
+                        "fails": 0
+                    },
+                    "js: status 200": {
+                        "path": "::1_web_vercel::js: status 200",
+                        "id": "ac0543ee0fc124a2c62ae48bc8d714ad",
+                        "passes": 3119,
+                        "fails": 0,
+                        "name": "js: status 200"
+                    },
+                    "js: content-type javascript": {
+                        "path": "::1_web_vercel::js: content-type javascript",
+                        "id": "703a631075affc3e3a56e2e4ebc0cb9d",
+                        "passes": 3119,
+                        "fails": 0,
+                        "name": "js: content-type javascript"
+                    },
+                    "js: tamaño > 50 KB": {
+                        "name": "js: tamaño > 50 KB",
+                        "path": "::1_web_vercel::js: tamaño > 50 KB",
+                        "id": "4591ed2a840f3091ef8821acc0bd32df",
+                        "passes": 3119,
+                        "fails": 0
+                    },
+                    "css: status 200": {
+                        "fails": 0,
+                        "name": "css: status 200",
+                        "path": "::1_web_vercel::css: status 200",
+                        "id": "81ba80dbe3e27264211ce3a2e8c8a552",
+                        "passes": 3119
+                    },
+                    "css: content-type css": {
+                        "path": "::1_web_vercel::css: content-type css",
+                        "id": "bbda1918435eb4b223ba72d676190232",
+                        "passes": 3119,
+                        "fails": 0,
+                        "name": "css: content-type css"
+                    },
+                    "imagen: status 200": {
+                        "name": "imagen: status 200",
+                        "path": "::1_web_vercel::imagen: status 200",
+                        "id": "8769453870f0579bc9c529adf7feb9d1",
+                        "passes": 3119,
+                        "fails": 0
+                    },
+                    "imagen: content-type webp": {
+                        "name": "imagen: content-type webp",
+                        "path": "::1_web_vercel::imagen: content-type webp",
+                        "id": "ceb8ce197b76cbadb4ea1b775be0f6e3",
+                        "passes": 3119,
+                        "fails": 0
+                    }
+                },
+                "name": "1_web_vercel",
+                "path": "::1_web_vercel",
+                "id": "f50c706c446a43f23b98aeb0d91e97a9",
+                "groups": {}
+            },
+            "2_busqueda_supabase": {
+                "path": "::2_busqueda_supabase",
+                "id": "365647a948e4dd8ac351846235834ad5",
+                "groups": {},
+                "checks": {
+                        "categorias: status 200": {
+                            "id": "e4f09fd9fa699301facaa3305b8f7cc5",
+                            "passes": 3119,
+                            "fails": 0,
+                            "name": "categorias: status 200",
+                            "path": "::2_busqueda_supabase::categorias: status 200"
+                        },
+                        "categorias: arreglo con >= 1 oficio": {
+                            "passes": 3119,
+                            "fails": 0,
+                            "name": "categorias: arreglo con >= 1 oficio",
+                            "path": "::2_busqueda_supabase::categorias: arreglo con >= 1 oficio",
+                            "id": "fc13621c9dcb17c2d12ebbaf7c792ba8"
+                        },
+                        "servicios: status 200": {
+                            "name": "servicios: status 200",
+                            "path": "::2_busqueda_supabase::servicios: status 200",
+                            "id": "1234a9c2cbc326c6c1c7a38683974446",
+                            "passes": 3119,
+                            "fails": 0
+                        },
+                        "servicios: filas activas con nombre": {
+                            "name": "servicios: filas activas con nombre",
+                            "path": "::2_busqueda_supabase::servicios: filas activas con nombre",
+                            "id": "25727a7b8f4809ab316d7fd375ac51e1",
+                            "passes": 3119,
+                            "fails": 0
+                        },
+                        "catalogo: status 200": {
+                            "passes": 3119,
+                            "fails": 0,
+                            "name": "catalogo: status 200",
+                            "path": "::2_busqueda_supabase::catalogo: status 200",
+                            "id": "ff1e65d50befbc38ea48c8182636dfed"
+                        },
+                        "catalogo: arreglo JSON": {
+                            "path": "::2_busqueda_supabase::catalogo: arreglo JSON",
+                            "id": "34a090629f9b2e9e02a6b95d9819dc9d",
+                            "passes": 3119,
+                            "fails": 0,
+                            "name": "catalogo: arreglo JSON"
+                        },
+                        "catalogo: filas del oficio pedido": {
+                            "id": "14d415daec9622974a09dc39558962f5",
+                            "passes": 3119,
+                            "fails": 0,
+                            "name": "catalogo: filas del oficio pedido",
+                            "path": "::2_busqueda_supabase::catalogo: filas del oficio pedido"
+                        },
+                        "catalogo: no expone correo": {
+                            "name": "catalogo: no expone correo",
+                            "path": "::2_busqueda_supabase::catalogo: no expone correo",
+                            "id": "96d9e0b5ba266cf6a7c75fbb44ad584a",
+                            "passes": 3119,
+                            "fails": 0
+                        }
+                    },
+                "name": "2_busqueda_supabase"
+            },
+            "3_perfil_y_horas": {
+                "name": "3_perfil_y_horas",
+                "path": "::3_perfil_y_horas",
+                "id": "d7843cbce17ffad7e0ec07918143dd28",
+                "groups": {},
+                "checks": {
+                        "horarios: status 200": {
+                            "name": "horarios: status 200",
+                            "path": "::3_perfil_y_horas::horarios: status 200",
+                            "id": "2d851ce8d4b58c7e3e6f2a0353d4465e",
+                            "passes": 3119,
+                            "fails": 0
+                        },
+                        "horarios: arreglo con campo inicio": {
+                            "name": "horarios: arreglo con campo inicio",
+                            "path": "::3_perfil_y_horas::horarios: arreglo con campo inicio",
+                            "id": "afc87fd9cdcd9d2a5e598703c3480c85",
+                            "passes": 3119,
+                            "fails": 0
+                        },
+                        "rls: anónimo NO lee trabajos (401/403)": {
+                            "name": "rls: anónimo NO lee trabajos (401/403)",
+                            "path": "::3_perfil_y_horas::rls: anónimo NO lee trabajos (401/403)",
+                            "id": "ab5b586d9064d4d55c2b38aba23ce7f7",
+                            "passes": 3119,
+                            "fails": 0
+                        },
+                        "rls: no devuelve filas": {
+                            "name": "rls: no devuelve filas",
+                            "path": "::3_perfil_y_horas::rls: no devuelve filas",
+                            "id": "bad33e5340da8a5cf2e346436b8d0174",
+                            "passes": 3119,
+                            "fails": 0
+                        }
+                    }
+            }
+        },
+        "checks": {
+            "edge preflight: status 200": {
+                "fails": 0,
+                "name": "edge preflight: status 200",
+                "path": "::edge preflight: status 200",
+                "id": "ae7a1d8d296900a46ffa20835031ab56",
+                "passes": 121
+            },
+            "edge preflight: CORS permite la web pública": {
+                "passes": 121,
+                "fails": 0,
+                "name": "edge preflight: CORS permite la web pública",
+                "path": "::edge preflight: CORS permite la web pública",
+                "id": "406a0daaf72725626a98460ba9f1175d"
+            },
+            "edge status: 200": {
+                "name": "edge status: 200",
+                "path": "::edge status: 200",
+                "id": "be78de94636482dd937c6315b15c4d2c",
+                "passes": 120,
+                "fails": 0
+            },
+            "edge status: pago correcto": {
+                "name": "edge status: pago correcto",
+                "path": "::edge status: pago correcto",
+                "id": "b8ebc949c1642f4b383e2428a0ab4421",
+                "passes": 120,
+                "fails": 0
+            },
+            "edge status: no expone token_tbk/url_tbk": {
+                "name": "edge status: no expone token_tbk/url_tbk",
+                "path": "::edge status: no expone token_tbk/url_tbk",
+                "id": "3546193703d64bcc64049caa5d440870",
+                "passes": 120,
+                "fails": 0
+            }
+        }
+    }
+}

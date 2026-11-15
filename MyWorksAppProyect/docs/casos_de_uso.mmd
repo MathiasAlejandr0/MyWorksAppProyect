@@ -1,0 +1,75 @@
+flowchart LR
+  V([Visitante])
+  CI([Cliente invitado])
+  CR([Cliente registrado])
+  P([Profesional])
+  A([Administrador])
+  S([Sistema / cron])
+  TBK[[Transbank Webpay]]
+
+  CI -. especializa .-> V
+  CR -. especializa .-> V
+
+  subgraph MWA[MyWorksApp]
+    direction TB
+    subgraph ACC[Acceso]
+      CU01(CU-01 Registrarse)
+      CU02(CU-02 Iniciar sesión)
+      CU03(CU-03 Recuperar contraseña)
+      CU04(CU-04 Derechos sobre datos)
+    end
+    subgraph BUS[Búsqueda y reserva]
+      CU05(CU-05 Buscar con mapa)
+      CU06(CU-06 Ver perfil y horas)
+      CU07(CU-07 Solicitar y reservar)
+      CU08(CU-08 Pagar en garantía)
+      CU09(CU-09 Comprar como invitado)
+      CU10(CU-10 Definir contraseña)
+    end
+    subgraph EJE[Ejecución y cierre]
+      CU11(CU-11 Aceptar / rechazar)
+      CU12(CU-12 Voy en camino + GPS)
+      CU13(CU-13 Seguir en vivo)
+      CU14(CU-14 Iniciar con PIN)
+      CU15(CU-15 Cobro adicional)
+      CU16(CU-16 Evidencia y finalizar)
+      CU17(CU-17 Recibir conforme)
+      CU18(CU-18 Calificar profesional)
+      CU19(CU-19 Calificar cliente)
+    end
+    subgraph EXC[Excepciones y comunicación]
+      CU20(CU-20 Cancelar con reembolso)
+      CU21(CU-21 Disputa y acuerdo)
+      CU22(CU-22 Resolver disputa)
+      CU23(CU-23 Chat)
+      CU24(CU-24 Notificaciones)
+    end
+    subgraph GES[Gestión del profesional]
+      CU25(CU-25 Perfil y verificación)
+      CU26(CU-26 Tarifas y horario)
+      CU27(CU-27 Cobros y cuenta)
+    end
+    subgraph ADM[Administración]
+      CU28(CU-28 Consola con 2FA)
+      CU29(CU-29 Verificar profesionales)
+      CU30(CU-30 Métricas y liquidación)
+      CU31(CU-31 Invitar colaborador)
+      CU32(CU-32 Procesos automáticos)
+    end
+  end
+
+  V --- CU01 & CU05 & CU06
+  CI --- CU09 & CU10
+  CR --- CU02 & CU03 & CU04 & CU07 & CU13 & CU17 & CU18 & CU20 & CU21 & CU23 & CU24
+  P --- CU02 & CU11 & CU12 & CU14 & CU15 & CU16 & CU19 & CU21 & CU23 & CU25 & CU26 & CU27
+  A --- CU28 & CU29 & CU30 & CU31 & CU22
+  S --- CU32 & CU22
+  CU08 --- TBK
+  CU09 --- TBK
+
+  CU07 -. include .-> CU08
+  CU09 -. include .-> CU08
+  CU10 -. extend .-> CU09
+  CU18 -. extend .-> CU17
+  CU21 -. extend .-> CU17
+  CU22 -. extend .-> CU21
