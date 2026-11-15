@@ -154,6 +154,7 @@ class _AdminJobDetailPageState extends ConsumerState<AdminJobDetailPage>
               onPressed: _cancelJob,
             ),
           IconButton(
+            tooltip: 'Actualizar',
             icon: const Icon(Icons.refresh),
             onPressed: _load,
           ),

@@ -40,6 +40,7 @@ class RateClientButton extends StatelessWidget {
                 children: List.generate(5, (index) {
                   final value = index + 1;
                   return IconButton(
+                    tooltip: '$value de 5 estrellas',
                     onPressed: () => setLocal(() => score = value),
                     icon: Icon(
                       value <= score ? Icons.star : Icons.star_border,

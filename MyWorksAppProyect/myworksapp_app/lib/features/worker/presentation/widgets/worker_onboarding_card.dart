@@ -127,6 +127,7 @@ class _WorkerOnboardingCardState extends State<WorkerOnboardingCard> {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Actualizar',
                   icon: Icon(Icons.refresh_rounded, color: muted),
                   onPressed: () {
                     setState(() => _loading = true);

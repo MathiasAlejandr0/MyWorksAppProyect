@@ -62,6 +62,7 @@ class _AdminSearchFieldState extends State<AdminSearchField> {
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _controller.text.isNotEmpty
               ? IconButton(
+                  tooltip: 'Limpiar búsqueda',
                   icon: const Icon(Icons.clear),
                   onPressed: _clear,
                 )

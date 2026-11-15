@@ -12,7 +12,6 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/services/profile_photo_service.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -205,6 +204,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
         actions: [
           if (_isEditing)
             IconButton(
+              tooltip: 'Cerrar',
               icon: const Icon(Icons.close),
               onPressed: () {
                 setState(() {
@@ -215,6 +215,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
             )
           else
             IconButton(
+              tooltip: 'Editar',
               icon: const Icon(Icons.edit),
               onPressed: () {
                 setState(() => _isEditing = true);

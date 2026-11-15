@@ -172,6 +172,7 @@ class _AdminFeatureFlagsPageState extends ConsumerState<AdminFeatureFlagsPage> {
                                   onChanged: (_) => _toggleFlag(flag),
                                 ),
                                 IconButton(
+                                  tooltip: 'Eliminar',
                                   icon: const Icon(Icons.delete_outline),
                                   onPressed: () => _deleteFlag(flag),
                                 ),

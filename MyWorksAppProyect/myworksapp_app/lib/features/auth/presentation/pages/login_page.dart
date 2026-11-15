@@ -268,6 +268,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     emphasized: false,
                     focused: _passwordFocus.hasFocus,
                     suffix: IconButton(
+                      tooltip: 'Mostrar u ocultar contraseña',
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
                       icon: Icon(

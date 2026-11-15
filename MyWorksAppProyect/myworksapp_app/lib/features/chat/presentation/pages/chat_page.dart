@@ -310,6 +310,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   IconButton(
+                    tooltip: 'Enviar mensaje',
                     onPressed: _sendMessage,
                     icon: const Icon(Icons.send),
                     color: Theme.of(context).colorScheme.primary,
