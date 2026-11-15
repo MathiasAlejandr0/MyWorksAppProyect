@@ -106,6 +106,10 @@ void main() {
 
     await tester.pump(UserLocationService.gpsTimeout + const Duration(seconds: 5));
     await tester.pump();
+    // flutter_map throttle (220 ms) deja un timer pendiente al soltar el árbol
+    // en Flutter 3.50. Avanzarlo aquí evita el fallo de timersPending.
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Obteniendo tu ubicación GPS...'), findsNothing);
     expect(find.text(UserLocationService.demoFallbackLabel), findsOneWidget);
