@@ -191,7 +191,7 @@ test('el mapa de búsqueda usa OpenFreeMap y la leyenda no tapa el recuento', as
   const shot = testInfo.outputPath('mapa-openfreemap-desktop.png');
   await page.locator('.search-map-panel').screenshot({ path: shot });
   await page.screenshot({
-    path: '/workspace/mwa_video/screens/web_mapa_openfreemap_desktop.png',
+    path: testInfo.outputPath('pagina-openfreemap-desktop.png'),
     fullPage: false,
   });
 });
@@ -219,7 +219,7 @@ test('el mapa de búsqueda se ve bien en un teléfono y tampoco pide CARTO', asy
   const shot = testInfo.outputPath('mapa-openfreemap-mobile.png');
   await page.locator('.search-map-panel').screenshot({ path: shot });
   await page.screenshot({
-    path: '/workspace/mwa_video/screens/web_mapa_openfreemap_mobile.png',
+    path: testInfo.outputPath('pagina-openfreemap-mobile.png'),
     fullPage: false,
   });
 });
