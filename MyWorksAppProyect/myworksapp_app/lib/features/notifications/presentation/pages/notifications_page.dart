@@ -92,6 +92,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       case 'job_rejected':
       case 'job_completed':
       case 'job_cancelled':
+      case 'job_rescheduled':
+      case 'pago_reembolsado':
       case 'new_job':
         context
             .push('${AppConstants.routeJobDetail}/${notification.relatedId}');
@@ -172,6 +174,8 @@ class _NotificationItem extends StatelessWidget {
         return Icons.work;
       case 'new_job':
         return Icons.add_circle;
+      case 'job_rescheduled':
+        return Icons.event_repeat;
       case 'new_message':
         return Icons.chat;
       default:
@@ -188,6 +192,7 @@ class _NotificationItem extends StatelessWidget {
       case 'job_cancelled':
         return AppColors.error;
       case 'new_job':
+      case 'job_rescheduled':
         return AppColors.brandOrange;
       case 'new_message':
         return AppColors.brandOrangeDark;

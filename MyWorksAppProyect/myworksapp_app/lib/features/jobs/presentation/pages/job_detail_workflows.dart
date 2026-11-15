@@ -670,6 +670,12 @@ extension JobDetailWorkflows on _JobDetailPageState {
               onReview: !isWorker ? _approveChangeOrder : null,
             ),
             const SizedBox(height: 16),
+            if (isOwner)
+              RescheduleSection(
+                job: _job!,
+                currentUserId: currentUser?.id,
+                onChanged: _loadJobDetails,
+              ),
             DisputeSection(
               dispute: _dispute,
               isParticipant: isOwner,

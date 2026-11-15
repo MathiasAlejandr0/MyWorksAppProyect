@@ -31,6 +31,7 @@ import '../../../../core/services/pricing_service.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../widgets/quote_proposals_section.dart';
 import '../widgets/worker_quote_form_dialog.dart';
+import '../widgets/reschedule_section.dart';
 import '../../../../core/utils/open_quote_utils.dart';
 import '../../../../core/widgets/escrow_checkout_sheet.dart';
 import '../../../../core/domain/price_quote.dart';
