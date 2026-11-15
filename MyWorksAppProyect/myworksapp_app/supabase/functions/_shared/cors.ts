@@ -1,11 +1,8 @@
-import { resolveCorsAllowOrigin } from "./cors_origin.ts";
+import { corsAllowlist, resolveCorsAllowOrigin } from "./cors_origin.ts";
 
 export function corsHeadersFor(req: Request): Record<string, string> {
   const origin = req.headers.get("Origin") || "";
-  const allowed = (Deno.env.get("CORS_ALLOWED_ORIGINS") || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const allowed = corsAllowlist(Deno.env.get("CORS_ALLOWED_ORIGINS"));
   const allow = resolveCorsAllowOrigin({
     origin,
     allowlist: allowed,
