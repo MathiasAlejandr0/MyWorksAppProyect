@@ -70,6 +70,75 @@ export type Database = {
           },
         ]
       }
+      acuerdos_trabajo: {
+        Row: {
+          acepta_cliente: boolean | null
+          acepta_trabajador: boolean | null
+          aplicado_en: string | null
+          creado_en: string
+          estado: string
+          id: string
+          id_trabajo: string
+          propuesto_por: string
+          tipo: string
+        }
+        Insert: {
+          acepta_cliente?: boolean | null
+          acepta_trabajador?: boolean | null
+          aplicado_en?: string | null
+          creado_en?: string
+          estado?: string
+          id: string
+          id_trabajo: string
+          propuesto_por: string
+          tipo: string
+        }
+        Update: {
+          acepta_cliente?: boolean | null
+          acepta_trabajador?: boolean | null
+          aplicado_en?: string | null
+          creado_en?: string
+          estado?: string
+          id?: string
+          id_trabajo?: string
+          propuesto_por?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acuerdos_trabajo_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: false
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acuerdos_trabajo_propuesto_por_fkey"
+            columns: ["propuesto_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_config: {
+        Row: {
+          actualizado_en: string
+          clave: string
+          valor: string
+        }
+        Insert: {
+          actualizado_en?: string
+          clave: string
+          valor: string
+        }
+        Update: {
+          actualizado_en?: string
+          clave?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       banderas_funcionalidad: {
         Row: {
           actualizado_en: string
@@ -103,6 +172,41 @@ export type Database = {
         }
         Relationships: []
       }
+      bloqueos_pin_inicio: {
+        Row: {
+          actualizado_en: string
+          bloqueado_hasta: string | null
+          fallos: number
+          id_trabajo: string
+          pin_ok_hasta: string | null
+          pin_ok_usuario: string | null
+        }
+        Insert: {
+          actualizado_en?: string
+          bloqueado_hasta?: string | null
+          fallos?: number
+          id_trabajo: string
+          pin_ok_hasta?: string | null
+          pin_ok_usuario?: string | null
+        }
+        Update: {
+          actualizado_en?: string
+          bloqueado_hasta?: string | null
+          fallos?: number
+          id_trabajo?: string
+          pin_ok_hasta?: string | null
+          pin_ok_usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bloqueos_pin_inicio_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: true
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bloqueos_usuario: {
         Row: {
           creado_en: string
@@ -128,25 +232,40 @@ export type Database = {
         Row: {
           comentario: string | null
           creado_en: string
+          direccion: string
+          estado_revision: string
           id: string
+          id_calificado: string | null
           id_trabajo: string
           id_usuario: string | null
+          motivo_revision: string | null
+          peso_confianza: number
           puntaje: number
         }
         Insert: {
           comentario?: string | null
           creado_en: string
+          direccion?: string
+          estado_revision?: string
           id: string
+          id_calificado?: string | null
           id_trabajo: string
           id_usuario?: string | null
+          motivo_revision?: string | null
+          peso_confianza?: number
           puntaje: number
         }
         Update: {
           comentario?: string | null
           creado_en?: string
+          direccion?: string
+          estado_revision?: string
           id?: string
+          id_calificado?: string | null
           id_trabajo?: string
           id_usuario?: string | null
+          motivo_revision?: string | null
+          peso_confianza?: number
           puntaje?: number
         }
         Relationships: [
@@ -158,6 +277,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      calificaciones_cliente: {
+        Row: {
+          comentario: string | null
+          creado_en: string
+          id: string
+          id_cliente: string
+          id_trabajador: string
+          id_trabajo: string
+          puntaje: number
+        }
+        Insert: {
+          comentario?: string | null
+          creado_en?: string
+          id: string
+          id_cliente: string
+          id_trabajador: string
+          id_trabajo: string
+          puntaje: number
+        }
+        Update: {
+          comentario?: string | null
+          creado_en?: string
+          id?: string
+          id_cliente?: string
+          id_trabajador?: string
+          id_trabajo?: string
+          puntaje?: number
+        }
+        Relationships: []
       }
       cancelaciones_trabajo: {
         Row: {
@@ -220,6 +369,41 @@ export type Database = {
           usado?: number | null
         }
         Relationships: []
+      }
+      comunas: {
+        Row: {
+          activa: number
+          id: string
+          id_region: string
+          latitud: number | null
+          longitud: number | null
+          nombre: string
+        }
+        Insert: {
+          activa?: number
+          id: string
+          id_region: string
+          latitud?: number | null
+          longitud?: number | null
+          nombre: string
+        }
+        Update: {
+          activa?: number
+          id?: string
+          id_region?: string
+          latitud?: number | null
+          longitud?: number | null
+          nombre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comunas_id_region_fkey"
+            columns: ["id_region"]
+            isOneToOne: false
+            referencedRelation: "regiones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       configuraciones_servicio: {
         Row: {
@@ -291,11 +475,121 @@ export type Database = {
           },
         ]
       }
+      cuentas_bancarias: {
+        Row: {
+          actualizado_en: string
+          banco: string
+          id_usuario: string
+          nombre_titular: string
+          numero_cuenta: string
+          rut_titular: string
+          tipo_cuenta: string
+        }
+        Insert: {
+          actualizado_en?: string
+          banco: string
+          id_usuario: string
+          nombre_titular: string
+          numero_cuenta: string
+          rut_titular: string
+          tipo_cuenta: string
+        }
+        Update: {
+          actualizado_en?: string
+          banco?: string
+          id_usuario?: string
+          nombre_titular?: string
+          numero_cuenta?: string
+          rut_titular?: string
+          tipo_cuenta?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cuentas_bancarias_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: true
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispositivos_push: {
+        Row: {
+          actualizado_en: string
+          creado_en: string
+          id_usuario: string
+          plataforma: string
+          token: string
+        }
+        Insert: {
+          actualizado_en?: string
+          creado_en?: string
+          id_usuario: string
+          plataforma?: string
+          token: string
+        }
+        Update: {
+          actualizado_en?: string
+          creado_en?: string
+          id_usuario?: string
+          plataforma?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispositivos_push_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disputa_mensajes: {
+        Row: {
+          creado_en: string
+          cuerpo: string
+          id: string
+          id_autor: string | null
+          id_disputa: string
+        }
+        Insert: {
+          creado_en?: string
+          cuerpo: string
+          id: string
+          id_autor?: string | null
+          id_disputa: string
+        }
+        Update: {
+          creado_en?: string
+          cuerpo?: string
+          id?: string
+          id_autor?: string | null
+          id_disputa?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputa_mensajes_id_autor_fkey"
+            columns: ["id_autor"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputa_mensajes_id_disputa_fkey"
+            columns: ["id_disputa"]
+            isOneToOne: false
+            referencedRelation: "disputas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       disputas: {
         Row: {
           abierta_por: string
           actualizado_en: string
           creado_en: string
+          decision_sugerida: string | null
           descripcion: string | null
           estado: string
           id: string
@@ -303,16 +597,16 @@ export type Database = {
           motivo: string
           motivo_regla: string | null
           origen: string
-          decision_sugerida: string | null
-          vence_en: string | null
           resolucion: string | null
           resuelta_en: string | null
           resuelta_por: string | null
+          vence_en: string | null
         }
         Insert: {
           abierta_por: string
           actualizado_en: string
           creado_en: string
+          decision_sugerida?: string | null
           descripcion?: string | null
           estado: string
           id: string
@@ -320,16 +614,16 @@ export type Database = {
           motivo: string
           motivo_regla?: string | null
           origen?: string
-          decision_sugerida?: string | null
-          vence_en?: string | null
           resolucion?: string | null
           resuelta_en?: string | null
           resuelta_por?: string | null
+          vence_en?: string | null
         }
         Update: {
           abierta_por?: string
           actualizado_en?: string
           creado_en?: string
+          decision_sugerida?: string | null
           descripcion?: string | null
           estado?: string
           id?: string
@@ -337,11 +631,10 @@ export type Database = {
           motivo?: string
           motivo_regla?: string | null
           origen?: string
-          decision_sugerida?: string | null
-          vence_en?: string | null
           resolucion?: string | null
           resuelta_en?: string | null
           resuelta_por?: string | null
+          vence_en?: string | null
         }
         Relationships: [
           {
@@ -421,6 +714,33 @@ export type Database = {
         }
         Relationships: []
       }
+      eventos_ranking: {
+        Row: {
+          creado_en: string
+          factores: Json
+          id: string
+          id_trabajador: string
+          id_trabajo: string | null
+          tipo_evento: string
+        }
+        Insert: {
+          creado_en?: string
+          factores?: Json
+          id: string
+          id_trabajador: string
+          id_trabajo?: string | null
+          tipo_evento: string
+        }
+        Update: {
+          creado_en?: string
+          factores?: Json
+          id?: string
+          id_trabajador?: string
+          id_trabajo?: string | null
+          tipo_evento?: string
+        }
+        Relationships: []
+      }
       fotos_trabajo: {
         Row: {
           creado_en: string
@@ -491,6 +811,90 @@ export type Database = {
           },
         ]
       }
+      intentos_pin_inicio: {
+        Row: {
+          creado_en: string
+          id: number
+          id_trabajo: string
+          id_usuario: string | null
+          intentos_restantes: number
+          resultado: string
+        }
+        Insert: {
+          creado_en?: string
+          id?: never
+          id_trabajo: string
+          id_usuario?: string | null
+          intentos_restantes: number
+          resultado: string
+        }
+        Update: {
+          creado_en?: string
+          id?: never
+          id_trabajo?: string
+          id_usuario?: string | null
+          intentos_restantes?: number
+          resultado?: string
+        }
+        Relationships: []
+      }
+      liquidaciones: {
+        Row: {
+          creado_en: string
+          estado_transferencia: string
+          id: string
+          id_operador: string
+          id_pago: string
+          id_trabajador: string | null
+          id_trabajo: string
+          monto_clp: number
+          notas: string | null
+          proveedor: string
+          referencia_transferencia: string
+        }
+        Insert: {
+          creado_en?: string
+          estado_transferencia?: string
+          id?: string
+          id_operador: string
+          id_pago: string
+          id_trabajador?: string | null
+          id_trabajo: string
+          monto_clp: number
+          notas?: string | null
+          proveedor?: string
+          referencia_transferencia: string
+        }
+        Update: {
+          creado_en?: string
+          estado_transferencia?: string
+          id?: string
+          id_operador?: string
+          id_pago?: string
+          id_trabajador?: string | null
+          id_trabajo?: string
+          monto_clp?: number
+          notas?: string | null
+          proveedor?: string
+          referencia_transferencia?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liquidaciones_id_pago_fkey"
+            columns: ["id_pago"]
+            isOneToOne: false
+            referencedRelation: "pagos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidaciones_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: false
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mensajes: {
         Row: {
           contenido: string
@@ -534,6 +938,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      metodos_pago_oneclick: {
+        Row: {
+          actualizado_en: string
+          creado_en: string
+          estado: string
+          id_trabajo_pendiente: string | null
+          id_usuario: string
+          tbk_user: string | null
+          ticket_handoff: string | null
+          tipo_tarjeta: string | null
+          token_inscripcion: string | null
+          ultimos4: string | null
+          url_inscripcion: string | null
+          username: string
+        }
+        Insert: {
+          actualizado_en?: string
+          creado_en?: string
+          estado?: string
+          id_trabajo_pendiente?: string | null
+          id_usuario: string
+          tbk_user?: string | null
+          ticket_handoff?: string | null
+          tipo_tarjeta?: string | null
+          token_inscripcion?: string | null
+          ultimos4?: string | null
+          url_inscripcion?: string | null
+          username: string
+        }
+        Update: {
+          actualizado_en?: string
+          creado_en?: string
+          estado?: string
+          id_trabajo_pendiente?: string | null
+          id_usuario?: string
+          tbk_user?: string | null
+          ticket_handoff?: string | null
+          tipo_tarjeta?: string | null
+          token_inscripcion?: string | null
+          ultimos4?: string | null
+          url_inscripcion?: string | null
+          username?: string
+        }
+        Relationships: []
       }
       notificaciones: {
         Row: {
@@ -629,9 +1078,16 @@ export type Database = {
       pagos: {
         Row: {
           actualizado_en: string
+          alta_consumido_en: string | null
+          alta_jti: string | null
+          alta_nonce_hash: string | null
+          ambiente: string | null
           autorizado_en: string | null
+          buy_order: string | null
+          cobro_reclamado_en: string | null
           creado_en: string
           estado: string
+          handoff_consumido_en: string | null
           id: string
           id_orden_cambio: string | null
           id_trabajo: string
@@ -640,15 +1096,26 @@ export type Database = {
           metodo_pago: string | null
           moneda: string
           monto: number
+          orden_detalle_oneclick: string | null
           origen_retorno: string | null
           reembolsado_en: string | null
+          reembolso_solicitado_en: string | null
           tipo_pago: string
+          token_tbk: string | null
+          url_tbk: string | null
         }
         Insert: {
           actualizado_en: string
+          alta_consumido_en?: string | null
+          alta_jti?: string | null
+          alta_nonce_hash?: string | null
+          ambiente?: string | null
           autorizado_en?: string | null
+          buy_order?: string | null
+          cobro_reclamado_en?: string | null
           creado_en: string
           estado: string
+          handoff_consumido_en?: string | null
           id: string
           id_orden_cambio?: string | null
           id_trabajo: string
@@ -657,14 +1124,26 @@ export type Database = {
           metodo_pago?: string | null
           moneda?: string
           monto: number
+          orden_detalle_oneclick?: string | null
+          origen_retorno?: string | null
           reembolsado_en?: string | null
+          reembolso_solicitado_en?: string | null
           tipo_pago?: string
+          token_tbk?: string | null
+          url_tbk?: string | null
         }
         Update: {
           actualizado_en?: string
+          alta_consumido_en?: string | null
+          alta_jti?: string | null
+          alta_nonce_hash?: string | null
+          ambiente?: string | null
           autorizado_en?: string | null
+          buy_order?: string | null
+          cobro_reclamado_en?: string | null
           creado_en?: string
           estado?: string
+          handoff_consumido_en?: string | null
           id?: string
           id_orden_cambio?: string | null
           id_trabajo?: string
@@ -673,8 +1152,13 @@ export type Database = {
           metodo_pago?: string | null
           moneda?: string
           monto?: number
+          orden_detalle_oneclick?: string | null
+          origen_retorno?: string | null
           reembolsado_en?: string | null
+          reembolso_solicitado_en?: string | null
           tipo_pago?: string
+          token_tbk?: string | null
+          url_tbk?: string | null
         }
         Relationships: [
           {
@@ -686,35 +1170,85 @@ export type Database = {
           },
         ]
       }
+      paises: {
+        Row: {
+          id: string
+          iso2: string
+          nombre: string
+        }
+        Insert: {
+          id: string
+          iso2: string
+          nombre: string
+        }
+        Update: {
+          id?: string
+          iso2?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
       perfiles: {
         Row: {
+          calificaciones_cliente: number
           correo: string | null
           creado_en: string
           estado_cuenta: string
           id: string
           nombre: string
+          reputacion_cliente: number | null
           rol: string
           ruta_foto_perfil: string | null
         }
         Insert: {
+          calificaciones_cliente?: number
           correo?: string | null
           creado_en?: string
           estado_cuenta?: string
           id?: string
           nombre?: string
+          reputacion_cliente?: number | null
           rol?: string
           ruta_foto_perfil?: string | null
         }
         Update: {
+          calificaciones_cliente?: number
           correo?: string | null
           creado_en?: string
           estado_cuenta?: string
           id?: string
           nombre?: string
+          reputacion_cliente?: number | null
           rol?: string
           ruta_foto_perfil?: string | null
         }
         Relationships: []
+      }
+      pines_inicio_trabajo: {
+        Row: {
+          creado_en: string
+          id_trabajo: string
+          pin: string
+        }
+        Insert: {
+          creado_en?: string
+          id_trabajo: string
+          pin: string
+        }
+        Update: {
+          creado_en?: string
+          id_trabajo?: string
+          pin?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pines_inicio_trabajo_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: true
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       portafolio_trabajador: {
         Row: {
@@ -802,6 +1336,119 @@ export type Database = {
           },
         ]
       }
+      ranking_aprendizaje: {
+        Row: {
+          creado_en: string
+          id: string
+          metricas: Json | null
+          motivo: string
+          pesos_antes: Json
+          pesos_despues: Json
+        }
+        Insert: {
+          creado_en?: string
+          id: string
+          metricas?: Json | null
+          motivo: string
+          pesos_antes: Json
+          pesos_despues: Json
+        }
+        Update: {
+          creado_en?: string
+          id?: string
+          metricas?: Json | null
+          motivo?: string
+          pesos_antes?: Json
+          pesos_despues?: Json
+        }
+        Relationships: []
+      }
+      ranking_config: {
+        Row: {
+          actualizado_en: string
+          aprendizaje_activo: number
+          id: string
+          n_bayes: number
+          peso_calificacion: number
+          peso_completados: number
+          peso_confianza: number
+          peso_impulso: number
+          peso_recencia: number
+          peso_rechazos: number
+          peso_verificacion: number
+          pesos_senal: Json
+          prior_bayes: number
+          tasa_aprendizaje: number
+          umbral_auto_excluir: number
+          umbral_revision: number
+        }
+        Insert: {
+          actualizado_en?: string
+          aprendizaje_activo?: number
+          id?: string
+          n_bayes?: number
+          peso_calificacion?: number
+          peso_completados?: number
+          peso_confianza?: number
+          peso_impulso?: number
+          peso_recencia?: number
+          peso_rechazos?: number
+          peso_verificacion?: number
+          pesos_senal?: Json
+          prior_bayes?: number
+          tasa_aprendizaje?: number
+          umbral_auto_excluir?: number
+          umbral_revision?: number
+        }
+        Update: {
+          actualizado_en?: string
+          aprendizaje_activo?: number
+          id?: string
+          n_bayes?: number
+          peso_calificacion?: number
+          peso_completados?: number
+          peso_confianza?: number
+          peso_impulso?: number
+          peso_recencia?: number
+          peso_rechazos?: number
+          peso_verificacion?: number
+          pesos_senal?: Json
+          prior_bayes?: number
+          tasa_aprendizaje?: number
+          umbral_auto_excluir?: number
+          umbral_revision?: number
+        }
+        Relationships: []
+      }
+      regiones: {
+        Row: {
+          codigo_oficial: string | null
+          id: string
+          id_pais: string
+          nombre: string
+        }
+        Insert: {
+          codigo_oficial?: string | null
+          id: string
+          id_pais: string
+          nombre: string
+        }
+        Update: {
+          codigo_oficial?: string | null
+          id?: string
+          id_pais?: string
+          nombre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regiones_id_pais_fkey"
+            columns: ["id_pais"]
+            isOneToOne: false
+            referencedRelation: "paises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registros_error_app: {
         Row: {
           creado_en: string
@@ -878,6 +1525,100 @@ export type Database = {
           motivo?: string
         }
         Relationships: []
+      }
+      reprogramaciones_trabajo: {
+        Row: {
+          creado_en: string
+          estado: string
+          fecha_anterior: string
+          fecha_propuesta: string
+          id: string
+          id_trabajo: string
+          motivo: string | null
+          propuesta_por: string
+          respondida_en: string | null
+          respondida_por: string | null
+          rol_proponente: string
+        }
+        Insert: {
+          creado_en?: string
+          estado?: string
+          fecha_anterior: string
+          fecha_propuesta: string
+          id?: string
+          id_trabajo: string
+          motivo?: string | null
+          propuesta_por: string
+          respondida_en?: string | null
+          respondida_por?: string | null
+          rol_proponente: string
+        }
+        Update: {
+          creado_en?: string
+          estado?: string
+          fecha_anterior?: string
+          fecha_propuesta?: string
+          id?: string
+          id_trabajo?: string
+          motivo?: string | null
+          propuesta_por?: string
+          respondida_en?: string | null
+          respondida_por?: string | null
+          rol_proponente?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reprogramaciones_trabajo_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: false
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      senales_resena: {
+        Row: {
+          creado_en: string
+          detalle: string | null
+          estado: string
+          id: string
+          id_calificacion: string
+          puntaje: number
+          resuelto_en: string | null
+          resuelto_por: string | null
+          tipo_senal: string
+        }
+        Insert: {
+          creado_en?: string
+          detalle?: string | null
+          estado?: string
+          id: string
+          id_calificacion: string
+          puntaje: number
+          resuelto_en?: string | null
+          resuelto_por?: string | null
+          tipo_senal: string
+        }
+        Update: {
+          creado_en?: string
+          detalle?: string | null
+          estado?: string
+          id?: string
+          id_calificacion?: string
+          puntaje?: number
+          resuelto_en?: string | null
+          resuelto_por?: string | null
+          tipo_senal?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "senales_resena_id_calificacion_fkey"
+            columns: ["id_calificacion"]
+            isOneToOne: false
+            referencedRelation: "calificaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       servicios: {
         Row: {
@@ -994,29 +1735,65 @@ export type Database = {
       }
       trabajador_horarios: {
         Row: {
+          activo: boolean | null
           actualizado_en: string
+          creado_en: string | null
+          dia_semana: number | null
+          hora_fin: string | null
+          hora_inicio: string | null
           horarios: Json
+          id: string
           id_usuario: string
         }
         Insert: {
+          activo?: boolean | null
           actualizado_en?: string
+          creado_en?: string | null
+          dia_semana?: number | null
+          hora_fin?: string | null
+          hora_inicio?: string | null
           horarios?: Json
+          id?: string
           id_usuario: string
         }
         Update: {
+          activo?: boolean | null
           actualizado_en?: string
+          creado_en?: string | null
+          dia_semana?: number | null
+          hora_fin?: string | null
+          hora_inicio?: string | null
           horarios?: Json
+          id?: string
           id_usuario?: string
         }
         Relationships: [
           {
             foreignKeyName: "trabajador_horarios_id_usuario_fkey"
             columns: ["id_usuario"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "trabajadores"
             referencedColumns: ["id_usuario"]
           },
         ]
+      }
+      trabajador_precios: {
+        Row: {
+          codigo: string
+          id_usuario: string
+          monto_clp: number
+        }
+        Insert: {
+          codigo: string
+          id_usuario: string
+          monto_clp: number
+        }
+        Update: {
+          codigo?: string
+          id_usuario?: string
+          monto_clp?: number
+        }
+        Relationships: []
       }
       trabajador_servicios: {
         Row: {
@@ -1041,30 +1818,30 @@ export type Database = {
           },
         ]
       }
-      ubicacion_en_vivo: {
+      trabajador_servicios_extra: {
         Row: {
-          actualizado_en: string
-          id_trabajo: string
-          id_trabajador: string
-          latitud: number
-          longitud: number
-          precision_metros: number | null
+          id: string
+          id_usuario: string
+          monto_clp: number
+          subtitulo: string
+          titulo: string
+          unidad: string
         }
         Insert: {
-          actualizado_en?: string
-          id_trabajo: string
-          id_trabajador: string
-          latitud: number
-          longitud: number
-          precision_metros?: number | null
+          id: string
+          id_usuario: string
+          monto_clp: number
+          subtitulo?: string
+          titulo: string
+          unidad?: string
         }
         Update: {
-          actualizado_en?: string
-          id_trabajo?: string
-          id_trabajador?: string
-          latitud?: number
-          longitud?: number
-          precision_metros?: number | null
+          id?: string
+          id_usuario?: string
+          monto_clp?: number
+          subtitulo?: string
+          titulo?: string
+          unidad?: string
         }
         Relationships: []
       }
@@ -1075,19 +1852,31 @@ export type Database = {
           conteo_rechazos: number
           descripcion: string | null
           disponible: number
+          es_elite: boolean | null
           estado_verificacion: string
+          id_comuna: string | null
+          id_region: string | null
           id_usuario: string
-          nota_verificacion: string | null
-          niveles_precio: Json
-          precios_configurados: number
-          profesion: string
-          servicios_personalizados: Json
-          tarifa_visita: number
-          zona_trabajo: string | null
           latitud_base: number | null
           longitud_base: number | null
-          radio_servicio_km: number
+          niveles_precio: Json
+          nota_verificacion: string | null
           origen_base: string | null
+          pausa_por_trabajo: boolean
+          precios_configurados: number
+          prioridad_manual: number
+          profesion: string
+          radio_servicio_km: number
+          radio_urbano_km: number
+          ranking_actualizado_en: string | null
+          score_desglose: Json
+          score_listado: number
+          servicios_personalizados: Json
+          tarifa_fuera_radio_clp: number
+          tarifa_visita: number
+          trabajos_completados: number
+          usa_horario: boolean
+          zona_trabajo: string | null
         }
         Insert: {
           calificacion?: number
@@ -1095,19 +1884,31 @@ export type Database = {
           conteo_rechazos?: number
           descripcion?: string | null
           disponible?: number
+          es_elite?: boolean | null
           estado_verificacion?: string
+          id_comuna?: string | null
+          id_region?: string | null
           id_usuario: string
-          niveles_precio?: Json
-          nota_verificacion?: string | null
-          precios_configurados?: number
-          profesion?: string
-          servicios_personalizados?: Json
-          tarifa_visita?: number
-          zona_trabajo?: string | null
           latitud_base?: number | null
           longitud_base?: number | null
-          radio_servicio_km?: number
+          niveles_precio?: Json
+          nota_verificacion?: string | null
           origen_base?: string | null
+          pausa_por_trabajo?: boolean
+          precios_configurados?: number
+          prioridad_manual?: number
+          profesion?: string
+          radio_servicio_km?: number
+          radio_urbano_km?: number
+          ranking_actualizado_en?: string | null
+          score_desglose?: Json
+          score_listado?: number
+          servicios_personalizados?: Json
+          tarifa_fuera_radio_clp?: number
+          tarifa_visita?: number
+          trabajos_completados?: number
+          usa_horario?: boolean
+          zona_trabajo?: string | null
         }
         Update: {
           calificacion?: number
@@ -1115,21 +1916,47 @@ export type Database = {
           conteo_rechazos?: number
           descripcion?: string | null
           disponible?: number
+          es_elite?: boolean | null
           estado_verificacion?: string
+          id_comuna?: string | null
+          id_region?: string | null
           id_usuario?: string
-          niveles_precio?: Json
-          nota_verificacion?: string | null
-          precios_configurados?: number
-          profesion?: string
-          servicios_personalizados?: Json
-          tarifa_visita?: number
-          zona_trabajo?: string | null
           latitud_base?: number | null
           longitud_base?: number | null
-          radio_servicio_km?: number
+          niveles_precio?: Json
+          nota_verificacion?: string | null
           origen_base?: string | null
+          pausa_por_trabajo?: boolean
+          precios_configurados?: number
+          prioridad_manual?: number
+          profesion?: string
+          radio_servicio_km?: number
+          radio_urbano_km?: number
+          ranking_actualizado_en?: string | null
+          score_desglose?: Json
+          score_listado?: number
+          servicios_personalizados?: Json
+          tarifa_fuera_radio_clp?: number
+          tarifa_visita?: number
+          trabajos_completados?: number
+          usa_horario?: boolean
+          zona_trabajo?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "trabajadores_id_comuna_fkey"
+            columns: ["id_comuna"]
+            isOneToOne: false
+            referencedRelation: "comunas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trabajadores_id_region_fkey"
+            columns: ["id_region"]
+            isOneToOne: false
+            referencedRelation: "regiones"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trabajadores_id_usuario_fkey"
             columns: ["id_usuario"]
@@ -1228,6 +2055,90 @@ export type Database = {
             referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "trabajos_id_comuna_fkey"
+            columns: ["id_comuna"]
+            isOneToOne: false
+            referencedRelation: "comunas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ubicacion_en_vivo: {
+        Row: {
+          actualizado_en: string
+          id_trabajador: string
+          id_trabajo: string
+          latitud: number
+          longitud: number
+          precision_metros: number | null
+        }
+        Insert: {
+          actualizado_en?: string
+          id_trabajador: string
+          id_trabajo: string
+          latitud: number
+          longitud: number
+          precision_metros?: number | null
+        }
+        Update: {
+          actualizado_en?: string
+          id_trabajador?: string
+          id_trabajo?: string
+          latitud?: number
+          longitud?: number
+          precision_metros?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ubicacion_en_vivo_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: true
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ubicacion_en_vivo_trabajador_fkey"
+            columns: ["id_trabajador"]
+            isOneToOne: false
+            referencedRelation: "trabajadores"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      verificacion_eventos: {
+        Row: {
+          creado_en: string
+          estado: string
+          id: string
+          id_actor: string | null
+          id_usuario: string
+          nota: string | null
+        }
+        Insert: {
+          creado_en?: string
+          estado: string
+          id?: string
+          id_actor?: string | null
+          id_usuario: string
+          nota?: string | null
+        }
+        Update: {
+          creado_en?: string
+          estado?: string
+          id?: string
+          id_actor?: string | null
+          id_usuario?: string
+          nota?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verificacion_eventos_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -1235,11 +2146,95 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _hora_santiago: { Args: { p_ts: string }; Returns: string }
+      _normalizar_pesos_ranking: {
+        Args: {
+          p_cal: number
+          p_comp: number
+          p_conf: number
+          p_imp: number
+          p_rec: number
+          p_rech: number
+          p_ver: number
+        }
+        Returns: number[]
+      }
+      _notificar_reprogramacion: {
+        Args: {
+          p_cuerpo: string
+          p_destino: string
+          p_id_trabajo: string
+          p_titulo: string
+        }
+        Returns: undefined
+      }
+      _ranking_cfg: {
+        Args: never
+        Returns: {
+          actualizado_en: string
+          aprendizaje_activo: number
+          id: string
+          n_bayes: number
+          peso_calificacion: number
+          peso_completados: number
+          peso_confianza: number
+          peso_impulso: number
+          peso_recencia: number
+          peso_rechazos: number
+          peso_verificacion: number
+          pesos_senal: Json
+          prior_bayes: number
+          tasa_aprendizaje: number
+          umbral_auto_excluir: number
+          umbral_revision: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ranking_config"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      _registrar_evento_ranking: {
+        Args: { p_tipo: string; p_trabajador: string; p_trabajo: string }
+        Returns: undefined
+      }
+      abrir_disputa: {
+        Args: {
+          p_descripcion: string
+          p_id: string
+          p_id_trabajo: string
+          p_motivo: string
+        }
+        Returns: undefined
+      }
+      acuerdo_pendiente: {
+        Args: { p_id_trabajo: string }
+        Returns: {
+          acepta_cliente: boolean
+          acepta_trabajador: boolean
+          estado: string
+          id: string
+          tipo: string
+        }[]
+      }
       admin_actualizar_estado_disputa: {
         Args: { p_estado: string; p_id: string; p_resolucion?: string }
         Returns: undefined
       }
       admin_metricas_resumen: { Args: never; Returns: Json }
+      aplicar_cierre_disputa: {
+        Args: {
+          p_decision: string
+          p_disputa_id: string
+          p_operador: string
+          p_resolucion: string
+        }
+        Returns: Json
+      }
+      aprender_pesos_ranking: { Args: never; Returns: Json }
+      aprender_pesos_ranking_admin: { Args: never; Returns: Json }
+      asegurar_pin_inicio: { Args: { p_trabajo_id: string }; Returns: string }
       asignar_trabajador_trabajo: {
         Args: { p_trabajador_id: string; p_trabajo_id: string }
         Returns: {
@@ -1271,67 +2266,312 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      abrir_disputa: {
-        Args: {
-          p_id: string
-          p_id_trabajo: string
-          p_motivo: string
-          p_descripcion?: string
-        }
-        Returns: undefined
-      }
-      comentar_disputa: {
-        Args: { p_id: string; p_comentario: string }
-        Returns: undefined
-      }
-      proponer_acuerdo: {
-        Args: { p_id: string; p_id_trabajo: string; p_tipo: string }
-        Returns: Json
-      }
-      responder_acuerdo: {
-        Args: { p_id: string; p_acepta: boolean }
-        Returns: Json
-      }
-      acuerdo_pendiente: {
-        Args: { p_id_trabajo: string }
+      base_publica_profesional: {
+        Args: { p_id: string }
         Returns: {
-          id: string
-          tipo: string
-          estado: string
-          acepta_cliente: boolean | null
-          acepta_trabajador: boolean | null
+          latitud_base: number
+          longitud_base: number
         }[]
       }
-      evidencia_disputa: {
-        Args: { p_id_disputa: string }
-        Returns: { id: string; imagen_base64: string }[]
+      calificar_cliente: {
+        Args: { p_comentario?: string; p_puntaje: number; p_trabajo_id: string }
+        Returns: number
+      }
+      categorias_con_disponibles: { Args: never; Returns: string[] }
+      cerrar_trabajo_conforme: {
+        Args: { p_trabajo_id: string }
+        Returns: {
+          actualizado_en: string
+          creado_en: string
+          descripcion: string | null
+          direccion: string
+          estado: string
+          estado_pago: string | null
+          fecha_programada: string | null
+          horas_bloque: number | null
+          id: string
+          id_comuna: string | null
+          id_cotizacion_seleccionada: string | null
+          id_servicio: string | null
+          id_sku_servicio: string | null
+          id_trabajador: string | null
+          id_usuario: string
+          instantanea_precio: string | null
+          latitud: number | null
+          longitud: number | null
+          metadatos_servicio: string | null
+          modalidad_cobro: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "trabajos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      clasificar_disputa: {
+        Args: { p_motivo: string; p_trabajo_id: string }
+        Returns: {
+          decision: string
+          estado: string
+          regla: string
+          vence: string
+        }[]
+      }
+      comentar_disputa: {
+        Args: { p_comentario: string; p_id: string }
+        Returns: undefined
+      }
+      confirmar_trabajo_tras_captura: {
+        Args: { p_id_pago: string }
+        Returns: string
+      }
+      consola_disputas_abiertas: {
+        Args: never
+        Returns: {
+          creado_en: string
+          decision_sugerida: string
+          descripcion: string
+          estado: string
+          id: string
+          id_trabajo: string
+          monto_retenido: number
+          motivo: string
+          motivo_regla: string
+          nombre_cliente: string
+          nombre_profesional: string
+          vence_en: string
+        }[]
+      }
+      crear_intencion_pago: {
+        Args: { p_buy_order?: string; p_id_trabajo: string; p_monto: number }
+        Returns: {
+          actualizado_en: string
+          alta_consumido_en: string | null
+          alta_jti: string | null
+          alta_nonce_hash: string | null
+          ambiente: string | null
+          autorizado_en: string | null
+          buy_order: string | null
+          cobro_reclamado_en: string | null
+          creado_en: string
+          estado: string
+          handoff_consumido_en: string | null
+          id: string
+          id_orden_cambio: string | null
+          id_trabajo: string
+          id_transaccion: string | null
+          liberado_en: string | null
+          metodo_pago: string | null
+          moneda: string
+          monto: number
+          orden_detalle_oneclick: string | null
+          origen_retorno: string | null
+          reembolsado_en: string | null
+          reembolso_solicitado_en: string | null
+          tipo_pago: string
+          token_tbk: string | null
+          url_tbk: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pagos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      crear_intencion_pago_orden_cambio: {
+        Args: {
+          p_buy_order?: string
+          p_id_orden_cambio: string
+          p_id_trabajo: string
+          p_monto: number
+        }
+        Returns: {
+          actualizado_en: string
+          alta_consumido_en: string | null
+          alta_jti: string | null
+          alta_nonce_hash: string | null
+          ambiente: string | null
+          autorizado_en: string | null
+          buy_order: string | null
+          cobro_reclamado_en: string | null
+          creado_en: string
+          estado: string
+          handoff_consumido_en: string | null
+          id: string
+          id_orden_cambio: string | null
+          id_trabajo: string
+          id_transaccion: string | null
+          liberado_en: string | null
+          metodo_pago: string | null
+          moneda: string
+          monto: number
+          orden_detalle_oneclick: string | null
+          origen_retorno: string | null
+          reembolsado_en: string | null
+          reembolso_solicitado_en: string | null
+          tipo_pago: string
+          token_tbk: string | null
+          url_tbk: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pagos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      crear_intencion_pago_servicio: {
+        Args: { p_id_trabajo: string; p_id_usuario: string; p_monto: number }
+        Returns: {
+          actualizado_en: string
+          alta_consumido_en: string | null
+          alta_jti: string | null
+          alta_nonce_hash: string | null
+          ambiente: string | null
+          autorizado_en: string | null
+          buy_order: string | null
+          cobro_reclamado_en: string | null
+          creado_en: string
+          estado: string
+          handoff_consumido_en: string | null
+          id: string
+          id_orden_cambio: string | null
+          id_trabajo: string
+          id_transaccion: string | null
+          liberado_en: string | null
+          metodo_pago: string | null
+          moneda: string
+          monto: number
+          orden_detalle_oneclick: string | null
+          origen_retorno: string | null
+          reembolsado_en: string | null
+          reembolso_solicitado_en: string | null
+          tipo_pago: string
+          token_tbk: string | null
+          url_tbk: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pagos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      disputa_esta_activa: { Args: { p_estado: string }; Returns: boolean }
+      enviar_verificacion_profesional: {
+        Args: { p_nota: string }
+        Returns: undefined
       }
       es_parte_trabajo: { Args: { p_trabajo_id: string }; Returns: boolean }
       es_rol_trabajador: { Args: { p_usuario_id: string }; Returns: boolean }
+      evaluar_resena: { Args: { p_id: string }; Returns: number }
+      evidencia_disputa: {
+        Args: { p_id_disputa: string }
+        Returns: {
+          id: string
+          imagen_base64: string
+        }[]
+      }
+      expirar_pagos_abandonados: { Args: never; Returns: number }
+      fichas_sensibles_admin: {
+        Args: never
+        Returns: {
+          id_usuario: string
+          latitud_base: number
+          longitud_base: number
+          nota_verificacion: string
+        }[]
+      }
+      fijar_prioridad_trabajador: {
+        Args: { p_id: string; p_prioridad: number }
+        Returns: undefined
+      }
+      fijar_verificacion_profesional: {
+        Args: { p_estado: string; p_id_usuario: string; p_nota?: string }
+        Returns: undefined
+      }
+      guardar_config_ranking: { Args: { p_cfg: Json }; Returns: Json }
+      guardar_horarios_propios: { Args: { p_horarios: Json }; Returns: Json }
+      horarios_disponibles_propios: { Args: never; Returns: Json }
       horarios_libres_profesional: {
-        Args: { p_id_trabajador: string; p_dias?: number }
-        Returns: { inicio: string }[]
+        Args: { p_dias?: number; p_id_trabajador: string }
+        Returns: {
+          inicio: string
+        }[]
       }
-      horarios_disponibles_propios: {
-        Args: Record<string, never>
-        Returns: Json
-      }
-      guardar_horarios_propios: {
-        Args: { p_horarios: Json }
+      intentar_pin_inicio: {
+        Args: { p_pin: string; p_trabajo_id: string }
         Returns: Json
       }
       is_admin: { Args: never; Returns: boolean }
-      categorias_con_disponibles: {
-        Args: never
-        Returns: string[]
+      km_entre_puntos: {
+        Args: { p_lat1: number; p_lat2: number; p_lng1: number; p_lng2: number }
+        Returns: number
       }
-      obtener_pin_inicio: {
-        Args: { p_trabajo_id: string }
-        Returns: string
+      liberar_escrow: {
+        Args: { p_id_pago: string }
+        Returns: {
+          actualizado_en: string
+          alta_consumido_en: string | null
+          alta_jti: string | null
+          alta_nonce_hash: string | null
+          ambiente: string | null
+          autorizado_en: string | null
+          buy_order: string | null
+          cobro_reclamado_en: string | null
+          creado_en: string
+          estado: string
+          handoff_consumido_en: string | null
+          id: string
+          id_orden_cambio: string | null
+          id_trabajo: string
+          id_transaccion: string | null
+          liberado_en: string | null
+          metodo_pago: string | null
+          moneda: string
+          monto: number
+          orden_detalle_oneclick: string | null
+          origen_retorno: string | null
+          reembolsado_en: string | null
+          reembolso_solicitado_en: string | null
+          tipo_pago: string
+          token_tbk: string | null
+          url_tbk: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pagos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      intentar_pin_inicio: {
-        Args: { p_pin?: string; p_trabajo_id: string }
+      liberar_escrow_manual: {
+        Args: {
+          p_id_operador: string
+          p_id_pago: string
+          p_notas?: string
+          p_proveedor?: string
+          p_referencia: string
+        }
         Returns: Json
+      }
+      liberar_trabajo_sistema: {
+        Args: { p_nota: string; p_trabajo_id: string }
+        Returns: undefined
+      }
+      limpiar_invitados_sin_pago: { Args: never; Returns: number }
+      listar_cuentas_demo_acceso: {
+        Args: never
+        Returns: {
+          categoria_servicio: string
+          correo: string
+          id: string
+          nombre: string
+          profesion: string
+          rol: string
+        }[]
       }
       listar_profesionales_catalogo: {
         Args: {
@@ -1342,38 +2582,335 @@ export type Database = {
           p_zona?: string
         }
         Returns: {
-          calificacion: number | null
+          calificacion: number
           categoria_servicio: string
-          descripcion: string | null
+          descripcion: string
+          es_elite: boolean
           id_usuario: string
-          nombre: string | null
+          latitud_base: number
+          longitud_base: number
+          nombre: string
+          origen_base: string
+          prioridad_manual: number
           profesion: string
-          ruta_foto_perfil: string | null
-          tarifa_visita: number | null
-          zona_trabajo: string | null
-          latitud_base: number | null
-          longitud_base: number | null
-          radio_servicio_km: number | null
-          origen_base: string | null
-          trabajos_completados: number | null
-          score_listado: number | null
-          prioridad_manual: number | null
-          radio_urbano_km: number | null
-          tarifa_fuera_radio_clp: number | null
-          es_elite: boolean | null
+          radio_servicio_km: number
+          radio_urbano_km: number
+          ruta_foto_perfil: string
+          score_listado: number
+          tarifa_fuera_radio_clp: number
+          tarifa_visita: number
+          trabajos_completados: number
+          zona_trabajo: string
         }[]
       }
-      publicar_ubicacion_trabajo: {
+      listar_senales_resena: {
+        Args: { p_estado?: string; p_limit?: number }
+        Returns: {
+          comentario: string
+          creado_en: string
+          detalle: string
+          estado: string
+          estado_revision: string
+          id: string
+          id_calificacion: string
+          id_trabajador: string
+          id_trabajo: string
+          nombre_cliente: string
+          nombre_trabajador: string
+          peso_confianza: number
+          puntaje: number
+          puntaje_resena: number
+          tipo_senal: string
+        }[]
+      }
+      listar_trabajos_marketplace: {
+        Args: { p_limite?: number }
+        Returns: {
+          actualizado_en: string
+          creado_en: string
+          descripcion: string
+          estado: string
+          id: string
+          id_servicio: string
+          metadatos_servicio: string
+          modalidad_cobro: string
+        }[]
+      }
+      marcar_orden_cambio_pagada: {
+        Args: { p_id_orden_cambio: string; p_id_pago: string }
+        Returns: {
+          creado_en: string
+          descripcion: string
+          estado: string
+          id: string
+          id_pago: string | null
+          id_trabajador: string
+          id_trabajo: string
+          monto_clp: number
+          respondido_en: string | null
+          tipo: string
+          titulo: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ordenes_cambio"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      marcar_pago_liberado: {
         Args: {
-          p_trabajo_id: string
-          p_lat: number
-          p_lng: number
-          p_precision?: number
+          p_id_operador: string
+          p_id_pago: string
+          p_notas: string
+          p_referencia: string
         }
         Returns: undefined
       }
+      marcar_reembolso_automatico: {
+        Args: { p_id_pago: string; p_modo: string }
+        Returns: string
+      }
+      metadatos_sin_pin: { Args: { p_raw: string }; Returns: string }
+      mi_ficha_propia: {
+        Args: never
+        Returns: {
+          estado_verificacion: string
+          latitud_base: number
+          longitud_base: number
+          nota_verificacion: string
+          origen_base: string
+          radio_servicio_km: number
+        }[]
+      }
+      minuto_utc: { Args: { p_valor: string }; Returns: string }
+      monto_esperado_trabajo: {
+        Args: { p_job: Database["public"]["Tables"]["trabajos"]["Row"] }
+        Returns: number
+      }
+      normalizar_bloques_horario: { Args: { p_horarios: Json }; Returns: Json }
+      obtener_config_ranking: { Args: never; Returns: Json }
+      obtener_pin_inicio: { Args: { p_trabajo_id: string }; Returns: string }
+      obtener_trabajo_sin_direccion: { Args: { p_id: string }; Returns: Json }
+      perfil_contacto_si_trabajo_activo: {
+        Args: { p_perfil_id: string }
+        Returns: {
+          correo: string
+          id: string
+          nombre: string
+        }[]
+      }
+      perfiles_publicos_por_ids: {
+        Args: { p_ids: string[] }
+        Returns: {
+          id: string
+          nombre: string
+          rol: string
+          ruta_foto_perfil: string
+        }[]
+      }
+      profesional_tiene_trabajo_activo: {
+        Args: { p_id_trabajador: string }
+        Returns: boolean
+      }
+      profesionales_ocupados: { Args: { p_ids: string[] }; Returns: string[] }
+      proponer_acuerdo: {
+        Args: { p_id: string; p_id_trabajo: string; p_tipo: string }
+        Returns: Json
+      }
+      proponer_reprogramacion: {
+        Args: { p_fecha: string; p_motivo?: string; p_trabajo_id: string }
+        Returns: {
+          creado_en: string
+          estado: string
+          fecha_anterior: string
+          fecha_propuesta: string
+          id: string
+          id_trabajo: string
+          motivo: string | null
+          propuesta_por: string
+          respondida_en: string | null
+          respondida_por: string | null
+          rol_proponente: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reprogramaciones_trabajo"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      publicar_ubicacion_trabajo: {
+        Args: {
+          p_lat: number
+          p_lng: number
+          p_precision?: number
+          p_trabajo_id: string
+        }
+        Returns: undefined
+      }
+      quitar_dispositivo_push: { Args: { p_token: string }; Returns: undefined }
+      recargo_traslado_clp: {
+        Args: {
+          p_lat_trabajador: number
+          p_lat_trabajo: number
+          p_lng_trabajador: number
+          p_lng_trabajo: number
+          p_radio_km: number
+        }
+        Returns: number
+      }
       rechazar_trabajo_pendiente: {
         Args: { p_metadatos?: string; p_trabajo_id: string }
+        Returns: {
+          actualizado_en: string
+          creado_en: string
+          descripcion: string | null
+          direccion: string
+          estado: string
+          estado_pago: string | null
+          fecha_programada: string | null
+          horas_bloque: number | null
+          id: string
+          id_comuna: string | null
+          id_cotizacion_seleccionada: string | null
+          id_servicio: string | null
+          id_sku_servicio: string | null
+          id_trabajador: string | null
+          id_usuario: string
+          instantanea_precio: string | null
+          latitud: number | null
+          longitud: number | null
+          metadatos_servicio: string | null
+          modalidad_cobro: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "trabajos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reclamar_cobro_oneclick: {
+        Args: { p_buy_order: string; p_id_pago: string; p_monto: number }
+        Returns: string
+      }
+      reconcile_secret_valido: { Args: { p_secret: string }; Returns: boolean }
+      reembolsar_escrow: {
+        Args: { p_id_pago: string }
+        Returns: {
+          actualizado_en: string
+          alta_consumido_en: string | null
+          alta_jti: string | null
+          alta_nonce_hash: string | null
+          ambiente: string | null
+          autorizado_en: string | null
+          buy_order: string | null
+          cobro_reclamado_en: string | null
+          creado_en: string
+          estado: string
+          handoff_consumido_en: string | null
+          id: string
+          id_orden_cambio: string | null
+          id_trabajo: string
+          id_transaccion: string | null
+          liberado_en: string | null
+          metodo_pago: string | null
+          moneda: string
+          monto: number
+          orden_detalle_oneclick: string | null
+          origen_retorno: string | null
+          reembolsado_en: string | null
+          reembolso_solicitado_en: string | null
+          tipo_pago: string
+          token_tbk: string | null
+          url_tbk: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pagos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      refrescar_ranking_todos: { Args: never; Returns: number }
+      refrescar_ranking_todos_admin: { Args: never; Returns: number }
+      refrescar_ranking_trabajador: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      registrar_dispositivo_push: {
+        Args: { p_plataforma?: string; p_token: string }
+        Returns: undefined
+      }
+      registrar_transferencia_profesional: {
+        Args: { p_id_pago: string; p_notas?: string; p_referencia: string }
+        Returns: Json
+      }
+      resolver_senal_resena: {
+        Args: { p_estado: string; p_id: string }
+        Returns: undefined
+      }
+      resolver_soporte_automatico: { Args: never; Returns: Json }
+      responder_acuerdo: {
+        Args: { p_acepta: boolean; p_id: string }
+        Returns: Json
+      }
+      responder_reprogramacion: {
+        Args: { p_acepta: boolean; p_id: string }
+        Returns: {
+          creado_en: string
+          estado: string
+          fecha_anterior: string
+          fecha_propuesta: string
+          id: string
+          id_trabajo: string
+          motivo: string | null
+          propuesta_por: string
+          respondida_en: string | null
+          respondida_por: string | null
+          rol_proponente: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reprogramaciones_trabajo"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      resumen_calificacion_clientes: {
+        Args: { p_ids: string[] }
+        Returns: {
+          cantidad: number
+          id_usuario: string
+          promedio: number
+        }[]
+      }
+      retirar_reprogramacion: {
+        Args: { p_id: string }
+        Returns: {
+          creado_en: string
+          estado: string
+          fecha_anterior: string
+          fecha_propuesta: string
+          id: string
+          id_trabajo: string
+          motivo: string | null
+          propuesta_por: string
+          respondida_en: string | null
+          respondida_por: string | null
+          rol_proponente: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reprogramaciones_trabajo"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      rol_consola: { Args: never; Returns: string }
+      seleccionar_cotizacion: {
+        Args: { p_id_cotizacion: string }
         Returns: {
           actualizado_en: string
           creado_en: string
@@ -1407,9 +2944,16 @@ export type Database = {
         Args: { p_nuevo_estado: string; p_pago_id: string }
         Returns: {
           actualizado_en: string
+          alta_consumido_en: string | null
+          alta_jti: string | null
+          alta_nonce_hash: string | null
+          ambiente: string | null
           autorizado_en: string | null
+          buy_order: string | null
+          cobro_reclamado_en: string | null
           creado_en: string
           estado: string
+          handoff_consumido_en: string | null
           id: string
           id_orden_cambio: string | null
           id_trabajo: string
@@ -1418,8 +2962,13 @@ export type Database = {
           metodo_pago: string | null
           moneda: string
           monto: number
+          orden_detalle_oneclick: string | null
+          origen_retorno: string | null
           reembolsado_en: string | null
+          reembolso_solicitado_en: string | null
           tipo_pago: string
+          token_tbk: string | null
+          url_tbk: string | null
         }
         SetofOptions: {
           from: "*"
@@ -1428,8 +2977,137 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      sincronizar_estado_pago_trabajo: {
+        Args: { p_trabajo_id: string }
+        Returns: {
+          actualizado_en: string
+          creado_en: string
+          descripcion: string | null
+          direccion: string
+          estado: string
+          estado_pago: string | null
+          fecha_programada: string | null
+          horas_bloque: number | null
+          id: string
+          id_comuna: string | null
+          id_cotizacion_seleccionada: string | null
+          id_servicio: string | null
+          id_sku_servicio: string | null
+          id_trabajador: string | null
+          id_usuario: string
+          instantanea_precio: string | null
+          latitud: number | null
+          longitud: number | null
+          metadatos_servicio: string | null
+          modalidad_cobro: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "trabajos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      slug_geo: { Args: { p_texto: string }; Returns: string }
+      soporte_comentar_disputa: {
+        Args: { p_comentario: string; p_id: string }
+        Returns: undefined
+      }
+      soporte_numero: {
+        Args: { p_clave: string; p_default: number }
+        Returns: number
+      }
+      texto_a_timestamptz: { Args: { p_valor: string }; Returns: string }
+      texto_tiene_contacto: { Args: { p_texto: string }; Returns: boolean }
+      trabajador_reservable: {
+        Args: { p_trabajador: string }
+        Returns: boolean
+      }
+      trabajo_admite_disputa: { Args: { p_estado: string }; Returns: boolean }
+      trabajo_tiene_evidencia: {
+        Args: { p_trabajo_id: string }
+        Returns: boolean
+      }
+      transicion_trabajo_permitida: {
+        Args: { p_desde: string; p_hacia: string; p_modalidad?: string }
+        Returns: boolean
+      }
       transicionar_trabajo: {
         Args: { p_nuevo_estado: string; p_pin?: string; p_trabajo_id: string }
+        Returns: {
+          actualizado_en: string
+          creado_en: string
+          descripcion: string | null
+          direccion: string
+          estado: string
+          estado_pago: string | null
+          fecha_programada: string | null
+          horas_bloque: number | null
+          id: string
+          id_comuna: string | null
+          id_cotizacion_seleccionada: string | null
+          id_servicio: string | null
+          id_sku_servicio: string | null
+          id_trabajador: string | null
+          id_usuario: string
+          instantanea_precio: string | null
+          latitud: number | null
+          longitud: number | null
+          metadatos_servicio: string | null
+          modalidad_cobro: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "trabajos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      transiciones_trabajo_posibles: {
+        Args: { p_desde: string; p_modalidad?: string }
+        Returns: string[]
+      }
+      ver_reputacion_cliente: {
+        Args: { p_cliente: string }
+        Returns: {
+          calificaciones: number
+          disputas: number
+          reputacion: number
+        }[]
+      }
+      vincular_trabajador_cotizacion: {
+        Args: { p_trabajador_id: string; p_trabajo_id: string }
+        Returns: {
+          actualizado_en: string
+          creado_en: string
+          descripcion: string | null
+          direccion: string
+          estado: string
+          estado_pago: string | null
+          fecha_programada: string | null
+          horas_bloque: number | null
+          id: string
+          id_comuna: string | null
+          id_cotizacion_seleccionada: string | null
+          id_servicio: string | null
+          id_sku_servicio: string | null
+          id_trabajador: string | null
+          id_usuario: string
+          instantanea_precio: string | null
+          latitud: number | null
+          longitud: number | null
+          metadatos_servicio: string | null
+          modalidad_cobro: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "trabajos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      vincular_trabajador_solicitud: {
+        Args: { p_trabajador_id: string; p_trabajo_id: string }
         Returns: {
           actualizado_en: string
           creado_en: string
