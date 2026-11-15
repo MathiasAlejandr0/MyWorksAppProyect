@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:math' as math show Point, log, ln2, min, max;
+import 'dart:math' as math show log, ln2, min, max;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -302,10 +302,8 @@ class _WorkerSearchMapState extends State<WorkerSearchMap> {
     if (!_draggingClient || _clientDrag == null) return;
     try {
       final camera = _map.camera;
-      final current = camera.latLngToScreenPoint(_clientDrag!);
-      final next = camera.pointToLatLng(
-        math.Point(current.x + details.delta.dx, current.y + details.delta.dy),
-      );
+      final current = camera.latLngToScreenOffset(_clientDrag!);
+      final next = camera.screenOffsetToLatLng(current + details.delta);
       setState(() => _clientDrag = next);
     } catch (_) {}
   }

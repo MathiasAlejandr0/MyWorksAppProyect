@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' show Point;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -505,12 +504,9 @@ class _ClientMapPickerSheetState extends State<_ClientMapPickerSheet> {
                         onPanUpdate: (details) {
                           try {
                             final camera = _map.camera;
-                            final current = camera.latLngToScreenPoint(_point);
-                            final next = camera.pointToLatLng(
-                              Point(
-                                current.x + details.delta.dx,
-                                current.y + details.delta.dy,
-                              ),
+                            final current = camera.latLngToScreenOffset(_point);
+                            final next = camera.screenOffsetToLatLng(
+                              current + details.delta,
                             );
                             setState(() => _point = next);
                           } catch (_) {}

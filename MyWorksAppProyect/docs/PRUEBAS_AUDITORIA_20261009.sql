@@ -18,6 +18,7 @@ DECLARE
   v_n int;
   v_err text;
   v_estado text;
+  v_pin text;
 
 BEGIN
   IF v_camila IS NULL OR v_pedro IS NULL OR v_andres IS NULL OR v_jose IS NULL THEN
@@ -114,10 +115,28 @@ BEGIN
   END IF;
 
   -- El camino del guion sigue: el profesional pasa de en camino a en curso y termina.
+  -- Desde 20261115180001 el inicio exige el PIN del cliente.
+  PERFORM set_config('role', 'postgres', true);
+  SELECT pin INTO v_pin
+  FROM public.pines_inicio_trabajo
+  WHERE id_trabajo = 'demo-job-en-camino';
+  PERFORM set_config('role', 'authenticated', true);
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', v_pedro, 'role', 'authenticated')::text, true);
+  BEGIN
+    PERFORM public.transicionar_trabajo('demo-job-en-camino', 'en_curso', NULL);
+    v_err := 'paso';
+  EXCEPTION WHEN others THEN
+    v_err := SQLERRM;
+  END;
+  IF v_err NOT LIKE 'Ingresa el PIN%' THEN
+    RAISE EXCEPTION 'FALLO: el profesional inició sin PIN (%)', v_err;
+  END IF;
+  IF (public.intentar_pin_inicio('demo-job-en-camino', v_pin) ->> 'ok') IS DISTINCT FROM 'true' THEN
+    RAISE EXCEPTION 'FALLO: el PIN correcto no abrió el inicio';
+  END IF;
   SELECT estado INTO v_estado
-  FROM public.transicionar_trabajo('demo-job-en-camino', 'en_curso', NULL);
+  FROM public.transicionar_trabajo('demo-job-en-camino', 'en_curso', v_pin);
   IF v_estado <> 'en_curso' THEN
     RAISE EXCEPTION 'FALLO: el profesional no pudo iniciar (%)', v_estado;
   END IF;

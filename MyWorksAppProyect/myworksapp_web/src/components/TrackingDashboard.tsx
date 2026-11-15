@@ -22,6 +22,7 @@ interface TrackingDashboardProps {
   serviceLocation: string;
   orderId: string;
   jobStatus?: string | null;
+  startPin?: string | null;
   paymentStatus?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -60,6 +61,7 @@ export function TrackingDashboard({
   serviceLocation,
   orderId,
   jobStatus,
+  startPin,
   paymentStatus,
   latitude,
   longitude,
@@ -203,6 +205,13 @@ export function TrackingDashboard({
               <span className="tracking-status-dot" /> {statusLabel}
             </div>
             <p className="tracking-status-detail">{statusDetail}</p>
+            {startPin ? (
+              <div className="tracking-start-pin">
+                <span>PIN para iniciar</span>
+                <strong>{startPin}</strong>
+                <p>Díselo al profesional cuando llegue. Sin este PIN no puede dejar el trabajo en curso.</p>
+              </div>
+            ) : null}
           </div>
 
           {evidencePhotos.length > 0 ? (

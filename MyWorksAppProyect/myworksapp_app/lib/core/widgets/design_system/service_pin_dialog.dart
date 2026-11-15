@@ -3,35 +3,35 @@ import '../../design_system/app_radius.dart';
 import '../../design_system/app_spacing.dart';
 import '../../services/app_feedback.dart';
 import '../../theme/app_colors.dart';
-import '../../utils/service_pin.dart';
 import 'primary_button.dart';
 
-/// Diálogo interactivo de Verificación por PIN de 4 dígitos para inicio/término de trabajo.
+/// Diálogo para que el profesional escriba el PIN de 4 dígitos del cliente.
+/// No lo compara en el teléfono: lo devuelve y el servidor lo valida.
 class ServicePinDialog extends StatefulWidget {
   final String title;
   final String subtitle;
-  final String expectedPin;
+  final String? serverError;
 
   const ServicePinDialog({
     super.key,
     this.title = 'Verificación por PIN',
     this.subtitle = 'Ingresa el PIN de 4 dígitos proporcionado por el cliente para confirmar la acción.',
-    this.expectedPin = '',
+    this.serverError,
   });
 
-  static Future<bool?> show(
+  static Future<String?> show(
     BuildContext context, {
     String? title,
     String? subtitle,
-    String expectedPin = '',
+    String? serverError,
   }) {
-    return showDialog<bool>(
+    return showDialog<String>(
       context: context,
       barrierDismissible: true,
       builder: (ctx) => ServicePinDialog(
         title: title ?? 'Verificación por PIN',
         subtitle: subtitle ?? 'Ingresa el PIN de 4 dígitos proporcionado por el cliente para confirmar la acción.',
-        expectedPin: expectedPin,
+        serverError: serverError,
       ),
     );
   }
@@ -42,42 +42,31 @@ class ServicePinDialog extends StatefulWidget {
 
 class _ServicePinDialogState extends State<ServicePinDialog> {
   final List<String> _pin = [];
-  bool _hasError = false;
 
   void _onKeyPress(String digit) {
     if (_pin.length < 4) {
       AppFeedback.selection();
-      setState(() {
-        _hasError = false;
-        _pin.add(digit);
-      });
+      setState(() => _pin.add(digit));
     }
   }
 
   void _onBackspace() {
     if (_pin.isNotEmpty) {
       AppFeedback.selection();
-      setState(() {
-        _hasError = false;
-        _pin.removeLast();
-      });
+      setState(() => _pin.removeLast());
     }
   }
 
   void _onVerify() {
-    final enteredPin = _pin.join();
-    if (verifyServicePin(enteredPin, widget.expectedPin)) {
-      AppFeedback.heavy();
-      Navigator.pop(context, true);
-    } else {
-      AppFeedback.heavy();
-      setState(() => _hasError = true);
-    }
+    if (_pin.length != 4) return;
+    AppFeedback.heavy();
+    Navigator.pop(context, _pin.join());
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasError = widget.serverError != null && widget.serverError!.trim().isNotEmpty;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
@@ -135,12 +124,12 @@ class _ServicePinDialogState extends State<ServicePinDialog> {
                     color: isDark ? AppColors.surfaceDarkElevated : AppColors.grayBackground,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
-                      color: _hasError
+                      color: hasError
                           ? AppColors.crimson
                           : isFilled
                               ? AppColors.brandOrange
                               : AppColors.grayBorder.withValues(alpha: 0.5),
-                      width: isFilled || _hasError ? 2 : 1,
+                      width: isFilled || hasError ? 2 : 1,
                     ),
                   ),
                   child: Center(
@@ -149,7 +138,7 @@ class _ServicePinDialogState extends State<ServicePinDialog> {
                       style: TextStyle(
                         fontSize: isFilled ? 22 : 28,
                         fontWeight: FontWeight.w800,
-                        color: _hasError
+                        color: hasError
                             ? AppColors.crimson
                             : isDark
                                 ? AppColors.white
@@ -161,14 +150,15 @@ class _ServicePinDialogState extends State<ServicePinDialog> {
               }),
             ),
 
-            if (_hasError) ...[
+            if (widget.serverError != null && widget.serverError!.trim().isNotEmpty) ...[
               const SizedBox(height: 10),
-              const Text(
-                'PIN incorrecto. Intenta nuevamente.',
-                style: TextStyle(
+              Text(
+                widget.serverError!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
                   color: AppColors.crimson,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],

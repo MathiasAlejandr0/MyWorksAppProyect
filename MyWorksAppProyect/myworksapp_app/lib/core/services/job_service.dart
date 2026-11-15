@@ -205,6 +205,7 @@ class JobService {
     required String jobId,
     required String newStatus,
     String? userId, // Para validar permisos
+    String? pin,
   }) async {
     try {
       AppLogger.i('Actualizando estado del trabajo $jobId a $newStatus');
@@ -234,13 +235,24 @@ class JobService {
         );
       }
 
+      if (newStatus == AppConstants.jobStatusInProgress &&
+          (job.status == AppConstants.jobStatusAccepted ||
+              job.status == AppConstants.jobStatusEnRoute)) {
+        if (pin == null || pin.trim().isEmpty) {
+          throw AppError.validation(
+            'Ingresa el PIN de 4 dígitos que te muestra el cliente.',
+          );
+        }
+        await _jobRepository.confirmStartPin(job.id, pin);
+      }
+
       // Actualizar trabajo
       final updatedJob = job.copyWith(
         status: newStatus,
         updatedAt: DateTime.now(),
       );
 
-      await _jobRepository.updateJob(updatedJob);
+      await _jobRepository.updateJob(updatedJob, pin: pin);
 
       // Crear notificación según el nuevo estado
       await _createStatusChangeNotification(updatedJob);

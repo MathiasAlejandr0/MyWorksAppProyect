@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import '../../domain/pricing_constants.dart';
 import '../../utils/app_error.dart';
 import '../../utils/constants.dart';
+import '../../utils/error_handler.dart';
 import '../../utils/json_map.dart';
 import '../../utils/worker_job_status.dart';
 import '../job_insert_policy.dart';
@@ -206,9 +208,9 @@ class JobRepository {
     return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
   }
 
-  Future<void> updateJob(JobModel job) async {
+  Future<void> updateJob(JobModel job, {String? pin}) async {
     // Metadatos/campos no-estado: solo admin vía policy; estado vía RPC.
-    await updateJobStatus(job.id, job.status);
+    await updateJobStatus(job.id, job.status, pin: pin);
   }
 
   /// Rechazo del profesional: mantiene [workerId] para cumplir RLS en Supabase.
@@ -232,14 +234,60 @@ class JobRepository {
   }
 
   Future<void> updateJobStatus(String id, String status, {String? pin}) async {
-    await supabase.rpc(
-      'transicionar_trabajo',
-      params: {
-        'p_trabajo_id': id,
-        'p_nuevo_estado': status,
-        if (pin != null) 'p_pin': pin,
-      },
+    try {
+      await supabase.rpc(
+        'transicionar_trabajo',
+        params: {
+          'p_trabajo_id': id,
+          'p_nuevo_estado': status,
+          if (pin != null) 'p_pin': pin,
+        },
+      );
+    } on PostgrestException catch (error) {
+      final message = ErrorHandler.userMessageFor(error);
+      if (error.code == 'P0001' &&
+          message != 'Algo salió mal. Intenta de nuevo en un momento.') {
+        throw AppError.validation(message);
+      }
+      rethrow;
+    }
+  }
+
+  /// Confirma el PIN del cliente. Si falla, deja el intento grabado y no cambia el estado.
+  Future<void> confirmStartPin(String jobId, String pin) async {
+    try {
+      final raw = await supabase.rpc(
+        'intentar_pin_inicio',
+        params: {
+          'p_trabajo_id': jobId,
+          'p_pin': pin.trim(),
+        },
+      );
+      final map = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+      if (map['ok'] == true) return;
+      final message = (map['mensaje'] as String?)?.trim();
+      throw AppError.validation(
+        message == null || message.isEmpty ? 'PIN incorrecto.' : message,
+      );
+    } on PostgrestException catch (error) {
+      final message = ErrorHandler.userMessageFor(error);
+      if (error.code == 'P0001' &&
+          message != 'Algo salió mal. Intenta de nuevo en un momento.') {
+        throw AppError.validation(message);
+      }
+      rethrow;
+    }
+  }
+
+  /// PIN de inicio. Solo el cliente del trabajo (o un admin) lo recibe.
+  Future<String?> fetchClientStartPin(String jobId) async {
+    final value = await supabase.rpc(
+      'obtener_pin_inicio',
+      params: {'p_trabajo_id': jobId},
     );
+    final pin = value?.toString().trim() ?? '';
+    if (!RegExp(r'^\d{4}$').hasMatch(pin)) return null;
+    return pin;
   }
 
   Future<void> assignWorker(String jobId, String workerId) async {

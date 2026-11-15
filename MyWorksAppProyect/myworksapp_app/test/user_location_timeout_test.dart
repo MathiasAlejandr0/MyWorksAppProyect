@@ -106,17 +106,16 @@ void main() {
 
     await tester.pump(UserLocationService.gpsTimeout + const Duration(seconds: 5));
     await tester.pump();
-    // flutter_map throttle (220 ms) deja un timer pendiente al soltar el árbol
-    // en Flutter 3.50. Avanzarlo aquí evita el fallo de timersPending.
+    // flutter_map 8 deja el throttle de baldosas (220 ms) pendiente.
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Obteniendo tu ubicación GPS...'), findsNothing);
     expect(find.text(UserLocationService.demoFallbackLabel), findsOneWidget);
     expect(emitted, UserLocationService.demoFallbackLabel);
-    // El mapa deja un temporizador corto de baldosas; hay que drenarlo
-    // antes de cerrar el test.
+    // Al soltar el mapa, flutter_map 8 puede dejar el timeout HTTP de la
+    // baldosa (7 s). Hay que drenarlo antes de cerrar el test.
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 8));
   });
 }

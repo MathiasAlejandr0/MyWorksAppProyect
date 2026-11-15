@@ -19,6 +19,20 @@ void main() {
       expect(text, isNot(contains('acuerdo_pendiente')));
     });
 
+    test('muestra el PIN incorrecto y los intentos que quedan', () {
+      const wrong = PostgrestException(
+        message: 'PIN incorrecto. Te quedan 3 intentos.',
+        code: 'P0001',
+      );
+      const locked = PostgrestException(
+        message:
+            'Demasiados intentos fallidos. Espera 15 minutos para volver a ingresar el PIN.',
+        code: 'P0001',
+      );
+      expect(ErrorHandler.userMessageFor(wrong), wrong.message);
+      expect(ErrorHandler.userMessageFor(locked), locked.message);
+    });
+
     test('muestra los mensajes de negocio de RAISE EXCEPTION', () {
       const e = PostgrestException(
         message: 'El trabajo queda a más de 30 km del profesional',

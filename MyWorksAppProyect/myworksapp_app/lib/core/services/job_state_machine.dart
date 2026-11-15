@@ -77,6 +77,7 @@ class JobStateMachine {
     required String jobId,
     required String newStatus,
     String? userId,
+    String? pin,
   }) async {
     try {
       final job = await _jobRepository.getJobById(jobId);
@@ -112,6 +113,17 @@ class JobStateMachine {
 
       await PaymentGuard.validate(job: job, targetStatus: newStatus);
 
+      if (newStatus == AppConstants.jobStatusInProgress &&
+          (job.status == AppConstants.jobStatusAccepted ||
+              job.status == AppConstants.jobStatusEnRoute)) {
+        if (pin == null || pin.trim().isEmpty) {
+          throw AppError.validation(
+            'Ingresa el PIN de 4 dígitos que te muestra el cliente.',
+          );
+        }
+        await _jobRepository.confirmStartPin(job.id, pin);
+      }
+
       final updatedJob = job.copyWith(
         status: newStatus,
         updatedAt: DateTime.now(),
@@ -121,7 +133,7 @@ class JobStateMachine {
         await PaymentService.instance.refundPrimaryOnCancellation(jobId);
       }
 
-      await _jobRepository.updateJob(updatedJob);
+      await _jobRepository.updateJob(updatedJob, pin: pin);
 
       if (newStatus == AppConstants.jobStatusCompleted) {
         AppLogger.i(
