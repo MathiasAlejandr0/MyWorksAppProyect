@@ -77,36 +77,16 @@ class WorkerScheduleRepository {
     await supabase
         .from('trabajadores')
         .update({'usa_horario': schedule.enabled}).eq('id_usuario', userId);
-    final existing = await supabase
-        .from('trabajador_horarios')
-        .select('id, dia_semana')
-        .eq('id_usuario', userId);
-    final idByDay = <int, String>{};
-    for (final row in existing as List) {
-      final map = Map<String, dynamic>.from(row as Map);
-      final day = (map['dia_semana'] as num?)?.toInt();
-      final id = map['id'] as String?;
-      if (day != null && id != null) idByDay[day] = id;
-    }
-    for (final day in schedule.days) {
-      final payload = {
-        'id_usuario': userId,
-        'dia_semana': day.weekday,
-        'hora_inicio': formatMinute(day.startMinute),
-        'hora_fin': formatMinute(day.endMinute),
-        'activo': day.enabled,
-        'actualizado_en': DateTime.now().toUtc().toIso8601String(),
-      };
-      final existingId = idByDay[day.weekday];
-      if (existingId != null) {
-        await supabase
-            .from('trabajador_horarios')
-            .update(payload)
-            .eq('id', existingId);
-      } else {
-        await supabase.from('trabajador_horarios').insert(payload);
-      }
-    }
+    final rows = scheduleDayRows(
+      userId: userId,
+      days: schedule.days,
+      updatedAt: DateTime.now(),
+    );
+    if (rows.isEmpty) return;
+    await supabase.from('trabajador_horarios').upsert(
+          rows,
+          onConflict: scheduleUpsertConflict,
+        );
   }
 
   static int _minutes(Object? raw) {

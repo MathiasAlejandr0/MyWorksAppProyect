@@ -120,3 +120,26 @@ String formatMinute(int minute) {
   final mins = (minute % 60).toString().padLeft(2, '0');
   return '$hour:$mins';
 }
+
+/// Columnas del índice único parcial `(id_usuario, dia_semana)`.
+const scheduleUpsertConflict = 'id_usuario,dia_semana';
+
+/// Filas para upsert. No incluye la fila legada sin `dia_semana`.
+List<Map<String, dynamic>> scheduleDayRows({
+  required String userId,
+  required List<DayWindow> days,
+  required DateTime updatedAt,
+}) {
+  final stamp = updatedAt.toUtc().toIso8601String();
+  return [
+    for (final day in days)
+      {
+        'id_usuario': userId,
+        'dia_semana': day.weekday,
+        'hora_inicio': formatMinute(day.startMinute),
+        'hora_fin': formatMinute(day.endMinute),
+        'activo': day.enabled,
+        'actualizado_en': stamp,
+      },
+  ];
+}

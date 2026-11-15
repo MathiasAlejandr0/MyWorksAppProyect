@@ -52,32 +52,51 @@ function minutesOf(value: string): number {
   return Number(hour) * 60 + Number(minute || 0);
 }
 
+type LooseQuery = {
+  from: (table: string) => {
+    select: (columns: string) => {
+      in: (
+        column: string,
+        values: string[],
+      ) => Promise<{
+        data: Array<Record<string, unknown>> | null;
+        error: { message: string } | null;
+      }>;
+    };
+  };
+};
+
 async function loadSchedules(
   ids: string[],
 ): Promise<Map<string, WeeklyHours>> {
   const result = new Map<string, WeeklyHours>();
   if (ids.length === 0) return result;
+  // Las columnas viven en la base y todavía no están en database.types.ts.
+  const db = supabase as unknown as LooseQuery;
   const [flags, rows] = await Promise.all([
-    supabase.from('trabajadores').select('id_usuario, usa_horario').in('id_usuario', ids),
-    supabase
+    db.from('trabajadores').select('id_usuario, usa_horario').in('id_usuario', ids),
+    db
       .from('trabajador_horarios')
       .select('id_usuario, dia_semana, hora_inicio, hora_fin, activo')
       .in('id_usuario', ids),
   ]);
   if (flags.error || rows.error) return result;
   const days = new Map<string, WeeklyHours['days']>();
-  for (const row of (rows.data ?? []) as ScheduleRow[]) {
+  for (const raw of rows.data ?? []) {
+    const row = raw as ScheduleRow;
+    if (!row.id_usuario || row.dia_semana == null) continue;
     const list = days.get(row.id_usuario) ?? [];
     list.push({
       weekday: row.dia_semana,
-      startMinute: minutesOf(row.hora_inicio),
-      endMinute: minutesOf(row.hora_fin),
+      startMinute: minutesOf(String(row.hora_inicio)),
+      endMinute: minutesOf(String(row.hora_fin)),
       enabled: row.activo !== false,
     });
     days.set(row.id_usuario, list);
   }
   for (const flag of flags.data ?? []) {
-    const id = String(flag.id_usuario);
+    const id = String(flag.id_usuario ?? '');
+    if (!id) continue;
     result.set(id, {
       enabled: flag.usa_horario === true,
       days: days.get(id) ?? [],
