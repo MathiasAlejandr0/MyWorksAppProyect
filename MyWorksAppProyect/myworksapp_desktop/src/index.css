@@ -3425,3 +3425,41 @@ body::before {
   }
 }
 
+
+.support-note-form {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.support-note-form label {
+  font-size: 12px;
+  color: var(--text-main-dark);
+}
+
+.support-note-form textarea {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-dark);
+  color: var(--text-main-dark);
+  font-family: var(--font-family);
+  font-size: 13px;
+  resize: vertical;
+}
+
+.support-note-form button {
+  justify-self: start;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--orange-accent);
+  color: #0b1f3a;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.support-note-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

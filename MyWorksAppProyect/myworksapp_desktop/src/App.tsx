@@ -18,6 +18,7 @@ import { AdminMfaGate } from './components/AdminMfaGate';
 import { SessionLoadingShell } from './components/LoadingState';
 import { AdminInboxPanel } from './components/AdminInboxPanel';
 import { useAuth } from './context/AuthContext';
+import { consolePermissions, consoleRoleLabel, type ConsolePermissions } from './authAccess';
 import { supabaseConfigStatus } from './supabaseClient';
 
 const SupportWorkspace = lazy(() =>
@@ -36,16 +37,21 @@ const HumanResourcesWorkspace = lazy(() =>
   })),
 );
 
-const NAV_ITEMS = [
-  { id: 0, label: 'Panel ejecutivo', icon: LayoutGrid },
-  { id: 1, label: 'Soporte y disputas', icon: Headset },
-  { id: 2, label: 'Seguridad', icon: Shield },
-  { id: 3, label: 'RRHH', icon: Users },
-] as const;
+const NAV_ITEMS: ReadonlyArray<{
+  id: number;
+  label: string;
+  icon: typeof LayoutGrid;
+  allowed: (p: ConsolePermissions) => boolean;
+}> = [
+  { id: 0, label: 'Panel ejecutivo', icon: LayoutGrid, allowed: (p) => p.executive },
+  { id: 1, label: 'Soporte y disputas', icon: Headset, allowed: (p) => p.supportQueue },
+  { id: 2, label: 'Seguridad', icon: Shield, allowed: (p) => p.security },
+  { id: 3, label: 'RRHH', icon: Users, allowed: (p) => p.people },
+];
 
 export function App() {
   const { profile, loading, logout, needsMfa, mustSetPassword, finishPasswordSetup } = useAuth();
-  const [activeRoleWorkspace, setActiveRoleWorkspace] = useState<number>(0);
+  const [chosenWorkspace, setActiveRoleWorkspace] = useState<number | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -71,6 +77,14 @@ export function App() {
     return <DesktopLoginScreen />;
   }
 
+  const permissions = consolePermissions(profile.role);
+  const navItems = NAV_ITEMS.filter((item) => item.allowed(permissions));
+  // Cada rol abre en la primera sección que tiene permitida.
+  const activeRoleWorkspace =
+    chosenWorkspace !== null && navItems.some((item) => item.id === chosenWorkspace)
+      ? chosenWorkspace
+      : navItems[0]?.id ?? -1;
+
   const initials = profile.name
     .split(/\s+/)
     .filter(Boolean)
@@ -92,12 +106,13 @@ export function App() {
         </div>
 
         <nav className="sidebar-nav" aria-label="Operaciones">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          {navItems.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
               className={`sidebar-nav-item${activeRoleWorkspace === id ? ' active' : ''}`}
               onClick={() => setActiveRoleWorkspace(id)}
+              aria-current={activeRoleWorkspace === id ? 'page' : undefined}
             >
               <Icon size={18} strokeWidth={2} />
               <span>{label}</span>
@@ -110,7 +125,7 @@ export function App() {
             <div className="sidebar-profile-avatar">{initials}</div>
             <div className="sidebar-profile-info">
               <div className="sidebar-profile-name">{profile.name}</div>
-              <div className="sidebar-profile-role">Administración</div>
+              <div className="sidebar-profile-role">{consoleRoleLabel(profile.role)}</div>
             </div>
             <ChevronDown size={16} className="sidebar-profile-chevron" aria-hidden />
           </div>
@@ -131,7 +146,7 @@ export function App() {
       <main className="main-content">
         <div className={`workspace-pad page-enter${activeRoleWorkspace === 1 ? ' workspace-pad--flush' : ''}`}>
           <Suspense fallback={<SessionLoadingShell />}>
-          {activeRoleWorkspace === 0 && (
+          {activeRoleWorkspace === 0 && permissions.executive && (
             <ExecutiveWorkspace
               headerActions={(
                 <div className="shell-actions">
@@ -154,9 +169,13 @@ export function App() {
               )}
             />
           )}
-          {activeRoleWorkspace === 1 && <SupportWorkspace adminId={profile.id} />}
-          {activeRoleWorkspace === 2 && <DevSecOpsWorkspace operatorEmail={profile.email} />}
-          {activeRoleWorkspace === 3 && (
+          {activeRoleWorkspace === 1 && permissions.supportQueue && (
+            <SupportWorkspace adminId={profile.id} permissions={permissions} />
+          )}
+          {activeRoleWorkspace === 2 && permissions.security && (
+            <DevSecOpsWorkspace operatorEmail={profile.email} />
+          )}
+          {activeRoleWorkspace === 3 && permissions.people && (
             <HumanResourcesWorkspace onOpenNotifications={() => setShowInbox(true)} />
           )}
           </Suspense>
@@ -194,7 +213,7 @@ export function App() {
           >
             <h2 id="admin-settings-title" style={{ margin: '0 0 8px' }}>Ajustes de la sesión</h2>
             <p style={{ margin: '0 0 4px' }}>{profile.email}</p>
-            <p style={{ margin: '0 0 8px' }}>Rol: {profile.role}</p>
+            <p style={{ margin: '0 0 8px' }}>Rol: {consoleRoleLabel(profile.role)}</p>
             <p style={{ margin: '0 0 16px' }}>
               Supabase: {supabaseConfigStatus.urlConfigured ? 'URL configurada' : 'falta VITE_SUPABASE_URL'}.
               {' '}
@@ -235,7 +254,7 @@ export function App() {
           >
             <h2 id="admin-profile-title" style={{ margin: '0 0 8px' }}>{profile.name}</h2>
             <p style={{ margin: '0 0 4px' }}>{profile.email}</p>
-            <p style={{ margin: '0 0 16px', opacity: 0.8 }}>Rol: {profile.role}</p>
+            <p style={{ margin: '0 0 16px', opacity: 0.8 }}>Rol: {consoleRoleLabel(profile.role)}</p>
             <button type="button" className="sidebar-logout-btn" onClick={() => setShowProfile(false)}>
               Cerrar
             </button>

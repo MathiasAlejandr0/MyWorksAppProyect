@@ -14,7 +14,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { JobScopeAdjustmentModal } from './JobScopeAdjustmentModal';
 import { TableRowsSkeleton } from './LoadingState';
-import { fetchOpenDisputes, formatDbDateTime } from '@myworksapp/shared';
+import {
+  addSupportDisputeNote,
+  fetchConsoleDisputes,
+  formatDbDateTime,
+} from '@myworksapp/shared';
+import { consolePermissions, type ConsolePermissions } from '../authAccess';
 import { supabase } from '../supabaseClient';
 import { queryKeys } from '../queryClient';
 
@@ -32,10 +37,12 @@ interface Ticket {
 
 interface SupportWorkspaceProps {
   adminId?: string;
+  /** Lo que puede hacer el rol actual; el servidor lo vuelve a validar. */
+  permissions?: ConsolePermissions;
 }
 
 function mapDisputesToTickets(
-  disputes: Awaited<ReturnType<typeof fetchOpenDisputes>>,
+  disputes: Awaited<ReturnType<typeof fetchConsoleDisputes>>,
 ): Ticket[] {
   return disputes.map((dispute) => ({
     id: dispute.id,
@@ -50,8 +57,12 @@ function mapDisputesToTickets(
   }));
 }
 
-export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
+export function SupportWorkspace({
+  adminId,
+  permissions = consolePermissions('qa'),
+}: SupportWorkspaceProps) {
   void adminId;
+  const [note, setNote] = useState('');
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [scopeModalTicket, setScopeModalTicket] = useState<Ticket | null>(null);
@@ -61,7 +72,7 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
   const ticketsQuery = useQuery({
     queryKey: queryKeys.openDisputes,
-    queryFn: async () => mapDisputesToTickets(await fetchOpenDisputes(supabase)),
+    queryFn: async () => mapDisputesToTickets(await fetchConsoleDisputes(supabase)),
   });
 
   const tickets = ticketsQuery.data ?? [];
@@ -112,13 +123,27 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
   const selectedTicket = tickets.find((t) => t.id === selectedId) ?? null;
   const evidenceQuery = useQuery({
     queryKey: ['dispute-evidence', selectedId],
-    enabled: Boolean(selectedId),
+    enabled: Boolean(selectedId) && permissions.disputeEvidence,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('evidencia_disputa', {
         p_id_disputa: selectedId ?? '',
       });
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const noteMutation = useMutation({
+    mutationFn: async ({ ticketId, text }: { ticketId: string; text: string }) =>
+      addSupportDisputeNote(supabase, ticketId, text),
+    onSuccess: () => {
+      setNote('');
+      setNotification('Nota de soporte guardada en la disputa.');
+      setTimeout(() => setNotification(null), 4000);
+    },
+    onError: (e) => {
+      setNotification(e instanceof Error ? e.message : 'No se pudo guardar la nota.');
+      setTimeout(() => setNotification(null), 5000);
     },
   });
 
@@ -494,7 +519,9 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
                 <h3>EVIDENCIA DEL TRABAJO</h3>
 
                 <div className="support-evidence-grid">
-                  {(evidenceQuery.data ?? []).length === 0 ? (
+                  {!permissions.disputeEvidence ? (
+                    <p>Tu rol (QA) ve la cola sin fotos de evidencia.</p>
+                  ) : (evidenceQuery.data ?? []).length === 0 ? (
                     <p>Este caso no tiene fotos cargadas.</p>
                   ) : (evidenceQuery.data ?? []).map((photo) => (
                     <img
@@ -550,6 +577,28 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
               <p className="support-compose">El mensaje al cliente no se envía desde esta consola.</p>
 
+              {permissions.disputeNotes && selectedTicket.status === 'Pending' ? (
+                <form
+                  className="support-note-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    noteMutation.mutate({ ticketId: selectedTicket.id, text: note });
+                  }}
+                >
+                  <label htmlFor="support-note">Nota de soporte (queda en el historial de la disputa que ven las partes)</label>
+                  <textarea
+                    id="support-note"
+                    value={note}
+                    maxLength={1000}
+                    rows={3}
+                    onChange={(event) => setNote(event.target.value)}
+                  />
+                  <button type="submit" disabled={noteMutation.isPending || !note.trim()}>
+                    {noteMutation.isPending ? 'Guardando…' : 'Guardar nota'}
+                  </button>
+                </form>
+              ) : null}
+
 
 
               <footer className="support-escrow-bar">
@@ -564,7 +613,9 @@ export function SupportWorkspace({ adminId }: SupportWorkspaceProps) {
 
                 <div className="support-escrow-actions">
 
-                  {selectedTicket.status === 'Pending' ? (
+                  {selectedTicket.status === 'Pending' && !permissions.resolveDisputes ? (
+                    <span className="status-badge">Solo administración libera o devuelve el pago</span>
+                  ) : selectedTicket.status === 'Pending' ? (
 
                     <>
 

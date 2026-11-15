@@ -24,6 +24,8 @@ export type {
   ServiceRow,
   WorkerWithProfile,
   WebWorkerCard,
+  ConsoleRole,
+  UserRole,
 } from './types';
 export * from './payments/webpay';
 export * from './payments/oneclick';
