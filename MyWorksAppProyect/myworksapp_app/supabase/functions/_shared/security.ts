@@ -1,3 +1,5 @@
+import { webReturnOrigins } from "./cors_origin.ts";
+
 /** Tickets HMAC de un solo uso para handoff Webpay (sin exponer paymentId crudo). */
 
 function toHex(buf: ArrayBuffer): string {
@@ -109,29 +111,13 @@ export function resolveReturnUrl(requested: string | undefined): string {
   return base;
 }
 
-const INTEGRATION_WEB_ORIGINS = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-];
-
-function listedOrigins(raw: string | undefined): string[] {
-  return (raw || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0 && s !== "*");
-}
-
 /** Orígenes a los que puede volver el navegador después de Transbank. */
 export function allowedWebReturnOrigins(): string[] {
-  const allowed = new Set<string>([
-    ...listedOrigins(Deno.env.get("WEBPAY_ALLOWED_RETURN_ORIGINS")),
-    ...listedOrigins(Deno.env.get("CORS_ALLOWED_ORIGINS")),
-  ]);
-  const env = (Deno.env.get("TBK_ENV") || "integration").toLowerCase();
-  if (env === "integration") {
-    for (const origin of INTEGRATION_WEB_ORIGINS) allowed.add(origin);
-  }
-  return [...allowed];
+  return webReturnOrigins({
+    returnOrigins: Deno.env.get("WEBPAY_ALLOWED_RETURN_ORIGINS"),
+    corsOrigins: Deno.env.get("CORS_ALLOWED_ORIGINS"),
+    tbkEnv: Deno.env.get("TBK_ENV"),
+  });
 }
 
 /**
