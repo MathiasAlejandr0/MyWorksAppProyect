@@ -245,10 +245,12 @@ export function TrackingDashboard({
 
           {closedJob ? (
             <div className="tracking-complete-card">
-              <strong>Pago liberado</strong>
+              <strong>{jobStatus === 'cancelado' ? 'Trabajo anulado' : 'Pago liberado'}</strong>
               <p>
                 {paymentNotice
-                  ?? 'El trabajo quedó cerrado y el retenido se liberó al profesional.'}
+                  ?? (jobStatus === 'cancelado'
+                    ? 'El trabajo se anuló y el cobro retenido no se entregó al profesional.'
+                    : 'El trabajo quedó cerrado y el retenido se liberó al profesional.')}
               </p>
               <button type="button" className="btn-primary" onClick={onGoHome}>
                 Volver al inicio
