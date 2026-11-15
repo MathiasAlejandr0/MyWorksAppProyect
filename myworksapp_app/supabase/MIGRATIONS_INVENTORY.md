@@ -4,14 +4,14 @@
 
 | Version | Archivo | Qué hace |
 |---------|---------|----------|
-| 20261010000001 | `migrations/20261010000001_asesor_acuerdos_search_path_fk.sql` | Revoca EXECUTE de `acuerdo_pendiente`, `proponer_acuerdo` y `responder_acuerdo` a `anon`/`PUBLIC` y lo deja en `authenticated` + `service_role` (sin reescribir el cuerpo). Fija `search_path` de `slug_geo` y `disputa_esta_activa`. Crea índices de cobertura para las FKs de `public` que el asesor marca sin índice. Idempotente. **No está aplicada en la base viva.** |
-| 20261011000001 | `migrations/20261011000001_bucket_evidencias.sql` | Bucket privado `evidencias` y políticas: leen las partes del trabajo y un admin; inserta solo el usuario autenticado en `{trabajo}/{usuario}/…`. **No aplicada.** |
-| 20261011000002 | `migrations/20261011000002_pago_por_confirmar.sql` | Estado `pagado_por_confirmar`, confirmación idempotente y reembolso automático. No programa el cobro a Transbank: eso lo hace la función `webpay-reconcile`. **No aplicada.** |
-| 20261012000001 | `migrations/20261012000001_calificacion_bidireccional.sql` | Calificación cliente↔profesional, una por dirección, y RPC de promedio del cliente. **No aplicada.** |
-| 20261013000001 | `migrations/20261013000001_pagos_cuenta_bancaria.sql` | Estado de transferencia en `liquidaciones` (las filas viejas quedan `transferido`), cuenta bancaria con RLS de dueño y admin, y RPC `registrar_transferencia_profesional`. **No aplicada.** |
-| 20261013000002 | `migrations/20261013000002_horarios_semanales.sql` | `usa_horario` en falso y columnas aditivas en `trabajador_horarios`. No borra filas. **No aplicada.** |
-| 20261013000003 | `migrations/20261013000003_verificacion_eventos.sql` | Historial de verificación por trigger. **No aplicada.** |
-| 20261013000004 | `migrations/20261013000004_evidencias_video_20mb.sql` | Tope del bucket `evidencias` a 20 MB. **No aplicada.** |
+| 20261114000001 | `migrations/20261114000001_asesor_acuerdos_search_path_fk.sql` | Revoca EXECUTE de `acuerdo_pendiente`, `proponer_acuerdo` y `responder_acuerdo` a `anon`/`PUBLIC` y lo deja en `authenticated` + `service_role` (sin reescribir el cuerpo). Fija `search_path` de `slug_geo` y `disputa_esta_activa`. Crea índices de cobertura para las FKs de `public` que el asesor marca sin índice. Idempotente. **No está aplicada en la base viva.** Renombrada desde `20261010000001` para quedar después de `20261113000005`. |
+| 20261114000002 | `migrations/20261114000002_bucket_evidencias.sql` | Bucket privado `evidencias` y políticas: leen las partes del trabajo y un admin; inserta solo el usuario autenticado en `{trabajo}/{usuario}/…`. **No aplicada.** |
+| 20261114000003 | `migrations/20261114000003_pago_por_confirmar.sql` | Estado `pagado_por_confirmar`, confirmación idempotente y reembolso automático. No programa el cobro a Transbank: eso lo hace la función `webpay-reconcile`. **No aplicada.** |
+| 20261114000004 | `migrations/20261114000004_calificacion_bidireccional.sql` | Calificación cliente↔profesional, una por dirección, y RPC de promedio del cliente. **No aplicada.** |
+| 20261114000005 | `migrations/20261114000005_pagos_cuenta_bancaria.sql` | Estado de transferencia en `liquidaciones` (las filas viejas quedan `transferido`), cuenta bancaria con RLS de dueño y admin, y RPC `registrar_transferencia_profesional`. **No aplicada.** |
+| 20261114000006 | `migrations/20261114000006_horarios_semanales.sql` | `usa_horario` en falso y columnas aditivas en `trabajador_horarios`. No borra filas. **No aplicada.** |
+| 20261114000007 | `migrations/20261114000007_verificacion_eventos.sql` | Historial de verificación por trigger. **No aplicada.** |
+| 20261114000008 | `migrations/20261114000008_evidencias_video_20mb.sql` | Tope del bucket `evidencias` a 20 MB. **No aplicada.** |
 
 ## Snapshot CLI (2026-09-07)
 
@@ -27,7 +27,7 @@ y `npx supabase migration list` (2026-09-07).
 | 20250607000003 | revoke trigger execute |
 | 20250819120000 | oauth profile names |
 | 20250907120000 | schema baseline documented |
-| 20261010000001 | asesor acuerdos, search_path e índices FK (pendiente de aplicar) |
+| 20261114000001 | asesor acuerdos, search_path e índices FK (pendiente de aplicar; antes `20261010000001`) |
 
 ## Remoto (historial en Supabase) sin archivo local
 
