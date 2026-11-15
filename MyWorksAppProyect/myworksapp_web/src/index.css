@@ -2656,3 +2656,15 @@ button.search-nav-profile {
 /* Los paneles de Leaflet usan z-index 400-1000. Sin un contexto propio competían con los
    paneles fijos de la página: el mapa del seguimiento tapaba el chat (z-index 250). */
 .leaflet-container { isolation: isolate; }
+
+.auth-modal-forgot {
+  justify-self: end;
+  margin: -4px 0 0;
+  font-size: 13px;
+}
+
+.auth-modal-success {
+  color: var(--emerald-success, #0f7b4f);
+  font-size: 13px;
+  font-weight: 600;
+}

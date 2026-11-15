@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { LogIn, UserPlus, X } from 'lucide-react';
+import { KeyRound, LogIn, UserPlus, X } from 'lucide-react';
 import {
   AuthError,
   isEmailNotConfirmed,
@@ -19,8 +19,9 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) {
-  const { login, loginWithOAuth, register } = useAuth();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const { login, loginWithOAuth, register, sendPasswordReset } = useAuth();
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
+  const [resetSent, setResetSent] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState(() => initialEmail.trim());
   const [password, setPassword] = useState('');
@@ -36,6 +37,8 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
       setPassword('');
       setLocalError(null);
       setResendNote(null);
+      setResetSent(false);
+      setMode('login');
     }
     wasOpen.current = open;
   }, [open, initialEmail]);
@@ -59,6 +62,11 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
     setLocalError(null);
     setResendNote(null);
     try {
+      if (mode === 'forgot') {
+        await sendPasswordReset(email);
+        setResetSent(true);
+        return;
+      }
       if (mode === 'login') {
         await login(email, password);
       } else {
@@ -90,7 +98,7 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
 
         <p className="auth-modal-kicker">Acceso clientes</p>
         <h2 id="auth-modal-title" className="auth-modal-title">
-          {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+          {mode === 'login' ? 'Iniciar sesión' : mode === 'register' ? 'Crear cuenta' : 'Recuperar contraseña'}
         </h2>
         <p className="auth-modal-lead">
           Esta web es solo para <strong>clientes</strong> que buscan un oficio. Los trabajadores usan la app móvil; el equipo interno, el panel de escritorio.
@@ -102,29 +110,60 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nombre completo"
+              aria-label="Nombre completo"
+              autoComplete="name"
               required
               className="auth-modal-input"
             />
           )}
+          {mode === 'forgot' ? (
+            <p className="auth-modal-hint" id="auth-forgot-help">
+              Escribe el correo de tu cuenta y te enviaremos un enlace para crear una contraseña nueva.
+            </p>
+          ) : null}
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
+            aria-label="Correo electrónico"
+            aria-describedby={mode === 'forgot' ? 'auth-forgot-help' : undefined}
+            autoComplete="email"
             required
             className="auth-modal-input"
           />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Contraseña"
-            required
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            aria-invalid={localError ? true : undefined}
-            aria-describedby={mode === 'register' ? 'auth-password-policy' : undefined}
-            className="auth-modal-input"
-          />
+          {mode !== 'forgot' ? (
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              aria-label="Contraseña"
+              required
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              aria-invalid={localError ? true : undefined}
+              aria-describedby={mode === 'register' ? 'auth-password-policy' : undefined}
+              className="auth-modal-input"
+            />
+          ) : null}
+          {mode === 'login' ? (
+            <button
+              type="button"
+              className="auth-modal-switch auth-modal-forgot"
+              onClick={() => {
+                setMode('forgot');
+                setLocalError(null);
+                setResetSent(false);
+              }}
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          ) : null}
+          {mode === 'forgot' && resetSent ? (
+            <p role="status" className="auth-modal-success">
+              Si {email.trim()} tiene una cuenta, te llegará un correo con el enlace. Revisa también la carpeta de spam.
+            </p>
+          ) : null}
           {mode === 'register' && (
             <p id="auth-password-policy" className="auth-modal-hint">
               Mínimo 8 caracteres, con al menos una letra y un número.
@@ -159,11 +198,21 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
           {resendNote ? <p role="status">{resendNote}</p> : null}
 
           <button type="submit" className="btn-primary auth-modal-submit" disabled={submitting}>
-            {mode === 'login' ? <LogIn size={16} /> : <UserPlus size={16} />}
-            {submitting ? 'Un momento…' : mode === 'login' ? 'Entrar' : 'Registrarme'}
+            {mode === 'login' ? <LogIn size={16} /> : mode === 'register' ? <UserPlus size={16} /> : <KeyRound size={16} />}
+            {submitting
+              ? 'Un momento…'
+              : mode === 'login'
+                ? 'Entrar'
+                : mode === 'register'
+                  ? 'Registrarme'
+                  : resetSent
+                    ? 'Reenviar enlace'
+                    : 'Enviar enlace'}
           </button>
         </form>
 
+        {mode !== 'forgot' ? (
+        <>
         <div className="auth-modal-divider">
           <span>o continúa con</span>
         </div>
@@ -176,6 +225,8 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
             Continuar con Apple
           </button>
         </div>
+        </>
+        ) : null}
 
         <button
           type="button"
@@ -185,7 +236,7 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
             setLocalError(null);
           }}
         >
-          {mode === 'login' ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
+          {mode === 'login' ? '¿No tienes cuenta? Regístrate' : mode === 'forgot' ? 'Volver a iniciar sesión' : '¿Ya tienes cuenta? Inicia sesión'}
         </button>
       </div>
     </div>

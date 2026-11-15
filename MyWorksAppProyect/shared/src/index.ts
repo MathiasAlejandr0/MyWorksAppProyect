@@ -19,6 +19,7 @@ export * from './catalog';
 export * from './database.types';
 export * from './client';
 export * from './auth';
+export * from './emailDomain';
 export type {
   Profile,
   ServiceRow,

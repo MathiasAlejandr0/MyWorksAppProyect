@@ -1,4 +1,5 @@
 import type { AppSupabase } from './client';
+import { reservedEmailMessage } from './emailDomain';
 import { passwordPolicyMessage } from './passwordPolicy';
 import type { Profile, UserRole } from './types';
 
@@ -20,10 +21,43 @@ export function translateAuthError(message: string): string {
   if (/rate limit|too many requests|over_request_rate_limit|only request this after/i.test(text)) {
     return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
   }
+  if (/error sending (recovery|confirmation|magic link|invite) email|email address .* (is )?not authorized|email_address_invalid|email address .* is invalid/i.test(text)) {
+    return 'No pudimos enviar el correo a esa dirección. Revisa que esté bien escrita o inténtalo más tarde.';
+  }
+  if (/same.?password|should be different from the old/i.test(text)) {
+    return 'La nueva contraseña debe ser distinta a la anterior.';
+  }
   if (/weak password|password should be at least|password should contain|password is known/i.test(text)) {
     return 'La contraseña es débil. Usa al menos 8 caracteres, con una letra y un número.';
   }
   return text;
+}
+
+/** Marca que agrega la web al enlace del correo de recuperación. */
+export const PASSWORD_RESET_PARAM = 'restablecer';
+
+/** Vuelve al mismo sitio que pidió el correo (producción, preview o local). */
+export function passwordResetRedirect(origin: string): string {
+  return `${origin.replace(/\/+$/, '')}/?${PASSWORD_RESET_PARAM}=1`;
+}
+
+/**
+ * Pide el correo para restablecer la contraseña. Por privacidad, Auth no
+ * dice si el correo existe; la web muestra siempre el mismo aviso.
+ */
+export async function requestPasswordReset(
+  supabase: AppSupabase,
+  email: string,
+  redirectTo: string,
+): Promise<void> {
+  const clean = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+    throw new AuthError('Escribe un correo válido.');
+  }
+  const reserved = reservedEmailMessage(clean);
+  if (reserved) throw new AuthError(reserved);
+  const { error } = await supabase.auth.resetPasswordForEmail(clean, { redirectTo });
+  if (error) throw new AuthError(translateAuthError(error.message));
 }
 
 export async function resendSignupConfirmation(
