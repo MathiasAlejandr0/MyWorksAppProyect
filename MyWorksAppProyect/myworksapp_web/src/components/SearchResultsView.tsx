@@ -406,10 +406,18 @@ export function SearchResultsView({
             </div>
           </div>
           <div className="search-map-legend">
-            <span className="search-map-legend-dot" /> Profesionales cerca
-            <span className="search-map-legend-dot search-map-legend-dot--elite" /> Élite del mes
-            <span className="search-map-legend-dot search-map-legend-dot--client" /> Tu trabajo
-            <span className="search-map-legend-radar" /> Área sin extra de traslado
+            <span className="search-map-legend-item">
+              <span className="search-map-legend-dot" /> Profesionales cerca
+            </span>
+            <span className="search-map-legend-item">
+              <span className="search-map-legend-dot search-map-legend-dot--elite" /> Élite del mes
+            </span>
+            <span className="search-map-legend-item">
+              <span className="search-map-legend-dot search-map-legend-dot--client" /> Tu trabajo
+            </span>
+            <span className="search-map-legend-item">
+              <span className="search-map-legend-radar" /> Área sin extra de traslado
+            </span>
           </div>
         </aside>
       </div>
