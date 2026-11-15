@@ -1,3 +1,4 @@
+import 'package:myworksapp/core/utils/santiago_time.dart';
 import 'package:myworksapp/core/utils/error_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,7 +86,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
   }
 
   List<String> get _hoursForSelectedDate => openSlotsOnDate(_freeSlots, _selectedDate)
-      .map((slot) => MockReservedSlots.format(TimeOfDay.fromDateTime(slot.toLocal())))
+      .map((slot) => MockReservedSlots.format(TimeOfDay.fromDateTime(SantiagoTime.wall(slot))))
       .toList();
 
   @override

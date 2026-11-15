@@ -1,3 +1,4 @@
+import 'package:myworksapp/core/utils/santiago_time.dart';
 import 'package:myworksapp/core/utils/error_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
@@ -157,7 +158,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     final date = _selectedDate;
     if (date == null) return const [];
     return openSlotsOnDate(_freeSlots, date)
-        .map((slot) => MockReservedSlots.format(TimeOfDay.fromDateTime(slot.toLocal())))
+        .map((slot) => MockReservedSlots.format(TimeOfDay.fromDateTime(SantiagoTime.wall(slot))))
         .toList();
   }
 

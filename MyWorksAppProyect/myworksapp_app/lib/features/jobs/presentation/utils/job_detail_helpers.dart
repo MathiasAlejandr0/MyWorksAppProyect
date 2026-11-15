@@ -3,8 +3,8 @@ import '../../../../core/database/models/dispute_model.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/domain/price_quote.dart';
 import '../../../../core/domain/pricing_constants.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/job_status_copy.dart';
 
 /// Utilidades puras para la pantalla de detalle de trabajo.
 class JobDetailHelpers {
@@ -78,34 +78,7 @@ class JobDetailHelpers {
         job.status == AppConstants.jobStatusCompleted;
   }
 
-  static Color statusColor(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return AppColors.warning;
-      case AppConstants.jobStatusAccepted:
-        return AppColors.brandOrange;
-      case AppConstants.jobStatusEnRoute:
-        return AppColors.brandOrange;
-      case AppConstants.jobStatusInProgress:
-        return AppColors.brandOrangeDark;
-      case AppConstants.jobStatusCompleted:
-        return AppColors.success;
-      case AppConstants.jobStatusCancelled:
-        return AppColors.error;
-      case PricingConstants.jobAwaitingPayment:
-        return AppColors.brandOrangeDark;
-      case PricingConstants.jobAwaitingQuotes:
-        return AppColors.warning;
-      case PricingConstants.jobQuoteSelected:
-        return AppColors.brandOrange;
-      case PricingConstants.jobPausedChangeOrder:
-        return AppColors.brandOrangeDark;
-      case PricingConstants.jobAwaitingClientApproval:
-        return AppColors.brandOrange;
-      default:
-        return AppColors.grayMedium;
-    }
-  }
+  static Color statusColor(String status) => JobStatusCopy.color(status);
 
   static String paymentStatusLabel(String status) {
     switch (status) {
@@ -122,61 +95,7 @@ class JobDetailHelpers {
     }
   }
 
-  static IconData statusIcon(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return Icons.pending;
-      case AppConstants.jobStatusAccepted:
-        return Icons.check_circle_outline;
-      case AppConstants.jobStatusEnRoute:
-        return Icons.directions_car_outlined;
-      case AppConstants.jobStatusInProgress:
-        return Icons.work;
-      case AppConstants.jobStatusCompleted:
-        return Icons.check_circle;
-      case AppConstants.jobStatusCancelled:
-        return Icons.cancel;
-      case PricingConstants.jobAwaitingPayment:
-        return Icons.payment;
-      case PricingConstants.jobAwaitingQuotes:
-        return Icons.request_quote;
-      case PricingConstants.jobQuoteSelected:
-        return Icons.fact_check;
-      case PricingConstants.jobPausedChangeOrder:
-        return Icons.pause_circle;
-      case PricingConstants.jobAwaitingClientApproval:
-        return Icons.rate_review;
-      default:
-        return Icons.help_outline;
-    }
-  }
+  static IconData statusIcon(String status) => JobStatusCopy.icon(status);
 
-  static String statusText(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return 'Pendiente';
-      case AppConstants.jobStatusAccepted:
-        return 'Aceptado';
-      case AppConstants.jobStatusEnRoute:
-        return 'En camino';
-      case AppConstants.jobStatusInProgress:
-        return 'En Curso';
-      case AppConstants.jobStatusCompleted:
-        return 'Completado';
-      case AppConstants.jobStatusCancelled:
-        return 'Cancelado';
-      case PricingConstants.jobAwaitingPayment:
-        return 'Pago pendiente';
-      case PricingConstants.jobAwaitingQuotes:
-        return 'Esperando cotizaciones';
-      case PricingConstants.jobQuoteSelected:
-        return 'Cotización seleccionada';
-      case PricingConstants.jobPausedChangeOrder:
-        return 'Cobro extra pendiente';
-      case PricingConstants.jobAwaitingClientApproval:
-        return 'Pendiente de aprobación';
-      default:
-        return status;
-    }
-  }
+  static String statusText(String status) => JobStatusCopy.label(status);
 }

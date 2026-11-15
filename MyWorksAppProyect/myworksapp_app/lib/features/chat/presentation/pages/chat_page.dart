@@ -1,3 +1,4 @@
+import 'package:myworksapp/core/utils/santiago_time.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
@@ -382,8 +383,8 @@ class _MessageBubble extends StatelessWidget {
   }
 
   String _formatTime(DateTime date) {
-    final local = date.toLocal();
-    final now = DateTime.now();
+    final local = SantiagoTime.wall(date);
+    final now = SantiagoTime.wall(DateTime.now());
     final difference = now.difference(local);
 
     if (difference.inDays == 0) {

@@ -1,3 +1,5 @@
+import '../utils/santiago_time.dart';
+
 class WorkerHourSlot {
   const WorkerHourSlot({required this.weekday, required this.time});
 
@@ -84,7 +86,7 @@ String? addWorkerHourError(List<WorkerHourSlot> slots, WorkerHourSlot next) {
 List<DateTime> slotsOnDate(List<DateTime> freeSlots, DateTime date) {
   final day = DateTime(date.year, date.month, date.day);
   return freeSlots.where((slot) {
-    final local = slot.toLocal();
+    final local = SantiagoTime.wall(slot);
     return local.year == day.year &&
         local.month == day.month &&
         local.day == day.day;
@@ -111,7 +113,7 @@ DateTime? matchingFreeSlot({
   required int minute,
 }) {
   for (final slot in slotsOnDate(freeSlots, date)) {
-    final local = slot.toLocal();
+    final local = SantiagoTime.wall(slot);
     if (local.hour == hour && local.minute == minute) return slot;
   }
   return null;

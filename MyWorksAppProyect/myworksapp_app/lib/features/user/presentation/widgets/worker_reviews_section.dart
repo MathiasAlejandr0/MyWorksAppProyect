@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myworksapp/core/utils/santiago_time.dart';
 
 import '../../../../core/database/models/worker_review_model.dart';
 import '../../../../core/design_system/app_spacing.dart';
@@ -238,7 +239,7 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateLabel = DateFormat('d MMM yyyy', 'es_CL').format(review.createdAt);
+    final dateLabel = DateFormat('d MMM yyyy', 'es_CL').format(SantiagoTime.wall(review.createdAt));
     final initial = review.displayReviewerName.isNotEmpty
         ? review.displayReviewerName[0].toUpperCase()
         : 'C';

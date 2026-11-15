@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:myworksapp/core/utils/santiago_time.dart';
 
 import '../../../../core/database/models/dispute_model.dart';
 import '../../../../core/database/repositories/dispute_repository.dart';
@@ -85,7 +86,7 @@ class _MyDisputesPageState extends ConsumerState<MyDisputesPage> {
                           child: ListTile(
                             title: Text(_status(dispute.status)),
                             subtitle: Text(
-                              '${dispute.reason}\n${date.format(dispute.createdAt.toLocal())}',
+                              '${dispute.reason}\n${date.format(SantiagoTime.wall(dispute.createdAt))}',
                             ),
                             isThreeLine: true,
                             trailing: const Icon(Icons.chevron_right),
