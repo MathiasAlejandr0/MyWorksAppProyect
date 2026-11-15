@@ -280,6 +280,9 @@ class WorkerRepository {
   }
 
   /// Mantiene al trabajador como no disponible mientras tenga trabajos activos.
+  /// La base marca esa pausa (`pausa_por_trabajo`) y la levanta sola cuando
+  /// termina el último trabajo activo (trigger
+  /// `trabajos_restablecer_disponibilidad`), también para cuentas reales.
   Future<void> enforceUnavailableWhileBusy(String userId) async {
     final jobRepository = JobRepository();
     if (!await jobRepository.hasActiveJobs(userId)) return;
@@ -290,8 +293,9 @@ class WorkerRepository {
     }
   }
 
-  /// Si no está en un trabajo en curso, las cuentas demo vuelven al catálogo.
-  /// Un checkout o pedido pendiente no debe dejarlas ocultas para el cliente.
+  /// Si no está en un trabajo en curso, las cuentas demo vuelven al catálogo
+  /// aunque las hayan pausado a mano. Las cuentas reales vuelven solas desde
+  /// la base al terminar el trabajo; una pausa voluntaria se respeta.
   Future<void> syncAvailabilityWithJobs(
     String userId, {
     String? email,
