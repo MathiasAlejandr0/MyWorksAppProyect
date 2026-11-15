@@ -1,0 +1,211 @@
+{
+ "herramienta": "Lighthouse 13.6.0 (Chrome headless, box)",
+ "url": "https://myworksapp-cl.vercel.app/",
+ "corridas": {
+  "mobile": {
+   "throttling": {
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.5600000000002,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4
+   },
+   "runs": [
+    {
+     "corrida": 1,
+     "fetchTime": "2026-11-15T22:45:20.168Z",
+     "performance": 79,
+     "accessibility": 90,
+     "best-practices": 100,
+     "seo": 100,
+     "FCP_ms": 2558,
+     "LCP_ms": 4659,
+     "TBT_ms": 32,
+     "CLS": 0,
+     "SpeedIndex_ms": 2603,
+     "TTI_ms": 4662,
+     "TTFB_ms": 184,
+     "peso_total_bytes": 433648
+    },
+    {
+     "corrida": 2,
+     "fetchTime": "2026-11-15T22:45:44.403Z",
+     "performance": 91,
+     "accessibility": 90,
+     "best-practices": 100,
+     "seo": 100,
+     "FCP_ms": 1672,
+     "LCP_ms": 3466,
+     "TBT_ms": 0,
+     "CLS": 0,
+     "SpeedIndex_ms": 1833,
+     "TTI_ms": 3466,
+     "TTFB_ms": 124,
+     "peso_total_bytes": 433656
+    },
+    {
+     "corrida": 3,
+     "fetchTime": "2026-11-15T22:46:08.113Z",
+     "performance": 82,
+     "accessibility": 90,
+     "best-practices": 100,
+     "seo": 100,
+     "FCP_ms": 2424,
+     "LCP_ms": 4309,
+     "TBT_ms": 0,
+     "CLS": 0,
+     "SpeedIndex_ms": 2424,
+     "TTI_ms": 4309,
+     "TTFB_ms": 139,
+     "peso_total_bytes": 433672
+    }
+   ],
+   "mediana": {
+    "performance": 82,
+    "accessibility": 90,
+    "best-practices": 100,
+    "seo": 100,
+    "FCP_ms": 2424,
+    "LCP_ms": 4309,
+    "TBT_ms": 0,
+    "CLS": 0,
+    "SpeedIndex_ms": 2424,
+    "TTI_ms": 4309,
+    "TTFB_ms": 139,
+    "peso_total_bytes": 433656
+   }
+  },
+  "desktop": {
+   "throttling": {
+    "rttMs": 40,
+    "throughputKbps": 10240,
+    "requestLatencyMs": 0,
+    "downloadThroughputKbps": 0,
+    "uploadThroughputKbps": 0,
+    "cpuSlowdownMultiplier": 1
+   },
+   "runs": [
+    {
+     "corrida": 1,
+     "fetchTime": "2026-11-15T22:45:32.428Z",
+     "performance": 84,
+     "accessibility": 90,
+     "best-practices": 100,
+     "seo": 100,
+     "FCP_ms": 1280,
+     "LCP_ms": 2309,
+     "TBT_ms": 0,
+     "CLS": 0,
+     "SpeedIndex_ms": 1280,
+     "TTI_ms": 2309,
+     "TTFB_ms": 128,
+     "peso_total_bytes": 532144
+    },
+    {
+     "corrida": 2,
+     "fetchTime": "2026-11-15T22:45:56.158Z",
+     "performance": 98,
+     "accessibility": 90,
+     "best-practices": 100,
+     "seo": 100,
+     "FCP_ms": 607,
+     "LCP_ms": 1006,
+     "TBT_ms": 0,
+     "CLS": 0,
+     "SpeedIndex_ms": 840,
+     "TTI_ms": 1008,
+     "TTFB_ms": 148,
+     "peso_total_bytes": 532183
+    },
+    {
+     "corrida": 3,
+     "fetchTime": "2026-11-15T22:46:20.096Z",
+     "performance": 81,
+     "accessibility": 90,
+     "best-practices": 100,
+     "seo": 100,
+     "FCP_ms": 1384,
+     "LCP_ms": 2561,
+     "TBT_ms": 0,
+     "CLS": 0,
+     "SpeedIndex_ms": 1384,
+     "TTI_ms": 2561,
+     "TTFB_ms": 148,
+     "peso_total_bytes": 531952
+    }
+   ],
+   "mediana": {
+    "performance": 84,
+    "accessibility": 90,
+    "best-practices": 100,
+    "seo": 100,
+    "FCP_ms": 1280,
+    "LCP_ms": 2309,
+    "TBT_ms": 0,
+    "CLS": 0,
+    "SpeedIndex_ms": 1280,
+    "TTI_ms": 2309,
+    "TTFB_ms": 148,
+    "peso_total_bytes": 532144
+   }
+  }
+ },
+ "hallazgos_mobile": [
+  {
+   "id": "first-contentful-paint",
+   "titulo": "First Contentful Paint",
+   "valor": "2.4 s"
+  },
+  {
+   "id": "largest-contentful-paint",
+   "titulo": "Largest Contentful Paint",
+   "valor": "4.3 s"
+  },
+  {
+   "id": "interactive",
+   "titulo": "Time to Interactive",
+   "valor": "4.3 s"
+  },
+  {
+   "id": "valid-source-maps",
+   "titulo": "Missing source maps for large first-party JavaScript",
+   "valor": null
+  },
+  {
+   "id": "color-contrast",
+   "titulo": "Background and foreground colors do not have a sufficient contrast ratio.",
+   "valor": null
+  },
+  {
+   "id": "landmark-one-main",
+   "titulo": "Document does not have a main landmark.",
+   "valor": null
+  },
+  {
+   "id": "unused-javascript",
+   "titulo": "Reduce unused JavaScript",
+   "valor": "Est savings of 91 KiB"
+  },
+  {
+   "id": "cache-insight",
+   "titulo": "Use efficient cache lifetimes",
+   "valor": "Est savings of 50 KiB"
+  },
+  {
+   "id": "lcp-discovery-insight",
+   "titulo": "LCP request discovery",
+   "valor": null
+  },
+  {
+   "id": "network-dependency-tree-insight",
+   "titulo": "Network dependency tree",
+   "valor": null
+  },
+  {
+   "id": "render-blocking-insight",
+   "titulo": "Render-blocking requests",
+   "valor": "Est savings of 780 ms"
+  }
+ ]
+}
