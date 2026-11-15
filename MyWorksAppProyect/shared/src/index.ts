@@ -39,6 +39,7 @@ export * from './repositories/notifications';
 export * from './jobs/statusCopy';
 export * from './jobs/startPin';
 export * from './jobs/bookingSlot';
+export * from './jobs/reschedule';
 export * from './chat/messages';
 export { contactBlockedMessage, contactBlockedTitle } from './chat/contactFilter';
 export * from './verification';

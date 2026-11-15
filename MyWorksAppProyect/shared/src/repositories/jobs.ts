@@ -70,6 +70,8 @@ export interface JobTrackingSnapshot {
   longitude: number | null;
   workerId: string | null;
   userId: string;
+  /** fecha_programada tal como la guarda la base (ISO o formato Postgres). */
+  scheduledAt: string | null;
 }
 
 export async function fetchJobTrackingSnapshot(
@@ -79,7 +81,7 @@ export async function fetchJobTrackingSnapshot(
   const { data, error } = await supabase
     .from('trabajos')
     .select(
-      'id, estado, estado_pago, direccion, descripcion, latitud, longitud, id_trabajador, id_usuario',
+      'id, estado, estado_pago, direccion, descripcion, latitud, longitud, id_trabajador, id_usuario, fecha_programada',
     )
     .eq('id', jobId)
     .maybeSingle();
@@ -96,6 +98,7 @@ export async function fetchJobTrackingSnapshot(
     longitude: row.longitud == null ? null : Number(row.longitud),
     workerId: row.id_trabajador ? String(row.id_trabajador) : null,
     userId: String(row.id_usuario),
+    scheduledAt: row.fecha_programada ? String(row.fecha_programada) : null,
   };
 }
 
