@@ -172,6 +172,36 @@ export async function tbkCreateTransaction(input: {
   return { token: data.token, url: data.url };
 }
 
+/** Estado de una transacción ya creada. No vuelve a cobrar. */
+export async function tbkTransactionStatus(
+  token: string,
+): Promise<Record<string, unknown> | null> {
+  const { commerceCode, apiKey, host } = tbkConfig();
+  const res = await tbkFetch(
+    `${host}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`,
+    {
+      method: "GET",
+      headers: {
+        "Tbk-Api-Key-Id": commerceCode,
+        "Tbk-Api-Key-Secret": apiKey,
+      },
+    },
+  );
+  if (res.status === 404) return null;
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error("No se pudo consultar Transbank");
+  }
+  return data as Record<string, unknown>;
+}
+
+export function tbkStatusAuthorized(data: Record<string, unknown> | null): boolean {
+  if (!data) return false;
+  const code = Number(data.response_code);
+  const status = String(data.status || "").toUpperCase();
+  return code === 0 || status === "AUTHORIZED";
+}
+
 export async function tbkCommit(token: string): Promise<Record<string, unknown>> {
   const { commerceCode, apiKey, host } = tbkConfig();
   const res = await tbkFetch(

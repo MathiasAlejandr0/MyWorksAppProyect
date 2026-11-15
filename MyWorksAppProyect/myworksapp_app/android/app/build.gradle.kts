@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.myworksapp"
+    namespace = "cl.myworksapp.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "28.2.13676358"
 
@@ -27,8 +27,8 @@ android {
 
     defaultConfig {
         // Identidad de la app en Android y Google Play. Cambiarla después de
-        // publicar equivale a crear otra app. `namespace` (paquete Kotlin/R)
-        // puede seguir siendo com.example.myworksapp: no se ve en la tienda.
+        // publicar equivale a crear otra app. El paquete Kotlin coincide
+        // con este id: cl.myworksapp.app.
         applicationId = "cl.myworksapp.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -71,6 +71,12 @@ android {
                 )
                 signingConfigs.getByName("debug")
             }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }

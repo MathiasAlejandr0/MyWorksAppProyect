@@ -13,6 +13,7 @@ import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../widgets/admin_search_field.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class AdminJobsPage extends ConsumerStatefulWidget {
   const AdminJobsPage({super.key});
@@ -59,7 +60,7 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -92,7 +93,7 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -167,10 +168,9 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
                           itemCount: _jobs.length,
                           itemBuilder: (context, index) {
                             final job = _jobs[index];
-                            final canCancel =
-                                job.status != AppConstants.jobStatusCompleted &&
-                                    job.status !=
-                                        AppConstants.jobStatusCancelled;
+                            final canCancel = job.status !=
+                                    AppConstants.jobStatusCompleted &&
+                                job.status != AppConstants.jobStatusCancelled;
                             return Card(
                               child: ListTile(
                                 leading: Icon(

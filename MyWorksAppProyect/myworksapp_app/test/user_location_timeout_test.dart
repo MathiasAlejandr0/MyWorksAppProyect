@@ -110,5 +110,8 @@ void main() {
     expect(find.text('Obteniendo tu ubicación GPS...'), findsNothing);
     expect(find.text(UserLocationService.demoFallbackLabel), findsOneWidget);
     expect(emitted, UserLocationService.demoFallbackLabel);
+    // El mapa deja un temporizador corto de baldosas; hay que drenarlo
+    // antes de cerrar el test.
+    await tester.pump(const Duration(seconds: 1));
   });
 }

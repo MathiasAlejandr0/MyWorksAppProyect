@@ -11,6 +11,8 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../../../core/widgets/design_system/error_state_widget.dart';
 
 class NotificationsPage extends ConsumerStatefulWidget {
   const NotificationsPage({super.key});
@@ -20,9 +22,11 @@ class NotificationsPage extends ConsumerStatefulWidget {
 }
 
 class _NotificationsPageState extends ConsumerState<NotificationsPage> {
-  final NotificationRepository _notificationRepository = NotificationRepository();
+  final NotificationRepository _notificationRepository =
+      NotificationRepository();
   List<NotificationModel> _notifications = [];
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -31,20 +35,36 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   }
 
   Future<void> _loadNotifications() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     try {
       final authState = ref.read(authProvider);
       final user = authState.user;
-      if (user != null) {
-        final notifications = await _notificationRepository.getNotificationsByUserId(user.id);
+      if (user == null) {
+        if (!mounted) return;
         setState(() {
-          _notifications = notifications;
+          _notifications = [];
           _isLoading = false;
+          _error = 'Inicia sesión para ver tus notificaciones.';
         });
+        return;
       }
+      final notifications =
+          await _notificationRepository.getNotificationsByUserId(user.id);
+      if (!mounted) return;
+      setState(() {
+        _notifications = notifications;
+        _isLoading = false;
+      });
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = ErrorHandler.getErrorMessage(e);
+      });
     }
   }
 
@@ -73,7 +93,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       case 'job_completed':
       case 'job_cancelled':
       case 'new_job':
-        context.push('${AppConstants.routeJobDetail}/${notification.relatedId}');
+        context
+            .push('${AppConstants.routeJobDetail}/${notification.relatedId}');
         break;
       case 'new_message':
         context.push('${AppConstants.routeChat}/${notification.relatedId}');
@@ -100,26 +121,33 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
               itemCount: 5,
               itemBuilder: (context, index) => const ListItemSkeleton(),
             )
-          : _notifications.isEmpty
-              ? const EmptyStateWidget(
-                  icon: Icons.notifications_none,
-                  title: 'No hay notificaciones',
-                  message: 'Las notificaciones aparecerán aquí cuando haya actualizaciones',
+          : _error != null
+              ? ErrorStateWidget(
+                  title: 'No se pudieron cargar las notificaciones',
+                  message: _error,
+                  onRetry: _loadNotifications,
                 )
-          : RefreshIndicator(
-              onRefresh: _loadNotifications,
-              child: ListView.builder(
-                padding: LayoutUtils.scrollPadding(context, top: 0),
-                itemCount: _notifications.length,
-                itemBuilder: (context, index) {
-                  final notification = _notifications[index];
-                  return _NotificationItem(
-                    notification: notification,
-                    onTap: () => _handleNotificationTap(notification),
-                  );
-                },
-              ),
-            ),
+              : _notifications.isEmpty
+                  ? const EmptyStateWidget(
+                      icon: Icons.notifications_none,
+                      title: 'No hay notificaciones',
+                      message:
+                          'Las notificaciones aparecerán aquí cuando haya actualizaciones',
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadNotifications,
+                      child: ListView.builder(
+                        padding: LayoutUtils.scrollPadding(context, top: 0),
+                        itemCount: _notifications.length,
+                        itemBuilder: (context, index) {
+                          final notification = _notifications[index];
+                          return _NotificationItem(
+                            notification: notification,
+                            onTap: () => _handleNotificationTap(notification),
+                          );
+                        },
+                      ),
+                    ),
     );
   }
 }
@@ -174,7 +202,10 @@ class _NotificationItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: notification.isRead
           ? null
-          : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+          : Theme.of(context)
+              .colorScheme
+              .primaryContainer
+              .withValues(alpha: 0.3),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: _getColor().withValues(alpha: 0.2),
@@ -186,7 +217,8 @@ class _NotificationItem extends StatelessWidget {
         title: Text(
           notification.title,
           style: TextStyle(
-            fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+            fontWeight:
+                notification.isRead ? FontWeight.normal : FontWeight.bold,
           ),
         ),
         subtitle: Column(
@@ -232,4 +264,3 @@ class _NotificationItem extends StatelessWidget {
     }
   }
 }
-

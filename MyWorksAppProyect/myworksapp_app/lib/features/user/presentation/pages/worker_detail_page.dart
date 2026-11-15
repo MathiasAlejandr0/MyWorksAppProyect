@@ -85,10 +85,12 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
 
       String? serviceId = widget.serviceId;
       if (serviceId == null && worker != null) {
-        final services = await _serviceRepository.getServicesByCategory(worker.serviceCategory);
+        final services = await _serviceRepository
+            .getServicesByCategory(worker.serviceCategory);
         if (services.isNotEmpty) serviceId = services.first.id;
       }
 
+      if (!mounted) return;
       setState(() {
         _worker = worker;
         _user = user;
@@ -100,6 +102,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = ErrorHandler.getErrorMessage(e);
         _isLoading = false;
@@ -253,7 +256,8 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.star_rounded, color: AppColors.warning, size: 18),
+              const Icon(Icons.star_rounded,
+                  color: AppColors.warning, size: 18),
               const SizedBox(width: AppSpacing.xs + 2),
               Text(
                 _worker!.rating.toStringAsFixed(1),
@@ -374,8 +378,9 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
   }
 
   Widget _buildAboutCard(BuildContext context) {
-    final categoryLabel = ServiceWorkerMapper.categoryLabels[_worker!.serviceCategory] ??
-        _worker!.profession;
+    final categoryLabel =
+        ServiceWorkerMapper.categoryLabels[_worker!.serviceCategory] ??
+            _worker!.profession;
     final rawDescription = _worker!.description?.trim() ?? '';
     final description = rawDescription.isNotEmpty
         ? rawDescription
@@ -391,7 +396,8 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
         children: [
           Row(
             children: [
-              const Icon(Icons.badge_outlined, color: AppColors.primaryLight, size: 18),
+              const Icon(Icons.badge_outlined,
+                  color: AppColors.primaryLight, size: 18),
               const SizedBox(width: 8),
               Text(
                 'Sobre mí',
@@ -444,7 +450,8 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
 
   Widget _buildSpecialtyChips(BuildContext context, String categoryLabel) {
     final chips = <Widget>[
-      _infoChip(context, Icons.handyman_outlined, _worker!.profession, compact: true),
+      _infoChip(context, Icons.handyman_outlined, _worker!.profession,
+          compact: true),
       _infoChip(context, Icons.category_outlined, categoryLabel, compact: true),
       _infoChip(
         context,
@@ -462,14 +469,14 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
       _infoChip(
         context,
         Icons.photo_library_outlined,
-        _portfolio.isEmpty
-            ? 'Sin portafolio'
-            : '${_portfolio.length} trabajos',
+        _portfolio.isEmpty ? 'Sin portafolio' : '${_portfolio.length} trabajos',
         compact: true,
       ),
       _infoChip(
         context,
-        _isAcceptingJobs ? Icons.event_available_outlined : Icons.schedule_outlined,
+        _isAcceptingJobs
+            ? Icons.event_available_outlined
+            : Icons.schedule_outlined,
         _isAcceptingJobs ? 'Disponible' : 'Ocupado',
         compact: true,
       ),
@@ -527,8 +534,10 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
         const SizedBox(height: AppSpacing.md),
         const BeforeAfterSlider(
           title: 'Transformación Destacada (Antes vs Después)',
-          beforeImageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
-          afterImageUrl: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
+          beforeImageUrl:
+              'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+          afterImageUrl:
+              'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
           height: 210,
         ),
         const SizedBox(height: AppSpacing.md),
@@ -618,7 +627,8 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
       decoration: BoxDecoration(
         color: AppColors.primaryLight.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(compact ? 16 : 20),
-        border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: AppColors.primaryLight.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

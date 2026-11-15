@@ -9,8 +9,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
         android:maxSdkVersion="32" />
-    <!-- Android 13+ (API 33): imágenes en galería -->
+    <!-- Android 13+ (API 33): imágenes y videos en galería -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <!-- Notificaciones locales (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     

@@ -2,19 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/database/models/job_model.dart';
-import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/job_display_utils.dart';
 import '../../../../core/utils/location_utils.dart';
+import '../../../ratings/presentation/widgets/client_rating_badge.dart';
 
 /// Tarjeta de trabajo en las pestañas del panel del trabajador (mockup worker-home).
 class WorkerJobCard extends StatefulWidget {
-  const WorkerJobCard({super.key, required this.job, required this.onTap});
+  const WorkerJobCard({
+    super.key,
+    required this.job,
+    required this.onTap,
+    this.clientRatingLabel,
+    this.clientName,
+    this.priceLabel,
+  });
 
   final JobModel job;
   final VoidCallback onTap;
+  final String? clientRatingLabel;
+  final String? clientName;
+  final String? priceLabel;
 
   @override
   State<WorkerJobCard> createState() => _WorkerJobCardState();
@@ -58,8 +68,6 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
     switch (status) {
       case AppConstants.jobStatusPending:
         return 'PENDIENTE';
-      case PricingConstants.jobAwaitingPayment:
-        return 'ESPERANDO PAGO';
       case AppConstants.jobStatusInProgress:
         return 'EN CURSO';
       case AppConstants.jobStatusCompleted:
@@ -82,6 +90,12 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
       default:
         return AppColors.brandOrange;
     }
+  }
+
+  String _clientLine() {
+    final name = widget.clientName?.trim();
+    if (name == null || name.isEmpty) return 'Cliente';
+    return name;
   }
 
   (String date, String? time) _scheduleParts() {
@@ -144,43 +158,48 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: statusColor.withValues(alpha: 0.14),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: statusColor.withValues(alpha: 0.45),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: statusColor.withValues(alpha: 0.45),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: statusColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Flexible(
+                                      child: Text(
+                                        _statusLabel(widget.job.status),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                          color: statusColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: statusColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    _statusLabel(widget.job.status),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.3,
-                                      color: statusColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 8),
                             Icon(
                               Icons.more_vert_rounded,
                               size: 18,
@@ -189,6 +208,32 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
                           ],
                         ),
                         const SizedBox(height: 8),
+                        if (widget.job.status ==
+                            AppConstants.jobStatusPending) ...[
+                          Text(
+                            _clientLine(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: titleColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.priceLabel ??
+                                JobDisplayUtils.offeredAmountLabel(widget.job),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: AppColors.brandOrange,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                        ],
                         Text(
                           JobDisplayUtils.title(widget.job),
                           style: TextStyle(
@@ -215,39 +260,56 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 8),
-                        Row(
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Icon(
-                              Icons.calendar_today_outlined,
-                              size: 13,
-                              color: muted,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              schedule.$1,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: muted,
-                              ),
-                            ),
-                            if (schedule.$2 != null) ...[
-                              const SizedBox(width: 12),
-                              Icon(
-                                Icons.access_time_rounded,
-                                size: 13,
-                                color: muted,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                schedule.$2!,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_outlined,
+                                  size: 13,
                                   color: muted,
                                 ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    schedule.$1,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: muted,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (schedule.$2 != null)
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time_rounded,
+                                    size: 13,
+                                    color: muted,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      schedule.$2!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: muted,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
                           ],
                         ),
                       ],
@@ -255,6 +317,11 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
                   ),
                 ],
               ),
+              if (widget.job.status == AppConstants.jobStatusPending &&
+                  widget.clientRatingLabel != null) ...[
+                const SizedBox(height: 8),
+                ClientRatingBadge(label: widget.clientRatingLabel!),
+              ],
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: widget.onTap,
@@ -271,11 +338,16 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Ver detalles del trabajo',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
+                    Flexible(
+                      child: Text(
+                        'Ver detalles del trabajo',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     SizedBox(width: 4),

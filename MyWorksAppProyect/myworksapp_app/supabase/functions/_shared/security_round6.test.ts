@@ -124,6 +124,21 @@ describe("commit de Webpay", () => {
     );
   });
 
+  it("un cobro ya capturado no se vuelve a autorizar", () => {
+    assert.deepEqual(
+      assessWebpayCommit({
+        estado: "pagado_por_confirmar",
+        responseCode: null,
+        status: "",
+        commitAmount: null,
+        expectedAmount: 15000,
+        commitBuyOrder: "",
+        storedBuyOrder: "MWA1",
+      }),
+      { action: "resume" },
+    );
+  });
+
   it("exige monto y orden iguales antes de retener", () => {
     assert.deepEqual(
       assessWebpayCommit({

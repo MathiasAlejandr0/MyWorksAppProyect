@@ -1,5 +1,6 @@
 export type CommitAssessment =
   | { action: "replay" }
+  | { action: "resume" }
   | { action: "hold" }
   | { action: "reject" }
   | { action: "mismatch"; reason: "monto" | "buy_order" };
@@ -16,6 +17,12 @@ export function assessWebpayCommit(input: {
 }): CommitAssessment {
   if (input.estado === "retenido" || input.estado === "liberado") {
     return { action: "replay" };
+  }
+  if (input.estado === "pagado_por_confirmar") {
+    return { action: "resume" };
+  }
+  if (input.estado === "reembolsado" || input.estado === "reembolsado_auto") {
+    return { action: "reject" };
   }
   const approved = input.responseCode === 0 ||
     input.status.toUpperCase() === "AUTHORIZED";

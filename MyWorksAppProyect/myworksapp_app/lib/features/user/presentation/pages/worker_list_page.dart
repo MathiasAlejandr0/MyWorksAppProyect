@@ -10,6 +10,8 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/models/user_model.dart';
 import '../../../../core/domain/user_location_context.dart';
+import '../../../../core/database/repositories/worker_schedule_repository.dart';
+import '../../../../core/domain/weekly_schedule.dart';
 import '../../../../core/services/matching_service.dart';
 import '../../../../core/services/user_location_service.dart';
 import '../../../../core/domain/worker_highlight.dart';
@@ -54,13 +56,16 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   List<WorkerModel> _workers = [];
   List<WorkerModel> _filteredWorkers = [];
   Map<String, UserModel> _users = {};
-  Map<String, double> _matchScores = {}; // Para mostrar scores en modo automático
+  Map<String, double> _matchScores =
+      {}; // Para mostrar scores en modo automático
   Set<String> _busyWorkerIds = {};
   UserLocationContext? _userLocation;
   bool _isLoading = true;
   bool _isAutomaticMode = false; // false = Manual, true = Inteligente
   String _sortBy = 'rating';
   double _minRating = lowRatingFloor;
+  bool _onlyNow = false;
+  Map<String, WeeklySchedule> _schedules = {};
   String? _serviceName;
   String? _selectedWorkerId;
   bool _mapExpanded = false;
@@ -130,7 +135,14 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
           profession: worker.profession,
         );
         final matchesRating = worker.rating >= _minRating;
-        return matchesSearch && matchesRating;
+        final schedule = _schedules[worker.userId];
+        final matchesNow = !_onlyNow ||
+            countsAsAvailableNow(
+              manuallyAvailable: worker.isAvailable,
+              schedule: schedule,
+              instant: DateTime.now(),
+            );
+        return matchesSearch && matchesRating && matchesNow;
       }).toList();
 
       if (_sortBy == 'rating') {
@@ -289,7 +301,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     try {
       final authState = ref.read(authProvider);
       final user = authState.user;
-      
+
       if (user == null || widget.jobId == null || widget.serviceId == null) {
         await _loadManualWorkers();
         return;
@@ -298,7 +310,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       // Obtener job para obtener coordenadas
       final JobRepository jobRepository = JobRepository();
       final job = await jobRepository.getJobById(widget.jobId!);
-      
+
       if (job == null || job.latitude == null || job.longitude == null) {
         // Si no hay coordenadas, usar modo manual
         await _loadManualWorkers();
@@ -340,6 +352,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         _matchScores = scores;
         _isLoading = false;
       });
+      await _refreshSchedules();
     } catch (e) {
       // Si falla matching automático, cargar manual
       await _loadManualWorkers();
@@ -350,7 +363,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     List<WorkerModel> workers;
 
     if (widget.serviceId != null) {
-      final service = await _serviceRepository.getServiceById(widget.serviceId!);
+      final service =
+          await _serviceRepository.getServiceById(widget.serviceId!);
       _serviceName = service?.name;
 
       if (service != null) {
@@ -384,6 +398,20 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       _isLoading = false;
     });
     _filterWorkers();
+    await _refreshSchedules();
+  }
+
+  Future<void> _refreshSchedules() async {
+    try {
+      final schedules = await WorkerScheduleRepository().loadMany(
+        _workers.map((worker) => worker.userId).toList(),
+      );
+      if (!mounted) return;
+      setState(() => _schedules = schedules);
+      _filterWorkers();
+    } catch (_) {
+      // Sin la migración el listado sigue usando el interruptor disponible.
+    }
   }
 
   void _openWorker(WorkerModel worker) {
@@ -617,7 +645,20 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   }
 
   Widget _buildFilters() {
-    return WorkerListFilters(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Disponible ahora'),
+          subtitle: const Text('Respeta el horario semanal si el profesional lo activó'),
+          value: _onlyNow,
+          onChanged: (value) {
+            setState(() => _onlyNow = value);
+            _filterWorkers();
+          },
+        ),
+        WorkerListFilters(
       searchController: _searchController,
       sortBy: _sortBy,
       minRating: _minRating,
@@ -629,6 +670,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         setState(() => _minRating = value);
         _filterWorkers();
       },
+        ),
+      ],
     );
   }
 
@@ -906,4 +949,3 @@ class _LocationRequiredState extends StatelessWidget {
     );
   }
 }
-

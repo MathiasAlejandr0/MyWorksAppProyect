@@ -5,11 +5,14 @@ import '../../../../core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/database/models/rating_model.dart';
 import '../../../../core/database/supabase_db.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/services/dispute_service.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../domain/rating_gate.dart';
 
 class RatingPage extends StatefulWidget {
   final String jobId;
@@ -50,8 +53,29 @@ class _RatingPageState extends State<RatingPage> {
 
     try {
       final userId = supabase.auth.currentUser?.id;
-      if (userId == null) {
-        ErrorHandler.showError(context, 'Debes iniciar sesión para calificar');
+      final job = await JobRepository().getJobById(widget.jobId);
+      final direction = userId != null && userId == job?.workerId
+          ? RatingDirection.workerToClient
+          : RatingDirection.clientToWorker;
+      final existing = await _ratingRepository.getRatingByJobId(
+        widget.jobId,
+        direction: direction,
+      );
+      final disputeOpen =
+          await DisputeService.instance.hasOpenDispute(widget.jobId);
+      if (!mounted) return;
+      final block = ratingBlockReason(
+        currentUserId: userId,
+        jobClientId: job?.userId,
+        jobWorkerId: job?.workerId,
+        jobStatus: job?.status,
+        alreadyRated: existing != null,
+        disputeOpen: disputeOpen,
+        direction: direction,
+      );
+      if (block != null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(block)));
         setState(() => _isLoading = false);
         return;
       }
@@ -60,6 +84,10 @@ class _RatingPageState extends State<RatingPage> {
         id: const Uuid().v4(),
         jobId: widget.jobId,
         userId: userId,
+        ratedUserId: direction == RatingDirection.workerToClient
+            ? job?.userId
+            : job?.workerId,
+        direction: direction,
         score: _selectedRating,
         comment: _commentController.text.trim().isEmpty
             ? null

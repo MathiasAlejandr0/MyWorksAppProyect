@@ -8,6 +8,7 @@ import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class AdminFeatureFlagsPage extends ConsumerStatefulWidget {
   const AdminFeatureFlagsPage({super.key});
@@ -41,7 +42,7 @@ class _AdminFeatureFlagsPageState extends ConsumerState<AdminFeatureFlagsPage> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -153,8 +154,7 @@ class _AdminFeatureFlagsPageState extends ConsumerState<AdminFeatureFlagsPage> {
                         final flag = _flags[index];
                         final scope = [
                           if (flag.role != null) 'rol: ${flag.role}',
-                          if (flag.appVersion != null)
-                            'v: ${flag.appVersion}',
+                          if (flag.appVersion != null) 'v: ${flag.appVersion}',
                           if (flag.userId != null) 'usuario específico',
                         ].join(' · ');
 

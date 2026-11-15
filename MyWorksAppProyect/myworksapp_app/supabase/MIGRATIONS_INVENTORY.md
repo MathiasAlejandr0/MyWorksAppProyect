@@ -1,4 +1,56 @@
-# Inventario de migraciones (snapshot CLI)
+# Inventario de migraciones
+
+## Unificación con el PR #55 (2026-11-15)
+
+La base viva es `wxqrfcqifkfgawrnqmnj`. Las migraciones del equipo hasta
+`20261115000001_base_solo_dueno_y_demo_cerrado.sql` ya están aplicadas con
+el mismo número de versión que el archivo.
+
+El PR #55 del otro repo se aplicó encima, con versiones que Supabase anotó
+al subirlas. Esos archivos, en este repo, se nombraron para ordenar
+**después** de `20261115000001`. El SQL ya está en vivo: no hay que volver
+a ejecutarlo. Antes de un `supabase db push` hay que marcar las versiones
+locales que no coinciden con `schema_migrations`.
+
+| Versión en este repo | Archivo | En vivo |
+|----------------------|---------|---------|
+| 20261115050001 | `asesor_acuerdos_search_path_fk` | Una de `20261115051320`–`20261115051532` |
+| 20261115050002 | `bucket_evidencias` | Una de `20261115051320`–`20261115051532` |
+| 20261115050003 | `pago_por_confirmar` | Una de `20261115051320`–`20261115051532` |
+| 20261115050004 | `calificacion_bidireccional` | Una de `20261115051320`–`20261115051532` |
+| 20261115050005 | `pagos_cuenta_bancaria` | Una de `20261115051320`–`20261115051532` |
+| 20261115050006 | `horarios_semanales` | Una de `20261115051320`–`20261115051532` |
+| 20261115050007 | `verificacion_eventos` | Una de `20261115051320`–`20261115051532` |
+| 20261115050008 | `evidencias_video_20mb` | Una de `20261115051320`–`20261115051532` |
+| 20261115052827 | `trabajador_horarios_pk_por_dia` | **La misma** `20261115052827`. No reparar. |
+| 20261115060002 | `cron_webpay_reconcile` | El job `mwa_webpay_reconcile` corre cada 5 minutos. No hay fila en `schema_migrations`. |
+
+Las ocho versiones remotas `20261115051320`–`20261115051532` se quedan en el
+historial sin archivo de ese número. Son el mismo SQL, no una segunda copia
+para correr.
+
+```bash
+supabase migration repair --status applied 20261115050001
+supabase migration repair --status applied 20261115050002
+supabase migration repair --status applied 20261115050003
+supabase migration repair --status applied 20261115050004
+supabase migration repair --status applied 20261115050005
+supabase migration repair --status applied 20261115050006
+supabase migration repair --status applied 20261115050007
+supabase migration repair --status applied 20261115050008
+supabase migration repair --status applied 20261115060002
+```
+
+## Todavía no están en vivo
+
+| Versión | Archivo | Qué hace |
+|---------|---------|----------|
+| 20261115140001 | `minuto_utc_execute_authenticated.sql` | `EXECUTE` de `minuto_utc(text)` y `texto_a_timestamptz(text)` para `authenticated`. Sin esto un cliente con sesión no puede crear un pedido (42501). |
+| 20261115140002 | `agenda_jsonb_tras_pk.sql` | `usa_horario` se puede actualizar. Guardar y leer la plantilla jsonb funciona con la PK en `id` y una fila por día. |
+
+Esas dos se aplican con `supabase db push` (o el SQL a mano). No usar `migration repair` sobre ellas.
+
+## Snapshot CLI (2026-09-07)
 
 Generado tras `npx supabase login` + `npx supabase link --project-ref wxqrfcqifkfgawrnqmnj`
 y `npx supabase migration list` (2026-09-07).

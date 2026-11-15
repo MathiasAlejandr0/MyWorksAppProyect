@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/database/models/job_model.dart';
+import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../ratings/presentation/widgets/client_reputation_card.dart';
 import '../../../ratings/presentation/widgets/rate_client_button.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../ratings/domain/client_rating_label.dart';
+import '../../../ratings/presentation/widgets/client_rating_badge.dart';
 import '../utils/job_detail_helpers.dart';
 
 class JobDetailActionsSection extends StatelessWidget {
@@ -61,6 +64,29 @@ class JobDetailActionsSection extends StatelessWidget {
           if (isWorker &&
               job.status == AppConstants.jobStatusPending &&
               canTransition[AppConstants.jobStatusAccepted] == true) ...[
+            FutureBuilder<Map<String, ClientRatingSummary>>(
+              future: RatingRepository().clientSummaries([job.userId]),
+              builder: (context, snapshot) {
+                final ready = snapshot.connectionState == ConnectionState.done;
+                if (!ready) {
+                  return const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: LinearProgressIndicator(minHeight: 2),
+                  );
+                }
+                final summary = snapshot.data?[job.userId];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: ClientRatingBadge(
+                    label: clientRatingLabel(
+                      average: summary?.average,
+                      count: summary?.count ?? 0,
+                      known: !snapshot.hasError,
+                    ),
+                  ),
+                );
+              },
+            ),
             ElevatedButton(
               onPressed: onAcceptJob,
               child: const Text('Aceptar Trabajo'),

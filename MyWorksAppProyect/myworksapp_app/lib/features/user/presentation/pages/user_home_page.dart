@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/database/models/service_model.dart';
+import '../../../../core/database/repositories/message_repository.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/design_system/app_radius.dart';
@@ -37,6 +38,7 @@ class UserHomePage extends ConsumerStatefulWidget {
 
 class _UserHomePageState extends ConsumerState<UserHomePage> {
   final ServiceRepository _serviceRepository = ServiceRepository();
+  final MessageRepository _messageRepository = MessageRepository();
   final _searchController = TextEditingController();
   final _profileKey = GlobalKey();
   final _settingsKey = GlobalKey();
@@ -47,6 +49,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
   String _query = '';
   late Future<List<ServiceModel>> _servicesFuture;
   bool _hasUnreadNotices = false;
+  int _unreadMessages = 0;
 
   @override
   void initState() {
@@ -55,7 +58,19 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
     _refreshUnreadNotices();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _askForCardOnce();
+      _refreshUnreadMessages();
     });
+  }
+
+  Future<void> _refreshUnreadMessages() async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+    try {
+      final count = await _messageRepository.getUnreadCount(user.id);
+      if (mounted) setState(() => _unreadMessages = count);
+    } catch (_) {
+      // La bandeja sigue accesible si el conteo falla.
+    }
   }
 
   Future<void> _refreshUnreadNotices() async {
@@ -160,6 +175,11 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
             onProjects: () => context.push(AppConstants.routeJobHistory),
             onNotices: _openNotices,
             hasUnreadNotices: _hasUnreadNotices,
+            onMessages: () async {
+              await context.push(AppConstants.routeMessages);
+              if (mounted) await _refreshUnreadMessages();
+            },
+            showMessageDot: _unreadMessages > 0,
             onProfile: () => context.push(AppConstants.routeUserProfile),
           ),
           body: AuthSoftBackground(
@@ -693,13 +713,17 @@ class _UserBottomNav extends StatelessWidget {
     required this.onProjects,
     required this.onNotices,
     required this.hasUnreadNotices,
+    required this.onMessages,
     required this.onProfile,
+    this.showMessageDot = false,
   });
 
   final VoidCallback onProjects;
   final VoidCallback onNotices;
   final bool hasUnreadNotices;
+  final Future<void> Function() onMessages;
   final VoidCallback onProfile;
+  final bool showMessageDot;
 
   @override
   Widget build(BuildContext context) {
@@ -743,8 +767,6 @@ class _UserBottomNav extends StatelessWidget {
                 muted: muted,
                 onTap: onProjects,
               ),
-              // Abre los avisos (notificaciones). Los chats están dentro de
-              // cada trabajo, no hay una bandeja de mensajes aparte.
               _NavItem(
                 icon: Icons.notifications_none_rounded,
                 label: 'Avisos',
@@ -752,6 +774,14 @@ class _UserBottomNav extends StatelessWidget {
                 muted: muted,
                 onTap: onNotices,
                 showDot: hasUnreadNotices,
+              ),
+              _NavItem(
+                icon: Icons.chat_bubble_outline_rounded,
+                label: 'Mensajes',
+                active: false,
+                muted: muted,
+                onTap: () => onMessages(),
+                showDot: showMessageDot,
               ),
               _NavItem(
                 icon: Icons.person_outline_rounded,

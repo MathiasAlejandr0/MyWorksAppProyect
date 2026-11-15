@@ -17,6 +17,7 @@ import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/dispute_resolution_dialog.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class AdminJobDetailPage extends ConsumerStatefulWidget {
   const AdminJobDetailPage({super.key, required this.jobId});
@@ -24,8 +25,7 @@ class AdminJobDetailPage extends ConsumerStatefulWidget {
   final String jobId;
 
   @override
-  ConsumerState<AdminJobDetailPage> createState() =>
-      _AdminJobDetailPageState();
+  ConsumerState<AdminJobDetailPage> createState() => _AdminJobDetailPageState();
 }
 
 class _AdminJobDetailPageState extends ConsumerState<AdminJobDetailPage>
@@ -62,7 +62,7 @@ class _AdminJobDetailPageState extends ConsumerState<AdminJobDetailPage>
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -88,12 +88,13 @@ class _AdminJobDetailPageState extends ConsumerState<AdminJobDetailPage>
     if (ok != true) return;
     try {
       await PaymentService.instance.refundPrimaryOnCancellation(widget.jobId);
-      await _repo.updateJobStatus(widget.jobId, AppConstants.jobStatusCancelled);
+      await _repo.updateJobStatus(
+          widget.jobId, AppConstants.jobStatusCancelled);
       await _load();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }

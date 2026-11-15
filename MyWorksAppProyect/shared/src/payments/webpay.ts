@@ -82,7 +82,11 @@ export async function fetchPaymentStatus(
   const { data, error } = await supabase.functions.invoke('webpay-status', {
     body: { paymentId, jobId },
   });
-  if (error) throw new Error(error.message || 'No se pudo consultar el pago');
+  if (error) {
+    throw new Error(
+      await edgeFunctionErrorMessage(error, 'No se pudo consultar el pago'),
+    );
+  }
   const payload = data as { payment?: Record<string, unknown>; error?: string } | null;
   if (!payload || payload.error || !payload.payment) return null;
   return {

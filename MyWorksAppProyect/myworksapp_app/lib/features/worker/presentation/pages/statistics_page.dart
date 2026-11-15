@@ -6,6 +6,7 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/worker_job_status.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -63,7 +64,7 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Error: ${snapshot.error}'),
+                  Text(ErrorHandler.getErrorMessage(snapshot.error)),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () {
@@ -87,9 +88,12 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
               .length;
           final inProgress =
               jobs.where((j) => WorkerJobStatus.isActive(j.status)).length;
-          final pending = jobs.where((j) => j.status == AppConstants.jobStatusPending).length;
-          final cancelled =
-              jobs.where((j) => j.status == AppConstants.jobStatusCancelled).length;
+          final pending = jobs
+              .where((j) => j.status == AppConstants.jobStatusPending)
+              .length;
+          final cancelled = jobs
+              .where((j) => j.status == AppConstants.jobStatusCancelled)
+              .length;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -258,4 +262,3 @@ class _StatusItem extends StatelessWidget {
     );
   }
 }
-

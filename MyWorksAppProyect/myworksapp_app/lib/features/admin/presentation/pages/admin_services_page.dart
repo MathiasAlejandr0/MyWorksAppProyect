@@ -8,6 +8,7 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class AdminServicesPage extends ConsumerStatefulWidget {
   const AdminServicesPage({super.key});
@@ -40,7 +41,7 @@ class _AdminServicesPageState extends ConsumerState<AdminServicesPage> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -69,9 +70,7 @@ class _AdminServicesPageState extends ConsumerState<AdminServicesPage> {
                         s.isActive
                             ? Icons.check_circle_outline
                             : Icons.remove_circle_outline,
-                        color: s.isActive
-                            ? AppColors.success
-                            : Colors.grey,
+                        color: s.isActive ? AppColors.success : Colors.grey,
                       ),
                       title: Text(s.name),
                       subtitle: Text(
