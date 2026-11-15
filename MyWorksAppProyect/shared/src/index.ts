@@ -21,6 +21,7 @@ export * from './client';
 export * from './auth';
 export * from './emailDomain';
 export * from './avatar';
+export * from './plural';
 export type {
   Profile,
   ServiceRow,

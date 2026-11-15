@@ -12,6 +12,7 @@ import {
   periodRange,
   PLATFORM_COMMISSION_RATE,
   type BusinessPeriodSummary,
+  pluralize,
 } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 import { KpiCardsSkeleton } from './LoadingState';
@@ -89,7 +90,7 @@ export function ExecutivePeriodPanel({ activeJobs }: { activeJobs: number }) {
     {
       label: 'CSAT',
       value: summary?.csat == null ? 'Sin calificaciones' : `${summary.csat.toFixed(1)} / 5`,
-      trend: summary?.ratingCount ? `${summary.ratingCount} reseñas` : 'Sin reseñas en el período',
+      trend: summary?.ratingCount ? pluralize(summary.ratingCount, 'reseña') : 'Sin reseñas en el período',
       icon: Smile,
     },
     {

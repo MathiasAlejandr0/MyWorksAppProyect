@@ -29,6 +29,7 @@ import '../../../../core/widgets/portfolio_media_viewer.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../widgets/worker_reviews_section.dart';
 import '../widgets/worker_search_map.dart';
+import '../../../../core/utils/plural.dart';
 class WorkerDetailPage extends ConsumerStatefulWidget {
   final String workerId;
   final String? serviceId;
@@ -417,7 +418,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
           if (isEliteWorker(_worker!)) ...[
             const SizedBox(height: 8),
             Text(
-              'Élite del mes · ${_worker!.completedJobs} trabajos · ${_worker!.rating.toStringAsFixed(1)}',
+              'Élite del mes · ${plural(_worker!.completedJobs, 'trabajo')} · ${_worker!.rating.toStringAsFixed(1)}',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: const Color(0xFFB45309),
                     fontWeight: FontWeight.w700,
@@ -469,7 +470,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
       _infoChip(
         context,
         Icons.photo_library_outlined,
-        _portfolio.isEmpty ? 'Sin portafolio' : '${_portfolio.length} trabajos',
+        _portfolio.isEmpty ? 'Sin portafolio' : plural(_portfolio.length, 'trabajo'),
         compact: true,
       ),
       _infoChip(
