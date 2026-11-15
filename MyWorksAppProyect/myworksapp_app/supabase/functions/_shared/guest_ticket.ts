@@ -75,3 +75,41 @@ export async function sha256Hex(value: string): Promise<string> {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
+
+/** Dominios reservados (RFC 2606 / 6761): nunca reciben correo. */
+export function isReservedEmailDomain(email: string): boolean {
+  const value = email.trim().toLowerCase();
+  const at = value.lastIndexOf("@");
+  if (at < 0) return false;
+  const domain = value.slice(at + 1).replace(/\.$/, "");
+  if (!domain) return false;
+  const reserved = ["example.com", "example.net", "example.org"];
+  if (reserved.some((d) => domain === d || domain.endsWith(`.${d}`))) return true;
+  return ["test", "example", "invalid", "localhost"].includes(domain.split(".").pop() ?? "");
+}
+
+/**
+ * Respuesta de definir-clave-invitado. La clave ya quedó guardada: si el
+ * correo de confirmación falla (SMTP, dominio rechazado) no se devuelve
+ * 502; se avisa para que la persona lo reenvíe desde «Iniciar sesión».
+ */
+export function guestPasswordOutcome(input: {
+  emailConfirmed: boolean;
+  resendAttempted: boolean;
+  resendFailed: boolean;
+}): { ok: true; emailConfirmed: boolean; emailSent: boolean; notice?: string } {
+  if (input.emailConfirmed || !input.resendAttempted) {
+    return { ok: true, emailConfirmed: input.emailConfirmed, emailSent: false };
+  }
+  if (input.resendFailed) {
+    return {
+      ok: true,
+      emailConfirmed: false,
+      emailSent: false,
+      notice:
+        "Tu contraseña quedó guardada, pero no pudimos enviar el correo de confirmación. " +
+        "Entra con «Iniciar sesión» y usa «Reenviar correo de confirmación».",
+    };
+  }
+  return { ok: true, emailConfirmed: false, emailSent: true };
+}

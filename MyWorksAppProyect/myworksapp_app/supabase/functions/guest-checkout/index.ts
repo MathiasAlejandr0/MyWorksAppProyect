@@ -1,5 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
-import { sha256Hex } from "../_shared/guest_ticket.ts";
+import { isReservedEmailDomain, sha256Hex } from "../_shared/guest_ticket.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import {
   allowRate,
@@ -116,6 +116,13 @@ Deno.serve(async (req) => {
       return jsonResponse(
         req,
         { error: "Nombre, correo, teléfono y dirección son obligatorios" },
+        400,
+      );
+    }
+    if (isReservedEmailDomain(email)) {
+      return jsonResponse(
+        req,
+        { error: "Ese correo es de ejemplo y no recibe mensajes. Usa un correo real." },
         400,
       );
     }

@@ -10,6 +10,8 @@ import {
 } from "./cors_origin.ts";
 import {
   guestPasswordConfirmPlan,
+  guestPasswordOutcome,
+  isReservedEmailDomain,
   parseGuestTicket,
   paymentHoldTransitioned,
   sha256Hex,
@@ -75,6 +77,31 @@ describe("ticket de contraseña del invitado", () => {
     assert.equal(shouldConsumeGuestTicket({ userLoaded: false, passwordSaved: true }), false);
     assert.equal(shouldConsumeGuestTicket({ userLoaded: true, passwordSaved: false }), false);
     assert.equal(shouldConsumeGuestTicket({ userLoaded: true, passwordSaved: true }), true);
+  });
+
+  it("si falla el correo de confirmación la clave queda guardada y se avisa (sin 502)", () => {
+    assert.deepEqual(
+      guestPasswordOutcome({ emailConfirmed: true, resendAttempted: false, resendFailed: false }),
+      { ok: true, emailConfirmed: true, emailSent: false },
+    );
+    assert.deepEqual(
+      guestPasswordOutcome({ emailConfirmed: false, resendAttempted: true, resendFailed: false }),
+      { ok: true, emailConfirmed: false, emailSent: true },
+    );
+    const failed = guestPasswordOutcome({
+      emailConfirmed: false,
+      resendAttempted: true,
+      resendFailed: true,
+    });
+    assert.equal(failed.ok, true);
+    assert.equal(failed.emailSent, false);
+    assert.match(failed.notice ?? "", /Reenviar correo de confirmación/);
+  });
+
+  it("rechaza correos de dominios reservados en el checkout invitado", () => {
+    assert.equal(isReservedEmailDomain("qa@example.com"), true);
+    assert.equal(isReservedEmailDomain("qa@demo.test"), true);
+    assert.equal(isReservedEmailDomain("qa@gmail.com"), false);
   });
 
   it("exige jti y rechaza el formato viejo de cuatro partes", () => {
