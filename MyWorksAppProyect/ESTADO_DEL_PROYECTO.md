@@ -224,7 +224,7 @@ Las cuentas `@demo.com` / `demo123` son legado: el administrador `admin@demo.com
 | Notificaciones push remotas (FCM / APNs) | `send-push` y `firebase_messaging` están en el repo. El equipo las recibe cuando el build trae las claves | Media |
 | Chat en tiempo real | ✅ Supabase Realtime (`postgres_changes` sobre `mensajes`): app `chat_page.dart`, web `LiveChatWidget.tsx` | — |
 | Evidencia del trabajo | Fotos en WebP dentro de la base (`fotos_trabajo.imagen_webp`, migración `20261108000001`); el video solo guarda el nombre del archivo | Media (video) |
-| Tests automatizados Flutter | Suite en `myworksapp_app/test/` + CI (`flutter test`: 145 pruebas en verde, 9-nov-2026) | ✅ Parcial |
+| Tests automatizados Flutter | Corrida del 15-nov-2026 sobre `8fa913e`: 174 pruebas en verde. Registro en `docs/anexos/2026-11-15-pruebas/REGISTRO.md`. `main` siguió después y esa cifra no incluye esos commits | ✅ |
 | CI/CD (GitHub Actions) | Un solo `.github` en la raíz del repo, con actions fijadas por SHA | ✅ |
 | Panel de administración web | `myworksapp_desktop` con Supabase Auth (rol admin) | ✅ MVP |
 | Publicación en tiendas | No publicada | Alta (al lanzar) |
@@ -514,7 +514,7 @@ Presentar en **tabla** con ID, descripción, prioridad (Alta/Media/Baja).
 | Pruebas manuales | Matriz: caso de prueba, pasos, resultado esperado, OK/Falla |
 | Pruebas de integración | Login → solicitud → aceptación → evidencia → pago |
 | Pruebas de regresión | Checklist antes de cada demo |
-| Pruebas automatizadas | **Pendiente** — documentar como trabajo futuro |
+| Pruebas automatizadas | Corrida del 15-nov-2026: Flutter 174, Playwright 17 (1 omitida), shared 110, escritorio 2. Detalle en `docs/anexos/2026-11-15-pruebas/REGISTRO.md` |
 | Usabilidad | Tour guiado, feedback informal de usuarios demo |
 
 **Tabla de ejemplo:**
@@ -526,8 +526,10 @@ Presentar en **tabla** con ID, descripción, prioridad (Alta/Media/Baja).
 | P-03 | Finalizar con evidencia | Trabajador | Estado `awaiting_client_approval` | ✅ |
 | P-04 | Aprobar y pagar | Usuario | `completed` + pago Webpay (integración) | ✅ |
 
+La tabla de arriba es el ejemplo del flujo ya demostrado antes. La matriz de esta fecha, con lo que se recorrió y lo que no, está en `docs/anexos/2026-11-15-pruebas/REGISTRO.md`. El cobro Webpay, el teléfono y el hub no se volvieron a ejecutar el 15 de noviembre.
+
 **Señales ✓**
-- [x] Honestidad: hay `flutter test` automatizado (84 pruebas en `myworksapp_app/test/`, octubre 2026) y E2E Playwright en la web; no cubren pagos reales.
+- [x] Honestidad: `flutter test` quedó en 174 pruebas el 15-nov-2026, más Playwright, shared y escritorio. No cubren un pago real ni el teléfono.
 - [ ] Evidencia: capturas o fotos de la app en uso.
 
 ---

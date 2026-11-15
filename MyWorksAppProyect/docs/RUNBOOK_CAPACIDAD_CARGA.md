@@ -138,9 +138,16 @@ Si se rompe a **50 VUs**:
 | booking-reads stress | 08-11-2026 | 80 | **249** | **0** | ~95 | p95 estable; max huecos 2,2 s |
 | mixed + JWT | 08-11-2026 | 40 | 240 | 0 | ~44 | `trabajos` 200 (Camila) |
 | free-ceiling | 20-09-2026 | 300 | **263** | **0** | ~302 | Umbrales Free cumplidos (p95&lt;500, error&lt;1 %). Egress prueba ≈ 196 MB |
-| free-ceiling | 08-11-2026 | — | — | — | — | No repetido (egress + REST vacío). Usar booking-reads |
-| ceiling | | (arrival-rate) | | | | |
-| soak | | 40 | | | | |
+| free-ceiling | 08-11-2026 | — | — | — | — | No repetido ese día (egress + REST vacío). Usar booking-reads |
+| smoke | 15-11-2026 | 5 | 244 | 0 | 6,7 | OK. Registro: `docs/anexos/2026-11-15-pruebas/` |
+| baseline | 15-11-2026 | 50 | 232 | 0 | 47,5 | OK. REST `trabajadores` anon sigue en 0 filas |
+| stress | 15-11-2026 | 200 | 235 | 0 | 175 | OK |
+| booking-reads baseline | 15-11-2026 | 30 | 237 | 0 | 36 | OK |
+| booking-reads stress | 15-11-2026 | 80 | 247 | 0 | 95 | OK. Máximo de huecos 1,38 s |
+| free-ceiling | 15-11-2026 | 300 | 236 | 0 | 308 | Umbral p95 &lt; 500 ms y error &lt; 1 %. Recibido ≈ 85 MB |
+| ceiling | 15-11-2026 | 63 | 224 | 0 | 58 | Llegada creciente; umbral p95 &lt; 3 s |
+| soak | 15-11-2026 | 40 | 229 | 0 | 56 | 10 min, error 0 |
+| mixed + JWT | 15-11-2026 | — | — | — | — | No corrido: no había JWT de un usuario de prueba |
 
 ---
 
