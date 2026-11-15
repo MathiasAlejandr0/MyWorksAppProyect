@@ -112,6 +112,7 @@ void main() {
     expect(emitted, UserLocationService.demoFallbackLabel);
     // El mapa deja un temporizador corto de baldosas; hay que drenarlo
     // antes de cerrar el test.
+    await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 1));
   });
 }

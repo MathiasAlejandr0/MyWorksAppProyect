@@ -1,0 +1,10 @@
+inicio 2026-11-15T12:16:26.0670587-03:00
+catalog-smoke exit=0
+catalog-baseline exit=0
+catalog-stress exit=0
+booking-smoke exit=0
+booking-baseline exit=0
+booking-stress exit=0
+catalog-free-ceiling exit=0
+capacity-ceiling exit=0
+catalog-soak exit=0

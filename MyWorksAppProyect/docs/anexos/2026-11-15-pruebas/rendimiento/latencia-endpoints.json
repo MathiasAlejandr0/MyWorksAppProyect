@@ -1,0 +1,2161 @@
+{
+  "kind": "rendimiento-latencia-secuencial",
+  "protocolo": {
+    "samples": 30,
+    "warmup": 5,
+    "pause_ms": 200,
+    "percentil": "interpolación lineal sobre orden de estadísticas (p50/p95/p99)",
+    "cliente": "node fetch, 1 conexión lógica a la vez"
+  },
+  "entorno": {
+    "supabase_url": "https://wxqrfcqifkfgawrnqmnj.supabase.co",
+    "git_sha": null,
+    "measured_at": "2026-11-15T15:13:03.282Z",
+    "finished_at": "2026-11-15T15:15:05.362Z",
+    "node": "v22.15.0",
+    "worker_id": "11111111-1111-4111-8111-000000000206"
+  },
+  "auth_used": {
+    "camila": null,
+    "profesional": null
+  },
+  "rest_sin_agenda_semanal": true,
+  "endpoints": [
+    {
+      "id": "servicios",
+      "label": "REST servicios activos",
+      "method": "GET",
+      "path": "/rest/v1/servicios?select=id,nombre,categoria,activo&activo=eq.1&limit=50",
+      "n": 30,
+      "min_ms": 201.2,
+      "p50_ms": 210.6,
+      "p95_ms": 246.7,
+      "p99_ms": 494.8,
+      "max_ms": 594.5,
+      "mean_ms": 228.3,
+      "error_n": 0,
+      "bytes_last": 1206,
+      "status_last": 200,
+      "rows_last": 13,
+      "keys_last": [
+        "id",
+        "nombre",
+        "categoria",
+        "activo"
+      ]
+    },
+    {
+      "id": "trabajadores_catalogo",
+      "label": "REST trabajadores disponibles (columnas de listado)",
+      "method": "GET",
+      "path": "/rest/v1/trabajadores?select=id_usuario,profesion,calificacion,disponible,tarifa_visita,categoria_servicio&disponible=eq.1&limit=40",
+      "n": 30,
+      "min_ms": 200.6,
+      "p50_ms": 213.3,
+      "p95_ms": 227.7,
+      "p99_ms": 233.3,
+      "max_ms": 234.8,
+      "mean_ms": 214.2,
+      "error_n": 0,
+      "bytes_last": 2,
+      "status_last": 200,
+      "rows_last": 0,
+      "keys_last": []
+    },
+    {
+      "id": "trabajador_fila",
+      "label": "REST trabajador Patricia SELECT * (sin agenda semanal)",
+      "method": "GET",
+      "path": "/rest/v1/trabajadores?id_usuario=eq.11111111-1111-4111-8111-000000000206&select=*",
+      "n": 30,
+      "min_ms": 198.9,
+      "p50_ms": 217.4,
+      "p95_ms": 231,
+      "p99_ms": 261.9,
+      "max_ms": 273.1,
+      "mean_ms": 217.3,
+      "error_n": 30,
+      "bytes_last": 194,
+      "status_last": 401,
+      "rows_last": 1,
+      "keys_last": [
+        "code",
+        "details",
+        "hint",
+        "message"
+      ]
+    },
+    {
+      "id": "rpc_categorias",
+      "label": "RPC categorias_con_disponibles",
+      "method": "POST",
+      "path": "/rest/v1/rpc/categorias_con_disponibles",
+      "n": 30,
+      "min_ms": 194.9,
+      "p50_ms": 206.8,
+      "p95_ms": 221.5,
+      "p99_ms": 231.5,
+      "max_ms": 233.8,
+      "mean_ms": 208.9,
+      "error_n": 0,
+      "bytes_last": 170,
+      "status_last": 200,
+      "rows_last": 12,
+      "keys_last": []
+    },
+    {
+      "id": "rpc_catalogo_gasfiteria",
+      "label": "RPC listar_profesionales_catalogo gasfiteria",
+      "method": "POST",
+      "path": "/rest/v1/rpc/listar_profesionales_catalogo",
+      "n": 30,
+      "min_ms": 202.6,
+      "p50_ms": 214.9,
+      "p95_ms": 232.9,
+      "p99_ms": 239.6,
+      "max_ms": 241.7,
+      "mean_ms": 216.7,
+      "error_n": 0,
+      "bytes_last": 4738,
+      "status_last": 200,
+      "rows_last": 9,
+      "keys_last": [
+        "id_usuario",
+        "profesion",
+        "descripcion",
+        "calificacion",
+        "tarifa_visita",
+        "categoria_servicio",
+        "zona_trabajo",
+        "nombre",
+        "ruta_foto_perfil",
+        "latitud_base",
+        "longitud_base",
+        "radio_servicio_km",
+        "origen_base",
+        "trabajos_completados",
+        "score_listado",
+        "prioridad_manual",
+        "radio_urbano_km",
+        "tarifa_fuera_radio_clp",
+        "es_elite"
+      ]
+    },
+    {
+      "id": "rpc_catalogo_plomeria",
+      "label": "RPC listar_profesionales_catalogo plomeria",
+      "method": "POST",
+      "path": "/rest/v1/rpc/listar_profesionales_catalogo",
+      "n": 30,
+      "min_ms": 203,
+      "p50_ms": 215.6,
+      "p95_ms": 382.7,
+      "p99_ms": 416.1,
+      "max_ms": 423.6,
+      "mean_ms": 245.1,
+      "error_n": 0,
+      "bytes_last": 1566,
+      "status_last": 200,
+      "rows_last": 3,
+      "keys_last": [
+        "id_usuario",
+        "profesion",
+        "descripcion",
+        "calificacion",
+        "tarifa_visita",
+        "categoria_servicio",
+        "zona_trabajo",
+        "nombre",
+        "ruta_foto_perfil",
+        "latitud_base",
+        "longitud_base",
+        "radio_servicio_km",
+        "origen_base",
+        "trabajos_completados",
+        "score_listado",
+        "prioridad_manual",
+        "radio_urbano_km",
+        "tarifa_fuera_radio_clp",
+        "es_elite"
+      ]
+    },
+    {
+      "id": "rpc_huecos_patricia",
+      "label": "RPC horarios_libres_profesional Patricia 14 días",
+      "method": "POST",
+      "path": "/rest/v1/rpc/horarios_libres_profesional",
+      "n": 30,
+      "min_ms": 199.8,
+      "p50_ms": 210.9,
+      "p95_ms": 227.7,
+      "p99_ms": 234.4,
+      "max_ms": 236.8,
+      "mean_ms": 211.9,
+      "error_n": 0,
+      "bytes_last": 2098,
+      "status_last": 200,
+      "rows_last": 50,
+      "keys_last": [
+        "inicio"
+      ]
+    },
+    {
+      "id": "rpc_huecos_pedro",
+      "label": "RPC horarios_libres_profesional Pedro 14 días",
+      "method": "POST",
+      "path": "/rest/v1/rpc/horarios_libres_profesional",
+      "n": 30,
+      "min_ms": 198.5,
+      "p50_ms": 210.2,
+      "p95_ms": 232,
+      "p99_ms": 462.4,
+      "max_ms": 555.2,
+      "mean_ms": 222.6,
+      "error_n": 0,
+      "bytes_last": 2098,
+      "status_last": 200,
+      "rows_last": 50,
+      "keys_last": [
+        "inicio"
+      ]
+    }
+  ],
+  "series": {
+    "servicios": [
+      {
+        "i": 1,
+        "ms": 237.6,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 2,
+        "ms": 206.7,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 3,
+        "ms": 217.5,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 4,
+        "ms": 210.7,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 5,
+        "ms": 208.4,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 6,
+        "ms": 207,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 7,
+        "ms": 203.6,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 8,
+        "ms": 218.2,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 9,
+        "ms": 201.2,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 10,
+        "ms": 227.9,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 11,
+        "ms": 209.5,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 12,
+        "ms": 203.3,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 13,
+        "ms": 206.1,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 14,
+        "ms": 250.7,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 15,
+        "ms": 216.3,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 16,
+        "ms": 230.5,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 17,
+        "ms": 215.1,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 18,
+        "ms": 241.8,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 19,
+        "ms": 594.5,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 20,
+        "ms": 210,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 21,
+        "ms": 205.8,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 22,
+        "ms": 207.7,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 23,
+        "ms": 206,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 24,
+        "ms": 208.8,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 25,
+        "ms": 210.4,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 26,
+        "ms": 218.3,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 27,
+        "ms": 218.4,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 28,
+        "ms": 223,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 29,
+        "ms": 224.6,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 30,
+        "ms": 210.4,
+        "status": 200,
+        "bytes": 1206,
+        "ok": true,
+        "error": null
+      }
+    ],
+    "trabajadores_catalogo": [
+      {
+        "i": 1,
+        "ms": 209.7,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 2,
+        "ms": 206.1,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 3,
+        "ms": 212.9,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 4,
+        "ms": 224.3,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 5,
+        "ms": 220.9,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 6,
+        "ms": 217.7,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 7,
+        "ms": 211.7,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 8,
+        "ms": 223.2,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 9,
+        "ms": 215.9,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 10,
+        "ms": 205.5,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 11,
+        "ms": 229.5,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 12,
+        "ms": 216.6,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 13,
+        "ms": 208.1,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 14,
+        "ms": 234.8,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 15,
+        "ms": 200.6,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 16,
+        "ms": 201.9,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 17,
+        "ms": 212.9,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 18,
+        "ms": 219.3,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 19,
+        "ms": 204.9,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 20,
+        "ms": 211.1,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 21,
+        "ms": 214.3,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 22,
+        "ms": 216.9,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 23,
+        "ms": 209.6,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 24,
+        "ms": 209.3,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 25,
+        "ms": 204.8,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 26,
+        "ms": 218.9,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 27,
+        "ms": 225.5,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 28,
+        "ms": 217.6,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 29,
+        "ms": 208.4,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 30,
+        "ms": 213.7,
+        "status": 200,
+        "bytes": 2,
+        "ok": true,
+        "error": null
+      }
+    ],
+    "trabajador_fila": [
+      {
+        "i": 1,
+        "ms": 220.8,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 2,
+        "ms": 219,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 3,
+        "ms": 219.4,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 4,
+        "ms": 218.7,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 5,
+        "ms": 217.2,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 6,
+        "ms": 214.7,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 7,
+        "ms": 219.5,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 8,
+        "ms": 219.4,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 9,
+        "ms": 234.4,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 10,
+        "ms": 218.8,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 11,
+        "ms": 209.8,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 12,
+        "ms": 208.8,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 13,
+        "ms": 212.1,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 14,
+        "ms": 273.1,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 15,
+        "ms": 218,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 16,
+        "ms": 198.9,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 17,
+        "ms": 213.8,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 18,
+        "ms": 223.2,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 19,
+        "ms": 213.7,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 20,
+        "ms": 221.3,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 21,
+        "ms": 204.6,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 22,
+        "ms": 206.3,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 23,
+        "ms": 201.8,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 24,
+        "ms": 226.8,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 25,
+        "ms": 217.5,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 26,
+        "ms": 206.9,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 27,
+        "ms": 208.9,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 28,
+        "ms": 217.3,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 29,
+        "ms": 225.4,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      },
+      {
+        "i": 30,
+        "ms": 209.7,
+        "status": 401,
+        "bytes": 194,
+        "ok": false,
+        "error": null
+      }
+    ],
+    "rpc_categorias": [
+      {
+        "i": 1,
+        "ms": 207.4,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 2,
+        "ms": 209,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 3,
+        "ms": 205.4,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 4,
+        "ms": 210.3,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 5,
+        "ms": 205.1,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 6,
+        "ms": 210.2,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 7,
+        "ms": 206.1,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 8,
+        "ms": 206.8,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 9,
+        "ms": 206.7,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 10,
+        "ms": 204.4,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 11,
+        "ms": 205.1,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 12,
+        "ms": 203.2,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 13,
+        "ms": 194.9,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 14,
+        "ms": 208,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 15,
+        "ms": 208.8,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 16,
+        "ms": 215.7,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 17,
+        "ms": 205.1,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 18,
+        "ms": 216,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 19,
+        "ms": 206.1,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 20,
+        "ms": 203.9,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 21,
+        "ms": 233.8,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 22,
+        "ms": 206.7,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 23,
+        "ms": 214.6,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 24,
+        "ms": 206.2,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 25,
+        "ms": 211.1,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 26,
+        "ms": 206.5,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 27,
+        "ms": 209.9,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 28,
+        "ms": 206.7,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 29,
+        "ms": 226,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 30,
+        "ms": 207.7,
+        "status": 200,
+        "bytes": 170,
+        "ok": true,
+        "error": null
+      }
+    ],
+    "rpc_catalogo_gasfiteria": [
+      {
+        "i": 1,
+        "ms": 214.5,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 2,
+        "ms": 216.6,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 3,
+        "ms": 231.1,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 4,
+        "ms": 208.1,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 5,
+        "ms": 220.6,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 6,
+        "ms": 210.4,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 7,
+        "ms": 217.5,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 8,
+        "ms": 223.7,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 9,
+        "ms": 218.2,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 10,
+        "ms": 217.6,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 11,
+        "ms": 216.6,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 12,
+        "ms": 202.6,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 13,
+        "ms": 211.8,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 14,
+        "ms": 214.1,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 15,
+        "ms": 207.6,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 16,
+        "ms": 234.3,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 17,
+        "ms": 215.2,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 18,
+        "ms": 241.7,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 19,
+        "ms": 213.2,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 20,
+        "ms": 211.2,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 21,
+        "ms": 230.5,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 22,
+        "ms": 210.1,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 23,
+        "ms": 217.4,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 24,
+        "ms": 210.2,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 25,
+        "ms": 224.6,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 26,
+        "ms": 213,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 27,
+        "ms": 215.6,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 28,
+        "ms": 204.5,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 29,
+        "ms": 213,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 30,
+        "ms": 214.1,
+        "status": 200,
+        "bytes": 4738,
+        "ok": true,
+        "error": null
+      }
+    ],
+    "rpc_catalogo_plomeria": [
+      {
+        "i": 1,
+        "ms": 223.8,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 2,
+        "ms": 210.8,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 3,
+        "ms": 227.7,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 4,
+        "ms": 217.6,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 5,
+        "ms": 241.9,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 6,
+        "ms": 423.6,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 7,
+        "ms": 219.1,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 8,
+        "ms": 314.9,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 9,
+        "ms": 363.5,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 10,
+        "ms": 397.6,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 11,
+        "ms": 329.8,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 12,
+        "ms": 364.6,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 13,
+        "ms": 213.8,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 14,
+        "ms": 213.1,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 15,
+        "ms": 217.1,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 16,
+        "ms": 207.3,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 17,
+        "ms": 203,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 18,
+        "ms": 210.5,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 19,
+        "ms": 205.9,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 20,
+        "ms": 211.5,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 21,
+        "ms": 209,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 22,
+        "ms": 208.5,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 23,
+        "ms": 214.6,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 24,
+        "ms": 216.6,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 25,
+        "ms": 211.2,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 26,
+        "ms": 216.6,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 27,
+        "ms": 214.5,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 28,
+        "ms": 214.3,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 29,
+        "ms": 217.1,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 30,
+        "ms": 213.8,
+        "status": 200,
+        "bytes": 1566,
+        "ok": true,
+        "error": null
+      }
+    ],
+    "rpc_huecos_patricia": [
+      {
+        "i": 1,
+        "ms": 208.2,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 2,
+        "ms": 226.5,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 3,
+        "ms": 211.7,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 4,
+        "ms": 208.6,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 5,
+        "ms": 236.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 6,
+        "ms": 207.3,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 7,
+        "ms": 202.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 8,
+        "ms": 218,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 9,
+        "ms": 213.6,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 10,
+        "ms": 216.4,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 11,
+        "ms": 204.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 12,
+        "ms": 228.6,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 13,
+        "ms": 223.6,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 14,
+        "ms": 206.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 15,
+        "ms": 218.6,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 16,
+        "ms": 209.3,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 17,
+        "ms": 201.5,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 18,
+        "ms": 203.3,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 19,
+        "ms": 205.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 20,
+        "ms": 215.6,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 21,
+        "ms": 206.7,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 22,
+        "ms": 199.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 23,
+        "ms": 210.3,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 24,
+        "ms": 203.5,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 25,
+        "ms": 202.9,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 26,
+        "ms": 214.7,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 27,
+        "ms": 212.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 28,
+        "ms": 214.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 29,
+        "ms": 211.4,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 30,
+        "ms": 213.2,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      }
+    ],
+    "rpc_huecos_pedro": [
+      {
+        "i": 1,
+        "ms": 215.7,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 2,
+        "ms": 235.1,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 3,
+        "ms": 207.6,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 4,
+        "ms": 198.5,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 5,
+        "ms": 204.6,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 6,
+        "ms": 209.4,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 7,
+        "ms": 212.4,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 8,
+        "ms": 217.1,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 9,
+        "ms": 199.9,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 10,
+        "ms": 212,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 11,
+        "ms": 216.1,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 12,
+        "ms": 206.5,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 13,
+        "ms": 208.5,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 14,
+        "ms": 214.1,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 15,
+        "ms": 198.7,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 16,
+        "ms": 213.2,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 17,
+        "ms": 211.7,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 18,
+        "ms": 555.2,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 19,
+        "ms": 212.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 20,
+        "ms": 203.8,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 21,
+        "ms": 207.9,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 22,
+        "ms": 222.2,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 23,
+        "ms": 211,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 24,
+        "ms": 206,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 25,
+        "ms": 225.9,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 26,
+        "ms": 228.3,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 27,
+        "ms": 208.7,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 28,
+        "ms": 202.5,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 29,
+        "ms": 205.2,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      },
+      {
+        "i": 30,
+        "ms": 207.3,
+        "status": 200,
+        "bytes": 2098,
+        "ok": true,
+        "error": null
+      }
+    ]
+  }
+}
