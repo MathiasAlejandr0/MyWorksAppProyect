@@ -15,7 +15,7 @@ enum JobMapDisplayMode {
   interactive,
 }
 
-/// Mapa de ubicación con OpenStreetMap (el recorte estático de OSM fallaba en web).
+/// Mapa de ubicación con OpenFreeMap Positron (el recorte estático de OSM fallaba en web).
 class JobLocationMap extends StatelessWidget {
   const JobLocationMap({
     super.key,

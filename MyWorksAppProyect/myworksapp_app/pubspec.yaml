@@ -66,6 +66,7 @@ dependencies:
   supabase_flutter: ^2.18.3
   app_links: ^6.3.2
   flutter_map: ^8.3.2
+  flutter_map_vector_tiles: ^2.11.0
   latlong2: ^0.10.1
   video_player: ^2.14.1
   video_player_win: ^3.3.1

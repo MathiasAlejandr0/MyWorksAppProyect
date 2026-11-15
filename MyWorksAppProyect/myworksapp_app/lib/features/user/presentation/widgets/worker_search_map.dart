@@ -13,7 +13,7 @@ import '../../../../core/domain/worker_highlight.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 
-/// Mismo mapa que la web: OpenStreetMap, pines, radar de traslado y punto del trabajo.
+/// Mismo mapa que la web: OpenFreeMap Positron, pines, radar de traslado y punto del trabajo.
 class WorkerSearchMap extends StatefulWidget {
   const WorkerSearchMap({
     super.key,
