@@ -511,7 +511,8 @@ button.brand-logo-button {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--orange-accent);
+  /* Naranja oscuro: el blanco sobre #ff5e03 daba contraste 3,06 (mínimo 4,5). */
+  background: #c2410c;
   color: #fff;
   font-size: 11px;
   font-weight: 800;
@@ -866,7 +867,8 @@ button.search-nav-profile {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #b45309;
+  /* Ámbar claro sobre la tarjeta oscura: #b45309 daba contraste 3,15. */
+  color: #fbbf24;
   background: rgba(180, 83, 9, 0.12);
   border-radius: 999px;
   padding: 2px 8px;
@@ -899,7 +901,8 @@ button.search-nav-profile {
   padding: 3px 8px;
   border-radius: var(--radius-pill);
   background: var(--emerald-soft);
-  color: var(--emerald-success);
+  /* Verde más claro: el de marca daba 4,0 sobre la tarjeta seleccionada. */
+  color: #6ee7a8;
   white-space: nowrap;
 }
 .search-pagination {
@@ -1366,7 +1369,7 @@ button.search-nav-profile {
   color: var(--orange-accent);
   margin-bottom: 4px;
 }
-.quick-booking-copy h3 { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+.quick-booking-copy h2, .quick-booking-copy h3 { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
 .quick-booking-hint { font-size: 12px; color: var(--text-muted-dark); }
 .quick-booking-datetime {
   display: flex;

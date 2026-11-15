@@ -195,7 +195,7 @@ export function SearchResultsView({
       </header>
 
       <div className="search-view-body">
-        <aside className="search-filters">
+        <aside className="search-filters" aria-label="Filtros de búsqueda">
           <div className="search-filters-head">
             <h2>Filtros</h2>
             <button
@@ -357,7 +357,7 @@ export function SearchResultsView({
           )}
         </main>
 
-        <aside className="search-map-panel">
+        <aside className="search-map-panel" aria-label="Mapa de profesionales">
           {showMap ? (
             <Suspense fallback={<div className="search-map-skeleton">Cargando mapa…</div>}>
               <PremiumSearchMap

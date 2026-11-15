@@ -230,7 +230,16 @@ export function PremiumSearchMap({
       if (!position) continue;
       positions.push(position);
       const elite = worker.isElite === true;
-      const marker = L.marker(position, { icon: elite ? pinIconElite : pinIcon });
+      const marker = L.marker(position, {
+        icon: elite ? pinIconElite : pinIcon,
+        title: worker.name,
+        keyboard: true,
+      });
+      marker.on('add', () => {
+        marker
+          .getElement()
+          ?.setAttribute('aria-label', `${worker.name}, ${worker.profession}. Ver en el mapa`);
+      });
       marker.bindPopup(workerPopup(worker, clientLocRef.current), POPUP_OPTIONS);
       marker.on('click', () => onSelectRef.current(worker));
       marker.addTo(map);
@@ -315,6 +324,10 @@ export function PremiumSearchMap({
       icon: clientIcon,
       draggable: true,
       zIndexOffset: 400,
+      title: 'Ubicación de tu trabajo',
+    });
+    marker.on('add', () => {
+      marker.getElement()?.setAttribute('aria-label', 'Ubicación de tu trabajo (se puede arrastrar)');
     });
     marker.bindPopup(clientText, POPUP_OPTIONS);
     marker.on('dragend', () => {

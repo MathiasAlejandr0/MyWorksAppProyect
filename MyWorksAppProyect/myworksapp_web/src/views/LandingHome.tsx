@@ -161,6 +161,8 @@ export function LandingHome({
 
           </div>
 
+      <main id="contenido">
+
         </div>
 
       </nav>
@@ -576,6 +578,8 @@ export function LandingHome({
       </section>
 
 
+
+      </main>
 
       <Suspense fallback={null}>
         <AuthModal
