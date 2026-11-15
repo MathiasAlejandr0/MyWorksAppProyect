@@ -48,6 +48,8 @@ import {
   type JobEvidencePhoto,
   type CatalogCursor,
   type WorkerWithProfile,
+  initialsAvatarDataUrl,
+  profilePhotoOrInitials,
 } from '@myworksapp/shared';
 
 type ScheduleRow = {
@@ -197,8 +199,6 @@ function ViewFallback() {
   return <div className="min-h-screen app-shell" />;
 }
 
-const FALLBACK_PHOTO =
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&q=70';
 
 type AppView = 'landing' | 'categories' | 'search' | 'tracking' | 'paid';
 
@@ -474,7 +474,7 @@ export function App() {
         category: '',
         rating: 0,
         jobsDone: 0,
-        photoUrl: FALLBACK_PHOTO,
+        photoUrl: initialsAvatarDataUrl('Profesional', snapshot.workerId ?? 'sin-profesional'),
         pricePerVisit: 0,
       };
       if (snapshot.workerId) {
@@ -498,7 +498,11 @@ export function App() {
             // Conteo real de la ficha: el catálogo excluye a quien está ocupado
             // y antes el seguimiento mostraba "(0 trabajos)".
             jobsDone: Number(data.trabajos_completados ?? 0),
-            photoUrl: profileRow?.ruta_foto_perfil || FALLBACK_PHOTO,
+            photoUrl: profilePhotoOrInitials(
+              profileRow?.ruta_foto_perfil,
+              profileRow?.nombre ?? 'Profesional',
+              String(data.id_usuario),
+            ),
             pricePerVisit: Number(data.tarifa_visita ?? 0),
           };
         }

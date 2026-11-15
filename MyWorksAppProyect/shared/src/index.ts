@@ -20,6 +20,7 @@ export * from './database.types';
 export * from './client';
 export * from './auth';
 export * from './emailDomain';
+export * from './avatar';
 export type {
   Profile,
   ServiceRow,
