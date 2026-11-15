@@ -214,7 +214,7 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
                           Text(
                             widget.priceLabel ??
                                 JobDisplayUtils.offeredAmountLabel(widget.job),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                               color: AppColors.brandOrange,

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/utils/error_handler.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/database/models/change_order_model.dart';
 import '../../../../core/database/models/dispute_model.dart';
@@ -340,8 +339,9 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     final user = authState.user;
     if (user == null || user.id != job.userId) return;
     if (job.status != AppConstants.jobStatusCancelled) return;
-    if (job.serviceMetadata?['rejection_reason'] != 'worker_unavailable')
+    if (job.serviceMetadata?['rejection_reason'] != 'worker_unavailable') {
       return;
+    }
 
     _rejectionDialogShown = true;
     final rejectedWorkerId =

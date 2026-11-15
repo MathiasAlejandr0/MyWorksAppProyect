@@ -83,14 +83,12 @@ class WorkerScheduleRepository {
         .eq('id_usuario', userId);
     Object horarios = const <Object>[];
     var best = -1;
-    if (existing is List) {
-      for (final raw in existing) {
-        final value = (raw as Map)['horarios'];
-        final length = value is List ? value.length : 0;
-        if (length > best) {
-          best = length;
-          horarios = value ?? const <Object>[];
-        }
+    for (final raw in existing) {
+      final value = (raw as Map)['horarios'];
+      final length = value is List ? value.length : 0;
+      if (length > best) {
+        best = length;
+        horarios = value ?? const <Object>[];
       }
     }
     final rows = [

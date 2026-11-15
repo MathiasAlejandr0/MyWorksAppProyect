@@ -116,7 +116,7 @@ class _ConversationsPageState extends ConsumerState<ConversationsPage> {
                         itemBuilder: (context, index) {
                           final item = _previews[index];
                           return ListTile(
-                            leading: CircleAvatar(
+                            leading: const CircleAvatar(
                               backgroundColor: AppColors.brandOrangeSoft,
                               child: Icon(
                                 Icons.chat_bubble_outline,

@@ -175,7 +175,7 @@ class WorkerRepository {
         .update({'horarios': slots})
         .eq('id_usuario', userId)
         .select('id');
-    if (updated is List && updated.isEmpty) {
+    if (updated.isEmpty) {
       await supabase.from('trabajador_horarios').insert({
         'id_usuario': userId,
         'horarios': slots,

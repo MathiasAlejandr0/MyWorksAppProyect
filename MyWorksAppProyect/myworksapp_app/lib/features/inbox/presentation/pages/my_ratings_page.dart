@@ -60,9 +60,9 @@ class _MyRatingsPageState extends ConsumerState<MyRatingsPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppGradientAppBar(
-          title: const Text('Mis calificaciones'),
-          bottom: const TabBar(
+        appBar: const AppGradientAppBar(
+          title: Text('Mis calificaciones'),
+          bottom: TabBar(
             tabs: [
               Tab(text: 'Recibidas'),
               Tab(text: 'Entregadas'),

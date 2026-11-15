@@ -11,6 +11,7 @@ import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/utils/plural.dart';
 import '../widgets/admin_nav_tile.dart';
 
 class AdminDashboardPage extends ConsumerStatefulWidget {
@@ -132,6 +133,21 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
                   if (m.totalIncidents > 0) ...[
                     const SizedBox(height: AppSpacing.sm),
                     _AlertBanner(count: m.totalIncidents),
+                  ],
+                  if (_paymentAttention.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.payments_outlined),
+                        title: Text(
+                          '${plural(_paymentAttention.length, 'pago')} por revisar',
+                        ),
+                        subtitle: const Text(
+                          'Pagados por confirmar o devueltos automáticamente. '
+                          'Revísalos en Pagos a profesionales.',
+                        ),
+                      ),
+                    ),
                   ],
                   const SizedBox(height: AppSpacing.lg),
                   _MetricsGrid(metrics: m),
