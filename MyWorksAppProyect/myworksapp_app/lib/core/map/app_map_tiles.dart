@@ -4,45 +4,128 @@ import 'dart:ui' show Codec, ImmutableBuffer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_vector_tiles/flutter_map_vector_tiles.dart' as vt;
 import 'package:http/http.dart' as http;
 
-/// Baldosas del mapa pensadas para un teléfono: pocas, sin animación de
-/// fundido y con caché en memoria para que ampliar el mapa no las baje otra vez.
-///
-/// CARTO Voyager responde mucho más rápido que el servidor público de
-/// OpenStreetMap (medido ~0,4 s contra ~1,2 s por baldosa). Si CARTO falla,
-/// se usa OpenStreetMap para esa baldosa.
-class AppMapTiles extends StatelessWidget {
+/// Baldosas del mapa pensadas para un teléfono: OpenFreeMap Positron
+/// (vectorial, sin clave), el mismo estilo claro que la web. Si el estilo no
+/// carga, se usa el servidor público de OpenStreetMap para esa sesión.
+class AppMapTiles extends StatefulWidget {
   const AppMapTiles({super.key});
 
-  static final _provider = _CachedMapTileProvider();
+  static const styleUrl = 'https://tiles.openfreemap.org/styles/positron';
+  static const attribution =
+      'OpenFreeMap © OpenMapTiles © OpenStreetMap contributors';
+
+  @override
+  State<AppMapTiles> createState() => _AppMapTilesState();
+}
+
+class _AppMapTilesState extends State<AppMapTiles> {
+  vt.Style? _style;
+  var _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolve();
+  }
+
+  Future<void> _resolve() async {
+    final style = await _AppMapStyle.load();
+    if (!mounted) return;
+    setState(() {
+      _style = style;
+      _ready = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return TileLayer(
-      urlTemplate: _CachedMapTileProvider.urlTemplate,
-      subdomains: const ['a', 'b', 'c', 'd'],
-      userAgentPackageName: 'com.myworksapp.myworksapp',
-      tileProvider: _provider,
-      // Sin {r}: una baldosa retina pesa cuatro veces más y traba el teléfono.
-      retinaMode: false,
-      maxZoom: 19,
-      // Solo lo visible. El margen por defecto (pan 1 + keep 2) multiplica
-      // las baldosas y es lo que congela la entrada del mapa.
-      panBuffer: 0,
-      keepBuffer: 1,
-      tileDisplay: const TileDisplay.instantaneous(),
-      evictErrorTileStrategy: EvictErrorTileStrategy.notVisible,
-      // Un transformador por capa: si se comparte, el temporizador de un mapa
-      // se come los eventos del otro.
-      tileUpdateTransformer: TileUpdateTransformers.throttle(
-        const Duration(milliseconds: 220),
-      ),
+    if (!_ready) return const SizedBox.shrink();
+    final style = _style;
+    if (style == null) return const _OsmFallbackTiles();
+    return vt.VectorTileLayer(
+      theme: style.theme,
+      tileProviders: style.providers,
+      rasterSources: style.rasterSources,
+      sprites: style.sprites,
+      glyphs: style.glyphs,
+      tileOffset: vt.TileOffset.maplibre,
+      // En el teléfono las etiquetas van en la baldosa, sin costo por frame.
+      labelMode: vt.LabelMode.tile,
+      tileFadeDuration: Duration.zero,
     );
   }
 }
 
-/// Crédito mínimo que piden OpenStreetMap y CARTO. No intercepta toques.
+/// Carga una sola vez el estilo Positron y lo reutilizan todos los mapas.
+/// No se libera al cerrar un mapa: otro puede seguir usándolo.
+class _AppMapStyle {
+  _AppMapStyle._();
+
+  static const _timeout = Duration(seconds: 8);
+  static const _userAgent = 'com.myworksapp.myworksapp';
+  static Future<vt.Style?>? _future;
+
+  /// En los tests de widgets no se pide el estilo (evita path_provider, aislados
+  /// y una espera de red). El mapa cae a OpenStreetMap, como cuando falla.
+  @visibleForTesting
+  static bool debugForceOsmFallback = false;
+
+  static bool get _inWidgetTest {
+    return WidgetsBinding.instance.runtimeType.toString().contains('Test');
+  }
+
+  static Future<vt.Style?> load() {
+    if (debugForceOsmFallback || _inWidgetTest) {
+      return Future<vt.Style?>.value(null);
+    }
+    return _future ??= _read();
+  }
+
+  static Future<vt.Style?> _read() async {
+    try {
+      final style = await _readWith(cache: _useDiskCache);
+      MapTileCache.markServed();
+      return style;
+    } catch (_) {
+      if (_useDiskCache) {
+        try {
+          final style = await _readWith(cache: false);
+          MapTileCache.markServed();
+          return style;
+        } catch (_) {
+          return null;
+        }
+      }
+      return null;
+    }
+  }
+
+  static Future<vt.Style> _readWith({required bool cache}) {
+    return vt.StyleReader(
+      uri: AppMapTiles.styleUrl,
+      language: 'es',
+      headers: const {'User-Agent': _userAgent},
+      cache: cache,
+    ).read().timeout(_timeout);
+  }
+
+  /// En web no hay caché en disco. En tests, path_provider no está disponible.
+  static bool get _useDiskCache {
+    if (kIsWeb) return false;
+    return !_inWidgetTest;
+  }
+
+  @visibleForTesting
+  static void debugReset() {
+    _future = null;
+    debugForceOsmFallback = false;
+  }
+}
+
+/// Crédito que piden OpenFreeMap, OpenMapTiles y OpenStreetMap. No intercepta toques.
 class MapTileCredits extends StatelessWidget {
   const MapTileCredits({super.key, this.alignment = Alignment.bottomLeft});
 
@@ -60,8 +143,12 @@ class MapTileCredits extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 4, vertical: 1),
               child: Text(
-                '© OpenStreetMap · CARTO',
-                style: TextStyle(fontSize: 9, color: Color(0xFF334155), height: 1.1),
+                AppMapTiles.attribution,
+                style: TextStyle(
+                  fontSize: 8,
+                  color: Color(0xFF334155),
+                  height: 1.1,
+                ),
               ),
             ),
           ),
@@ -72,6 +159,8 @@ class MapTileCredits extends StatelessWidget {
 }
 
 /// Avisa cuando la primera baldosa de la sesión ya está en memoria.
+/// Con OpenFreeMap se marca al cargar el estilo; con el respaldo OSM, al
+/// recibir la primera baldosa raster.
 class MapTileCache {
   MapTileCache._();
 
@@ -139,29 +228,50 @@ class MapTileCache {
     _entries.clear();
     served = 0;
     _waiters.clear();
-    _CachedMapTileProvider.preferOsm = false;
+    _AppMapStyle.debugReset();
+  }
+}
+
+class _OsmFallbackTiles extends StatelessWidget {
+  const _OsmFallbackTiles();
+
+  static final _provider = _CachedMapTileProvider();
+
+  @override
+  Widget build(BuildContext context) {
+    return TileLayer(
+      urlTemplate: _CachedMapTileProvider.urlTemplate,
+      userAgentPackageName: 'com.myworksapp.myworksapp',
+      tileProvider: _provider,
+      retinaMode: false,
+      maxZoom: 19,
+      panBuffer: 0,
+      keepBuffer: 1,
+      tileDisplay: const TileDisplay.instantaneous(),
+      evictErrorTileStrategy: EvictErrorTileStrategy.notVisible,
+      tileUpdateTransformer: TileUpdateTransformers.throttle(
+        const Duration(milliseconds: 220),
+      ),
+    );
   }
 }
 
 class _CachedMapTileProvider extends TileProvider {
-  static const urlTemplate =
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+  static const urlTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   /// Un cliente para todos los mapas. [TileLayer] llama a [dispose] al
   /// destruirse; cerrar el cliente aquí dejaría mudos a los demás mapas.
   static final http.Client _client = http.Client();
-  static bool preferOsm = false;
 
   @override
   ImageProvider getImage(TileCoordinates coordinates, TileLayer options) {
-    final primary = getTileUrl(coordinates, options);
-    final cached = MapTileCache.get(primary);
+    final url = getTileUrl(coordinates, options);
+    final cached = MapTileCache.get(url);
     if (cached != null) {
-      return _CachedTileImage.memory(primary, cached);
+      return _CachedTileImage.memory(url, cached);
     }
     return _CachedTileImage.network(
-      url: preferOsm ? MapTileCache.osmUrlFor(primary) : primary,
-      fallbackUrl: MapTileCache.osmUrlFor(primary),
+      url: url,
       headers: headers,
       client: _client,
     );
@@ -172,7 +282,6 @@ class _CachedMapTileProvider extends TileProvider {
 class _CachedTileImage extends ImageProvider<_CachedTileImage> {
   const _CachedTileImage._({
     required this.url,
-    required this.fallbackUrl,
     required this.headers,
     required this.client,
     required this.memory,
@@ -181,7 +290,6 @@ class _CachedTileImage extends ImageProvider<_CachedTileImage> {
   factory _CachedTileImage.memory(String url, Uint8List bytes) {
     return _CachedTileImage._(
       url: url,
-      fallbackUrl: null,
       headers: const {},
       client: null,
       memory: bytes,
@@ -190,13 +298,11 @@ class _CachedTileImage extends ImageProvider<_CachedTileImage> {
 
   factory _CachedTileImage.network({
     required String url,
-    required String fallbackUrl,
     required Map<String, String> headers,
     required http.Client client,
   }) {
     return _CachedTileImage._(
       url: url,
-      fallbackUrl: fallbackUrl,
       headers: headers,
       client: client,
       memory: null,
@@ -204,7 +310,6 @@ class _CachedTileImage extends ImageProvider<_CachedTileImage> {
   }
 
   final String url;
-  final String? fallbackUrl;
   final Map<String, String> headers;
   final http.Client? client;
   final Uint8List? memory;
@@ -237,28 +342,13 @@ class _CachedTileImage extends ImageProvider<_CachedTileImage> {
     if (httpClient == null) {
       throw StateError('Sin cliente HTTP para la baldosa');
     }
-    try {
-      return await _read(httpClient, url);
-    } catch (error) {
-      final fallback = fallbackUrl;
-      if (fallback == null || fallback == url) rethrow;
-      if (error is TimeoutException || error is http.ClientException) {
-        _CachedMapTileProvider.preferOsm = true;
-      }
-      return _read(httpClient, fallback);
-    }
+    return _read(httpClient, url);
   }
 
   Future<Uint8List> _read(http.Client httpClient, String target) async {
     final response = await httpClient
         .get(Uri.parse(target), headers: headers)
         .timeout(const Duration(seconds: 7));
-    if (response.statusCode == 401 ||
-        response.statusCode == 403 ||
-        response.statusCode == 429) {
-      _CachedMapTileProvider.preferOsm = true;
-      throw StateError('baldosa ${response.statusCode}');
-    }
     if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
       throw StateError('baldosa ${response.statusCode}');
     }

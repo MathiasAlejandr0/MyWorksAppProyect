@@ -6,16 +6,27 @@ import 'package:myworksapp/core/map/app_map_tiles.dart';
 void main() {
   setUp(MapTileCache.debugReset);
 
-  test('la clave ignora el subdominio y deja z/x/y', () {
+  test('el mapa usa OpenFreeMap Positron y el crédito pedido', () {
+    expect(
+      AppMapTiles.styleUrl,
+      'https://tiles.openfreemap.org/styles/positron',
+    );
+    expect(
+      AppMapTiles.attribution,
+      'OpenFreeMap © OpenMapTiles © OpenStreetMap contributors',
+    );
+  });
+
+  test('la clave ignora el servidor y deja z/x/y', () {
     expect(
       MapTileCache.keyOf(
-        'https://a.basemaps.cartocdn.com/rastertiles/voyager/13/2516/5486.png',
+        'https://tile.openstreetmap.org/13/2516/5486.png',
       ),
       '13/2516/5486.png',
     );
     expect(
       MapTileCache.osmUrlFor(
-        'https://b.basemaps.cartocdn.com/rastertiles/voyager/13/2516/5486.png',
+        'https://tiles.example/raster/13/2516/5486.png',
       ),
       'https://tile.openstreetmap.org/13/2516/5486.png',
     );
