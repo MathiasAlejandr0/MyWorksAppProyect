@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:myworksapp/core/database/models/dispute_model.dart';
 import 'package:myworksapp/core/database/models/job_model.dart';
 import 'package:myworksapp/core/domain/pricing_constants.dart';
 import 'package:myworksapp/core/utils/constants.dart';
@@ -93,6 +94,60 @@ void main() {
       expect(JobDetailHelpers.canOpenChat(AppConstants.jobStatusCancelled), isFalse);
       expect(
         JobDetailHelpers.canOpenChat(PricingConstants.jobAwaitingPayment),
+        isFalse,
+      );
+    });
+  });
+
+  group('JobDetailHelpers disputas', () {
+    DisputeModel dispute(String status) => DisputeModel(
+          id: 'd',
+          jobId: 'job-1',
+          openedBy: 'u',
+          reason: 'calidad',
+          status: status,
+          createdAt: DateTime.utc(2026, 1, 1),
+          updatedAt: DateTime.utc(2026, 1, 1),
+        );
+
+    test('no ofrece abrir disputa en un trabajo cerrado', () {
+      for (final status in [
+        AppConstants.jobStatusCompleted,
+        AppConstants.jobStatusCancelled,
+        AppConstants.jobStatusExpired,
+        AppConstants.jobStatusNoShow,
+      ]) {
+        expect(
+          JobDetailHelpers.canOpenDispute(_job(status: status), null),
+          isFalse,
+          reason: status,
+        );
+      }
+    });
+
+    test('sí la ofrece mientras el trabajo está en marcha', () {
+      expect(
+        JobDetailHelpers.canOpenDispute(
+          _job(status: AppConstants.jobStatusInProgress),
+          null,
+        ),
+        isTrue,
+      );
+    });
+
+    test('no negocia acuerdos con la disputa resuelta o el trabajo cerrado', () {
+      final enCurso = _job(status: AppConstants.jobStatusInProgress);
+      final cerrado = _job(status: AppConstants.jobStatusCompleted);
+      expect(
+        JobDetailHelpers.canNegotiateDispute(enCurso, dispute('abierta')),
+        isTrue,
+      );
+      expect(
+        JobDetailHelpers.canNegotiateDispute(enCurso, dispute('resuelta')),
+        isFalse,
+      );
+      expect(
+        JobDetailHelpers.canNegotiateDispute(cerrado, dispute('abierta')),
         isFalse,
       );
     });

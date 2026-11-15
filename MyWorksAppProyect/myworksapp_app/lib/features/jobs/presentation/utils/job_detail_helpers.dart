@@ -63,19 +63,51 @@ class JobDetailHelpers {
         status == PricingConstants.jobAwaitingClientApproval;
   }
 
+  /// Estados en que el trabajo ya terminó: no admite disputas ni acuerdos.
+  static const Set<String> closedJobStatuses = {
+    AppConstants.jobStatusCompleted,
+    AppConstants.jobStatusCancelled,
+    AppConstants.jobStatusExpired,
+    AppConstants.jobStatusNoShow,
+  };
+
+  static bool isJobClosed(String status) => closedJobStatuses.contains(status);
+
+  static bool isDisputeOpen(DisputeModel? dispute) {
+    if (dispute == null) return false;
+    return dispute.status == AppConstants.disputeStatusOpen ||
+        dispute.status == AppConstants.disputeStatusUnderReview ||
+        dispute.status == AppConstants.disputeStatusNeedsHuman ||
+        dispute.status == AppConstants.disputeStatusRefundPending;
+  }
+
+  /// Solo un trabajo en marcha admite una disputa nueva. Un trabajo cerrado
+  /// (completado, cancelado, expirado, no asistió) ya liberó o devolvió el
+  /// pago; el servidor (`abrir_disputa`) aplica la misma regla.
   static bool canOpenDispute(JobModel job, DisputeModel? dispute) {
-    if (dispute != null &&
-        (dispute.status == AppConstants.disputeStatusOpen ||
-            dispute.status == AppConstants.disputeStatusUnderReview ||
-            dispute.status == AppConstants.disputeStatusNeedsHuman ||
-            dispute.status == AppConstants.disputeStatusRefundPending)) {
-      return false;
-    }
+    if (isDisputeOpen(dispute)) return false;
     return job.status == AppConstants.jobStatusAccepted ||
         job.status == AppConstants.jobStatusEnRoute ||
         job.status == AppConstants.jobStatusInProgress ||
-        job.status == PricingConstants.jobAwaitingClientApproval ||
-        job.status == AppConstants.jobStatusCompleted;
+        job.status == PricingConstants.jobAwaitingClientApproval;
+  }
+
+  /// Proponer o responder acuerdos solo mientras la disputa sigue abierta y
+  /// el trabajo no se cerró.
+  static bool canNegotiateDispute(JobModel job, DisputeModel? dispute) =>
+      isDisputeOpen(dispute) && !isJobClosed(job.status);
+
+  static String agreementTypeLabel(String? type) {
+    switch (type) {
+      case 'aceptar':
+        return 'aceptar la entrega';
+      case 'rehacer':
+        return 'rehacer el trabajo';
+      case 'anular':
+        return 'anular y devolver el pago';
+      default:
+        return type ?? '';
+    }
   }
 
   static Color statusColor(String status) => JobStatusCopy.color(status);
