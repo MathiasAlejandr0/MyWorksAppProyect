@@ -950,6 +950,10 @@ button.search-nav-profile {
   position: absolute;
   inset: 0;
 }
+/* La tarjeta del profesional queda sobre la búsqueda de dirección, no debajo. */
+.search-map-panel .premium-search-map-chrome {
+  padding-bottom: 116px;
+}
 .search-map-skeleton {
   position: absolute;
   inset: 0;

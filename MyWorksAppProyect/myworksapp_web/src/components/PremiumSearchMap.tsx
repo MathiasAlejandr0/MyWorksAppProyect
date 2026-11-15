@@ -97,6 +97,16 @@ function workerPopup(
   return root;
 }
 
+/**
+ * El recuento y la leyenda tapan la franja superior y la búsqueda de
+ * dirección la inferior: los globos se acomodan dentro del espacio libre.
+ */
+const POPUP_OPTIONS: L.PopupOptions = {
+  autoPanPaddingTopLeft: L.point(16, 150),
+  autoPanPaddingBottomRight: L.point(16, 130),
+  maxWidth: 240,
+};
+
 type PremiumSearchMapProps = {
   workers: SearchWorker[];
   selectedWorkerId: string | null;
@@ -221,7 +231,7 @@ export function PremiumSearchMap({
       positions.push(position);
       const elite = worker.isElite === true;
       const marker = L.marker(position, { icon: elite ? pinIconElite : pinIcon });
-      marker.bindPopup(workerPopup(worker, clientLocRef.current));
+      marker.bindPopup(workerPopup(worker, clientLocRef.current), POPUP_OPTIONS);
       marker.on('click', () => onSelectRef.current(worker));
       marker.addTo(map);
       markersRef.current.set(worker.id, marker);
@@ -306,7 +316,7 @@ export function PremiumSearchMap({
       draggable: true,
       zIndexOffset: 400,
     });
-    marker.bindPopup(clientText);
+    marker.bindPopup(clientText, POPUP_OPTIONS);
     marker.on('dragend', () => {
       const point = marker.getLatLng();
       onPickRef.current?.({ latitude: point.lat, longitude: point.lng });
@@ -340,7 +350,7 @@ export function PremiumSearchMap({
             className="premium-search-map-card"
             onClick={() => onSelectWorker(selected)}
           >
-            <img src={selected.photoUrl} alt="" />
+            <img src={selected.photoUrl} alt="" width={44} height={44} />
             <div>
               <strong>{selected.name}</strong>
               <span>
