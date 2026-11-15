@@ -24,6 +24,7 @@ import '../../../../core/widgets/design_system/primary_button.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/worker_card.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
+import '../widgets/worker_list_chrome.dart';
 import '../widgets/worker_search_map.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/theme/app_decorations.dart';
@@ -63,6 +64,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   String? _serviceName;
   String? _selectedWorkerId;
   bool _mapExpanded = false;
+  bool _mapReady = false;
+  bool _mapMountScheduled = false;
+  final _mapKey = GlobalKey();
   bool _locatingGps = false;
   bool _locatingAddress = false;
 
@@ -266,7 +270,19 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       if (mounted && generation == _loadGeneration && _isLoading) {
         setState(() => _isLoading = false);
       }
+      _revealMapSoon();
     }
+  }
+
+  /// El mapa entra un frame después de la lista. Si nace en el mismo frame,
+  /// decodificar las baldosas traba el primer toque en el teléfono.
+  void _revealMapSoon() {
+    if (!mounted || _mapReady || _mapMountScheduled) return;
+    _mapMountScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _mapReady = true);
+    });
   }
 
   Future<void> _loadAutomaticMatching() async {
@@ -486,7 +502,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
+    if (_isLoading && _workers.isEmpty) {
       return ListView.builder(
         padding: const EdgeInsets.only(top: 12),
         itemCount: 5,
@@ -500,21 +516,47 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         isDesktop: AppPlatform.isDesktopNative,
       );
     }
-    if (_mapExpanded) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildLocationHeader(),
+    // El mapa queda fijo en el árbol (misma GlobalKey al ampliar). Si vive
+    // dentro del scroll, al salir de pantalla se destruye y al volver —o al
+    // abrir el mapa solo— baja todas las baldosas otra vez y se pega.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildLocationHeader(),
+        if (_isLoading) const LinearProgressIndicator(minHeight: 2),
+        if (_mapExpanded)
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-              child: _buildMap(showSelectedCard: true),
+              child: _mapSlot(showSelectedCard: true),
+            ),
+          )
+        else ...[
+          SizedBox(
+            height: 260,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: _mapSlot(
+                showSelectedCard: false,
+                showLocationBar: false,
+              ),
             ),
           ),
+          Expanded(child: _buildScrollableResults()),
         ],
-      );
-    }
-    return _buildScrollableResults();
+      ],
+    );
+  }
+
+  Widget _mapSlot({
+    required bool showSelectedCard,
+    bool showLocationBar = true,
+  }) {
+    if (!_mapReady) return const _MapPlaceholder();
+    return _buildMap(
+      showSelectedCard: showSelectedCard,
+      showLocationBar: showLocationBar,
+    );
   }
 
   Widget _buildScrollableResults() {
@@ -523,22 +565,6 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       child: CustomScrollView(
         controller: _listController,
         slivers: [
-        if (_userLocation != null)
-          SliverToBoxAdapter(child: _buildLocationHeader()),
-        const SliverToBoxAdapter(child: SizedBox(height: 8)),
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 260,
-            width: double.infinity,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-              child: _buildMap(
-                showSelectedCard: false,
-                showLocationBar: false,
-              ),
-            ),
-          ),
-        ),
         SliverToBoxAdapter(child: _buildMapLocationRow()),
         if (widget.jobId != null && widget.serviceId != null)
           SliverToBoxAdapter(child: _buildMatchingToggle()),
@@ -591,99 +617,25 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   }
 
   Widget _buildFilters() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Buscar por nombre o profesión...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                      },
-                    )
-                  : null,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _sortBy,
-                  decoration: const InputDecoration(
-                    labelText: 'Ordenar por',
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'rating', child: Text('Calificación')),
-                    DropdownMenuItem(value: 'name', child: Text('Nombre')),
-                  ],
-                  onChanged: (value) {
-                    setState(() => _sortBy = value ?? 'rating');
-                    _filterWorkers();
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonFormField<double>(
-                  initialValue: _minRating,
-                  decoration: const InputDecoration(
-                    labelText: 'Calificación mín.',
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 0.0, child: Text('Todas')),
-                    DropdownMenuItem(value: 3.0, child: Text('3+')),
-                    DropdownMenuItem(value: 4.0, child: Text('4+')),
-                    DropdownMenuItem(value: 4.5, child: Text('4.5+')),
-                  ],
-                  onChanged: (value) {
-                    setState(() => _minRating = value ?? 0.0);
-                    _filterWorkers();
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return WorkerListFilters(
+      searchController: _searchController,
+      sortBy: _sortBy,
+      minRating: _minRating,
+      onSortChanged: (value) {
+        setState(() => _sortBy = value);
+        _filterWorkers();
+      },
+      onMinRatingChanged: (value) {
+        setState(() => _minRating = value);
+        _filterWorkers();
+      },
     );
   }
 
   Widget _buildLocationHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-      color: AppColors.brandOrangeSoft,
-      child: Row(
-        children: [
-          const Icon(Icons.location_on, color: AppColors.brandOrange, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Profesionales en ${_userLocation!.displayLabel}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-          ),
-          TextButton(
-            onPressed: _selectCityManually,
-            child: const Text('Cambiar'),
-          ),
-        ],
-      ),
+    return WorkerListLocationHeader(
+      label: _userLocation!.displayLabel,
+      onChangeCity: _selectCityManually,
     );
   }
 
@@ -697,7 +649,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         borderRadius: BorderRadius.circular(16),
       ),
       child: WorkerSearchMap(
-        key: const ValueKey('worker-search-map'),
+        key: _mapKey,
         workers: _filteredWorkers,
         users: _users,
         selectedWorkerId: _selectedWorkerId,
@@ -719,62 +671,13 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   }
 
   Widget _buildMapLocationRow() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _addressController,
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: (_) => _searchAddress(),
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    hintText: 'Calle, barrio o ciudad',
-                    prefixIcon: Icon(Icons.search, size: 20),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(
-                onPressed: _locatingAddress ? null : _searchAddress,
-                child: Text(_locatingAddress ? '…' : 'Buscar'),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              TextButton.icon(
-                onPressed: _locatingGps ? null : _useGps,
-                icon: _locatingGps
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.my_location, size: 18),
-                label: Text(
-                  _locatingGps
-                      ? 'Leyendo GPS…'
-                      : _userLocation?.latitude != null
-                          ? 'Ubicación lista'
-                          : 'Usar GPS',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'o marca / arrastra el pin azul',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return WorkerListAddressRow(
+      addressController: _addressController,
+      onSearch: _searchAddress,
+      onUseGps: _useGps,
+      locatingAddress: _locatingAddress,
+      locatingGps: _locatingGps,
+      hasFix: _userLocation?.latitude != null,
     );
   }
 
@@ -884,6 +787,27 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
             return card;
           },
         childCount: _filteredWorkers.length,
+      ),
+    );
+  }
+}
+
+class _MapPlaceholder extends StatelessWidget {
+  const _MapPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        color: Color(0xFFE8EEF3),
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
+      child: Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
       ),
     );
   }

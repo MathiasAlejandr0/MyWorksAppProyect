@@ -23,7 +23,4 @@ class AppPlatform {
           defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.linux);
 
-  /// Google Maps embebido: Android, iOS y Web. En Windows/macOS/Linux usa fallback.
-  static bool get supportsEmbeddedGoogleMap =>
-      isMobileNative || isWeb;
 }

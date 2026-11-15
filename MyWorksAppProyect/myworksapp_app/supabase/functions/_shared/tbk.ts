@@ -64,12 +64,14 @@ function envValue(value: string | undefined): string {
   return (value ?? "").trim();
 }
 
-/** Sin variable, el demo queda en integración. Cualquier otro valor que no sea production falla. */
+/** TBK_ENV es obligatorio. integration para la demo; production solo con claves del comercio. */
 export function resolveTbkEnv(raw: string | undefined): TbkEnv {
-  const env = envValue(raw).toLowerCase() || "integration";
+  const env = envValue(raw).toLowerCase();
   if (env === "integration" || env === "production") return env;
   throw new Error(
-    `TBK_ENV=${raw} no es válido. Usa integration o production. El fallback público solo aplica con TBK_ENV=integration.`,
+    env
+      ? `TBK_ENV=${raw} no es válido. Usa integration o production.`
+      : "TBK_ENV es obligatorio. Usa integration para la demo o production con las claves del comercio.",
   );
 }
 

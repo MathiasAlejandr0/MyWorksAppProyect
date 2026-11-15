@@ -2,7 +2,7 @@
 
 Documento de referencia para **memoria de título**, **presentaciones universitarias**, **financiamiento** y **planificación técnica**.
 
-**Última actualización:** 9 de noviembre de 2026 (pago, chat, evidencia y migraciones revisados contra el código de `main` 3d7c14c)  
+**Última actualización:** 15 de noviembre de 2026 (versiones, mapas y pagos alineados con el árbol local)  
 **Versión de producto:** 1.0.0 (MVP con backend Supabase)  
 **Repositorio:** https://github.com/MathiasAlejandr0/MyWorksAppProyect
 
@@ -138,13 +138,13 @@ Cada feature sigue: `features/<módulo>/presentation/{pages, widgets, providers}
 | Capa | Tecnología | Versión / nota |
 |------|------------|----------------|
 | Framework UI | Flutter / Dart | SDK ≥ 3.0 |
-| Estado | flutter_riverpod | ^2.4.9 |
-| Navegación | go_router | ^13.0.0 |
+| Estado | flutter_riverpod | ^3.4.3 |
+| Navegación | go_router | ^18.0.1 |
 | Backend | supabase_flutter | Auth + Postgres + PostgREST |
-| Mapas | google_maps_flutter + OpenStreetMap estático (desktop) | Ubicación de trabajos |
-| Notificaciones | flutter_local_notifications + Supabase Realtime | Locales y en la app por Realtime (`notification_realtime_service.dart`); push remoto (FCM) pendiente |
-| Persistencia local | shared_preferences, flutter_secure_storage | Onboarding, tokens |
-| Seguridad | bcrypt, RLS en Supabase | Contraseñas y políticas por tabla |
+| Mapas | flutter_map + CARTO Voyager (respaldo OSM) en la app; leaflet en la web | Ubicación de trabajos y catálogo |
+| Notificaciones | flutter_local_notifications, firebase_messaging y Edge `send-push` | Locales, Realtime y push si el build trae las claves FCM |
+| Persistencia local | shared_preferences | Onboarding y preferencias |
+| Seguridad | Supabase Auth y RLS | La contraseña la guarda Auth; no hay bcrypt en la app |
 | Fuentes / UI | google_fonts, design system propio | Identidad naranja / azul marino |
 
 ---
@@ -219,12 +219,13 @@ Las cuentas `@demo.com` / `demo123` son legado: el administrador `admin@demo.com
 
 | Área | Estado | Prioridad |
 |------|--------|-----------|
-| Pasarela de pago | Webpay Plus y Oneclick en **ambiente de integración** (Edge Functions `webpay-*` / `oneclick-*`, `_shared/tbk.ts`); falta pasar a producción (`docs/RUNBOOK_TRANSBANK_PRODUCCION.md`) | Alta |
-| Notificaciones push remotas (FCM / APNs) | Solo locales | Alta |
+| Pasarela de pago | Webpay exige `TBK_ENV`. Sin la variable el checkout falla. La demo usa `integration`. Producción sigue en `docs/RUNBOOK_TRANSBANK_PRODUCCION.md` | Alta |
+| Liquidación al profesional | El admin confirma la transferencia bancaria (`provider=manual`). Khipu y Fintoc responden 501 hasta tener contrato y claves | Alta |
+| Notificaciones push remotas (FCM / APNs) | `send-push` y `firebase_messaging` están en el repo. El equipo las recibe cuando el build trae las claves | Media |
 | Chat en tiempo real | ✅ Supabase Realtime (`postgres_changes` sobre `mensajes`): app `chat_page.dart`, web `LiveChatWidget.tsx` | — |
 | Evidencia del trabajo | Fotos en WebP dentro de la base (`fotos_trabajo.imagen_webp`, migración `20261108000001`); el video solo guarda el nombre del archivo | Media (video) |
 | Tests automatizados Flutter | Suite en `myworksapp_app/test/` + CI (`flutter test`: 145 pruebas en verde, 9-nov-2026) | ✅ Parcial |
-| CI/CD (GitHub Actions) | Flutter CI + Web/Desktop CI + Gitleaks | ✅ Parcial |
+| CI/CD (GitHub Actions) | Un solo `.github` en la raíz del repo, con actions fijadas por SHA | ✅ |
 | Panel de administración web | `myworksapp_desktop` con Supabase Auth (rol admin) | ✅ MVP |
 | Publicación en tiendas | No publicada | Alta (al lanzar) |
 

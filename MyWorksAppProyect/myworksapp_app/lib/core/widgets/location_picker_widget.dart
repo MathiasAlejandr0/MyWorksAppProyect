@@ -11,6 +11,7 @@ import '../services/user_location_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/chile_comunas.dart';
 import 'job_location_map.dart';
+import '../map/app_map_tiles.dart';
 
 class LocationPickerWidget extends StatefulWidget {
   final Function(String address, double latitude, double longitude) onLocationSelected;
@@ -490,10 +491,8 @@ class _ClientMapPickerSheetState extends State<_ClientMapPickerSheet> {
                 ),
               ),
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.myworksapp.myworksapp',
-                ),
+                const AppMapTiles(),
+                const MapTileCredits(),
                 MarkerLayer(
                   markers: [
                     Marker(

@@ -7,27 +7,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-fun loadPropertyFromFile(file: java.io.File, key: String): String? {
-    if (!file.exists()) return null
-    val props = Properties()
-    file.inputStream().use { props.load(it) }
-    return props.getProperty(key)?.trim()?.takeIf { it.isNotEmpty() }
-}
-
-fun loadGoogleMapsApiKey(): String {
-    loadPropertyFromFile(rootProject.file("secrets.properties"), "GOOGLE_MAPS_API_KEY")?.let { return it }
-    loadPropertyFromFile(rootProject.file("local.properties"), "GOOGLE_MAPS_API_KEY")?.let { return it }
-    return System.getenv("GOOGLE_MAPS_API_KEY")?.trim()?.takeIf { it.isNotEmpty() } ?: ""
-}
-
 // Cargar propiedades del keystore si existe
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
-
-val googleMapsApiKey = loadGoogleMapsApiKey()
 
 android {
     namespace = "com.example.myworksapp"
@@ -51,7 +36,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
     }
 
     signingConfigs {

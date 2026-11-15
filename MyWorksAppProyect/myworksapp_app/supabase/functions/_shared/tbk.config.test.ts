@@ -44,13 +44,9 @@ describe("credenciales Transbank de integración", () => {
     assert.equal(oneclick.apiKey.endsWith(WRONG_ONECLICK_SUFFIX), false);
   });
 
-  it("aplica el fallback si TBK_ENV no está definido", () => {
-    const webpay = resolveTbkConfig({});
-    const oneclick = resolveOneclickConfig({});
-    assert.equal(webpay.env, "integration");
-    assert.equal(webpay.apiKey, OFFICIAL_KEY);
-    assert.equal(oneclick.apiKey, OFFICIAL_KEY);
-    assert.equal(oneclick.childCommerceCode, TBK_ONECLICK_CHILD_COMMERCE);
+  it("falla si TBK_ENV no está definido", () => {
+    assert.throws(() => resolveTbkConfig({}), /TBK_ENV es obligatorio/);
+    assert.throws(() => resolveOneclickConfig({}), /TBK_ENV es obligatorio/);
   });
 
   it("respeta secretos explícitos en integración", () => {

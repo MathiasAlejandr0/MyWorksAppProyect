@@ -6,6 +6,7 @@ import {
   transportSurcharge,
 } from '@myworksapp/shared';
 import type { SearchWorker } from './SearchResultsView';
+import { addFastBasemap, fastMapOptions, isCoarseMap } from '../map/basemap';
 
 /** Vista inicial si ningún profesional tiene coordenada propia (demo Puerto Montt). */
 const DEMO_CENTER: [number, number] = [-41.4717, -72.9366];
@@ -141,39 +142,30 @@ export function PremiumSearchMap({
     const stamped = host as StampedEl;
     if (stamped._leaflet_id != null) delete stamped._leaflet_id;
 
-    const map = L.map(host, { scrollWheelZoom: true, zoomControl: true }).setView(
-      DEMO_CENTER,
-      13,
-    );
+    const map = L.map(host, {
+      scrollWheelZoom: true,
+      zoomControl: true,
+      ...fastMapOptions(),
+    }).setView(DEMO_CENTER, 13);
     mapRef.current = map;
     const markers = markersRef.current;
 
-    const cartoKey = (import.meta.env.VITE_CARTO_BASEMAPS_KEY ?? '').trim();
-    const osmAttribution =
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
-    L.tileLayer(
-      cartoKey
-        ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(cartoKey)}`
-        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      cartoKey
-        ? {
-            attribution: `${osmAttribution} · &copy; <a href="https://carto.com/">CARTO</a>`,
-            subdomains: 'abcd',
-            maxZoom: 19,
-          }
-        : { attribution: osmAttribution, maxZoom: 19 },
-    ).addTo(map);
+    // Las baldosas se piden después de que los otros efectos dejen el encuadre
+    // final. Si se agregan antes, el teléfono descarga dos niveles de zoom.
+    let tilesAdded = false;
+    const addTiles = () => {
+      if (tilesAdded || mapRef.current !== map) return;
+      tilesAdded = true;
+      addFastBasemap(map);
+    };
+    queueMicrotask(addTiles);
 
-    let resizeQueued = false;
+    let resizeTimer = 0;
     const resize = () => {
-      if (resizeQueued) return;
-      resizeQueued = true;
-      window.requestAnimationFrame(() => {
-        resizeQueued = false;
-        map.invalidateSize();
-        const circle = radarRef.current;
-        if (circle) map.fitBounds(circle.getBounds().pad(0.18));
-      });
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        map.invalidateSize({ animate: false, pan: false });
+      }, 160);
     };
     const timer = window.setTimeout(resize, 0);
     window.addEventListener('resize', resize);
@@ -198,6 +190,7 @@ export function PremiumSearchMap({
 
     return () => {
       window.clearTimeout(timer);
+      window.clearTimeout(resizeTimer);
       window.removeEventListener('resize', resize);
       observer.disconnect();
       map.off('click', onMapClick);
@@ -234,15 +227,15 @@ export function PremiumSearchMap({
       markersRef.current.set(worker.id, marker);
     }
 
-    map.invalidateSize();
+    map.invalidateSize({ animate: false, pan: false });
     if (selectedIdRef.current) return;
 
     if (!positions.length) {
-      map.setView(DEMO_CENTER, 13);
+      map.setView(DEMO_CENTER, 13, { animate: false });
     } else if (positions.length === 1) {
-      map.setView(positions[0], 14);
+      map.setView(positions[0], 14, { animate: false });
     } else {
-      map.fitBounds(L.latLngBounds(positions).pad(0.25));
+      map.fitBounds(L.latLngBounds(positions).pad(0.25), { animate: false, maxZoom: 14 });
     }
   }, [workers]);
 
@@ -274,16 +267,11 @@ export function PremiumSearchMap({
       }).addTo(map);
       radarRef.current = circle;
       const marker = markersRef.current.get(selected.id);
-      // El efecto de clientLocation refresca este popup cuando cambia la ubicación.
       marker?.setPopupContent(workerPopup(selected, clientLocRef.current));
-      marker?.openPopup();
-      const frameRadar = () => {
-        map.invalidateSize();
-        map.fitBounds(circle.getBounds().pad(0.18));
-      };
-      frameRadar();
-      const timer = window.setTimeout(frameRadar, 80);
-      return () => window.clearTimeout(timer);
+      if (!isCoarseMap()) marker?.openPopup();
+      map.invalidateSize({ animate: false, pan: false });
+      map.fitBounds(circle.getBounds().pad(0.18), { animate: false, maxZoom: 14 });
+      return;
     }
 
     const timer = window.setTimeout(() => map.invalidateSize(), 50);
@@ -327,7 +315,7 @@ export function PremiumSearchMap({
     clientMarkerRef.current = marker;
     const point = L.latLng(clientLocation.latitude, clientLocation.longitude);
     if (!map.getBounds().contains(point)) {
-      map.panTo(point);
+      map.panTo(point, { animate: false });
     }
     if (selected) {
       markersRef.current

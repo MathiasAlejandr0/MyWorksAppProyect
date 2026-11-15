@@ -16,7 +16,12 @@ class AdminCatalogRepository {
     var query = supabase
         .from('trabajadores')
         .select(
-          '*, perfiles!trabajadores_id_usuario_fkey(nombre, correo, estado_cuenta)',
+          'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, '
+          'categoria_servicio, niveles_precio, conteo_rechazos, servicios_personalizados, '
+          'precios_configurados, zona_trabajo, estado_verificacion, radio_servicio_km, '
+          'origen_base, score_listado, radio_urbano_km, tarifa_fuera_radio_clp, '
+          'trabajos_completados, es_elite, '
+          'perfiles!trabajadores_id_usuario_fkey(nombre, correo, estado_cuenta)',
         );
     if (availableOnly == true) {
       query = query.eq('disponible', 1);
@@ -24,9 +29,12 @@ class AdminCatalogRepository {
       query = query.eq('disponible', 0);
     }
     final rows = await query.order('score_listado', ascending: false).limit(limit);
+    final sensitive = await _sensitiveByUser();
 
     var entries = rows.map<AdminWorkerEntry>((row) {
       final map = Map<String, dynamic>.from(row);
+      final extra = sensitive[map['id_usuario']];
+      if (extra != null) map.addAll(extra);
       final profile = map['perfiles'] as Map<String, dynamic>?;
       map.remove('perfiles');
       return AdminWorkerEntry(
@@ -59,6 +67,24 @@ class AdminCatalogRepository {
   }
 
   Future<List<FeatureFlagModel>> listFeatureFlags() => _flagRepo.getAllFlags();
+
+  Future<Map<String, Map<String, dynamic>>> _sensitiveByUser() async {
+    try {
+      final raw = await supabase.rpc('fichas_sensibles_admin');
+      if (raw is! List) return const {};
+      final out = <String, Map<String, dynamic>>{};
+      for (final row in raw) {
+        if (row is! Map) continue;
+        final map = Map<String, dynamic>.from(row);
+        final id = map['id_usuario'] as String?;
+        if (id == null || id.isEmpty) continue;
+        out[id] = map;
+      }
+      return out;
+    } catch (_) {
+      return const {};
+    }
+  }
 
   Future<void> upsertFeatureFlag(FeatureFlagModel flag) =>
       _flagRepo.upsertFlag(flag);

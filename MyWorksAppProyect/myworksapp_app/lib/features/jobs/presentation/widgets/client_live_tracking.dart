@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart' as ll;
 import '../../../../core/database/supabase_db.dart';
 import '../../../../core/domain/distance_match.dart';
 import '../../../../core/services/gps_publish_gate.dart';
+import '../../../../core/map/app_map_tiles.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class ClientLiveTracking extends StatefulWidget {
@@ -117,10 +118,8 @@ class _ClientLiveTrackingState extends State<ClientLiveTracking> {
                 initialZoom: 14,
               ),
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.myworksapp.myworksapp',
-                ),
+                const AppMapTiles(),
+                const MapTileCredits(),
                 MarkerLayer(
                   markers: [
                     if (hasDest)

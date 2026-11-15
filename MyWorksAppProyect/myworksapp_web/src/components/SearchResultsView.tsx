@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useState, type FormEvent } from 'react';
 import {
   Heart,
   Bell,
@@ -92,6 +92,18 @@ export function SearchResultsView({
   const displayQuery = query.trim() || 'profesionales';
   const total = workers.length;
   const [addressQuery, setAddressQuery] = useState('');
+  const [showMap, setShowMap] = useState(false);
+
+  useEffect(() => {
+    let second = 0;
+    const first = window.requestAnimationFrame(() => {
+      second = window.requestAnimationFrame(() => setShowMap(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(first);
+      window.cancelAnimationFrame(second);
+    };
+  }, []);
 
   const submitAddress = (event: FormEvent) => {
     event.preventDefault();
@@ -323,16 +335,20 @@ export function SearchResultsView({
         </main>
 
         <aside className="search-map-panel">
-          <Suspense fallback={<div className="search-map-skeleton" aria-hidden />}>
-            <PremiumSearchMap
-              workers={workers}
-              selectedWorkerId={selectedWorkerId}
-              onSelectWorker={onSelectWorker}
-              categoryLabel={displayQuery}
-              clientLocation={clientLocation}
-              onPickClientLocation={onPickClientLocation}
-            />
-          </Suspense>
+          {showMap ? (
+            <Suspense fallback={<div className="search-map-skeleton">Cargando mapa…</div>}>
+              <PremiumSearchMap
+                workers={workers}
+                selectedWorkerId={selectedWorkerId}
+                onSelectWorker={onSelectWorker}
+                categoryLabel={displayQuery}
+                clientLocation={clientLocation}
+                onPickClientLocation={onPickClientLocation}
+              />
+            </Suspense>
+          ) : (
+            <div className="search-map-skeleton">Cargando mapa…</div>
+          )}
           <div className="search-map-location">
             <form className="search-map-address" onSubmit={submitAddress}>
               <MapPin size={14} aria-hidden />

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { addFastBasemap, fastMapOptions } from '../map/basemap';
 
 const homeIcon = L.divIcon({
   className: 'mwa-map-pin mwa-map-pin--active',
@@ -44,11 +45,9 @@ export function JobLocationMap({
   useEffect(() => {
     const node = host.current;
     if (!node) return;
-    const map = L.map(node, { zoomControl: true }).setView([latitude, longitude], 15);
+    const map = L.map(node, { zoomControl: true, ...fastMapOptions() }).setView([latitude, longitude], 15);
     mapRef.current = map;
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
-    }).addTo(map);
+    addFastBasemap(map);
     homeRef.current = L.marker([latitude, longitude], { icon: homeIcon }).addTo(map).bindPopup(textPopup(label));
     const frame = window.requestAnimationFrame(() => map.invalidateSize());
     return () => {
@@ -79,7 +78,7 @@ export function JobLocationMap({
       [latitude, longitude],
       [worker.latitude, worker.longitude],
     ]);
-    map.fitBounds(bounds.pad(0.3));
+    map.fitBounds(bounds.pad(0.3), { animate: false, maxZoom: 16 });
   }, [worker, latitude, longitude]);
 
   return <div ref={host} className="job-location-map" role="region" aria-label="Mapa del domicilio" />;

@@ -33,7 +33,7 @@ Después corre `docs/PRUEBAS_RLS_20261008.sql`, `docs/PRUEBAS_RLS_20261009.sql`,
 
 | clave | valor que sale | antes del lanzamiento |
 |---|---|---|
-| `demo_modo` | `1` (el login de la app sigue listando correos `@demo.myworksapp.cl`) | `UPDATE public.app_config SET valor = '0', actualizado_en = now() WHERE clave = 'demo_modo';` y luego `REVOKE EXECUTE ON FUNCTION public.listar_cuentas_demo_acceso() FROM anon;` |
+| `demo_modo` | `1` (el invitado de prueba queda con el correo confirmado). El login lista los correos locales de `demo_credentials.dart`; `listar_cuentas_demo_acceso` ya no es ejecutable por anon ni authenticated | `UPDATE public.app_config SET valor = '0', actualizado_en = now() WHERE clave = 'demo_modo';` |
 | `admin_requiere_aal2` | `0` (el panel no exige `aal2` en SQL, para que la demo de mañana no se trabe) | `UPDATE public.app_config SET valor = '1', actualizado_en = now() WHERE clave = 'admin_requiere_aal2';` después de que `admin.ops` tenga un TOTP verificado |
 
 El escritorio ya pide el segundo factor antes de mostrar el panel (`AdminMfaGate`). El primer ingreso de `admin.ops` muestra el QR: escanéalo y confirma el código de 6 dígitos. Con el interruptor en `0` el panel funciona aunque esa sesión todavía no sea `aal2`. En producción el interruptor tiene que quedar en `1`: `is_admin()` solo es verdadero para `rol = administrador` y, con el flag, JWT `aal = aal2`. Soporte y QA invitados quedan en `soporte` y `qa`; no entran al hub ni pasan `is_admin()`.
@@ -43,7 +43,7 @@ El escritorio ya pide el segundo factor antes de mostrar el panel (`AdminMfaGate
 La demo de mañana se corre con Transbank en integración y `demo_modo = 1`. Esto se hace **después** de la demo, cuando el sitio público deje de ser de prueba:
 
 1. `UPDATE public.app_config SET valor = '0', actualizado_en = now() WHERE clave = 'demo_modo';` Con eso el invitado que crea su clave **no** queda con el correo confirmado: recibe el correo de alta y el login ofrece reenviar la confirmación.
-2. `REVOKE EXECUTE ON FUNCTION public.listar_cuentas_demo_acceso() FROM anon;` El login deja de listar los correos `@demo.myworksapp.cl`.
+2. La migración `20261115000001` ya revoca `listar_cuentas_demo_acceso` para anon y authenticated. El selector de la app sigue usando la lista local.
 3. `UPDATE public.app_config SET valor = '1', actualizado_en = now() WHERE clave = 'admin_requiere_aal2';` Solo después de que `admin.ops` haya verificado el TOTP. Si se enciende antes, el panel deja de reconocer al admin.
 4. `CORS_ALLOWED_ORIGINS` con el origen real de la web (y el del escritorio, si se publica). En integración ya se aceptan `localhost` y `127.0.0.1` en los puertos 5173 y 3001.
 5. `TURNSTILE_SECRET_KEY` en las funciones y `VITE_TURNSTILE_SITE_KEY` al construir la web. En `production`, sin el secreto, el checkout de invitado responde 503.

@@ -1,10 +1,12 @@
-import 'dart:math' show Point;
+import 'dart:async';
+import 'dart:math' as math show Point, log, ln2, min, max;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
 
 import '../../../../core/database/models/user_model.dart';
+import '../../../../core/map/app_map_tiles.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/domain/transport_surcharge.dart';
 import '../../../../core/domain/worker_highlight.dart';
@@ -61,6 +63,10 @@ class _WorkerSearchMapState extends State<WorkerSearchMap> {
   DateTime? _ignoreMapTapUntil;
   bool _draggingClient = false;
   ll.LatLng? _clientDrag;
+  Timer? _fitTimer;
+  Timer? _tilesTimer;
+  String? _appliedView;
+  bool _tilesVisible = false;
 
   static const _fallback = ll.LatLng(-41.4717, -72.9366);
   static const _clientColor = Color(0xFF2563EB);
@@ -95,80 +101,168 @@ class _WorkerSearchMapState extends State<WorkerSearchMap> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fit());
+    _tilesVisible = MapTileCache.served > 0;
+    if (!_tilesVisible) {
+      MapTileCache.whenServed(_showTiles);
+      _tilesTimer = Timer(const Duration(seconds: 6), _showTiles);
+    }
   }
 
   @override
   void dispose() {
+    _fitTimer?.cancel();
+    _tilesTimer?.cancel();
+    MapTileCache.cancel(_showTiles);
     try {
       _map.dispose();
     } catch (_) {}
     super.dispose();
   }
 
+  void _showTiles() {
+    if (!mounted || _tilesVisible) return;
+    setState(() => _tilesVisible = true);
+  }
+
   @override
   void didUpdateWidget(covariant WorkerSearchMap oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (_draggingClient) return;
     final selectionChanged =
         oldWidget.selectedWorkerId != widget.selectedWorkerId;
-    final setChanged = oldWidget.workers.length != widget.workers.length;
     final clientChanged = oldWidget.clientLatitude != widget.clientLatitude ||
         oldWidget.clientLongitude != widget.clientLongitude;
-    if (!_draggingClient && (selectionChanged || setChanged || clientChanged)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _fit());
+    final placedChanged = _placedSignature(oldWidget.workers) != _placedSignature(widget.workers);
+    if (selectionChanged || clientChanged || placedChanged) {
+      _scheduleFit();
     }
   }
 
-  void _fit() {
-    if (!mounted) return;
-    try {
-      final selected = _selected;
-      final selectedPoint = _pointOf(selected);
-      final explicitSelection = widget.selectedWorkerId != null &&
-          selected?.userId == widget.selectedWorkerId;
-      if (explicitSelection && selected != null && selectedPoint != null) {
-        final radiusKm = resolveServiceRadiusKm(selected.serviceRadiusKm);
-        final delta = radiusKm / 111.0;
-        final bounds = LatLngBounds(
-          ll.LatLng(selectedPoint.latitude - delta, selectedPoint.longitude - delta),
-          ll.LatLng(selectedPoint.latitude + delta, selectedPoint.longitude + delta),
-        );
-        final clientPoint = _clientPoint;
-        if (clientPoint != null) {
-          bounds.extend(clientPoint);
-        }
-        _map.fitCamera(
-          CameraFit.bounds(
-            bounds: bounds,
-            padding: const EdgeInsets.fromLTRB(28, 48, 28, 72),
-            maxZoom: 14.5,
-          ),
-        );
-        return;
-      }
+  String _placedSignature(List<WorkerModel> workers) {
+    final buffer = StringBuffer();
+    for (final worker in workers) {
+      final lat = worker.baseLatitude;
+      final lng = worker.baseLongitude;
+      if (lat == null || lng == null) continue;
+      buffer
+        ..write(worker.userId)
+        ..write(':')
+        ..write(lat.toStringAsFixed(4))
+        ..write(',')
+        ..write(lng.toStringAsFixed(4))
+        ..write('|');
+    }
+    return buffer.toString();
+  }
 
-      final clientPoint = _clientPoint;
-      final points = <ll.LatLng>[
-        for (final worker in _placed) _pointOf(worker)!,
-        if (clientPoint != null) clientPoint,
-      ];
-      if (points.isEmpty) {
-        _map.move(_fallback, 12);
-        return;
+  /// Un solo encuadre aunque el padre reconstruya el mapa varias veces al abrir.
+  void _scheduleFit() {
+    if (_draggingClient) return;
+    final signature = _viewSignature();
+    if (signature == _appliedView) return;
+    _fitTimer?.cancel();
+    _fitTimer = Timer(const Duration(milliseconds: 50), () {
+      if (!mounted || _draggingClient) return;
+      final next = _viewSignature();
+      if (next == _appliedView) return;
+      if (_fit()) {
+        _appliedView = next;
+      } else {
+        _fitTimer = Timer(const Duration(milliseconds: 120), () {
+          if (!mounted || _draggingClient) return;
+          if (_fit()) _appliedView = _viewSignature();
+        });
       }
-      if (points.length == 1) {
-        _map.move(points.first, 14);
-        return;
+    });
+  }
+
+  String _viewSignature() {
+    final bounds = _targetBounds();
+    if (bounds == null) return 'fallback';
+    return '${bounds.south.toStringAsFixed(4)},${bounds.west.toStringAsFixed(4)},'
+        '${bounds.north.toStringAsFixed(4)},${bounds.east.toStringAsFixed(4)}';
+  }
+
+  LatLngBounds? _targetBounds() {
+    final selected = _selected;
+    final selectedPoint = _pointOf(selected);
+    final explicitSelection = widget.selectedWorkerId != null &&
+        selected?.userId == widget.selectedWorkerId;
+    if (explicitSelection && selectedPoint != null) {
+      final radiusKm = resolveServiceRadiusKm(selected!.serviceRadiusKm);
+      final delta = radiusKm / 111.0;
+      final bounds = LatLngBounds(
+        ll.LatLng(selectedPoint.latitude - delta, selectedPoint.longitude - delta),
+        ll.LatLng(selectedPoint.latitude + delta, selectedPoint.longitude + delta),
+      );
+      final clientPoint = _clientPoint;
+      if (clientPoint != null) bounds.extend(clientPoint);
+      return bounds;
+    }
+
+    final clientPoint = _clientPoint;
+    final points = <ll.LatLng>[
+      for (final worker in _placed) _pointOf(worker)!,
+      if (clientPoint != null) clientPoint,
+    ];
+    if (points.isEmpty) return null;
+    if (points.length == 1) {
+      const delta = 0.012;
+      final point = points.first;
+      return LatLngBounds(
+        ll.LatLng(point.latitude - delta, point.longitude - delta),
+        ll.LatLng(point.latitude + delta, point.longitude + delta),
+      );
+    }
+    return LatLngBounds.fromPoints(points);
+  }
+
+  double _openingZoom(Size size) {
+    final bounds = _targetBounds();
+    if (bounds == null) return 12;
+    if (!size.width.isFinite || !size.height.isFinite || size.height < 40) {
+      return 13;
+    }
+    return _zoomCovering(bounds, size);
+  }
+
+  ll.LatLng _openingCenter() {
+    return _targetBounds()?.center ?? _fallback;
+  }
+
+  /// Zoom entero aproximado para pedir, desde el primer frame, el mismo nivel
+  /// que va a dejar el encuadre. Si no, el teléfono baja dos juegos de baldosas.
+  double _zoomCovering(LatLngBounds bounds, Size size) {
+    const tile = 256.0;
+    final width = math.max(size.width - 56, tile);
+    final height = math.max(size.height - 120, tile);
+    final lngSpan = math.max((bounds.east - bounds.west).abs(), 0.0008);
+    final latSpan = math.max((bounds.north - bounds.south).abs(), 0.0008);
+    final zoomX = math.log((360 / lngSpan) * (width / tile)) / math.ln2;
+    final zoomY = math.log((170 / latSpan) * (height / tile)) / math.ln2;
+    return math.min(zoomX, zoomY).clamp(4, 14).floorToDouble();
+  }
+
+  bool _fit() {
+    if (!mounted) return false;
+    try {
+      final bounds = _targetBounds();
+      if (bounds == null) {
+        _map.move(_fallback, 12);
+        return true;
       }
       _map.fitCamera(
         CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints(points),
-          padding: const EdgeInsets.fromLTRB(24, 40, 24, 64),
+          bounds: bounds,
+          padding: const EdgeInsets.fromLTRB(28, 48, 28, 72),
           maxZoom: 14,
+          forceIntegerZoomLevel: true,
         ),
       );
+      return true;
     } catch (_) {
       // El mapa todavía no tiene cámara (primer frame).
+      return false;
     }
   }
 
@@ -210,7 +304,7 @@ class _WorkerSearchMapState extends State<WorkerSearchMap> {
       final camera = _map.camera;
       final current = camera.latLngToScreenPoint(_clientDrag!);
       final next = camera.pointToLatLng(
-        Point(current.x + details.delta.dx, current.y + details.delta.dy),
+        math.Point(current.x + details.delta.dx, current.y + details.delta.dy),
       );
       setState(() => _clientDrag = next);
     } catch (_) {}
@@ -275,16 +369,17 @@ class _WorkerSearchMapState extends State<WorkerSearchMap> {
           return Stack(
             fit: StackFit.expand,
             children: [
-              FlutterMap(
+              RepaintBoundary(
+                child: FlutterMap(
                 mapController: _map,
                 options: MapOptions(
-                  initialCenter: selectedPoint ??
-                      (_clientPoint ??
-                          (_placed.isNotEmpty
-                              ? _pointOf(_placed.first)!
-                              : _fallback)),
-                  initialZoom: 13,
-                  onMapReady: _fit,
+                  initialCenter: _openingCenter(),
+                  initialZoom: _openingZoom(constraints.biggest),
+                  minZoom: 4,
+                  maxZoom: 16,
+                  backgroundColor: const Color(0xFFE8EEF3),
+                  keepAlive: true,
+                  onMapReady: _scheduleFit,
                   onTap: widget.interactive ? _onMapTap : null,
                   interactionOptions: InteractionOptions(
                     flags: widget.interactive && !_draggingClient
@@ -295,11 +390,7 @@ class _WorkerSearchMapState extends State<WorkerSearchMap> {
                   ),
                 ),
                 children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.myworksapp.myworksapp',
-                    maxZoom: 19,
-                  ),
+                  const AppMapTiles(),
                   if (showRadar)
                     CircleLayer(
                       circles: [
@@ -360,8 +451,23 @@ class _WorkerSearchMapState extends State<WorkerSearchMap> {
                         ),
                     ],
                   ),
+                  const MapTileCredits(alignment: Alignment.bottomLeft),
                 ],
               ),
+              ),
+              if (!_tilesVisible)
+                const IgnorePointer(
+                  child: ColoredBox(
+                    color: Color(0x99E8EEF3),
+                    child: Center(
+                      child: SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                ),
               Positioned(
                 top: 10,
                 left: 10,

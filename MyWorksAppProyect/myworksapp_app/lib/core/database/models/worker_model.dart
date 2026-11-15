@@ -122,7 +122,7 @@ class WorkerModel {
 
   /// Fila de `listar_profesionales_catalogo`: ya viene filtrada (disponible,
   /// precio y verificado). Completa flags que la RPC no devuelve.
-  /// Sin sesión la base viene redondeada (~1 km); con sesión, exacta.
+  /// La base viene redondeada (~1 km), salvo la ficha del propio profesional.
   factory WorkerModel.fromCatalogMap(Map<String, dynamic> map) {
     return WorkerModel.fromMap({
       ...map,

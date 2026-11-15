@@ -25,6 +25,7 @@ import '../../../../core/utils/comuna_utils.dart';
 import '../../../../core/utils/sku_utils.dart';
 import '../../../../core/domain/pricing_mode_recommendation.dart';
 import '../../../../core/domain/worker_service_options_catalog.dart';
+import '../widgets/traslado_radar_banner.dart';
 import '../widgets/pricing_mode_questionnaire.dart';
 import '../widgets/time_slot_selector.dart';
 import '../widgets/worker_service_option_picker.dart';
@@ -759,7 +760,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                   ),
                   if (_selectedWorker != null) ...[
                     const SizedBox(height: 12),
-                    _TrasladoRadarBanner(quote: _traslado),
+                    TrasladoRadarBanner(quote: _traslado),
                   ],
                   const SizedBox(height: 20),
                   if (_usesWorkerTierPricing) ...[
@@ -976,56 +977,5 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     });
   }
 
-}
-
-class _TrasladoRadarBanner extends StatelessWidget {
-  const _TrasladoRadarBanner({required this.quote});
-
-  final TransportSurcharge quote;
-
-  @override
-  Widget build(BuildContext context) {
-    final radius = quote.radiusKm.round();
-    late final String text;
-    late final Color color;
-    if (quote.insideRadar == true) {
-      text = 'El trabajo queda dentro de $radius km: sin extra de traslado.';
-      color = AppColors.success;
-    } else if (quote.insideRadar == false) {
-      final km = quote.distanceKm?.toStringAsFixed(1) ?? '?';
-      text =
-          'Queda a $km km, fuera del área cercana. Traslado extra: \$${quote.extraClp}.';
-      color = AppColors.brandOrange;
-    } else {
-      text =
-          'Hasta $radius km cubre sin extra de traslado. Confirma tu ubicación para calcularlo.';
-      color = AppColors.grayMedium;
-    }
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.radar_rounded, color: color, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 

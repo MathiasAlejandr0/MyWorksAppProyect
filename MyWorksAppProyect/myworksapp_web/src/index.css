@@ -942,6 +942,16 @@ button.brand-logo-button {
   position: absolute;
   inset: 0;
 }
+.search-map-skeleton {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #e8eef3;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
 .search-map-location {
   position: absolute;
   left: 12px;
@@ -2504,6 +2514,10 @@ button.brand-logo-button {
     height: 32vh;
   }
   .search-results-main { grid-row: 2; }
+  .search-results-grid .pro-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 140px;
+  }
   .search-filters { display: none; }
   .search-results-grid { grid-template-columns: 1fr; }
   .tracking-dashboard { height: auto; }

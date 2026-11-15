@@ -129,7 +129,7 @@ export async function fetchWorkersCatalog(
   let query = supabase
     .from('trabajadores')
     .select(
-      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, latitud_base, longitud_base, radio_servicio_km, origen_base, trabajos_completados, score_listado, radio_urbano_km, tarifa_fuera_radio_clp, es_elite',
+      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, radio_servicio_km, origen_base, trabajos_completados, score_listado, radio_urbano_km, tarifa_fuera_radio_clp, es_elite',
     )
     .eq('categoria_servicio', opts.category)
     .eq('disponible', 1)
@@ -185,12 +185,22 @@ export async function fetchWorkersForAdmin(
 ): Promise<WorkerWithProfile[]> {
   const withVerification = await supabase
     .from('trabajadores')
-    .select(`${ADMIN_WORKER_COLUMNS}, estado_verificacion, nota_verificacion`)
+    .select(`${ADMIN_WORKER_COLUMNS}, estado_verificacion`)
     .order('calificacion', { ascending: false })
     .limit(200);
 
   if (!withVerification.error) {
-    return ((withVerification.data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);
+    const notes = await supabase.rpc('fichas_sensibles_admin');
+    const byId = new Map<string, WorkerQueryRow>();
+    if (!notes.error && Array.isArray(notes.data)) {
+      for (const raw of notes.data as WorkerQueryRow[]) {
+        if (raw.id_usuario) byId.set(raw.id_usuario, raw);
+      }
+    }
+    return ((withVerification.data ?? []) as WorkerQueryRow[]).map((row) => {
+      const extra = byId.get(row.id_usuario);
+      return mapWorkerRow(extra ? { ...row, ...extra } : row);
+    });
   }
 
   const fallback = await supabase

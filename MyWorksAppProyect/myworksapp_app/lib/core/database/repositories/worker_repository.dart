@@ -12,6 +12,15 @@ import 'job_repository.dart';
 class WorkerRepository {
   static const String _table = 'trabajadores';
 
+  /// Columnas que anon y authenticated pueden leer. La base exacta sale de
+  /// `mi_ficha_propia`, solo para el dueño.
+  static const String _publicColumns =
+      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, '
+      'categoria_servicio, niveles_precio, conteo_rechazos, servicios_personalizados, '
+      'precios_configurados, zona_trabajo, estado_verificacion, radio_servicio_km, '
+      'origen_base, score_listado, radio_urbano_km, tarifa_fuera_radio_clp, '
+      'trabajos_completados, es_elite';
+
   Future<void> createWorker(WorkerModel worker) async {
     await supabase.from(_table).upsert(worker.toMap());
   }
@@ -19,16 +28,47 @@ class WorkerRepository {
   Future<WorkerModel?> getWorkerByUserId(String userId) async {
     final row = await supabase
         .from(_table)
-        .select()
+        .select(_publicColumns)
         .eq('id_usuario', userId)
         .maybeSingle();
     if (row == null) return null;
     var worker = WorkerModel.fromMap(row);
     if (supabase.auth.currentUser?.id == userId) {
+      Map<String, dynamic>? ficha;
+      try {
+        ficha = _firstRow(await supabase.rpc('mi_ficha_propia'));
+      } catch (_) {
+        ficha = null;
+      }
       final hours = await supabase.rpc('horarios_disponibles_propios');
-      worker = worker.copyWith(availableHours: parseWorkerHours(hours));
+      worker = worker.copyWith(
+        baseLatitude: (ficha?['latitud_base'] as num?)?.toDouble(),
+        baseLongitude: (ficha?['longitud_base'] as num?)?.toDouble(),
+        availableHours: parseWorkerHours(hours),
+      );
+    } else {
+      try {
+        final base = _firstRow(
+          await supabase.rpc(
+            'base_publica_profesional',
+            params: {'p_id': userId},
+          ),
+        );
+        worker = worker.copyWith(
+          baseLatitude: (base?['latitud_base'] as num?)?.toDouble(),
+          baseLongitude: (base?['longitud_base'] as num?)?.toDouble(),
+        );
+      } catch (_) {}
     }
     return worker;
+  }
+
+  Map<String, dynamic>? _firstRow(dynamic raw) {
+    if (raw is List && raw.isNotEmpty && raw.first is Map) {
+      return Map<String, dynamic>.from(raw.first as Map);
+    }
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return null;
   }
 
   /// Obtiene un trabajador por su ID (alias para getWorkerByUserId)
@@ -107,35 +147,9 @@ class WorkerRepository {
     return workers;
   }
 
-  /// Correos solo de cuentas @demo.myworksapp.cl. El resto de perfiles no se lista.
+  /// Lista local de la demo. La RPC ya no es ejecutable por anon.
   Future<List<WorkerLoginItem>> getWorkersForLogin() async {
-    final items = <WorkerLoginItem>[];
-    try {
-      final rows = await supabase.rpc('listar_cuentas_demo_acceso');
-      if (rows is List) {
-        for (final raw in rows) {
-          if (raw is! Map) continue;
-          final row = Map<String, dynamic>.from(raw);
-          final userId = row['id'] as String?;
-          if (userId == null || userId.isEmpty) continue;
-          items.add(
-            WorkerLoginItem(
-              userId: userId,
-              name: row['nombre'] as String? ?? 'Trabajador',
-              email: row['correo'] as String? ?? '',
-              profession: row['profesion'] as String? ?? '',
-              serviceCategory: row['categoria_servicio'] as String? ?? 'general',
-            ),
-          );
-        }
-      }
-    } catch (_) {
-      // La RPC puede fallar si demo_modo está apagado o no hay GRANT.
-    }
-    if (items.isEmpty) {
-      items.addAll(DemoCredentials.loginWorkers);
-    }
-    return sortWorkerLoginItems(items);
+    return sortWorkerLoginItems(DemoCredentials.loginWorkers);
   }
 
   Future<void> updateWorker(WorkerModel worker) async {
@@ -189,11 +203,15 @@ class WorkerRepository {
     try {
       final row = await supabase
           .from(_table)
-          .select('estado_verificacion, nota_verificacion')
+          .select('estado_verificacion')
           .eq('id_usuario', userId)
           .maybeSingle();
       if (row == null) return null;
-      final rawNote = row['nota_verificacion'] as String?;
+      String? rawNote;
+      if (supabase.auth.currentUser?.id == userId) {
+        rawNote = _firstRow(await supabase.rpc('mi_ficha_propia'))?['nota_verificacion']
+            as String?;
+      }
       final visibleNote = rawNote?.split('\nDocumento:').first.trim();
       return (
         status: row['estado_verificacion'] as String? ?? 'pendiente',
@@ -314,7 +332,7 @@ class WorkerRepository {
     try {
       var query = supabase
           .from(_table)
-          .select()
+          .select(_publicColumns)
           .eq('disponible', 1)
           .eq('precios_configurados', 1)
           .eq('estado_verificacion', 'verificado');

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:latlong2/latlong.dart' as ll;
 
-import '../config/google_maps_config.dart';
+import '../map/app_map_tiles.dart';
 import '../theme/app_colors.dart';
 import '../utils/external_map_launcher.dart';
-import '../utils/platform_support.dart';
 
 /// Modo del mapa embebido.
 enum JobMapDisplayMode {
@@ -119,10 +117,8 @@ class JobLocationMap extends StatelessWidget {
               ),
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.myworksapp.myworksapp',
-              ),
+              const AppMapTiles(),
+              const MapTileCredits(alignment: Alignment.topLeft),
               MarkerLayer(
                 markers: [
                   Marker(
@@ -140,67 +136,12 @@ class JobLocationMap extends StatelessWidget {
             ],
           ),
           if (_isPreview) _previewHint(context),
-          if (!_isPreview)
-            Positioned(
-              right: 8,
-              bottom: 8,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Text(
-                    '© OpenStreetMap',
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _googleMap(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          gmaps.GoogleMap(
-            initialCameraPosition: gmaps.CameraPosition(
-              target: gmaps.LatLng(latitude, longitude),
-              zoom: _zoom,
-            ),
-            markers: {
-              gmaps.Marker(
-                markerId: const gmaps.MarkerId('job_location'),
-                position: gmaps.LatLng(latitude, longitude),
-              ),
-            },
-            zoomControlsEnabled: !_isPreview,
-            myLocationButtonEnabled: !_isPreview,
-            myLocationEnabled: !_isPreview,
-            scrollGesturesEnabled: !_isPreview,
-            zoomGesturesEnabled: !_isPreview,
-            rotateGesturesEnabled: !_isPreview,
-            tiltGesturesEnabled: !_isPreview,
-            mapType: gmaps.MapType.normal,
-          ),
-          if (_isPreview) _previewHint(context),
         ],
       ),
     );
   }
 
   Widget _mapBody(BuildContext context) {
-    if (!_isPreview &&
-        AppPlatform.supportsEmbeddedGoogleMap &&
-        GoogleMapsConfig.useEmbeddedGoogleMap) {
-      return _googleMap(context);
-    }
     return _osmMap(context);
   }
 
