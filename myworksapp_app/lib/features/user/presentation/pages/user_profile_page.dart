@@ -11,6 +11,7 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/services/profile_photo_service.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -74,7 +75,9 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
 
       final updated = user.copyWith(profilePhotoPath: path);
       await _userRepository.updateUser(updated);
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -83,7 +86,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo actualizar la foto: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     } finally {
       if (mounted) setState(() => _photoLoading = false);
@@ -100,7 +103,9 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
       await ProfilePhotoService.instance.removePhoto(user.profilePhotoPath);
       final updated = user.copyWith(clearProfilePhoto: true);
       await _userRepository.updateUser(updated);
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,7 +114,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     } finally {
       if (mounted) setState(() => _photoLoading = false);
@@ -124,7 +129,10 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
     try {
       final authState = ref.read(authProvider);
       final user = authState.user;
-      if (user == null) return;
+      if (user == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
 
       final updatedUser = user.copyWith(
         name: _nameController.text.trim(),
@@ -132,7 +140,9 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
       );
 
       await _userRepository.updateUser(updatedUser);
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
 
       if (!mounted) return;
       setState(() {
@@ -147,7 +157,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -284,7 +294,10 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
                         future: _jobsFuture,
                         builder: (context, snapshot) {
                           final jobs = snapshot.data ?? [];
-                          final completed = jobs.where((j) => j.status == AppConstants.jobStatusCompleted).length;
+                          final completed = jobs
+                              .where((j) =>
+                                  j.status == AppConstants.jobStatusCompleted)
+                              .length;
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
@@ -365,4 +378,3 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
-

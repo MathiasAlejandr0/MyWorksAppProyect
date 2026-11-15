@@ -7,14 +7,14 @@ class WorkerQuickActionsRow extends StatelessWidget {
     super.key,
     required this.onNewJob,
     required this.onCalendar,
-    required this.onJobMap,
-    required this.onInvoices,
+    required this.onHistory,
+    required this.onEarnings,
   });
 
   final VoidCallback onNewJob;
   final VoidCallback onCalendar;
-  final VoidCallback onJobMap;
-  final VoidCallback onInvoices;
+  final VoidCallback onHistory;
+  final VoidCallback onEarnings;
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +33,14 @@ class WorkerQuickActionsRow extends StatelessWidget {
             onTap: onCalendar,
           ),
           _ActionTile(
-            icon: Icons.map_outlined,
-            label: 'Mapa de trabajos',
-            onTap: onJobMap,
+            icon: Icons.history,
+            label: 'Historial',
+            onTap: onHistory,
           ),
           _ActionTile(
-            icon: Icons.receipt_long_outlined,
-            label: 'Mis facturas',
-            onTap: onInvoices,
+            icon: Icons.payments_outlined,
+            label: 'Ingresos',
+            onTap: onEarnings,
           ),
         ],
       ),

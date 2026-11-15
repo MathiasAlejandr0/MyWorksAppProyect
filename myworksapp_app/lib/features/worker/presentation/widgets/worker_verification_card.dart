@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/database/repositories/verification_event_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/supabase_db.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -25,6 +26,7 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
   final ImagePicker _picker = ImagePicker();
 
   String _status = 'pendiente';
+  List<VerificationEvent> _events = [];
   bool _loading = true;
   bool _saving = false;
   Uint8List? _preview;
@@ -43,9 +45,16 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
 
   Future<void> _load() async {
     final current = await _workers.fetchVerification(widget.userId);
+    List<VerificationEvent> events = [];
+    try {
+      events = await VerificationEventRepository().history(widget.userId);
+    } catch (_) {
+      events = [];
+    }
     if (!mounted) return;
     setState(() {
       _loading = false;
+      _events = events;
       if (current != null) {
         _status = current.status;
         _note.text = current.note ?? '';
@@ -53,8 +62,10 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
     });
   }
 
-  String get _label {
-    switch (_status) {
+  String get _label => _labelFor(_status);
+
+  String _labelFor(String status) {
+    switch (status) {
       case 'en_revision':
         return 'En revisión';
       case 'verificado':
@@ -83,7 +94,8 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
     if (note.length < 8 && _preview == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Escribe tu RUT y oficio, o adjunta una foto del documento.'),
+          content: Text(
+              'Escribe tu RUT y oficio, o adjunta una foto del documento.'),
         ),
       );
       return;
@@ -102,7 +114,9 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
                 contentType: 'image/jpeg',
               ),
             );
-        storedNote = storedNote.isEmpty ? 'Documento: $path' : '$storedNote\nDocumento: $path';
+        storedNote = storedNote.isEmpty
+            ? 'Documento: $path'
+            : '$storedNote\nDocumento: $path';
       }
       await _workers.submitVerificationReview(
         userId: widget.userId,
@@ -135,7 +149,8 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Verificación', style: Theme.of(context).textTheme.titleMedium),
+            Text('Verificación',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             if (_loading)
               const LinearProgressIndicator(minHeight: 3)
@@ -157,6 +172,28 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
                 hintText: 'Ej. 12.345.678-9 · gasfiter · Ñuñoa',
               ),
             ),
+            const SizedBox(height: 12),
+            Text('Historial', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 4),
+            if (_events.isEmpty)
+              Text('Estado actual: $_label')
+            else
+              for (final event in _events)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  leading: const Icon(Icons.timeline, size: 18),
+                  title: Text(_labelFor(event.status)),
+                  subtitle: Text(
+                    [
+                      if (event.note != null && event.note!.trim().isNotEmpty)
+                        event.note!.trim(),
+                      '${event.createdAt.toLocal()}',
+                    ].join('\n'),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
             const SizedBox(height: 8),
             if (_preview != null)
               ClipRRect(
@@ -165,14 +202,16 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
               ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: _status == 'verificado' || _saving ? null : _pickDocument,
+              onPressed:
+                  _status == 'verificado' || _saving ? null : _pickDocument,
               icon: const Icon(Icons.badge_outlined),
               label: const Text('Adjuntar documento'),
             ),
             const SizedBox(height: 8),
             FilledButton(
               onPressed: _status == 'verificado' || _saving ? null : _submit,
-              style: FilledButton.styleFrom(backgroundColor: AppColors.brandOrange),
+              style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.brandOrange),
               child: Text(_saving ? 'Enviando…' : 'Enviar a revisión'),
             ),
           ],

@@ -10,6 +10,10 @@ verify_jwt = true
 [functions.webpay-commit]
 verify_jwt = false
 
+# Cron del dueño. La función exige RECONCILE_CRON_SECRET o la service role.
+[functions.webpay-reconcile]
+verify_jwt = false
+
 [functions.webpay-handoff]
 verify_jwt = false
 

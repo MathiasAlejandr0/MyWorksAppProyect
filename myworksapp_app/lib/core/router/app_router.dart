@@ -23,11 +23,17 @@ import '../../features/jobs/presentation/pages/job_detail_page.dart';
 import '../../features/jobs/presentation/pages/job_history_page.dart';
 import '../../features/ratings/presentation/pages/rating_page.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
+import '../../features/chat/presentation/pages/conversations_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/jobs/presentation/pages/job_photos_page.dart';
 import '../../features/worker/presentation/pages/statistics_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/worker/presentation/pages/worker_schedule_page.dart';
+import '../../features/worker/presentation/pages/worker_payouts_page.dart';
+import '../../features/inbox/presentation/pages/my_ratings_page.dart';
+import '../../features/inbox/presentation/pages/my_disputes_page.dart';
+import '../../features/admin/presentation/pages/admin_payouts_page.dart';
 import '../../features/jobs/presentation/pages/job_schedule_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/auth/presentation/pages/reset_password_new_page.dart';
@@ -88,7 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       try {
         final authUser = ref.read(authProvider).user;
         final isLoggedIn = authUser != null;
-        
+
         // Primera vez: el onboarding va antes que welcome o login
         // (en web el navegador puede reabrir /login de una sesión anterior).
         if (!isLoggedIn &&
@@ -100,18 +106,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             return AppConstants.routeOnboarding;
           }
         }
-        
-        final isOnWelcome = state.matchedLocation == AppConstants.routeWelcome ||
-            state.matchedLocation == AppConstants.routeOnboarding;
+
+        final isOnWelcome =
+            state.matchedLocation == AppConstants.routeWelcome ||
+                state.matchedLocation == AppConstants.routeOnboarding;
         final isOnAuth = state.matchedLocation == AppConstants.routeLogin ||
             state.matchedLocation == AppConstants.routeRegister ||
             state.matchedLocation == AppConstants.routeForgotPassword ||
             state.matchedLocation == AppConstants.routeResetPassword;
 
         // Rutas legales accesibles sin login (GDPR compliance)
-        final isLegalRoute = state.matchedLocation == AppConstants.routePrivacyPolicy ||
-            state.matchedLocation == AppConstants.routeTerms ||
-            state.matchedLocation == AppConstants.routeUserRights;
+        final isLegalRoute =
+            state.matchedLocation == AppConstants.routePrivacyPolicy ||
+                state.matchedLocation == AppConstants.routeTerms ||
+                state.matchedLocation == AppConstants.routeUserRights;
 
         // Si no está logueado y no está en welcome/auth/legal, redirigir a welcome
         if (!isLoggedIn && !isOnWelcome && !isOnAuth && !isLegalRoute) {
@@ -139,19 +147,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isLoggedIn &&
             authUser.userRole.isEspecialista &&
             state.matchedLocation == AppConstants.routeWorkerHome) {
-          final worker = await WorkerRepository().getWorkerByUserId(authUser.id);
+          final worker =
+              await WorkerRepository().getWorkerByUserId(authUser.id);
           if (worker != null && !worker.pricingConfigured) {
             return AppConstants.routeWorkerPricingSetup;
           }
         }
 
         final isAdminRoute = state.matchedLocation.startsWith('/admin');
-        if (isLoggedIn &&
-            isAdminRoute &&
-            !authUser.userRole.isAdministrador) {
+        if (isLoggedIn && isAdminRoute && !authUser.userRole.isAdministrador) {
           return homeRouteForRole(authUser.userRole);
         }
-
       } catch (e, st) {
         AppLogger.e('Error en redirect del router', e, st);
       }
@@ -299,6 +305,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: AppConstants.routeMessages,
+        builder: (context, state) => const ConversationsPage(),
+      ),
+      GoRoute(
         path: AppConstants.routeNotifications,
         builder: (context, state) => const NotificationsPage(),
       ),
@@ -321,6 +331,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppConstants.routeJobSchedule,
         builder: (context, state) => const JobSchedulePage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeWorkerPayouts,
+        builder: (context, state) => const WorkerPayoutsPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeWorkerSchedule,
+        builder: (context, state) => const WorkerSchedulePage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeMyRatings,
+        builder: (context, state) => const MyRatingsPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeMyDisputes,
+        builder: (context, state) => const MyDisputesPage(),
       ),
       // Rutas GDPR
       GoRoute(
@@ -393,7 +419,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppConstants.routeAdminDesktopHub,
         builder: (context, state) => const AdminDesktopManagementPage(),
       ),
+      GoRoute(
+        path: AppConstants.routeAdminPayouts,
+        builder: (context, state) => const AdminPayoutsPage(),
+      ),
     ],
   );
 });
-

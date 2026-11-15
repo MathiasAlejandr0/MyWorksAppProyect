@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/database/models/service_model.dart';
+import '../../../../core/database/repositories/message_repository.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/design_system/app_radius.dart';
@@ -34,6 +35,7 @@ class UserHomePage extends ConsumerStatefulWidget {
 
 class _UserHomePageState extends ConsumerState<UserHomePage> {
   final ServiceRepository _serviceRepository = ServiceRepository();
+  final MessageRepository _messageRepository = MessageRepository();
   final _searchController = TextEditingController();
   final _profileKey = GlobalKey();
   final _settingsKey = GlobalKey();
@@ -42,6 +44,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
   final _firstServiceKey = GlobalKey();
   List<ServiceModel> _allServices = [];
   String _query = '';
+  int _unreadMessages = 0;
   late Future<List<ServiceModel>> _servicesFuture;
 
   @override
@@ -50,7 +53,20 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
     _servicesFuture = _serviceRepository.getMainServices();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _askForCardOnce();
+      _refreshUnreadMessages();
     });
+  }
+
+  Future<void> _refreshUnreadMessages() async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+    try {
+      final count = await _messageRepository.getUnreadCount(user.id);
+      if (!mounted) return;
+      setState(() => _unreadMessages = count);
+    } catch (_) {
+      // La bandeja sigue accesible si el conteo falla.
+    }
   }
 
   Future<void> _askForCardOnce() async {
@@ -133,253 +149,257 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
     return DemoTourOverlay(
       steps: _homeTourSteps,
       child: Scaffold(
-          backgroundColor: AppDecorations.canvasOf(context),
-          bottomNavigationBar: _UserBottomNav(
-            onProjects: () => context.push(AppConstants.routeJobHistory),
-            onMessages: () => context.push(AppConstants.routeNotifications),
-            onProfile: () => context.push(AppConstants.routeUserProfile),
-          ),
-          body: AuthSoftBackground(
-            showDecorations: true,
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _TopBar(
-                    userName: user?.name ?? 'Usuario',
-                    photoPath: user?.profilePhotoPath,
-                    profileKey: _profileKey,
-                    settingsKey: _settingsKey,
-                    onProfile: () =>
-                        context.push(AppConstants.routeUserProfile),
-                    onSettings: () => context.push(AppConstants.routeSettings),
-                  ),
-                  Expanded(
-                    child: FutureBuilder<List<ServiceModel>>(
-                      future: _servicesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                                ConnectionState.waiting &&
-                            _allServices.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
-                            child: Column(
-                              children: [
-                                ListItemSkeleton(),
-                                ListItemSkeleton(),
-                                ListItemSkeleton(),
-                                ListItemSkeleton(),
-                              ],
-                            ),
-                          );
-                        }
-
-                        if (snapshot.hasError) {
-                          return ErrorStateWidget(
-                            title: 'No se pudieron cargar los servicios',
-                            message: '${snapshot.error}',
-                            actionLabel: 'Reintentar',
-                            onRetry: () => setState(() {
-                              _servicesFuture =
-                                  _serviceRepository.getMainServices();
-                            }),
-                          );
-                        }
-
-                        if (snapshot.hasData) {
-                          _allServices = snapshot.data!;
-                        }
-
-                        final services = _filteredServices;
-                        final crossCount = AppBreakpoints.gridColumns(
-                          context,
-                          phone: 2,
-                          tablet: 3,
-                          desktopCols: 4,
-                        );
-
-                        return SingleChildScrollView(
-                          padding: EdgeInsets.fromLTRB(
-                            AppBreakpoints.screenPadding(context) + 4,
-                            6,
-                            AppBreakpoints.screenPadding(context) + 4,
-                            20,
-                          ),
+        backgroundColor: AppDecorations.canvasOf(context),
+        bottomNavigationBar: _UserBottomNav(
+          onProjects: () => context.push(AppConstants.routeJobHistory),
+          onMessages: () async {
+            await context.push(AppConstants.routeMessages);
+            if (mounted) await _refreshUnreadMessages();
+          },
+          showMessageDot: _unreadMessages > 0,
+          onProfile: () => context.push(AppConstants.routeUserProfile),
+        ),
+        body: AuthSoftBackground(
+          showDecorations: true,
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _TopBar(
+                  userName: user?.name ?? 'Usuario',
+                  photoPath: user?.profilePhotoPath,
+                  profileKey: _profileKey,
+                  settingsKey: _settingsKey,
+                  onProfile: () => context.push(AppConstants.routeUserProfile),
+                  onSettings: () => context.push(AppConstants.routeSettings),
+                ),
+                Expanded(
+                  child: FutureBuilder<List<ServiceModel>>(
+                    future: _servicesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          _allServices.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Text(
-                                '¡Hola de nuevo, $userName!',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.5,
-                                  height: 1.15,
-                                  color: titleColor,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                '¿Qué necesitas hoy?',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: mutedColor,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              TourTarget(
-                                tourKey: _searchKey,
-                                width: double.infinity,
-                                child: _SearchBar(
-                                  controller: _searchController,
-                                  onChanged: (value) =>
-                                      setState(() => _query = value),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              const HowItWorksCard(),
-                              if (isAdmin) ...[
-                                const SizedBox(height: 12),
-                                _AdminConsoleTile(
-                                  onTap: () => context.push(
-                                    AppConstants.routeAdminDashboard,
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 22),
-                              TourTarget(
-                                tourKey: _servicesKey,
-                                width: double.infinity,
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 4,
-                                      height: 18,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(4),
-                                        gradient: const LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [
-                                            AppColors.brandOrangeVibrant,
-                                            AppColors.brandOrange,
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      'Servicios disponibles',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -0.2,
-                                        color: titleColor,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    TextButton(
-                                      onPressed: () {
-                                        _searchController.clear();
-                                        setState(() => _query = '');
-                                        final target = _servicesKey.currentContext;
-                                        if (target != null) {
-                                          Scrollable.ensureVisible(
-                                            target,
-                                            duration: const Duration(milliseconds: 280),
-                                            alignment: 0.05,
-                                          );
-                                        }
-                                      },
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: AppColors.brandOrange,
-                                        padding: EdgeInsets.zero,
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: const Text(
-                                        'Ver todos ›',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              if (services.isEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 32,
-                                    bottom: 24,
-                                  ),
-                                  child: EmptyStateWidget(
-                                    icon: Icons.search_off_rounded,
-                                    title: _query.isEmpty
-                                        ? 'Aún no hay servicios'
-                                        : 'Sin resultados',
-                                    message: _query.isEmpty
-                                        ? 'Vuelve a intentar en un momento.'
-                                        : 'Prueba con otra palabra o elige una categoría.',
-                                  ),
-                                )
-                              else
-                                GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: crossCount,
-                                    crossAxisSpacing: 12,
-                                    mainAxisSpacing: 12,
-                                    childAspectRatio:
-                                        AppBreakpoints.isTablet(context)
-                                            ? 0.92
-                                            : 0.84,
-                                  ),
-                                  itemCount: services.length,
-                                  itemBuilder: (context, index) {
-                                    final service = services[index];
-                                    final card = ServiceCard.fromService(
-                                      service: service,
-                                      compact: true,
-                                      onTap: () {
-                                        AppFeedback.light();
-                                        context.push(
-                                          AppConstants.routeWorkerList,
-                                          extra: {'serviceId': service.id},
-                                        );
-                                      },
-                                    );
-                                    if (index == 0) {
-                                      return TourTarget(
-                                        tourKey: _firstServiceKey,
-                                        child: card,
-                                      );
-                                    }
-                                    return card;
-                                  },
-                                ),
-                              const SizedBox(height: 16),
-                              const MyWorksGuaranteeBadge(),
-                              const SizedBox(height: 24),
+                              ListItemSkeleton(),
+                              ListItemSkeleton(),
+                              ListItemSkeleton(),
+                              ListItemSkeleton(),
                             ],
                           ),
                         );
-                      },
-                    ),
+                      }
+
+                      if (snapshot.hasError) {
+                        return ErrorStateWidget(
+                          title: 'No se pudieron cargar los servicios',
+                          message: '${snapshot.error}',
+                          actionLabel: 'Reintentar',
+                          onRetry: () => setState(() {
+                            _servicesFuture =
+                                _serviceRepository.getMainServices();
+                          }),
+                        );
+                      }
+
+                      if (snapshot.hasData) {
+                        _allServices = snapshot.data!;
+                      }
+
+                      final services = _filteredServices;
+                      final crossCount = AppBreakpoints.gridColumns(
+                        context,
+                        phone: 2,
+                        tablet: 3,
+                        desktopCols: 4,
+                      );
+
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          AppBreakpoints.screenPadding(context) + 4,
+                          6,
+                          AppBreakpoints.screenPadding(context) + 4,
+                          20,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              '¡Hola de nuevo, $userName!',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                                height: 1.15,
+                                color: titleColor,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '¿Qué necesitas hoy?',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: mutedColor,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TourTarget(
+                              tourKey: _searchKey,
+                              width: double.infinity,
+                              child: _SearchBar(
+                                controller: _searchController,
+                                onChanged: (value) =>
+                                    setState(() => _query = value),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const HowItWorksCard(),
+                            if (isAdmin) ...[
+                              const SizedBox(height: 12),
+                              _AdminConsoleTile(
+                                onTap: () => context.push(
+                                  AppConstants.routeAdminDashboard,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 22),
+                            TourTarget(
+                              tourKey: _servicesKey,
+                              width: double.infinity,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 4,
+                                    height: 18,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(4),
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          AppColors.brandOrangeVibrant,
+                                          AppColors.brandOrange,
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Servicios disponibles',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.2,
+                                      color: titleColor,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  TextButton(
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _query = '');
+                                      final target =
+                                          _servicesKey.currentContext;
+                                      if (target != null) {
+                                        Scrollable.ensureVisible(
+                                          target,
+                                          duration:
+                                              const Duration(milliseconds: 280),
+                                          alignment: 0.05,
+                                        );
+                                      }
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.brandOrange,
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: const Text(
+                                      'Ver todos ›',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (services.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 32,
+                                  bottom: 24,
+                                ),
+                                child: EmptyStateWidget(
+                                  icon: Icons.search_off_rounded,
+                                  title: _query.isEmpty
+                                      ? 'Aún no hay servicios'
+                                      : 'Sin resultados',
+                                  message: _query.isEmpty
+                                      ? 'Vuelve a intentar en un momento.'
+                                      : 'Prueba con otra palabra o elige una categoría.',
+                                ),
+                              )
+                            else
+                              GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossCount,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio:
+                                      AppBreakpoints.isTablet(context)
+                                          ? 0.92
+                                          : 0.84,
+                                ),
+                                itemCount: services.length,
+                                itemBuilder: (context, index) {
+                                  final service = services[index];
+                                  final card = ServiceCard.fromService(
+                                    service: service,
+                                    compact: true,
+                                    onTap: () {
+                                      AppFeedback.light();
+                                      context.push(
+                                        AppConstants.routeWorkerList,
+                                        extra: {'serviceId': service.id},
+                                      );
+                                    },
+                                  );
+                                  if (index == 0) {
+                                    return TourTarget(
+                                      tourKey: _firstServiceKey,
+                                      child: card,
+                                    );
+                                  }
+                                  return card;
+                                },
+                              ),
+                            const SizedBox(height: 16),
+                            const MyWorksGuaranteeBadge(),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 }
@@ -660,11 +680,13 @@ class _UserBottomNav extends StatelessWidget {
     required this.onProjects,
     required this.onMessages,
     required this.onProfile,
+    this.showMessageDot = false,
   });
 
   final VoidCallback onProjects;
-  final VoidCallback onMessages;
+  final Future<void> Function() onMessages;
   final VoidCallback onProfile;
+  final bool showMessageDot;
 
   @override
   Widget build(BuildContext context) {
@@ -713,14 +735,8 @@ class _UserBottomNav extends StatelessWidget {
                 label: 'Mensajes',
                 active: false,
                 muted: muted,
-                onTap: onMessages,
-                showDot: true,
-              ),
-              _NavItem(
-                icon: Icons.favorite_border_rounded,
-                label: 'Favoritos',
-                active: false,
-                muted: muted,
+                onTap: () => onMessages(),
+                showDot: showMessageDot,
               ),
               _NavItem(
                 icon: Icons.person_outline_rounded,

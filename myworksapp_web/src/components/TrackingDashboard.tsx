@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   Bell,
-  ChevronDown,
   Lock,
   MessageCircle,
   ShieldCheck,
@@ -36,11 +35,13 @@ interface TrackingDashboardProps {
   onBack: () => void;
   onOpenChat: () => void;
   onOpenNotifications?: () => void;
+  onLogout?: () => void;
   onConfirmReceipt?: () => void;
   confirmBusy?: boolean;
   confirmError?: string | null;
   onOpenDispute?: (reason: string, detail: string) => Promise<void>;
   onAddDisputeComment?: (comment: string) => Promise<void>;
+  evidence?: ReactNode;
 }
 
 export function TrackingDashboard({
@@ -67,11 +68,13 @@ export function TrackingDashboard({
   onBack,
   onOpenChat,
   onOpenNotifications,
+  onLogout,
   onConfirmReceipt,
   confirmBusy = false,
   confirmError = null,
   onOpenDispute,
   onAddDisputeComment,
+  evidence,
 }: TrackingDashboardProps) {
   const [showPayment, setShowPayment] = useState(false);
   const [disputeReason, setDisputeReason] = useState('calidad');
@@ -123,8 +126,12 @@ export function TrackingDashboard({
               <strong>{profileName ? profileLabel(profileName) : 'Invitado'}</strong>
               <span>Cuenta de cliente</span>
             </div>
-            <ChevronDown size={14} />
           </div>
+          {profileName && onLogout ? (
+            <button type="button" className="btn-ghost" onClick={() => onLogout()}>
+              Salir
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -190,6 +197,7 @@ export function TrackingDashboard({
             <p className="tracking-status-detail" role="alert">{confirmError}</p>
           ) : null}
 
+          {evidence}
           <button type="button" className="btn-primary tracking-chat-btn" onClick={onOpenChat}>
             <MessageCircle size={18} /> Abrir chat
           </button>

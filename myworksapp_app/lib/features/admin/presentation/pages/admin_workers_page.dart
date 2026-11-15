@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../widgets/admin_search_field.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class AdminWorkersPage extends ConsumerStatefulWidget {
   const AdminWorkersPage({super.key});
@@ -46,7 +47,7 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -61,7 +62,7 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -77,7 +78,7 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -158,7 +159,8 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
                                           : '?',
                                     ),
                                   ),
-                                  title: Text('${entry.name} · ${w.profession}'),
+                                  title:
+                                      Text('${entry.name} · ${w.profession}'),
                                   subtitle: Text(
                                     '${entry.email ?? ''}\n'
                                     '${w.isAvailable ? 'Disponible' : 'No disponible'} · '

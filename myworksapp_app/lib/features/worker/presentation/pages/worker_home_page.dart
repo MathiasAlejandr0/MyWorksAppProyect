@@ -4,13 +4,16 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/repositories/job_repository.dart';
+import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/database/repositories/notification_repository.dart';
+import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/open_quote_utils.dart';
 import '../../../../core/utils/worker_job_status.dart';
 import '../../../../core/widgets/design_system/app_brand_logo.dart';
@@ -20,6 +23,7 @@ import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../../../../core/widgets/app_guided_tour.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../ratings/domain/client_rating_label.dart';
 import '../providers/worker_home_refresh_provider.dart';
 import '../widgets/worker_active_job_banner.dart';
 import '../widgets/worker_demo_tour_overlay.dart';
@@ -136,11 +140,11 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
       if (!mounted) return;
       setState(() {
         _loadingDashboard = false;
-        _dashboardError = e.toString();
+        _dashboardError = ErrorHandler.getErrorMessage(e);
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo actualizar el panel: $e'),
+          content: Text(_dashboardError!),
           backgroundColor: AppColors.error,
         ),
       );
@@ -183,8 +187,8 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
         }
       }
       await _workerRepository.updateAvailability(user.id, newAvailability);
-      setState(() => _isAvailable = newAvailability);
       if (!mounted) return;
+      setState(() => _isAvailable = newAvailability);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(newAvailability
@@ -194,8 +198,8 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     }
   }
 
@@ -269,131 +273,90 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     return WorkerDemoTourOverlay(
       steps: _workerTourSteps(),
       child: Scaffold(
-          backgroundColor: AppDecorations.canvasOf(context),
-          body: AuthSoftBackground(
-            showDecorations: true,
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _WorkerTopBar(
-                    userName: user.name,
-                    photoPath: user.profilePhotoPath,
-                    profileTourKey: _profileKey,
-                    unreadNotifications: _dashboard?.unreadNotifications ?? 0,
-                    onNotifications: () =>
-                        context.push(AppConstants.routeNotifications),
-                    onProfile: () =>
-                        context.push(AppConstants.routeWorkerProfile),
-                    onSettings: () => context.push(AppConstants.routeSettings),
+        backgroundColor: AppDecorations.canvasOf(context),
+        body: AuthSoftBackground(
+          showDecorations: true,
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _WorkerTopBar(
+                  userName: user.name,
+                  photoPath: user.profilePhotoPath,
+                  profileTourKey: _profileKey,
+                  unreadNotifications: _dashboard?.unreadNotifications ?? 0,
+                  onNotifications: () =>
+                      context.push(AppConstants.routeNotifications),
+                  onProfile: () =>
+                      context.push(AppConstants.routeWorkerProfile),
+                  onSettings: () => context.push(AppConstants.routeSettings),
+                ),
+                WorkerHeader(
+                  firstName: firstName,
+                  worker: _dashboard?.worker,
+                  isAvailable: _isAvailable,
+                  hasActiveJobs: _hasActiveJobs,
+                  loading: _loadingDashboard,
+                  availabilityTourKey: _availabilityKey,
+                  onToggleAvailability: _toggleAvailability,
+                ),
+                if (_dashboard?.highlightJob != null)
+                  WorkerActiveJobBanner(
+                    job: _dashboard!.highlightJob!,
+                    onTap: () => context.push(
+                      '${AppConstants.routeJobDetail}/${_dashboard!.highlightJob!.id}',
+                    ),
+                    onChat: () => context.push(
+                      '${AppConstants.routeChat}/${_dashboard!.highlightJob!.id}',
+                    ),
                   ),
-                  WorkerHeader(
-                    firstName: firstName,
-                    worker: _dashboard?.worker,
-                    isAvailable: _isAvailable,
-                    hasActiveJobs: _hasActiveJobs,
-                    loading: _loadingDashboard,
-                    availabilityTourKey: _availabilityKey,
-                    onToggleAvailability: _toggleAvailability,
-                  ),
-                  WorkerOnboardingCard(
-                    workerId: user.id,
-                    onCompleted: _refresh,
-                  ),
-                  if (_dashboardError != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-                      child: Material(
-                        color: AppColors.error.withValues(alpha: 0.08),
+                if (_dashboardError != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    child: Material(
+                      color: AppColors.error.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        onTap: _refresh,
                         borderRadius: BorderRadius.circular(10),
-                        child: InkWell(
-                          onTap: _refresh,
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.error_outline,
-                                    color: AppColors.error, size: 18),
-                                const SizedBox(width: 8),
-                                const Expanded(
-                                  child: Text(
-                                    'Error al cargar. Toca para reintentar.',
-                                    style: TextStyle(
-                                      color: AppColors.error,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  color: AppColors.error, size: 18),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Error al cargar. Toca para reintentar.',
+                                  style: TextStyle(
+                                    color: AppColors.error,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                Icon(Icons.refresh,
-                                    color:
-                                        AppColors.error.withValues(alpha: 0.8),
-                                    size: 18),
-                              ],
-                            ),
+                              ),
+                              Icon(Icons.refresh,
+                                  color: AppColors.error.withValues(alpha: 0.8),
+                                  size: 18),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  if (_loadingDashboard)
-                    const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                      child: LinearProgressIndicator(
-                        minHeight: 2,
-                        color: AppColors.brandOrange,
-                        backgroundColor: AppColors.brandOrangeSoft,
-                      ),
-                    )
-                  else if (_dashboard != null) ...[
-                  TourTarget(
-                    tourKey: _statsKey,
-                    width: double.infinity,
-                    child: WorkerStatsRow(
-                      pending: _dashboard!.pendingCount,
-                      active: _dashboard!.activeCount,
-                      completed: _dashboard!.completedCount,
-                      selectedIndex: _tabController.index,
-                      onTap: (i) => _tabController.animateTo(i),
+                  ),
+                if (_loadingDashboard)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    child: LinearProgressIndicator(
+                      minHeight: 2,
+                      color: AppColors.brandOrange,
+                      backgroundColor: AppColors.brandOrangeSoft,
                     ),
                   ),
-                  TourTarget(
-                    tourKey: _earningsKey,
-                    width: double.infinity,
-                    child: WorkerEarningsSummary(
-                      key: ValueKey('earnings-$_jobsListGeneration'),
-                      workerId: user.id,
-                      onViewDetails: () =>
-                          context.push(AppConstants.routeStatistics),
-                    ),
-                  ),
-                  TourTarget(
-                    tourKey: _actionsKey,
-                    width: double.infinity,
-                    child: WorkerQuickActionsRow(
-                      onNewJob: () => _tabController.animateTo(0),
-                      onCalendar: () =>
-                          context.push(AppConstants.routeJobSchedule),
-                      onJobMap: () =>
-                          context.push(AppConstants.routeJobHistory),
-                      onInvoices: () =>
-                          context.push(AppConstants.routeStatistics),
-                    ),
-                  ),
-                  if (_dashboard!.highlightJob != null)
-                    WorkerActiveJobBanner(
-                      job: _dashboard!.highlightJob!,
-                      onTap: () => context.push(
-                        '${AppConstants.routeJobDetail}/${_dashboard!.highlightJob!.id}',
-                      ),
-                      onChat: () => context.push(
-                        '${AppConstants.routeChat}/${_dashboard!.highlightJob!.id}',
-                      ),
-                    ),
-                ],
-                Expanded(
+                Flexible(
+                  flex: 5,
                   child: Container(
                     margin: EdgeInsets.fromLTRB(
                       AppBreakpoints.screenPadding(context) - 4,
@@ -413,8 +376,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                         ),
                       ),
                       boxShadow: AppDecorations.appleCardShadow(
-                        isDark:
-                            Theme.of(context).brightness == Brightness.dark,
+                        isDark: Theme.of(context).brightness == Brightness.dark,
                       ),
                     ),
                     child: Column(
@@ -509,6 +471,65 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                     ),
                   ),
                 ),
+                Flexible(
+                  flex: 4,
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    children: [
+                      WorkerOnboardingCard(
+                        workerId: user.id,
+                        onCompleted: _refresh,
+                      ),
+                      if (_loadingDashboard)
+                        const Padding(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                          child: LinearProgressIndicator(
+                            minHeight: 2,
+                            color: AppColors.brandOrange,
+                            backgroundColor: AppColors.brandOrangeSoft,
+                          ),
+                        )
+                      else if (_dashboard != null) ...[
+                        TourTarget(
+                          tourKey: _statsKey,
+                          width: double.infinity,
+                          child: WorkerStatsRow(
+                            pending: _dashboard!.pendingCount,
+                            active: _dashboard!.activeCount,
+                            completed: _dashboard!.completedCount,
+                            selectedIndex: _tabController.index,
+                            onTap: (i) => _tabController.animateTo(i),
+                          ),
+                        ),
+                        TourTarget(
+                          tourKey: _earningsKey,
+                          width: double.infinity,
+                          child: WorkerEarningsSummary(
+                            key: ValueKey('earnings-$_jobsListGeneration'),
+                            workerId: user.id,
+                            onViewDetails: () =>
+                                context.push(AppConstants.routeStatistics),
+                          ),
+                        ),
+                        TourTarget(
+                          tourKey: _actionsKey,
+                          width: double.infinity,
+                          child: WorkerQuickActionsRow(
+                            onNewJob: () => _tabController.animateTo(0),
+                            onCalendar: () =>
+                                context.push(AppConstants.routeJobSchedule),
+                            onHistory: () =>
+                                context.push(AppConstants.routeJobHistory),
+                            onEarnings: () =>
+                                context.push(AppConstants.routeStatistics),
+                          ),
+                        ),
+                        _WorkerMoreLinks(),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -557,6 +578,40 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
     return allJobs
         .where((j) => j.status == AppConstants.jobStatusCompleted)
         .toList();
+  }
+}
+
+class _WorkerMoreLinks extends StatelessWidget {
+  const _WorkerMoreLinks();
+
+  @override
+  Widget build(BuildContext context) {
+    final links = [
+      (
+        AppConstants.routeWorkerPayouts,
+        Icons.account_balance_outlined,
+        'Pagos'
+      ),
+      (AppConstants.routeWorkerSchedule, Icons.schedule_outlined, 'Horario'),
+      (AppConstants.routeMyRatings, Icons.star_outline, 'Calificaciones'),
+      (AppConstants.routeMyDisputes, Icons.gavel_outlined, 'Disputas'),
+      (AppConstants.routeMessages, Icons.forum_outlined, 'Mensajes'),
+    ];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final link in links)
+            ActionChip(
+              avatar: Icon(link.$2, size: 18, color: AppColors.brandOrange),
+              label: Text(link.$3),
+              onPressed: () => context.push(link.$1),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -723,6 +778,9 @@ class _JobsTab extends StatefulWidget {
 
 class _JobsTabState extends State<_JobsTab> {
   late Future<List<JobModel>> _future;
+  Future<Map<String, ClientRatingSummary>>? _ratings;
+  Future<Map<String, String>>? _names;
+  String? _ratingKey;
 
   @override
   void initState() {
@@ -734,6 +792,9 @@ class _JobsTabState extends State<_JobsTab> {
   void didUpdateWidget(covariant _JobsTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.reloadToken != widget.reloadToken) {
+      _ratings = null;
+      _names = null;
+      _ratingKey = null;
       setState(() {
         _future = widget.loader();
       });
@@ -795,14 +856,58 @@ class _JobsTabState extends State<_JobsTab> {
             );
           }
 
-          return ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-            itemCount: jobs.length,
-            itemBuilder: (context, index) => WorkerJobCard(
-              job: jobs[index],
-              onTap: () => widget.onJobTap(jobs[index]),
-            ),
+          final key = jobs.map((job) => job.userId).join('|');
+          if (_ratings == null || _ratingKey != key) {
+            _ratingKey = key;
+            _ratings = RatingRepository().clientSummaries(
+              jobs.map((job) => job.userId).toList(),
+            );
+            _names = UserRepository()
+                .getPublicProfilesByIds(jobs.map((job) => job.userId).toList())
+                .then(
+                  (profiles) => {
+                    for (final entry in profiles.entries)
+                      entry.key: entry.value.name,
+                  },
+                );
+          }
+          return FutureBuilder<Map<String, ClientRatingSummary>>(
+            future: _ratings,
+            builder: (context, ratingSnap) {
+              return FutureBuilder<Map<String, String>>(
+                future: _names,
+                builder: (context, nameSnap) {
+                  final ready =
+                      ratingSnap.connectionState == ConnectionState.done;
+                  final known = ready && !ratingSnap.hasError;
+                  final summaries = ratingSnap.data ?? {};
+                  final names = nameSnap.data ?? {};
+                  return ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                    itemCount: jobs.length,
+                    itemBuilder: (context, index) {
+                      final job = jobs[index];
+                      final summary = summaries[job.userId];
+                      final label =
+                          job.status == AppConstants.jobStatusPending && ready
+                              ? clientRatingLabel(
+                                  average: summary?.average,
+                                  count: summary?.count ?? 0,
+                                  known: known,
+                                )
+                              : null;
+                      return WorkerJobCard(
+                        job: job,
+                        clientName: names[job.userId],
+                        clientRatingLabel: label,
+                        onTap: () => widget.onJobTap(job),
+                      );
+                    },
+                  );
+                },
+              );
+            },
           );
         },
       ),

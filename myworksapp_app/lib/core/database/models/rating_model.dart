@@ -2,6 +2,8 @@ class RatingModel {
   final String id;
   final String jobId;
   final String? userId;
+  final String? ratedUserId;
+  final String direction;
   final int score; // 1-5
   final String? comment;
   final DateTime createdAt;
@@ -10,6 +12,8 @@ class RatingModel {
     required this.id,
     required this.jobId,
     this.userId,
+    this.ratedUserId,
+    this.direction = 'cliente_a_trabajador',
     required this.score,
     this.comment,
     required this.createdAt,
@@ -20,6 +24,8 @@ class RatingModel {
       'id': id,
       'id_trabajo': jobId,
       if (userId != null) 'id_usuario': userId,
+      if (ratedUserId != null) 'id_calificado': ratedUserId,
+      'direccion': direction,
       'puntaje': score,
       'comentario': comment,
       'creado_en': createdAt.toIso8601String(),
@@ -31,6 +37,8 @@ class RatingModel {
       id: map['id'] as String,
       jobId: map['id_trabajo'] as String,
       userId: map['id_usuario'] as String?,
+      ratedUserId: map['id_calificado'] as String?,
+      direction: (map['direccion'] as String?) ?? 'cliente_a_trabajador',
       score: map['puntaje'] as int,
       comment: map['comentario'] as String?,
       createdAt: _parseDate(map['creado_en'] as String),

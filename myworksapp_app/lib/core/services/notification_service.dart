@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:uuid/uuid.dart';
@@ -11,7 +12,8 @@ class NotificationService {
   static final NotificationService instance = NotificationService._init();
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
-  final NotificationRepository _notificationRepository = NotificationRepository();
+  final NotificationRepository _notificationRepository =
+      NotificationRepository();
   bool _isInitialized = false;
 
   NotificationService._init();
@@ -22,12 +24,13 @@ class NotificationService {
     try {
       tz.initializeTimeZones();
 
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
       const darwinSettings = DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
       );
 
       const linuxSettings = LinuxInitializationSettings(
@@ -47,21 +50,15 @@ class NotificationService {
       );
 
       _isInitialized = ok == true;
-
-      if (_isInitialized) {
-        await _requestPermissions();
-      }
     } catch (e) {
       _isInitialized = false;
       AppLogger.e('Error inicializando notificaciones', e);
     }
   }
 
-  Future<void> _requestPermissions() async {
-    await _notifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+  Future<bool> _bannersAllowed() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('notifications_enabled') ?? false;
   }
 
   void _onNotificationTapped(NotificationResponse response) {
@@ -90,7 +87,8 @@ class NotificationService {
       AppLogger.e('Error guardando notificación en Supabase', e);
     }
 
-    await _showLocalBanner(title: title, body: body, id: notification.id.hashCode);
+    await _showLocalBanner(
+        title: title, body: body, id: notification.id.hashCode);
   }
 
   /// Muestra banner local para una notificación recibida por Realtime (sin reinsertar).
@@ -108,6 +106,7 @@ class NotificationService {
     required int id,
   }) async {
     if (!_isInitialized) return;
+    if (!await _bannersAllowed()) return;
 
     try {
       const androidDetails = AndroidNotificationDetails(
@@ -169,6 +168,7 @@ class NotificationService {
     }
 
     if (!_isInitialized) return;
+    if (!await _bannersAllowed()) return;
 
     try {
       const androidDetails = AndroidNotificationDetails(

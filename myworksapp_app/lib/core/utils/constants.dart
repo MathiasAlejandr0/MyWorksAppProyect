@@ -73,6 +73,7 @@ class AppConstants {
   static const String routeJobHistory = '/job/history';
   static const String routeRating = '/rating';
   static const String routeChat = '/chat';
+  static const String routeMessages = '/messages';
   static const String routeNotifications = '/notifications';
   static const String routeSettings = '/settings';
   static const String routeForgotPassword = '/forgot-password';
@@ -80,13 +81,17 @@ class AppConstants {
   static const String routeStatistics = '/statistics';
   static const String routeJobPhotos = '/job/photos';
   static const String routeJobSchedule = '/job/schedule';
+  static const String routeWorkerPayouts = '/worker/payouts';
+  static const String routeWorkerSchedule = '/worker/schedule';
+  static const String routeMyRatings = '/me/ratings';
+  static const String routeMyDisputes = '/me/disputes';
   static const String routeOnboarding = '/onboarding';
-  
+
   // Rutas GDPR
   static const String routePrivacyPolicy = '/privacy-policy';
   static const String routeTerms = '/terms';
   static const String routeUserRights = '/user-rights';
-  
+
   // Rutas nuevas
   static const String routeMaintenance = '/maintenance';
   static const String routeHelpCenter = '/help-center';
@@ -103,4 +108,5 @@ class AppConstants {
   static const String routeAdminServices = '/admin/services';
   static const String routeAdminFeatureFlags = '/admin/feature-flags';
   static const String routeAdminDesktopHub = '/admin/desktop-hub';
+  static const String routeAdminPayouts = '/admin/payouts';
 }

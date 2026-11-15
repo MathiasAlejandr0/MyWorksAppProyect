@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/database/repositories/admin_repository.dart';
+import '../../../../core/database/supabase_db.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/design_system/app_spacing.dart';
@@ -16,13 +17,13 @@ class AdminDashboardPage extends ConsumerStatefulWidget {
   const AdminDashboardPage({super.key});
 
   @override
-  ConsumerState<AdminDashboardPage> createState() =>
-      _AdminDashboardPageState();
+  ConsumerState<AdminDashboardPage> createState() => _AdminDashboardPageState();
 }
 
 class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
   AdminRepository get _repo => ref.read(adminRepositoryProvider);
   AdminMetrics? _metrics;
+  List<Map<String, dynamic>> _paymentAttention = [];
   bool _loading = true;
 
   @override
@@ -35,9 +36,15 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
     setState(() => _loading = true);
     try {
       final metrics = await _repo.getMetrics();
+      final rows = await supabase
+          .from('pagos')
+          .select('id, id_trabajo, estado, monto')
+          .inFilter(
+              'estado', ['pagado_por_confirmar', 'reembolsado_auto']).limit(20);
       if (!mounted) return;
       setState(() {
         _metrics = metrics;
+        _paymentAttention = List<Map<String, dynamic>>.from(rows);
         _loading = false;
       });
     } catch (e) {
@@ -54,7 +61,8 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cerrar sesión'),
-        content: const Text('Vas a salir del panel y volver al inicio de sesión.'),
+        content:
+            const Text('Vas a salir del panel y volver al inicio de sesión.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -113,88 +121,127 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
                   ),
                 )
               : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                padding: LayoutUtils.scrollPadding(context),
-                children: [
-                  Text(
-                    'Resumen de la plataforma',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                  onRefresh: _load,
+                  child: ListView(
+                    padding: LayoutUtils.scrollPadding(context),
+                    children: [
+                      Text(
+                        'Resumen de la plataforma',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      if (_paymentAttention.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Cobros por confirmar o devueltos solos',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 8),
+                                for (final row in _paymentAttention)
+                                  Text(
+                                    '${row['estado']} · trabajo ${row['id_trabajo']} · \$${row['monto']}',
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (m.totalIncidents > 0) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        _AlertBanner(count: m.totalIncidents),
+                      ],
+                      const SizedBox(height: AppSpacing.lg),
+                      _MetricsGrid(metrics: m),
+                      const SizedBox(height: AppSpacing.xl),
+                      const _SectionTitle('Operación'),
+                      AdminNavTile(
+                        icon: Icons.people_outline,
+                        title: 'Usuarios',
+                        subtitle: '${m.usersCount} cuentas registradas',
+                        onTap: () => context.push(AppConstants.routeAdminUsers),
+                      ),
+                      AdminNavTile(
+                        icon: Icons.engineering_outlined,
+                        title: 'Trabajadores',
+                        subtitle: '${m.workersCount} perfiles activos',
+                        onTap: () =>
+                            context.push(AppConstants.routeAdminWorkers),
+                      ),
+                      AdminNavTile(
+                        icon: Icons.work_outline,
+                        title: 'Trabajos',
+                        subtitle:
+                            '${m.activeJobsCount} activos de ${m.jobsCount}',
+                        onTap: () => context.push(AppConstants.routeAdminJobs),
+                      ),
+                      AdminNavTile(
+                        icon: Icons.home_repair_service_outlined,
+                        title: 'Servicios',
+                        subtitle: 'Activar o desactivar catálogo',
+                        onTap: () =>
+                            context.push(AppConstants.routeAdminServices),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const _SectionTitle('Incidencias y reclamos'),
+                      AdminNavTile(
+                        icon: Icons.flag_outlined,
+                        title: 'Reclamos de usuarios',
+                        subtitle: 'Reportes entre clientes y trabajadores',
+                        badge: m.pendingReportsCount,
+                        onTap: () =>
+                            context.push(AppConstants.routeAdminReports),
+                      ),
+                      AdminNavTile(
+                        icon: Icons.gavel_outlined,
+                        title: 'Disputas de trabajos',
+                        subtitle:
+                            '${m.openDisputesCount} abiertas · ${m.underReviewDisputesCount} en revisión',
+                        badge: m.openDisputesCount + m.underReviewDisputesCount,
+                        onTap: () =>
+                            context.push(AppConstants.routeAdminDisputes),
+                      ),
+                      AdminNavTile(
+                        icon: Icons.bug_report_outlined,
+                        title: 'Errores y sincronización',
+                        subtitle: 'Crashes, sync fallido y abuso',
+                        badge: m.newErrorsCount +
+                            m.failedSyncCount +
+                            m.unresolvedAbuseCount,
+                        onTap: () =>
+                            context.push(AppConstants.routeAdminErrors),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const _SectionTitle('Configuración'),
+                      AdminNavTile(
+                        icon: Icons.tune_outlined,
+                        title: 'Feature flags',
+                        subtitle: 'Activar funciones por rol o versión',
+                        onTap: () =>
+                            context.push(AppConstants.routeAdminFeatureFlags),
+                      ),
+                      AdminNavTile(
+                        icon: Icons.payments_outlined,
+                        title: 'Liquidaciones',
+                        subtitle: 'Marcar transferencias al profesional',
+                        onTap: () =>
+                            context.push(AppConstants.routeAdminPayouts),
+                      ),
+                      AdminNavTile(
+                        icon: Icons.desktop_windows_outlined,
+                        title: 'Programa de escritorio',
+                        subtitle:
+                            'La liquidación y el soporte viven en la app de escritorio',
+                        onTap: () =>
+                            context.push(AppConstants.routeAdminDesktopHub),
+                      ),
+                    ],
                   ),
-                  if (m.totalIncidents > 0) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    _AlertBanner(count: m.totalIncidents),
-                  ],
-                  const SizedBox(height: AppSpacing.lg),
-                  _MetricsGrid(metrics: m),
-                  const SizedBox(height: AppSpacing.xl),
-                  const _SectionTitle('Operación'),
-                  AdminNavTile(
-                    icon: Icons.people_outline,
-                    title: 'Usuarios',
-                    subtitle: '${m.usersCount} cuentas registradas',
-                    onTap: () => context.push(AppConstants.routeAdminUsers),
-                  ),
-                  AdminNavTile(
-                    icon: Icons.engineering_outlined,
-                    title: 'Trabajadores',
-                    subtitle: '${m.workersCount} perfiles activos',
-                    onTap: () => context.push(AppConstants.routeAdminWorkers),
-                  ),
-                  AdminNavTile(
-                    icon: Icons.work_outline,
-                    title: 'Trabajos',
-                    subtitle: '${m.activeJobsCount} activos de ${m.jobsCount}',
-                    onTap: () => context.push(AppConstants.routeAdminJobs),
-                  ),
-                  AdminNavTile(
-                    icon: Icons.home_repair_service_outlined,
-                    title: 'Servicios',
-                    subtitle: 'Activar o desactivar catálogo',
-                    onTap: () => context.push(AppConstants.routeAdminServices),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  const _SectionTitle('Incidencias y reclamos'),
-                  AdminNavTile(
-                    icon: Icons.flag_outlined,
-                    title: 'Reclamos de usuarios',
-                    subtitle: 'Reportes entre clientes y trabajadores',
-                    badge: m.pendingReportsCount,
-                    onTap: () => context.push(AppConstants.routeAdminReports),
-                  ),
-                  AdminNavTile(
-                    icon: Icons.gavel_outlined,
-                    title: 'Disputas de trabajos',
-                    subtitle:
-                        '${m.openDisputesCount} abiertas · ${m.underReviewDisputesCount} en revisión',
-                    badge: m.openDisputesCount + m.underReviewDisputesCount,
-                    onTap: () => context.push(AppConstants.routeAdminDisputes),
-                  ),
-                  AdminNavTile(
-                    icon: Icons.bug_report_outlined,
-                    title: 'Errores y sincronización',
-                    subtitle: 'Crashes, sync fallido y abuso',
-                    badge: m.newErrorsCount + m.failedSyncCount + m.unresolvedAbuseCount,
-                    onTap: () => context.push(AppConstants.routeAdminErrors),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  const _SectionTitle('Configuración'),
-                  AdminNavTile(
-                    icon: Icons.tune_outlined,
-                    title: 'Feature flags',
-                    subtitle: 'Activar funciones por rol o versión',
-                    onTap: () =>
-                        context.push(AppConstants.routeAdminFeatureFlags),
-                  ),
-                  AdminNavTile(
-                    icon: Icons.desktop_windows_outlined,
-                    title: 'Programa de escritorio',
-                    subtitle: 'La liquidación y el soporte viven en la app de escritorio',
-                    onTap: () => context.push(AppConstants.routeAdminDesktopHub),
-                  ),
-                ],
-              ),
-            ),
+                ),
     );
   }
 }

@@ -5,7 +5,7 @@ import '../../theme/app_colors.dart';
 import '../../utils/constants.dart';
 
 /// Página de centro de ayuda
-/// 
+///
 /// Incluye:
 /// - FAQ por rol (usuario / trabajador)
 /// - Contacto de soporte
@@ -61,7 +61,8 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                             selected: _selectedRole == AppConstants.roleUser,
                             onSelected: (selected) {
                               if (selected) {
-                                setState(() => _selectedRole = AppConstants.roleUser);
+                                setState(() =>
+                                    _selectedRole = AppConstants.roleUser);
                               }
                             },
                           ),
@@ -73,7 +74,8 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                             selected: _selectedRole == AppConstants.roleWorker,
                             onSelected: (selected) {
                               if (selected) {
-                                setState(() => _selectedRole = AppConstants.roleWorker);
+                                setState(() =>
+                                    _selectedRole = AppConstants.roleWorker);
                               }
                             },
                           ),
@@ -84,48 +86,42 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // FAQ
             Text(
               'Preguntas Frecuentes',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
-            
+
             ...(_selectedRole == AppConstants.roleUser
                 ? _buildUserFAQ()
                 : _buildWorkerFAQ()),
-            
+
             const SizedBox(height: 32),
-            
+
             // Contacto de soporte
             Text(
               'Contacto de Soporte',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
-            
+
             Card(
               child: Column(
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.email, color: AppColors.primaryLight),
+                    leading:
+                        const Icon(Icons.email, color: AppColors.primaryLight),
                     title: const Text('Email'),
                     subtitle: const Text('soporte@myworksapp.com'),
                     onTap: () => _launchEmail(),
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.chat, color: AppColors.primaryLight),
-                    title: const Text('WhatsApp'),
-                    subtitle: const Text('+56 9 1234 5678'),
-                    onTap: () => _launchWhatsApp(),
                   ),
                 ],
               ),
@@ -140,27 +136,32 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
     return [
       _buildFAQItem(
         question: '¿Cómo creo un trabajo?',
-        answer: 'Selecciona un servicio desde la pantalla principal, completa los detalles '
+        answer:
+            'Selecciona un servicio desde la pantalla principal, completa los detalles '
             'y envía la solicitud. Los trabajadores disponibles recibirán una notificación.',
       ),
       _buildFAQItem(
         question: '¿Cómo elijo un trabajador?',
-        answer: 'Puedes elegir automáticamente el mejor trabajador disponible o seleccionar '
+        answer:
+            'Puedes elegir automáticamente el mejor trabajador disponible o seleccionar '
             'uno manualmente desde la lista de trabajadores disponibles.',
       ),
       _buildFAQItem(
         question: '¿Cómo pago por el servicio?',
-        answer: 'El pago se autoriza cuando aceptas el trabajo y se libera cuando el trabajador '
+        answer:
+            'El pago se autoriza cuando aceptas el trabajo y se libera cuando el trabajador '
             'completa el servicio satisfactoriamente.',
       ),
       _buildFAQItem(
         question: '¿Puedo cancelar un trabajo?',
-        answer: 'Sí, puedes cancelar un trabajo antes de que sea aceptado. Si ya fue aceptado, '
+        answer:
+            'Sí, puedes cancelar un trabajo antes de que sea aceptado. Si ya fue aceptado, '
             'puede haber políticas de cancelación según el servicio.',
       ),
       _buildFAQItem(
         question: '¿Cómo califico a un trabajador?',
-        answer: 'Después de que un trabajo se completa, recibirás una notificación para calificar '
+        answer:
+            'Después de que un trabajo se completa, recibirás una notificación para calificar '
             'al trabajador. Puedes dejar una calificación de 1 a 5 estrellas y un comentario opcional.',
       ),
     ];
@@ -170,28 +171,33 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
     return [
       _buildFAQItem(
         question: '¿Cómo completo mi perfil?',
-        answer: 'Ve a tu perfil y completa: descripción profesional (mín. 150 caracteres), '
+        answer:
+            'Ve a tu perfil y completa: descripción profesional (mín. 150 caracteres), '
             'al menos una foto en tu portafolio, y selecciona tu servicio principal. '
             'Solo los trabajadores con perfil completo reciben trabajos.',
       ),
       _buildFAQItem(
         question: '¿Cómo recibo trabajos?',
-        answer: 'Una vez que tu perfil esté completo, recibirás notificaciones automáticas '
+        answer:
+            'Una vez que tu perfil esté completo, recibirás notificaciones automáticas '
             'cuando haya trabajos disponibles en tu área y servicio.',
       ),
       _buildFAQItem(
         question: '¿Cómo acepto un trabajo?',
-        answer: 'Revisa los detalles del trabajo en la notificación o en la lista de trabajos '
+        answer:
+            'Revisa los detalles del trabajo en la notificación o en la lista de trabajos '
             'pendientes. Si estás disponible, puedes aceptarlo directamente.',
       ),
       _buildFAQItem(
         question: '¿Cuándo recibo el pago?',
-        answer: 'El pago se autoriza cuando el usuario acepta tu oferta y se libera cuando '
+        answer:
+            'El pago se autoriza cuando el usuario acepta tu oferta y se libera cuando '
             'completas el trabajo y el usuario lo confirma.',
       ),
       _buildFAQItem(
         question: '¿Qué pasa si no puedo completar un trabajo?',
-        answer: 'Si no puedes completar un trabajo aceptado, puedes cancelarlo. Sin embargo, '
+        answer:
+            'Si no puedes completar un trabajo aceptado, puedes cancelarlo. Sin embargo, '
             'las cancelaciones frecuentes pueden afectar tu calificación.',
       ),
     ];
@@ -224,8 +230,9 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   Future<void> _launchEmail() async {
     const email = 'soporte@myworksapp.com';
     const subject = 'Soporte My Works App';
-    final uri = Uri.parse('mailto:$email?subject=${Uri.encodeComponent(subject)}');
-    
+    final uri =
+        Uri.parse('mailto:$email?subject=${Uri.encodeComponent(subject)}');
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
@@ -236,21 +243,4 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       }
     }
   }
-
-  Future<void> _launchWhatsApp() async {
-    const phone = '56912345678'; // Sin + ni espacios
-    const message = 'Hola, necesito ayuda con My Works App';
-    final uri = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
-    
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo abrir WhatsApp')),
-        );
-      }
-    }
-  }
 }
-

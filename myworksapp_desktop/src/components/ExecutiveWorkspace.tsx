@@ -20,6 +20,7 @@ import { FinancialSettlementModal } from './FinancialSettlementModal';
 import { DigitalContractModal } from './DigitalContractModal';
 import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
 import { fetchAdminMetrics, fetchBusinessPeriod, fetchWorkersForAdmin, periodRange, setWorkerVerification, verificationLabel } from '@myworksapp/shared';
+import { PaymentAttentionBanner } from './PaymentAttentionBanner';
 import { supabase } from '../supabaseClient';
 import { queryKeys } from '../queryClient';
 
@@ -265,6 +266,8 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
       </div>
 
 
+
+      <PaymentAttentionBanner />
 
       <div className="executive-subnav">
 

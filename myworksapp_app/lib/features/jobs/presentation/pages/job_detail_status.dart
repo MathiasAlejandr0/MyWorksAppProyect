@@ -18,7 +18,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No se puede cambiar el estado de ${_job!.status} a $newStatus'),
+            content: Text(
+                'No se puede cambiar el estado de ${_job!.status} a $newStatus'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -33,14 +34,15 @@ extension JobDetailStatusActions on _JobDetailPageState {
       );
 
       await _loadJobDetails();
-      
+
       // Enviar notificación
       if (_job != null) {
-        final otherUserId = user.id == _job!.userId ? _job!.workerId : _job!.userId;
+        final otherUserId =
+            user.id == _job!.userId ? _job!.workerId : _job!.userId;
         if (otherUserId != null) {
           String title = '';
           String body = '';
-          
+
           switch (newStatus) {
             case AppConstants.jobStatusAccepted:
               title = 'Trabajo Aceptado';
@@ -48,7 +50,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
               break;
             case AppConstants.jobStatusEnRoute:
               title = 'Profesional en camino';
-              body = 'El especialista va hacia el domicilio. Puedes ver su ubicación.';
+              body =
+                  'El especialista va hacia el domicilio. Puedes ver su ubicación.';
               break;
             case AppConstants.jobStatusInProgress:
               title = 'Trabajo Iniciado';
@@ -63,7 +66,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
               body = 'El trabajo ha sido cancelado';
               break;
           }
-          
+
           if (title.isNotEmpty) {
             await NotificationService.instance.showNotification(
               title: title,
@@ -75,7 +78,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
           }
         }
       }
-      
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Estado actualizado')),
@@ -92,7 +95,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text(ErrorHandler.getErrorMessage(e)),
           backgroundColor: AppColors.error,
         ),
       );
@@ -113,7 +116,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se puede aceptar un trabajo en estado: ${_job!.status}'),
+          content:
+              Text('No se puede aceptar un trabajo en estado: ${_job!.status}'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -140,13 +144,13 @@ extension JobDetailStatusActions on _JobDetailPageState {
       // en 'aceptado' en una sola llamada. Llamarlo después de
       // transicionar_trabajo falla con «estado no permite asignacion: aceptado».
       await _jobRepository.assignWorker(_job!.id, user.id);
-      
+
       final WorkerRepository workerRepository = WorkerRepository();
       await workerRepository.updateAvailability(user.id, false);
       await workerRepository.enforceUnavailableWhileBusy(user.id);
-      
+
       await _loadJobDetails();
-      
+
       // Recargar la dirección ahora que el trabajo está aceptado
       if (_job != null) {
         _loadAddress(_job!);
@@ -166,7 +170,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Trabajo aceptado. Revisa los detalles en la pestaña En curso.'),
+          content: Text(
+              'Trabajo aceptado. Revisa los detalles en la pestaña En curso.'),
         ),
       );
       context.go(AppConstants.routeWorkerHome);
@@ -182,7 +187,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text(ErrorHandler.getErrorMessage(e)),
           backgroundColor: AppColors.error,
         ),
       );
@@ -202,7 +207,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se puede finalizar un trabajo en estado: ${_job!.status}'),
+          content: Text(
+              'No se puede finalizar un trabajo en estado: ${_job!.status}'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -255,7 +261,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
       if (targetStatus == PricingConstants.jobAwaitingClientApproval) {
         await NotificationService.instance.showNotification(
           title: 'Trabajo finalizado',
-          body: 'El profesional terminó. Si recibes conforme, se liberan los fondos retenidos.',
+          body:
+              'El profesional terminó. Si recibes conforme, se liberan los fondos retenidos.',
           userId: _job!.userId,
           type: 'job_completion_review',
           relatedId: widget.jobId,
@@ -276,10 +283,20 @@ extension JobDetailStatusActions on _JobDetailPageState {
             ),
           );
         }
-        if (user.role == AppConstants.roleUser) {
-          if (!mounted) return;
-          context.push('${AppConstants.routeRating}/${widget.jobId}');
+        final canRate = await DisputeService.instance.canRateJob(widget.jobId);
+        if (!mounted) return;
+        if (!canRate) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Calificación bloqueada por una disputa abierta'),
+            ),
+          );
+          return;
         }
+        if (user.role == AppConstants.roleWorker) {
+          requestWorkerHomeRefresh(ref);
+        }
+        context.push('${AppConstants.routeRating}/${widget.jobId}');
       } else if (!mounted) {
         return;
       } else {
@@ -304,7 +321,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text(ErrorHandler.getErrorMessage(e)),
           backgroundColor: AppColors.error,
         ),
       );
@@ -322,7 +339,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se puede cancelar un trabajo en estado: ${_job!.status}'),
+          content: Text(
+              'No se puede cancelar un trabajo en estado: ${_job!.status}'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -334,7 +352,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cancelar Solicitud'),
-        content: const Text('¿Estás seguro de que quieres cancelar esta solicitud?'),
+        content:
+            const Text('¿Estás seguro de que quieres cancelar esta solicitud?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -377,7 +396,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(ErrorHandler.getErrorMessage(e)),
             backgroundColor: AppColors.error,
           ),
         );
@@ -390,7 +409,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Rechazar Trabajo'),
-        content: const Text('¿Estás seguro de que quieres rechazar este trabajo?'),
+        content:
+            const Text('¿Estás seguro de que quieres rechazar este trabajo?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -428,7 +448,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
         } on AppError catch (e) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+            SnackBar(
+                content: Text(e.message), backgroundColor: AppColors.error),
           );
         }
         return;

@@ -80,16 +80,31 @@ export async function signUpUser(
   if (error) throw new AuthError(translateAuthError(error.message));
   if (!data.user) throw new AuthError('No se pudo registrar la cuenta.');
 
-  const profile = await getProfile(supabase, data.user.id);
-  if (profile) return profile;
+  const profile = await loadProfileAfterSignup(
+    () => getProfile(supabase, data.user.id),
+  );
+  if (!profile) {
+    throw new AuthError(
+      'Tu cuenta se creó, pero el perfil todavía no está listo. Confirma el correo e ingresa de nuevo.',
+    );
+  }
+  return profile;
+}
 
-  return {
-    id: data.user.id,
-    name,
-    email,
-    role: 'usuario',
-    accountStatus: 'activo',
-  };
+/** Reintenta el perfil que crea el trigger. No inventa una cuenta activa. */
+export async function loadProfileAfterSignup(
+  read: () => Promise<Profile | null>,
+  attempts = 4,
+  delayMs = 250,
+): Promise<Profile | null> {
+  for (let i = 0; i < attempts; i += 1) {
+    const profile = await read();
+    if (profile) return profile;
+    if (i < attempts - 1 && delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return null;
 }
 
 /** Cambio de clave (recuperación, invitación o cuenta ya iniciada). */

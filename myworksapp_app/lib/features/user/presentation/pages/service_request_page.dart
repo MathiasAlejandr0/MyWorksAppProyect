@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/database/repositories/service_repository.dart';
@@ -26,7 +27,8 @@ import '../../../../core/widgets/escrow_checkout_sheet.dart';
 import '../../../../core/widgets/design_system/myworks_guarantee_badge.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/location_picker_widget.dart';
-import '../../../../core/widgets/app_guided_tour.dart' show AppGuidedTour, GuidedTourStep, TourTarget, TourTooltipAlign;
+import '../../../../core/widgets/app_guided_tour.dart'
+    show AppGuidedTour, GuidedTourStep, TourTarget, TourTooltipAlign;
 import '../../../../core/services/demo_tour_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/job_service.dart';
@@ -65,7 +67,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   WorkerModel? _selectedWorker;
   UserModel? _selectedWorkerUser;
   Map<String, dynamic> _serviceMetadata = {};
-  String? _selectedVariant; // Variante seleccionada (para servicios con variantes)
+  String?
+      _selectedVariant; // Variante seleccionada (para servicios con variantes)
   List<Map<String, dynamic>> _serviceVariants = []; // Variantes disponibles
   String _selectedAddress = '';
   double? _selectedLatitude;
@@ -174,22 +177,23 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   Future<void> _loadServiceConfig(String serviceId) async {
     try {
       final config = await _configRepository.getConfigByServiceId(serviceId);
-      
+
       // Extraer variantes si existen
       List<Map<String, dynamic>> variants = [];
       String? selectedVariant;
-      
+
       if (config != null && config.configSchema.containsKey('variants')) {
         final variantsList = config.configSchema['variants'] as List<dynamic>?;
         if (variantsList != null) {
-          variants = variantsList.map((v) => v as Map<String, dynamic>).toList();
+          variants =
+              variantsList.map((v) => v as Map<String, dynamic>).toList();
           // Seleccionar la primera variante por defecto
           if (variants.isNotEmpty) {
             selectedVariant = variants.first['id'] as String?;
           }
         }
       }
-      
+
       setState(() {
         _serviceVariants = variants;
         _selectedVariant = selectedVariant;
@@ -213,7 +217,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   /// Reemplaza la pila de navegación para no volver paso a paso por el flujo de solicitud.
   void _navigateAfterJobCreated(
     String jobId, {
-    ServiceRequestSubmittedAction action = ServiceRequestSubmittedAction.viewJob,
+    ServiceRequestSubmittedAction action =
+        ServiceRequestSubmittedAction.viewJob,
   }) {
     if (action == ServiceRequestSubmittedAction.goHome) {
       context.go(AppConstants.routeUserHome);
@@ -238,12 +243,14 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     if (!_questionnaireComplete || _pricingMode.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Responde el cuestionario para definir la forma de cobro'),
+          content:
+              Text('Responde el cuestionario para definir la forma de cobro'),
         ),
       );
       return;
     }
-    if (_pricingMode != PricingConstants.modeLegacy && _selectedWorkerId == null) {
+    if (_pricingMode != PricingConstants.modeLegacy &&
+        _selectedWorkerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -255,7 +262,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     }
     if (_selectedAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor selecciona una ubicación en el mapa')),
+        const SnackBar(
+            content: Text('Por favor selecciona una ubicación en el mapa')),
       );
       return;
     }
@@ -275,7 +283,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       }
 
       // Obtener información del servicio para el diálogo
-      final service = await _serviceRepository.getServiceById(_selectedServiceId!);
+      final service =
+          await _serviceRepository.getServiceById(_selectedServiceId!);
       if (service == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -329,8 +338,9 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       }
 
       final comuna = inferComunaKey(_selectedAddress);
-      final metadata =
-          _serviceMetadata.isNotEmpty ? Map<String, dynamic>.from(_serviceMetadata) : null;
+      final metadata = _serviceMetadata.isNotEmpty
+          ? Map<String, dynamic>.from(_serviceMetadata)
+          : null;
       final description = _descriptionController.text.trim();
 
       if (_usesWorkerTierPricing &&
@@ -568,7 +578,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     } finally {
       if (mounted) {
@@ -586,296 +596,309 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       body: !_servicesReady
           ? const LoadingWidget(message: 'Cargando servicios...')
           : SingleChildScrollView(
-            padding: LayoutUtils.scrollPadding(context),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Completa los datos de tu solicitud',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  if (_selectedWorker != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.primaryLight.withValues(alpha: 0.25),
+              padding: LayoutUtils.scrollPadding(context),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Completa los datos de tu solicitud',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    if (_selectedWorker != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color:
+                                AppColors.primaryLight.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Trabajador seleccionado',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
+                                  ?.copyWith(
+                                    color: AppColors.primaryLight,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _selectedWorkerUser?.name ??
+                                  _selectedWorker!.profession,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            Text(
+                              _selectedWorker!.profession,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            Text(
+                              'El profesional revisará tu solicitud y te enviará una cotización. Pagas el total aprobado; la comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ],
+                    const SizedBox(height: 24),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedServiceId,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de servicio',
+                        prefixIcon: Icon(Icons.category),
+                      ),
+                      items: _services.map((service) {
+                        return DropdownMenuItem(
+                          value: service.id,
+                          child: Text(service.name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedServiceId = value;
+                          _serviceMetadata = {};
+                          _serviceVariants = [];
+                          _selectedVariant = null;
+                        });
+                        if (value != null) {
+                          _loadServiceConfig(value);
+                        }
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Selecciona un servicio';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Ubicación',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tu ubicación se detectará automáticamente',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.grayMedium,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    TourTarget(
+                      tourKey: _locationKey,
+                      width: double.infinity,
+                      child: LocationPickerWidget(
+                        onLocationSelected: (address, latitude, longitude) {
+                          if (_selectedAddress == address &&
+                              _selectedLatitude == latitude &&
+                              _selectedLongitude == longitude) {
+                            return;
+                          }
+                          setState(() {
+                            _selectedAddress = address;
+                            _selectedLatitude = latitude;
+                            _selectedLongitude = longitude;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (_usesWorkerTierPricing) ...[
+                      WorkerServiceOptionPicker(
+                        worker: _selectedWorker!,
+                        category: _selectedWorker!.serviceCategory,
+                        initialOptionId: _selectedWorkerTierId,
+                        onSelected: _applyWorkerServiceOption,
+                      ),
+                      if (_needsSquareMeters && _questionnaireComplete) ...[
+                        const SizedBox(height: 12),
+                        WorkerSquareMetersField(
+                          controller: _squareMetersController,
+                          unitRateClp:
+                              WorkerServiceOptionsCatalog.unitPriceForWorker(
+                            worker: _selectedWorker!,
+                            option: _selectedWorkerOption!,
+                          ),
+                          serviceCategory: _selectedWorker!.serviceCategory,
+                          squareMeters: _parsedSquareMeters,
+                          totalClp: _workerTierTotalClp(),
+                          onChanged: () => setState(() {}),
+                        ),
+                      ],
+                    ] else
+                      PricingModeQuestionnaire(
+                        workerPreselected: _selectedWorkerId != null,
+                        category: _categoryForSelectedService(),
+                        initialRecommendation: _pricingRecommendation,
+                        onRecommendation: _applyPricingRecommendation,
+                      ),
+                    if (_questionnaireComplete) ...[
+                      if (!_usesWorkerTierPricing &&
+                          _serviceVariants.isNotEmpty &&
+                          _pricingRecommendation?.variantKey == null) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          'Tipo de servicio',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        RadioGroup<String>(
+                          groupValue: _selectedVariant,
+                          onChanged: (value) {
+                            if (value == null) return;
+                            final variant = _serviceVariants
+                                .firstWhere((v) => v['id'] == value);
+                            setState(() {
+                              _selectedVariant = value;
+                              _serviceMetadata['variant'] = value;
+                              _serviceMetadata['variantName'] = variant['name'];
+                              _serviceMetadata['variantDescription'] =
+                                  variant['description'];
+                            });
+                          },
+                          child: Column(
+                            children: _serviceVariants.map((variant) {
+                              final variantId = variant['id'] as String;
+                              final variantName = variant['name'] as String;
+                              final variantDesc =
+                                  variant['description'] as String?;
+                              final isSelected = _selectedVariant == variantId;
+
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                color: isSelected
+                                    ? AppColors.primaryLight
+                                        .withValues(alpha: 0.1)
+                                    : null,
+                                child: RadioListTile<String>(
+                                  title: Text(
+                                    variantName,
+                                    style: TextStyle(
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  subtitle: variantDesc != null
+                                      ? Text(variantDesc)
+                                      : null,
+                                  value: variantId,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _descriptionController,
+                        decoration: const InputDecoration(
+                          labelText: 'Descripción del trabajo',
+                          prefixIcon: Icon(Icons.description),
+                          hintText:
+                              'Describe el problema o trabajo a realizar (mín. 10 caracteres)',
+                        ),
+                        maxLines: 5,
+                        validator: Validators.validateDescription,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
                         children: [
-                          Text(
-                            'Trabajador seleccionado',
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: AppColors.primaryLight,
-                                ),
+                          Expanded(
+                            child: ListTile(
+                              leading: const Icon(Icons.calendar_today),
+                              title: Text(
+                                _selectedDate == null
+                                    ? 'Seleccionar fecha'
+                                    : DateFormat('dd/MM/yyyy')
+                                        .format(_selectedDate!),
+                              ),
+                              onTap: () async {
+                                // Sin esto, al cerrar el selector el foco vuelve
+                                // a la descripcion y se reabre el teclado.
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime.now()
+                                      .add(const Duration(days: 365)),
+                                );
+                                if (date != null) {
+                                  setState(() => _selectedDate = date);
+                                }
+                              },
+                            ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _selectedWorkerUser?.name ?? _selectedWorker!.profession,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                          Text(
-                            _selectedWorker!.profession,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          Text(
-                            'El profesional revisará tu solicitud y te enviará una cotización. Pagas el total aprobado; la comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
-                            style: Theme.of(context).textTheme.bodySmall,
+                          Expanded(
+                            child: ListTile(
+                              leading: const Icon(Icons.access_time),
+                              title: Text(
+                                _selectedTime == null
+                                    ? 'Seleccionar hora'
+                                    : _selectedTime!.format(context),
+                              ),
+                              onTap: () async {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.now(),
+                                );
+                                if (time != null) {
+                                  setState(() => _selectedTime = time);
+                                }
+                              },
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedServiceId,
-                    decoration: const InputDecoration(
-                      labelText: 'Tipo de servicio',
-                      prefixIcon: Icon(Icons.category),
-                    ),
-                    items: _services.map((service) {
-                      return DropdownMenuItem(
-                        value: service.id,
-                        child: Text(service.name),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedServiceId = value;
-                        _serviceMetadata = {};
-                        _serviceVariants = [];
-                        _selectedVariant = null;
-                      });
-                      if (value != null) {
-                        _loadServiceConfig(value);
-                      }
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Selecciona un servicio';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Ubicación',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tu ubicación se detectará automáticamente',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.grayMedium,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  TourTarget(
-                    tourKey: _locationKey,
-                    width: double.infinity,
-                    child: LocationPickerWidget(
-                      onLocationSelected: (address, latitude, longitude) {
-                        if (_selectedAddress == address &&
-                            _selectedLatitude == latitude &&
-                            _selectedLongitude == longitude) {
-                          return;
-                        }
-                        setState(() {
-                          _selectedAddress = address;
-                          _selectedLatitude = latitude;
-                          _selectedLongitude = longitude;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  if (_usesWorkerTierPricing) ...[
-                    WorkerServiceOptionPicker(
-                      worker: _selectedWorker!,
-                      category: _selectedWorker!.serviceCategory,
-                      initialOptionId: _selectedWorkerTierId,
-                      onSelected: _applyWorkerServiceOption,
-                    ),
-                    if (_needsSquareMeters && _questionnaireComplete) ...[
-                      const SizedBox(height: 12),
-                      WorkerSquareMetersField(
-                        controller: _squareMetersController,
-                        unitRateClp: WorkerServiceOptionsCatalog.unitPriceForWorker(
-                          worker: _selectedWorker!,
-                          option: _selectedWorkerOption!,
-                        ),
-                        serviceCategory: _selectedWorker!.serviceCategory,
-                        squareMeters: _parsedSquareMeters,
-                        totalClp: _workerTierTotalClp(),
-                        onChanged: () => setState(() {}),
-                      ),
-                    ],
-                  ] else
-                    PricingModeQuestionnaire(
-                      workerPreselected: _selectedWorkerId != null,
-                      category: _categoryForSelectedService(),
-                      initialRecommendation: _pricingRecommendation,
-                      onRecommendation: _applyPricingRecommendation,
-                    ),
-                  if (_questionnaireComplete) ...[
-                    if (!_usesWorkerTierPricing &&
-                        _serviceVariants.isNotEmpty &&
-                        _pricingRecommendation?.variantKey == null) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'Tipo de servicio',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      RadioGroup<String>(
-                        groupValue: _selectedVariant,
-                        onChanged: (value) {
-                          if (value == null) return;
-                          final variant = _serviceVariants
-                              .firstWhere((v) => v['id'] == value);
-                          setState(() {
-                            _selectedVariant = value;
-                            _serviceMetadata['variant'] = value;
-                            _serviceMetadata['variantName'] = variant['name'];
-                            _serviceMetadata['variantDescription'] =
-                                variant['description'];
-                          });
-                        },
-                        child: Column(
-                          children: _serviceVariants.map((variant) {
-                            final variantId = variant['id'] as String;
-                            final variantName = variant['name'] as String;
-                            final variantDesc = variant['description'] as String?;
-                            final isSelected = _selectedVariant == variantId;
-
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              color: isSelected
-                                  ? AppColors.primaryLight.withValues(alpha: 0.1)
-                                  : null,
-                              child: RadioListTile<String>(
-                                title: Text(
-                                  variantName,
-                                  style: TextStyle(
-                                    fontWeight: isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                  ),
+                      const SizedBox(height: 20),
+                      const MyWorksGuaranteeBadge(),
+                      const SizedBox(height: 20),
+                      TourTarget(
+                        tourKey: _submitKey,
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _handleSubmit,
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(
+                                  _usesWorkerTierPricing
+                                      ? 'Solicitar el servicio'
+                                      : _pricingMode ==
+                                              PricingConstants.modeOpenQuote
+                                          ? 'Enviar solicitud al profesional'
+                                          : _pricingMode ==
+                                                  PricingConstants.modeLegacy
+                                              ? 'Continuar'
+                                              : 'Continuar al pago',
                                 ),
-                                subtitle:
-                                    variantDesc != null ? Text(variantDesc) : null,
-                                value: variantId,
-                              ),
-                            );
-                          }).toList(),
                         ),
                       ),
-                      const SizedBox(height: 16),
                     ],
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Descripción del trabajo',
-                        prefixIcon: Icon(Icons.description),
-                        hintText:
-                            'Describe el problema o trabajo a realizar (mín. 10 caracteres)',
-                      ),
-                      maxLines: 5,
-                      validator: Validators.validateDescription,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ListTile(
-                            leading: const Icon(Icons.calendar_today),
-                            title: Text(
-                              _selectedDate == null
-                                  ? 'Seleccionar fecha'
-                                  : DateFormat('dd/MM/yyyy')
-                                      .format(_selectedDate!),
-                            ),
-                            onTap: () async {
-                              // Sin esto, al cerrar el selector el foco vuelve
-                              // a la descripcion y se reabre el teclado.
-                              FocusManager.instance.primaryFocus?.unfocus();
-                              final date = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime.now(),
-                                lastDate: DateTime.now()
-                                    .add(const Duration(days: 365)),
-                              );
-                              if (date != null) {
-                                setState(() => _selectedDate = date);
-                              }
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: ListTile(
-                            leading: const Icon(Icons.access_time),
-                            title: Text(
-                              _selectedTime == null
-                                  ? 'Seleccionar hora'
-                                  : _selectedTime!.format(context),
-                            ),
-                            onTap: () async {
-                              FocusManager.instance.primaryFocus?.unfocus();
-                              final time = await showTimePicker(
-                                context: context,
-                                initialTime: TimeOfDay.now(),
-                              );
-                              if (time != null) {
-                                setState(() => _selectedTime = time);
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    const MyWorksGuaranteeBadge(),
-                    const SizedBox(height: 20),
-                    TourTarget(
-                      tourKey: _submitKey,
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleSubmit,
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : Text(
-                                _usesWorkerTierPricing
-                                    ? 'Solicitar el servicio'
-                                    : _pricingMode ==
-                                            PricingConstants.modeOpenQuote
-                                        ? 'Enviar solicitud al profesional'
-                                        : _pricingMode ==
-                                                PricingConstants.modeLegacy
-                                            ? 'Continuar'
-                                            : 'Continuar al pago',
-                              ),
-                      ),
-                    ),
                   ],
-                ],
+                ),
               ),
             ),
-          ),
     );
 
     if (!_servicesReady) return page;
@@ -925,6 +948,4 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       _serviceMetadata['pricing_questionnaire'] = rec.questionnaireAnswers;
     });
   }
-
 }
-

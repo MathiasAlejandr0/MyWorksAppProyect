@@ -4,10 +4,11 @@ import '../database/repositories/job_repository.dart';
 import '../database/models/dispute_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
+import 'dispute_rules.dart';
 import 'payment_service.dart';
 
 /// Servicio de disputas
-/// 
+///
 /// Maneja:
 /// - Apertura de disputas
 /// - Congelamiento de rating y pago
@@ -21,7 +22,7 @@ class DisputeService {
   final PaymentService _paymentService = PaymentService.instance;
 
   /// Abre una disputa para un job
-  /// 
+  ///
   /// Congela:
   /// - Rating (no se puede calificar)
   /// - Pago (se retiene si está autorizado)
@@ -42,13 +43,15 @@ class DisputeService {
 
       // 2. Verificar que el usuario tiene permiso
       if (job.userId != openedBy && job.workerId != openedBy) {
-        throw AppError.permission('No tienes permiso para abrir una disputa en este trabajo');
+        throw AppError.permission(
+            'No tienes permiso para abrir una disputa en este trabajo');
       }
 
       // 3. Verificar que no hay disputa abierta
       final existingDispute = await _disputeRepository.getDisputeByJobId(jobId);
-      if (existingDispute != null && existingDispute.status == 'abierta') {
-        throw AppError.validation('Ya existe una disputa abierta para este trabajo');
+      if (disputeIsOpen(existingDispute?.status)) {
+        throw AppError.validation(
+            'Ya existe una disputa abierta para este trabajo');
       }
 
       // 4. Crear disputa
@@ -72,7 +75,8 @@ class DisputeService {
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error abriendo disputa', e);
-      throw AppError.database('Error al abrir disputa: ${e.toString()}');
+      throw AppError.database(
+          'No se pudo abrir la disputa. Inténtalo de nuevo.');
     }
   }
 
@@ -93,7 +97,8 @@ class DisputeService {
         throw AppError.validation('La disputa ya fue resuelta');
       }
       if (decision != 'liberar' && decision != 'reembolsar') {
-        throw AppError.validation('Elige liberar el pago o devolverlo a la tarjeta');
+        throw AppError.validation(
+            'Elige liberar el pago o devolverlo a la tarjeta');
       }
 
       await _paymentService.resolveDisputeFunds(
@@ -104,13 +109,14 @@ class DisputeService {
 
       final updated = await _disputeRepository.getDisputeById(disputeId);
       AppLogger.i('Disputa $disputeId cerrada por $resolvedBy: $decision');
-      return updated ?? dispute.copyWith(
-        status: 'resuelta',
-        resolution: resolution,
-        resolvedBy: resolvedBy,
-        resolvedAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+      return updated ??
+          dispute.copyWith(
+            status: 'resuelta',
+            resolution: resolution,
+            resolvedBy: resolvedBy,
+            resolvedAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error resolviendo disputa', e);
@@ -133,11 +139,10 @@ class DisputeService {
   Future<bool> hasOpenDispute(String jobId) async {
     try {
       final dispute = await _disputeRepository.getDisputeByJobId(jobId);
-      return dispute != null &&
-          (dispute.status == 'abierta' || dispute.status == 'en_revision');
+      return disputeIsOpen(dispute?.status);
     } catch (e) {
       AppLogger.e('Error verificando disputa', e);
-      return false;
+      return true;
     }
   }
 
@@ -157,4 +162,3 @@ class DisputeService {
     }
   }
 }
-
