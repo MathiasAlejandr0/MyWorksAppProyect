@@ -1,0 +1,7 @@
+Historias de usuario — MyWorksApp
+
+Historia 1. Cliente
+Una persona que necesita un oficio entra a MyWorksApp desde la aplicación móvil o desde la página web. Busca en el catálogo por tipo de trabajo y zona, compara a los profesionales según su reputación, su cobertura y la evidencia de trabajos anteriores, y solicita el servicio. Desde ese momento sigue el mismo pedido en cualquiera de las dos interfaces: conversa por el chat del trabajo, revisa el avance y las fotografías, y cierra el servicio cuando queda conforme. El pago se realiza con Webpay y permanece retenido hasta ese cierre; después el cliente califica la atención. La aplicación y la web comparten el pedido, de modo que el seguimiento no depende de la pantalla en la que haya empezado.
+
+Historia 2. Trabajador y operación interna
+Un trabajador de oficio publica en la aplicación móvil su profesión, su zona, sus tarifas y su disponibilidad, y queda visible en el catálogo sin tener que promocionarse por redes sociales. Cuando un cliente lo elige, acepta el trabajo, actualiza los estados, sube la evidencia y mantiene el contacto por el chat del pedido. Al cierre conforme, el cobro retenido se libera y la calificación actualiza su reputación, lo que influye en cómo aparece después en el listado. Si hace falta soporte, resolver una disputa o registrar el pago al profesional, esa operación se atiende desde el software de escritorio, que usa la misma base de datos que la aplicación y la web.

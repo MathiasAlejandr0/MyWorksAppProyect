@@ -1,0 +1,27 @@
+{
+  "anexo": "2026-11-08-rendimiento-carga",
+  "titulo": "Línea base de rendimiento y carga tras trabajador_horarios",
+  "git_sha": "5654833",
+  "git_subject": "fix: ocultar la agenda semanal del catalogo REST",
+  "measured_from": "2026-11-08T19:46:54.536Z",
+  "measured_to": "2026-11-08T20:30:00.000Z",
+  "timezone": "America/Santiago",
+  "cliente": {
+    "os": "Windows 10 10.0.26300",
+    "k6": "v2.2.0",
+    "node": "v22.15.0",
+    "vite": "8.2.1"
+  },
+  "objetivo": {
+    "supabase_url": "https://wxqrfcqifkfgawrnqmnj.supabase.co",
+    "project_ref": "wxqrfcqifkfgawrnqmnj",
+    "plan": "Free (demo Capstone)",
+    "worker_id": "11111111-1111-4111-8111-000000000206"
+  },
+  "no_incluido": [
+    "Webpay / guest-checkout (crea pagos o usuarios reales)",
+    "PROFILE=free-ceiling 300 VUs (egress ~196 MB y REST trabajadores anon queda vacío)",
+    "PROFILE=soak 10 min",
+    "capacity-ceiling.js"
+  ]
+}

@@ -1,0 +1,98 @@
+# Dependabot abre actualizaciones estables.
+# Un salto de versión mayor se revisa aparte: si el código usa APIs viejas,
+# se migra el código. No se ignoran majors por comodidad.
+# glib queda fuera: Tauri 2 resuelve 0.18 y 0.20 no entra en ese stack.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+
+  - package-ecosystem: npm
+    directory: /myworksapp_web
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      web-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: /myworksapp_desktop
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      desktop-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: /shared
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      shared-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: pub
+    directory: /myworksapp_app
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      flutter-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: cargo
+    directory: /myworksapp_desktop/src-tauri
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    ignore:
+      - dependency-name: glib
+    groups:
+      tauri-minor-patch:
+        update-types:
+          - minor
+          - patch

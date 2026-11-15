@@ -27,7 +27,7 @@ jobs:
           VITE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          config="myworksapp_app/lib/core/config/supabase_config.dart"
+          config="MyWorksAppProyect/myworksapp_app/lib/core/config/supabase_config.dart"
           file_url=$(sed -n "s/.*defaultValue: '\\(https:\\/\\/[^']*supabase\\.co\\)'.*/\\1/p" "$config" | head -n 1)
           file_key=$(sed -n "s/.*defaultValue: '\\(sb_publishable_[^']*\\)'.*/\\1/p" "$config" | head -n 1)
           url="${SUPABASE_URL:-${VITE_URL:-$file_url}}"

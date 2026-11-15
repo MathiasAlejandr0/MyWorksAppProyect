@@ -1,0 +1,120 @@
+export type UserRole = 'usuario' | 'trabajador' | 'administrador';
+export type AccountStatus = 'activo' | 'suspendido' | 'bloqueado';
+export type DisputeStatus =
+  | 'abierta'
+  | 'en_revision'
+  | 'requiere_humano'
+  | 'reembolso_pendiente'
+  | 'resuelta';
+
+export interface Profile {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  accountStatus: AccountStatus;
+  profilePhotoPath?: string | null;
+  createdAt?: string;
+}
+
+export interface ServiceRow {
+  id: string;
+  name: string;
+  description?: string | null;
+  category: string;
+  isActive: number;
+  pricingModel?: string | null;
+}
+
+export interface WorkerRow {
+  userId: string;
+  profession: string;
+  description?: string | null;
+  rating: number;
+  isAvailable: number;
+  visitFee: number;
+  serviceCategory: string;
+  pricingConfigured: number;
+  workZone?: string | null;
+  verificationStatus?: string | null;
+  verificationNote?: string | null;
+  /** Sin sesión, el catálogo la entrega redondeada (~1 km). Exacta solo con sesión. */
+  baseLatitude?: number | null;
+  baseLongitude?: number | null;
+  serviceRadiusKm?: number | null;
+  baseOrigin?: string | null;
+  completedJobs?: number;
+  listingScore?: number | null;
+  urbanRadiusKm?: number | null;
+  outsideMobilizationFeeClp?: number | null;
+  isElite?: boolean;
+}
+
+export interface WorkerWithProfile extends WorkerRow {
+  name: string;
+  profilePhotoPath?: string | null;
+  email?: string;
+}
+
+export interface JobRow {
+  id: string;
+  userId: string;
+  workerId?: string | null;
+  serviceId?: string | null;
+  status: string;
+  address?: string | null;
+  description?: string | null;
+  createdAt: string;
+}
+
+export interface DisputeRow {
+  id: string;
+  jobId: string;
+  openedBy: string;
+  reason: string;
+  description?: string | null;
+  status: DisputeStatus;
+  resolution?: string | null;
+  origin?: string | null;
+  suggestedDecision?: 'liberar' | 'reembolsar' | 'humano' | null;
+  rule?: string | null;
+  dueAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DisputeWithContext extends DisputeRow {
+  clientName: string;
+  workerName: string;
+  escrowAmount: number;
+}
+
+export interface AdminMetrics {
+  usersCount: number;
+  workersCount: number;
+  jobsCount: number;
+  openDisputesCount: number;
+  underReviewDisputesCount: number;
+  pendingReportsCount: number;
+  activeJobsCount: number;
+  newErrorsCount: number;
+  unresolvedAbuseCount: number;
+  failedSyncCount: number;
+}
+
+export interface WebWorkerCard {
+  id: string;
+  name: string;
+  profession: string;
+  category: string;
+  rating: number;
+  jobsDone: number;
+  photoUrl: string;
+  pricePerVisit: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  serviceRadiusKm?: number | null;
+  urbanRadiusKm?: number | null;
+  outsideMobilizationFeeClp?: number | null;
+  isElite?: boolean;
+}

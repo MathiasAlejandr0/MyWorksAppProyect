@@ -1,0 +1,12 @@
+fecha,prueba,script,profile,vus_max,p95_ms,error_pct,rps,http_reqs,notas
+2026-09-20,catalogo REST,catalog.js,smoke,5,303,0,6.5,,runbook; informe Word
+2026-09-20,catalogo REST,catalog.js,stress,200,220,0,,,runbook; p95 aproximado
+2026-09-20,catalogo REST,catalog.js,free-ceiling,300,263,0,302,90942,p95<500; egress ~196 MB
+2026-11-08,catalogo REST,catalog.js,smoke,5,249.23,0,6.71,210,mismos scripts; REST trabajadores anon = []
+2026-11-08,catalogo REST,catalog.js,baseline,50,232.58,0,47.62,8600,REST trabajadores anon = []
+2026-11-08,catalogo REST,catalog.js,stress,200,237.38,0,174.23,62834,comparable con stress 20-09; REST trabajadores anon = []
+2026-11-08,catalogo REST+RPC,catalog.js + K6_USE_RPC=1,baseline,50,264.96,0,60.44,10965,RPC listar_profesionales_catalogo con filas
+2026-11-08,funnel reserva RPC,booking-reads.js,smoke,5,261.76,0,8.69,270,categorias+catalogo+huecos con filas
+2026-11-08,funnel reserva RPC,booking-reads.js,baseline,30,249.82,0,35.82,6471,línea base nueva (no existía en sep)
+2026-11-08,funnel reserva RPC,booking-reads.js,stress,80,248.74,0,95.32,24402,max 2.22 s en cola; p95 sigue <250 ms
+2026-11-08,mixto anon+JWT,mixed-read.js,baseline,40,239.65,0,43.57,7905,sesión Camila; trabajos 200

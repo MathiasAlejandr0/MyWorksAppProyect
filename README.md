@@ -1,240 +1,191 @@
-# My Works App — Ecosistema multiplataforma (MVP)
+﻿# My Works App — Proyecto de Título Profesional
 
-[![Estado](https://img.shields.io/badge/Estado-MVP%20demo-yellow.svg)]()
-[![Tests Flutter](https://img.shields.io/badge/Tests%20Flutter-unit%2Fwidget-blue.svg)]()
-[![Backend](https://img.shields.io/badge/Backend-Supabase%20PostgreSQL-orange.svg)]()
-
-Marketplace de servicios del hogar (cliente + profesional) para Chile, con hub web y escritorio admin.  
-**Estado:** listo para lanzar comercial con Webpay en integración; flip a producción al crear la empresa (ver runbook Transbank).
-
-Documento técnico de referencia: [`ESTADO_DEL_PROYECTO.md`](ESTADO_DEL_PROYECTO.md).  
-Diccionario de datos: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md).  
-Pruebas de capacidad (k6): [`docs/RUNBOOK_CAPACIDAD_CARGA.md`](docs/RUNBOOK_CAPACIDAD_CARGA.md).  
-Escala ≥20.000 usuarios: [`docs/RUNBOOK_ESCALA_20K_USUARIOS.md`](docs/RUNBOOK_ESCALA_20K_USUARIOS.md).  
-Informe Word (Duoc UC): [`docs/INFORME_PRUEBAS_CARGA_CAPACIDAD.docx`](docs/INFORME_PRUEBAS_CARGA_CAPACIDAD.docx).
+**Institución:** Duoc UC — Sede Puerto Montt  
+**Asignatura / programa:** Capstone PTY4614 (APT)  
+**Tipo de proyecto:** Proyecto de título profesional (desarrollo de software)  
+**Equipo:** Mathias Alejandro Jara Alvarado · Nicolas Chiguay · Gabriel Valderas
 
 ---
 
-## Arquitectura de software
+## 1. Resumen del proyecto
+
+**My Works App** es una plataforma digital multiplataforma que conecta **hogares y clientes** con **profesionales de oficios** (electricidad, gasfitería, armado, plomería, etc.) en Chile.
+
+El proyecto de título aborda el problema de la **informalidad, la desconfianza y la falta de trazabilidad** en la contratación de servicios a domicilio: el cliente no siempre sabe a quién contratar, el profesional no siempre tiene un canal formal de demanda, y el pago suele quedar expuesto a incumplimientos.
+
+La solución propuesta es un **ecosistema comercial** (app móvil, web y panel de escritorio) con:
+
+- solicitud y agendamiento de visitas o urgencias;
+- perfiles y roles (cliente, profesional, administración);
+- **pago protegido (escrow de negocio)** mediante Transbank Webpay Plus;
+- seguimiento del trabajo y herramientas operativas para el equipo interno.
+
+El repositorio concentra los **entregables académicos Capstone** en la raíz y el **monorepo de software** dentro de [`MyWorksAppProyect/`](MyWorksAppProyect/).
+
+---
+
+## 2. Objetivo general
+
+Diseñar, implementar y validar un **MVP multiplataforma** de marketplace de servicios del hogar, con base de datos y autenticación en la nube, pagos en ambiente de integración Transbank y flujos diferenciados para cliente, profesional y administración, en el marco de un proyecto de título profesional en Duoc UC.
+
+### Objetivos específicos
+
+1. Definir el problema, alcance y stack tecnológico del proyecto (Fase 1 — definición APT).
+2. Modelar e implementar dominio, autenticación, trabajos y políticas de acceso (Supabase / PostgreSQL / RLS).
+3. Desarrollar interfaces cliente (Flutter + web) y hub operativo (desktop).
+4. Integrar pagos Webpay sin capturar datos de tarjeta en el cliente (Edge Functions).
+5. Documentar operación, riesgos y criterios de paso a producción (runbooks).
+6. Evidenciar el trabajo académico Capstone (fases, guías, presentaciones).
+
+---
+
+## 3. Alcance del producto (qué entrega el título)
+
+| Actor | Capacidad principal |
+|-------|---------------------|
+| **Cliente** | Buscar oficio, solicitar visita/urgencia, pagar con Webpay, seguir el servicio |
+| **Profesional** | Gestionar trabajos y perfil desde la app móvil |
+| **Administración / soporte** | Operar desde el hub desktop: métricas, disputas, liquidación manual del escrow |
+
+**Fuera de alcance inmediato del MVP académico-comercial (documentado como pendiente):** MFA obligatorio, payout bancario automatizado (Khipu/Fintoc), firma electrónica legal Ley 19.799, métricas de negocio reales en producción.
+
+---
+
+## 4. Arquitectura de software
 
 ### En una frase
 
-> **Monorepo multiplataforma** con arquitectura **cliente–servidor** sobre **Supabase (BaaS)**: tres clientes (móvil, web, escritorio) comparten un backend (Auth + PostgreSQL + RLS + Edge Functions). En la app Flutter se usa un enfoque **modular por features** con capas prácticas (UI → servicios → repositorios), inspirado en Clean Architecture sin aplicarla de forma rígida.
+> **Monorepo multiplataforma** con arquitectura **cliente–servidor** sobre **Supabase (BaaS)**. Tres clientes (Flutter, web React/Vite, desktop Tauri) usan el mismo backend (Auth, PostgreSQL, RLS, Edge Functions). En móvil: organización **modular por features** con capas prácticas (UI → servicios → repositorios), inspirada en Clean Architecture de forma pragmática.
 
-### Qué tipo de arquitectura es
+### Tipo de arquitectura
 
-| Nombre que usamos | Qué significa en la práctica |
-|-------------------|------------------------------|
-| **Cliente–servidor** | Los datos viven en la nube (Supabase). Las apps no son “solo offline”. |
-| **BaaS (Backend as a Service)** | No inventamos un API desde cero: Auth, Postgres, RLS y Edge Functions. |
-| **Monorepo** | Un solo repositorio con app, web, desktop y `shared/`. |
-| **Modular / Feature-First (Flutter)** | Pantallas agrupadas por funcionalidad (`features/`), con un `core/` compartido. |
-| **Capas pragmáticas** | Presentación → servicios de aplicación → dominio → repositorios → Supabase. |
-| **Serverless en el borde** | Pagos Webpay y guest-checkout corren en **Edge Functions** (Deno), no en el celular. |
+| Concepto | Qué es en este proyecto |
+|----------|-------------------------|
+| Cliente–servidor | Datos centralizados en la nube; las apps consultan Supabase |
+| BaaS | Backend como servicio (Auth + Postgres + políticas RLS) |
+| Monorepo | Código de app, web, desktop y `shared/` en un solo árbol (`MyWorksAppProyect/`) |
+| Feature-First | En Flutter, pantallas por funcionalidad + `core/` compartido |
+| Capas pragmáticas | Presentación → aplicación → dominio → infraestructura (repositorios) |
+| Edge / serverless | Webpay y guest-checkout en Edge Functions (no en el dispositivo) |
 
-### Diagrama del ecosistema
+### Diagrama
 
 ```text
 ┌─────────────────┐   ┌─────────────────┐   ┌──────────────────────┐
 │  App Flutter    │   │  Web (Vite)     │   │  Desktop (Tauri)     │
-│  Cliente /      │   │  Landing +      │   │  Admin / soporte     │
-│  profesional    │   │  checkout       │   │                      │
+│  Cliente /      │   │  Landing +      │   │  Admin / soporte /   │
+│  profesional    │   │  checkout web   │   │  ejecutivo            │
 └────────┬────────┘   └────────┬────────┘   └──────────┬───────────┘
          │                     │                         │
          └──────────┬──────────┴──────────┬──────────────┘
                     ▼                     ▼
-            shared/ (TypeScript)    Supabase
-                                    Auth + PostgreSQL + RLS
+            shared/ (TypeScript)    Supabase (Auth + DB + RLS)
                     │                     │
                     └──────────┬──────────┘
                                ▼
-                    Edge Functions (Webpay, guest-checkout)
+                    Edge Functions Webpay / guest-checkout
                                ▼
                          Transbank (integración)
 ```
 
-### Capas dentro de la app móvil (Flutter)
+| Componente | Rol |
+|------------|-----|
+| `MyWorksAppProyect/myworksapp_app/` | App móvil Flutter |
+| `MyWorksAppProyect/myworksapp_web/` | Canal web (sesión o invitado) |
+| `MyWorksAppProyect/myworksapp_desktop/` | Hub operativo |
+| `MyWorksAppProyect/shared/` | Contratos TS compartidos |
+| `MyWorksAppProyect/myworksapp_app/supabase/` | Migraciones y Edge Functions |
+| `Fase 1/`, `Fase 2/`, `Documentos Guia/` | Expediente académico Capstone |
 
-```text
-features/*/presentation/   →  pantallas y widgets
-core/services/             →  orquestación (trabajos, precios, estados)
-core/domain/               →  reglas y constantes de negocio
-core/database/repositories →  acceso a datos
-                    ↓
-              Supabase (Postgres + Auth)
-```
-
-Web y desktop reutilizan contratos TypeScript en `shared/` y hablan al mismo backend.
-
-### Dinero (patrón de pagos)
-
-1. El cliente paga en **Transbank Webpay**. My Works App **no** pide ni guarda el número de la tarjeta (en jerga bancaria: **PAN** = *Primary Account Number*, el número largo de la tarjeta).  
-2. El commit deja el pago **`retenido`** (escrow de negocio: la plata queda “congelada” hasta liquidar al profesional).  
-3. Un administrador registra la liquidación al profesional (`liquidaciones`, hoy transferencia manual).
-
-Detalle: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md) y [`docs/RUNBOOK_TRANSBANK_PRODUCCION.md`](docs/RUNBOOK_TRANSBANK_PRODUCCION.md).
+Diccionario de datos (fácil de explicar): [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md).
 
 ---
 
-## Metodología de trabajo
+## 5. Metodología de trabajo
 
 ### En una frase
 
-> Trabajamos con **desarrollo ágil iterativo e incremental** orientado a un **MVP**, organizado por **fases Capstone (APT / Duoc UC)** y entregas pequeñas que se pueden demostrar, auditar y documentar.
+> **Desarrollo ágil iterativo e incremental**, orientado a un **MVP**, organizado por las **fases del Capstone APT (Duoc UC)**. Cada ciclo entrega un flujo usable (por ejemplo auth, trabajos, Webpay, liquidación), se prueba y se documenta.
 
-### Qué metodología es (y qué no es)
+### Cómo trabajamos
 
-| Sí aplicamos | Cómo se ve en el proyecto |
-|--------------|---------------------------|
-| **Ágil / iterativo-incremental** | Se entrega por ciclos: auth → trabajos → RLS → Webpay → liquidación → hardening. |
-| **MVP primero** | Priorizamos lo demostrable y comercializable; lo demorado (MFA, payout automático) queda explícito como pendiente. |
-| **Fases Capstone (APT)** | Fase 1 definición; Fase 2 y siguientes con evidencias académicas; el código vive en el monorepo. |
-| **Trabajo por dominio** | Cada incremento toca un flujo (reserva, pago, admin) de punta a punta, no “páginas sueltas”. |
-| **Calidad continua** | CI (analyze/test Flutter, lint/build web-desktop), runbooks, diccionario de BD, auditorías de seguridad. |
+| Práctica | En el proyecto |
+|----------|----------------|
+| Ágil / iterativo-incremental | Entregas por dominio: definición → backend/RLS → clientes → pagos → hardening |
+| MVP primero | Primero lo demostrable; pendientes explícitos (MFA, payout automático, prod Transbank) |
+| Fases Capstone | Fase 1 definición APT; Fase 2 y siguientes con evidencias; software en `MyWorksAppProyect/` |
+| Calidad continua | CI, runbooks, diccionario BD, auditorías de seguridad |
 
-| No pretendemos ser | Por qué |
-|--------------------|---------|
-| Waterfall / cascada pura | El alcance del MVP se ajusta con feedback, no con un único diseño cerrado al inicio. |
-| Scrum ceremonial estricto | No dependemos de ceremonias formales diarias documentadas; sí de sprints de entrega y priorización. |
-| Clean Architecture dogmática | Las capas existen donde aportan velocidad y claridad; no hay use-cases formales en cada feature. |
+**No** es cascada pura ni Scrum ceremonial estricto: priorizamos entregas demostrables y evidencia académica sobre rituales formales.
 
-### Ciclo típico de una iteración
+### Ciclo de una iteración
 
 ```text
-Priorizar un flujo (ej. Webpay guest)
-    → Diseñar / acordar estados en BD
-    → Implementar clientes + Edge + migración
-    → Probar (local / integración Transbank)
-    → Documentar (README, diccionario, runbook)
-    → Commit + CI
+Priorizar un flujo → acordar estados en BD → implementar (apps + Edge + SQL)
+→ probar → documentar → commit / CI
 ```
 
 ---
 
-## Estructura del monorepo
+## 6. Criterios de diseño profesional aplicados
 
-```mermaid
-graph TD
-    A["My Works App"] --> B["Flutter app — myworksapp_app"]
-    A --> C["Web Vite PWA — myworksapp_web"]
-    A --> D["Desktop Tauri hub — myworksapp_desktop"]
-    A --> E["Shared TS — shared/"]
-    A --> F["Supabase Auth + PostgreSQL + RLS"]
-```
-
-| Carpeta | Rol |
-|---------|-----|
-| `myworksapp_app/` | App principal Flutter (usuario, trabajador, admin) |
-| `myworksapp_web/` | Landing / flujo cliente web |
-| `myworksapp_desktop/` | Hub operativo admin (Tauri) |
-| `shared/` | Auth y repositorios TypeScript compartidos (web/desktop) |
-| `myworksapp_app/supabase/migrations/` | Migraciones SQL (esquema, RLS, Webpay, liquidaciones) |
-| `docs/` | Diccionario BD, runbooks Transbank/payout, arquitectura de cobro |
+- **Separación de secretos:** las claves de Transbank y del servidor solo viven en el backend (Edge / secrets de Supabase). Nadie del equipo las pone en la app que se instala en el celular.
+- **Datos de la tarjeta de crédito/débito (PCI):** el usuario **no escribe el número de su tarjeta en My Works App**. Paga en la página oficial de **Transbank**.  
+  En seguridad de pagos, al número de la tarjeta se le llama **PAN** (*Primary Account Number* = el número largo impreso en la tarjeta).  
+  **En simple:** nosotros nunca pedimos ni guardamos ese número; Transbank lo maneja. Así reducimos el riesgo de fraude y cumplimos con buenas prácticas bancarias.
+- **Escrow de negocio (plata “retenida”):** cuando Transbank confirma el cobro, el pago queda marcado como **retenido** en nuestra base. El profesional **no** recibe el dinero de inmediato: primero se completa el trabajo y un administrador registra la transferencia. Eso da confianza al cliente.
+- **Invitado en la web:** si alguien pide una urgencia **sin** iniciar sesión, completa nombre/correo/teléfono/dirección y luego va a Transbank. Si ya tiene sesión, paga en una ventana controlada **sin** abandonar My Works App.
+- **Trazabilidad:** cada vez que se paga al profesional, queda un registro en la tabla `liquidaciones` (quién liquidó, cuánto, referencia de la transferencia). Sirve para auditoría académica y operativa.
 
 ---
 
-## Qué es real vs demo
+## 7. Estructura del repositorio
 
-| Capacidad | Realidad |
-|-----------|----------|
-| Auth Supabase + perfiles / roles | Real |
-| Jobs, matching, estado de trabajos (Flutter) | Real (con reglas de dominio) |
-| Escrow / pagos | **Webpay Plus** (integración Transbank; flip a prod vía secrets) |
-| GPS en vivo (web) | **Simulado** (animación UI) |
-| Firma “SHA-256 / Ley 19.799” (desktop) | **Demo** (no es firma criptográfica legal) |
-| DevSecOps “test runner 1-click” | **Demo UI** (no ejecuta suites reales) |
-| CSAT 99.4% / GMV $14.85M | **Datos de ejemplo**, no métricas medidas |
-| Stress tests 15k VUs | **No hay scripts** de carga en este repo |
-| Tests automatizados | Flutter unit/widget; web/desktop sin suite aún |
+| Ruta | Contenido |
+|------|-----------|
+| `Fase 1/` | Entregables y evidencias de definición APT |
+| `Fase 2/` | Entregables de la siguiente fase Capstone |
+| `Documentos Guia/` | Guías e instructivos del programa |
+| `Capstone_Project.mpp` | Planificación del proyecto |
+| **`MyWorksAppProyect/`** | **Monorepo del producto** (app, web, desktop, shared, docs técnicos, CI) |
+| `MyWorksAppProyect/docs/` | Runbooks (Transbank, liquidación) y diccionario BD |
+| `MyWorksAppProyect/INSTALL.md` | Instalación y demo técnica |
 
 ---
 
-## Arranque rápido para el equipo (app móvil)
+## 8. Cómo ejecutar (resumen)
 
-Si al clonar o hacer `git pull` ves una versión vieja de la app (consulta la tabla `profiles`, sesión expirada, no aparecen trabajadores), casi siempre es porque **la compilación nueva falló** y el emulador sigue abriendo la app vieja instalada.
-
-**Requisitos:** Flutter **3.47.x stable** (`flutter --version`) y Android Studio actual. El proyecto Android usa **Gradle 9.3.1 + AGP 9.1.0 + Kotlin 2.3.20**, que funcionan con el JDK 21 o el JDK 25 que trae Android Studio.
+Detalle completo en [`MyWorksAppProyect/INSTALL.md`](MyWorksAppProyect/INSTALL.md).
 
 ```bash
-cd myworksapp_app
-flutter doctor -v              # revisa que "Java version" sea 21 o 25
-flutter clean
-flutter pub get
-adb uninstall cl.myworksapp.app   # borra la app vieja del emulador/teléfono (si no está, da error y no pasa nada)
-flutter run                    # debug: usa el Supabase de la demo, no requiere .env
+# Web
+cd MyWorksAppProyect/myworksapp_web && npm install && npm run dev
+
+# Desktop
+cd MyWorksAppProyect/myworksapp_desktop && npm install && npm run dev
+
+# App Flutter
+cd MyWorksAppProyect/myworksapp_app && flutter pub get && flutter run
 ```
 
-- **No hace falta `.env` para la app en debug:** `lib/core/config/supabase_config.dart` trae la URL y la clave **publicable** del proyecto `wxqrfcqifkfgawrnqmnj`.
-- **Release (APK para instalar o `--release`) sí exige los `--dart-define`** (si faltan, la app se cierra al abrir):
-
-```bash
-flutter build apk --release \
-  --dart-define=SUPABASE_URL=https://wxqrfcqifkfgawrnqmnj.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=sb_publishable_WN_cTANRJ4nCuPw_6HWd7w_iDJjRA8O
-# APK: build/app/outputs/flutter-apk/app-release.apk
-```
-
-- **Ver la app móvil en el navegador rápido:** `flutter run -d chrome --release` con los mismos dos `--dart-define`. En debug (`flutter run -d chrome` o `-d web-server --web-port 8080`) la primera carga tarda mucho; eso no es la web del proyecto. La web de clientes es `myworksapp_web` (Vite) en `http://localhost:5173` (el retorno de Webpay solo funciona en 5173).
-- **Si la compilación falla con un error que solo dice `25.0.x`:** tu copia todavía tiene Gradle 8.14. Haz `git pull`. Como alternativa temporal, `flutter config --jdk-dir=<ruta a un JDK 21>`.
-- **Login demo:** el atajo de cuentas demo solo aparece en debug. Cuentas y contraseña en `DEMO.md`.
-
-## Ejecución local
-
-### Variables de entorno
-
-Copia los ejemplos y completa con tu proyecto Supabase:
-
-```bash
-cp myworksapp_web/.env.example myworksapp_web/.env
-cp myworksapp_desktop/.env.example myworksapp_desktop/.env
-```
-
-Flutter (opcional, recomendado en CI):
-
-```bash
-flutter run --dart-define=SUPABASE_URL=https://xxx.supabase.co --dart-define=SUPABASE_ANON_KEY=sb_publishable_...
-```
-
-### Web
-
-```bash
-cd myworksapp_web
-npm install
-npm run dev -- --port 3000
-```
-
-### Desktop hub
-
-```bash
-cd myworksapp_desktop
-npm install
-npm run tauri:dev
-```
-
-### Flutter
-
-```bash
-cd myworksapp_app
-flutter pub get
-flutter test
-flutter run
-```
-
-Cuentas demo **solo staging/debug** (nunca en release UI): ver `DEMO.md`. Runbook Webpay: [`docs/RUNBOOK_TRANSBANK_PRODUCCION.md`](docs/RUNBOOK_TRANSBANK_PRODUCCION.md).
+Configurar variables Supabase según `.env.example` de web/desktop y `--dart-define` en Flutter.
 
 ---
 
-## Calidad y CI
+## 9. Estado respecto al título y al producto
 
-- Flutter: `flutter analyze` + `flutter test` (`.github/workflows/flutter_ci.yml`)
-- Web/desktop: lint + build; Tauri build en Windows (`.github/workflows/web_desktop_ci.yml`)
-- Gitleaks, Scorecard, commitlint y keepalive de Supabase (requiere secrets `SUPABASE_URL` / `SUPABASE_ANON_KEY`)
-- **Capacidad / stress (manual):** [`docs/RUNBOOK_CAPACIDAD_CARGA.md`](docs/RUNBOOK_CAPACIDAD_CARGA.md) — scripts en `scripts/load/k6/`
-
-Pre-commit local: ver `.pre-commit-config.yaml`.
+| Dimensión | Estado actual |
+|-----------|----------------|
+| Definición / evidencia Fase 1 | Presente en carpetas académicas |
+| MVP técnico multiplataforma | Implementado (`MyWorksAppProyect/`) |
+| Pagos Webpay (integración) | Implementado (Edge + clientes) |
+| Liquidación al profesional | Manual por admin (automatización futura) |
+| Lanzamiento comercial fin de año | Condicionado a empresa, secrets de producción y cierre de pendientes (MFA, E2E vivo, etc.) |
 
 ---
 
-## Licencia
+## 10. Autores
 
-Proyecto académico / demo. Todos los derechos reservados salvo acuerdo distinto.
+Proyecto de título profesional desarrollado por el equipo indicado arriba, sede **Duoc UC Puerto Montt**, en el marco del Capstone **PTY4614**.
+
+Para el estado técnico del monorepo, ver [`MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`](MyWorksAppProyect/ESTADO_DEL_PROYECTO.md).

@@ -1,0 +1,202 @@
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:latlong2/latlong.dart' as ll;
+
+import '../../../../core/map/app_map_tiles.dart';
+import '../../../../core/theme/app_colors.dart';
+
+class WorkerBaseLocationCard extends StatefulWidget {
+  const WorkerBaseLocationCard({
+    super.key,
+    required this.latitude,
+    required this.longitude,
+    required this.radiusKm,
+    required this.origin,
+    required this.enabled,
+    required this.onSave,
+  });
+
+  final double? latitude;
+  final double? longitude;
+  final double radiusKm;
+  final String? origin;
+  final bool enabled;
+  final Future<void> Function(double latitude, double longitude, double radiusKm) onSave;
+
+  @override
+  State<WorkerBaseLocationCard> createState() => _WorkerBaseLocationCardState();
+}
+
+class _WorkerBaseLocationCardState extends State<WorkerBaseLocationCard> {
+  final _search = TextEditingController();
+  final _map = MapController();
+  late double? _lat = widget.latitude;
+  late double? _lng = widget.longitude;
+  late double _radius = _initialRadius(widget.radiusKm);
+  late final double _sliderMax = math.max(
+    _defaultMaxKm,
+    _initialRadius(widget.radiusKm),
+  );
+  bool _saving = false;
+  String? _error;
+
+  static const _minKm = 3.0;
+  static const _defaultMaxKm = 15.0;
+
+  static double _initialRadius(double radiusKm) {
+    if (radiusKm <= 0) return 7;
+    return math.max(_minKm, radiusKm);
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  Future<void> _geocode() async {
+    final query = _search.text.trim();
+    if (query.length < 3) {
+      setState(() => _error = 'Escribe una dirección de al menos 3 caracteres.');
+      return;
+    }
+    setState(() => _error = null);
+    try {
+      final hits = await Geocoding(locale: const Locale('es')).locationFromAddress('$query, Chile');
+      if (hits.isEmpty) {
+        setState(() => _error = 'No encontramos esa dirección.');
+        return;
+      }
+      setState(() {
+        _lat = hits.first.latitude;
+        _lng = hits.first.longitude;
+      });
+      _map.move(ll.LatLng(_lat!, _lng!), 15);
+    } catch (_) {
+      setState(() => _error = 'La geocodificación no respondió. Marca el punto en el mapa.');
+    }
+  }
+
+  Future<void> _save() async {
+    if (_lat == null || _lng == null) {
+      setState(() => _error = 'Elige un punto en el mapa.');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await widget.onSave(_lat!, _lng!, _radius);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'No se pudo guardar la ubicación. Intenta de nuevo.');
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final center = ll.LatLng(_lat ?? -33.45, _lng ?? -70.66);
+    return Card(
+      margin: const EdgeInsets.only(top: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Ubicación base',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              widget.origin == 'comuna' && widget.latitude != null
+                  ? 'Hoy está el centro de tu comuna. Confírmalo en el mapa para que el pin deje de ser aproximado.'
+                  : 'Este punto es tu base. Dentro del radio no cobras traslado extra; si el cliente pide un trabajo más lejos, la app suma un recargo.',
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _search,
+              enabled: widget.enabled,
+              decoration: const InputDecoration(
+                labelText: 'Buscar dirección',
+                hintText: 'Calle, comuna',
+              ),
+              onSubmitted: (_) => _geocode(),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(onPressed: widget.enabled ? _geocode : null, child: const Text('Buscar')),
+            ),
+            SizedBox(
+              height: 220,
+              child: FlutterMap(
+                mapController: _map,
+                options: MapOptions(
+                  initialCenter: center,
+                  initialZoom: _lat == null ? 11 : 14,
+                  onTap: widget.enabled
+                      ? (_, point) => setState(() {
+                            _lat = point.latitude;
+                            _lng = point.longitude;
+                          })
+                      : null,
+                ),
+                children: [
+                  const AppMapTiles(),
+                  const MapTileCredits(),
+                  if (_lat != null && _lng != null)
+                    CircleLayer(
+                      circles: [
+                        CircleMarker(
+                          point: ll.LatLng(_lat!, _lng!),
+                          radius: _radius * 1000,
+                          useRadiusInMeter: true,
+                          color: AppColors.brandOrange.withValues(alpha: 0.15),
+                          borderColor: AppColors.brandOrange,
+                          borderStrokeWidth: 1,
+                        ),
+                      ],
+                    ),
+                  if (_lat != null && _lng != null)
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: ll.LatLng(_lat!, _lng!),
+                          width: 36,
+                          height: 36,
+                          child: const Icon(Icons.location_on, color: AppColors.brandOrange, size: 36),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+            Text(
+              'Radio cercano: ${_radius.round()} km (sin extra de traslado)',
+            ),
+            Slider(
+              min: _minKm,
+              max: _sliderMax,
+              divisions: (_sliderMax - _minKm).round().clamp(1, 40),
+              value: _radius.clamp(_minKm, _sliderMax),
+              label: '${_radius.round()} km',
+              onChanged: widget.enabled ? (value) => setState(() => _radius = value) : null,
+            ),
+            if (_error != null) Text(_error!, style: const TextStyle(color: AppColors.error)),
+            FilledButton(
+              onPressed: widget.enabled && !_saving ? _save : null,
+              child: Text(_saving ? 'Guardando…' : 'Guardar ubicación'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

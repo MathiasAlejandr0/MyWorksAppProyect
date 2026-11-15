@@ -1,0 +1,411 @@
+{
+  "kind": "rendimiento-web-bundle-navegacion",
+  "measured_at": "2026-11-08T20:15:28.521Z",
+  "git_sha": "5654833",
+  "preview": "http://127.0.0.1:4173/",
+  "viewport": "1366x768",
+  "bundle": {
+    "files": [
+      {
+        "path": "categories/cerrajeria.png",
+        "bytes": 299219,
+        "gzip_bytes": 287417
+      },
+      {
+        "path": "categories/limpieza.png",
+        "bytes": 280089,
+        "gzip_bytes": 268206
+      },
+      {
+        "path": "categories/armado.png",
+        "bytes": 255398,
+        "gzip_bytes": 243557
+      },
+      {
+        "path": "categories/plomeria.png",
+        "bytes": 243519,
+        "gzip_bytes": 231704
+      },
+      {
+        "path": "categories/gasfiteria.png",
+        "bytes": 227944,
+        "gzip_bytes": 216111
+      },
+      {
+        "path": "assets/index-Bod60mOP.js",
+        "bytes": 255643,
+        "gzip_bytes": 78911
+      },
+      {
+        "path": "assets/supabaseClient-Cf8j3EOp.js",
+        "bytes": 214741,
+        "gzip_bytes": 54541
+      },
+      {
+        "path": "evidencia-mueble.webp",
+        "bytes": 51066,
+        "gzip_bytes": 51104
+      },
+      {
+        "path": "assets/map-CAUv2N7X.js",
+        "bytes": 148807,
+        "gzip_bytes": 42858
+      },
+      {
+        "path": "assets/index-Bc8Qi3aK.css",
+        "bytes": 52343,
+        "gzip_bytes": 9888
+      },
+      {
+        "path": "assets/map-vh-t_kPv.css",
+        "bytes": 15095,
+        "gzip_bytes": 6363
+      },
+      {
+        "path": "assets/TrackingDashboard-DkhCUkj7.js",
+        "bytes": 11081,
+        "gzip_bytes": 3717
+      },
+      {
+        "path": "assets/SearchResultsView-egmENIIA.js",
+        "bytes": 10672,
+        "gzip_bytes": 3482
+      },
+      {
+        "path": "assets/jsx-runtime-Cltr0gcK.js",
+        "bytes": 8430,
+        "gzip_bytes": 3214
+      },
+      {
+        "path": "assets/LiveChatWidget-COKY1U5X.js",
+        "bytes": 6296,
+        "gzip_bytes": 2728
+      },
+      {
+        "path": "assets/PremiumSearchMap-Cx0kX98K.js",
+        "bytes": 6206,
+        "gzip_bytes": 2462
+      },
+      {
+        "path": "icons.svg",
+        "bytes": 5055,
+        "gzip_bytes": 2110
+      },
+      {
+        "path": "assets/GuestCheckoutForm-B2ioEQTv.js",
+        "bytes": 4765,
+        "gzip_bytes": 2034
+      },
+      {
+        "path": "assets/AuthContext-Cvukq54t.js",
+        "bytes": 4309,
+        "gzip_bytes": 2009
+      },
+      {
+        "path": "assets/PaymentCheckoutModal-CxgW2e5m.js",
+        "bytes": 4874,
+        "gzip_bytes": 1983
+      },
+      {
+        "path": "assets/AuthModal-C9Nc0FQu.js",
+        "bytes": 4428,
+        "gzip_bytes": 1810
+      },
+      {
+        "path": "favicon.svg",
+        "bytes": 9522,
+        "gzip_bytes": 1485
+      },
+      {
+        "path": "assets/PaidReturnView-CO6S53wD.js",
+        "bytes": 3348,
+        "gzip_bytes": 1343
+      },
+      {
+        "path": "assets/src-C986VBf0.js",
+        "bytes": 2782,
+        "gzip_bytes": 1174
+      },
+      {
+        "path": "index.html",
+        "bytes": 3188,
+        "gzip_bytes": 1163
+      },
+      {
+        "path": "assets/QuickBookingBar-DKypIIQK.js",
+        "bytes": 2349,
+        "gzip_bytes": 1086
+      },
+      {
+        "path": "assets/preload-helper-CztHcIbR.js",
+        "bytes": 1367,
+        "gzip_bytes": 798
+      },
+      {
+        "path": "assets/createLucideIcon-B4axtvH8.js",
+        "bytes": 1385,
+        "gzip_bytes": 777
+      },
+      {
+        "path": "assets/CategoriesCatalogView-vGe1ZJ3R.js",
+        "bytes": 1765,
+        "gzip_bytes": 771
+      },
+      {
+        "path": "assets/transport-rCChmXuZ.js",
+        "bytes": 1315,
+        "gzip_bytes": 661
+      },
+      {
+        "path": "assets/oneclick-BGCsT4HE.js",
+        "bytes": 1127,
+        "gzip_bytes": 604
+      },
+      {
+        "path": "_headers",
+        "bytes": 2330,
+        "gzip_bytes": 557
+      },
+      {
+        "path": "assets/CategoryCard-CU6bokhp.js",
+        "bytes": 1012,
+        "gzip_bytes": 539
+      },
+      {
+        "path": "assets/TurnstileWidget-v9z_xoYe.js",
+        "bytes": 718,
+        "gzip_bytes": 461
+      },
+      {
+        "path": "assets/BrandLogo-Bl6DOM0o.js",
+        "bytes": 725,
+        "gzip_bytes": 377
+      },
+      {
+        "path": "brand/mark.svg",
+        "bytes": 616,
+        "gzip_bytes": 371
+      },
+      {
+        "path": "assets/profileLabel-COtK3tQ8.js",
+        "bytes": 453,
+        "gzip_bytes": 338
+      },
+      {
+        "path": "sw.js",
+        "bytes": 485,
+        "gzip_bytes": 269
+      },
+      {
+        "path": "assets/shield-check-CIEF3R4U.js",
+        "bytes": 320,
+        "gzip_bytes": 249
+      },
+      {
+        "path": "manifest.json",
+        "bytes": 340,
+        "gzip_bytes": 242
+      },
+      {
+        "path": "assets/edgeError-DelyBptH.js",
+        "bytes": 321,
+        "gzip_bytes": 225
+      },
+      {
+        "path": "assets/map-pin-BbnnVMvN.js",
+        "bytes": 259,
+        "gzip_bytes": 224
+      },
+      {
+        "path": "assets/passwordPolicy-Du63OI4s.js",
+        "bytes": 265,
+        "gzip_bytes": 218
+      },
+      {
+        "path": "sitemap.xml",
+        "bytes": 272,
+        "gzip_bytes": 207
+      },
+      {
+        "path": "assets/lock-DjVWaum4.js",
+        "bytes": 206,
+        "gzip_bytes": 190
+      },
+      {
+        "path": "assets/arrow-left-D01_TyXR.js",
+        "bytes": 165,
+        "gzip_bytes": 161
+      },
+      {
+        "path": "assets/x-PjIhfHhm.js",
+        "bytes": 154,
+        "gzip_bytes": 151
+      },
+      {
+        "path": "robots.txt",
+        "bytes": 71,
+        "gzip_bytes": 87
+      }
+    ],
+    "js_bytes": 700773,
+    "js_gzip_bytes": 210365,
+    "css_bytes": 67438,
+    "css_gzip_bytes": 16251,
+    "total_bytes": 2146840,
+    "total_gzip_bytes": 1530937
+  },
+  "navegacion": {
+    "url": "http://127.0.0.1:4173/",
+    "title": "My Works App — Servicios del Hogar & Profesionales Verificados",
+    "ttfb_ms": 2.2,
+    "dcl_ms": 2942,
+    "load_ms": 2942.4,
+    "fcp_ms": 3148,
+    "lcp_ms": 3192,
+    "transfer_bytes": 1463,
+    "resource_n": 31,
+    "resources": [
+      {
+        "name": "http://127.0.0.1:4173/categories/cerrajeria.png",
+        "type": "img",
+        "duration_ms": 11.600000001490116,
+        "transfer_bytes": 299519,
+        "encoded_bytes": 299219
+      },
+      {
+        "name": "http://127.0.0.1:4173/categories/limpieza.png",
+        "type": "img",
+        "duration_ms": 11.400000002235174,
+        "transfer_bytes": 280389,
+        "encoded_bytes": 280089
+      },
+      {
+        "name": "http://127.0.0.1:4173/categories/armado.png",
+        "type": "img",
+        "duration_ms": 9.399999998509884,
+        "transfer_bytes": 255698,
+        "encoded_bytes": 255398
+      },
+      {
+        "name": "http://127.0.0.1:4173/categories/plomeria.png",
+        "type": "img",
+        "duration_ms": 9.899999998509884,
+        "transfer_bytes": 243819,
+        "encoded_bytes": 243519
+      },
+      {
+        "name": "http://127.0.0.1:4173/categories/gasfiteria.png",
+        "type": "img",
+        "duration_ms": 10.400000002235174,
+        "transfer_bytes": 228244,
+        "encoded_bytes": 227944
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/index-Bod60mOP.js",
+        "type": "script",
+        "duration_ms": 22.199999999254942,
+        "transfer_bytes": 79325,
+        "encoded_bytes": 79025
+      },
+      {
+        "name": "https://images.unsplash.com/photo-1416879595882-3373a0480b5b",
+        "type": "img",
+        "duration_ms": 152.40000000223517,
+        "transfer_bytes": 57821,
+        "encoded_bytes": 57521
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/supabaseClient-Cf8j3EOp.js",
+        "type": "script",
+        "duration_ms": 31.300000000745058,
+        "transfer_bytes": 55009,
+        "encoded_bytes": 54709
+      },
+      {
+        "name": "https://images.unsplash.com/photo-1562259949-e8e7689d7828",
+        "type": "img",
+        "duration_ms": 133.19999999925494,
+        "transfer_bytes": 34737,
+        "encoded_bytes": 34437
+      },
+      {
+        "name": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e",
+        "type": "img",
+        "duration_ms": 205.5,
+        "transfer_bytes": 23959,
+        "encoded_bytes": 23659
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/index-Bc8Qi3aK.css",
+        "type": "link",
+        "duration_ms": 21.600000001490116,
+        "transfer_bytes": 10278,
+        "encoded_bytes": 9978
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/jsx-runtime-Cltr0gcK.js",
+        "type": "script",
+        "duration_ms": 14.5,
+        "transfer_bytes": 3512,
+        "encoded_bytes": 3212
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/AuthContext-Cvukq54t.js",
+        "type": "script",
+        "duration_ms": 27.800000000745058,
+        "transfer_bytes": 2309,
+        "encoded_bytes": 2009
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/AuthModal-C9Nc0FQu.js",
+        "type": "script",
+        "duration_ms": 6.900000002235174,
+        "transfer_bytes": 2112,
+        "encoded_bytes": 1812
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/src-C986VBf0.js",
+        "type": "script",
+        "duration_ms": 22.400000002235174,
+        "transfer_bytes": 1474,
+        "encoded_bytes": 1174
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/CategoryCard-CU6bokhp.js",
+        "type": "script",
+        "duration_ms": 13.800000000745058,
+        "transfer_bytes": 1312,
+        "encoded_bytes": 1012
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/preload-helper-CztHcIbR.js",
+        "type": "script",
+        "duration_ms": 15.199999999254942,
+        "transfer_bytes": 1098,
+        "encoded_bytes": 798
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/createLucideIcon-B4axtvH8.js",
+        "type": "script",
+        "duration_ms": 15,
+        "transfer_bytes": 1077,
+        "encoded_bytes": 777
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/BrandLogo-Bl6DOM0o.js",
+        "type": "script",
+        "duration_ms": 27.399999998509884,
+        "transfer_bytes": 1025,
+        "encoded_bytes": 725
+      },
+      {
+        "name": "http://127.0.0.1:4173/assets/TurnstileWidget-v9z_xoYe.js",
+        "type": "script",
+        "duration_ms": 5.5,
+        "transfer_bytes": 1018,
+        "encoded_bytes": 718
+      }
+    ]
+  },
+  "navegacion_error": null
+}

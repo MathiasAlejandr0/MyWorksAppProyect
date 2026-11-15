@@ -1,0 +1,24 @@
+title = "MyWorksApp — Gitleaks"
+
+exclude_patterns = [
+  # Flutter / caches
+  ".dart_tool/",
+  ".flutter-plugins/",
+  ".packages",
+  ".pub-cache/",
+  ".pub/",
+  "build/",
+  "releases/",
+  "coverage/",
+  ".test_coverage/",
+
+  # Android local secrets & generated files
+  "android/local.properties",
+  "android/secrets.properties",
+  "android/key.properties",
+  "android/app/build/",
+
+  # iOS secrets (si aplica)
+  "ios/Flutter/Secrets.xcconfig",
+]
+

@@ -8,20 +8,14 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    cooldown:
-      default-days: 7
-      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
 
   - package-ecosystem: npm
-    directory: /myworksapp_web
+    directory: /MyWorksAppProyect/myworksapp_web
     schedule:
       interval: weekly
-    cooldown:
-      default-days: 7
-      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -32,12 +26,9 @@ updates:
           - patch
 
   - package-ecosystem: npm
-    directory: /myworksapp_desktop
+    directory: /MyWorksAppProyect/myworksapp_desktop
     schedule:
       interval: weekly
-    cooldown:
-      default-days: 7
-      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -48,12 +39,9 @@ updates:
           - patch
 
   - package-ecosystem: npm
-    directory: /shared
+    directory: /MyWorksAppProyect/shared
     schedule:
       interval: weekly
-    cooldown:
-      default-days: 7
-      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -64,12 +52,9 @@ updates:
           - patch
 
   - package-ecosystem: pub
-    directory: /myworksapp_app
+    directory: /MyWorksAppProyect/myworksapp_app
     schedule:
       interval: weekly
-    cooldown:
-      default-days: 7
-      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -80,12 +65,9 @@ updates:
           - patch
 
   - package-ecosystem: cargo
-    directory: /myworksapp_desktop/src-tauri
+    directory: /MyWorksAppProyect/myworksapp_desktop/src-tauri
     schedule:
       interval: weekly
-    cooldown:
-      default-days: 7
-      semver-major-days: 14
     open-pull-requests-limit: 5
     labels:
       - dependencies
