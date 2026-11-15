@@ -22,7 +22,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/leaflet')) {
+          if (
+            id.includes('node_modules/leaflet') ||
+            id.includes('node_modules/maplibre-gl') ||
+            id.includes('node_modules/@maplibre/')
+          ) {
             return 'map';
           }
         },

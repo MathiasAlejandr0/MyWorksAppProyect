@@ -1,7 +1,16 @@
 import L from 'leaflet';
+import { setWorkerUrl } from 'maplibre-gl';
+import { maplibreGL } from '@maplibre/maplibre-gl-leaflet';
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
-const CARTO =
-  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+setWorkerUrl(workerUrl);
+
+/** Positron: fondo claro y neutro para que los pines naranja de la marca se lean bien. */
+export const OPENFREEMAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
+
+const ATTRIBUTION =
+  '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>';
 
 /** Teléfono o puntero táctil: ahí el zoom animado pide varios niveles de baldosas y se pega. */
 export function isCoarseMap(): boolean {
@@ -10,21 +19,17 @@ export function isCoarseMap(): boolean {
 }
 
 /**
- * Capa base rápida. Sin `{r}` (retina cuadruplica los píxeles) y sin pedir
- * baldosas mientras el dedo todavía se mueve.
+ * Capa base vectorial de OpenFreeMap (sin API key). Leaflet sigue manejando
+ * pines, círculos, popups y clics; MapLibre solo pinta el mapa.
  */
-export function addFastBasemap(map: L.Map): L.TileLayer {
-  const cartoKey = (import.meta.env.VITE_CARTO_BASEMAPS_KEY ?? '').trim();
-  const keyQuery = cartoKey ? `?key=${encodeURIComponent(cartoKey)}` : '';
-  return L.tileLayer(`${CARTO}${keyQuery}`, {
-    subdomains: 'abcd',
+export function addFastBasemap(map: L.Map): L.Layer {
+  return maplibreGL({
+    style: OPENFREEMAP_STYLE,
+    attributionControl: { compact: true, customAttribution: ATTRIBUTION },
+    interactive: false,
+    maplibreLogo: false,
+    fadeDuration: 0,
     maxZoom: 19,
-    updateWhenIdle: true,
-    updateWhenZooming: false,
-    keepBuffer: 0,
-    detectRetina: false,
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · &copy; <a href="https://carto.com/">CARTO</a>',
   }).addTo(map);
 }
 
@@ -38,6 +43,6 @@ export function fastMapOptions(): L.MapOptions {
     zoomDelta: phone ? 1 : 0.5,
     inertia: !phone,
     minZoom: 4,
-    maxZoom: 18,
+    maxZoom: 19,
   };
 }

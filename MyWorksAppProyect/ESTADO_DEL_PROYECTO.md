@@ -141,7 +141,7 @@ Cada feature sigue: `features/<módulo>/presentation/{pages, widgets, providers}
 | Estado | flutter_riverpod | ^3.4.3 |
 | Navegación | go_router | ^18.0.1 |
 | Backend | supabase_flutter | Auth + Postgres + PostgREST |
-| Mapas | flutter_map + CARTO Voyager (respaldo OSM) en la app; leaflet en la web | Ubicación de trabajos y catálogo |
+| Mapas | flutter_map + CARTO Voyager (respaldo OSM) en la app; Leaflet + OpenFreeMap Positron (MapLibre, sin clave) en la web | Ubicación de trabajos y catálogo |
 | Notificaciones | flutter_local_notifications, firebase_messaging y Edge `send-push` | Locales, Realtime y push si el build trae las claves FCM |
 | Persistencia local | shared_preferences | Onboarding y preferencias |
 | Seguridad | Supabase Auth y RLS | La contraseña la guarda Auth; no hay bcrypt en la app |

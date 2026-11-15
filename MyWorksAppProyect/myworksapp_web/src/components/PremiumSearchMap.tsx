@@ -109,7 +109,7 @@ type PremiumSearchMapProps = {
 type StampedEl = HTMLElement & { _leaflet_id?: number };
 
 /**
- * Mapa realista (OpenStreetMap + estilo Carto Voyager) — sin API key.
+ * Mapa realista (OpenFreeMap Positron vía MapLibre) — sin API key.
  * Al elegir un profesional muestra su punto y el radar de trabajo cercano.
  */
 export function PremiumSearchMap({

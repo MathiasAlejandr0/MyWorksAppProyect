@@ -1039,18 +1039,31 @@ button.search-nav-profile {
 }
 .search-map-legend {
   position: absolute;
-  top: 14px;
-  right: 16px;
+  /* Debajo del recuento «N en el mapa · oficio» para que no se tapen. */
+  top: 58px;
+  left: 14px;
+  right: 14px;
   bottom: auto;
   z-index: 450;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 6px 10px;
   background: rgba(15, 23, 42, 0.75);
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 16px;
+  pointer-events: none;
+  box-sizing: border-box;
+  max-width: calc(100% - 28px);
+}
+.search-map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 .search-map-legend-radar {
   width: 12px;
@@ -1058,7 +1071,7 @@ button.search-nav-profile {
   border-radius: 50%;
   border: 2px solid #ff5e03;
   background: rgba(255, 94, 3, 0.25);
-  margin-left: 4px;
+  flex: 0 0 auto;
 }
 .premium-search-map-leaflet {
   position: absolute !important;
@@ -1066,6 +1079,10 @@ button.search-nav-profile {
   z-index: 0;
   border-radius: 0;
   background: #e8eef3;
+}
+.premium-search-map-leaflet .leaflet-top.leaflet-left {
+  /* Debajo del recuento y la leyenda, que ocupan la franja superior. */
+  top: 110px;
 }
 .premium-search-map-leaflet .leaflet-control-attribution {
   font-size: 9px;
@@ -1301,10 +1318,10 @@ button.search-nav-profile {
   width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--orange-accent);
+  flex: 0 0 auto;
 }
 .search-map-legend-dot--elite {
   background: #b45309;
-  margin-left: 10px;
 }
 .search-map-legend-dot--client {
   background: #2563eb;
