@@ -3,7 +3,43 @@ part of 'job_detail_page.dart';
 // El estado es privado de la página; la extensión se invoca por nombre.
 // ignore: library_private_types_in_public_api
 extension JobDetailStatusActions on _JobDetailPageState {
-  Future<void> _updateJobStatus(String newStatus) async {
+  bool _isPinRetry(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('pin') || lower.contains('intento');
+  }
+
+  Future<void> _startJob() async {
+    String? serverError;
+    while (mounted) {
+      final pin = await ServicePinDialog.show(
+        context,
+        title: 'Iniciar trabajo',
+        subtitle:
+            'Pide al cliente el PIN de 4 dígitos que aparece en su pedido y escríbelo aquí.',
+        serverError: serverError,
+      );
+      if (!mounted || pin == null) return;
+      try {
+        await _updateJobStatus(
+          AppConstants.jobStatusInProgress,
+          pin: pin,
+        );
+        return;
+      } on AppError catch (error) {
+        if (_isPinRetry(error.message)) {
+          serverError = error.message;
+          continue;
+        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message), backgroundColor: AppColors.error),
+        );
+        return;
+      }
+    }
+  }
+
+  Future<void> _updateJobStatus(String newStatus, {String? pin}) async {
     try {
       final authState = ref.read(authProvider);
       final user = authState.user;
@@ -31,6 +67,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
         jobId: widget.jobId,
         newStatus: newStatus,
         userId: user.id,
+        pin: pin,
       );
 
       await _loadJobDetails();
@@ -84,6 +121,7 @@ extension JobDetailStatusActions on _JobDetailPageState {
         const SnackBar(content: Text('Estado actualizado')),
       );
     } on AppError catch (e) {
+      if (pin != null && _isPinRetry(e.message)) rethrow;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

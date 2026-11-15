@@ -1623,6 +1623,34 @@ button.search-nav-profile {
 }
 .tracking-status-block { margin-bottom: 20px; }
 .tracking-status-detail { font-size: 12px; color: var(--text-muted-dark); margin-top: 4px; }
+.tracking-start-pin {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(240, 120, 42, 0.45);
+  background: rgba(240, 120, 42, 0.1);
+}
+.tracking-start-pin span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted-dark);
+}
+.tracking-start-pin strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 28px;
+  letter-spacing: 0.28em;
+  color: var(--text-main-dark);
+}
+.tracking-start-pin p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted-dark);
+}
 .tracking-chat-btn { width: 100%; justify-content: center; margin-bottom: 16px; }
 .tracking-escrow-card {
   display: flex;

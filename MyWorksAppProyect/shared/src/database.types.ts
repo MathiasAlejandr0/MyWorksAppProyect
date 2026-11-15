@@ -1325,6 +1325,14 @@ export type Database = {
         Args: never
         Returns: string[]
       }
+      obtener_pin_inicio: {
+        Args: { p_trabajo_id: string }
+        Returns: string
+      }
+      intentar_pin_inicio: {
+        Args: { p_pin?: string; p_trabajo_id: string }
+        Returns: Json
+      }
       listar_profesionales_catalogo: {
         Args: {
           p_categoria?: string

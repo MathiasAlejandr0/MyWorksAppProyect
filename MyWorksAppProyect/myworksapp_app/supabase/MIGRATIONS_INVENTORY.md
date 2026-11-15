@@ -47,6 +47,7 @@ supabase migration repair --status applied 20261115060002
 |---------|---------|----------|
 | 20261115140001 | `minuto_utc_execute_authenticated.sql` | `EXECUTE` de `minuto_utc(text)` y `texto_a_timestamptz(text)` para `authenticated`. Sin esto un cliente con sesión no puede crear un pedido (42501). |
 | 20261115140002 | `agenda_jsonb_tras_pk.sql` | `usa_horario` se puede actualizar. Guardar y leer la plantilla jsonb funciona con la PK en `id` y una fila por día. |
+| 20261115180001 | `inicio_trabajo_requiere_pin.sql` | Iniciar (`aceptado`/`en_camino` → `en_curso`) exige el PIN del cliente por RPC, con 5 intentos y 15 minutos de bloqueo. No está aplicada en la base en vivo. |
 
 Esas dos se aplican con `supabase db push` (o el SQL a mano). No usar `migration repair` sobre ellas.
 

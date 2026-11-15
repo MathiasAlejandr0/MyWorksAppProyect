@@ -568,6 +568,14 @@ extension JobDetailWorkflows on _JobDetailPageState {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             JobDetailStatusHeader(job: _job!),
+            if (!isWorker &&
+                currentUser?.id == _job!.userId &&
+                _clientStartPin != null &&
+                (_job!.status == AppConstants.jobStatusAccepted ||
+                    _job!.status == AppConstants.jobStatusEnRoute)) ...[
+              const SizedBox(height: 12),
+              ClientStartPinCard(pin: _clientStartPin!),
+            ],
             const SizedBox(height: 12),
             JobStatusTimeline(status: _job!.status),
             if (_job!.scheduledDate != null && !workerShowsLocationCard) ...[
@@ -687,10 +695,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
                   JobDetailStatusActions(this)._updateJobStatus(
                     AppConstants.jobStatusEnRoute,
                   ),
-              onStartJob: () =>
-                  JobDetailStatusActions(this)._updateJobStatus(
-                    AppConstants.jobStatusInProgress,
-                  ),
+              onStartJob: () => JobDetailStatusActions(this)._startJob(),
               onRequestOvertimeHours: _requestOvertimeHours,
               onCompleteJob: () => JobDetailStatusActions(this)._completeJob(),
               ratingBlockedByDispute:

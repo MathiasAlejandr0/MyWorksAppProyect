@@ -37,6 +37,7 @@ export * from './repositories/jobs';
 export * from './media/bytea';
 export * from './repositories/notifications';
 export * from './jobs/statusCopy';
+export * from './jobs/startPin';
 export * from './jobs/bookingSlot';
 export * from './chat/messages';
 export { contactBlockedMessage, contactBlockedTitle } from './chat/contactFilter';

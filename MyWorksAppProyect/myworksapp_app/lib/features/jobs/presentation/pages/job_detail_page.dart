@@ -53,6 +53,8 @@ import '../widgets/job_detail_description_section.dart';
 import '../widgets/job_status_timeline.dart';
 import '../widgets/worker_gps_publisher.dart';
 import '../widgets/client_live_tracking.dart';
+import '../widgets/client_start_pin_card.dart';
+import '../../../../core/widgets/design_system/service_pin_dialog.dart';
 import '../../../../core/services/gps_publish_gate.dart';
 
 part 'job_detail_workflows.dart';
@@ -78,6 +80,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   final ChangeOrderRepository _changeOrderRepository = ChangeOrderRepository();
 
   JobModel? _job;
+  String? _clientStartPin;
   List<ChangeOrderModel> _changeOrders = [];
   DisputeModel? _dispute;
   String? _pendingAgreementId;
@@ -108,8 +111,21 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
 
     try {
       final job = await _jobRepository.getJobById(widget.jobId);
+      final clientId = ref.read(authProvider).user?.id;
+      String? startPin;
+      if (job != null &&
+          clientId == job.userId &&
+          (job.status == AppConstants.jobStatusAccepted ||
+              job.status == AppConstants.jobStatusEnRoute)) {
+        try {
+          startPin = await _jobRepository.fetchClientStartPin(job.id);
+        } catch (e) {
+          AppLogger.e('No se pudo leer el PIN de inicio', e);
+        }
+      }
       setState(() {
         _job = job;
+        _clientStartPin = startPin;
         _isLoading = false;
       });
 

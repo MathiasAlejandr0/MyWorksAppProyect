@@ -32,6 +32,8 @@ import {
   fetchCategoriesWithPros,
   categoriesWithPros,
   fetchJobTrackingSnapshot,
+  fetchClientStartPin,
+  clientShouldShowStartPin,
   fetchJobEvidencePhotos,
   syncJobEvidencePhotos,
   fetchMyNotifications,
@@ -275,6 +277,7 @@ export function App() {
   const [guestPasswordToken, setGuestPasswordToken] = useState<string | null>(null);
   const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
   const [jobSnapshot, setJobSnapshot] = useState<JobTrackingSnapshot | null>(null);
+  const [clientStartPin, setClientStartPin] = useState<string | null>(null);
   const [jobEvidence, setJobEvidence] = useState<JobEvidencePhoto[]>([]);
   const jobEvidenceRef = useRef<JobEvidencePhoto[]>([]);
   jobEvidenceRef.current = jobEvidence;
@@ -352,8 +355,14 @@ export function App() {
     let cancelled = false;
     const loadSnapshot = () => {
       void fetchJobTrackingSnapshot(supabase, checkoutJobId)
-        .then((snapshot) => {
-          if (!cancelled && snapshot) setJobSnapshot(snapshot);
+        .then(async (snapshot) => {
+          if (cancelled || !snapshot) return;
+          setJobSnapshot(snapshot);
+          if (!clientShouldShowStartPin(snapshot.status)) {
+            setClientStartPin(null);
+            return;
+          }
+          setClientStartPin(await fetchClientStartPin(supabase, snapshot.id));
         })
         .catch(() => {
           // Se conserva el último estado visible si el refresco falla.
@@ -404,6 +413,7 @@ export function App() {
     setConfirmBusy(false);
     setPaymentNotice(null);
     setJobEvidence([]);
+    setClientStartPin(null);
     setView('landing');
   };
 
@@ -1170,6 +1180,8 @@ export function App() {
           orderId={checkoutJobId ?? 'sin-pedido'}
 
           jobStatus={jobSnapshot?.status}
+
+          startPin={clientStartPin}
 
           paymentStatus={jobSnapshot?.paymentStatus}
 
