@@ -12,6 +12,7 @@ import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../widgets/admin_search_field.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class AdminUsersPage extends ConsumerStatefulWidget {
   const AdminUsersPage({super.key});
@@ -51,18 +52,25 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
 
   Future<void> _setStatus(UserModel user, String status) async {
-    await _repo.updateAccountStatus(user.id, status);
-    await _load();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${user.name}: $status')),
-    );
+    try {
+      await _repo.updateAccountStatus(user.id, status);
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${user.name}: $status')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
+      );
+    }
   }
 
   @override
@@ -122,8 +130,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                 const SizedBox(width: 16),
                 FilterChip(
                   label: const Text('Activos'),
-                  selected:
-                      _statusFilter == AppConstants.accountStatusActive,
+                  selected: _statusFilter == AppConstants.accountStatusActive,
                   onSelected: (_) {
                     setState(() => _statusFilter =
                         _statusFilter == AppConstants.accountStatusActive
@@ -138,10 +145,10 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                   selected:
                       _statusFilter == AppConstants.accountStatusSuspended,
                   onSelected: (_) {
-                    setState(() => _statusFilter = _statusFilter ==
-                            AppConstants.accountStatusSuspended
-                        ? null
-                        : AppConstants.accountStatusSuspended);
+                    setState(() => _statusFilter =
+                        _statusFilter == AppConstants.accountStatusSuspended
+                            ? null
+                            : AppConstants.accountStatusSuspended);
                     _load();
                   },
                 ),

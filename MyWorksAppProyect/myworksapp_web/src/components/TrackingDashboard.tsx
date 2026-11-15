@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   Bell,
-  ChevronDown,
   Home,
   Lock,
   MessageCircle,
@@ -38,6 +37,7 @@ interface TrackingDashboardProps {
   onGoHome: () => void;
   onOpenChat: () => void;
   onOpenNotifications?: () => void;
+  onLogout?: () => void;
   onConfirmReceipt?: () => void;
   confirmBusy?: boolean;
   confirmError?: string | null;
@@ -47,6 +47,7 @@ interface TrackingDashboardProps {
   onRespondAgreement?: (acepta: boolean) => Promise<void>;
   pendingAgreement?: { id: string; tipo: string } | null;
   evidencePhotos?: JobEvidencePhoto[];
+  evidence?: ReactNode;
 }
 
 export function TrackingDashboard({
@@ -74,6 +75,7 @@ export function TrackingDashboard({
   onGoHome,
   onOpenChat,
   onOpenNotifications,
+  onLogout,
   onConfirmReceipt,
   confirmBusy = false,
   confirmError = null,
@@ -83,6 +85,7 @@ export function TrackingDashboard({
   onRespondAgreement,
   pendingAgreement = null,
   evidencePhotos = [],
+  evidence,
 }: TrackingDashboardProps) {
   const [showPayment, setShowPayment] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
@@ -145,8 +148,12 @@ export function TrackingDashboard({
               <strong>{profileName ? profileLabel(profileName) : 'Invitado'}</strong>
               <span>Cuenta de cliente</span>
             </div>
-            <ChevronDown size={14} />
           </div>
+          {profileName && onLogout ? (
+            <button type="button" className="btn-ghost" onClick={() => onLogout()}>
+              Salir
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -249,6 +256,8 @@ export function TrackingDashboard({
             </div>
           ) : null}
 
+
+          {evidence}
           <button type="button" className="btn-primary tracking-chat-btn" onClick={onOpenChat}>
             <MessageCircle size={18} /> Abrir chat
           </button>

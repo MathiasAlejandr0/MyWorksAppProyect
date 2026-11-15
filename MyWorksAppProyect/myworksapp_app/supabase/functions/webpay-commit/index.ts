@@ -176,7 +176,8 @@ Deno.serve(async (req) => {
     }
 
     const alreadyHeld = payment.estado === "retenido" ||
-      payment.estado === "liberado";
+      payment.estado === "liberado" ||
+      payment.estado === "pagado_por_confirmar";
     let commit: Record<string, unknown> = {};
     if (!alreadyHeld) {
       commit = await tbkCommit(tokenWs);
@@ -196,7 +197,9 @@ Deno.serve(async (req) => {
         : String(commit.buy_order || ""),
       storedBuyOrder: String(payment.buy_order || ""),
     });
-    const approved = decision.action === "hold" || decision.action === "replay";
+    const approved = decision.action === "hold" ||
+      decision.action === "replay" ||
+      decision.action === "resume";
     const voidPlan = abandonedCheckoutUpdate({
       estado: String(payment.estado || ""),
       tokenWs,
@@ -220,7 +223,7 @@ Deno.serve(async (req) => {
       const held = await admin
         .from("pagos")
         .update({
-          estado: "retenido",
+          estado: "pagado_por_confirmar",
           autorizado_en: new Date().toISOString(),
           id_transaccion: String(commit.authorization_code || commit.buy_order || ""),
           alta_jti: jti,
@@ -228,8 +231,19 @@ Deno.serve(async (req) => {
         })
         .eq("id", payment.id)
         .eq("estado", "pendiente")
+        .eq("token_tbk", tokenWs)
         .select("id");
       transitioned = paymentHoldTransitioned(held);
+      if (!transitioned) {
+        const { data: again } = await admin
+          .from("pagos")
+          .select("estado")
+          .eq("id", payment.id)
+          .maybeSingle();
+        if (again?.estado !== "pagado_por_confirmar" && again?.estado !== "retenido") {
+          throw new Error("No se pudo registrar el cobro antes de confirmar el trabajo");
+        }
+      }
     }
 
     let guest = false;
@@ -240,8 +254,28 @@ Deno.serve(async (req) => {
         : null,
       paymentId: String(payment.id),
     };
+    if (decision.action === "hold" || decision.action === "resume" || decision.action === "replay") {
+      try {
+        await openJobAfterHold(admin, payment.id_trabajo, holdOptions);
+        if (decision.action !== "replay") {
+          await admin
+            .from("pagos")
+            .update({
+              estado: "retenido",
+              actualizado_en: new Date().toISOString(),
+            })
+            .eq("id", payment.id)
+            .eq("estado", "pagado_por_confirmar");
+        }
+      } catch (confirmError) {
+        console.error(
+          "confirmar trabajo tras cobro",
+          confirmError instanceof Error ? confirmError.message : confirmError,
+        );
+      }
+    }
+
     if (decision.action === "hold") {
-      await openJobAfterHold(admin, payment.id_trabajo, holdOptions);
 
       const { data: job } = await admin
         .from("trabajos")
@@ -273,10 +307,6 @@ Deno.serve(async (req) => {
           }
         }
       }
-    }
-
-    if (decision.action === "replay") {
-      await openJobAfterHold(admin, payment.id_trabajo, holdOptions);
     }
 
     if (decision.action === "mismatch") {

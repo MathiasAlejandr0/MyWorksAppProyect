@@ -1,6 +1,8 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
+const statusError = "No se pudo consultar el pago";
+
 /**
  * Estado de pago sin exponer token_tbk/url_tbk.
  * - Autenticado: dueño del trabajo / admin vía RLS.
@@ -44,7 +46,10 @@ Deno.serve(async (req) => {
         .eq("id", paymentId)
         .maybeSingle();
 
-      if (error) return jsonResponse(req, { error: error.message }, 400);
+      if (error) {
+        console.error("webpay-status", error.message);
+        return jsonResponse(req, { error: statusError }, 400);
+      }
       if (!data) return jsonResponse(req, { error: "No encontrado" }, 404);
       return jsonResponse(req, { payment: data });
     }
@@ -62,15 +67,15 @@ Deno.serve(async (req) => {
       .eq("id_trabajo", jobId)
       .maybeSingle();
 
-    if (error) return jsonResponse(req, { error: error.message }, 400);
+    if (error) {
+      console.error("webpay-status", error.message);
+      return jsonResponse(req, { error: statusError }, 400);
+    }
     if (!data) return jsonResponse(req, { error: "No encontrado" }, 404);
 
     return jsonResponse(req, { payment: data });
   } catch (e) {
-    return jsonResponse(
-      req,
-      { error: e instanceof Error ? e.message : String(e) },
-      500,
-    );
+    console.error("webpay-status", e instanceof Error ? e.message : e);
+    return jsonResponse(req, { error: statusError }, 500);
   }
 });

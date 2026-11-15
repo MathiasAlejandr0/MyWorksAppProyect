@@ -4,9 +4,11 @@ import '../../config/support_config.dart';
 import '../../services/app_health_service.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/app_logger.dart';
+import '../../utils/constants.dart';
+import '../../utils/error_handler.dart';
 
 /// Página de mantenimiento (Modo Seguro)
-/// 
+///
 /// Se muestra cuando se detectan fallos críticos en la aplicación.
 /// Ofrece opciones de recuperación sin crashear la app.
 class MaintenancePage extends StatefulWidget {
@@ -42,28 +44,28 @@ class _MaintenancePageState extends State<MaintenancePage> {
                 color: AppColors.warning,
               ),
               const SizedBox(height: 24),
-              
+
               // Título
               Text(
                 'Modo Mantenimiento',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.grayDark,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.grayDark,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              
+
               // Mensaje principal
               Text(
                 'No pudimos conectar con el servidor.\nRevisa tu conexión a internet.',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.grayMedium,
-                ),
+                      color: AppColors.grayMedium,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
+
               // Información del error (si está disponible)
               if (failureType != null || failureMessage != null)
                 Container(
@@ -71,7 +73,8 @@ class _MaintenancePageState extends State<MaintenancePage> {
                   decoration: BoxDecoration(
                     color: AppColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                    border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,9 +100,9 @@ class _MaintenancePageState extends State<MaintenancePage> {
                     ],
                   ),
                 ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Mensaje de recuperación (si está en proceso)
               if (_isRecovering)
                 Column(
@@ -114,7 +117,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                       ),
                   ],
                 ),
-              
+
               if (!_isRecovering) ...[
                 // Botón: Reintentar
                 SizedBox(
@@ -146,9 +149,9 @@ class _MaintenancePageState extends State<MaintenancePage> {
                   ),
                 ),
               ],
-              
+
               const SizedBox(height: 32),
-              
+
               // Información de diagnóstico (colapsable)
               ExpansionTile(
                 title: const Text(
@@ -199,16 +202,17 @@ class _MaintenancePageState extends State<MaintenancePage> {
     });
 
     try {
-      final success = await _healthService.attemptRecovery(restoreBackup: false);
-      
+      final success =
+          await _healthService.attemptRecovery(restoreBackup: false);
+
       if (success) {
         setState(() {
           _recoveryMessage = '¡Recuperación exitosa!';
         });
-        
+
         // Esperar un momento y luego intentar navegar
         await Future.delayed(const Duration(seconds: 1));
-        
+
         // La app debería redirigir automáticamente cuando el health check pase
         if (mounted && Navigator.of(context).canPop()) {
           Navigator.of(context).popUntil((route) => route.isFirst);
@@ -275,4 +279,3 @@ class _MaintenancePageState extends State<MaintenancePage> {
     );
   }
 }
-

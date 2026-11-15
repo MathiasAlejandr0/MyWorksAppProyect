@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/database/repositories/admin_repository.dart';
+import '../../../../core/database/supabase_db.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/design_system/app_spacing.dart';
@@ -16,13 +17,13 @@ class AdminDashboardPage extends ConsumerStatefulWidget {
   const AdminDashboardPage({super.key});
 
   @override
-  ConsumerState<AdminDashboardPage> createState() =>
-      _AdminDashboardPageState();
+  ConsumerState<AdminDashboardPage> createState() => _AdminDashboardPageState();
 }
 
 class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
   AdminRepository get _repo => ref.read(adminRepositoryProvider);
   AdminMetrics? _metrics;
+  List<Map<String, dynamic>> _paymentAttention = [];
   bool _loading = true;
 
   @override
@@ -35,9 +36,15 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
     setState(() => _loading = true);
     try {
       final metrics = await _repo.getMetrics();
+      final rows = await supabase
+          .from('pagos')
+          .select('id, id_trabajo, estado, monto')
+          .inFilter(
+              'estado', ['pagado_por_confirmar', 'reembolsado_auto']).limit(20);
       if (!mounted) return;
       setState(() {
         _metrics = metrics;
+        _paymentAttention = List<Map<String, dynamic>>.from(rows);
         _loading = false;
       });
     } catch (e) {
@@ -54,7 +61,8 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cerrar sesión'),
-        content: const Text('Vas a salir del panel y volver al inicio de sesión.'),
+        content:
+            const Text('Vas a salir del panel y volver al inicio de sesión.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -193,6 +201,12 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
                     subtitle: 'Activar funciones por rol o versión',
                     onTap: () =>
                         context.push(AppConstants.routeAdminFeatureFlags),
+                  ),
+                  AdminNavTile(
+                    icon: Icons.payments_outlined,
+                    title: 'Liquidaciones',
+                    subtitle: 'Cuenta bancaria y transferencias al profesional',
+                    onTap: () => context.push(AppConstants.routeAdminPayouts),
                   ),
                   AdminNavTile(
                     icon: Icons.desktop_windows_outlined,

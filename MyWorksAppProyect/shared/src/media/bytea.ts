@@ -26,6 +26,13 @@ export function decodeBytea(value: unknown): Uint8Array | null {
   return bytes;
 }
 
+/** Hex con prefijo `\x` que PostgREST acepta en columnas bytea. */
+export function encodeByteaHex(bytes: Uint8Array): string {
+  let hex = '\\x';
+  for (const byte of bytes) hex += byte.toString(16).padStart(2, '0');
+  return hex;
+}
+
 export function isWebpBytes(bytes: Uint8Array): boolean {
   return (
     bytes.length >= 12 &&

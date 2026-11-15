@@ -6,6 +6,8 @@ import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/notification_repository.dart';
+import '../../../../core/database/repositories/rating_repository.dart';
+import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -21,6 +23,7 @@ import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../../../../core/widgets/app_guided_tour.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../ratings/domain/client_rating_label.dart';
 import '../providers/worker_home_refresh_provider.dart';
 import '../widgets/worker_active_job_banner.dart';
 import '../widgets/worker_demo_tour_overlay.dart';
@@ -384,12 +387,13 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                       onNewJob: () => _tabController.animateTo(0),
                       onCalendar: () =>
                           context.push(AppConstants.routeJobSchedule),
-                      onJobMap: () =>
+                      onHistory: () =>
                           context.push(AppConstants.routeJobHistory),
-                      onInvoices: () =>
-                          context.push(AppConstants.routeStatistics),
+                      onEarnings: () =>
+                          context.push(AppConstants.routeWorkerPayouts),
                     ),
                   ),
+                  const _WorkerMoreLinks(),
                   if (_dashboard!.highlightJob != null)
                     WorkerActiveJobBanner(
                       job: _dashboard!.highlightJob!,
@@ -743,6 +747,9 @@ class _JobsTab extends StatefulWidget {
 
 class _JobsTabState extends State<_JobsTab> {
   late Future<List<JobModel>> _future;
+  Future<Map<String, ClientRatingSummary>>? _ratings;
+  Future<Map<String, String>>? _names;
+  String? _ratingKey;
 
   @override
   void initState() {
@@ -754,6 +761,9 @@ class _JobsTabState extends State<_JobsTab> {
   void didUpdateWidget(covariant _JobsTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.reloadToken != widget.reloadToken) {
+      _ratings = null;
+      _names = null;
+      _ratingKey = null;
       setState(() {
         _future = widget.loader();
       });
@@ -815,16 +825,90 @@ class _JobsTabState extends State<_JobsTab> {
             );
           }
 
-          return ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-            itemCount: jobs.length,
-            itemBuilder: (context, index) => WorkerJobCard(
-              job: jobs[index],
-              onTap: () => widget.onJobTap(jobs[index]),
-            ),
+          final key = jobs.map((job) => job.userId).join('|');
+          if (_ratings == null || _ratingKey != key) {
+            _ratingKey = key;
+            _ratings = RatingRepository().clientSummaries(
+              jobs.map((job) => job.userId).toList(),
+            );
+            _names = UserRepository()
+                .getPublicProfilesByIds(jobs.map((job) => job.userId).toList())
+                .then(
+                  (profiles) => {
+                    for (final entry in profiles.entries)
+                      entry.key: entry.value.name,
+                  },
+                );
+          }
+          return FutureBuilder<Map<String, ClientRatingSummary>>(
+            future: _ratings,
+            builder: (context, ratingSnap) {
+              return FutureBuilder<Map<String, String>>(
+                future: _names,
+                builder: (context, nameSnap) {
+                  final ready =
+                      ratingSnap.connectionState == ConnectionState.done;
+                  final known = ready && !ratingSnap.hasError;
+                  final summaries = ratingSnap.data ?? {};
+                  final names = nameSnap.data ?? {};
+                  return ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                    itemCount: jobs.length,
+                    itemBuilder: (context, index) {
+                      final job = jobs[index];
+                      final summary = summaries[job.userId];
+                      final label =
+                          job.status == AppConstants.jobStatusPending && ready
+                              ? clientRatingLabel(
+                                  average: summary?.average,
+                                  count: summary?.count ?? 0,
+                                  known: known,
+                                )
+                              : null;
+                      return WorkerJobCard(
+                        job: job,
+                        clientName: names[job.userId],
+                        clientRatingLabel: label,
+                        onTap: () => widget.onJobTap(job),
+                      );
+                    },
+                  );
+                },
+              );
+            },
           );
         },
+      ),
+    );
+  }
+}
+
+class _WorkerMoreLinks extends StatelessWidget {
+  const _WorkerMoreLinks();
+
+  @override
+  Widget build(BuildContext context) {
+    final links = [
+      (AppConstants.routeWorkerPayouts, Icons.account_balance_outlined, 'Pagos'),
+      (AppConstants.routeWorkerSchedule, Icons.schedule_outlined, 'Horario'),
+      (AppConstants.routeMyRatings, Icons.star_outline, 'Calificaciones'),
+      (AppConstants.routeMyDisputes, Icons.gavel_outlined, 'Disputas'),
+      (AppConstants.routeMessages, Icons.forum_outlined, 'Mensajes'),
+    ];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final link in links)
+            ActionChip(
+              avatar: Icon(link.$2, size: 18, color: AppColors.brandOrange),
+              label: Text(link.$3),
+              onPressed: () => context.push(link.$1),
+            ),
+        ],
       ),
     );
   }

@@ -10,6 +10,8 @@ import '../../../../core/domain/worker_hours.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/mock_reserved_slots.dart';
+import '../../../../core/utils/job_schedule_grouping.dart';
+import '../../../../core/utils/santiago_time.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../worker/presentation/widgets/worker_hours_editor.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +37,9 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
   @override
   void initState() {
     super.initState();
+    final today = SantiagoTime.day(DateTime.now());
+    _focusedDay = today;
+    _selectedDay = today;
     _loadJobs();
     _loadHours();
   }
@@ -105,15 +110,10 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
 
     try {
       final jobs = await _jobRepository.getJobsByWorkerId(user.id);
-      final jobsMap = <DateTime, List<JobModel>>{};
-
-      for (final job in jobs) {
-        final date = _jobDay(job);
-        jobsMap.putIfAbsent(date, () => []).add(job);
-      }
-
       if (!mounted) return;
-      setState(() => _jobsByDate = jobsMap);
+      setState(() {
+        _jobsByDate = jobsBySantiagoDay(jobs);
+      });
     } catch (e) {
       // Error al cargar trabajos
     }
@@ -166,7 +166,10 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
             eventLoader: _getJobsForDay,
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
               selectedDecoration: BoxDecoration(
@@ -199,7 +202,7 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
                         child: ListTile(
                           title: Text(job.description ?? 'Sin descripción'),
                           subtitle: Text(
-                            '${_getStatusText(job.status)} · ${_jobTimeLabel(job)}',
+                            '${_getStatusText(job.status)} - ${DateFormat('HH:mm').format(SantiagoTime.wall(scheduleInstant(job)))}',
                           ),
                           trailing: Icon(
                             _getStatusIcon(job.status),

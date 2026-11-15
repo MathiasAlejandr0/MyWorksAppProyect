@@ -60,7 +60,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           callback: (payload) {
             final row = payload.newRecord;
             if (row.isEmpty || !mounted) return;
-            final message = MessageModel.fromMap(Map<String, dynamic>.from(row));
+            final message =
+                MessageModel.fromMap(Map<String, dynamic>.from(row));
             setState(() {
               if (_messages.every((item) => item.id != message.id)) {
                 _messages = [..._messages, message];
@@ -91,14 +92,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
     try {
       final job = await _jobRepository.getJobById(widget.jobId);
-      final messages = await _messageRepository.getMessagesByJobId(widget.jobId);
+      final messages =
+          await _messageRepository.getMessagesByJobId(widget.jobId);
 
       final authState = ref.read(authProvider);
       final currentUser = authState.user;
 
       UserModel? otherUser;
       if (job != null && currentUser != null) {
-        final otherUserId = currentUser.id == job.userId ? job.workerId : job.userId;
+        final otherUserId =
+            currentUser.id == job.userId ? job.workerId : job.userId;
         if (otherUserId != null) {
           otherUser = await _userRepository.getUserById(otherUserId);
           await _messageRepository.markAllAsRead(widget.jobId, currentUser.id);
@@ -146,10 +149,27 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
     final authState = ref.read(authProvider);
     final currentUser = authState.user;
-    if (currentUser == null || _job == null) return;
+    if (currentUser == null || _job == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo enviar. Recarga el chat.')),
+        );
+      }
+      return;
+    }
 
-    final otherUserId = currentUser.id == _job!.userId ? _job!.workerId : _job!.userId;
-    if (otherUserId == null) return;
+    final otherUserId =
+        currentUser.id == _job!.userId ? _job!.workerId : _job!.userId;
+    if (otherUserId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Este trabajo todavía no tiene a la otra persona.'),
+          ),
+        );
+      }
+      return;
+    }
 
     try {
       final message = MessageModel(
@@ -232,24 +252,25 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     message: _loadError!,
                   )
                 : _messages.isEmpty
-                ? const EmptyStateWidget(
-                    icon: Icons.chat_bubble_outline,
-                    title: 'No hay mensajes aún',
-                    message: 'Envía el primer mensaje para comenzar la conversación.',
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      final isMe = message.senderId == currentUser?.id;
-                      return _MessageBubble(
-                        message: message,
-                        isMe: isMe,
-                      );
-                    },
-                  ),
+                    ? const EmptyStateWidget(
+                        icon: Icons.chat_bubble_outline,
+                        title: 'No hay mensajes aún',
+                        message:
+                            'Envía el primer mensaje para comenzar la conversación.',
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) {
+                          final message = _messages[index];
+                          final isMe = message.senderId == currentUser?.id;
+                          return _MessageBubble(
+                            message: message,
+                            isMe: isMe,
+                          );
+                        },
+                      ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(
@@ -348,7 +369,10 @@ class _MessageBubble extends StatelessWidget {
                 fontSize: 10,
                 color: isMe
                     ? AppColors.white.withValues(alpha: 0.7)
-                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    : Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -371,4 +395,3 @@ class _MessageBubble extends StatelessWidget {
     }
   }
 }
-

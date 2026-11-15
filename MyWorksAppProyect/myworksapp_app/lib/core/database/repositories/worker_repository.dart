@@ -166,12 +166,21 @@ class WorkerRepository {
     if (supabase.auth.currentUser?.id != userId) {
       throw StateError('solo puedes editar tu propia agenda');
     }
-    await supabase.rpc(
-      'guardar_horarios_propios',
-      params: {
-        'p_horarios': uniqueWorkerHours(hours).map((slot) => slot.toJson()).toList(),
-      },
-    );
+    final slots = uniqueWorkerHours(hours).map((slot) => slot.toJson()).toList();
+    // La PK viva es `id`, no `id_usuario`. Se actualizan todas las filas
+    // del profesional para que horarios_libres_profesional vea los bloques
+    // aunque también existan filas por día.
+    final updated = await supabase
+        .from('trabajador_horarios')
+        .update({'horarios': slots})
+        .eq('id_usuario', userId)
+        .select('id');
+    if (updated is List && updated.isEmpty) {
+      await supabase.from('trabajador_horarios').insert({
+        'id_usuario': userId,
+        'horarios': slots,
+      });
+    }
   }
 
   Future<List<DateTime>> fetchFreeSlots(String workerId) async {

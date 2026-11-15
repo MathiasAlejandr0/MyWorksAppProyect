@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   isEmailNotConfirmed,
+  loadProfileAfterSignup,
   signUpUser,
   translateAuthError,
   updateAccountPassword,
@@ -63,6 +64,29 @@ describe('signUpUser y updateAccountPassword', () => {
       /al menos una letra/,
     );
     assert.equal(calls, 0);
+  });
+});
+
+describe('loadProfileAfterSignup', () => {
+  it('reintenta y no inventa un perfil activo', async () => {
+    let reads = 0;
+    const found = await loadProfileAfterSignup(async () => {
+      reads += 1;
+      return reads < 2
+        ? null
+        : {
+            id: 'u1',
+            name: 'Ana',
+            email: 'ana@demo.myworksapp.cl',
+            role: 'usuario',
+            accountStatus: 'activo',
+          };
+    }, 3, 0);
+    assert.equal(found?.id, 'u1');
+    assert.equal(reads, 2);
+
+    const missing = await loadProfileAfterSignup(async () => null, 2, 0);
+    assert.equal(missing, null);
   });
 });
 

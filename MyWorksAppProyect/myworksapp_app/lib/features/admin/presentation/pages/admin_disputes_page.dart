@@ -14,6 +14,7 @@ import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/admin_search_field.dart';
 import '../widgets/dispute_resolution_dialog.dart';
+import '../../../../core/utils/error_handler.dart';
 
 class AdminDisputesPage extends ConsumerStatefulWidget {
   const AdminDisputesPage({super.key});
@@ -51,7 +52,7 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -76,7 +77,7 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -109,7 +110,7 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -166,7 +167,8 @@ class _AdminDisputesPageState extends ConsumerState<AdminDisputesPage> {
                             final d = _disputes[index];
                             return Card(
                               child: ListTile(
-                                title: Text('Trabajo ${d.jobId.substring(0, 8)}…'),
+                                title:
+                                    Text('Trabajo ${d.jobId.substring(0, 8)}…'),
                                 subtitle: Text(
                                   '${d.reason} · ${d.status}\n${d.description ?? ''}',
                                 ),

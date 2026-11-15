@@ -249,5 +249,3 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
-
-

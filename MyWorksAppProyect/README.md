@@ -160,7 +160,7 @@ cd myworksapp_app
 flutter doctor -v              # revisa que "Java version" sea 21 o 25
 flutter clean
 flutter pub get
-adb uninstall com.example.myworksapp   # borra la app vieja del emulador/teléfono (si no está, da error y no pasa nada)
+adb uninstall cl.myworksapp.app   # borra la app vieja del emulador/teléfono (si no está, da error y no pasa nada)
 flutter run                    # debug: usa el Supabase de la demo, no requiere .env
 ```
 

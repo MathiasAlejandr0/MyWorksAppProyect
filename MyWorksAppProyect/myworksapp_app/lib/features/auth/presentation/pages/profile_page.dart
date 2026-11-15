@@ -15,6 +15,7 @@ import '../../../../core/services/profile_photo_service.dart';
 import '../../../ratings/presentation/widgets/client_reputation_card.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../providers/auth_provider.dart';
@@ -52,9 +53,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     setState(() => _loadingExtras = true);
     try {
       if (user.userRole.isEspecialista) {
-        final worker = await ref
-            .read(workerRepositoryProvider)
-            .getWorkerByUserId(user.id);
+        final worker =
+            await ref.read(workerRepositoryProvider).getWorkerByUserId(user.id);
         final jobs =
             await ref.read(jobRepositoryProvider).getJobsByWorkerId(user.id);
         if (!mounted) return;
@@ -94,7 +94,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       await ref.read(userRepositoryProvider).updateUser(
             user.copyWith(profilePhotoPath: path),
           );
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Foto de perfil actualizada')),
@@ -119,7 +121,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       await ref.read(userRepositoryProvider).updateUser(
             user.copyWith(clearProfilePhoto: true),
           );
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Foto de perfil eliminada')),
@@ -246,14 +250,16 @@ class _ProfileIdentityCard extends StatelessWidget {
               user.email,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.onCanvasMuted(Theme.of(context).brightness),
+                    color:
+                        AppColors.onCanvasMuted(Theme.of(context).brightness),
                   ),
             ),
             const SizedBox(height: 12),
             Chip(
               avatar: Icon(role.icon, size: 18, color: AppColors.brandOrange),
               label: Text(role.label),
-              side: BorderSide(color: AppColors.brandOrange.withValues(alpha: 0.4)),
+              side: BorderSide(
+                  color: AppColors.brandOrange.withValues(alpha: 0.4)),
               backgroundColor: AppColors.brandOrange.withValues(alpha: 0.1),
             ),
             const SizedBox(height: 20),
@@ -291,9 +297,13 @@ class _ClienteSection extends StatelessWidget {
           title: 'Datos personales',
           child: Column(
             children: [
-              _InfoRow(icon: Icons.person_outline, label: 'Nombre', value: user.name),
+              _InfoRow(
+                  icon: Icons.person_outline,
+                  label: 'Nombre',
+                  value: user.name),
               const Divider(height: 20),
-              _InfoRow(icon: Icons.mail_outline, label: 'Correo', value: user.email),
+              _InfoRow(
+                  icon: Icons.mail_outline, label: 'Correo', value: user.email),
               const Divider(height: 20),
               _InfoRow(
                 icon: Icons.verified_user_outlined,
@@ -353,6 +363,24 @@ class _ClienteSection extends StatelessWidget {
           title: const Text('Editar datos personales'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push(AppConstants.routeUserProfileEdit),
+        ),
+        ListTile(
+          leading: const Icon(Icons.forum_outlined),
+          title: const Text('Mensajes'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMessages),
+        ),
+        ListTile(
+          leading: const Icon(Icons.star_outline),
+          title: const Text('Mis calificaciones'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMyRatings),
+        ),
+        ListTile(
+          leading: const Icon(Icons.gavel_outlined),
+          title: const Text('Mis disputas'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMyDisputes),
         ),
         ListTile(
           leading: const Icon(Icons.settings_outlined),
@@ -479,9 +507,8 @@ class _EspecialistaSection extends StatelessWidget {
                 child: _StatTile(
                   icon: Icons.star_outline,
                   label: 'Calificación',
-                  value: worker == null
-                      ? '—'
-                      : worker!.rating.toStringAsFixed(1),
+                  value:
+                      worker == null ? '—' : worker!.rating.toStringAsFixed(1),
                 ),
               ),
               const SizedBox(width: 12),
@@ -502,6 +529,36 @@ class _EspecialistaSection extends StatelessWidget {
           subtitle: const Text('Edita tu perfil profesional completo'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push(AppConstants.routeWorkerProfileManage),
+        ),
+        ListTile(
+          leading: const Icon(Icons.payments_outlined),
+          title: const Text('Pagos y cuenta bancaria'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeWorkerPayouts),
+        ),
+        ListTile(
+          leading: const Icon(Icons.schedule_outlined),
+          title: const Text('Horario semanal'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeWorkerSchedule),
+        ),
+        ListTile(
+          leading: const Icon(Icons.star_outline),
+          title: const Text('Mis calificaciones'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMyRatings),
+        ),
+        ListTile(
+          leading: const Icon(Icons.gavel_outlined),
+          title: const Text('Mis disputas'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMyDisputes),
+        ),
+        ListTile(
+          leading: const Icon(Icons.forum_outlined),
+          title: const Text('Mensajes'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMessages),
         ),
         ListTile(
           leading: const Icon(Icons.settings_outlined),

@@ -40,11 +40,99 @@ import {
   tooFarToBookCopy,
   transportSurcharge,
   withinTravelRange,
+  isOpenAt,
+  type WeeklyHours,
   type JobTrackingSnapshot,
   type JobEvidencePhoto,
   type CatalogCursor,
   type WorkerWithProfile,
 } from '@myworksapp/shared';
+
+type ScheduleRow = {
+  id_usuario: string;
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fin: string;
+  activo: boolean | null;
+};
+
+function minutesOf(value: string): number {
+  const [hour, minute] = value.split(':');
+  return Number(hour) * 60 + Number(minute || 0);
+}
+
+type LooseQuery = {
+  from: (table: string) => {
+    select: (columns: string) => {
+      in: (
+        column: string,
+        values: string[],
+      ) => Promise<{
+        data: Array<Record<string, unknown>> | null;
+        error: { message: string } | null;
+      }>;
+    };
+  };
+};
+
+async function loadSchedules(
+  ids: string[],
+): Promise<Map<string, WeeklyHours>> {
+  const result = new Map<string, WeeklyHours>();
+  if (ids.length === 0) return result;
+  // anon no tiene SELECT sobre trabajadores: sin sesión no se consulta y
+  // la disponibilidad queda como la entrega el catálogo.
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) return result;
+  // Las columnas viven en la base y todavía no están en database.types.ts.
+  const db = supabase as unknown as LooseQuery;
+  const [flags, rows] = await Promise.all([
+    db.from('trabajadores').select('id_usuario, usa_horario').in('id_usuario', ids),
+    db
+      .from('trabajador_horarios')
+      .select('id_usuario, dia_semana, hora_inicio, hora_fin, activo')
+      .in('id_usuario', ids),
+  ]);
+  if (flags.error || rows.error) return result;
+  const days = new Map<string, WeeklyHours['days']>();
+  for (const raw of rows.data ?? []) {
+    const row = raw as ScheduleRow;
+    if (!row.id_usuario || row.dia_semana == null) continue;
+    const list = days.get(row.id_usuario) ?? [];
+    list.push({
+      weekday: row.dia_semana,
+      startMinute: minutesOf(String(row.hora_inicio)),
+      endMinute: minutesOf(String(row.hora_fin)),
+      enabled: row.activo !== false,
+    });
+    days.set(row.id_usuario, list);
+  }
+  for (const flag of flags.data ?? []) {
+    const id = String(flag.id_usuario ?? '');
+    if (!id) continue;
+    result.set(id, {
+      enabled: flag.usa_horario === true,
+      days: days.get(id) ?? [],
+    });
+  }
+  return result;
+}
+
+async function withScheduleAvailability(workers: WorkerWithProfile[]): Promise<SearchWorker[]> {
+  const now = new Date();
+  let schedules = new Map<string, WeeklyHours>();
+  try {
+    schedules = await loadSchedules(workers.map((worker) => worker.userId));
+  } catch {
+    schedules = new Map();
+  }
+  return workers.map((worker) => ({
+    ...toWebWorkerCard(worker),
+    availableNow:
+      worker.isAvailable === 1 &&
+      isOpenAt(schedules.get(worker.userId) ?? null, now),
+  }));
+}
 
 const PaymentCheckoutModal = lazy(() =>
   import('./components/PaymentCheckoutModal').then((m) => ({
@@ -83,6 +171,12 @@ const SearchResultsView = lazy(() =>
 const QuickBookingBar = lazy(() =>
   import('./components/QuickBookingBar').then((m) => ({
     default: m.QuickBookingBar,
+  })),
+);
+
+const JobEvidencePanel = lazy(() =>
+  import('./components/JobEvidencePanel').then((m) => ({
+    default: m.JobEvidencePanel,
   })),
 );
 
@@ -133,7 +227,7 @@ interface ServiceMatch {
 
 export function App() {
 
-  const { profile, logout, error: authError, clearError } = useAuth();
+  const { profile, loading: authLoading, logout, error: authError, clearError } = useAuth();
   const queryClient = useQueryClient();
 
   const [view, setView] = useState<AppView>('landing');
@@ -667,13 +761,7 @@ export function App() {
 
       setSelectedServiceId(service?.id ?? null);
 
-      const workers: SearchWorker[] = page.workers.map((worker: WorkerWithProfile) => ({
-
-        ...toWebWorkerCard(worker),
-
-        availableNow: true,
-
-      }));
+      const workers: SearchWorker[] = await withScheduleAvailability(page.workers);
 
 
 
@@ -707,10 +795,7 @@ export function App() {
         category: match.category,
         cursor: match.nextCursor,
       });
-      const extra: SearchWorker[] = page.workers.map((worker: WorkerWithProfile) => ({
-        ...toWebWorkerCard(worker),
-        availableNow: true,
-      }));
+      const extra: SearchWorker[] = await withScheduleAvailability(page.workers);
       setServiceMatch({
         ...match,
         workers: [...match.workers, ...extra],
@@ -843,6 +928,10 @@ export function App() {
     setBookingError(null);
     if (liveTooFar) {
       setBookingError(tooFarToBookCopy());
+      return;
+    }
+    if (authLoading) {
+      setBookingError('Estamos confirmando tu sesión. Inténtalo en un momento.');
       return;
     }
 
@@ -1122,6 +1211,10 @@ export function App() {
 
           onOpenChat={() => setShowChat(true)}
 
+          evidence={checkoutJobId && profile ? (
+            <JobEvidencePanel jobId={checkoutJobId} userId={profile.id} />
+          ) : null}
+
           onOpenNotifications={() => setShowNotifications(true)}
 
           onConfirmReceipt={() => void confirmReceipt()}
@@ -1138,7 +1231,7 @@ export function App() {
               p_motivo: reason,
               p_descripcion: detail,
             });
-            if (error) throw new Error(error.message);
+            if (error) throw new Error('No se pudo abrir la disputa.');
           } : undefined}
 
           pendingAgreement={pendingAgreement}
@@ -1175,13 +1268,13 @@ export function App() {
               .order('creado_en', { ascending: false })
               .limit(1)
               .maybeSingle();
-            if (error) throw new Error(error.message);
+            if (error) throw new Error('No se pudo leer la disputa.');
             if (!data?.id) throw new Error('No hay una disputa abierta en este trabajo.');
             const { error: commentError } = await supabase.rpc('comentar_disputa', {
               p_id: data.id,
               p_comentario: comment,
             });
-            if (commentError) throw new Error(commentError.message);
+            if (commentError) throw new Error('No se pudo agregar el comentario.');
           } : undefined}
 
         />
@@ -1278,6 +1371,9 @@ export function App() {
             setAuthInitialEmail('');
             setShowAuth(true);
           }}
+          onOpenNotifications={() => setShowNotifications(true)}
+          onLogout={() => void logout()}
+          unreadCount={unreadCount}
           hasMore={Boolean(serviceMatch?.nextCursor)}
           isLoadingMore={loadingMoreWorkers}
           onLoadMore={() => void loadMoreWorkers()}
@@ -1290,7 +1386,14 @@ export function App() {
 
         />
 
-
+        {showNotifications && (
+          <div className="toast-error" role="status">
+            {notificationLines.length === 0
+              ? 'No tienes notificaciones.'
+              : notificationLines.slice(0, 5).join(' · ')}
+            <button type="button" onClick={() => setShowNotifications(false)}>Cerrar</button>
+          </div>
+        )}
 
         {selectedWorker && (
 

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/database/models/change_order_model.dart';
 import '../../../../core/database/models/dispute_model.dart';
@@ -88,7 +89,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   String? _error;
   String _displayAddress = '';
   bool _isLoadingAddress = true;
-  
+
   // Estados de transiciones válidas (cache)
   Map<String, bool> _canTransition = {};
   bool _rejectionDialogShown = false;
@@ -111,7 +112,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         _job = job;
         _isLoading = false;
       });
-      
+
       if (job != null) {
         _loadAddress(job);
         _loadValidTransitions(job);
@@ -143,7 +144,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     if (user == null) return;
 
     final transitions = <String, bool>{};
-    
+
     // Verificar cada transición posible
     final possibleStatuses = [
       PricingConstants.jobAwaitingPayment,
@@ -260,7 +261,8 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       await _loadDispute(dispute.jobId);
     } catch (e) {
       if (!mounted) return;
-      final message = e is AppError ? e.message : 'No se pudo agregar el comentario';
+      final message =
+          e is AppError ? e.message : 'No se pudo agregar el comentario';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: AppColors.error),
       );
@@ -280,8 +282,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         description: description,
       );
 
-      final notifyUserId =
-          user.id == job.userId ? job.workerId : job.userId;
+      final notifyUserId = user.id == job.userId ? job.workerId : job.userId;
       if (notifyUserId != null) {
         await NotificationService.instance.showNotification(
           title: 'Disputa abierta',
@@ -321,10 +322,12 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     final user = authState.user;
     if (user == null || user.id != job.userId) return;
     if (job.status != AppConstants.jobStatusCancelled) return;
-    if (job.serviceMetadata?['rejection_reason'] != 'worker_unavailable') return;
+    if (job.serviceMetadata?['rejection_reason'] != 'worker_unavailable')
+      return;
 
     _rejectionDialogShown = true;
-    final rejectedWorkerId = job.serviceMetadata?['rejected_by_worker_id'] as String?;
+    final rejectedWorkerId =
+        job.serviceMetadata?['rejected_by_worker_id'] as String?;
     final rejectedUser = rejectedWorkerId != null
         ? await _userRepository.getPublicProfile(rejectedWorkerId)
         : null;

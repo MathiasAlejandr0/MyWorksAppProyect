@@ -21,8 +21,7 @@ class DisputeRepository {
   }
 
   Future<DisputeModel?> getDisputeById(String id) async {
-    final row =
-        await supabase.from(_table).select().eq('id', id).maybeSingle();
+    final row = await supabase.from(_table).select().eq('id', id).maybeSingle();
     if (row == null) return null;
     return DisputeModel.fromMap(row);
   }
@@ -72,6 +71,26 @@ class DisputeRepository {
       'p_id': id,
       'p_acepta': accept,
     });
+  }
+
+  Future<List<DisputeModel>> listForParticipant(String userId) async {
+    final asClient =
+        await supabase.from('trabajos').select('id').eq('id_usuario', userId);
+    final asWorker = await supabase
+        .from('trabajos')
+        .select('id')
+        .eq('id_trabajador', userId);
+    final ids = <String>{
+      for (final row in [...asClient as List, ...asWorker as List])
+        (row as Map)['id'] as String,
+    };
+    if (ids.isEmpty) return [];
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .inFilter('id_trabajo', ids.toList())
+        .order('creado_en', ascending: false);
+    return rows.map<DisputeModel>((m) => DisputeModel.fromMap(m)).toList();
   }
 
   Future<List<DisputeModel>> getOpenDisputes() async {

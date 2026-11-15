@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../widgets/admin_search_field.dart';
+import '../../../../core/utils/error_handler.dart';
 
 String _recordedOn(String? platform) {
   switch (platform) {
@@ -95,7 +96,7 @@ class _AdminErrorsPageState extends ConsumerState<AdminErrorsPage>
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
     }
   }
@@ -245,9 +246,9 @@ class _ErrorLogsTab extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-                subtitle: Text(
-                  '${log.errorType} · ${log.status} · ${_recordedOn(log.platform)}',
-                ),
+              subtitle: Text(
+                '${log.errorType} · ${log.status} · ${_recordedOn(log.platform)}',
+              ),
               children: [
                 if (log.stackTrace != null)
                   Padding(

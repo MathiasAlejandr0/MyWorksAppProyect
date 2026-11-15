@@ -60,7 +60,10 @@ class WorkerHeader extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 14),
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (worker != null)
                 _HeaderChip(
