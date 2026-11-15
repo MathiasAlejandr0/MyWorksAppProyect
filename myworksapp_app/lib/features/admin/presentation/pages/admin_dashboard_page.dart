@@ -225,6 +225,13 @@ class _AdminDashboardPageState extends ConsumerState<AdminDashboardPage> {
                             context.push(AppConstants.routeAdminFeatureFlags),
                       ),
                       AdminNavTile(
+                        icon: Icons.payments_outlined,
+                        title: 'Liquidaciones',
+                        subtitle: 'Marcar transferencias al profesional',
+                        onTap: () =>
+                            context.push(AppConstants.routeAdminPayouts),
+                      ),
+                      AdminNavTile(
                         icon: Icons.desktop_windows_outlined,
                         title: 'Programa de escritorio',
                         subtitle:

@@ -30,7 +30,7 @@ if (keystorePropertiesFile.exists()) {
 val googleMapsApiKey = loadGoogleMapsApiKey()
 
 android {
-    namespace = "com.example.myworksapp"
+    namespace = "cl.myworksapp.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "28.2.13676358"
 
@@ -42,7 +42,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.myworksapp"
+        applicationId = "cl.myworksapp.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -72,6 +72,12 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }

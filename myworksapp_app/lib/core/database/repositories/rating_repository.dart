@@ -76,6 +76,15 @@ class RatingRepository {
     return total / ratings.length;
   }
 
+  Future<List<RatingModel>> listReceived(String userId) async {
+    final rows = await supabase
+        .from(_table)
+        .select()
+        .eq('id_calificado', userId)
+        .order('creado_en', ascending: false);
+    return rows.map<RatingModel>((m) => RatingModel.fromMap(m)).toList();
+  }
+
   /// Obtiene todas las calificaciones donde el usuario es el calificador
   Future<List<RatingModel>> getRatingsByUserId(String userId) async {
     final rows = await supabase

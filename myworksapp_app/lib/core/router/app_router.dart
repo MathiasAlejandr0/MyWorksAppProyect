@@ -29,6 +29,11 @@ import '../../features/jobs/presentation/pages/job_photos_page.dart';
 import '../../features/worker/presentation/pages/statistics_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/worker/presentation/pages/worker_schedule_page.dart';
+import '../../features/worker/presentation/pages/worker_payouts_page.dart';
+import '../../features/inbox/presentation/pages/my_ratings_page.dart';
+import '../../features/inbox/presentation/pages/my_disputes_page.dart';
+import '../../features/admin/presentation/pages/admin_payouts_page.dart';
 import '../../features/jobs/presentation/pages/job_schedule_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/auth/presentation/pages/reset_password_new_page.dart';
@@ -327,6 +332,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppConstants.routeJobSchedule,
         builder: (context, state) => const JobSchedulePage(),
       ),
+      GoRoute(
+        path: AppConstants.routeWorkerPayouts,
+        builder: (context, state) => const WorkerPayoutsPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeWorkerSchedule,
+        builder: (context, state) => const WorkerSchedulePage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeMyRatings,
+        builder: (context, state) => const MyRatingsPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeMyDisputes,
+        builder: (context, state) => const MyDisputesPage(),
+      ),
       // Rutas GDPR
       GoRoute(
         path: AppConstants.routePrivacyPolicy,
@@ -397,6 +418,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppConstants.routeAdminDesktopHub,
         builder: (context, state) => const AdminDesktopManagementPage(),
+      ),
+      GoRoute(
+        path: AppConstants.routeAdminPayouts,
+        builder: (context, state) => const AdminPayoutsPage(),
       ),
     ],
   );

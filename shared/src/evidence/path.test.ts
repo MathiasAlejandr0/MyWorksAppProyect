@@ -20,7 +20,8 @@ describe('evidencia en Storage', () => {
   it('rechaza tipos y tamaños fuera de límite', () => {
     assert.equal(validateEvidenceFile({ mime: 'image/jpeg', byteLength: 100 }).ok, true);
     assert.equal(validateEvidenceFile({ mime: 'application/pdf', byteLength: 100 }).ok, false);
-    assert.equal(validateEvidenceFile({ mime: 'video/mp4', byteLength: 51 * 1024 * 1024 }).ok, false);
+    assert.equal(validateEvidenceFile({ mime: 'video/mp4', byteLength: 20 * 1024 * 1024 }).ok, true);
+    assert.equal(validateEvidenceFile({ mime: 'video/mp4', byteLength: 21 * 1024 * 1024 }).ok, false);
     assert.equal(validateEvidenceFile({ mime: 'image/png', byteLength: 9 * 1024 * 1024 }).ok, false);
   });
 });

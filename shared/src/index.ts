@@ -47,3 +47,4 @@ export * from './metrics/fetchPeriod';
 export * from './invites/parseInvite';
 export * from './evidence/path';
 export * from './evidence/save';
+export * from './scheduling/weeklyHours';

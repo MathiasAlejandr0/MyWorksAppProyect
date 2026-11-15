@@ -4,7 +4,7 @@ class EvidenceStoragePath {
 
   static const String bucket = 'evidencias';
   static const int maxImageBytes = 8 * 1024 * 1024;
-  static const int maxVideoBytes = 50 * 1024 * 1024;
+  static const int maxVideoBytes = 20 * 1024 * 1024;
 
   static const _imageExt = {
     'image/jpeg': 'jpg',

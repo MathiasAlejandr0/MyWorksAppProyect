@@ -5,7 +5,7 @@ class AppTextScaling {
   AppTextScaling._();
 
   static const double minScale = 0.85;
-  static const double maxScale = 1.4;
+  static const double maxScale = 2.0;
 
   static TextScaler clamp(TextScaler scaler) =>
       scaler.clamp(minScaleFactor: minScale, maxScaleFactor: maxScale);

@@ -10,6 +10,8 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/models/user_model.dart';
 import '../../../../core/domain/user_location_context.dart';
+import '../../../../core/database/repositories/worker_schedule_repository.dart';
+import '../../../../core/domain/weekly_schedule.dart';
 import '../../../../core/services/matching_service.dart';
 import '../../../../core/services/user_location_service.dart';
 import '../../../../core/services/worker_reputation_service.dart';
@@ -26,7 +28,8 @@ import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_guided_tour.dart' show AppGuidedTour, GuidedTourStep, TourTarget, TourTooltipAlign;
+import '../../../../core/widgets/app_guided_tour.dart'
+    show AppGuidedTour, GuidedTourStep, TourTarget, TourTooltipAlign;
 import '../../../../core/services/demo_tour_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,12 +54,15 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   List<WorkerModel> _workers = [];
   List<WorkerModel> _filteredWorkers = [];
   Map<String, UserModel> _users = {};
-  Map<String, double> _matchScores = {}; // Para mostrar scores en modo automático
+  Map<String, double> _matchScores =
+      {}; // Para mostrar scores en modo automático
   Set<String> _busyWorkerIds = {};
   UserLocationContext? _userLocation;
   bool _isLoading = true;
   bool _isAutomaticMode = false; // false = Manual, true = Inteligente
   String _sortBy = 'rating';
+  bool _onlyNow = false;
+  Map<String, WeeklySchedule> _schedules = {};
   double _minRating = 0.0;
   String? _serviceName;
   final _workerListKey = GlobalKey();
@@ -107,10 +113,22 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       _filteredWorkers = _workers.where((worker) {
         final user = _users[worker.userId];
         final matchesSearch = _searchController.text.isEmpty ||
-            user?.name.toLowerCase().contains(_searchController.text.toLowerCase()) == true ||
-            worker.profession.toLowerCase().contains(_searchController.text.toLowerCase());
+            user?.name
+                    .toLowerCase()
+                    .contains(_searchController.text.toLowerCase()) ==
+                true ||
+            worker.profession
+                .toLowerCase()
+                .contains(_searchController.text.toLowerCase());
         final matchesRating = worker.rating >= _minRating;
-        return matchesSearch && matchesRating;
+        final schedule = _schedules[worker.userId];
+        final matchesNow = !_onlyNow ||
+            countsAsAvailableNow(
+              manuallyAvailable: worker.isAvailable,
+              schedule: schedule,
+              instant: DateTime.now(),
+            );
+        return matchesSearch && matchesRating && matchesNow;
       }).toList();
 
       if (_sortBy == 'rating') {
@@ -192,7 +210,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
 
     try {
       await _resolveUserLocation();
-      if (_isAutomaticMode && widget.jobId != null && widget.serviceId != null) {
+      if (_isAutomaticMode &&
+          widget.jobId != null &&
+          widget.serviceId != null) {
         await _loadAutomaticMatching();
       } else {
         await _loadManualWorkers();
@@ -200,7 +220,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     } catch (e) {
       if (!mounted) return;
       // En caso de cualquier excepción, asegurar fallback manual de seguridad
-      _userLocation ??= const UserLocationContext(city: 'Puerto Montt', region: 'Los Lagos');
+      _userLocation ??=
+          const UserLocationContext(city: 'Puerto Montt', region: 'Los Lagos');
       await _loadManualWorkers();
     }
   }
@@ -209,7 +230,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     try {
       final authState = ref.read(authProvider);
       final user = authState.user;
-      
+
       if (user == null || widget.jobId == null || widget.serviceId == null) {
         await _loadManualWorkers();
         return;
@@ -218,7 +239,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       // Obtener job para obtener coordenadas
       final JobRepository jobRepository = JobRepository();
       final job = await jobRepository.getJobById(widget.jobId!);
-      
+
       if (job == null || job.latitude == null || job.longitude == null) {
         // Si no hay coordenadas, usar modo manual
         await _loadManualWorkers();
@@ -260,6 +281,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         _matchScores = scores;
         _isLoading = false;
       });
+      await _refreshSchedules();
     } catch (e) {
       // Si falla matching automático, cargar manual
       await _loadManualWorkers();
@@ -270,7 +292,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     List<WorkerModel> workers;
 
     if (widget.serviceId != null) {
-      final service = await _serviceRepository.getServiceById(widget.serviceId!);
+      final service =
+          await _serviceRepository.getServiceById(widget.serviceId!);
       _serviceName = service?.name;
 
       if (service != null) {
@@ -289,7 +312,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
           near: _userLocation,
         );
         if (workers.isEmpty) {
-          workers = await _workerRepository.getAvailableWorkersWithoutActiveJobs(
+          workers =
+              await _workerRepository.getAvailableWorkersWithoutActiveJobs(
             near: null,
           );
         }
@@ -324,6 +348,20 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       _isLoading = false;
     });
     _filterWorkers();
+    await _refreshSchedules();
+  }
+
+  Future<void> _refreshSchedules() async {
+    try {
+      final schedules = await WorkerScheduleRepository().loadMany(
+        _workers.map((worker) => worker.userId).toList(),
+      );
+      if (!mounted) return;
+      setState(() => _schedules = schedules);
+      _filterWorkers();
+    } catch (_) {
+      // Sin la migración el listado sigue usando el interruptor disponible.
+    }
   }
 
   @override
@@ -377,7 +415,10 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                             Expanded(
                               child: Text(
                                 'Profesionales en ${_userLocation!.displayLabel}',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
                               ),
@@ -395,20 +436,25 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                             Expanded(
                               child: Text(
                                 'Modo de búsqueda',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ),
                             CupertinoSlidingSegmentedControl<bool>(
                               groupValue: _isAutomaticMode,
                               children: const {
                                 false: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
                                   child: Text('Lista Manual'),
                                 ),
                                 true: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
                                   child: Text('Búsqueda Inteligente'),
                                 ),
                               },
@@ -429,74 +475,94 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                         child: Column(
                           children: [
                             TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: 'Buscar por nombre o profesión...',
-                              prefixIcon: const Icon(Icons.search),
-                              suffixIcon: _searchController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
-                                        _searchController.clear();
-                                      },
-                                    )
-                                  : null,
+                              controller: _searchController,
+                              decoration: InputDecoration(
+                                hintText: 'Buscar por nombre o profesión...',
+                                prefixIcon: const Icon(Icons.search),
+                                suffixIcon: _searchController.text.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () {
+                                          _searchController.clear();
+                                        },
+                                      )
+                                    : null,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  initialValue: _sortBy,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Ordenar por',
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            const SizedBox(height: 12),
+                            FilterChip(
+                              label: const Text('Disponible ahora'),
+                              selected: _onlyNow,
+                              onSelected: (value) {
+                                setState(() => _onlyNow = value);
+                                _filterWorkers();
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    initialValue: _sortBy,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Ordenar por',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 8),
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(
+                                          value: 'rating',
+                                          child: Text('Calificación')),
+                                      DropdownMenuItem(
+                                          value: 'name', child: Text('Nombre')),
+                                    ],
+                                    onChanged: (value) {
+                                      setState(
+                                          () => _sortBy = value ?? 'rating');
+                                      _filterWorkers();
+                                    },
                                   ),
-                                  items: const [
-                                    DropdownMenuItem(value: 'rating', child: Text('Calificación')),
-                                    DropdownMenuItem(value: 'name', child: Text('Nombre')),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() => _sortBy = value ?? 'rating');
-                                    _filterWorkers();
-                                  },
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: DropdownButtonFormField<double>(
-                                  initialValue: _minRating,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Calificación mín.',
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: DropdownButtonFormField<double>(
+                                    initialValue: _minRating,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Calificación mín.',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 8),
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(
+                                          value: 0.0, child: Text('Todas')),
+                                      DropdownMenuItem(
+                                          value: 3.0, child: Text('3+')),
+                                      DropdownMenuItem(
+                                          value: 4.0, child: Text('4+')),
+                                      DropdownMenuItem(
+                                          value: 4.5, child: Text('4.5+')),
+                                    ],
+                                    onChanged: (value) {
+                                      setState(() => _minRating = value ?? 0.0);
+                                      _filterWorkers();
+                                    },
                                   ),
-                                  items: const [
-                                    DropdownMenuItem(value: 0.0, child: Text('Todas')),
-                                    DropdownMenuItem(value: 3.0, child: Text('3+')),
-                                    DropdownMenuItem(value: 4.0, child: Text('4+')),
-                                    DropdownMenuItem(value: 4.5, child: Text('4.5+')),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() => _minRating = value ?? 0.0);
-                                    _filterWorkers();
-                                  },
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     // Lista
                     Expanded(
                       child: _filteredWorkers.isEmpty
                           ? const EmptyStateWidget(
                               icon: Icons.search_off,
                               title: 'No se encontraron trabajadores',
-                              message: 'Intenta con otros filtros o busca otro servicio',
+                              message:
+                                  'Intenta con otros filtros o busca otro servicio',
                             )
                           : TourTarget(
                               tourKey: _workerListKey,
@@ -504,7 +570,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                               child: RefreshIndicator(
                                 onRefresh: _loadWorkers,
                                 child: ListView.builder(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
                                   itemCount: _filteredWorkers.length,
                                   itemBuilder: (context, index) {
                                     final worker = _filteredWorkers[index];
@@ -531,7 +598,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                       badges: [
                                         WorkerCardBadge(
                                           icon: Icons.star_rounded,
-                                          label: worker.rating.toStringAsFixed(1),
+                                          label:
+                                              worker.rating.toStringAsFixed(1),
                                           color: AppColors.warning,
                                         ),
                                         if (worker.workZone != null)
@@ -548,11 +616,14 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                                           ),
                                       ],
                                       showChevron: true,
-                                      margin: const EdgeInsets.only(bottom: AppSpacing.sm + 2),
+                                      margin: const EdgeInsets.only(
+                                          bottom: AppSpacing.sm + 2),
                                       onTap: () {
                                         context.push(
                                           '${AppConstants.routeWorkerDetail}/${worker.userId}',
-                                          extra: {'serviceId': widget.serviceId},
+                                          extra: {
+                                            'serviceId': widget.serviceId
+                                          },
                                         );
                                       },
                                     );
@@ -677,4 +748,3 @@ class _LocationRequiredState extends StatelessWidget {
     );
   }
 }
-

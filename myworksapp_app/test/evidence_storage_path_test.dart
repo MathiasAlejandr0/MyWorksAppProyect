@@ -12,7 +12,8 @@ void main() {
       ),
       'job-1/user-1/file-1.jpg',
     );
-    expect(EvidenceStoragePath.isStoragePath('job-1/user-1/file-1.jpg'), isTrue);
+    expect(
+        EvidenceStoragePath.isStoragePath('job-1/user-1/file-1.jpg'), isTrue);
     expect(
       EvidenceStoragePath.isStoragePath(r'/data/user/0/foto.jpg'),
       isFalse,
@@ -27,9 +28,9 @@ void main() {
     expect(
       EvidenceStoragePath.validate(
         mime: 'video/mp4',
-        byteLength: 51 * 1024 * 1024,
+        byteLength: 21 * 1024 * 1024,
       ),
-      contains('50 MB'),
+      contains('20 MB'),
     );
     expect(
       EvidenceStoragePath.validate(mime: 'text/plain', byteLength: 10),

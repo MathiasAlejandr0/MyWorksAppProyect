@@ -361,6 +361,24 @@ class _ClienteSection extends StatelessWidget {
           onTap: () => context.push(AppConstants.routeUserProfileEdit),
         ),
         ListTile(
+          leading: const Icon(Icons.forum_outlined),
+          title: const Text('Mensajes'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMessages),
+        ),
+        ListTile(
+          leading: const Icon(Icons.star_outline),
+          title: const Text('Mis calificaciones'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMyRatings),
+        ),
+        ListTile(
+          leading: const Icon(Icons.gavel_outlined),
+          title: const Text('Mis disputas'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMyDisputes),
+        ),
+        ListTile(
           leading: const Icon(Icons.settings_outlined),
           title: const Text('Configuración'),
           trailing: const Icon(Icons.chevron_right),
@@ -507,6 +525,36 @@ class _EspecialistaSection extends StatelessWidget {
           subtitle: const Text('Edita tu perfil profesional completo'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push(AppConstants.routeWorkerProfileManage),
+        ),
+        ListTile(
+          leading: const Icon(Icons.payments_outlined),
+          title: const Text('Pagos y cuenta bancaria'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeWorkerPayouts),
+        ),
+        ListTile(
+          leading: const Icon(Icons.schedule_outlined),
+          title: const Text('Horario semanal'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeWorkerSchedule),
+        ),
+        ListTile(
+          leading: const Icon(Icons.star_outline),
+          title: const Text('Mis calificaciones'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMyRatings),
+        ),
+        ListTile(
+          leading: const Icon(Icons.gavel_outlined),
+          title: const Text('Mis disputas'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMyDisputes),
+        ),
+        ListTile(
+          leading: const Icon(Icons.forum_outlined),
+          title: const Text('Mensajes'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppConstants.routeMessages),
         ),
         ListTile(
           leading: const Icon(Icons.settings_outlined),

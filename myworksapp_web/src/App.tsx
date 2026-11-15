@@ -31,10 +31,76 @@ import {
   fetchMyNotifications,
   fetchUserJobs,
   toWebWorkerCard,
+  isOpenAt,
+  visitFitsSchedule,
+  type WeeklyHours,
   type JobTrackingSnapshot,
   type CatalogCursor,
   type WorkerWithProfile,
 } from '@myworksapp/shared';
+
+type ScheduleRow = {
+  id_usuario: string;
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fin: string;
+  activo: boolean | null;
+};
+
+function minutesOf(value: string): number {
+  const [hour, minute] = value.split(':');
+  return Number(hour) * 60 + Number(minute || 0);
+}
+
+async function loadSchedules(
+  ids: string[],
+): Promise<Map<string, WeeklyHours>> {
+  const result = new Map<string, WeeklyHours>();
+  if (ids.length === 0) return result;
+  const [flags, rows] = await Promise.all([
+    supabase.from('trabajadores').select('id_usuario, usa_horario').in('id_usuario', ids),
+    supabase
+      .from('trabajador_horarios')
+      .select('id_usuario, dia_semana, hora_inicio, hora_fin, activo')
+      .in('id_usuario', ids),
+  ]);
+  if (flags.error || rows.error) return result;
+  const days = new Map<string, WeeklyHours['days']>();
+  for (const row of (rows.data ?? []) as ScheduleRow[]) {
+    const list = days.get(row.id_usuario) ?? [];
+    list.push({
+      weekday: row.dia_semana,
+      startMinute: minutesOf(row.hora_inicio),
+      endMinute: minutesOf(row.hora_fin),
+      enabled: row.activo !== false,
+    });
+    days.set(row.id_usuario, list);
+  }
+  for (const flag of flags.data ?? []) {
+    const id = String(flag.id_usuario);
+    result.set(id, {
+      enabled: flag.usa_horario === true,
+      days: days.get(id) ?? [],
+    });
+  }
+  return result;
+}
+
+async function withScheduleAvailability(workers: WorkerWithProfile[]): Promise<SearchWorker[]> {
+  const now = new Date();
+  let schedules = new Map<string, WeeklyHours>();
+  try {
+    schedules = await loadSchedules(workers.map((worker) => worker.userId));
+  } catch {
+    schedules = new Map();
+  }
+  return workers.map((worker) => ({
+    ...toWebWorkerCard(worker),
+    availableNow:
+      worker.isAvailable === 1 &&
+      isOpenAt(schedules.get(worker.userId) ?? null, now),
+  }));
+}
 
 const PaymentCheckoutModal = lazy(() =>
   import('./components/PaymentCheckoutModal').then((m) => ({
@@ -733,13 +799,7 @@ export function App() {
 
       setSelectedServiceId(service?.id ?? null);
 
-      const workers: SearchWorker[] = page.workers.map((worker: WorkerWithProfile) => ({
-
-        ...toWebWorkerCard(worker),
-
-        availableNow: worker.isAvailable === 1,
-
-      }));
+      const workers: SearchWorker[] = await withScheduleAvailability(page.workers);
 
 
 
@@ -773,10 +833,7 @@ export function App() {
         category: match.category,
         cursor: match.nextCursor,
       });
-      const extra: SearchWorker[] = page.workers.map((worker: WorkerWithProfile) => ({
-        ...toWebWorkerCard(worker),
-        availableNow: worker.isAvailable === 1,
-      }));
+      const extra: SearchWorker[] = await withScheduleAvailability(page.workers);
       setServiceMatch({
         ...match,
         workers: [...match.workers, ...extra],
@@ -803,6 +860,18 @@ export function App() {
     const when = slotIso ?? scheduledAt ?? undefined;
     if (slotIso) setScheduledAt(slotIso);
     setBookingError(null);
+    if (when) {
+      try {
+        const schedules = await loadSchedules([selectedWorker.id]);
+        const schedule = schedules.get(selectedWorker.id) ?? null;
+        if (!visitFitsSchedule(schedule, new Date(when))) {
+          setBookingError('Ese horario está fuera de la agenda del profesional.');
+          return;
+        }
+      } catch {
+        // Si la tabla aún no está aplicada, la reserva sigue el flujo actual.
+      }
+    }
 
     if (authLoading) {
       setBookingError('Estamos confirmando tu sesión. Inténtalo en un momento.');

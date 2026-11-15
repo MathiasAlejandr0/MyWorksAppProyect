@@ -80,101 +80,85 @@ class _WorkerOnboardingCardState extends State<WorkerOnboardingCard> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDarkElevated : AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.brandOrange.withValues(alpha: 0.35),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.brandOrange.withValues(alpha: 0.1),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+      child: Material(
+        color: isDark ? AppColors.surfaceDarkElevated : AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: AppColors.brandOrange.withValues(alpha: 0.35),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: AppColors.brandOrange.withValues(alpha: 0.35),
+            ),
+          ),
+          title: Text(
+            'Completa tu perfil (${status.completionPercentage}%)',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              color: titleColor,
+            ),
+          ),
+          subtitle: Text(
+            'Puedes plegar esta lista',
+            style: TextStyle(fontSize: 12, color: muted),
+          ),
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: AppColors.brandOrange.withValues(alpha: 0.18),
-                  ),
-                  child: const Icon(
-                    Icons.checklist_rounded,
-                    color: AppColors.brandOrange,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Completa tu perfil (${status.completionPercentage}%)',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                      color: titleColor,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: status.completionPercentage / 100,
+                      minHeight: 6,
+                      color: AppColors.brandOrange,
+                      backgroundColor: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : AppColors.brandOrangeSoft,
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.refresh_rounded, color: muted),
-                  onPressed: () {
-                    setState(() => _loading = true);
-                    _load();
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: status.completionPercentage / 100,
-                minHeight: 6,
-                color: AppColors.brandOrange,
-                backgroundColor: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : AppColors.brandOrangeSoft,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Para aparecer en búsquedas y recibir trabajos:',
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: muted,
-              ),
-            ),
-            const SizedBox(height: 4),
-            ...status.missingItems.map(
-              (item) => ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  Icons.radio_button_unchecked,
-                  size: 20,
-                  color: AppColors.brandOrange.withValues(alpha: 0.85),
-                ),
-                title: Text(
-                  item,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: titleColor,
+                  const SizedBox(height: 12),
+                  Text(
+                    'Para aparecer en búsquedas y recibir trabajos:',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: muted,
+                    ),
                   ),
-                ),
-                trailing: Icon(Icons.chevron_right, color: muted, size: 18),
-                onTap: () => _goToStep(item),
+                  const SizedBox(height: 4),
+                  ...status.missingItems.map(
+                    (item) => ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.radio_button_unchecked,
+                        size: 20,
+                        color: AppColors.brandOrange.withValues(alpha: 0.85),
+                      ),
+                      title: Text(
+                        item,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: titleColor,
+                        ),
+                      ),
+                      trailing:
+                          Icon(Icons.chevron_right, color: muted, size: 18),
+                      onTap: () => _goToStep(item),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

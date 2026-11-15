@@ -7,6 +7,8 @@ import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/job_schedule_grouping.dart';
+import '../../../../core/utils/santiago_time.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,6 +29,9 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
   @override
   void initState() {
     super.initState();
+    final today = SantiagoTime.day(DateTime.now());
+    _focusedDay = today;
+    _selectedDay = today;
     _loadJobs();
   }
 
@@ -37,23 +42,8 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
 
     try {
       final jobs = await _jobRepository.getJobsByWorkerId(user.id);
-      final jobsMap = <DateTime, List<JobModel>>{};
-
-      for (var job in jobs) {
-        final date = DateTime(
-          job.createdAt.year,
-          job.createdAt.month,
-          job.createdAt.day,
-        );
-        if (jobsMap.containsKey(date)) {
-          jobsMap[date]!.add(job);
-        } else {
-          jobsMap[date] = [job];
-        }
-      }
-
       setState(() {
-        _jobsByDate = jobsMap;
+        _jobsByDate = jobsBySantiagoDay(jobs);
       });
     } catch (e) {
       // Error al cargar trabajos
@@ -93,7 +83,10 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
             eventLoader: _getJobsForDay,
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
               selectedDecoration: BoxDecoration(
@@ -126,7 +119,7 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
                         child: ListTile(
                           title: Text(job.description ?? 'Sin descripción'),
                           subtitle: Text(
-                            '${_getStatusText(job.status)} - ${DateFormat('HH:mm').format(job.createdAt)}',
+                            '${_getStatusText(job.status)} - ${DateFormat('HH:mm').format(SantiagoTime.wall(scheduleInstant(job)))}',
                           ),
                           trailing: Icon(
                             _getStatusIcon(job.status),
@@ -187,4 +180,3 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
     }
   }
 }
-

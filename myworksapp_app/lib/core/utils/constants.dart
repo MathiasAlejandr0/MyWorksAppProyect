@@ -81,6 +81,10 @@ class AppConstants {
   static const String routeStatistics = '/statistics';
   static const String routeJobPhotos = '/job/photos';
   static const String routeJobSchedule = '/job/schedule';
+  static const String routeWorkerPayouts = '/worker/payouts';
+  static const String routeWorkerSchedule = '/worker/schedule';
+  static const String routeMyRatings = '/me/ratings';
+  static const String routeMyDisputes = '/me/disputes';
   static const String routeOnboarding = '/onboarding';
 
   // Rutas GDPR
@@ -104,4 +108,5 @@ class AppConstants {
   static const String routeAdminServices = '/admin/services';
   static const String routeAdminFeatureFlags = '/admin/feature-flags';
   static const String routeAdminDesktopHub = '/admin/desktop-hub';
+  static const String routeAdminPayouts = '/admin/payouts';
 }

@@ -8,6 +8,10 @@
 | 20261011000001 | `migrations/20261011000001_bucket_evidencias.sql` | Bucket privado `evidencias` y políticas: leen las partes del trabajo y un admin; inserta solo el usuario autenticado en `{trabajo}/{usuario}/…`. **No aplicada.** |
 | 20261011000002 | `migrations/20261011000002_pago_por_confirmar.sql` | Estado `pagado_por_confirmar`, confirmación idempotente y reembolso automático. No programa el cobro a Transbank: eso lo hace la función `webpay-reconcile`. **No aplicada.** |
 | 20261012000001 | `migrations/20261012000001_calificacion_bidireccional.sql` | Calificación cliente↔profesional, una por dirección, y RPC de promedio del cliente. **No aplicada.** |
+| 20261013000001 | `migrations/20261013000001_pagos_cuenta_bancaria.sql` | Estado de transferencia en `liquidaciones` (las filas viejas quedan `transferido`), cuenta bancaria con RLS de dueño y admin, y RPC `registrar_transferencia_profesional`. **No aplicada.** |
+| 20261013000002 | `migrations/20261013000002_horarios_semanales.sql` | `usa_horario` en falso y columnas aditivas en `trabajador_horarios`. No borra filas. **No aplicada.** |
+| 20261013000003 | `migrations/20261013000003_verificacion_eventos.sql` | Historial de verificación por trigger. **No aplicada.** |
+| 20261013000004 | `migrations/20261013000004_evidencias_video_20mb.sql` | Tope del bucket `evidencias` a 20 MB. **No aplicada.** |
 
 ## Snapshot CLI (2026-09-07)
 

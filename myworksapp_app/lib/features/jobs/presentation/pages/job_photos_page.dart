@@ -77,7 +77,12 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
     if (userId == null) {
       throw StateError('Inicia sesión para subir evidencia');
     }
-    final bytes = await file.readAsBytes();
+    final length = await file.length();
+    final problem =
+        EvidenceStoragePath.validate(mime: mime, byteLength: length);
+    if (problem != null) {
+      throw StateError(problem);
+    }
     setState(() {
       _uploading = true;
       _uploadFraction = 0;
@@ -85,17 +90,34 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
       _pendingRetry = _PendingEvidence(file, mime);
     });
     try {
-      await _uploader.save(
-        jobId: widget.jobId,
-        userId: userId,
-        fileId: const Uuid().v4(),
-        bytes: bytes,
-        mime: mime,
-        onProgress: (progress) {
-          if (!mounted) return;
-          setState(() => _uploadFraction = progress.fraction);
-        },
-      );
+      final fileId = const Uuid().v4();
+      if (mime.startsWith('video/')) {
+        await _uploader.saveFile(
+          jobId: widget.jobId,
+          userId: userId,
+          fileId: fileId,
+          filePath: file.path,
+          byteLength: length,
+          mime: mime,
+          onProgress: (progress) {
+            if (!mounted) return;
+            setState(() => _uploadFraction = progress.fraction);
+          },
+        );
+      } else {
+        final bytes = await file.readAsBytes();
+        await _uploader.save(
+          jobId: widget.jobId,
+          userId: userId,
+          fileId: fileId,
+          bytes: bytes,
+          mime: mime,
+          onProgress: (progress) {
+            if (!mounted) return;
+            setState(() => _uploadFraction = progress.fraction);
+          },
+        );
+      }
       if (!mounted) return;
       setState(() => _pendingRetry = null);
       await _loadPhotos();

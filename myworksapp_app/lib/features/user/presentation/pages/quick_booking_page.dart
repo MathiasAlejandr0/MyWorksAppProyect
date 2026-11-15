@@ -8,6 +8,8 @@ import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/providers/service_providers.dart';
+import '../../../../core/database/repositories/worker_schedule_repository.dart';
+import '../../../../core/domain/weekly_schedule.dart';
 import '../../../../core/services/pricing_service.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/comuna_utils.dart';
@@ -102,6 +104,21 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
       return;
     }
 
+    WeeklySchedule? schedule;
+    try {
+      schedule = await WorkerScheduleRepository().load(widget.workerId);
+    } catch (_) {
+      schedule = null;
+    }
+    final blocked = scheduleBlocksCivilDay(schedule, _selectedDate);
+    if (blocked != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(blocked)));
+      return;
+    }
+    final scheduledDate = applyScheduleStart(schedule, _selectedDate);
+
     setState(() => _submitting = true);
     try {
       final notes = _notesController.text.trim();
@@ -116,7 +133,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
         serviceId: widget.serviceId,
         address: address,
         visitFeeClp: _worker!.visitFee.round(),
-        scheduledDate: _selectedDate,
+        scheduledDate: scheduledDate,
         description: description,
         comunaKey: inferComunaKey(address),
       );

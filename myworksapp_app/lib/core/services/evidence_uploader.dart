@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,6 +16,7 @@ class EvidenceUploadProgress {
 /// Operaciones de Storage y de la fila. El servicio real habla con Supabase.
 abstract class EvidenceStorageGateway {
   Future<void> upload(String path, Uint8List bytes, String mime);
+  Future<void> uploadFile(String path, String filePath, String mime);
   Future<void> remove(String path);
   Future<void> insertRow(Map<String, dynamic> row);
   Future<String?> signedUrl(String path);
@@ -26,6 +28,16 @@ class SupabaseEvidenceGateway implements EvidenceStorageGateway {
     return supabase.storage.from(EvidenceStoragePath.bucket).uploadBinary(
           path,
           bytes,
+          fileOptions: FileOptions(contentType: mime, upsert: false),
+          retryAttempts: 0,
+        );
+  }
+
+  @override
+  Future<void> uploadFile(String path, String filePath, String mime) {
+    return supabase.storage.from(EvidenceStoragePath.bucket).upload(
+          path,
+          File(filePath),
           fileOptions: FileOptions(contentType: mime, upsert: false),
           retryAttempts: 0,
         );
@@ -96,6 +108,57 @@ class EvidenceUploader {
       throw StateError('No se pudo subir la evidencia');
     }
     onProgress?.call(const EvidenceUploadProgress(0.8, 'Guardando'));
+    try {
+      await _gateway.insertRow({
+        'id': fileId,
+        'id_trabajo': jobId,
+        'ruta_foto': path,
+        'tipo_medio': media,
+        'creado_en': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (_) {
+      try {
+        await _gateway.remove(path);
+      } catch (_) {}
+      throw StateError('No se pudo registrar la evidencia');
+    }
+    onProgress?.call(const EvidenceUploadProgress(1, 'Listo'));
+    return path;
+  }
+
+  /// Sube desde disco. El video no se carga entero en memoria.
+  Future<String> saveFile({
+    required String jobId,
+    required String userId,
+    required String fileId,
+    required String filePath,
+    required int byteLength,
+    required String mime,
+    void Function(EvidenceUploadProgress progress)? onProgress,
+  }) async {
+    final problem = EvidenceStoragePath.validate(
+      mime: mime,
+      byteLength: byteLength,
+    );
+    if (problem != null) throw StateError(problem);
+    final media = EvidenceStoragePath.mediaForMime(mime)!;
+    final path = EvidenceStoragePath.objectPath(
+      jobId: jobId,
+      userId: userId,
+      fileId: fileId,
+      mime: mime,
+    );
+    onProgress?.call(const EvidenceUploadProgress(0.2, 'Subiendo'));
+    var uploaded = false;
+    for (var attempt = 0; attempt < 3 && !uploaded; attempt++) {
+      try {
+        await _gateway.uploadFile(path, filePath, mime);
+        uploaded = true;
+      } catch (_) {}
+    }
+    if (!uploaded) {
+      throw StateError('No se pudo subir la evidencia');
+    }
     try {
       await _gateway.insertRow({
         'id': fileId,

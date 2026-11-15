@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/providers/theme_mode_provider.dart';
+import '../../../../core/services/notification_opt_in.dart';
+import '../../../../core/services/notification_permission_gateway.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
@@ -27,14 +31,58 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
     });
   }
 
   Future<void> _saveNotifications(bool value) async {
+    if (!value) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('notifications_enabled', false);
+      if (mounted) setState(() => _notificationsEnabled = false);
+      return;
+    }
+    final outcome =
+        await const NotificationOptIn(NotificationPermissionGateway()).enable();
+    if (!mounted) return;
+    if (outcome == NotificationPermissionOutcome.granted) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('notifications_enabled', true);
+      if (mounted) setState(() => _notificationsEnabled = true);
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notifications_enabled', value);
-    setState(() => _notificationsEnabled = value);
+    await prefs.setBool('notifications_enabled', false);
+    if (!mounted) return;
+    setState(() => _notificationsEnabled = false);
+    if (outcome == NotificationPermissionOutcome.permanentlyDenied) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Notificaciones bloqueadas'),
+          content: const Text(
+            'El permiso quedó desactivado en el sistema. Ábrelo en Ajustes para recibir avisos de trabajos.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Ahora no'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                openAppSettings();
+              },
+              child: const Text('Abrir Ajustes'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se activaron las notificaciones.')),
+    );
   }
 
   Future<void> _saveDarkMode(bool value) async {
@@ -52,7 +100,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         title: Text('Configuración'),
       ),
       body: ListView(
-        padding: EdgeInsets.only(bottom: AppSpacing.xl + MediaQuery.paddingOf(context).bottom),
+        padding: EdgeInsets.only(
+            bottom: AppSpacing.xl + MediaQuery.paddingOf(context).bottom),
         children: [
           // Notificaciones
           ListTile(
@@ -109,7 +158,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 context: context,
                 applicationName: AppConstants.appBrandDisplayName,
                 applicationVersion: '1.0.0',
-                applicationLegalese: '© 2025 ${AppConstants.appBrandDisplayName}',
+                applicationLegalese:
+                    '© 2025 ${AppConstants.appBrandDisplayName}',
               );
             },
           ),
@@ -132,4 +182,3 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 }
-

@@ -28,6 +28,11 @@ class _FakeGateway implements EvidenceStorageGateway {
     uploads++;
     if (uploads <= failUploads) throw StateError('red');
   }
+
+  @override
+  Future<void> uploadFile(String path, String filePath, String mime) async {
+    uploads++;
+  }
 }
 
 void main() {

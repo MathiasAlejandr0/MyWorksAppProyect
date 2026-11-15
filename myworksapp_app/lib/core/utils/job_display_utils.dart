@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 
 import '../database/models/job_model.dart';
 import '../domain/price_quote.dart';
+import '../services/job_price.dart';
 
 /// Textos legibles para listas y tarjetas de trabajos.
 class JobDisplayUtils {
@@ -18,8 +19,7 @@ class JobDisplayUtils {
     final snap = job.pricingSnapshot;
     if (snap != null && snap.isNotEmpty) {
       final quote = PriceQuote.fromJson(snap);
-      final fromBreakdown =
-          quote.breakdown['worker_tier_label'] as String?;
+      final fromBreakdown = quote.breakdown['worker_tier_label'] as String?;
       if (fromBreakdown != null && fromBreakdown.isNotEmpty) {
         return fromBreakdown;
       }
@@ -54,6 +54,20 @@ class JobDisplayUtils {
     }
 
     return null;
+  }
+
+  /// Monto que el profesional ve en la solicitud, sin abrir el detalle.
+  static String offeredAmountLabel(JobModel job) {
+    final tier = priceLine(job);
+    if (tier != null) {
+      return tier.replaceFirst('Tarifa referencial:', 'Oferta:');
+    }
+    final amount = agreedJobPriceClp(
+      pricingSnapshot: job.pricingSnapshot,
+      serviceMetadata: job.serviceMetadata,
+    );
+    if (amount == null) return 'Monto por cotizar';
+    return 'Oferta: ${_formatClp(amount.round()).replaceFirst('Tarifa referencial: ', '')}';
   }
 
   static String dateLine(JobModel job) {
