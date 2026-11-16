@@ -9,6 +9,7 @@ import {
   Search,
   X,
 } from 'lucide-react';
+import { pluralize } from '@myworksapp/shared';
 import { BrandLogo } from './BrandLogo';
 import { profileLabel } from '../profileLabel';
 
@@ -323,10 +324,16 @@ export function SearchResultsView({
                     </div>
                     <span className="pro-card-role">{w.profession}</span>
                     <div className="pro-card-rating">
-                      <Star size={13} fill="var(--orange-accent)" color="var(--orange-accent)" />
-                      <strong>{w.rating.toFixed(1)}</strong>
-                      <span className="pro-card-stars">★★★★★</span>
-                      <span>{w.jobsDone} trabajos</span>
+                      <Star size={13} fill="var(--orange-accent)" color="var(--orange-accent)" aria-hidden />
+                      {w.jobsDone === 0 && w.rating <= 0 ? (
+                        <strong>Nuevo · sin reseñas aún</strong>
+                      ) : (
+                        <>
+                          <strong>{w.rating.toFixed(1)}</strong>
+                          <span className="pro-card-stars" aria-hidden>★★★★★</span>
+                          <span>{pluralize(w.jobsDone, 'trabajo')}</span>
+                        </>
+                      )}
                     </div>
                     <p className="pro-card-coverage">{coverageLine(w)}</p>
                     <div className="pro-card-footer">

@@ -72,7 +72,7 @@ function workerPopup(
   role.textContent = worker.isElite ? `${worker.profession} · Élite` : worker.profession;
   const meta = document.createElement('span');
   const price = clp(worker.pricePerVisit);
-  meta.textContent = `★ ${worker.rating.toFixed(1)} · desde $${price}`;
+  meta.textContent = `${worker.rating > 0 ? `★ ${worker.rating.toFixed(1)}` : 'Nuevo'} · desde $${price}`;
   const radar = document.createElement('span');
   radar.className = 'mwa-map-radar';
   const radiusKm = resolveServiceRadiusKm(worker.serviceRadiusKm);

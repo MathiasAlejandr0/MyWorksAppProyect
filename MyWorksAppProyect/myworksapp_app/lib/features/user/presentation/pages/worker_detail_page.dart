@@ -261,7 +261,9 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
                   color: AppColors.warning, size: 18),
               const SizedBox(width: AppSpacing.xs + 2),
               Text(
-                _worker!.rating.toStringAsFixed(1),
+                _worker!.rating > 0
+                    ? _worker!.rating.toStringAsFixed(1)
+                    : 'Nuevo',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: AppColors.white,
                       fontWeight: FontWeight.w700,
