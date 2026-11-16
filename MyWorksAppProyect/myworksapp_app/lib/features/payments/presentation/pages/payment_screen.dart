@@ -65,7 +65,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     return 'No se pudo iniciar el pago';
   }
 
-  Future<void> _openWebpay(String url) async {
+  Future<void> _openWebpay(String url, {String? paymentId}) async {
     if (kIsWeb) {
       await openTransbankCheckout(url);
       return;
@@ -75,6 +75,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       context,
       paymentUrl: url,
       title: 'Pago Webpay',
+      watchOutcome: () => ref
+          .read(paymentServiceProvider)
+          .webpayCheckoutSettled(paymentId ?? ''),
     );
     if (!mounted) return;
     if (ok) Navigator.of(context).pop(true);
@@ -92,7 +95,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 amount: widget.amount,
               );
       if (!mounted) return;
-      await _openWebpay(session.redirectUrl ?? session.url);
+      await _openWebpay(
+        session.redirectUrl ?? session.url,
+        paymentId: session.paymentId,
+      );
     } on AppError catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);

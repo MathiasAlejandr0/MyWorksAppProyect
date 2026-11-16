@@ -1,29 +1,43 @@
 import 'package:flutter_test/flutter_test.dart';
-
-/// Copia de la regla de éxito del WebView (sin montar platform views).
-bool isApprovedReturn(String url) {
-  final lower = url.toLowerCase();
-  if (lower.contains('tarjeta=fail')) return false;
-  if (lower.contains('pago=fail') || lower.contains('ok=0')) return false;
-  if (lower.contains('tarjeta=ok')) return true;
-  if (lower.contains('pago=ok') || lower.contains('ok=1')) return true;
-  return false;
-}
+import 'package:myworksapp/core/utils/webpay_webview_return.dart';
 
 void main() {
   test('pago=ok y ok=1 son éxito', () {
-    expect(isApprovedReturn('myworksapp://pago?pago=ok'), isTrue);
-    expect(isApprovedReturn('https://localhost:5173/?pago=ok&jobId=1'), isTrue);
-    expect(isApprovedReturn('https://app/?ok=1'), isTrue);
+    expect(isApprovedWebpayReturn('myworksapp://pago?pago=ok'), isTrue);
+    expect(
+      isApprovedWebpayReturn('https://localhost:5173/?pago=ok&jobId=1'),
+      isTrue,
+    );
+    expect(isApprovedWebpayReturn('https://app/?ok=1'), isTrue);
+    expect(
+      isApprovedWebpayReturn(
+        'https://myworksapp-cl.vercel.app/?pago=ok&paymentId=pay-1',
+      ),
+      isTrue,
+    );
+    expect(
+      isApprovedWebpayReturn(
+        'https://myworksapp-cl.vercel.app/?tarjeta=ok',
+      ),
+      isTrue,
+    );
+  });
+
+  test('la vuelta https de la app se reconoce antes de abrirla', () {
+    const url = 'https://myworksapp-cl.vercel.app/?pago=ok&jobId=job-1';
+    expect(isWebpayReturnUrl(url), isTrue);
+    expect(isApprovedWebpayReturn(url), isTrue);
   });
 
   test('pago=retorno solo no cuenta como aprobado', () {
-    expect(isApprovedReturn('https://edge/pago?pago=retorno'), isFalse);
-    expect(isApprovedReturn('myworksapp://pago'), isFalse);
+    expect(isApprovedWebpayReturn('https://edge/pago?pago=retorno'), isFalse);
+    expect(isApprovedWebpayReturn('myworksapp://pago'), isFalse);
+    expect(isWebpayReturnUrl('myworksapp://pago'), isTrue);
   });
 
   test('pago=fail y tarjeta=fail son rechazo', () {
-    expect(isApprovedReturn('https://x/?pago=fail'), isFalse);
-    expect(isApprovedReturn('https://x/?tarjeta=fail'), isFalse);
+    expect(isApprovedWebpayReturn('https://x/?pago=fail'), isFalse);
+    expect(isApprovedWebpayReturn('https://x/?tarjeta=fail'), isFalse);
+    expect(isWebpayReturnUrl('https://x/?pago=fail'), isTrue);
   });
 }

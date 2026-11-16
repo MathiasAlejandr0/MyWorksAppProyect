@@ -8,16 +8,25 @@ import { allowRate, clientIp } from "../_shared/rate_limit.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { tbkOneclickFinish } from "../_shared/tbk.ts";
 
-function cardSavedUrl(ok: boolean): string {
-  const base = Deno.env.get("WEBPAY_WEB_RETURN_URL") || "http://localhost:5173/";
-  const url = new URL(base);
+import { APP_WEBVIEW_RETURN_ORIGIN } from "../_shared/webpay_return.ts";
+
+function returnBase(fromApp: boolean): string {
+  if (fromApp) return APP_WEBVIEW_RETURN_ORIGIN;
+  return Deno.env.get("WEBPAY_WEB_RETURN_URL") || "http://localhost:5173/";
+}
+
+function cardSavedUrl(ok: boolean, fromApp: boolean): string {
+  const url = new URL(returnBase(fromApp));
   url.searchParams.set("tarjeta", ok ? "ok" : "fail");
   return url.toString();
 }
 
-function webHome(ok: boolean, extra: Record<string, string>): string {
-  const base = Deno.env.get("WEBPAY_WEB_RETURN_URL") || "http://localhost:5173/";
-  const url = new URL(base);
+function webHome(
+  ok: boolean,
+  extra: Record<string, string>,
+  fromApp: boolean,
+): string {
+  const url = new URL(returnBase(fromApp));
   url.searchParams.set("pago", ok ? "ok" : "fail");
   if (ok) url.searchParams.set("tracking", "1");
   for (const [key, value] of Object.entries(extra)) {
@@ -54,13 +63,15 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeadersFor(req) });
   }
 
+  const fromApp = new URL(req.url).searchParams.get("desde") === "app";
+
   try {
     if (!allowRate(`oneclick-return:${clientIp(req)}`, 30, 60_000)) {
-      return redirect(webHome(false, { motivo: "limite" }));
+      return redirect(webHome(false, { motivo: "limite" }, fromApp));
     }
 
     const token = await readToken(req);
-    if (!token) return redirect(webHome(false, { motivo: "cancelado" }));
+    if (!token) return redirect(webHome(false, { motivo: "cancelado" }, fromApp));
 
     const admin = serviceClient();
     const { data: row } = await admin
@@ -71,7 +82,7 @@ Deno.serve(async (req) => {
       .eq("token_inscripcion", token)
       .maybeSingle();
     if (!row?.id_usuario) {
-      return redirect(cardSavedUrl(false));
+        return redirect(cardSavedUrl(false, fromApp));
     }
 
     const enrollOnly = !row.id_trabajo_pendiente;
@@ -92,7 +103,9 @@ Deno.serve(async (req) => {
           })
           .eq("id_usuario", row.id_usuario);
         return redirect(
-          enrollOnly ? cardSavedUrl(false) : webHome(false, { motivo: "tarjeta" }),
+          enrollOnly
+            ? cardSavedUrl(false, fromApp)
+            : webHome(false, { motivo: "tarjeta" }, fromApp),
         );
       }
       await admin
@@ -115,7 +128,7 @@ Deno.serve(async (req) => {
           actualizado_en: new Date().toISOString(),
         })
         .eq("id_usuario", row.id_usuario);
-      return redirect(cardSavedUrl(true));
+      return redirect(cardSavedUrl(true, fromApp));
     }
 
     const jobId = String(row.id_trabajo_pendiente);
@@ -133,7 +146,7 @@ Deno.serve(async (req) => {
           actualizado_en: new Date().toISOString(),
         })
         .eq("id_usuario", row.id_usuario);
-      return redirect(cardSavedUrl(true));
+      return redirect(cardSavedUrl(true, fromApp));
     }
 
     const amount = await expectedJobAmount(admin, jobId);
@@ -147,7 +160,7 @@ Deno.serve(async (req) => {
     );
     const paymentRow = Array.isArray(payment) ? payment[0] : payment;
     if (payErr || !paymentRow?.id) {
-      return redirect(webHome(false, { motivo: "cobro", jobId }));
+      return redirect(webHome(false, { motivo: "cobro", jobId }, fromApp));
     }
 
     const charged = await chargeInscribedCard(admin, {
@@ -174,10 +187,10 @@ Deno.serve(async (req) => {
         jobId,
         amount: String(charged.amount),
         last4,
-      }),
+      }, fromApp),
     );
   } catch (e) {
     console.error("oneclick-return", e instanceof Error ? e.message : "error");
-    return redirect(webHome(false, { motivo: "cobro" }));
+    return redirect(webHome(false, { motivo: "cobro" }, fromApp));
   }
 });

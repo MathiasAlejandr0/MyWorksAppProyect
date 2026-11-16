@@ -70,7 +70,10 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
     return 'No se pudo iniciar el pago';
   }
 
-  Future<void> _openWebpay(String url) async {
+  Future<void> _openWebpay(
+    String url, {
+    String? paymentId,
+  }) async {
     if (kIsWeb) {
       await openTransbankCheckout(url);
       return;
@@ -80,6 +83,9 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       context,
       paymentUrl: url,
       title: 'Pago Webpay',
+      watchOutcome: () => ref
+          .read(paymentServiceProvider)
+          .webpayCheckoutSettled(paymentId ?? ''),
     );
     if (!mounted) return;
     if (ok) Navigator.of(context).pop(true);
@@ -96,7 +102,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
               );
       final url = session.redirectUrl ?? session.url;
       if (!mounted) return;
-      await _openWebpay(url);
+      await _openWebpay(url, paymentId: session.paymentId);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

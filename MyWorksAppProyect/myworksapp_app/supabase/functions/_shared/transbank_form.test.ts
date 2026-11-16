@@ -7,7 +7,7 @@ import {
 } from "./transbank_form.ts";
 
 describe("redirect a Transbank", () => {
-  it("agrega token_ws por query y responde 303", () => {
+  it("agrega token_ws por query", () => {
     const location = transbankRedirectUrl({
       action: "https://webpay3gint.transbank.cl/webpayserver/initTransaction",
       fieldName: "token_ws",
@@ -15,16 +15,25 @@ describe("redirect a Transbank", () => {
     });
     const url = new URL(location);
     assert.equal(url.searchParams.get("token_ws"), "tok-1");
+  });
 
+  it("responde un formulario POST, no un GET", async () => {
     const res = transbankRedirectResponse({
       action: "https://webpay3gint.transbank.cl/webpayserver/initTransaction",
       fieldName: "token_ws",
-      token: "tok-1",
+      token: 'tok"1<',
     });
-    assert.equal(res.status, 303);
-    assert.equal(res.headers.get("Location"), location);
-    assert.equal(res.headers.get("Cache-Control"), "no-store");
-    assert.equal(res.headers.get("Referrer-Policy"), "no-referrer");
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get("content-type") || "", /text\/html/);
+    const html = await res.text();
+    assert.match(html, /method="post"/);
+    assert.match(html, /name="token_ws"/);
+    assert.match(html, /value="tok&quot;1&lt;"/);
+    assert.match(
+      html,
+      /action="https:\/\/webpay3gint\.transbank\.cl\/webpayserver\/initTransaction"/,
+    );
+    assert.equal(html.includes("tok\"1<"), false);
   });
 
   it("usa TBK_TOKEN en la inscripción Oneclick", () => {

@@ -52,6 +52,10 @@ class _CardEnrollmentPageState extends ConsumerState<CardEnrollmentPage> {
         context,
         paymentUrl: handoff,
         title: 'Inscribir tarjeta',
+        watchOutcome: () async {
+          final saved = await ref.read(paymentServiceProvider).hasSavedCard();
+          return saved ? true : null;
+        },
       );
       if (!mounted) return;
       if (!ok) {

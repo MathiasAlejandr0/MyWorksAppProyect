@@ -11,7 +11,13 @@ import { serviceClient, userClient } from "../_shared/supabase.ts";
 import { assertTransbankAction } from "../_shared/transbank_form.ts";
 import { tbkOneclickStart } from "../_shared/tbk.ts";
 
-async function cardSetup(req: Request, userId: string, email: string, action: string) {
+async function cardSetup(
+  req: Request,
+  userId: string,
+  email: string,
+  action: string,
+  fromApp: boolean,
+) {
   const admin = serviceClient();
   const { data: card, error: cardErr } = await admin
     .from("metodos_pago_oneclick")
@@ -45,7 +51,9 @@ async function cardSetup(req: Request, userId: string, email: string, action: st
   const started = await tbkOneclickStart({
     username: userId,
     email: mail,
-    responseUrl: `${base}/functions/v1/oneclick-return`,
+    responseUrl: fromApp
+      ? `${base}/functions/v1/oneclick-return?desde=app`
+      : `${base}/functions/v1/oneclick-return`,
   });
   assertTransbankAction(started.url);
   const ticket = crypto.randomUUID();
@@ -106,7 +114,13 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const action = String(body.action || "");
     if (action === "status" || action === "enroll") {
-      return await cardSetup(req, user.id, String(user.email || ""), action);
+      return await cardSetup(
+        req,
+        user.id,
+        String(user.email || ""),
+        action,
+        body.client === "app",
+      );
     }
 
     const jobId = String(body.jobId || "");

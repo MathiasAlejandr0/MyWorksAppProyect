@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { readCommitTokens, webReturnLocation } from "./webpay_return.ts";
+import {
+  bridgeCustomSchemeReturn,
+  readCommitTokens,
+  webReturnLocation,
+} from "./webpay_return.ts";
 
 describe("retorno Webpay", () => {
   it("lee token_ws y TBK_TOKEN de la query o del formulario", () => {
@@ -34,6 +38,26 @@ describe("retorno Webpay", () => {
     assert.equal(url.searchParams.get("invitado"), "1");
     assert.equal(url.searchParams.get("alta"), "pwd.token");
     assert.equal(url.searchParams.get("paymentId"), "pay-1");
+  });
+
+  it("la vuelta de la app pasa a https y conserva pago=ok", () => {
+    const bridged = bridgeCustomSchemeReturn(
+      "myworksapp://pago/?pago=ok&paymentId=pay-1&jobId=job-1",
+      "https://myworksapp-cl.vercel.app/",
+    );
+    const url = new URL(bridged);
+    assert.equal(url.origin, "https://myworksapp-cl.vercel.app");
+    assert.equal(url.searchParams.get("pago"), "ok");
+    assert.equal(url.searchParams.get("paymentId"), "pay-1");
+    assert.equal(url.searchParams.get("jobId"), "job-1");
+  });
+
+  it("un http de la web no se reescribe", () => {
+    const same = "http://localhost:5173/?pago=ok";
+    assert.equal(
+      bridgeCustomSchemeReturn(same, "https://myworksapp-cl.vercel.app/"),
+      same,
+    );
   });
 
   it("un abandono solo marca pago=fail", () => {

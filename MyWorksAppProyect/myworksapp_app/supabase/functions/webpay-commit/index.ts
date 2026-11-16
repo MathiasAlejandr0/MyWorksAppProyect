@@ -12,13 +12,23 @@ import {
 } from "../_shared/security.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { tbkCommit } from "../_shared/tbk.ts";
-import { readCommitTokens, webReturnLocation } from "../_shared/webpay_return.ts";
+import {
+  APP_WEBVIEW_RETURN_ORIGIN,
+  bridgeCustomSchemeReturn,
+  readCommitTokens,
+  webReturnLocation,
+} from "../_shared/webpay_return.ts";
 
 function browserRedirect(location: string): Response {
+  const configured = Deno.env.get("WEBPAY_WEB_RETURN_URL")?.trim() || "";
+  const httpsOrigin = configured.startsWith("https://")
+    ? configured
+    : APP_WEBVIEW_RETURN_ORIGIN;
+  const target = bridgeCustomSchemeReturn(location, httpsOrigin);
   return new Response(null, {
     status: 303,
     headers: {
-      Location: location,
+      Location: target,
       "Cache-Control": "no-store",
       "Referrer-Policy": "no-referrer",
     },

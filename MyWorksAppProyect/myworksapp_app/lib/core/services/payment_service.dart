@@ -346,7 +346,10 @@ class PaymentService {
     try {
       final response = await supabase.functions.invoke(
         'oneclick-charge',
-        body: {'action': 'enroll'},
+        body: {
+          'action': 'enroll',
+          if (!kIsWeb) 'client': 'app',
+        },
       );
       final data = _asMap(response.data);
       if (data['error'] != null) {
@@ -447,6 +450,37 @@ class PaymentService {
       if (e is AppError) rethrow;
       AppLogger.e('Error iniciando Webpay', e);
       throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
+  /// null = sigue pendiente. true = retenido o liberado. false = rechazado.
+  /// Sirve para cerrar el WebView cuando Transbank ya cobró y la vuelta
+  /// no llega a abrirse en el teléfono.
+  Future<bool?> webpayCheckoutSettled(String paymentId) async {
+    final id = paymentId.trim();
+    if (id.isEmpty) return null;
+    try {
+      final response = await supabase.functions.invoke(
+        'webpay-status',
+        body: {'paymentId': id},
+      );
+      final data = _asMap(response.data);
+      final payment = data['payment'];
+      if (payment is! Map) return null;
+      final estado = payment['estado']?.toString() ?? '';
+      if (PricingConstants.isEscrowSecured(estado) ||
+          estado == PricingConstants.paymentReleased) {
+        return true;
+      }
+      if (estado == PricingConstants.paymentFailed ||
+          estado == PricingConstants.paymentVoided ||
+          estado == PricingConstants.paymentRefunded) {
+        return false;
+      }
+      return null;
+    } catch (e) {
+      AppLogger.e('Estado Webpay', e);
+      return null;
     }
   }
 
