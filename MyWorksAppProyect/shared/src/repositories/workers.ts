@@ -98,6 +98,65 @@ function pageFromRows(
   };
 }
 
+
+type PublicStatsRow = {
+  id_usuario: string;
+  calificacion?: number | null;
+  n_calificaciones?: number | null;
+  trabajos_completados?: number | null;
+  es_elite?: boolean | null;
+};
+
+/** Superpone la nota y el recuento reales si la RPC canónica está desplegada. */
+async function overlayPublicStats(
+  supabase: AppSupabase,
+  workers: WorkerWithProfile[],
+): Promise<WorkerWithProfile[]> {
+  if (workers.length === 0) return workers;
+  const rpc = await supabase.rpc('stats_profesionales', {
+    p_ids: workers.map((w) => w.userId),
+  });
+  if (rpc.error || !Array.isArray(rpc.data)) return workers;
+  const byId = new Map<string, PublicStatsRow>();
+  for (const raw of rpc.data as PublicStatsRow[]) {
+    if (raw.id_usuario) byId.set(raw.id_usuario, raw);
+  }
+  if (byId.size === 0) return workers;
+  return workers.map((worker) => applyPublicStatsRow(worker, byId.get(worker.userId)));
+}
+
+export function applyPublicStatsRow(
+  worker: WorkerWithProfile,
+  stats: PublicStatsRow | undefined,
+): WorkerWithProfile {
+  if (!stats) return worker;
+  const count = Number(stats.n_calificaciones ?? 0);
+  const raw = stats.calificacion == null ? 0 : Number(stats.calificacion);
+  return {
+    ...worker,
+    rating: count <= 0 ? 0 : raw,
+    completedJobs: Number(stats.trabajos_completados ?? 0),
+    isElite: stats.es_elite === true,
+  };
+}
+
+export async function fetchWorkerPublicStats(
+  supabase: AppSupabase,
+  userId: string,
+): Promise<{ rating: number; completedJobs: number; isElite: boolean; ratingCount: number } | null> {
+  const rpc = await supabase.rpc('stats_profesional', { p_id: userId });
+  if (rpc.error || !Array.isArray(rpc.data) || rpc.data.length === 0) return null;
+  const row = rpc.data[0] as PublicStatsRow;
+  const count = Number(row.n_calificaciones ?? 0);
+  const raw = row.calificacion == null ? 0 : Number(row.calificacion);
+  return {
+    rating: count <= 0 ? 0 : raw,
+    completedJobs: Number(row.trabajos_completados ?? 0),
+    isElite: row.es_elite === true,
+    ratingCount: count,
+  };
+}
+
 export async function fetchWorkersCatalog(
   supabase: AppSupabase,
   opts: {
@@ -121,7 +180,8 @@ export async function fetchWorkersCatalog(
   });
 
   if (!rpc.error && Array.isArray(rpc.data)) {
-    return pageFromRows(rpc.data as WorkerQueryRow[], limit);
+    const page = pageFromRows(rpc.data as WorkerQueryRow[], limit);
+    return { ...page, workers: await overlayPublicStats(supabase, page.workers) };
   }
 
   let query = supabase
@@ -145,7 +205,8 @@ export async function fetchWorkersCatalog(
 
   const { data, error } = await query;
   if (error) throw error;
-  return pageFromRows((data ?? []) as WorkerQueryRow[], limit);
+  const page = pageFromRows((data ?? []) as WorkerQueryRow[], limit);
+  return { ...page, workers: await overlayPublicStats(supabase, page.workers) };
 }
 
 /** Oficios con al menos un profesional disponible y con precio. Null si la RPC no está. */
@@ -195,10 +256,11 @@ export async function fetchWorkersForAdmin(
         if (raw.id_usuario) byId.set(raw.id_usuario, raw);
       }
     }
-    return ((withVerification.data ?? []) as WorkerQueryRow[]).map((row) => {
+    const mapped = ((withVerification.data ?? []) as WorkerQueryRow[]).map((row) => {
       const extra = byId.get(row.id_usuario);
       return mapWorkerRow(extra ? { ...row, ...extra } : row);
     });
+    return overlayPublicStats(supabase, mapped);
   }
 
   const fallback = await supabase
@@ -207,7 +269,10 @@ export async function fetchWorkersForAdmin(
     .order('calificacion', { ascending: false })
     .limit(200);
   if (fallback.error) throw fallback.error;
-  return ((fallback.data ?? []) as WorkerQueryRow[]).map(mapWorkerRow);
+  return overlayPublicStats(
+    supabase,
+    ((fallback.data ?? []) as WorkerQueryRow[]).map(mapWorkerRow),
+  );
 }
 
 export async function setWorkerVerification(

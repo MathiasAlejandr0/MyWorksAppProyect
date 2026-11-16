@@ -2603,6 +2603,26 @@ export type Database = {
           zona_trabajo: string
         }[]
       }
+      stats_profesional: {
+        Args: { p_id: string }
+        Returns: {
+          calificacion: number | null
+          es_elite: boolean
+          id_usuario: string
+          n_calificaciones: number
+          trabajos_completados: number
+        }[]
+      }
+      stats_profesionales: {
+        Args: { p_ids: string[] }
+        Returns: {
+          calificacion: number | null
+          es_elite: boolean
+          id_usuario: string
+          n_calificaciones: number
+          trabajos_completados: number
+        }[]
+      }
       listar_senales_resena: {
         Args: { p_estado?: string; p_limit?: number }
         Returns: {

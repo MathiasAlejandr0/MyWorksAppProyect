@@ -39,6 +39,7 @@ import {
   fetchMyNotifications,
   fetchUserJobs,
   toWebWorkerCard,
+  fetchWorkerPublicStats,
   tooFarToBookCopy,
   transportSurcharge,
   withinTravelRange,
@@ -495,8 +496,7 @@ export function App() {
             profession: String(data.profesion ?? 'Visita'),
             category: String(data.categoria_servicio ?? ''),
             rating: Number(data.calificacion ?? 0),
-            // Conteo real de la ficha: el catálogo excluye a quien está ocupado
-            // y antes el seguimiento mostraba "(0 trabajos)".
+            // Preferimos la RPC canónica: la columna puede estar sembrada.
             jobsDone: Number(data.trabajos_completados ?? 0),
             photoUrl: profilePhotoOrInitials(
               profileRow?.ruta_foto_perfil,
@@ -505,6 +505,14 @@ export function App() {
             ),
             pricePerVisit: Number(data.tarifa_visita ?? 0),
           };
+          const stats = await fetchWorkerPublicStats(supabase, worker.id);
+          if (stats) {
+            worker = {
+              ...worker,
+              rating: stats.rating,
+              jobsDone: stats.completedJobs,
+            };
+          }
         }
       }
       setSelectedWorker(worker);
