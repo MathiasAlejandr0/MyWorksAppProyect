@@ -1243,7 +1243,11 @@ export function App() {
           ) : null}
 
           evidence={checkoutJobId && profile ? (
-            <JobEvidencePanel jobId={checkoutJobId} userId={profile.id} />
+            <JobEvidencePanel
+              jobId={checkoutJobId}
+              userId={profile.id}
+              readOnly={['completado', 'cancelado', 'expirado', 'rechazado'].includes(jobSnapshot?.status ?? '')}
+            />
           ) : null}
 
           onOpenNotifications={() => setShowNotifications(true)}

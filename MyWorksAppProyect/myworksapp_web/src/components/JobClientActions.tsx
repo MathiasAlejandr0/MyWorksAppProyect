@@ -141,8 +141,8 @@ export function JobClientActions({
         <section className="tracking-escrow-card" aria-labelledby="reagendar-titulo">
           <CalendarClock size={22} className="tracking-escrow-icon" aria-hidden />
           <div>
-            <strong id="reagendar-titulo">Cambiar la hora</strong>
-            {scheduledAt ? (
+            <strong id="reagendar-titulo">{reschedulable || pending ? 'Cambiar la hora' : 'Cambios de hora'}</strong>
+            {scheduledAt && (reschedulable || pending) ? (
               <p>Hora actual: {formatBookingSlotLabel(scheduledAt)}.</p>
             ) : null}
             {pending ? (
