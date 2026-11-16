@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/database/models/worker_model.dart';
+import '../../../../core/domain/worker_public_stats.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_guided_tour.dart';
 
@@ -68,7 +69,7 @@ class WorkerHeader extends StatelessWidget {
               if (worker != null)
                 _HeaderChip(
                   icon: Icons.star_rounded,
-                  label: worker!.rating.toStringAsFixed(1),
+                  label: WorkerPublicStats.ratingLabel(worker!.rating),
                   accent: AppColors.brandOrange,
                 ),
               if (worker != null) const SizedBox(width: 10),
@@ -128,11 +129,7 @@ class _HeaderChip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 4),
-          Icon(
-            Icons.chevron_right_rounded,
-            size: 16,
-            color: muted,
-          ),
+          Icon(Icons.chevron_right_rounded, size: 16, color: muted),
         ],
       ),
     );
@@ -178,10 +175,7 @@ class _AvailabilityPill extends StatelessWidget {
             Container(
               width: 8,
               height: 8,
-              decoration: BoxDecoration(
-                color: border,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: border, shape: BoxShape.circle),
             ),
             const SizedBox(width: 8),
             Text(

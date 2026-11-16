@@ -1,5 +1,6 @@
 import '../../config/demo_credentials.dart';
 import '../../domain/worker_hours.dart';
+import '../../domain/worker_public_stats.dart';
 import '../../domain/distance_match.dart';
 import '../../domain/transport_surcharge.dart';
 import '../../domain/user_location_context.dart';
@@ -7,8 +8,11 @@ import '../../domain/worker_login_item.dart';
 import '../../services/worker_reputation_service.dart';
 import '../../utils/worker_zone_matcher.dart';
 import '../models/worker_model.dart';
+import '../worker_stats_client.dart';
 import '../supabase_db.dart';
 import 'job_repository.dart';
+import 'rating_repository.dart';
+
 class WorkerRepository {
   static const String _table = 'trabajadores';
 
@@ -60,7 +64,8 @@ class WorkerRepository {
         );
       } catch (_) {}
     }
-    return worker;
+    final overlay = await _overlayStats([worker]);
+    return overlay.first;
   }
 
   Map<String, dynamic>? _firstRow(dynamic raw) {
@@ -69,6 +74,33 @@ class WorkerRepository {
     }
     if (raw is Map) return Map<String, dynamic>.from(raw);
     return null;
+  }
+
+  /// Nota y trabajos reales. Prefiere la RPC canónica; si aún no está
+  /// desplegada, calcula lo mismo en el cliente.
+  Future<WorkerPublicStats> getPublicStats(String userId) async {
+    try {
+      final row = _firstRow(
+        await supabase.rpc('stats_profesional', params: {'p_id': userId}),
+      );
+      if (row != null) return WorkerPublicStats.fromMap(row);
+    } catch (_) {}
+
+    final ratings = await RatingRepository().getRatingsByWorkerId(userId);
+    final counts = await JobRepository().countJobsByWorkerId(userId);
+    final average = ratings.isEmpty
+        ? null
+        : ratings.fold<int>(0, (sum, r) => sum + r.score) / ratings.length;
+    return WorkerPublicStats(
+      averageRating: average,
+      ratingCount: ratings.length,
+      completedJobs: counts.completed,
+      isElite: (average ?? 0) >= 4.7 && counts.completed >= 5,
+    );
+  }
+
+  Future<List<WorkerModel>> _overlayStats(List<WorkerModel> workers) {
+    return overlayWorkerPublicStats(workers);
   }
 
   /// Obtiene un trabajador por su ID (alias para getWorkerByUserId)
@@ -166,7 +198,9 @@ class WorkerRepository {
     if (supabase.auth.currentUser?.id != userId) {
       throw StateError('solo puedes editar tu propia agenda');
     }
-    final slots = uniqueWorkerHours(hours).map((slot) => slot.toJson()).toList();
+    final slots = uniqueWorkerHours(hours)
+        .map((slot) => slot.toJson())
+        .toList();
     // La PK viva es `id`, no `id_usuario`. Se actualizan todas las filas
     // del profesional para que horarios_libres_profesional vea los bloques
     // aunque también existan filas por día.
@@ -186,10 +220,7 @@ class WorkerRepository {
   Future<List<DateTime>> fetchFreeSlots(String workerId) async {
     final rows = await supabase.rpc(
       'horarios_libres_profesional',
-      params: {
-        'p_id_trabajador': workerId,
-        'p_dias': 14,
-      },
+      params: {'p_id_trabajador': workerId, 'p_dias': 14},
     );
     if (rows is! List) return const [];
     final slots = <DateTime>[];
@@ -208,7 +239,9 @@ class WorkerRepository {
     return slots;
   }
 
-  Future<({String status, String? note})?> fetchVerification(String userId) async {
+  Future<({String status, String? note})?> fetchVerification(
+    String userId,
+  ) async {
     try {
       final row = await supabase
           .from(_table)
@@ -218,8 +251,11 @@ class WorkerRepository {
       if (row == null) return null;
       String? rawNote;
       if (supabase.auth.currentUser?.id == userId) {
-        rawNote = _firstRow(await supabase.rpc('mi_ficha_propia'))?['nota_verificacion']
-            as String?;
+        rawNote =
+            _firstRow(
+                  await supabase.rpc('mi_ficha_propia'),
+                )?['nota_verificacion']
+                as String?;
       }
       final visibleNote = rawNote?.split('\nDocumento:').first.trim();
       return (
@@ -235,9 +271,10 @@ class WorkerRepository {
     required String userId,
     required String note,
   }) async {
-    await supabase.rpc('enviar_verificacion_profesional', params: {
-      'p_nota': note,
-    });
+    await supabase.rpc(
+      'enviar_verificacion_profesional',
+      params: {'p_nota': note},
+    );
   }
 
   Future<void> updateBaseLocation({
@@ -246,12 +283,15 @@ class WorkerRepository {
     required double longitude,
     required double radiusKm,
   }) async {
-    await supabase.from(_table).update({
-      'latitud_base': latitude,
-      'longitud_base': longitude,
-      'radio_servicio_km': radiusKm,
-      'origen_base': 'mapa',
-    }).eq('id_usuario', userId);
+    await supabase
+        .from(_table)
+        .update({
+          'latitud_base': latitude,
+          'longitud_base': longitude,
+          'radio_servicio_km': radiusKm,
+          'origen_base': 'mapa',
+        })
+        .eq('id_usuario', userId);
   }
 
   Future<void> updateUrbanCoverage({
@@ -259,16 +299,20 @@ class WorkerRepository {
     required double urbanRadiusKm,
     required int outsideFeeClp,
   }) async {
-    await supabase.from(_table).update({
-      'radio_urbano_km': urbanRadiusKm,
-      'tarifa_fuera_radio_clp': outsideFeeClp,
-    }).eq('id_usuario', userId);
+    await supabase
+        .from(_table)
+        .update({
+          'radio_urbano_km': urbanRadiusKm,
+          'tarifa_fuera_radio_clp': outsideFeeClp,
+        })
+        .eq('id_usuario', userId);
   }
 
   Future<void> updateAvailability(String userId, bool isAvailable) async {
     await supabase
         .from(_table)
-        .update({'disponible': isAvailable ? 1 : 0}).eq('id_usuario', userId);
+        .update({'disponible': isAvailable ? 1 : 0})
+        .eq('id_usuario', userId);
   }
 
   /// Disponible para nuevos trabajos: flag activo y sin trabajos en curso.
@@ -296,10 +340,7 @@ class WorkerRepository {
   /// Si no está en un trabajo en curso, las cuentas demo vuelven al catálogo
   /// aunque las hayan pausado a mano. Las cuentas reales vuelven solas desde
   /// la base al terminar el trabajo; una pausa voluntaria se respeta.
-  Future<void> syncAvailabilityWithJobs(
-    String userId, {
-    String? email,
-  }) async {
+  Future<void> syncAvailabilityWithJobs(String userId, {String? email}) async {
     final jobRepository = JobRepository();
     if (await jobRepository.hasActiveJobs(userId)) {
       await enforceUnavailableWhileBusy(userId);
@@ -329,15 +370,17 @@ class WorkerRepository {
       final rows = await supabase.rpc(
         'listar_profesionales_catalogo',
         params: {
-          'p_categoria': (categoria == null || categoria.isEmpty) ? null : categoria,
+          'p_categoria': (categoria == null || categoria.isEmpty)
+              ? null
+              : categoria,
           'p_limit': 40,
         },
       );
       if (rows is List) {
-        return rows
-            .whereType<Map>()
-            .map((row) => WorkerModel.fromCatalogMap(Map<String, dynamic>.from(row)))
-            .toList();
+        return await _overlayStats([
+          for (final row in rows.whereType<Map>())
+            WorkerModel.fromCatalogMap(Map<String, dynamic>.from(row)),
+        ]);
       }
     } catch (_) {
       // Si la RPC no está, un autenticado todavía puede leer el marketplace.
@@ -352,8 +395,12 @@ class WorkerRepository {
       if (categoria != null && categoria.isNotEmpty) {
         query = query.eq('categoria_servicio', categoria);
       }
-      final rows = await query.order('score_listado', ascending: false).limit(40);
-      return rows.map<WorkerModel>((row) => WorkerModel.fromMap(row)).toList();
+      final rows = await query
+          .order('score_listado', ascending: false)
+          .limit(40);
+      return await _overlayStats(
+        rows.map<WorkerModel>((row) => WorkerModel.fromMap(row)).toList(),
+      );
     } catch (_) {
       return const [];
     }

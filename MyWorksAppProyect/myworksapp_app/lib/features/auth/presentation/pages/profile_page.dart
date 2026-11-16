@@ -10,6 +10,7 @@ import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/domain/user_role.dart';
+import '../../../../core/domain/worker_public_stats.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/services/profile_photo_service.dart';
 import '../../../ratings/presentation/widgets/client_reputation_card.dart';
@@ -52,10 +53,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     setState(() => _loadingExtras = true);
     try {
       if (user.userRole.isEspecialista) {
-        final worker =
-            await ref.read(workerRepositoryProvider).getWorkerByUserId(user.id);
-        final jobs =
-            await ref.read(jobRepositoryProvider).getJobsByWorkerId(user.id);
+        final worker = await ref
+            .read(workerRepositoryProvider)
+            .getWorkerByUserId(user.id);
+        final jobs = await ref
+            .read(jobRepositoryProvider)
+            .getJobsByWorkerId(user.id);
         if (!mounted) return;
         setState(() {
           _worker = worker;
@@ -63,8 +66,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           _loadingExtras = false;
         });
       } else {
-        final jobs =
-            await ref.read(jobRepositoryProvider).getJobsByUserId(user.id);
+        final jobs = await ref
+            .read(jobRepositoryProvider)
+            .getJobsByUserId(user.id);
         if (!mounted) return;
         setState(() {
           _jobs = jobs;
@@ -90,9 +94,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       );
       if (path == null || !mounted) return;
 
-      await ref.read(userRepositoryProvider).updateUser(
-            user.copyWith(profilePhotoPath: path),
-          );
+      await ref
+          .read(userRepositoryProvider)
+          .updateUser(user.copyWith(profilePhotoPath: path));
       await ref
           .read(authProvider.notifier)
           .loadCurrentUser(user.id, silent: true);
@@ -103,7 +107,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.userMessage(e, fallback: 'No se pudo actualizar la foto.'))),
+        SnackBar(
+          content: Text(
+            ErrorHandler.userMessage(
+              e,
+              fallback: 'No se pudo actualizar la foto.',
+            ),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _photoLoading = false);
@@ -117,21 +128,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     setState(() => _photoLoading = true);
     try {
       await ProfilePhotoService.instance.removePhoto(user.profilePhotoPath);
-      await ref.read(userRepositoryProvider).updateUser(
-            user.copyWith(clearProfilePhoto: true),
-          );
+      await ref
+          .read(userRepositoryProvider)
+          .updateUser(user.copyWith(clearProfilePhoto: true));
       await ref
           .read(authProvider.notifier)
           .loadCurrentUser(user.id, silent: true);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Foto de perfil eliminada')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Foto de perfil eliminada')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.userMessage(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(ErrorHandler.userMessage(e))));
     } finally {
       if (mounted) setState(() => _photoLoading = false);
     }
@@ -154,11 +164,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             jobs: _jobs,
             loading: _loadingExtras,
           )
-        : _ClienteSection(
-            user: user,
-            jobs: _jobs,
-            loading: _loadingExtras,
-          );
+        : _ClienteSection(user: user, jobs: _jobs, loading: _loadingExtras);
 
     return Scaffold(
       appBar: const AppGradientAppBar(title: Text('Mi perfil')),
@@ -240,32 +246,28 @@ class _ProfileIdentityCard extends StatelessWidget {
             Text(
               user.name,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
             Text(
               user.email,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color:
-                        AppColors.onCanvasMuted(Theme.of(context).brightness),
-                  ),
+                color: AppColors.onCanvasMuted(Theme.of(context).brightness),
+              ),
             ),
             const SizedBox(height: 12),
             Chip(
               avatar: Icon(role.icon, size: 18, color: AppColors.brandOrange),
               label: Text(role.label),
               side: BorderSide(
-                  color: AppColors.brandOrange.withValues(alpha: 0.4)),
+                color: AppColors.brandOrange.withValues(alpha: 0.4),
+              ),
               backgroundColor: AppColors.brandOrange.withValues(alpha: 0.1),
             ),
             const SizedBox(height: 20),
-            const SizedBox(
-              width: double.infinity,
-              child: SignOutButton(),
-            ),
+            const SizedBox(width: double.infinity, child: SignOutButton()),
           ],
         ),
       ),
@@ -286,8 +288,9 @@ class _ClienteSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completed =
-        jobs.where((j) => j.status == AppConstants.jobStatusCompleted).length;
+    final completed = jobs
+        .where((j) => j.status == AppConstants.jobStatusCompleted)
+        .length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -297,12 +300,16 @@ class _ClienteSection extends StatelessWidget {
           child: Column(
             children: [
               _InfoRow(
-                  icon: Icons.person_outline,
-                  label: 'Nombre',
-                  value: user.name),
+                icon: Icons.person_outline,
+                label: 'Nombre',
+                value: user.name,
+              ),
               const Divider(height: 20),
               _InfoRow(
-                  icon: Icons.mail_outline, label: 'Correo', value: user.email),
+                icon: Icons.mail_outline,
+                label: 'Correo',
+                value: user.email,
+              ),
               const Divider(height: 20),
               _InfoRow(
                 icon: Icons.verified_user_outlined,
@@ -405,8 +412,9 @@ class _EspecialistaSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completed =
-        jobs.where((j) => j.status == AppConstants.jobStatusCompleted).length;
+    final completed = jobs
+        .where((j) => j.status == AppConstants.jobStatusCompleted)
+        .length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -421,73 +429,71 @@ class _EspecialistaSection extends StatelessWidget {
                   ),
                 )
               : worker == null
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Aún no completas tu perfil profesional.',
-                        ),
-                        const SizedBox(height: 12),
-                        FilledButton(
-                          onPressed: () =>
-                              context.go(AppConstants.routeWorkerRegister),
-                          child: const Text('Completar perfil de especialista'),
-                        ),
-                      ],
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _InfoRow(
-                          icon: Icons.engineering_outlined,
-                          label: 'Especialidad',
-                          value: worker!.profession,
-                        ),
-                        const Divider(height: 20),
-                        _InfoRow(
-                          icon: Icons.category_outlined,
-                          label: 'Categoría',
-                          value: worker!.serviceCategory,
-                        ),
-                        const Divider(height: 20),
-                        _InfoRow(
-                          icon: Icons.place_outlined,
-                          label: 'Zona de trabajo',
-                          value: worker!.workZone ?? 'Sin definir',
-                        ),
-                        const Divider(height: 20),
-                        _InfoRow(
-                          icon: Icons.toggle_on_outlined,
-                          label: 'Disponibilidad',
-                          value: worker!.isAvailable
-                              ? 'Disponible'
-                              : 'No disponible',
-                        ),
-                        if (worker!.description != null &&
-                            worker!.description!.isNotEmpty) ...[
-                          const Divider(height: 20),
-                          Text(
-                            worker!.description!,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                        if (worker!.customServices.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: worker!.customServices
-                                .map(
-                                  (s) => Chip(
-                                    label: Text(s.title),
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        ],
-                      ],
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Aún no completas tu perfil profesional.'),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: () =>
+                          context.go(AppConstants.routeWorkerRegister),
+                      child: const Text('Completar perfil de especialista'),
                     ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _InfoRow(
+                      icon: Icons.engineering_outlined,
+                      label: 'Especialidad',
+                      value: worker!.profession,
+                    ),
+                    const Divider(height: 20),
+                    _InfoRow(
+                      icon: Icons.category_outlined,
+                      label: 'Categoría',
+                      value: worker!.serviceCategory,
+                    ),
+                    const Divider(height: 20),
+                    _InfoRow(
+                      icon: Icons.place_outlined,
+                      label: 'Zona de trabajo',
+                      value: worker!.workZone ?? 'Sin definir',
+                    ),
+                    const Divider(height: 20),
+                    _InfoRow(
+                      icon: Icons.toggle_on_outlined,
+                      label: 'Disponibilidad',
+                      value: worker!.isAvailable
+                          ? 'Disponible'
+                          : 'No disponible',
+                    ),
+                    if (worker!.description != null &&
+                        worker!.description!.isNotEmpty) ...[
+                      const Divider(height: 20),
+                      Text(
+                        worker!.description!,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                    if (worker!.customServices.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: worker!.customServices
+                            .map(
+                              (s) => Chip(
+                                label: Text(s.title),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ],
+                ),
         ),
         const SizedBox(height: 16),
         _SectionCard(
@@ -506,8 +512,9 @@ class _EspecialistaSection extends StatelessWidget {
                 child: _StatTile(
                   icon: Icons.star_outline,
                   label: 'Calificación',
-                  value:
-                      worker == null ? '—' : worker!.rating.toStringAsFixed(1),
+                  value: worker == null
+                      ? '—'
+                      : WorkerPublicStats.ratingLabel(worker!.rating),
                 ),
               ),
               const SizedBox(width: 12),
@@ -586,9 +593,8 @@ class _SectionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 16),
             child,
@@ -621,16 +627,12 @@ class _InfoRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text(label, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(context).textTheme.bodyLarge
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -659,9 +661,8 @@ class _StatTile extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           value,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+          style: Theme.of(context).textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.w800),
         ),
         Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],

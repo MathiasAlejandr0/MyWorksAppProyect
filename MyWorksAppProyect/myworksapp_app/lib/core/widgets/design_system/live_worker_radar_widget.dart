@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../database/models/worker_model.dart';
+import '../../domain/worker_public_stats.dart';
 import '../../design_system/app_radius.dart';
 import '../../design_system/app_spacing.dart';
 import '../../services/app_feedback.dart';
@@ -117,21 +119,30 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
                           : '$activeCount activos en ${widget.city}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: isDark ? AppColors.grayLight : AppColors.grayMedium,
+                        color: isDark
+                            ? AppColors.grayLight
+                            : AppColors.grayMedium,
                       ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.brandOrange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.radar_rounded, size: 14, color: AppColors.brandOrange),
+                    Icon(
+                      Icons.radar_rounded,
+                      size: 14,
+                      color: AppColors.brandOrange,
+                    ),
                     SizedBox(width: 4),
                     Text(
                       'RADAR 24/7',
@@ -155,20 +166,16 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDark
-                    ? [
-                        const Color(0xFF0F172A),
-                        const Color(0xFF1E293B),
-                      ]
-                    : [
-                        const Color(0xFF1E293B),
-                        const Color(0xFF0F172A),
-                      ],
+                    ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                    : [const Color(0xFF1E293B), const Color(0xFF0F172A)],
               ),
             ),
             child: isEmpty
                 ? Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
                       child: Text(
                         'Sin profesionales en vivo ahora',
                         textAlign: TextAlign.center,
@@ -195,7 +202,9 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppColors.brandOrange.withValues(alpha: opacity * 0.6),
+                                    color: AppColors.brandOrange.withValues(
+                                      alpha: opacity * 0.6,
+                                    ),
                                     width: 1.5,
                                   ),
                                 ),
@@ -220,13 +229,18 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
                       ..._buildWorkerPins(context),
                       Center(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.brandOrange,
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.brandOrange.withValues(alpha: 0.5),
+                                color: AppColors.brandOrange.withValues(
+                                  alpha: 0.5,
+                                ),
                                 blurRadius: 10,
                               ),
                             ],
@@ -234,7 +248,11 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.my_location_rounded, size: 12, color: Colors.white),
+                              Icon(
+                                Icons.my_location_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
                               SizedBox(width: 4),
                               Text(
                                 'Tú',
@@ -267,11 +285,11 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
           right: _pinSlots[i].right,
           label: visible[i].profession,
           profession: visible[i].profession,
-          rating: visible[i].rating.toStringAsFixed(1),
+          rating: WorkerPublicStats.ratingLabel(visible[i].rating),
           onTap: () => _showWorkerSheet(
             context,
             visible[i].profession,
-            '${visible[i].rating.toStringAsFixed(1)} ⭐',
+            '${WorkerPublicStats.ratingLabel(visible[i].rating)} ⭐',
           ),
         ),
     ];
@@ -300,15 +318,37 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
                   profession.isNotEmpty ? profession[0].toUpperCase() : '?',
                 ),
               ),
-              title: Text(profession, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-              subtitle: Text(rating, style: const TextStyle(color: AppColors.emerald, fontWeight: FontWeight.w600)),
+              title: Text(
+                profession,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
+              subtitle: Text(
+                rating,
+                style: const TextStyle(
+                  color: AppColors.emerald,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.emerald.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
-                child: const Text('Disponible', style: TextStyle(color: AppColors.emerald, fontSize: 11, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Disponible',
+                  style: TextStyle(
+                    color: AppColors.emerald,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -321,9 +361,14 @@ class _LiveWorkerRadarWidgetState extends State<LiveWorkerRadarWidget>
                 backgroundColor: AppColors.brandOrange,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
               ),
-              child: const Text('Ver perfil y solicitar', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Ver perfil y solicitar',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),

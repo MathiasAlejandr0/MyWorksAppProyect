@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
@@ -9,6 +10,7 @@ import '../../utils/error_handler.dart';
 import '../../utils/json_map.dart';
 import '../../utils/worker_job_status.dart';
 import '../job_insert_policy.dart';
+import '../job_amount_hydrator.dart';
 import '../models/job_model.dart';
 import '../supabase_db.dart';
 
@@ -30,14 +32,14 @@ class JobRepository {
 
   Future<JobModel?> getJobById(String id) async {
     final row = await supabase.from(_table).select().eq('id', id).maybeSingle();
-    if (row != null) return JobModel.fromMap(row);
+    if (row != null) return _withAmount(JobModel.fromMap(row));
     final pub = await supabase.rpc(
       'obtener_trabajo_sin_direccion',
       params: {'p_id': id},
     );
     if (pub == null) return null;
     if (pub is! Map) return null;
-    return _openListing(Map<String, dynamic>.from(pub));
+    return _withAmount(_openListing(Map<String, dynamic>.from(pub)));
   }
 
   Future<List<JobModel>> getJobsByUserId(String userId) async {
@@ -46,7 +48,9 @@ class JobRepository {
         .select()
         .eq('id_usuario', userId)
         .order('creado_en', ascending: false);
-    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
+    return _withAmounts(
+      rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
+    );
   }
 
   Future<List<JobModel>> getJobsByWorkerId(String workerId) async {
@@ -55,7 +59,9 @@ class JobRepository {
         .select()
         .eq('id_trabajador', workerId)
         .order('creado_en', ascending: false);
-    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
+    return _withAmounts(
+      rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
+    );
   }
 
   /// Una página del historial (más recientes primero). Para «Mis Proyectos»:
@@ -73,7 +79,9 @@ class JobRepository {
         .order('creado_en', ascending: false)
         .order('id', ascending: false)
         .range(offset, offset + limit - 1);
-    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
+    return _withAmounts(
+      rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
+    );
   }
 
   Future<List<JobModel>> getPendingJobsForWorker(String workerId) async {
@@ -83,7 +91,9 @@ class JobRepository {
         .eq('id_trabajador', workerId)
         .eq('estado', 'pendiente')
         .order('creado_en', ascending: false);
-    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
+    return _withAmounts(
+      rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
+    );
   }
 
   /// Pedidos asignados al profesional: pagados (`pendiente`) o con checkout
@@ -94,10 +104,13 @@ class JobRepository {
         .select()
         .eq('id_trabajador', workerId)
         .inFilter('estado', [
-      AppConstants.jobStatusPending,
-      PricingConstants.jobAwaitingPayment,
-    ]).order('creado_en', ascending: false);
-    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
+          AppConstants.jobStatusPending,
+          PricingConstants.jobAwaitingPayment,
+        ])
+        .order('creado_en', ascending: false);
+    return _withAmounts(
+      rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
+    );
   }
 
   /// Trabajos asignados al profesional que aún no están completados ni cancelados.
@@ -108,7 +121,9 @@ class JobRepository {
         .eq('id_trabajador', workerId)
         .inFilter('estado', WorkerJobStatus.activeStatuses)
         .order('creado_en', ascending: false);
-    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
+    return _withAmounts(
+      rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
+    );
   }
 
   /// True si el profesional tiene al menos un trabajo en curso (sin bajar filas).
@@ -133,8 +148,9 @@ class JobRepository {
     const chunkSize = 200;
     final busy = <String>{};
     for (var i = 0; i < workerIds.length; i += chunkSize) {
-      final end =
-          i + chunkSize > workerIds.length ? workerIds.length : i + chunkSize;
+      final end = i + chunkSize > workerIds.length
+          ? workerIds.length
+          : i + chunkSize;
       final chunk = workerIds.sublist(i, end);
       try {
         final rows = await supabase.rpc(
@@ -205,7 +221,9 @@ class JobRepository {
         .select()
         .eq('estado', status)
         .order('creado_en', ascending: false);
-    return rows.map<JobModel>((m) => JobModel.fromMap(m)).toList();
+    return _withAmounts(
+      rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
+    );
   }
 
   Future<void> updateJob(JobModel job, {String? pin}) async {
@@ -222,10 +240,7 @@ class JobRepository {
     try {
       final row = await supabase.rpc(
         'rechazar_trabajo_pendiente',
-        params: {
-          'p_trabajo_id': jobId,
-          'p_metadatos': jsonEncode(metadata),
-        },
+        params: {'p_trabajo_id': jobId, 'p_metadatos': jsonEncode(metadata)},
       );
       return row != null;
     } catch (e) {
@@ -258,12 +273,11 @@ class JobRepository {
     try {
       final raw = await supabase.rpc(
         'intentar_pin_inicio',
-        params: {
-          'p_trabajo_id': jobId,
-          'p_pin': pin.trim(),
-        },
+        params: {'p_trabajo_id': jobId, 'p_pin': pin.trim()},
       );
-      final map = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+      final map = raw is Map
+          ? Map<String, dynamic>.from(raw)
+          : <String, dynamic>{};
       if (map['ok'] == true) return;
       final message = (map['mensaje'] as String?)?.trim();
       throw AppError.validation(
@@ -293,10 +307,7 @@ class JobRepository {
   Future<void> assignWorker(String jobId, String workerId) async {
     await supabase.rpc(
       'asignar_trabajador_trabajo',
-      params: {
-        'p_trabajo_id': jobId,
-        'p_trabajador_id': workerId,
-      },
+      params: {'p_trabajo_id': jobId, 'p_trabajador_id': workerId},
     );
   }
 
@@ -310,10 +321,7 @@ class JobRepository {
   }) async {
     await supabase.rpc(
       'vincular_trabajador_solicitud',
-      params: {
-        'p_trabajo_id': jobId,
-        'p_trabajador_id': workerId,
-      },
+      params: {'p_trabajo_id': jobId, 'p_trabajador_id': workerId},
     );
   }
 
@@ -331,10 +339,7 @@ class JobRepository {
   }) async {
     await supabase.rpc(
       'vincular_trabajador_cotizacion',
-      params: {
-        'p_trabajo_id': jobId,
-        'p_trabajador_id': workerId,
-      },
+      params: {'p_trabajo_id': jobId, 'p_trabajador_id': workerId},
     );
   }
 
@@ -351,10 +356,22 @@ class JobRepository {
       params: {'p_limite': 50},
     );
     if (rows is! List) return const [];
-    return rows
-        .whereType<Map>()
-        .map((row) => _openListing(Map<String, dynamic>.from(row)))
-        .toList();
+    return _withAmounts(
+      rows
+          .whereType<Map>()
+          .map((row) => _openListing(Map<String, dynamic>.from(row)))
+          .toList(),
+    );
+  }
+
+  Future<List<JobModel>> _withAmounts(List<JobModel> jobs) {
+    return hydrateJobKnownAmounts(jobs);
+  }
+
+  Future<JobModel?> _withAmount(JobModel? job) async {
+    if (job == null) return null;
+    final hydrated = await hydrateJobKnownAmounts([job]);
+    return hydrated.first;
   }
 
   JobModel _openListing(Map<String, dynamic> map) {
@@ -400,9 +417,11 @@ class JobRepository {
       final current = out[id] ?? const WorkerJobStats();
       final created = DateTime.tryParse(row['creado_en'] as String? ?? '');
       out[id] = WorkerJobStats(
-        cancelled: current.cancelled +
+        cancelled:
+            current.cancelled +
             (row['estado'] == AppConstants.jobStatusCancelled ? 1 : 0),
-        lastActivity: created == null ||
+        lastActivity:
+            created == null ||
                 (current.lastActivity != null &&
                     !created.isAfter(current.lastActivity!))
             ? current.lastActivity

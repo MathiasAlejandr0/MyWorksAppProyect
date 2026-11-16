@@ -54,6 +54,12 @@ class JobDisplayUtils {
       if (quote.totalClp > 0) return _formatClp(quote.totalClp);
     }
 
+    final agreed = agreedJobPriceClp(
+      pricingSnapshot: job.pricingSnapshot,
+      serviceMetadata: job.serviceMetadata,
+      recordedAmountClp: job.recordedAmountClp,
+    );
+    if (agreed != null) return _formatClp(agreed.round());
     return null;
   }
 
@@ -66,6 +72,7 @@ class JobDisplayUtils {
     final amount = agreedJobPriceClp(
       pricingSnapshot: job.pricingSnapshot,
       serviceMetadata: job.serviceMetadata,
+      recordedAmountClp: job.recordedAmountClp,
     );
     if (amount == null) return 'Monto por cotizar';
     return 'Oferta: ${_formatClp(amount.round()).replaceFirst('Tarifa referencial: ', '')}';

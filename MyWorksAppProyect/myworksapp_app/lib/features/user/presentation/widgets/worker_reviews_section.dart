@@ -7,6 +7,7 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
+import '../../../../core/domain/worker_public_stats.dart';
 
 /// Opiniones compactas en el perfil del trabajador (alineadas al portafolio).
 class WorkerReviewsSection extends StatelessWidget {
@@ -39,12 +40,12 @@ class WorkerReviewsSection extends StatelessWidget {
     final visibleReviews = maxVisible == null
         ? reviews
         : reviews.take(maxVisible!).toList();
-    final hiddenCount =
-        maxVisible == null ? 0 : reviews.length - visibleReviews.length;
+    final hiddenCount = maxVisible == null
+        ? 0
+        : reviews.length - visibleReviews.length;
     final avg = _resolvedAverage(averageRating, reviews);
 
-    final stripItemCount =
-        visibleReviews.length + (hiddenCount > 0 ? 1 : 0);
+    final stripItemCount = visibleReviews.length + (hiddenCount > 0 ? 1 : 0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -60,17 +61,15 @@ class WorkerReviewsSection extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Text(
               'Opiniones de clientes',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             if (reviews.isNotEmpty) ...[
               const SizedBox(width: AppSpacing.sm),
               Text(
                 '${reviews.length}',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.grayMedium,
-                    ),
+                style: Theme.of(context).textTheme.labelSmall
+                    ?.copyWith(color: AppColors.grayMedium),
               ),
             ],
           ],
@@ -80,23 +79,22 @@ class WorkerReviewsSection extends StatelessWidget {
           const EmptyStateWidget(
             icon: Icons.chat_bubble_outline,
             title: 'Sin opiniones aún',
-            message:
-                'Cuando clientes califiquen a este profesional, sus comentarios aparecerán aquí.',
+            message: 'Cuando clientes califiquen a este profesional, sus comentarios aparecerán aquí.',
           )
         else ...[
-          _SummaryStrip(
-            averageRating: avg,
-            totalReviews: reviews.length,
-          ),
+          _SummaryStrip(averageRating: avg, totalReviews: reviews.length),
           const SizedBox(height: AppSpacing.sm),
           LayoutBuilder(
             builder: (context, constraints) {
               const spacing = AppSpacing.sm;
               final moreWidth = hiddenCount > 0 ? 88.0 : 0.0;
-              final reviewsWidth = visibleReviews.length * _reviewCardWidth +
-                  (visibleReviews.isNotEmpty ? (visibleReviews.length - 1) * spacing : 0);
-              final totalWidth = reviewsWidth +
-                  (hiddenCount > 0 ? spacing + moreWidth : 0);
+              final reviewsWidth =
+                  visibleReviews.length * _reviewCardWidth +
+                  (visibleReviews.isNotEmpty
+                      ? (visibleReviews.length - 1) * spacing
+                      : 0);
+              final totalWidth =
+                  reviewsWidth + (hiddenCount > 0 ? spacing + moreWidth : 0);
               final fits = totalWidth <= constraints.maxWidth;
 
               if (fits) {
@@ -174,19 +172,17 @@ class _SummaryStrip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.brandOrangeSoft,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.brandOrange.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: AppColors.brandOrange.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            averageRating.toStringAsFixed(1),
+            WorkerPublicStats.ratingLabel(averageRating),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.brandOrange,
-                ),
+              fontWeight: FontWeight.w800,
+              color: AppColors.brandOrange,
+            ),
           ),
           const SizedBox(width: 8),
           _StarRow(score: averageRating.round().clamp(0, 5), size: 14),
@@ -194,9 +190,9 @@ class _SummaryStrip extends StatelessWidget {
           Text(
             '· $totalReviews ${totalReviews == 1 ? 'opinión' : 'opiniones'}',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.grayMedium,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: AppColors.grayMedium,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -223,10 +219,10 @@ class _MoreReviewsChip extends StatelessWidget {
         '+$hiddenCount\n${hiddenCount == 1 ? 'más' : 'más'}',
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.grayMedium,
-              fontWeight: FontWeight.w700,
-              height: 1.3,
-            ),
+          color: AppColors.grayMedium,
+          fontWeight: FontWeight.w700,
+          height: 1.3,
+        ),
       ),
     );
   }
@@ -239,7 +235,10 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateLabel = DateFormat('d MMM yyyy', 'es_CL').format(SantiagoTime.wall(review.createdAt));
+    final dateLabel = DateFormat(
+      'd MMM yyyy',
+      'es_CL',
+    ).format(SantiagoTime.wall(review.createdAt));
     final initial = review.displayReviewerName.isNotEmpty
         ? review.displayReviewerName[0].toUpperCase()
         : 'C';
@@ -278,15 +277,13 @@ class _ReviewCard extends StatelessWidget {
                       review.displayReviewerName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                      style: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     Text(
                       dateLabel,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.grayMedium,
-                          ),
+                      style: Theme.of(context).textTheme.labelSmall
+                          ?.copyWith(color: AppColors.grayMedium),
                     ),
                   ],
                 ),
@@ -303,11 +300,11 @@ class _ReviewCard extends StatelessWidget {
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          height: 1.35,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.white.withValues(alpha: 0.85)
-                              : AppColors.grayDark,
-                        ),
+                      height: 1.35,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.white.withValues(alpha: 0.85)
+                          : AppColors.grayDark,
+                    ),
                   )
                 : Align(
                     alignment: Alignment.topLeft,
@@ -315,9 +312,9 @@ class _ReviewCard extends StatelessWidget {
                       'Sin comentario escrito.',
                       maxLines: 1,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.grayMedium,
-                            fontStyle: FontStyle.italic,
-                          ),
+                        color: AppColors.grayMedium,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
           ),

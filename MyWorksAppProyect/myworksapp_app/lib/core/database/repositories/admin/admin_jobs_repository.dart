@@ -1,4 +1,5 @@
 import '../../models/dispute_model.dart';
+import '../../job_amount_hydrator.dart';
 import '../../models/job_model.dart';
 import '../../models/message_model.dart';
 import '../../models/payment_model.dart';
@@ -24,26 +25,29 @@ class AdminJobsRepository {
       );
     }
     final rows = await query.order('creado_en', ascending: false).limit(limit);
-    return rows
-        .map<JobModel>((m) => JobModel.fromMap(Map<String, dynamic>.from(m)))
-        .toList();
+    return hydrateJobKnownAmounts([
+      for (final m in rows) JobModel.fromMap(Map<String, dynamic>.from(m)),
+    ]);
   }
 
   Future<void> updateJobStatus(String jobId, String status) async {
     await supabase.rpc(
       'transicionar_trabajo',
-      params: {
-        'p_trabajo_id': jobId,
-        'p_nuevo_estado': status,
-      },
+      params: {'p_trabajo_id': jobId, 'p_nuevo_estado': status},
     );
   }
 
   Future<AdminJobDetail?> getJobDetail(String jobId) async {
-    final jobRow =
-        await supabase.from('trabajos').select().eq('id', jobId).maybeSingle();
+    final jobRow = await supabase
+        .from('trabajos')
+        .select()
+        .eq('id', jobId)
+        .maybeSingle();
     if (jobRow == null) return null;
-    final job = JobModel.fromMap(Map<String, dynamic>.from(jobRow));
+    final hydrated = await hydrateJobKnownAmounts([
+      JobModel.fromMap(Map<String, dynamic>.from(jobRow)),
+    ]);
+    final job = hydrated.first;
 
     final profileIds = <String>{job.userId};
     if (job.workerId != null) profileIds.add(job.workerId!);
@@ -94,9 +98,7 @@ class AdminJobsRepository {
         .order('creado_en', ascending: false)
         .limit(1);
     final dispute = disputeRows.isNotEmpty
-        ? DisputeModel.fromMap(
-            Map<String, dynamic>.from(disputeRows.first),
-          )
+        ? DisputeModel.fromMap(Map<String, dynamic>.from(disputeRows.first))
         : null;
 
     final ratingRow = await supabase
