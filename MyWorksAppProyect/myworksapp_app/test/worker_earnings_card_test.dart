@@ -59,6 +59,7 @@ void main() {
             expect(tester.takeException(), isNull);
             final label = find.text('Ganancias totales');
             expect(label, findsOneWidget);
+            expect(find.textContaining('vs. mes anterior'), findsNothing);
             // Antes el botón ocupaba todo el ancho y el texto quedaba en una
             // columna de una letra. Debe tener un ancho real.
             expect(tester.getSize(label).width, greaterThan(80));
@@ -71,4 +72,73 @@ void main() {
       }
     }
   }
+
+  Future<void> pumpGrowth(
+    WidgetTester tester,
+    WorkerEarningsSnapshot snapshot,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: SizedBox(
+            width: 400,
+            child: WorkerEarningsCard(data: snapshot, onViewDetails: () {}),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+  }
+
+  testWidgets('sin mes anterior no muestra un porcentaje', (tester) async {
+    await pumpGrowth(
+      tester,
+      const WorkerEarningsSnapshot(
+        escrowClp: 0,
+        releasedClp: 160000,
+        pendingClp: 0,
+        paymentCount: 5,
+      ),
+    );
+    expect(find.textContaining('vs. mes anterior'), findsNothing);
+    expect(find.text('Se mostrarán al confirmar pagos'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('muestra el porcentaje real cuando hay mes anterior', (tester) async {
+    await pumpGrowth(
+      tester,
+      const WorkerEarningsSnapshot(
+        escrowClp: 0,
+        releasedClp: 256000,
+        pendingClp: 0,
+        paymentCount: 8,
+        growthPercent: 67,
+      ),
+    );
+    expect(find.text('67% vs. mes anterior'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_upward_rounded), findsOneWidget);
+  });
+
+  testWidgets('una baja real se muestra hacia abajo', (tester) async {
+    await pumpGrowth(
+      tester,
+      const WorkerEarningsSnapshot(
+        escrowClp: 0,
+        releasedClp: 80000,
+        pendingClp: 0,
+        paymentCount: 2,
+        growthPercent: -20,
+      ),
+    );
+    expect(find.text('-20% vs. mes anterior'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_downward_rounded), findsOneWidget);
+  });
+
+  testWidgets('sin pagos explica que aparecerán al confirmar', (tester) async {
+    await pumpGrowth(tester, WorkerEarningsSnapshot.zero);
+    expect(find.text('Se mostrarán al confirmar pagos'), findsOneWidget);
+    expect(find.textContaining('%'), findsNothing);
+  });
 }
