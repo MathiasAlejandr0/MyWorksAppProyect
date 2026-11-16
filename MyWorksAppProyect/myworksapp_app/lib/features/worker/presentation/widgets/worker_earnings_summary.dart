@@ -27,14 +27,16 @@ class _WorkerEarningsSummaryState extends State<WorkerEarningsSummary> {
   @override
   void initState() {
     super.initState();
-    _snapshotFuture = WorkerEarningsService.instance.getSnapshot(widget.workerId);
+    _snapshotFuture =
+        WorkerEarningsService.instance.getSnapshot(widget.workerId);
   }
 
   @override
   void didUpdateWidget(covariant WorkerEarningsSummary oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.workerId != widget.workerId) {
-      _snapshotFuture = WorkerEarningsService.instance.getSnapshot(widget.workerId);
+      _snapshotFuture =
+          WorkerEarningsService.instance.getSnapshot(widget.workerId);
     }
   }
 
@@ -99,7 +101,10 @@ class WorkerEarningsCard extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final titleColor = AppColors.onCanvas(brightness);
     final muted = AppColors.onCanvasMuted(brightness);
-    final total = data.releasedClp + data.escrowClp;
+    // Ganancias = pagos liberados al profesional. Lo retenido en garantía
+    // todavía puede reembolsarse, así que se muestra aparte y no suma.
+    final total = data.releasedClp;
+    final escrow = data.escrowClp;
     final growthPercent = data.growthPercent;
     final textScale = MediaQuery.textScalerOf(context).scale(1);
 
@@ -146,6 +151,19 @@ class WorkerEarningsCard extends StatelessWidget {
             ),
           ),
         ),
+        if (escrow > 0) ...[
+          const SizedBox(height: 2),
+          Text(
+            '${_currency.format(escrow)} retenido en garantía',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: muted,
+            ),
+          ),
+        ],
         if (growthPercent != null) ...[
           const SizedBox(height: 4),
           _MonthGrowthLine(percent: growthPercent, muted: muted),

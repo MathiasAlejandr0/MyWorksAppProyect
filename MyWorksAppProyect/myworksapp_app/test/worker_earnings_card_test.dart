@@ -106,7 +106,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('muestra el porcentaje real cuando hay mes anterior', (tester) async {
+  testWidgets('muestra el porcentaje real cuando hay mes anterior',
+      (tester) async {
     await pumpGrowth(
       tester,
       const WorkerEarningsSnapshot(
@@ -134,6 +135,24 @@ void main() {
     );
     expect(find.text('-20% vs. mes anterior'), findsOneWidget);
     expect(find.byIcon(Icons.arrow_downward_rounded), findsOneWidget);
+  });
+
+  testWidgets('el total solo suma pagos liberados; lo retenido va aparte',
+      (tester) async {
+    await pumpGrowth(
+      tester,
+      const WorkerEarningsSnapshot(
+        escrowClp: 64000,
+        releasedClp: 32000,
+        pendingClp: 0,
+        paymentCount: 3,
+      ),
+    );
+    expect(find.textContaining('96.000'), findsNothing);
+    expect(find.textContaining('32.000'), findsOneWidget);
+    expect(find.textContaining('64.000'), findsOneWidget);
+    expect(find.textContaining('retenido en garantía'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('sin pagos explica que aparecerán al confirmar', (tester) async {
