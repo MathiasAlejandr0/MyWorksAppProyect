@@ -1,0 +1,17 @@
+{"capturado":"2026-11-16 01:45 -03","nota":"Top 15 por tiempo total, roles de la API (anon, authenticated, authenticator, service_role). Acumulado desde el último reinicio de estadísticas; incluye la prueba de carga web previa.",
+"filas":[
+{"rol":"authenticator","llamadas":362,"total_ms":227292.2,"media_ms":627.879,"max_ms":1876.9,"hit_pct":null,"consulta":"SELECT name FROM pg_timezone_names (recarga de caché de esquema de PostgREST)"},
+{"rol":"anon","llamadas":28153,"total_ms":39774.4,"media_ms":1.413,"max_ms":84.3,"hit_pct":100.0,"consulta":"RPC horarios_libres_profesional(p_id_trabajador, p_dias)"},
+{"rol":"anon","llamadas":31815,"total_ms":38751.8,"media_ms":1.218,"max_ms":69.8,"hit_pct":100.0,"consulta":"RPC listar_profesionales_catalogo(p_categoria, p_zona, cursor...)"},
+{"rol":"anon","llamadas":755057,"total_ms":20121.9,"media_ms":0.027,"max_ms":9.3,"hit_pct":100.0,"consulta":"set_config(search_path, role, request.jwt.claims...) (preámbulo de cada request PostgREST)"},
+{"rol":"anon","llamadas":291922,"total_ms":18489.1,"media_ms":0.063,"max_ms":18.0,"hit_pct":100.0,"consulta":"SELECT trabajadores (id_usuario, profesion, calificacion, ...) ficha pública"},
+{"rol":"authenticator","llamadas":359,"total_ms":16055.4,"media_ms":44.723,"max_ms":156.8,"hit_pct":99.95,"consulta":"introspección de tipos (caché de esquema PostgREST)"},
+{"rol":"authenticator","llamadas":362,"total_ms":15965.3,"media_ms":44.103,"max_ms":163.2,"hit_pct":99.92,"consulta":"introspección de tipos (caché de esquema PostgREST)"},
+{"rol":"anon","llamadas":28588,"total_ms":14369.4,"media_ms":0.503,"max_ms":96.6,"hit_pct":100.0,"consulta":"RPC categorias_con_disponibles()"},
+{"rol":"anon","llamadas":184258,"total_ms":11128.5,"media_ms":0.060,"max_ms":5.0,"hit_pct":100.0,"consulta":"SELECT servicios (id, nombre, categoria, activo)"},
+{"rol":"authenticated","llamadas":5301,"total_ms":5131.0,"media_ms":0.968,"max_ms":11.4,"hit_pct":100.0,"consulta":"SELECT trabajos (id, estado, estado_pago, creado_en) con RLS"},
+{"rol":"anon","llamadas":35974,"total_ms":4735.2,"media_ms":0.132,"max_ms":2.7,"hit_pct":100.0,"consulta":"SELECT trabajadores (perfil público con descripción)"},
+{"rol":"authenticator","llamadas":362,"total_ms":2042.7,"media_ms":5.643,"max_ms":30.4,"hit_pct":99.97,"consulta":"introspección de relaciones pk/fk (PostgREST)"},
+{"rol":"authenticator","llamadas":362,"total_ms":1768.5,"media_ms":4.885,"max_ms":38.9,"hit_pct":99.99,"consulta":"introspección de relaciones computadas (PostgREST)"},
+{"rol":"authenticated","llamadas":21762,"total_ms":1364.5,"media_ms":0.063,"max_ms":19.1,"hit_pct":100.0,"consulta":"set_config(...) preámbulo authenticated"},
+{"rol":"authenticated","llamadas":17,"total_ms":1308.9,"media_ms":76.994,"max_ms":237.3,"hit_pct":100.0,"consulta":"RPC con p_trabajo_id (acción sobre un trabajo; 17 llamadas)"}]}

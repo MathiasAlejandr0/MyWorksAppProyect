@@ -1,0 +1,107 @@
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+     execution: local
+        script: mwa_estres_bd.js
+        output: csv (resultados/series_k6.csv)
+     scenarios: (100.00%) 1 scenario, 200 max VUs, 8m10s max duration (incl. graceful stop):
+              * estres: Up to 200 looping VUs for 8m0s over 13 stages (gracefulRampDown: 10s, gracefulStop: 30s)
+Run      [ 100% ] setup()
+  █ THRESHOLDS 
+    http_req_duration{etapa:E010}
+    ✓ 'p(95)<3000' p(95)=251.48ms
+    http_req_duration{etapa:E050}
+    ✓ 'p(95)<3000' p(95)=237.85ms
+    http_req_duration{etapa:E100}
+    ✓ 'p(95)<3000' p(95)=196.02ms
+    http_req_duration{etapa:E200}
+    ✓ 'p(95)<3000' p(95)=134.79ms
+    http_req_duration{etapa:PICO}
+    ✓ 'p(95)<3000' p(95)=137.95ms
+    http_req_duration{etapa:R020}
+    ✓ 'p(95)<3000' p(95)=138.06ms
+    http_req_failed
+    ✓ 'rate<0.05' rate=0.00%
+      {etapa:E010}
+      ✓ 'rate<0.05' rate=0.00%
+      {etapa:E050}
+      ✓ 'rate<0.05' rate=0.00%
+      {etapa:E100}
+      ✓ 'rate<0.05' rate=0.00%
+      {etapa:E200}
+      ✓ 'rate<0.05' rate=0.00%
+      {etapa:PICO}
+      ✓ 'rate<0.05' rate=0.00%
+      {etapa:R020}
+      ✓ 'rate<0.05' rate=0.00%
+    http_reqs{etapa:E010}
+    ✓ 'count>=0' count=530
+    http_reqs{etapa:E050}
+    ✓ 'count>=0' count=2672
+    http_reqs{etapa:E100}
+    ✓ 'count>=0' count=5305
+    http_reqs{etapa:E200}
+    ✓ 'count>=0' count=10757
+    http_reqs{etapa:PICO}
+    ✓ 'count>=0' count=5422
+    http_reqs{etapa:R020}
+    ✓ 'count>=0' count=538
+  █ TOTAL RESULTS 
+    checks_total.......: 38038   78.957908/s
+    checks_succeeded...: 100.00% 38038 out of 38038
+    checks_failed......: 0.00%   0 out of 38038
+    ✓ notificaciones 200
+    ✓ categorias 200
+    ✓ servicios 200
+    ✓ horarios 200
+    ✓ chat 200
+    ✓ catalogo 200
+    ✓ mis_trabajos 200
+    ✓ evento_analitica 201
+    ✓ escribir_mensaje 201
+    ✓ marcar_leido 204/200
+    CUSTOM
+    op_catalogo....................: avg=119.89ms min=83ms     med=108.85ms p(90)=131.53ms p(95)=146.47ms p(99)=334.71ms max=1.3s    
+    op_categorias..................: avg=113.77ms min=81.35ms  med=105.23ms p(90)=127.47ms p(95)=140.66ms p(99)=310.55ms max=1.05s   
+    op_chat........................: avg=125.3ms  min=86.98ms  med=112.47ms p(90)=136.01ms p(95)=154.45ms p(99)=430.88ms max=1.12s   
+    op_escribir_mensaje............: avg=120.37ms min=83.25ms  med=108.43ms p(90)=131.58ms p(95)=148.85ms p(99)=435.09ms max=1.19s   
+    op_evento_analitica............: avg=115.01ms min=82.71ms  med=106.41ms p(90)=129.05ms p(95)=138.83ms p(99)=292.05ms max=1.01s   
+    op_horarios....................: avg=115.57ms min=82.41ms  med=106.22ms p(90)=128.79ms p(95)=141.21ms p(99)=306.11ms max=1.17s   
+    op_marcar_leido................: avg=118.2ms  min=83.03ms  med=108.89ms p(90)=131.9ms  p(95)=150.02ms p(99)=313.26ms max=1.09s   
+    op_mis_trabajos................: avg=118.69ms min=81ms     med=106.67ms p(90)=129.74ms p(95)=146.55ms p(99)=373.11ms max=1.15s   
+    op_notificaciones..............: avg=116.03ms min=82.13ms  med=107.06ms p(90)=129.5ms  p(95)=144.22ms p(99)=319.36ms max=1.07s   
+    op_servicios...................: avg=114.02ms min=80.75ms  med=105.73ms p(90)=127.16ms p(95)=141.17ms p(99)=298.67ms max=1.07s   
+    HTTP
+    http_req_duration..............: avg=117.98ms min=80.75ms  med=107.66ms p(90)=130.45ms p(95)=145.35ms p(99)=322.99ms max=1.3s    
+      { etapa:E010 }...............: avg=120.37ms min=84.61ms  med=107.48ms p(90)=138.63ms p(95)=251.48ms p(99)=313.36ms max=435.77ms
+      { etapa:E050 }...............: avg=118.93ms min=81.81ms  med=108.53ms p(90)=136.36ms p(95)=237.85ms p(99)=315.77ms max=450.51ms
+      { etapa:E100 }...............: avg=127.72ms min=81.77ms  med=109.18ms p(90)=136.62ms p(95)=196.02ms p(99)=615.83ms max=1.3s    
+      { etapa:E200 }...............: avg=109.98ms min=81.35ms  med=106.66ms p(90)=126.59ms p(95)=134.79ms p(99)=188.53ms max=424.49ms
+      { etapa:PICO }...............: avg=111.42ms min=81.39ms  med=106.88ms p(90)=128.22ms p(95)=137.95ms p(99)=257.17ms max=422.08ms
+      { etapa:R020 }...............: avg=111.65ms min=83.4ms   med=109.96ms p(90)=128.46ms p(95)=138.06ms p(99)=163.08ms max=220.1ms 
+      { expected_response:true }...: avg=117.98ms min=80.75ms  med=107.66ms p(90)=130.45ms p(95)=145.35ms p(99)=322.99ms max=1.3s    
+    http_req_failed................: 0.00%  0 out of 38046
+      { etapa:E010 }...............: 0.00%  0 out of 530
+      { etapa:E050 }...............: 0.00%  0 out of 2672
+      { etapa:E100 }...............: 0.00%  0 out of 5305
+      { etapa:E200 }...............: 0.00%  0 out of 10757
+      { etapa:PICO }...............: 0.00%  0 out of 5422
+      { etapa:R020 }...............: 0.00%  0 out of 538
+    http_reqs......................: 38046  78.974514/s
+      { etapa:E010 }...............: 530    1.100155/s
+      { etapa:E050 }...............: 2672   5.546441/s
+      { etapa:E100 }...............: 5305   11.011928/s
+      { etapa:E200 }...............: 10757  22.328992/s
+      { etapa:PICO }...............: 5422   11.254792/s
+      { etapa:R020 }...............: 538    1.116761/s
+    EXECUTION
+    iteration_duration.............: avg=1.11s    min=585.38ms med=1.11s    p(90)=1.51s    p(95)=1.56s    p(99)=1.62s    max=2.52s   
+    iterations.....................: 38038  78.957908/s
+    vus............................: 8      min=0          max=200
+    vus_max........................: 200    min=200        max=200
+    NETWORK
+    data_received..................: 127 MB 264 kB/s
+    data_sent......................: 13 MB  28 kB/s
+estres ✓ [ 100% ] 000/200 VUs  8m0s

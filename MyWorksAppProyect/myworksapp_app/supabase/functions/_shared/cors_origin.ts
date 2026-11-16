@@ -56,7 +56,10 @@ export function webReturnOrigins(input: {
 
 /**
  * Allowlist explícita. Sin Origin (curl, redirect de Transbank) queda `*`.
- * Un origen desconocido no se refleja.
+ * Un origen desconocido no se refleja: se responde con el primer origen de la
+ * lista (la web pública), que no coincide con el del atacante y el navegador
+ * bloquea la lectura. No se responde el literal "null", porque el navegador lo
+ * acepta para documentos con Origin: null (iframes sandbox, file://, data:).
  */
 export function resolveCorsAllowOrigin(input: {
   origin: string;
@@ -72,7 +75,7 @@ export function resolveCorsAllowOrigin(input: {
     const local = integrationLocalOrigin(origin);
     if (local) return local;
   }
-  return "null";
+  return input.allowlist[0] ?? PUBLIC_WEB_ORIGINS[0];
 }
 
 /** Flutter web elige un puerto libre. En integración vale localhost o 127.0.0.1. */

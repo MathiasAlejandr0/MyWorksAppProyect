@@ -1,0 +1,33 @@
+etapa  vus  segundos  requests   rps  avg_ms  p50_ms  p90_ms  p95_ms  p99_ms  max_ms  errores  tasa_error_pct
+ E010   10        60       530   8.8   120.4   107.5   138.6   251.5   313.4   435.8        0             0.0
+ E050   50        60      2672  44.5   118.9   108.5   136.4   237.9   315.8   450.5        0             0.0
+ E100  100        60      5305  88.4   127.7   109.2   136.6   196.0   615.8  1302.7        0             0.0
+ E200  200        60     10757 179.3   110.0   106.7   126.6   134.8   188.5   424.5        0             0.0
+ R020   20        30       538  17.9   111.7   110.0   128.5   138.1   163.1   220.1        0             0.0
+ PICO  200        30      5422 180.7   111.4   106.9   128.2   138.0   257.2   422.1        0             0.0
+
+p95 por operación (ms)
+ etapa              E010   E050   E100   E200   R020   PICO
+op                                                        
+catalogo          180.7  170.8  259.8  134.1  139.0  138.8
+categorias        232.6  249.8  147.7  133.3  132.3  133.3
+chat              191.0  280.9  210.2  144.3  158.7  141.9
+escribir_mensaje  151.2  143.7  256.9  133.8  132.4  133.6
+evento_analitica  131.1  146.8  178.7  131.7  130.6  136.7
+horarios          280.0  248.8  153.3  134.5  132.5  139.3
+marcar_leido      230.5  130.5  160.4  140.4  126.9  135.4
+mis_trabajos      275.9  156.7  190.8  132.9  134.1  134.6
+notificaciones    135.7  247.8  171.4  133.2  125.7  137.7
+servicios         266.0  236.7  238.4  131.0  134.4  136.7
+
+Códigos HTTP: {200.0: 34252, 201.0: 2985, 204.0: 801}
+
+Total requests CSV=38038 k6=38046 (incluye setup en k6: 8)
+  E010: p95 CSV=251.5 ms  k6=251.5 ms  dif=0.0 ms
+  E050: p95 CSV=237.9 ms  k6=237.9 ms  dif=0.0 ms
+  E100: p95 CSV=196.0 ms  k6=196.0 ms  dif=0.0 ms
+  E200: p95 CSV=134.8 ms  k6=134.8 ms  dif=0.0 ms
+  R020: p95 CSV=138.1 ms  k6=138.1 ms  dif=0.0 ms
+  PICO: p95 CSV=138.0 ms  k6=138.0 ms  dif=0.0 ms
+
+Gráficos en /workspace/mwa_audit/estres/graficos
