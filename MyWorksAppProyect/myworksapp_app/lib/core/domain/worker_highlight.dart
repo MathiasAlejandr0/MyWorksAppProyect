@@ -9,6 +9,15 @@ const int eliteMinCompletedJobs = 5;
 const double lowRatingFloor = 3.0;
 const double lowRatingDemote = 3.5;
 
+/// Filtro de nota mínima del listado. Un profesional sin reseñas no tiene
+/// una nota baja: tiene «Nuevo». Con el piso por defecto (3+) se muestra,
+/// igual que en `listar_profesionales_catalogo`; si el cliente pide una nota
+/// más alta, solo entran los que ya la tienen con reseñas reales.
+bool passesMinRating(double rating, double minRating) {
+  if (rating <= 0) return minRating <= lowRatingFloor;
+  return rating >= minRating;
+}
+
 bool isEliteWorker(WorkerModel worker) {
   if (worker.isElite) return true;
   return worker.rating >= eliteMinRating &&
