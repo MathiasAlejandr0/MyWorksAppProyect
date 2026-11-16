@@ -1,6 +1,10 @@
 -- Profesionales de muestra en Puerto Montt y alrededores.
 -- No es una migración. Correr en el SQL Editor DESPUÉS de
 -- 20261025000001_revision_patrocinante.sql.
+-- Los trabajos, pagos y reseñas que sostienen la nota y el contador están en
+-- seed_historial_puerto_montt.sql. La calificacion de esta ficha es el
+-- round(avg, 2) que deja refrescar_calificacion_trabajador; la app y la web
+-- muestran un decimal (4.88 se ve 4.9).
 -- Contraseña: NO se publica. Antes de correr este script, en la misma sesión:
 --   SET demo.password = '<clave-demo>';
 -- (pídela al equipo; el repo es público)
@@ -124,15 +128,21 @@ BEGIN
       v.categoria, 1, v.zona, 'verificado', 'Ficha de muestra, Puerto Montt.',
       v.lat, v.lng, v.radio, 'mapa', v.urbano, v.fuera, v.hechos
     FROM (
+      -- calificacion = round(promedio de las reseñas de seed_historial_puerto_montt.sql, 2).
+      -- Con notas enteras no siempre cae en el decimal publicado a ojo:
+      -- Mateo 4.875 → 4.88 (pantalla 4.9); Bruno 4.33 (pantalla 4.3);
+      -- Nora 3.50; Sofía 2.50 (sigue bajo 3, el catálogo no la muestra);
+      -- Clemente 4.00 (4 notas no dan 4.1 sin un .25 que cada cliente redondea distinto);
+      -- Rosa 4.71 (pantalla 4.7, sigue élite: nota >= 4.7 y 7 trabajos).
       VALUES
-        ('mateo.oyarzo@demo.myworksapp.cl', 'Gasfíter', 'Destacado del mes en el centro de Puerto Montt. Fugas y calefont.', 4.9::numeric, 32000, 'plomeria', 'Puerto Montt', -41.4718::float8, -72.9396::float8, 12::numeric, 5::numeric, 7000, 8),
-        ('elsa.caicheo@demo.myworksapp.cl', 'Electricista', 'Tableros domiciliarios en la costanera.', 4.8, 38000, 'electricidad', 'Puerto Montt', -41.4682, -72.9424, 10, 5, 0, 6),
-        ('bruno.levio@demo.myworksapp.cl', 'Pintor', 'Interiores en Pelluco. Buena nota, poco volumen.', 4.4, 27000, 'pintura', 'Pelluco', -41.4925, -72.9055, 8, 4, 5000, 3),
-        ('nora.huenchun@demo.myworksapp.cl', 'Maestra', 'Obras menores en Alerce. Nota media: baja en el feed.', 3.4, 30000, 'construccion', 'Alerce', -41.3960, -72.9030, 15, 6, 9000, 4),
-        ('ivan.barria@demo.myworksapp.cl', 'Jardinero', 'Élite en Puerto Varas, fuera del radio urbano de Puerto Montt.', 4.9, 26000, 'jardineria', 'Puerto Varas', -41.3195, -72.9854, 18, 5, 12000, 9),
-        ('sofia.alvarado@demo.myworksapp.cl', 'Aseo hogar', 'Nota baja. El catálogo no la muestra hasta que supere 3.0.', 2.6, 20000, 'limpieza', 'Angelmó', -41.4835, -72.9580, 8, 5, 4000, 2),
-        ('clemente.navarro@demo.myworksapp.cl', 'Cerrajero', 'Aperturas en La Paloma. Relevancia media.', 4.1, 25000, 'cerrajeria', 'La Paloma', -41.4550, -72.9550, 10, 5, 6000, 4),
-        ('rosa.millalonco@demo.myworksapp.cl', 'Soporte técnico', 'Élite en Chinquihue. Radio urbano corto, sin cobro fuera.', 4.8, 24000, 'soporte_tecnico', 'Chinquihue', -41.5050, -73.0100, 14, 5, 0, 7)
+        ('mateo.oyarzo@demo.myworksapp.cl', 'Gasfíter', 'Destacado del mes en el centro de Puerto Montt. Fugas y calefont.', 4.88::numeric, 32000, 'plomeria', 'Puerto Montt', -41.4718::float8, -72.9396::float8, 12::numeric, 5::numeric, 7000, 8),
+        ('elsa.caicheo@demo.myworksapp.cl', 'Electricista', 'Tableros domiciliarios en la costanera.', 4.83, 38000, 'electricidad', 'Puerto Montt', -41.4682, -72.9424, 10, 5, 0, 6),
+        ('bruno.levio@demo.myworksapp.cl', 'Pintor', 'Interiores en Pelluco. Buena nota, poco volumen.', 4.33, 27000, 'pintura', 'Pelluco', -41.4925, -72.9055, 8, 4, 5000, 3),
+        ('nora.huenchun@demo.myworksapp.cl', 'Maestra', 'Obras menores en Alerce. Nota media: baja en el feed.', 3.50, 30000, 'construccion', 'Alerce', -41.3960, -72.9030, 15, 6, 9000, 4),
+        ('ivan.barria@demo.myworksapp.cl', 'Jardinero', 'Élite en Puerto Varas, fuera del radio urbano de Puerto Montt.', 4.89, 26000, 'jardineria', 'Puerto Varas', -41.3195, -72.9854, 18, 5, 12000, 9),
+        ('sofia.alvarado@demo.myworksapp.cl', 'Aseo hogar', 'Nota baja. El catálogo no la muestra hasta que supere 3.0.', 2.50, 20000, 'limpieza', 'Angelmó', -41.4835, -72.9580, 8, 5, 4000, 2),
+        ('clemente.navarro@demo.myworksapp.cl', 'Cerrajero', 'Aperturas en La Paloma. Relevancia media.', 4.00, 25000, 'cerrajeria', 'La Paloma', -41.4550, -72.9550, 10, 5, 6000, 4),
+        ('rosa.millalonco@demo.myworksapp.cl', 'Soporte técnico', 'Élite en Chinquihue. Radio urbano corto, sin cobro fuera.', 4.71, 24000, 'soporte_tecnico', 'Chinquihue', -41.5050, -73.0100, 14, 5, 0, 7)
     ) AS v(email, profesion, descripcion, calificacion, tarifa, categoria, zona, lat, lng, radio, urbano, fuera, hechos)
     JOIN pm_cuentas c ON c.email = v.email
     ON CONFLICT (id_usuario) DO UPDATE SET
