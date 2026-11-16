@@ -38,6 +38,19 @@ void main() {
       expect(JobDisplayUtils.priceLine(job), contains('45'));
     });
 
+    test('muestra el monto de un pago cuando el snapshot no trae precio', () {
+      final job = _job().copyWith(recordedAmountClp: 28000);
+      expect(JobDisplayUtils.offeredAmountLabel(job), contains('28'));
+      expect(
+        JobDisplayUtils.offeredAmountLabel(job),
+        isNot(contains('cotizar')),
+      );
+    });
+
+    test('dice por cotizar solo si no hay ningún monto conocido', () {
+      expect(JobDisplayUtils.offeredAmountLabel(_job()), 'Monto por cotizar');
+    });
+
     test('usa snapshot de cotización cuando no hay precio en metadatos', () {
       final job = _job(
         pricingSnapshot: const PriceQuote(

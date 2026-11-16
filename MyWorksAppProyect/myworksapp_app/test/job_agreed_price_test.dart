@@ -22,6 +22,18 @@ void main() {
     );
   });
 
+  test('entiende totalClp en camelCase y quoted_total_clp', () {
+    expect(agreedJobPriceClp(pricingSnapshot: {'totalClp': 56000}), 56000);
+    expect(
+      agreedJobPriceClp(pricingSnapshot: {'quoted_total_clp': 61000}),
+      61000,
+    );
+  });
+
+  test('usa el monto registrado de un pago si no hay snapshot', () {
+    expect(agreedJobPriceClp(recordedAmountClp: 25000), 25000);
+  });
+
   test('devuelve null cuando no hay precio real', () {
     expect(
       agreedJobPriceClp(

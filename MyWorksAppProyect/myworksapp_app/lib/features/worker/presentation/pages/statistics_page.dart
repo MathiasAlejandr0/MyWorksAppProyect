@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:myworksapp/core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/database/repositories/job_repository.dart';
-import '../../../../core/database/repositories/rating_repository.dart';
+import '../../../../core/domain/worker_public_stats.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/error_handler.dart';
@@ -19,7 +20,6 @@ class StatisticsPage extends ConsumerStatefulWidget {
 
 class _StatisticsPageState extends ConsumerState<StatisticsPage> {
   JobRepository get _jobRepository => ref.read(jobRepositoryProvider);
-  final RatingRepository _ratingRepository = RatingRepository();
   Future<List<dynamic>>? _statsFuture;
 
   @override
@@ -33,7 +33,7 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
     if (user == null) return null;
     return Future.wait([
       _jobRepository.getJobsByWorkerId(user.id),
-      _ratingRepository.getAverageRatingByWorkerId(user.id),
+      ref.read(workerRepositoryProvider).getPublicStats(user.id),
     ]);
   }
 
@@ -43,15 +43,11 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
     final user = authState.user;
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Usuario no encontrado')),
-      );
+      return const Scaffold(body: Center(child: Text('Usuario no encontrado')));
     }
 
     return Scaffold(
-      appBar: const AppGradientAppBar(
-        title: Text('Estadísticas'),
-      ),
+      appBar: const AppGradientAppBar(title: Text('Estadísticas')),
       body: FutureBuilder(
         future: _statsFuture,
         builder: (context, snapshot) {
@@ -81,13 +77,14 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
 
           final results = snapshot.data as List;
           final jobs = results[0] as List;
-          final avgRating = results[1] as double;
+          final stats = results[1] as WorkerPublicStats;
 
           final completed = jobs
               .where((j) => j.status == AppConstants.jobStatusCompleted)
               .length;
-          final inProgress =
-              jobs.where((j) => WorkerJobStatus.isActive(j.status)).length;
+          final inProgress = jobs
+              .where((j) => WorkerJobStatus.isActive(j.status))
+              .length;
           final pending = jobs
               .where((j) => j.status == AppConstants.jobStatusPending)
               .length;
@@ -129,7 +126,10 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
                             _StatCard(
                               icon: Icons.star,
                               label: 'Calificación',
-                              value: avgRating.toStringAsFixed(1),
+                              value: WorkerPublicStats.ratingLabel(
+                                stats.averageRating,
+                                ratingCount: stats.ratingCount,
+                              ),
                               color: AppColors.brandOrangeDark,
                             ),
                           ],
@@ -209,15 +209,10 @@ class _StatCard extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           value,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(fontWeight: FontWeight.bold, color: color),
         ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
@@ -246,10 +241,7 @@ class _StatusItem extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label),
-              Text('$count de $total'),
-            ],
+            children: [Text(label), Text('$count de $total')],
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(

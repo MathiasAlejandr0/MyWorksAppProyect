@@ -7,6 +7,7 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/domain/worker_public_stats.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../widgets/admin_search_field.dart';
 import '../../../../core/utils/error_handler.dart';
@@ -46,9 +47,9 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     }
   }
 
@@ -61,9 +62,9 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
       await _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     }
   }
 
@@ -80,9 +81,8 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
       await _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -91,14 +91,13 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
       await _repo.updateAccountStatus(entry.worker.userId, status);
       await _load();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${entry.name}: $status')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('${entry.name}: $status')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     }
   }
 
@@ -178,12 +177,13 @@ class _AdminWorkersPageState extends ConsumerState<AdminWorkersPage> {
                                           : '?',
                                     ),
                                   ),
-                                  title:
-                                      Text('${entry.name} · ${w.profession}'),
+                                  title: Text(
+                                    '${entry.name} · ${w.profession}',
+                                  ),
                                   subtitle: Text(
                                     '${entry.email ?? ''}\n'
                                     '${w.isAvailable ? 'Disponible' : 'No disponible'} · '
-                                    '★ ${w.rating.toStringAsFixed(1)} · '
+                                    '★ ${WorkerPublicStats.ratingLabel(w.rating)} · '
                                     'ranking ${(w.listingScore ?? 0).toStringAsFixed(1)} · '
                                     'prioridad ${w.manualPriority}'
                                     '${w.workZone != null ? ' · ${w.workZone}' : ''}',

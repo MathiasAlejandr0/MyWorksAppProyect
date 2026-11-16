@@ -5,15 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+
 import 'dart:io';
+
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/domain/worker_public_stats.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/repositories/job_repository.dart';
-import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/database/repositories/portfolio_repository.dart';
 import '../../../../core/services/photo_service.dart';
 import '../../../../core/services/profile_photo_service.dart';
@@ -50,10 +52,9 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
   final UserRepository _userRepository = UserRepository();
   final WorkerRepository _workerRepository = WorkerRepository();
   final JobRepository _jobRepository = JobRepository();
-  final RatingRepository _ratingRepository = RatingRepository();
   final PortfolioRepository _portfolioRepository = PortfolioRepository();
   final ImagePicker _imagePicker = ImagePicker();
-  
+
   bool _isLoading = false;
   String? _loadError;
   bool _photoLoading = false;
@@ -94,24 +95,24 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
 
     try {
       final workerFuture = _workerRepository.getWorkerByUserId(user.id);
-      final portfolioFuture =
-          _portfolioRepository.getPortfolioByWorkerId(user.id);
-      final ratingFuture =
-          _ratingRepository.getAverageRatingByWorkerId(user.id);
+      final portfolioFuture = _portfolioRepository.getPortfolioByWorkerId(
+        user.id,
+      );
+      final statsFuture = _workerRepository.getPublicStats(user.id);
       final countsFuture = _jobRepository.countJobsByWorkerId(user.id);
 
       final worker = await workerFuture;
       final portfolio = await portfolioFuture;
-      final avgRating = await ratingFuture;
+      final stats = await statsFuture;
       final jobCounts = await countsFuture;
 
       if (!mounted) return;
       setState(() {
         _worker = worker;
         _portfolio = portfolio;
-        _averageRating = avgRating;
+        _averageRating = stats.averageRating ?? 0;
         _jobsCount = jobCounts.total;
-        _completedJobsCount = jobCounts.completed;
+        _completedJobsCount = stats.completedJobs;
         _nameController.text = user.name;
         _emailController.text = user.email;
         if (worker != null) {
@@ -119,8 +120,12 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
           _descriptionController.text = worker.description ?? '';
           _pricingTiers = worker.pricingTiers.isNotEmpty
               ? Map<String, int>.from(worker.pricingTiers)
-              : WorkerServiceOptionsCatalog.defaultTiersFor(worker.serviceCategory);
-          _customServices = List<WorkerCustomService>.from(worker.customServices);
+              : WorkerServiceOptionsCatalog.defaultTiersFor(
+                  worker.serviceCategory,
+                );
+          _customServices = List<WorkerCustomService>.from(
+            worker.customServices,
+          );
           _workZone = worker.workZone;
         }
         _isLoading = false;
@@ -150,7 +155,9 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
 
       final updated = user.copyWith(profilePhotoPath: path);
       await _userRepository.updateUser(updated);
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
       if (mounted) await _loadData();
 
       if (!mounted) return;
@@ -160,7 +167,14 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.userMessage(e, fallback: 'No se pudo actualizar la foto.'))),
+        SnackBar(
+          content: Text(
+            ErrorHandler.userMessage(
+              e,
+              fallback: 'No se pudo actualizar la foto.',
+            ),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _photoLoading = false);
@@ -177,18 +191,19 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
       await ProfilePhotoService.instance.removePhoto(user.profilePhotoPath);
       final updated = user.copyWith(clearProfilePhoto: true);
       await _userRepository.updateUser(updated);
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
       if (mounted) await _loadData();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Foto de perfil eliminada')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Foto de perfil eliminada')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.userMessage(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(ErrorHandler.userMessage(e))));
     } finally {
       if (mounted) setState(() => _photoLoading = false);
     }
@@ -228,7 +243,9 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
         await _workerRepository.updateWorker(updatedWorker);
       }
 
-      await ref.read(authProvider.notifier).loadCurrentUser(user.id, silent: true);
+      await ref
+          .read(authProvider.notifier)
+          .loadCurrentUser(user.id, silent: true);
       if (mounted) await _loadData();
 
       if (!mounted) return;
@@ -243,9 +260,8 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.userMessage(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(ErrorHandler.userMessage(e))));
     }
   }
 
@@ -315,9 +331,8 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.userMessage(e))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(ErrorHandler.userMessage(e))));
     }
   }
 
@@ -357,9 +372,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
     final user = ref.watch(authProvider.select((s) => s.user));
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Usuario no encontrado')),
-      );
+      return const Scaffold(body: Center(child: Text('Usuario no encontrado')));
     }
 
     return Scaffold(
@@ -395,9 +408,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildProfileContent(context, user),
-                ],
+                children: [_buildProfileContent(context, user)],
               ),
             ),
           ),
@@ -417,324 +428,320 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-              Center(
-                child: Column(
-                  children: [
-                    ProfileAvatarPicker(
-                      displayName: user.name,
-                      photoPath: user.profilePhotoPath,
-                      isLoading: _photoLoading,
-                      onPickFromSource: _updateProfilePhoto,
-                      onRemove: _removeProfilePhoto,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Toca la foto para cambiarla o usar la cámara',
-                      style: Theme.of(context).textTheme.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.star, color: AppColors.warning, size: 24),
-                        const SizedBox(width: 8),
-                        Text(
-                          _averageRating.toStringAsFixed(1),
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+        Center(
+          child: Column(
+            children: [
+              ProfileAvatarPicker(
+                displayName: user.name,
+                photoPath: user.profilePhotoPath,
+                isLoading: _photoLoading,
+                onPickFromSource: _updateProfilePhoto,
+                onRemove: _removeProfilePhoto,
               ),
-              const SizedBox(height: 16),
-              if (_loadError != null)
-                ErrorStateWidget(
-                  title: 'Perfil no disponible',
-                  message: _loadError!,
-                  actionLabel: 'Reintentar',
-                  onRetry: _loadData,
-                )
-              else if (_worker == null && !_isLoading)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Aún no tienes ficha de especialista.'),
-                        const SizedBox(height: 8),
-                        FilledButton(
-                          onPressed: () => context.push(AppConstants.routeWorkerRegister),
-                          child: const Text('Completar registro'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              WorkerVerificationCard(userId: user.id),
-              if (_worker != null)
-                WorkerBaseLocationCard(
-                  latitude: _worker!.baseLatitude,
-                  longitude: _worker!.baseLongitude,
-                  radiusKm: _worker!.serviceRadiusKm,
-                  origin: _worker!.baseOrigin,
-                  enabled: _isEditing,
-                  onSave: (latitude, longitude, radiusKm) async {
-                    await _workerRepository.updateBaseLocation(
-                      userId: user.id,
-                      latitude: latitude,
-                      longitude: longitude,
-                      radiusKm: radiusKm,
-                    );
-                    await _loadData();
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Ubicación base guardada')),
-                    );
-                  },
-                ),
-              if (_worker != null)
-                WorkerUrbanCoverageCard(
-                  urbanRadiusKm: _worker!.urbanRadiusKm,
-                  outsideFeeClp: _worker!.outsideMobilizationFeeClp,
-                  enabled: _isEditing,
-                  onSave: (urbanRadiusKm, outsideFeeClp) async {
-                    await _workerRepository.updateUrbanCoverage(
-                      userId: user.id,
-                      urbanRadiusKm: urbanRadiusKm,
-                      outsideFeeClp: outsideFeeClp,
-                    );
-                    await _loadData();
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Radio urbano guardado')),
-                    );
-                  },
-                ),
-              const SizedBox(height: 24),
-              // Información personal
-              TextFormField(
-                controller: _nameController,
-                enabled: _isEditing,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre completo',
-                  prefixIcon: Icon(Icons.person),
-                ),
-                validator: Validators.validateName,
+              const SizedBox(height: 8),
+              Text(
+                'Toca la foto para cambiarla o usar la cámara',
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                enabled: _isEditing,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                ),
-                validator: Validators.validateEmail,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _professionController,
-                enabled: _isEditing,
-                decoration: const InputDecoration(
-                  labelText: 'Profesión',
-                  prefixIcon: Icon(Icons.work),
-                ),
-                validator: (value) => Validators.validateRequired(value, 'Profesión'),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                enabled: _isEditing,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción profesional',
-                  prefixIcon: Icon(Icons.description),
-                ),
-                maxLines: 4,
-                maxLength: 500,
-                validator: (value) {
-                  if ((value ?? '').trim().length > 500) {
-                    return 'La descripción no puede superar 500 caracteres';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              if (_isEditing)
-                WorkerWorkZoneField(
-                  value: _workZone,
-                  onChanged: (v) => setState(() => _workZone = v),
-                )
-              else if (_workZone != null)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.location_on_outlined),
-                  title: const Text('Zona de trabajo'),
-                  subtitle: Text(_workZone!),
-                ),
-              if (_worker != null) ...[
-                const SizedBox(height: 24),
-                WorkerPricingTiersEditor(
-                  category: _worker!.serviceCategory,
-                  initialTiers: _pricingTiers,
-                  enabled: _isEditing,
-                  onChanged: (tiers) => setState(() => _pricingTiers = tiers),
-                ),
-                const SizedBox(height: 24),
-                WorkerCustomServicesEditor(
-                  services: _customServices,
-                  enabled: _isEditing,
-                  onChanged: (services) => setState(() => _customServices = services),
-                ),
-              ],
-              const SizedBox(height: 24),
-              if (_isEditing)
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _saveChanges,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Guardar cambios'),
-                ),
-              const SizedBox(height: 32),
-              // Portafolio
+              const SizedBox(height: 12),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const Icon(Icons.star, color: AppColors.warning, size: 24),
+                  const SizedBox(width: 8),
                   Text(
-                    'Portafolio',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add_photo_alternate),
-                    onPressed: _addPortfolioPhoto,
-                    tooltip: 'Agregar foto',
+                    WorkerPublicStats.ratingLabel(_averageRating),
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              _portfolio.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: Text('No hay fotos en el portafolio'),
-                      ),
-                    )
-                  : SizedBox(
-                      height: 84,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _portfolio.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          final item = _portfolio[index];
-                          return SizedBox(
-                            width: 84,
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                PortfolioMediaTile(
-                                  photoPath: item.photoPath,
-                                  mediaType: item.mediaType,
-                                  description: item.description,
-                                  showDescription: false,
-                                  compact: true,
-                                ),
-                                if (_isEditing)
-                                  Positioned(
-                                    top: 2,
-                                    right: 2,
-                                    child: Material(
-                                      color: Colors.white,
-                                      shape: const CircleBorder(),
-                                      child: IconButton(
-                                        tooltip: 'Eliminar',
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: AppColors.error,
-                                          size: 18,
-                                        ),
-                                        onPressed: () =>
-                                            _deletePortfolioPhoto(item.id),
-                                        padding: const EdgeInsets.all(2),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 28,
-                                          minHeight: 28,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-              const SizedBox(height: 20),
-              // Estadísticas
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Estadísticas',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _StatItem(
-                                icon: Icons.work,
-                                label: 'Trabajos',
-                                value: _jobsCount.toString(),
-                              ),
-                              _StatItem(
-                                icon: Icons.check_circle,
-                                label: 'Completados',
-                                value: _completedJobsCount.toString(),
-                              ),
-                              _StatItem(
-                                icon: Icons.star,
-                                label: 'Calificación',
-                                value: _averageRating.toStringAsFixed(1),
-                              ),
-                            ],
-                          ),
-                    ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (_loadError != null)
+          ErrorStateWidget(
+            title: 'Perfil no disponible',
+            message: _loadError!,
+            actionLabel: 'Reintentar',
+            onRetry: _loadData,
+          )
+        else if (_worker == null && !_isLoading)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Aún no tienes ficha de especialista.'),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    onPressed: () =>
+                        context.push(AppConstants.routeWorkerRegister),
+                    child: const Text('Completar registro'),
                   ),
+                ],
+              ),
+            ),
+          ),
+        WorkerVerificationCard(userId: user.id),
+        if (_worker != null)
+          WorkerBaseLocationCard(
+            latitude: _worker!.baseLatitude,
+            longitude: _worker!.baseLongitude,
+            radiusKm: _worker!.serviceRadiusKm,
+            origin: _worker!.baseOrigin,
+            enabled: _isEditing,
+            onSave: (latitude, longitude, radiusKm) async {
+              await _workerRepository.updateBaseLocation(
+                userId: user.id,
+                latitude: latitude,
+                longitude: longitude,
+                radiusKm: radiusKm,
+              );
+              await _loadData();
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Ubicación base guardada')),
+              );
+            },
+          ),
+        if (_worker != null)
+          WorkerUrbanCoverageCard(
+            urbanRadiusKm: _worker!.urbanRadiusKm,
+            outsideFeeClp: _worker!.outsideMobilizationFeeClp,
+            enabled: _isEditing,
+            onSave: (urbanRadiusKm, outsideFeeClp) async {
+              await _workerRepository.updateUrbanCoverage(
+                userId: user.id,
+                urbanRadiusKm: urbanRadiusKm,
+                outsideFeeClp: outsideFeeClp,
+              );
+              await _loadData();
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Radio urbano guardado')),
+              );
+            },
+          ),
+        const SizedBox(height: 24),
+        // Información personal
+        TextFormField(
+          controller: _nameController,
+          enabled: _isEditing,
+          decoration: const InputDecoration(
+            labelText: 'Nombre completo',
+            prefixIcon: Icon(Icons.person),
+          ),
+          validator: Validators.validateName,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _emailController,
+          enabled: _isEditing,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(
+            labelText: 'Email',
+            prefixIcon: Icon(Icons.email),
+          ),
+          validator: Validators.validateEmail,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _professionController,
+          enabled: _isEditing,
+          decoration: const InputDecoration(
+            labelText: 'Profesión',
+            prefixIcon: Icon(Icons.work),
+          ),
+          validator: (value) => Validators.validateRequired(value, 'Profesión'),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _descriptionController,
+          enabled: _isEditing,
+          decoration: const InputDecoration(
+            labelText: 'Descripción profesional',
+            prefixIcon: Icon(Icons.description),
+          ),
+          maxLines: 4,
+          maxLength: 500,
+          validator: (value) {
+            if ((value ?? '').trim().length > 500) {
+              return 'La descripción no puede superar 500 caracteres';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        if (_isEditing)
+          WorkerWorkZoneField(
+            value: _workZone,
+            onChanged: (v) => setState(() => _workZone = v),
+          )
+        else if (_workZone != null)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.location_on_outlined),
+            title: const Text('Zona de trabajo'),
+            subtitle: Text(_workZone!),
+          ),
+        if (_worker != null) ...[
+          const SizedBox(height: 24),
+          WorkerPricingTiersEditor(
+            category: _worker!.serviceCategory,
+            initialTiers: _pricingTiers,
+            enabled: _isEditing,
+            onChanged: (tiers) => setState(() => _pricingTiers = tiers),
+          ),
+          const SizedBox(height: 24),
+          WorkerCustomServicesEditor(
+            services: _customServices,
+            enabled: _isEditing,
+            onChanged: (services) => setState(() => _customServices = services),
+          ),
+        ],
+        const SizedBox(height: 24),
+        if (_isEditing)
+          ElevatedButton(
+            onPressed: _isLoading ? null : _saveChanges,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Guardar cambios'),
+          ),
+        const SizedBox(height: 32),
+        // Portafolio
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Portafolio', style: Theme.of(context).textTheme.titleMedium),
+            IconButton(
+              icon: const Icon(Icons.add_photo_alternate),
+              onPressed: _addPortfolioPhoto,
+              tooltip: 'Agregar foto',
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _portfolio.isEmpty
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Text('No hay fotos en el portafolio'),
+                ),
+              )
+            : SizedBox(
+                height: 84,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _portfolio.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final item = _portfolio[index];
+                    return SizedBox(
+                      width: 84,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          PortfolioMediaTile(
+                            photoPath: item.photoPath,
+                            mediaType: item.mediaType,
+                            description: item.description,
+                            showDescription: false,
+                            compact: true,
+                          ),
+                          if (_isEditing)
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: Material(
+                                color: Colors.white,
+                                shape: const CircleBorder(),
+                                child: IconButton(
+                                  tooltip: 'Eliminar',
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: AppColors.error,
+                                    size: 18,
+                                  ),
+                                  onPressed: () =>
+                                      _deletePortfolioPhoto(item.id),
+                                  padding: const EdgeInsets.all(2),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 28,
+                                    minHeight: 28,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
-              const SizedBox(height: 24),
-              const SiiTaxInfoWidget(),
-              const SizedBox(height: 24),
-              // Configuración
-              ListTile(
-                leading: const Icon(Icons.settings),
-                title: const Text('Configuración'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  context.push(AppConstants.routeSettings);
-                },
-              ),
-              const Divider(),
-              // Cerrar sesión
-              OutlinedButton.icon(
-                onPressed: _logout,
-                icon: const Icon(Icons.logout),
-                label: const Text('Cerrar sesión'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
+        const SizedBox(height: 20),
+        // Estadísticas
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Estadísticas',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-              ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _StatItem(
+                      icon: Icons.work,
+                      label: 'Trabajos',
+                      value: _jobsCount.toString(),
+                    ),
+                    _StatItem(
+                      icon: Icons.check_circle,
+                      label: 'Completados',
+                      value: _completedJobsCount.toString(),
+                    ),
+                    _StatItem(
+                      icon: Icons.star,
+                      label: 'Calificación',
+                      value: WorkerPublicStats.ratingLabel(_averageRating),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        const SiiTaxInfoWidget(),
+        const SizedBox(height: 24),
+        // Configuración
+        ListTile(
+          leading: const Icon(Icons.settings),
+          title: const Text('Configuración'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            context.push(AppConstants.routeSettings);
+          },
+        ),
+        const Divider(),
+        // Cerrar sesión
+        OutlinedButton.icon(
+          onPressed: _logout,
+          icon: const Icon(Icons.logout),
+          label: const Text('Cerrar sesión'),
+          style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
+        ),
       ],
     );
   }
@@ -759,16 +766,11 @@ class _StatItem extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           value,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
 }
-

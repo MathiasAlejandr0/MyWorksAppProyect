@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/database/models/portfolio_model.dart';
 import '../../../../core/database/models/user_model.dart';
 import '../../../../core/database/models/worker_model.dart';
@@ -17,6 +18,7 @@ import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/domain/user_location_context.dart';
 import '../../../../core/domain/worker_highlight.dart';
+import '../../../../core/domain/worker_public_stats.dart';
 import '../../../../core/services/user_location_service.dart';
 import '../../../../core/utils/service_worker_mapper.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
@@ -30,15 +32,12 @@ import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../widgets/worker_reviews_section.dart';
 import '../widgets/worker_search_map.dart';
 import '../../../../core/utils/plural.dart';
+
 class WorkerDetailPage extends ConsumerStatefulWidget {
   final String workerId;
   final String? serviceId;
 
-  const WorkerDetailPage({
-    super.key,
-    required this.workerId,
-    this.serviceId,
-  });
+  const WorkerDetailPage({super.key, required this.workerId, this.serviceId});
 
   @override
   ConsumerState<WorkerDetailPage> createState() => _WorkerDetailPageState();
@@ -75,19 +74,23 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
 
     try {
       final worker = await _workerRepository.getWorkerByUserId(widget.workerId);
-      final acceptingJobs =
-          await _workerRepository.isWorkerAcceptingJobs(widget.workerId);
+      final acceptingJobs = await _workerRepository.isWorkerAcceptingJobs(
+        widget.workerId,
+      );
       final user = await _userRepository.getPublicProfile(widget.workerId);
-      final portfolio =
-          await _portfolioRepository.getPortfolioByWorkerId(widget.workerId);
-      final reviews =
-          await _ratingRepository.getWorkerReviewsForProfile(widget.workerId);
+      final portfolio = await _portfolioRepository.getPortfolioByWorkerId(
+        widget.workerId,
+      );
+      final reviews = await _ratingRepository.getWorkerReviewsForProfile(
+        widget.workerId,
+      );
       final clientLocation = await UserLocationService.instance.resolve();
 
       String? serviceId = widget.serviceId;
       if (serviceId == null && worker != null) {
-        final services = await _serviceRepository
-            .getServicesByCategory(worker.serviceCategory);
+        final services = await _serviceRepository.getServicesByCategory(
+          worker.serviceCategory,
+        );
         if (services.isNotEmpty) serviceId = services.first.id;
       }
 
@@ -121,10 +124,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
 
     context.push(
       AppConstants.routeServiceRequest,
-      extra: {
-        'serviceId': _resolvedServiceId,
-        'workerId': widget.workerId,
-      },
+      extra: {'serviceId': _resolvedServiceId, 'workerId': widget.workerId},
     );
   }
 
@@ -133,9 +133,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppDecorations.canvasOf(context),
-        appBar: const AppGradientAppBar(
-          title: Text('Perfil del trabajador'),
-        ),
+        appBar: const AppGradientAppBar(title: Text('Perfil del trabajador')),
         body: const Padding(
           padding: EdgeInsets.symmetric(vertical: 12),
           child: Column(
@@ -163,9 +161,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
 
     return Scaffold(
       backgroundColor: AppDecorations.canvasOf(context),
-      appBar: const AppGradientAppBar(
-        title: Text('Perfil del trabajador'),
-      ),
+      appBar: const AppGradientAppBar(title: Text('Perfil del trabajador')),
       body: Column(
         children: [
           Expanded(
@@ -238,9 +234,9 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
               Text(
                 _user!.name,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w800,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(width: 8),
@@ -249,25 +245,25 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
           ),
           Text(
             _worker!.profession,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.white.withValues(alpha: 0.85),
-                ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: AppColors.white.withValues(alpha: 0.85)),
           ),
           const SizedBox(height: AppSpacing.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.star_rounded,
-                  color: AppColors.warning, size: 18),
+              const Icon(
+                Icons.star_rounded,
+                color: AppColors.warning,
+                size: 18,
+              ),
               const SizedBox(width: AppSpacing.xs + 2),
               Text(
-                _worker!.rating > 0
-                    ? _worker!.rating.toStringAsFixed(1)
-                    : 'Nuevo',
+                WorkerPublicStats.ratingLabel(_worker!.rating),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(width: AppSpacing.lg),
               Icon(
@@ -280,9 +276,8 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
               const SizedBox(width: AppSpacing.xs + 2),
               Text(
                 _isAcceptingJobs ? 'Disponible' : 'Ocupado',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.white.withValues(alpha: 0.9),
-                    ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: AppColors.white.withValues(alpha: 0.9)),
               ),
             ],
           ),
@@ -333,10 +328,10 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
                   'Este profesional no está disponible en este momento.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isDark
-                            ? AppColors.white.withValues(alpha: 0.65)
-                            : AppColors.grayMedium,
-                      ),
+                    color: isDark
+                        ? AppColors.white.withValues(alpha: 0.65)
+                        : AppColors.grayMedium,
+                  ),
                 ),
               ],
             ],
@@ -356,9 +351,8 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
       children: [
         Text(
           'Cobertura en el mapa',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(context).textTheme.titleSmall
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         SizedBox(
@@ -383,13 +377,13 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
   Widget _buildAboutCard(BuildContext context) {
     final categoryLabel =
         ServiceWorkerMapper.categoryLabels[_worker!.serviceCategory] ??
-            _worker!.profession;
+        _worker!.profession;
     final rawDescription = _worker!.description?.trim() ?? '';
     final description = rawDescription.isNotEmpty
         ? rawDescription
         : 'Profesional de $categoryLabel comprometido con un trabajo de calidad, '
-            'puntualidad y atención cercana. Evalúo cada solicitud en detalle para '
-            'entregarte una propuesta clara antes de comenzar.';
+              'puntualidad y atención cercana. Evalúo cada solicitud en detalle para '
+              'entregarte una propuesta clara antes de comenzar.';
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -399,14 +393,16 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
         children: [
           Row(
             children: [
-              const Icon(Icons.badge_outlined,
-                  color: AppColors.primaryLight, size: 18),
+              const Icon(
+                Icons.badge_outlined,
+                color: AppColors.primaryLight,
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Sobre mí',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -420,11 +416,11 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
           if (isEliteWorker(_worker!)) ...[
             const SizedBox(height: 8),
             Text(
-              'Élite del mes · ${plural(_worker!.completedJobs, 'trabajo')} · ${_worker!.rating.toStringAsFixed(1)}',
+              'Élite del mes · ${plural(_worker!.completedJobs, 'trabajo')} · ${WorkerPublicStats.ratingLabel(_worker!.rating)}',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: const Color(0xFFB45309),
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: const Color(0xFFB45309),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
           const SizedBox(height: 8),
@@ -434,15 +430,16 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
               clientLatitude: _clientLocation?.latitude,
               clientLongitude: _clientLocation?.longitude,
             ).text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.35),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(height: 1.35),
           ),
           const SizedBox(height: 10),
           Text(
             'Especialidad',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.grayMedium,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: AppColors.grayMedium,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           _buildSpecialtyChips(context, categoryLabel),
@@ -453,13 +450,17 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
 
   Widget _buildSpecialtyChips(BuildContext context, String categoryLabel) {
     final chips = <Widget>[
-      _infoChip(context, Icons.handyman_outlined, _worker!.profession,
-          compact: true),
+      _infoChip(
+        context,
+        Icons.handyman_outlined,
+        _worker!.profession,
+        compact: true,
+      ),
       _infoChip(context, Icons.category_outlined, categoryLabel, compact: true),
       _infoChip(
         context,
         Icons.star_rounded,
-        _worker!.rating.toStringAsFixed(1),
+        WorkerPublicStats.ratingLabel(_worker!.rating),
         compact: true,
       ),
       if (_reviews.isNotEmpty)
@@ -472,7 +473,9 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
       _infoChip(
         context,
         Icons.photo_library_outlined,
-        _portfolio.isEmpty ? 'Sin portafolio' : plural(_portfolio.length, 'trabajo'),
+        _portfolio.isEmpty
+            ? 'Sin portafolio'
+            : plural(_portfolio.length, 'trabajo'),
         compact: true,
       ),
       _infoChip(
@@ -509,17 +512,15 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
           children: [
             Text(
               'Trabajos anteriores',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             if (_portfolio.isNotEmpty) ...[
               const SizedBox(width: AppSpacing.sm),
               Text(
                 '${_portfolio.length}',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.grayMedium,
-                    ),
+                style: Theme.of(context).textTheme.labelSmall
+                    ?.copyWith(color: AppColors.grayMedium),
               ),
             ],
           ],
@@ -529,16 +530,14 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
           Text(
             'Toca una miniatura para ver foto o video',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.grayMedium,
-                ),
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: AppColors.grayMedium),
           ),
         ],
         const SizedBox(height: AppSpacing.md),
         const BeforeAfterSlider(
           title: 'Transformación Destacada (Antes vs Después)',
-          beforeImageUrl:
-              'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+          beforeImageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
           afterImageUrl:
               'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600',
           height: 210,
@@ -550,15 +549,15 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
             child: Text(
               'Este trabajador aún no ha subido fotos o videos.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.grayMedium,
-                  ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: AppColors.grayMedium),
             ),
           )
         else
           LayoutBuilder(
             builder: (context, constraints) {
-              final totalWidth = _portfolio.length * thumbSize +
+              final totalWidth =
+                  _portfolio.length * thumbSize +
                   (_portfolio.length - 1) * spacing;
               final fits = totalWidth <= constraints.maxWidth;
 
@@ -630,8 +629,9 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
       decoration: BoxDecoration(
         color: AppColors.primaryLight.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(compact ? 16 : 20),
-        border:
-            Border.all(color: AppColors.primaryLight.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: AppColors.primaryLight.withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -641,10 +641,10 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryDark,
-                  fontSize: compact ? 11.5 : null,
-                ),
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryDark,
+              fontSize: compact ? 11.5 : null,
+            ),
           ),
         ],
       ),

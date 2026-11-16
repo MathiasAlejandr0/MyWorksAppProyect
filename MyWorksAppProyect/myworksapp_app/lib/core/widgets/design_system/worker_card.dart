@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/app_radius.dart';
 import '../../design_system/app_spacing.dart';
+import '../../domain/worker_public_stats.dart';
 import '../../theme/app_colors.dart';
 import 'apple_card.dart';
 
@@ -55,7 +56,9 @@ class WorkerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isAvailable ? AppColors.brandOrange : AppColors.grayMedium;
+    final accentColor = isAvailable
+        ? AppColors.brandOrange
+        : AppColors.grayMedium;
 
     return AppleCard(
       onTap: onTap,
@@ -72,15 +75,13 @@ class WorkerCard extends StatelessWidget {
                         ? AppColors.surfaceDarkElevated
                         : AppColors.brandOrangeSoft,
                     backgroundImage: avatarUrl != null
-                        ? CachedNetworkImageProvider(
-                            avatarUrl!,
-                            maxWidth: 112,
-                          )
+                        ? CachedNetworkImageProvider(avatarUrl!, maxWidth: 112)
                         : null,
                     child: avatarUrl == null
                         ? Text(
                             name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
                                   color: AppColors.brandOrange,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -94,10 +95,14 @@ class WorkerCard extends StatelessWidget {
                       width: 12,
                       height: 12,
                       decoration: BoxDecoration(
-                        color: isAvailable ? AppColors.success : AppColors.grayMedium,
+                        color: isAvailable
+                            ? AppColors.success
+                            : AppColors.grayMedium,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDark ? AppColors.surfaceDark : AppColors.white,
+                          color: isDark
+                              ? AppColors.surfaceDark
+                              : AppColors.white,
                           width: 2,
                         ),
                       ),
@@ -116,18 +121,18 @@ class WorkerCard extends StatelessWidget {
                     child: Text(
                       headerBadge!,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: headerBadgeColor ?? AppColors.success,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.2,
-                          ),
+                        color: headerBadgeColor ?? AppColors.success,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
                     ),
                   ),
                 Text(
                   name,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? AppColors.white : AppColors.textPrimary,
-                      ),
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.white : AppColors.textPrimary,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -135,9 +140,9 @@ class WorkerCard extends StatelessWidget {
                 Text(
                   profession,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -147,11 +152,13 @@ class WorkerCard extends StatelessWidget {
                     spacing: AppSpacing.xs,
                     runSpacing: AppSpacing.xs,
                     children: badges!
-                        .map((b) => _ChipBadge(
-                              icon: b.icon,
-                              label: b.label,
-                              color: b.color,
-                            ))
+                        .map(
+                          (b) => _ChipBadge(
+                            icon: b.icon,
+                            label: b.label,
+                            color: b.color,
+                          ),
+                        )
                         .toList(),
                   ),
                 ] else if (rating != null) ...[
@@ -165,10 +172,9 @@ class WorkerCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        rating! > 0 ? rating!.toStringAsFixed(1) : 'Nuevo',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                        WorkerPublicStats.ratingLabel(rating),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -177,10 +183,8 @@ class WorkerCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     footnote!,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          height: 1.3,
-                        ),
+                    style: Theme.of(context).textTheme.labelSmall
+                        ?.copyWith(color: AppColors.textSecondary, height: 1.3),
                   ),
                 ],
               ],
@@ -206,9 +210,9 @@ class WorkerCard extends StatelessWidget {
               child: Text(
                 isAvailable ? 'Disponible' : 'Ocupado',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: isAvailable ? AppColors.success : AppColors.grayMedium,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: isAvailable ? AppColors.success : AppColors.grayMedium,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
         ],
@@ -246,14 +250,11 @@ class _ChipBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: color, fontWeight: FontWeight.w600),
           ),
         ],
       ),
     );
   }
 }
-

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/debouncer.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
@@ -15,6 +16,7 @@ import '../../../../core/domain/weekly_schedule.dart';
 import '../../../../core/services/matching_service.dart';
 import '../../../../core/services/user_location_service.dart';
 import '../../../../core/domain/worker_highlight.dart';
+import '../../../../core/domain/worker_public_stats.dart';
 import '../../../../core/services/worker_reputation_service.dart';
 import '../../../../core/utils/chile_comunas.dart';
 import '../../../../core/utils/platform_support.dart';
@@ -32,6 +34,7 @@ import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class WorkerListPage extends ConsumerStatefulWidget {
@@ -119,8 +122,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     final needle = _foldSearch(raw);
     final haystack = _foldSearch('$name $profession');
     if (haystack.contains(needle)) return true;
-    final parts =
-        needle.split(RegExp(r'\s+')).where((part) => part.length >= 3);
+    final parts = needle
+        .split(RegExp(r'\s+'))
+        .where((part) => part.length >= 3);
     return parts.any(haystack.contains);
   }
 
@@ -136,7 +140,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         );
         final matchesRating = worker.rating >= _minRating;
         final schedule = _schedules[worker.userId];
-        final matchesNow = !_onlyNow ||
+        final matchesNow =
+            !_onlyNow ||
             countsAsAvailableNow(
               manuallyAvailable: worker.isAvailable,
               schedule: schedule,
@@ -263,7 +268,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         );
       }
       if (!mounted || generation != _loadGeneration) return;
-      if (_isAutomaticMode && widget.jobId != null && widget.serviceId != null) {
+      if (_isAutomaticMode &&
+          widget.jobId != null &&
+          widget.serviceId != null) {
         await _loadAutomaticMatching().timeout(_loadTimeout);
       } else {
         await _loadManualWorkers().timeout(_loadTimeout);
@@ -363,8 +370,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     List<WorkerModel> workers;
 
     if (widget.serviceId != null) {
-      final service =
-          await _serviceRepository.getServiceById(widget.serviceId!);
+      final service = await _serviceRepository.getServiceById(
+        widget.serviceId!,
+      );
       _serviceName = service?.name;
 
       if (service != null) {
@@ -423,8 +431,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
 
   void _selectWorkerOnMap(WorkerModel worker) {
     setState(() => _selectedWorkerId = worker.userId);
-    final index =
-        _filteredWorkers.indexWhere((item) => item.userId == worker.userId);
+    final index = _filteredWorkers.indexWhere(
+      (item) => item.userId == worker.userId,
+    );
     if (index < 0 || !_listController.hasClients) return;
     _listController.animateTo(
       (index * 120.0).clamp(0, _listController.position.maxScrollExtent),
@@ -564,10 +573,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
             height: 260,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              child: _mapSlot(
-                showSelectedCard: false,
-                showLocationBar: false,
-              ),
+              child: _mapSlot(showSelectedCard: false, showLocationBar: false),
             ),
           ),
           Expanded(child: _buildScrollableResults()),
@@ -593,15 +599,15 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       child: CustomScrollView(
         controller: _listController,
         slivers: [
-        SliverToBoxAdapter(child: _buildMapLocationRow()),
-        if (widget.jobId != null && widget.serviceId != null)
-          SliverToBoxAdapter(child: _buildMatchingToggle()),
-        if (!_isAutomaticMode) SliverToBoxAdapter(child: _buildFilters()),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          sliver: _buildWorkerSliver(),
-        ),
-      ],
+          SliverToBoxAdapter(child: _buildMapLocationRow()),
+          if (widget.jobId != null && widget.serviceId != null)
+            SliverToBoxAdapter(child: _buildMatchingToggle()),
+          if (!_isAutomaticMode) SliverToBoxAdapter(child: _buildFilters()),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            sliver: _buildWorkerSliver(),
+          ),
+        ],
       ),
     );
   }
@@ -615,9 +621,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
           Expanded(
             child: Text(
               'Modo de búsqueda',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
           CupertinoSlidingSegmentedControl<bool>(
@@ -651,7 +656,9 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('Disponible ahora'),
-          subtitle: const Text('Respeta el horario semanal si el profesional lo activó'),
+          subtitle: const Text(
+            'Respeta el horario semanal si el profesional lo activó',
+          ),
           value: _onlyNow,
           onChanged: (value) {
             setState(() => _onlyNow = value);
@@ -659,17 +666,17 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
           },
         ),
         WorkerListFilters(
-      searchController: _searchController,
-      sortBy: _sortBy,
-      minRating: _minRating,
-      onSortChanged: (value) {
-        setState(() => _sortBy = value);
-        _filterWorkers();
-      },
-      onMinRatingChanged: (value) {
-        setState(() => _minRating = value);
-        _filterWorkers();
-      },
+          searchController: _searchController,
+          sortBy: _sortBy,
+          minRating: _minRating,
+          onSortChanged: (value) {
+            setState(() => _sortBy = value);
+            _filterWorkers();
+          },
+          onMinRatingChanged: (value) {
+            setState(() => _minRating = value);
+            _filterWorkers();
+          },
         ),
       ],
     );
@@ -751,86 +758,82 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       );
     }
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-            final worker = _filteredWorkers[index];
-            final user = _users[worker.userId];
-            final score = _matchScores[worker.userId];
-            final isBusy = _busyWorkerIds.contains(worker.userId);
-            final isRecommended = _isAutomaticMode && score != null;
-            final elite = isEliteWorker(worker);
-            final coverage = coverageNotice(
-              worker: worker,
-              clientLatitude: _userLocation?.latitude,
-              clientLongitude: _userLocation?.longitude,
-            );
-            final selected = worker.userId == _selectedWorkerId;
-            final card = DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: selected
-                    ? Border.all(color: AppColors.brandOrange, width: 2)
-                    : null,
-              ),
-              child: WorkerCard(
-                name: user?.name ?? 'Trabajador',
-                profession: worker.profession,
-                footnote: coverage.text,
-                leading: ProfileAvatarView(
-                  displayName: user?.name ?? 'Trabajador',
-                  photoPath: user?.profilePhotoPath,
-                  radius: 26,
-                  onDarkBackground:
-                      Theme.of(context).brightness == Brightness.dark,
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final worker = _filteredWorkers[index];
+        final user = _users[worker.userId];
+        final score = _matchScores[worker.userId];
+        final isBusy = _busyWorkerIds.contains(worker.userId);
+        final isRecommended = _isAutomaticMode && score != null;
+        final elite = isEliteWorker(worker);
+        final coverage = coverageNotice(
+          worker: worker,
+          clientLatitude: _userLocation?.latitude,
+          clientLongitude: _userLocation?.longitude,
+        );
+        final selected = worker.userId == _selectedWorkerId;
+        final card = DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: selected
+                ? Border.all(color: AppColors.brandOrange, width: 2)
+                : null,
+          ),
+          child: WorkerCard(
+            name: user?.name ?? 'Trabajador',
+            profession: worker.profession,
+            footnote: coverage.text,
+            leading: ProfileAvatarView(
+              displayName: user?.name ?? 'Trabajador',
+              photoPath: user?.profilePhotoPath,
+              radius: 26,
+              onDarkBackground: Theme.of(context).brightness == Brightness.dark,
+            ),
+            headerBadge: elite
+                ? 'Élite del mes'
+                : isRecommended
+                ? 'Recomendado ${(score * 100).toStringAsFixed(0)}%'
+                : null,
+            headerBadgeColor: elite ? const Color(0xFFB45309) : null,
+            badges: [
+              if (elite)
+                const WorkerCardBadge(
+                  icon: Icons.workspace_premium,
+                  label: 'Destacado',
+                  color: Color(0xFFB45309),
                 ),
-                headerBadge: elite
-                    ? 'Élite del mes'
-                    : isRecommended
-                        ? 'Recomendado ${(score * 100).toStringAsFixed(0)}%'
-                        : null,
-                headerBadgeColor: elite ? const Color(0xFFB45309) : null,
-                badges: [
-                  if (elite)
-                    const WorkerCardBadge(
-                      icon: Icons.workspace_premium,
-                      label: 'Destacado',
-                      color: Color(0xFFB45309),
-                    ),
-                  WorkerCardBadge(
-                    icon: Icons.star_rounded,
-                    label: worker.rating.toStringAsFixed(1),
-                    color: AppColors.warning,
-                  ),
-                  if (worker.workZone != null)
-                    WorkerCardBadge(
-                      icon: Icons.location_on_outlined,
-                      label: worker.workZone!,
-                      color: AppColors.grayMedium,
-                    ),
-                  WorkerCardBadge(
-                    icon: Icons.radar_rounded,
-                    label: '${worker.serviceRadiusKm.round()} km sin extra',
-                    color: AppColors.brandOrange,
-                  ),
-                  if (isBusy)
-                    const WorkerCardBadge(
-                      icon: Icons.schedule,
-                      label: 'Ocupado',
-                      color: AppColors.brandOrange,
-                    ),
-                ],
-                showChevron: true,
-                margin: const EdgeInsets.only(bottom: AppSpacing.sm + 2),
-                onTap: () {
-                  setState(() => _selectedWorkerId = worker.userId);
-                  _openWorker(worker);
-                },
+              WorkerCardBadge(
+                icon: Icons.star_rounded,
+                label: WorkerPublicStats.ratingLabel(worker.rating),
+                color: AppColors.warning,
               ),
-            );
-            return card;
-          },
-        childCount: _filteredWorkers.length,
-      ),
+              if (worker.workZone != null)
+                WorkerCardBadge(
+                  icon: Icons.location_on_outlined,
+                  label: worker.workZone!,
+                  color: AppColors.grayMedium,
+                ),
+              WorkerCardBadge(
+                icon: Icons.radar_rounded,
+                label: '${worker.serviceRadiusKm.round()} km sin extra',
+                color: AppColors.brandOrange,
+              ),
+              if (isBusy)
+                const WorkerCardBadge(
+                  icon: Icons.schedule,
+                  label: 'Ocupado',
+                  color: AppColors.brandOrange,
+                ),
+            ],
+            showChevron: true,
+            margin: const EdgeInsets.only(bottom: AppSpacing.sm + 2),
+            onTap: () {
+              setState(() => _selectedWorkerId = worker.userId);
+              _openWorker(worker);
+            },
+          ),
+        );
+        return card;
+      }, childCount: _filteredWorkers.length),
     );
   }
 }

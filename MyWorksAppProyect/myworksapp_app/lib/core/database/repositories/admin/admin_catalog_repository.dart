@@ -1,6 +1,7 @@
 import '../../models/feature_flag_model.dart';
 import '../../models/service_model.dart';
 import '../../models/worker_model.dart';
+import '../../worker_stats_client.dart';
 import '../../supabase_db.dart';
 import '../feature_flag_repository.dart';
 import 'admin_models.dart';
@@ -28,7 +29,9 @@ class AdminCatalogRepository {
     } else if (availableOnly == false) {
       query = query.eq('disponible', 0);
     }
-    final rows = await query.order('score_listado', ascending: false).limit(limit);
+    final rows = await query
+        .order('score_listado', ascending: false)
+        .limit(limit);
     final sensitive = await _sensitiveByUser();
 
     var entries = rows.map<AdminWorkerEntry>((row) {
@@ -44,6 +47,20 @@ class AdminCatalogRepository {
         accountStatus: profile?['estado_cuenta'] as String? ?? 'activo',
       );
     }).toList();
+
+    final overlaid = await overlayWorkerPublicStats([
+      for (final entry in entries) entry.worker,
+    ]);
+    final byId = {for (final worker in overlaid) worker.userId: worker};
+    entries = [
+      for (final entry in entries)
+        AdminWorkerEntry(
+          worker: byId[entry.worker.userId] ?? entry.worker,
+          name: entry.name,
+          email: entry.email,
+          accountStatus: entry.accountStatus,
+        ),
+    ];
 
     if (search != null && search.isNotEmpty) {
       final lower = search.toLowerCase();
@@ -61,9 +78,10 @@ class AdminCatalogRepository {
   }
 
   Future<void> setWorkerAvailability(String userId, bool available) async {
-    await supabase.from('trabajadores').update({
-      'disponible': available ? 1 : 0,
-    }).eq('id_usuario', userId);
+    await supabase
+        .from('trabajadores')
+        .update({'disponible': available ? 1 : 0})
+        .eq('id_usuario', userId);
   }
 
   Future<List<FeatureFlagModel>> listFeatureFlags() => _flagRepo.getAllFlags();
@@ -104,9 +122,12 @@ class AdminCatalogRepository {
   }
 
   Future<void> setServiceActive(String serviceId, bool active) async {
-    await supabase.from('servicios').update({
-      'activo': active ? 1 : 0,
-      'actualizado_en': DateTime.now().toIso8601String(),
-    }).eq('id', serviceId);
+    await supabase
+        .from('servicios')
+        .update({
+          'activo': active ? 1 : 0,
+          'actualizado_en': DateTime.now().toIso8601String(),
+        })
+        .eq('id', serviceId);
   }
 }

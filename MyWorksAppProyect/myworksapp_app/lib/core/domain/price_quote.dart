@@ -29,40 +29,66 @@ class PriceQuote {
   bool get feeDeductedFromWorker => workerPayoutClp != null;
 
   Map<String, dynamic> toJson() => {
-        'pricing_mode': pricingMode,
-        'total_clp': totalClp,
-        'subtotal_clp': subtotalClp,
-        'platform_fee_clp': platformFeeClp,
-        if (workerPayoutClp != null) 'worker_payout_clp': workerPayoutClp,
-        'currency': currency,
-        'breakdown': breakdown,
-        if (message != null) 'message': message,
-      };
+    'pricing_mode': pricingMode,
+    'total_clp': totalClp,
+    'subtotal_clp': subtotalClp,
+    'platform_fee_clp': platformFeeClp,
+    if (workerPayoutClp != null) 'worker_payout_clp': workerPayoutClp,
+    'currency': currency,
+    'breakdown': breakdown,
+    if (message != null) 'message': message,
+  };
 
   /// Copia visible en `metadatos_servicio`. El servidor borra
   /// `instantanea_precio` al crear el trabajo; estos campos permiten
   /// reconstruir el cobro en el detalle.
   Map<String, dynamic> toJobMetadata() => {
-        'quoted_total_clp': totalClp,
-        'quoted_subtotal_clp': subtotalClp,
-        'quoted_fee_clp': platformFeeClp,
-        if (workerPayoutClp != null) 'quoted_worker_payout_clp': workerPayoutClp,
-        'quoted_pricing_mode': pricingMode,
-        if (message != null) 'quoted_message': message,
-      };
+    'quoted_total_clp': totalClp,
+    'quoted_subtotal_clp': subtotalClp,
+    'quoted_fee_clp': platformFeeClp,
+    if (workerPayoutClp != null) 'quoted_worker_payout_clp': workerPayoutClp,
+    'quoted_pricing_mode': pricingMode,
+    if (message != null) 'quoted_message': message,
+  };
 
   factory PriceQuote.fromJson(Map<String, dynamic> json) {
     return PriceQuote(
-      pricingMode: json['pricing_mode'] as String? ?? PricingConstants.modeLegacy,
-      totalClp: (json['total_clp'] as num?)?.toInt() ?? 0,
-      subtotalClp: (json['subtotal_clp'] as num?)?.toInt() ?? 0,
-      platformFeeClp: (json['platform_fee_clp'] as num?)?.toInt() ?? 0,
-      workerPayoutClp: (json['worker_payout_clp'] as num?)?.toInt(),
+      pricingMode:
+          (json['pricing_mode'] as String?) ??
+          (json['pricingMode'] as String?) ??
+          PricingConstants.modeLegacy,
+      totalClp:
+          _firstInt(json, const [
+            'total_clp',
+            'totalClp',
+            'quoted_total_clp',
+            'quotedTotalClp',
+          ]) ??
+          0,
+      subtotalClp:
+          _firstInt(json, const [
+            'subtotal_clp',
+            'subtotalClp',
+            'quoted_subtotal_clp',
+          ]) ??
+          0,
+      platformFeeClp:
+          _firstInt(json, const ['platform_fee_clp', 'platformFeeClp']) ?? 0,
+      workerPayoutClp: _firstInt(json, const [
+        'worker_payout_clp',
+        'workerPayoutClp',
+      ]),
       currency: json['currency'] as String? ?? 'CLP',
-      breakdown: Map<String, dynamic>.from(
-        json['breakdown'] as Map? ?? {},
-      ),
+      breakdown: Map<String, dynamic>.from(json['breakdown'] as Map? ?? {}),
       message: json['message'] as String?,
     );
   }
+}
+
+int? _firstInt(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is num && value > 0) return value.toInt();
+  }
+  return null;
 }

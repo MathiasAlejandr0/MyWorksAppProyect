@@ -25,6 +25,9 @@ class JobModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  /// Monto ya registrado en un pago o una cotización, si el snapshot no lo trae.
+  final int? recordedAmountClp;
+
   JobModel({
     required this.id,
     required this.userId,
@@ -46,6 +49,7 @@ class JobModel {
     this.selectedQuoteId,
     required this.createdAt,
     required this.updatedAt,
+    this.recordedAmountClp,
   });
 
   bool get requiresEscrow =>
@@ -65,11 +69,15 @@ class JobModel {
       'longitud': longitude,
       'descripcion': description,
       'fecha_programada': scheduledDate?.toUtc().toIso8601String(),
-      'metadatos_servicio': serviceMetadata != null ? jsonEncode(serviceMetadata) : null,
+      'metadatos_servicio': serviceMetadata != null
+          ? jsonEncode(serviceMetadata)
+          : null,
       'modalidad_cobro': pricingMode,
       'estado_pago': paymentStatus,
       'id_comuna': comunaId,
-      'instantanea_precio': pricingSnapshot != null ? jsonEncode(pricingSnapshot) : null,
+      'instantanea_precio': pricingSnapshot != null
+          ? jsonEncode(pricingSnapshot)
+          : null,
       'id_sku_servicio': serviceSkuId,
       'horas_bloque': hourlyBlockHours,
       'id_cotizacion_seleccionada': selectedQuoteId,
@@ -89,15 +97,21 @@ class JobModel {
       serviceId: map['id_servicio'] as String,
       status: map['estado'] as String,
       address: map['direccion'] as String,
-      latitude: map['latitud'] != null ? (map['latitud'] as num).toDouble() : null,
-      longitude: map['longitud'] != null ? (map['longitud'] as num).toDouble() : null,
+      latitude: map['latitud'] != null
+          ? (map['latitud'] as num).toDouble()
+          : null,
+      longitude: map['longitud'] != null
+          ? (map['longitud'] as num).toDouble()
+          : null,
       description: map['descripcion'] as String?,
       scheduledDate: map['fecha_programada'] != null
           ? DateTime.parse(map['fecha_programada'] as String)
           : null,
       serviceMetadata: metadata,
-      pricingMode: map['modalidad_cobro'] as String? ?? PricingConstants.modeLegacy,
-      paymentStatus: map['estado_pago'] as String? ?? PricingConstants.paymentNone,
+      pricingMode:
+          map['modalidad_cobro'] as String? ?? PricingConstants.modeLegacy,
+      paymentStatus:
+          map['estado_pago'] as String? ?? PricingConstants.paymentNone,
       comunaId: map['id_comuna'] as String?,
       pricingSnapshot: snapshot,
       serviceSkuId: map['id_sku_servicio'] as String?,
@@ -105,6 +119,9 @@ class JobModel {
       selectedQuoteId: map['id_cotizacion_seleccionada'] as String?,
       createdAt: DateTime.parse(map['creado_en'] as String),
       updatedAt: DateTime.parse(map['actualizado_en'] as String),
+      recordedAmountClp:
+          (map['monto_conocido_clp'] as num?)?.toInt() ??
+          (map['recordedAmountClp'] as num?)?.toInt(),
     );
   }
 
@@ -129,6 +146,7 @@ class JobModel {
     String? selectedQuoteId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    int? recordedAmountClp,
   }) {
     return JobModel(
       id: id ?? this.id,
@@ -151,6 +169,7 @@ class JobModel {
       selectedQuoteId: selectedQuoteId ?? this.selectedQuoteId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      recordedAmountClp: recordedAmountClp ?? this.recordedAmountClp,
     );
   }
 }
