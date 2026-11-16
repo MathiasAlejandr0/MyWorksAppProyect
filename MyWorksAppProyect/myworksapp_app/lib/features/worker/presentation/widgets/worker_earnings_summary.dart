@@ -100,7 +100,7 @@ class WorkerEarningsCard extends StatelessWidget {
     final titleColor = AppColors.onCanvas(brightness);
     final muted = AppColors.onCanvasMuted(brightness);
     final total = data.releasedClp + data.escrowClp;
-    final growthPercent = data.paymentCount > 0 ? 12 : 0;
+    final growthPercent = data.growthPercent;
     final textScale = MediaQuery.textScalerOf(context).scale(1);
 
     final icon = Container(
@@ -146,30 +146,9 @@ class WorkerEarningsCard extends StatelessWidget {
             ),
           ),
         ),
-        if (growthPercent > 0) ...[
+        if (growthPercent != null) ...[
           const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(
-                Icons.arrow_upward_rounded,
-                size: 14,
-                color: AppColors.emerald,
-              ),
-              const SizedBox(width: 2),
-              Flexible(
-                child: Text(
-                  '$growthPercent% vs. mes anterior',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.emerald,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _MonthGrowthLine(percent: growthPercent, muted: muted),
         ] else if (data.paymentCount == 0) ...[
           const SizedBox(height: 4),
           Text(
@@ -264,6 +243,48 @@ class WorkerEarningsCard extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _MonthGrowthLine extends StatelessWidget {
+  final int percent;
+  final Color muted;
+
+  const _MonthGrowthLine({required this.percent, required this.muted});
+
+  @override
+  Widget build(BuildContext context) {
+    final up = percent > 0;
+    final down = percent < 0;
+    final color = up
+        ? AppColors.emerald
+        : down
+            ? AppColors.crimson
+            : muted;
+    final icon = up
+        ? Icons.arrow_upward_rounded
+        : down
+            ? Icons.arrow_downward_rounded
+            : Icons.remove_rounded;
+
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 2),
+        Flexible(
+          child: Text(
+            '$percent% vs. mes anterior',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
