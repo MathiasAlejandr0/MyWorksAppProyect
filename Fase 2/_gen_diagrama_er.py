@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Exporta el diagrama entidad-relación v2.3 e lo inserta en el informe."""
+"""Exporta el diagrama entidad-relación por grupo (figuras A-1 a A-6).
+
+Por defecto solo regenera Fase 2/figuras/diagrama_er_*.png.
+Pasa --informe para insertarlo en el informe final (no hacerlo en la
+actualización rutinaria del diccionario: eso lo arma experto).
+"""
 import importlib.util
 import re
 from pathlib import Path
@@ -52,8 +57,15 @@ def pk_list(table, pk_columns):
 
 
 def font(size, bold=False):
-    path = r"C:\Windows\Fonts\arialbd.ttf" if bold else r"C:\Windows\Fonts\arial.ttf"
-    return ImageFont.truetype(path, size)
+    from pathlib import Path as _P
+    candidates = [
+        r"C:\Windows\Fonts\arialbd.ttf" if bold else r"C:\Windows\Fonts\arial.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ]
+    for path in candidates:
+        if _P(path).exists():
+            return ImageFont.truetype(path, size)
+    return ImageFont.load_default()
 
 
 def wrap(draw, text, fnt, width):
@@ -246,7 +258,12 @@ def insert(paths):
 
 
 if __name__ == "__main__":
+    import sys
     figs = build()
-    insert(figs)
+    if "--informe" in sys.argv:
+        insert(figs)
+        print("Figuras insertadas en el informe final")
+    else:
+        print("Figuras escritas en Fase 2/figuras (pasa --informe para insertarlas en el informe)")
     for item in figs:
         print(item[0], item[2].name)
