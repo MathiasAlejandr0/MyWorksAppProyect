@@ -4,6 +4,7 @@ flowchart LR
   CR([Cliente registrado])
   P([Profesional])
   A([Administrador])
+  C([Colaborador interno: soporte / QA])
   S([Sistema / cron])
   TBK[[Transbank Webpay]]
 
@@ -25,6 +26,7 @@ flowchart LR
       CU08(CU-08 Pagar en garantía)
       CU09(CU-09 Comprar como invitado)
       CU10(CU-10 Definir contraseña)
+      CU33(CU-33 Reagendar la visita)
     end
     subgraph EJE[Ejecución y cierre]
       CU11(CU-11 Aceptar / rechazar)
@@ -55,14 +57,16 @@ flowchart LR
       CU30(CU-30 Métricas y liquidación)
       CU31(CU-31 Invitar colaborador)
       CU32(CU-32 Procesos automáticos)
+      CU34(CU-34 Cola de soporte)
     end
   end
 
   V --- CU01 & CU05 & CU06
   CI --- CU09 & CU10
-  CR --- CU02 & CU03 & CU04 & CU07 & CU13 & CU17 & CU18 & CU20 & CU21 & CU23 & CU24
-  P --- CU02 & CU11 & CU12 & CU14 & CU15 & CU16 & CU19 & CU21 & CU23 & CU25 & CU26 & CU27
+  CR --- CU02 & CU03 & CU04 & CU07 & CU13 & CU17 & CU18 & CU20 & CU21 & CU23 & CU24 & CU33
+  P --- CU02 & CU11 & CU12 & CU14 & CU15 & CU16 & CU19 & CU21 & CU23 & CU25 & CU26 & CU27 & CU33
   A --- CU28 & CU29 & CU30 & CU31 & CU22
+  C --- CU28 & CU34
   S --- CU32 & CU22
   CU08 --- TBK
   CU09 --- TBK

@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |---|---|
-| Versión del código analizada | `main` en `b3d944e` (15 de noviembre de 2026) |
-| Fuentes | Código de `myworksapp_app` (Flutter), `myworksapp_web` (React/Vite), `myworksapp_desktop` (Tauri), `shared/` (TypeScript), `myworksapp_app/supabase/migrations` (SQL) y `myworksapp_app/supabase/functions` (Edge Functions). Se contrastó con la base en vivo (solo lectura) y con la prueba E2E del 15-nov-2026 |
+| Versión del código analizada | `main` en `b3d944e` (15 de noviembre de 2026), actualizada con los cambios de cierre del 15-nov-2026 (versión 1.0.3: reagendar, recuperar contraseña en la web, cancelar y calificar en la web, roles `soporte` y `qa` en la consola) |
+| Fuentes | Código de `myworksapp_app` (Flutter), `myworksapp_web` (React/Vite), `myworksapp_desktop` (Tauri), `shared/` (TypeScript), `myworksapp_app/supabase/migrations` (SQL) y `myworksapp_app/supabase/functions` (Edge Functions). Se contrastó con la base en vivo y con las pruebas E2E del 15-nov-2026 en https://myworksapp-cl.vercel.app |
 | Diagrama | [`casos_de_uso_diagrama.png`](casos_de_uso_diagrama.png) (fuente Mermaid en §3) |
 
 Cada caso de uso se escribió a partir de lo que el código **hace hoy**, no de lo que se planificó. Las rutas de la trazabilidad son relativas a `MyWorksAppProyect/`. Cuando un comportamiento depende de una regla del servidor, se cita la función SQL o la Edge Function que la impone, porque esa es la regla que no se puede saltar desde un cliente modificado.
@@ -19,7 +19,7 @@ Cada caso de uso se escribió a partir de lo que el código **hace hoy**, no de 
 | **Cliente registrado** | Primario | Usuario con rol `cliente` que contrata servicios | Web y app |
 | **Profesional** (rol `trabajador`, «Especialista» en la app) | Primario | Ofrece y ejecuta servicios | Solo app móvil |
 | **Administrador** (rol `administrador`) | Primario | Opera la plataforma: verificación, disputas, pagos y personal | Consola de escritorio (Tauri) |
-| **Colaborador interno** (rol `soporte` o `qa`) | Secundario | Persona invitada por RRHH (ver la observación en CU-31) | Consola de escritorio |
+| **Colaborador interno** (rol `soporte` o `qa`) | Primario | Persona invitada por RRHH. Entra a la consola con mínimo privilegio (CU-34) | Consola de escritorio |
 | **Sistema (planificador)** | Secundario | Tareas `pg_cron` y Edge Functions automáticas | Backend Supabase |
 | **Transbank Webpay** | Externo | Pasarela de pago (ambiente de integración) | — |
 | **Supabase Auth / correo** | Externo | Autenticación, correos de alta y recuperación | — |
@@ -32,7 +32,7 @@ Cada caso de uso se escribió a partir de lo que el código **hace hoy**, no de 
 |---|---|---|---|---|
 | CU-01 | Registrarse | Visitante | Acceso | Web, app |
 | CU-02 | Iniciar sesión | Cliente, Profesional | Acceso | Web, app |
-| CU-03 | Recuperar contraseña | Cliente, Profesional | Acceso | App |
+| CU-03 | Recuperar contraseña | Cliente, Profesional | Acceso | Web, app |
 | CU-04 | Ejercer derechos sobre los datos (exportar / eliminar cuenta) | Cliente, Profesional | Acceso | App |
 | CU-05 | Buscar profesionales con mapa y filtros | Visitante | Búsqueda | Web, app |
 | CU-06 | Ver perfil del profesional y horas libres | Visitante | Búsqueda | Web, app |
@@ -47,9 +47,9 @@ Cada caso de uso se escribió a partir de lo que el código **hace hoy**, no de 
 | CU-15 | Solicitar y aprobar un cobro adicional (orden de cambio) | Profesional, Cliente | Ejecución / pago | App |
 | CU-16 | Subir evidencia y finalizar el trabajo | Profesional | Ejecución | App |
 | CU-17 | Recibir conforme y liberar el pago | Cliente | Cierre / pago | Web, app |
-| CU-18 | Calificar al profesional | Cliente | Reputación | App |
+| CU-18 | Calificar al profesional | Cliente | Reputación | Web, app |
 | CU-19 | Calificar al cliente | Profesional | Reputación | App |
-| CU-20 | Cancelar una solicitud con reembolso | Cliente | Excepción / pago | App |
+| CU-20 | Cancelar una solicitud con reembolso | Cliente | Excepción / pago | Web, app |
 | CU-21 | Abrir disputa y proponer un acuerdo | Cliente, Profesional | Excepción | Web, app |
 | CU-22 | Resolver una disputa | Administrador, Sistema | Excepción / pago | Escritorio, backend |
 | CU-23 | Chatear sobre un trabajo | Cliente, Profesional | Comunicación | Web, app |
@@ -57,13 +57,15 @@ Cada caso de uso se escribió a partir de lo que el código **hace hoy**, no de 
 | CU-25 | Completar perfil y solicitar verificación | Profesional | Gestión del profesional | App |
 | CU-26 | Configurar tarifas, horario y disponibilidad | Profesional | Gestión del profesional | App |
 | CU-27 | Consultar cobros y registrar cuenta bancaria | Profesional | Gestión del profesional | App |
-| CU-28 | Acceder a la consola con segundo factor | Administrador | Administración | Escritorio |
+| CU-28 | Acceder a la consola con segundo factor | Administrador, Colaborador interno | Administración | Escritorio |
 | CU-29 | Verificar profesionales | Administrador | Administración | Escritorio |
 | CU-30 | Supervisar métricas, pagos y liquidar al profesional | Administrador | Administración | Escritorio |
 | CU-31 | Invitar colaborador interno | Administrador | Administración | Escritorio |
 | CU-32 | Ejecutar procesos automáticos de pagos y soporte | Sistema | Backend | — |
+| CU-33 | Reagendar la visita | Cliente registrado, Profesional | Reserva | Web, app |
+| CU-34 | Atender la cola de soporte con mínimo privilegio | Colaborador interno (`soporte`, `qa`) | Administración | Escritorio |
 
-**Total: 32 casos de uso** (4 de acceso, 2 de búsqueda, 4 de reserva y pago, 9 de ejecución y cierre, 3 de excepciones, 2 de comunicación, 3 de gestión del profesional, 4 de administración y 1 de sistema).
+**Total: 34 casos de uso** (4 de acceso, 2 de búsqueda, 5 de reserva y pago, 9 de ejecución y cierre, 3 de excepciones, 2 de comunicación, 3 de gestión del profesional, 5 de administración y 1 de sistema).
 
 ## 3. Diagrama de casos de uso
 
@@ -78,6 +80,7 @@ flowchart LR
   CR([Cliente registrado])
   P([Profesional])
   A([Administrador])
+  C([Colaborador interno: soporte / QA])
   S([Sistema / cron])
   TBK[[Transbank Webpay]]
 
@@ -99,6 +102,7 @@ flowchart LR
       CU08(CU-08 Pagar en garantía)
       CU09(CU-09 Comprar como invitado)
       CU10(CU-10 Definir contraseña)
+      CU33(CU-33 Reagendar la visita)
     end
     subgraph EJE[Ejecución y cierre]
       CU11(CU-11 Aceptar / rechazar)
@@ -129,14 +133,16 @@ flowchart LR
       CU30(CU-30 Métricas y liquidación)
       CU31(CU-31 Invitar colaborador)
       CU32(CU-32 Procesos automáticos)
+      CU34(CU-34 Cola de soporte)
     end
   end
 
   V --- CU01 & CU05 & CU06
   CI --- CU09 & CU10
-  CR --- CU02 & CU03 & CU04 & CU07 & CU13 & CU17 & CU18 & CU20 & CU21 & CU23 & CU24
-  P --- CU02 & CU11 & CU12 & CU14 & CU15 & CU16 & CU19 & CU21 & CU23 & CU25 & CU26 & CU27
+  CR --- CU02 & CU03 & CU04 & CU07 & CU13 & CU17 & CU18 & CU20 & CU21 & CU23 & CU24 & CU33
+  P --- CU02 & CU11 & CU12 & CU14 & CU15 & CU16 & CU19 & CU21 & CU23 & CU25 & CU26 & CU27 & CU33
   A --- CU28 & CU29 & CU30 & CU31 & CU22
+  C --- CU28 & CU34
   S --- CU32 & CU22
   CU08 --- TBK
   CU09 --- TBK
@@ -235,22 +241,28 @@ Reglas transversales que impone el servidor:
 | Campo | Detalle |
 |---|---|
 | **Actor(es)** | Cliente registrado, Profesional; Supabase Auth (correo) |
-| **Descripción** | El usuario pide un enlace para restablecer su contraseña. |
-| **Precondiciones** | Tiene una cuenta. Supabase tiene configurado el envío de correos (SMTP). |
-| **Postcondiciones** | Se envía un correo con el enlace de restablecimiento. |
+| **Descripción** | El usuario pide un enlace para restablecer su contraseña y luego define una nueva. |
+| **Precondiciones** | Tiene una cuenta. Supabase tiene configurado el envío de correos (SMTP propio; ver la observación). |
+| **Postcondiciones** | Se envía un correo con el enlace. Al abrirlo, el usuario define una contraseña nueva que cumple RN-07. |
 
 **Flujo principal**
-1. En «Iniciar sesión» de la app, el usuario toca «¿Olvidaste tu contraseña?».
-2. Ingresa su correo y confirma.
-3. El sistema llama a `auth.resetPasswordForEmail` con el correo en minúsculas.
+1. En «Iniciar sesión» (app o web) el usuario toca «¿Olvidaste tu contraseña?».
+2. Ingresa su correo y confirma («Enviar enlace» en la web).
+3. El sistema valida el correo y llama a `auth.resetPasswordForEmail`. En la web el enlace vuelve a `https://myworksapp-cl.vercel.app/?restablecer=1`.
 4. El sistema confirma el envío sin revelar si el correo existe.
+5. Al abrir el enlace, la web recibe el evento `PASSWORD_RECOVERY` y muestra «Crea tu nueva contraseña». El usuario la escribe dos veces y presiona «Guardar contraseña».
+6. El sistema la guarda con `auth.updateUser` y muestra «Contraseña actualizada».
 
 **Flujos alternativos / excepciones**
-- 3a. El límite de correos por hora de Supabase está agotado: el sistema informa el error y el usuario reintenta más tarde.
+- 2a. El correo es de un dominio de ejemplo (`example.com`, etc.): «Ese correo es de ejemplo y no recibe mensajes…» y no se llama a Supabase.
+- 3a. Supabase no puede enviar el correo (dirección inválida o SMTP no configurado): «No pudimos enviar el correo a esa dirección…».
+- 3b. El límite de correos por hora está agotado: el sistema informa el error y el usuario reintenta más tarde.
+- 5a. La contraseña nueva es igual a la anterior: «La nueva contraseña debe ser distinta a la anterior.»
+- 5b. No cumple RN-07 o las dos no coinciden: el formulario lo indica antes de enviar.
 
-**Observación**: la web no tiene esta opción. Un cliente que solo usa la web debe recuperar la contraseña desde la app.
+**Observación**: con el SMTP por defecto de Supabase solo llegan correos a miembros del equipo. Para usuarios reales falta configurar un SMTP propio en Supabase Auth (pendiente del responsable del proyecto).
 
-**Trazabilidad**: `myworksapp_app/lib/features/auth/presentation/pages/forgot_password_page.dart`.
+**Trazabilidad**: `myworksapp_app/lib/features/auth/presentation/pages/forgot_password_page.dart`; `myworksapp_web/src/components/AuthModal.tsx` (modo `forgot`), `PasswordRecoveryModal.tsx`, `src/context/AuthContext.tsx`; `shared/src/auth.ts` (`requestPasswordReset`, `passwordResetRedirect`), `shared/src/emailDomain.ts`.
 
 ---
 
@@ -639,16 +651,18 @@ Reglas transversales que impone el servidor:
 | **Postcondiciones** | Hay una fila en `calificaciones` (`direccion = cliente_a_trabajador`). Los triggers recalculan la nota del profesional y evalúan la reseña (`senales_resena`). |
 
 **Flujo principal**
-1. El cliente abre «Calificar Trabajo — ¿Cómo fue tu experiencia?».
+1. El cliente abre «Calificar Trabajo — ¿Cómo fue tu experiencia?» en la app, o la tarjeta «Califica a …» en el seguimiento web de un trabajo completado.
 2. Elige las estrellas y escribe un comentario opcional.
-3. Presiona «Enviar Calificación».
+3. Presiona «Enviar calificación».
 4. El sistema guarda la nota. Los triggers `calificaciones_refrescar_trabajador` y `calificaciones_evaluar_resena` actualizan la reputación.
 
 **Flujos alternativos / excepciones**
 - 1a. Hay una disputa abierta: la calificación queda bloqueada.
 - 4a. Una reseña sospechosa (por ejemplo, un 1 o un 5 con señales de abuso) queda `en_revision` con menor peso de confianza.
+- 4b. El trabajo ya tiene una calificación del cliente: el índice único `calificaciones_trabajo_direccion_uidx` la rechaza y la web muestra la nota ya enviada.
+- 4c. El trabajo no está completado (por ejemplo, cancelado): la política RLS de `calificaciones` rechaza la fila.
 
-**Trazabilidad**: `myworksapp_app/lib/features/ratings/presentation/pages/rating_page.dart`; tabla `calificaciones` y sus triggers; `docs/AUTOMATIZACION_RANKING_Y_RESENAS.md`.
+**Trazabilidad**: `myworksapp_app/lib/features/ratings/presentation/pages/rating_page.dart`; `myworksapp_web/src/components/JobClientActions.tsx`, `shared/src/jobs/clientActions.ts` (`rateJobAsClient`); tabla `calificaciones` y sus triggers; `docs/AUTOMATIZACION_RANKING_Y_RESENAS.md`.
 
 ---
 
@@ -685,8 +699,8 @@ Reglas transversales que impone el servidor:
 | **Postcondiciones** | El pago queda reembolsado y el trabajo en `cancelado`. |
 
 **Flujo principal**
-1. En el detalle del trabajo en la app, el cliente presiona «Cancelar Solicitud».
-2. El sistema pregunta «¿Estás seguro…?» y el cliente presiona «Sí, cancelar».
+1. En el detalle del trabajo en la app, o en el seguimiento web, el cliente presiona «Cancelar solicitud».
+2. El sistema pregunta por el motivo («¿Por qué cancelas?») y el cliente presiona «Sí, cancelar».
 3. La Edge Function `webpay-refund-cancellation` devuelve la garantía a la tarjeta (una sola vez).
 4. `transicionar_trabajo(..., 'cancelado')` cierra el trabajo.
 
@@ -694,7 +708,9 @@ Reglas transversales que impone el servidor:
 - 1a. El trabajo ya fue aceptado o va más avanzado: el botón no aparece para el cliente. Debe hablar con el profesional (CU-23) o abrir una disputa (CU-21).
 - 4a. El reembolso no se completó: la transición falla («devuelve el pago a la tarjeta antes de cancelar», RN-05) y el sistema lo reintenta (CU-32).
 
-**Trazabilidad**: `myworksapp_app/lib/features/jobs/presentation/widgets/job_detail_actions_section.dart` (condición `!isWorker && status == pendiente`); `supabase/functions/webpay-refund-cancellation`, `_shared/refund_once.ts`.
+**Postcondición adicional**: se registra el motivo en `cancelaciones_trabajo` y se notifica al profesional. En la web, el trabajo cancelado ya no ofrece reagendar, disputar ni subir evidencia.
+
+**Trazabilidad**: `myworksapp_app/lib/features/jobs/presentation/widgets/job_detail_actions_section.dart` (condición `!isWorker && status == pendiente`); `myworksapp_web/src/components/JobClientActions.tsx`, `shared/src/jobs/clientActions.ts` (`cancelJobAsClient`); `supabase/functions/webpay-refund-cancellation`, `_shared/refund_once.ts`.
 
 ---
 
@@ -868,23 +884,23 @@ Reglas transversales que impone el servidor:
 
 | Campo | Detalle |
 |---|---|
-| **Actor(es)** | Administrador |
-| **Descripción** | El administrador entra a la consola de escritorio con contraseña y un código TOTP. |
-| **Precondiciones** | Tiene rol `administrador` y una app autenticadora. |
+| **Actor(es)** | Administrador, Colaborador interno (`soporte`, `qa`) |
+| **Descripción** | El personal entra a la consola de escritorio con contraseña y un código TOTP. |
+| **Precondiciones** | Tiene rol `administrador`, `soporte` o `qa` y una app autenticadora. |
 | **Postcondiciones** | Hay una sesión con nivel `aal2`. |
 
 **Flujo principal**
 1. Abre la consola («Consola operativa — Supervisa. Gestiona. Resuelve.»).
 2. Ingresa su correo y contraseña.
-3. El sistema verifica que el rol sea `administrador`.
-4. El sistema pide el código TOTP («Confirma que eres el administrador»). La primera vez muestra un QR para enrolar.
-5. Se abre el panel ejecutivo.
+3. El sistema verifica que el rol sea de consola (`administrador`, `soporte` o `qa`).
+4. El sistema pide el código TOTP. La primera vez muestra un QR para enrolar.
+5. Se abre el primer espacio permitido para su rol: el panel ejecutivo para el administrador, la cola de soporte para `soporte` y `qa` (CU-34). La barra lateral solo muestra los espacios permitidos.
 
 **Flujos alternativos / excepciones**
-- 3a. Otro rol: «Solo el rol administrador puede usar la consola ops.»
+- 3a. Rol de cliente o profesional: el sistema rechaza el acceso y cierra la sesión.
 - 4a. Código incorrecto: no se eleva la sesión y las vistas no cargan.
 
-**Reglas de negocio**: `admin_requiere_aal2 = 1` en vivo. Las funciones administrativas exigen `aal2`.
+**Reglas de negocio**: `admin_requiere_aal2 = 1` en vivo. Las funciones administrativas y las de consola (`rol_consola`) exigen `aal2`; con `aal1` responden `forbidden`.
 
 **Trazabilidad**: `myworksapp_desktop/src/components/DesktopLoginScreen.tsx`, `AdminMfaGate.tsx`; `src/authAccess.ts`; `src/context/AuthContext.tsx`.
 
@@ -955,7 +971,7 @@ Reglas transversales que impone el servidor:
 - 1a. El rol no está permitido: «Rol no permitido».
 - 4a. El perfil no existe o el trigger lo rechaza: «No se pudo asignar el rol del panel».
 
-**Observación de trazabilidad**: la consola solo admite el rol `administrador` (`authAccess.ts`). Por eso los colaboradores `soporte` y `qa` invitados hoy no pueden entrar a la consola. Es una brecha conocida entre RRHH y el control de acceso.
+**Observación**: desde la versión 1.0.3 los colaboradores `soporte` y `qa` entran a la consola con mínimo privilegio (CU-34). El trigger `perfiles_rol_inicial_seguro` impide que un usuario se asigne un rol de consola al registrarse.
 
 **Trazabilidad**: `myworksapp_desktop/src/components/HumanResourcesWorkspace.tsx`; `supabase/functions/invitar-colaborador/index.ts`.
 
@@ -985,13 +1001,64 @@ Reglas transversales que impone el servidor:
 
 ---
 
+### CU-33 Reagendar la visita
+
+| Campo | Detalle |
+|---|---|
+| **Actor(es)** | Cliente registrado, Profesional (uno propone, el otro responde) |
+| **Descripción** | Una de las partes propone mover la visita a otra hora publicada por el profesional; la otra parte la acepta o la rechaza. |
+| **Precondiciones** | El trabajo está en `pendiente` o `aceptado` (antes de `en_camino`), su hora todavía no llega y no hay una disputa activa. |
+| **Postcondiciones** | Si se acepta, `trabajos.fecha_programada` cambia a la hora propuesta. El pago retenido (escrow) no cambia. Cada propuesta queda en `reprogramaciones_trabajo` y cada paso notifica a la otra parte (`job_rescheduled`). |
+
+**Flujo principal**
+1. En el seguimiento web («Cambiar la hora») o en el detalle del trabajo en la app, la parte elige una hora libre del profesional y un motivo opcional.
+2. `proponer_reprogramacion` valida la regla y que la hora esté publicada y libre (misma fuente que `horarios_libres_profesional`), guarda la propuesta `pendiente` y notifica a la otra parte.
+3. La otra parte ve «… propone mover la visita al …» y presiona «Aceptar nueva hora» o «Rechazar».
+4. `responder_reprogramacion` registra la respuesta. Si acepta, cambia la hora; el trigger `trabajos_horario_unico` vuelve a validar que no choque con otro trabajo.
+5. Ambas partes ven el «Historial de cambios de hora».
+
+**Flujos alternativos / excepciones**
+- 2a. La hora no está publicada o ya está tomada: «Esa hora no está publicada o ya está tomada por el profesional».
+- 2b. El profesional ya salió en camino: «Solo se puede reagendar antes de que el profesional salga en camino».
+- 3a. Quien propuso intenta aceptar su propia propuesta: «La otra parte debe responder tu propuesta». Puede «Retirar mi propuesta» (`retirar_reprogramacion`).
+- 4a. El trabajo cambió de estado antes de responder: la propuesta vence (`trabajos_vencer_reprogramaciones`).
+- 4b. Un cliente o profesional intenta cambiar `fecha_programada` con un `UPDATE` directo: el trigger `trabajos_fecha_solo_por_rpc` y los permisos lo rechazan.
+
+**Reglas de negocio**: a lo más una propuesta pendiente por trabajo y 6 propuestas en total; el escrow no se toca (RN-17).
+
+**Trazabilidad**: migración `20261115232900_reprogramar_trabajo.sql`; `shared/src/jobs/reschedule.ts`; `myworksapp_web/src/components/JobClientActions.tsx`; `myworksapp_app/lib/core/domain/reschedule_rules.dart`, `lib/core/database/repositories/reschedule_repository.dart`, `lib/features/jobs/presentation/widgets/reschedule_section.dart`.
+
+---
+
+### CU-34 Atender la cola de soporte con mínimo privilegio
+
+| Campo | Detalle |
+|---|---|
+| **Actor(es)** | Colaborador interno (`soporte` o `qa`) |
+| **Descripción** | El colaborador revisa las disputas que necesitan una persona. `soporte` además ve la evidencia y deja notas a las partes; `qa` solo lee. |
+| **Precondiciones** | CU-28 completado con rol `soporte` o `qa` (sesión `aal2`). |
+| **Postcondiciones** | Las notas de soporte quedan en el hilo de la disputa. Ningún pago cambia. |
+
+**Flujo principal**
+1. La consola abre «Soporte» y lista las disputas abiertas (`consola_disputas_abiertas`: nombres de las partes y monto retenido, sin correos ni direcciones).
+2. `soporte` abre la evidencia (`evidencia_disputa`) y escribe una nota (`soporte_comentar_disputa`).
+3. La consola muestra «Solo administración libera o devuelve el pago».
+
+**Flujos alternativos / excepciones**
+- 2a. `qa` intenta ver evidencia o dejar notas: el botón no aparece y el RPC lo rechaza.
+- 3a. `soporte` o `qa` intenta liberar un pago, verificar profesionales, ver métricas o invitar personal: la consola no muestra esos espacios y la base lo rechaza (`is_admin()`, «Solo administradores», `permission denied`).
+
+**Trazabilidad**: migración `20261115232902_consola_roles_soporte_qa.sql`; `myworksapp_desktop/src/authAccess.ts` (`consolePermissions`), `src/App.tsx`, `src/components/SupportWorkspace.tsx`; `shared/src/repositories/disputes.ts` (`fetchConsoleDisputes`, `addSupportDisputeNote`).
+
+---
+
 ## 6. Matriz de trazabilidad (caso de uso → componente)
 
 | CU | Web | App | Escritorio | Edge Function | RPC / trigger SQL principal |
 |---|:-:|:-:|:-:|---|---|
 | 01 | ✔ | ✔ | | — | Auth + `perfiles` |
 | 02 | ✔ | ✔ | | — | `getProfile` |
-| 03 | | ✔ | | — | `resetPasswordForEmail` |
+| 03 | ✔ | ✔ | | — | `resetPasswordForEmail`, `updateUser` |
 | 04 | | ✔ | | — | `account_deletion_service` |
 | 05 | ✔ | ✔ | | — | `categorias_con_disponibles`, `listar_profesionales_catalogo`, `profesionales_ocupados` |
 | 06 | ✔ | ✔ | | — | `horarios_libres_profesional` |
@@ -1006,9 +1073,9 @@ Reglas transversales que impone el servidor:
 | 15 | | ✔ | | `webpay-create`, `webpay-commit` | `ordenes_cambio` |
 | 16 | | ✔ | | — | `trabajos_exigir_evidencia`, `fotos_trabajo_exigir_webp` |
 | 17 | ✔ | ✔ | | — | `cerrar_trabajo_conforme` |
-| 18 | | ✔ | | — | `calificaciones_refrescar_trabajador`, `calificaciones_evaluar_resena` |
+| 18 | ✔ | ✔ | | — | `calificaciones_refrescar_trabajador`, `calificaciones_evaluar_resena` |
 | 19 | | ✔ | | — | `calificar_cliente` |
-| 20 | | ✔ | | `webpay-refund-cancellation` | `transicionar_trabajo` |
+| 20 | ✔ | ✔ | | `webpay-refund-cancellation` | `transicionar_trabajo` |
 | 21 | ✔ | ✔ | | — | `abrir_disputa`, `proponer_acuerdo`, `responder_acuerdo` |
 | 22 | | | ✔ | `webpay-resolve-dispute`, `soporte-automatico` | `admin_actualizar_estado_disputa` |
 | 23 | ✔ | ✔ | | — | `mensajes_bloquear_contacto` |
@@ -1016,11 +1083,13 @@ Reglas transversales que impone el servidor:
 | 25 | | ✔ | | — | `trabajadores_proteger_verificacion` |
 | 26 | | ✔ | | — | `trabajador_precios`, `trabajador_horarios` |
 | 27 | | ✔ | | — | `liquidaciones`, `cuentas_bancarias` |
-| 28 | | | ✔ | — | MFA `aal2` |
+| 28 | | | ✔ | — | MFA `aal2`, `rol_consola` |
 | 29 | | | ✔ | — | `fijar_verificacion_profesional`, `fichas_sensibles_admin` |
 | 30 | | | ✔ | `webpay-release` | `admin_metricas_resumen`, `liberar_escrow_manual` |
 | 31 | | | ✔ | `invitar-colaborador` | `perfiles.rol` |
 | 32 | | | | `webpay-reconcile`, `soporte-automatico` | `expirar_pagos_abandonados` + `pg_cron` |
+| 33 | ✔ | ✔ | | — | `proponer_reprogramacion`, `responder_reprogramacion`, `retirar_reprogramacion`, `trabajos_fecha_solo_por_rpc` |
+| 34 | | | ✔ | — | `consola_disputas_abiertas`, `evidencia_disputa`, `soporte_comentar_disputa` |
 
 ## 7. Reglas de negocio consolidadas
 
@@ -1042,10 +1111,18 @@ Reglas transversales que impone el servidor:
 | RN-14 | Límites de tasa: invitado 5/min por IP y 3/min por correo; Webpay 20/min por IP y 10/min por usuario; alta de clave 8/min por IP | `_shared/rate_limit.ts` |
 | RN-15 | El chat bloquea datos de contacto | `mensajes_bloquear_contacto` |
 | RN-16 | La evidencia se guarda en un depósito privado, con fotos WebP y videos de hasta 20 MB | `fotos_trabajo_exigir_webp`, bucket `evidencias` |
+| RN-17 | Reagendar solo antes de `en_camino`, a una hora publicada y libre, con aceptación de la otra parte; el escrow no cambia | `proponer_reprogramacion`, `responder_reprogramacion` |
+| RN-18 | Un profesional que quedó «no disponible» por un trabajo vuelve a estar disponible al terminar su último trabajo activo | trigger de `pausa_por_trabajo` (`20261115232858`) |
+| RN-19 | Un trabajo cerrado (completado, cancelado, expirado) no admite disputas ni acuerdos nuevos | `20261115232852` |
+| RN-20 | La consola aplica mínimo privilegio: solo `administrador` mueve dinero, verifica, invita o ve métricas | `is_admin()`, `rol_consola`, `authAccess.ts` |
 
 ## 8. Observaciones encontradas al derivar los casos desde el código
 
-1. **Recuperar contraseña solo existe en la app** (CU-03). La web no ofrece «¿Olvidaste tu contraseña?».
-2. **Roles `soporte` y `qa`** (CU-31): RRHH los asigna, pero la consola solo deja entrar a `administrador`.
-3. **No existe «reprogramar»** un pedido en ningún cliente. Para cambiar la hora hay que cancelar (CU-20) y volver a reservar.
-4. **Calificar y cancelar son solo de la app** (CU-18, CU-19 y CU-20). La web no tiene pantalla de calificación ni botón para cancelar la solicitud.
+Las cuatro brechas detectadas en la primera versión de este documento quedaron resueltas en la versión 1.0.3 y se probaron en vivo el 15-nov-2026 (ver `docs/pruebas/prueba_carga_rendimiento.md`, §E2E de cierre):
+
+1. ~~Recuperar contraseña solo existía en la app~~ → la web tiene «¿Olvidaste tu contraseña?» y la pantalla «Crea tu nueva contraseña» (CU-03).
+2. ~~Los roles `soporte` y `qa` no podían entrar a la consola~~ → entran con mínimo privilegio (CU-28, CU-34).
+3. ~~No existía reagendar~~ → CU-33 en la web y en la app.
+4. ~~Calificar y cancelar eran solo de la app~~ → la web los ofrece en el seguimiento (CU-18, CU-20). Calificar al cliente (CU-19) sigue siendo del profesional, que usa solo la app.
+
+Pendiente fuera del código: configurar un SMTP propio en Supabase Auth para que los correos de recuperación y confirmación lleguen a cualquier usuario (hoy solo llegan a miembros del equipo).
