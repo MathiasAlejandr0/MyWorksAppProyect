@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1794" viewBox="0 0 2400 1794">
+<rect width='100%' height='100%' fill='#ffffff'/>
+<style>text{font-family:'Liberation Sans',Arial,Helvetica,sans-serif;}</style>
+<text x="1200.0" y="58.0" font-size="72" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Casos de uso — MyWorksApp</text>
+<text x="1200.0" y="126.4" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Búsqueda y reserva</text>
+<rect x="560.0" y="170.0" width="1280.0" height="955.6" rx="18" fill="#fcfcfd" stroke="#00205b" stroke-width="6"/>
+<text x="1200.0" y="218.0" font-size="48" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">MyWorksApp — Búsqueda y reserva</text>
+<ellipse cx="1200.0" cy="403.3" rx="497.0" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="366.5" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-05 Buscar profesionales</text>
+<text x="1200.0" y="440.1" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">con mapa y filtros</text>
+<ellipse cx="1200.0" cy="669.8" rx="545.0" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="633.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-06 Ver perfil del profesional</text>
+<text x="1200.0" y="706.6" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">y horas libres</text>
+<ellipse cx="1200.0" cy="936.3" rx="427.5" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="899.5" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-07 Solicitar servicio</text>
+<text x="1200.0" y="973.1" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">y reservar hora</text>
+<ellipse cx="1037.5" cy="1284.2" rx="457.5" ry="118.6" fill="#fffcf0" stroke="#00205b" stroke-width="5"/>
+<text x="1037.5" y="1247.4" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-08 Pagar con Webpay</text>
+<text x="1037.5" y="1321.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">en garantía</text>
+<circle cx="280.0" cy="475.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="280.0" y1="512.9" x2="280.0" y2="618.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="232.8" y1="542.4" x2="327.2" y2="542.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="618.2" x2="242.2" y2="701.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="618.2" x2="317.8" y2="701.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="280.0" y="729.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Visitante</text>
+<circle cx="280.0" cy="995.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="280.0" y1="1032.9" x2="280.0" y2="1138.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="232.8" y1="1062.4" x2="327.2" y2="1062.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="1138.2" x2="242.2" y2="1221.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="1138.2" x2="317.8" y2="1221.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="280.0" y="1249.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Cliente registrado</text>
+<circle cx="1695.0" cy="1247.3" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="1695.0" y1="1285.1" x2="1695.0" y2="1390.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="1647.8" y1="1314.6" x2="1742.2" y2="1314.6" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="1695.0" y1="1390.4" x2="1657.2" y2="1474.1" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="1695.0" y1="1390.4" x2="1732.8" y2="1474.1" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<rect x="1472.5" y="1476.6" width="445.0" height="51.0" fill="#fff"/>
+<text x="1695.0" y="1502.1" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«sistema externo»</text>
+<text x="1695.0" y="1568.1" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Transbank Webpay</text>
+<line x1="327.2" y1="542.4" x2="540.0" y2="542.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="542.4" x2="540.0" y2="403.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="403.3" x2="703.0" y2="403.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="327.2" y1="542.4" x2="540.0" y2="542.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="542.4" x2="540.0" y2="669.8" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="669.8" x2="655.0" y2="669.8" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="327.2" y1="1062.4" x2="526.0" y2="1062.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="1062.4" x2="526.0" y2="936.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="936.3" x2="772.5" y2="936.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1647.8" y1="1314.6" x2="1486.8" y2="1306.6" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1145.1" y1="1053.9" x2="1095.0" y2="1161.0" stroke="#464646" stroke-width="4" stroke-linecap="round" stroke-dasharray="16 14"/>
+<polygon points="1092.5,1166.5 1090.7,1139.1 1114.6,1150.3" fill="#464646" stroke="#464646" stroke-linejoin="round"/>
+<rect x="961.0" y="1067.8" width="243.0" height="51.0" fill="#fff"/>
+<text x="1082.5" y="1093.3" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«include»</text>
+</svg>

@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="2647" viewBox="0 0 2400 2647">
+<rect width='100%' height='100%' fill='#ffffff'/>
+<style>text{font-family:'Liberation Sans',Arial,Helvetica,sans-serif;}</style>
+<text x="1200.0" y="58.0" font-size="72" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Casos de uso — MyWorksApp</text>
+<text x="1200.0" y="126.4" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Administración</text>
+<rect x="500.0" y="170.0" width="1400.0" height="2080.4" rx="18" fill="#fcfcfd" stroke="#00205b" stroke-width="6"/>
+<text x="1200.0" y="218.0" font-size="48" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">MyWorksApp — Administración</text>
+<ellipse cx="1200.0" cy="407.5" rx="495.0" ry="100.0" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="407.5" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-22 Resolver una disputa</text>
+<ellipse cx="1200.0" cy="682.4" rx="489.0" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="645.6" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-28 Acceder a la consola</text>
+<text x="1200.0" y="719.2" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">con segundo factor</text>
+<ellipse cx="1200.0" cy="957.3" rx="514.5" ry="100.0" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="957.3" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-29 Verificar profesionales</text>
+<ellipse cx="1200.0" cy="1232.2" rx="589.5" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="1195.4" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-30 Supervisar métricas, pagos</text>
+<text x="1200.0" y="1269.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">y liquidar al profesional</text>
+<ellipse cx="1200.0" cy="1507.1" rx="578.5" ry="100.0" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="1507.1" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-31 Invitar colaborador interno</text>
+<ellipse cx="1200.0" cy="1782.0" rx="646.0" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="1745.2" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-32 Ejecutar procesos automáticos</text>
+<text x="1200.0" y="1818.8" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">de pagos y soporte</text>
+<ellipse cx="1200.0" cy="2056.9" rx="572.0" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="2020.1" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-34 Atender la cola de soporte</text>
+<text x="1200.0" y="2093.7" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">con mínimo privilegio</text>
+<ellipse cx="930.0" cy="2409.0" rx="410.0" ry="118.6" fill="#fffcf0" stroke="#00205b" stroke-width="5"/>
+<text x="930.0" y="2372.2" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-21 Abrir disputa y</text>
+<text x="930.0" y="2445.8" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">proponer un acuerdo</text>
+<circle cx="250.0" cy="914.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="250.0" y1="951.9" x2="250.0" y2="1057.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="202.8" y1="981.4" x2="297.2" y2="981.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="250.0" y1="1057.2" x2="212.2" y2="1140.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="250.0" y1="1057.2" x2="287.8" y2="1140.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="250.0" y="1168.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Administrador</text>
+<circle cx="250.0" cy="1434.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="250.0" y1="1471.9" x2="250.0" y2="1577.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="202.8" y1="1501.4" x2="297.2" y2="1501.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="250.0" y1="1577.2" x2="212.2" y2="1660.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="250.0" y1="1577.2" x2="287.8" y2="1660.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="250.0" y="1688.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Colaborador</text>
+<text x="250.0" y="1753.3" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">interno</text>
+<text x="250.0" y="1817.7" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">(soporte / QA)</text>
+<circle cx="2150.0" cy="1054.7" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="2150.0" y1="1092.5" x2="2150.0" y2="1197.8" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2102.8" y1="1122.0" x2="2197.2" y2="1122.0" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2150.0" y1="1197.8" x2="2112.2" y2="1281.5" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2150.0" y1="1197.8" x2="2187.8" y2="1281.5" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<rect x="1978.0" y="1279.0" width="344.0" height="61.0" fill="#fff"/>
+<text x="2150.0" y="1309.5" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«planificador»</text>
+<text x="2150.0" y="1375.5" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Sistema</text>
+<text x="2150.0" y="1439.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">(planificador)</text>
+<line x1="297.2" y1="981.4" x2="480.0" y2="981.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="981.4" x2="480.0" y2="407.5" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="407.5" x2="705.0" y2="407.5" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2102.8" y1="1122.0" x2="1920.0" y2="1122.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1920.0" y1="1122.0" x2="1920.0" y2="407.5" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1920.0" y1="407.5" x2="1695.0" y2="407.5" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="297.2" y1="981.4" x2="480.0" y2="981.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="981.4" x2="480.0" y2="682.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="682.4" x2="711.0" y2="682.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="297.2" y1="1501.4" x2="466.0" y2="1501.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="466.0" y1="1501.4" x2="466.0" y2="682.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="466.0" y1="682.4" x2="711.0" y2="682.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="297.2" y1="981.4" x2="480.0" y2="981.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="981.4" x2="480.0" y2="957.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="957.3" x2="685.5" y2="957.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="297.2" y1="981.4" x2="480.0" y2="981.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="981.4" x2="480.0" y2="1232.2" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="1232.2" x2="610.5" y2="1232.2" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="297.2" y1="981.4" x2="480.0" y2="981.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="981.4" x2="480.0" y2="1507.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="480.0" y1="1507.1" x2="621.5" y2="1507.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="297.2" y1="1501.4" x2="466.0" y2="1501.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="466.0" y1="1501.4" x2="466.0" y2="1507.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="466.0" y1="1507.1" x2="621.5" y2="1507.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2102.8" y1="1122.0" x2="1920.0" y2="1122.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1920.0" y1="1122.0" x2="1920.0" y2="1782.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1920.0" y1="1782.0" x2="1846.0" y2="1782.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="297.2" y1="1501.4" x2="466.0" y2="1501.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="466.0" y1="1501.4" x2="466.0" y2="2056.9" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="466.0" y1="2056.9" x2="628.0" y2="2056.9" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1695.0" y1="407.5" x2="1922.0" y2="407.5" stroke="#464646" stroke-width="4" stroke-linecap="round" stroke-dasharray="16 14"/>
+<line x1="1922.0" y1="407.5" x2="1922.0" y2="2290.4" stroke="#464646" stroke-width="4" stroke-linecap="round" stroke-dasharray="16 14"/>
+<line x1="1922.0" y1="2290.4" x2="930.0" y2="2290.4" stroke="#464646" stroke-width="4" stroke-linecap="round" stroke-dasharray="16 14"/>
+<polygon points="930.0,2290.4 954.0,2277.2 954.0,2303.6" fill="#464646" stroke="#464646" stroke-linejoin="round"/>
+<rect x="1309.0" y="2226.9" width="234.0" height="51.0" fill="#fff"/>
+<text x="1426.0" y="2252.4" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«extend»</text>
+</svg>

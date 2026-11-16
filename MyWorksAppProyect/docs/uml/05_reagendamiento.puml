@@ -1,0 +1,45 @@
+@startuml
+title Casos de uso — MyWorksApp\nReagendamiento
+skinparam shadowing false
+skinparam handwritten false
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 16
+skinparam ActorFontSize 16
+skinparam UseCaseFontSize 16
+skinparam PackageFontSize 16
+skinparam RectangleFontSize 16
+skinparam ArrowFontSize 14
+skinparam linetype ortho
+left to right direction
+hide circle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam rectangle {
+  BackgroundColor #FCFCFD
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam package {
+  BackgroundColor #F4F6F8
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+
+actor "Cliente registrado" as CR
+actor "Profesional" as P
+
+rectangle "MyWorksApp — Reagendamiento" {
+  usecase "CU-33 Reagendar la visita" as UC33
+}
+
+CR -- UC33
+P -- UC33
+@enduml

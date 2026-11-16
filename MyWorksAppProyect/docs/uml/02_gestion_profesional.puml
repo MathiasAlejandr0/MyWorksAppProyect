@@ -1,0 +1,47 @@
+@startuml
+title Casos de uso — MyWorksApp\nGestión del profesional
+skinparam shadowing false
+skinparam handwritten false
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 16
+skinparam ActorFontSize 16
+skinparam UseCaseFontSize 16
+skinparam PackageFontSize 16
+skinparam RectangleFontSize 16
+skinparam ArrowFontSize 14
+skinparam linetype ortho
+left to right direction
+hide circle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam rectangle {
+  BackgroundColor #FCFCFD
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam package {
+  BackgroundColor #F4F6F8
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+
+actor "Profesional" as P
+
+rectangle "MyWorksApp — Gestión del profesional" {
+  usecase "CU-25 Completar perfil y\nsolicitar verificación" as UC25
+  usecase "CU-26 Configurar tarifas,\nhorario y disponibilidad" as UC26
+  usecase "CU-27 Consultar cobros y\nregistrar cuenta bancaria" as UC27
+}
+
+P -- UC25
+P -- UC26
+P -- UC27
+@enduml

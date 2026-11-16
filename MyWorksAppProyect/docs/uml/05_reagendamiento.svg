@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1642" viewBox="0 0 2400 1642">
+<rect width='100%' height='100%' fill='#ffffff'/>
+<style>text{font-family:'Liberation Sans',Arial,Helvetica,sans-serif;}</style>
+<text x="1200.0" y="58.0" font-size="72" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Casos de uso — MyWorksApp</text>
+<text x="1200.0" y="126.4" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Reagendamiento</text>
+<rect x="560.0" y="512.0" width="1660.0" height="720.0" rx="18" fill="#fcfcfd" stroke="#00205b" stroke-width="6"/>
+<text x="1390.0" y="560.0" font-size="48" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">MyWorksApp — Reagendamiento</text>
+<ellipse cx="1390.0" cy="894.0" rx="463.5" ry="100.0" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1390.0" y="894.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-33 Reagendar la visita</text>
+<circle cx="280.0" cy="585.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="280.0" y1="622.9" x2="280.0" y2="728.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="232.8" y1="652.4" x2="327.2" y2="652.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="728.2" x2="242.2" y2="811.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="728.2" x2="317.8" y2="811.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="280.0" y="839.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Cliente registrado</text>
+<circle cx="280.0" cy="1105.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="280.0" y1="1142.9" x2="280.0" y2="1248.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="232.8" y1="1172.4" x2="327.2" y2="1172.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="1248.2" x2="242.2" y2="1331.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="1248.2" x2="317.8" y2="1331.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="280.0" y="1359.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Profesional</text>
+<line x1="327.2" y1="652.4" x2="540.0" y2="652.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="652.4" x2="540.0" y2="894.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="894.0" x2="926.5" y2="894.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="327.2" y1="1172.4" x2="526.0" y2="1172.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="1172.4" x2="526.0" y2="894.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="894.0" x2="926.5" y2="894.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+</svg>

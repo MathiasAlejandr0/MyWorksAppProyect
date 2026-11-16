@@ -1,0 +1,64 @@
+@startuml
+title Casos de uso — MyWorksApp\nPagos / escrow
+skinparam shadowing false
+skinparam handwritten false
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 16
+skinparam ActorFontSize 16
+skinparam UseCaseFontSize 16
+skinparam PackageFontSize 16
+skinparam RectangleFontSize 16
+skinparam ArrowFontSize 14
+skinparam linetype ortho
+left to right direction
+hide circle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam rectangle {
+  BackgroundColor #FCFCFD
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam package {
+  BackgroundColor #F4F6F8
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+
+actor "Cliente invitado" as CI
+actor "Cliente registrado" as CR
+actor "Profesional" as P
+actor "Transbank Webpay" as TBK <<sistema externo>>
+actor "Sistema (planificador)" as S <<planificador>>
+
+rectangle "MyWorksApp — Pagos / escrow" {
+  usecase "CU-08 Pagar con Webpay\nen garantía" as UC08
+  usecase "CU-09 Comprar como invitado" as UC09
+  usecase "CU-10 Definir contraseña tras\npagar como invitado" as UC10
+  usecase "CU-15 Solicitar y aprobar un\ncobro adicional\n(orden de cambio)" as UC15
+  usecase "CU-17 Recibir conforme y\nliberar el pago" as UC17
+  usecase "CU-20 Cancelar una solicitud\ncon reembolso" as UC20
+}
+
+CR -- UC08
+CI -- UC09
+CI -- UC10
+P -- UC15
+CR -- UC15
+CR -- UC17
+S -- UC17
+CR -- UC20
+TBK -- UC08
+TBK -- UC09
+TBK -- UC15
+UC09 ..> UC08 : <<include>>
+UC10 ..> UC09 : <<extend>>
+@enduml
