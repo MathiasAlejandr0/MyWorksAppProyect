@@ -41,15 +41,20 @@ supabase migration repair --status applied 20261115050008
 supabase migration repair --status applied 20261115060002
 ```
 
-## Todavía no están en vivo
+## Aplicadas en vivo el 15-nov-2026
+
+Verificado en `supabase_migrations.schema_migrations` del proyecto `wxqrfcqifkfgawrnqmnj` (las tres primeras figuraban antes como pendientes y ya están aplicadas).
 
 | Versión | Archivo | Qué hace |
 |---------|---------|----------|
 | 20261115140001 | `minuto_utc_execute_authenticated.sql` | `EXECUTE` de `minuto_utc(text)` y `texto_a_timestamptz(text)` para `authenticated`. Sin esto un cliente con sesión no puede crear un pedido (42501). |
 | 20261115140002 | `agenda_jsonb_tras_pk.sql` | `usa_horario` se puede actualizar. Guardar y leer la plantilla jsonb funciona con la PK en `id` y una fila por día. |
-| 20261115180001 | `inicio_trabajo_requiere_pin.sql` | Iniciar (`aceptado`/`en_camino` → `en_curso`) exige el PIN del cliente por RPC, con 5 intentos y 15 minutos de bloqueo. No está aplicada en la base en vivo. |
-
-Esas dos se aplican con `supabase db push` (o el SQL a mano). No usar `migration repair` sobre ellas.
+| 20261115180001 | `inicio_trabajo_requiere_pin.sql` | Iniciar (`aceptado`/`en_camino` → `en_curso`) exige el PIN del cliente por RPC, con 5 intentos y 15 minutos de bloqueo. |
+| 20261115232852 | `disputas_solo_trabajos_activos.sql` | Un trabajo cerrado (completado, cancelado, expirado) no admite disputas ni acuerdos nuevos. |
+| 20261115232858 | `disponibilidad_tras_trabajo.sql` | Columna `trabajadores.pausa_por_trabajo`; al terminar el último trabajo activo el profesional vuelve a `disponible = 1`. Backfill solo de la bandera. |
+| 20261115232900 | `reprogramar_trabajo.sql` | Tabla `reprogramaciones_trabajo` y RPC `proponer_reprogramacion`, `responder_reprogramacion`, `retirar_reprogramacion`; notificación `job_rescheduled`; `fecha_programada` solo cambia por RPC. Sin filas nuevas. |
+| 20261115232902 | `consola_roles_soporte_qa.sql` | Roles de consola `soporte` y `qa` con mínimo privilegio (`rol_consola`, `consola_disputas_abiertas`, `evidencia_disputa`, `soporte_comentar_disputa`, trigger `perfiles_rol_inicial_seguro`). Sin filas nuevas. |
+| 20261115234447 | `catalogo_plomeria_gasfiteria_distintos.sql` | Renombra los servicios para distinguir «Plomería» de «Gasfitería (gas)». Solo actualiza nombres; sin filas nuevas. |
 
 ## Snapshot CLI (2026-09-07)
 

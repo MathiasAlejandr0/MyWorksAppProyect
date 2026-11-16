@@ -254,6 +254,43 @@ Se hicieron 3 corridas por formato contra la URL pública y se informa la **medi
 
 **Interpretación.** No hay bloqueo del hilo principal (TBT 0) ni saltos de diseño (CLS 0), y el servidor responde rápido (TTFB < 150 ms). El punto débil es el **LCP en móvil**: con la red 4G simulada, la hoja CSS propia y la hoja de Google Fonts (DM Sans) bloquean el primer pintado, y el bundle JS retrasa el contenido principal. Lighthouse estima que solo la hoja de Google Fonts cuesta unos 780 ms y que hay 91 KiB de JavaScript sin usar. En escritorio el LCP cumple el umbral «bueno». La variación entre corridas (79–91 en móvil) es normal en Lighthouse y por eso se informa la mediana. Hallazgos menores de accesibilidad: contraste insuficiente en algunos textos y falta un elemento `<main>`.
 
+### 6.1 Re-medición tras optimizar el bundle (15-nov-2026, 21:00–21:20 hora de Chile)
+
+Después de esta prueba se aplicaron las recomendaciones de §5.3 y §6 (versión web desplegada en Vercel el 15-nov-2026, `dpl_7JyenRukjzBYXMBc7J7RYn3HYMH7`):
+
+- **División del código.** `vite.config.ts` separa `vendor-react`, `vendor-supabase` y `vendor-query`, y las vistas pesadas (mapa, seguimiento, acciones del cliente, chat, resultados) se cargan con `lazy()` solo cuando se usan. El chunk principal bajó de **526 kB a 74 kB** (25 kB comprimido). El mapa (MapLibre, ~1,2 MB) ya no se descarga en la portada.
+- **Fuente propia.** DM Sans se sirve desde el mismo dominio (`@fontsource-variable/dm-sans`) y se quitó Google Fonts del HTML y de la CSP. Desaparece la hoja externa que bloqueaba el primer pintado (~780 ms estimados).
+- **Imagen principal.** La foto del encabezado se sirve en WebP de 480/640/960 px con `srcset`, `preload` y `fetchpriority="high"`.
+- **Accesibilidad.** Elemento `<main>`, contrastes corregidos, títulos en orden y etiquetas en los marcadores del mapa. axe-core: 0 violaciones en portada, inicio de sesión, recuperación de contraseña y búsqueda.
+
+| Métrica (mediana de 3, mismo comando que §11) | Móvil antes | Móvil después | Escritorio antes | Escritorio después |
+|---|---:|---:|---:|---:|
+| Puntaje de rendimiento | 82 | **94** (93–94) | 84 | **99** (99–100) |
+| Accesibilidad | 90 | **100** | 90 | **100** |
+| Buenas prácticas / SEO | 100 / 100 | 100 / 100 | 100 / 100 | 100 / 100 |
+| First Contentful Paint | 2,42 s | **1,10 s** | 1,28 s | **0,43 s** |
+| Largest Contentful Paint | 4,31 s | **3,10 s** | 2,31 s | **0,92 s** |
+| Total Blocking Time | 0 ms | 4 ms | 0 ms | 0 ms |
+| Cumulative Layout Shift | 0 | 0 | 0 | 0 |
+| Speed Index | 2,42 s | 1,91 s | 1,28 s | 0,85 s |
+| Peso total de la página | 424 KiB | 465 KiB | 520 KiB | 532 KiB |
+
+**Lectura.** El rendimiento móvil sube de 82 a 94 y el de escritorio de 84 a 99. El FCP móvil queda bajo el umbral «bueno» (1,8 s). El LCP móvil mejora 1,2 s, pero con 4G lenta simulada sigue sobre 2,5 s: el elemento LCP es la foto del encabezado y el tiempo restante es sobre todo espera de render mientras se ejecuta React. El peso total sube unos 40 KiB porque la fuente ahora viaja desde el mismo dominio en vez de una hoja externa, a cambio de no bloquear el primer pintado. Una corrida aislada justo antes del despliegue, en el mismo equipo, dio 87 en móvil (LCP 3,7 s); las cifras «antes» de la tabla son las de §6 para comparar con el mismo procedimiento. Resumen crudo: [`resultados/lighthouse_tras_optimizacion_20261115.json`](resultados/lighthouse_tras_optimizacion_20261115.json).
+
+### 6.2 Pruebas E2E de cierre en producción (15-nov-2026)
+
+Con dos cuentas de prueba dedicadas (un cliente y un profesional, creadas solo para esto y eliminadas al terminar) se recorrieron en https://myworksapp-cl.vercel.app, con Playwright, los flujos nuevos de la versión 1.0.3. Webpay en ambiente de integración (tarjeta de prueba de Transbank).
+
+| Flujo | Resultado |
+|---|---|
+| Reservar y pagar (web) | Trabajo creado, Webpay de integración aprobado, pago `retenido`, vuelta al seguimiento con la hora en horario de Chile. Sin errores de consola |
+| Reagendar (web + backend de la app) | El cliente propuso otra hora desde la web; no pudo aceptar su propia propuesta; un `UPDATE` directo de la fecha fue rechazado; el profesional aceptó por RPC y la hora cambió. Luego el profesional propuso otra, una hora no publicada fue rechazada, y el cliente la rechazó desde la web. Historial con 2 filas, 4 notificaciones `job_rescheduled`, pago siempre `retenido` |
+| Reagendar en camino | Rechazado: «Solo se puede reagendar antes de que el profesional salga en camino» |
+| Cancelar (web) | Reembolso por `webpay-refund-cancellation`, trabajo `cancelado`, pago `reembolsado`; la vista ya no ofrece reagendar, disputar ni subir evidencia |
+| Ciclo completo + calificar (web) | Aceptar, en camino, PIN, en curso, evidencia y «Recibo conforme» desde la web: pago `liberado`. Calificación de 5 estrellas desde la web; una segunda calificación y calificar un trabajo cancelado fueron rechazadas por la base. El profesional volvió a «disponible» al terminar |
+| Recuperar contraseña (web) | El formulario envía la solicitud; Supabase rechaza el envío al dominio de prueba y la web muestra «No pudimos enviar el correo…». Un correo `@example.com` se rechaza antes de llamar a Supabase. La pantalla «Crea tu nueva contraseña» guardó una clave nueva y rechazó repetir la anterior. El envío real del correo depende de configurar un SMTP propio en Supabase Auth |
+| Consola `soporte` / `qa` | Con sesión `aal2`: ven la cola de disputas; métricas, verificación y liberación de pagos rechazadas; las fichas sensibles vuelven vacías. Con `aal1`: `forbidden` |
+
 ## 7. App móvil (artefacto)
 
 | Dato | Valor |
