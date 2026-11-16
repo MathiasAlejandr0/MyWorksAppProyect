@@ -137,10 +137,14 @@ class ServiceCard extends StatefulWidget {
         cat.contains('grifer')) {
       return 'asset:assets/images/services/plumbing.png';
     }
-    if (cat.contains('electr') || cat.contains('luz') || cat.contains('enchufe')) {
+    if (cat.contains('electr') ||
+        cat.contains('luz') ||
+        cat.contains('enchufe')) {
       return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?$q';
     }
-    if (cat.contains('garden') || cat.contains('jardin') || cat.contains('poda')) {
+    if (cat.contains('garden') ||
+        cat.contains('jardin') ||
+        cat.contains('poda')) {
       return 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?$q';
     }
     if (cat.contains('clean') ||
@@ -149,7 +153,9 @@ class ServiceCard extends StatefulWidget {
         cat.contains('sanitiz')) {
       return 'asset:assets/images/services/cleaning.png';
     }
-    if (cat.contains('assembl') || cat.contains('armado') || cat.contains('mueble')) {
+    if (cat.contains('assembl') ||
+        cat.contains('armado') ||
+        cat.contains('mueble')) {
       return 'asset:assets/images/services/assembly.png';
     }
     if (cat.contains('tech') ||
@@ -178,11 +184,10 @@ class ServiceCard extends StatefulWidget {
     return 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=900&h=700&q=80&sig=${category.hashCode.abs()}';
   }
 
-
   static String badgeTextFor(String category) {
     switch (category) {
       case ServiceCategories.construction:
-        return '4.9 · Garantía';
+        return 'Con garantía';
       case ServiceCategories.plumbing:
         return 'Llegada ~30 min';
       case ServiceCategories.electrical:
@@ -206,7 +211,8 @@ class ServiceCard extends StatefulWidget {
   State<ServiceCard> createState() => _ServiceCardState();
 }
 
-class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStateMixin {
+class _ServiceCardState extends State<ServiceCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnim;
 
@@ -318,13 +324,15 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
                                 ? Image.asset(
                                     assetPath,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        Container(
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
                                             const Color(0xFF1A2740),
-                                            palette.accent.withValues(alpha: 0.75),
+                                            palette.accent
+                                                .withValues(alpha: 0.75),
                                           ],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
@@ -334,7 +342,8 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
                                         child: Icon(
                                           widget.icon,
                                           size: 48,
-                                          color: Colors.white.withValues(alpha: 0.7),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.7),
                                         ),
                                       ),
                                     ),
@@ -360,12 +369,14 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
                                     ),
                                     errorWidget: (context, error, stackTrace) {
                                       return CachedNetworkImage(
-                                        imageUrl: ServiceCard.fallbackImageUrlFor(
+                                        imageUrl:
+                                            ServiceCard.fallbackImageUrlFor(
                                           catKey,
                                         ),
                                         fit: BoxFit.cover,
                                         memCacheWidth: 720,
-                                        errorWidget: (context, e, s) => Container(
+                                        errorWidget: (context, e, s) =>
+                                            Container(
                                           decoration: BoxDecoration(
                                             gradient: LinearGradient(
                                               colors: [
@@ -410,44 +421,44 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
                           ),
                         ),
 
-                        Positioned(
-                          top: 12,
-                          right: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.55),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.28),
-                                width: 0.8,
+                        // La tarjeta de categoría no tiene una nota propia:
+                        // antes mostraba una estrella fija «4.9». En la vista
+                        // compacta no se muestra nada; en la amplia, solo el
+                        // distintivo de texto de la categoría, sin estrella.
+                        if (!widget.compact)
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.55),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.pill),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.28),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    badgeText,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.star_rounded,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  widget.compact ? '4.9' : badgeText,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
 
                         Positioned(
                           top: 12,
@@ -510,7 +521,8 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.88),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.88),
                                       fontSize: widget.compact ? 11 : 12.5,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -533,7 +545,8 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          widget.actionLabel ?? 'Pedir servicio',
+                                          widget.actionLabel ??
+                                              'Pedir servicio',
                                           style: const TextStyle(
                                             color: AppColors.white,
                                             fontSize: 12,
@@ -566,4 +579,3 @@ class _ServiceCardState extends State<ServiceCard> with SingleTickerProviderStat
     );
   }
 }
-
