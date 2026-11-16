@@ -13,15 +13,24 @@
 -- no se muestra como la estrella pública.
 --
 -- Este archivo también RECALCULA las columnas cacheadas a partir de las
--- filas reales (no inventa reseñas ni trabajos). Aplicarlo en producción
--- requiere el OK de Mathias. No lo corras en automático.
+-- filas reales (no inventa reseñas ni trabajos). Aplicada en producción el
+-- 16-nov-2026 con el OK de Mathias (versión registrada 20261116044049).
 
 BEGIN;
 
 -- -----------------------------------------------------------------------------
 -- 1) Cálculo canónico
 -- -----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.stats_profesional(p_id uuid)
+-- El cálculo necesita leer trabajos y reseñas saltándose RLS (el visitante
+-- anónimo no ve esas filas), así que vive como SECURITY DEFINER en el
+-- esquema privado, que la API REST no expone. Las RPC públicas son
+-- SECURITY INVOKER y solo lo envuelven: así el linter de Supabase no marca
+-- una función definer invocable por anon/authenticated.
+CREATE SCHEMA IF NOT EXISTS privado;
+REVOKE ALL ON SCHEMA privado FROM PUBLIC;
+GRANT USAGE ON SCHEMA privado TO anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION privado.stats_profesional(p_id uuid)
 RETURNS TABLE (
   id_usuario uuid,
   calificacion numeric,
@@ -58,6 +67,25 @@ AS $$
   FROM jobs, reviews;
 $$;
 
+REVOKE ALL ON FUNCTION privado.stats_profesional(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION privado.stats_profesional(uuid) TO anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.stats_profesional(p_id uuid)
+RETURNS TABLE (
+  id_usuario uuid,
+  calificacion numeric,
+  n_calificaciones integer,
+  trabajos_completados integer,
+  es_elite boolean
+)
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path TO 'public'
+AS $$
+  SELECT * FROM privado.stats_profesional(p_id);
+$$;
+
 CREATE OR REPLACE FUNCTION public.stats_profesionales(p_ids uuid[])
 RETURNS TABLE (
   id_usuario uuid,
@@ -68,12 +96,12 @@ RETURNS TABLE (
 )
 LANGUAGE sql
 STABLE
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path TO 'public'
 AS $$
   SELECT s.*
   FROM unnest(COALESCE(p_ids, ARRAY[]::uuid[])) AS u(id)
-  JOIN LATERAL public.stats_profesional(u.id) AS s ON true;
+  JOIN LATERAL privado.stats_profesional(u.id) AS s ON true;
 $$;
 
 REVOKE ALL ON FUNCTION public.stats_profesional(uuid) FROM PUBLIC;
@@ -205,6 +233,30 @@ CREATE TRIGGER calificaciones_recomputar_agregados
   EXECUTE FUNCTION public._recomputar_agregados_por_calificacion();
 
 REVOKE ALL ON FUNCTION public._recomputar_agregados_por_calificacion() FROM PUBLIC, anon, authenticated;
+
+-- El trigger antiguo calificaciones_refrescar_trabajador corre DESPUÉS del
+-- nuevo (orden alfabético) y recalculaba la nota sin descartar reseñas
+-- excluidas ni reseñas sin dirección, pisando la cifra canónica. Ahora
+-- delega en el mismo cálculo para que ambos dejen el mismo valor.
+CREATE OR REPLACE FUNCTION public.refrescar_calificacion_trabajador()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_worker uuid;
+BEGIN
+  SELECT t.id_trabajador INTO v_worker
+  FROM public.trabajos t
+  WHERE t.id::text = COALESCE(NEW.id_trabajo, OLD.id_trabajo)::text;
+
+  PERFORM public.recomputar_agregados_profesional(v_worker);
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.refrescar_calificacion_trabajador() FROM PUBLIC, anon, authenticated;
 
 -- -----------------------------------------------------------------------------
 -- 4) Ranking: la estrella pública ya no usa el promedio ponderado
