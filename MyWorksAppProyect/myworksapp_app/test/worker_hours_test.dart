@@ -25,11 +25,10 @@ void main() {
     );
   });
 
-  test('slotsOnDate usa la fecha local y no mezcla días', () {
-    final slot = DateTime.now().toUtc().add(const Duration(days: 2));
-    final local = slot.toLocal();
-    final otherDay = local.add(const Duration(days: 1));
-    expect(slotsOnDate([slot], local), hasLength(1));
-    expect(slotsOnDate([slot], otherDay), isEmpty);
+  test('slotsOnDate usa el día de Santiago y no mezcla días', () {
+    // 23:30 del 12-nov en Santiago = 02:30 UTC del 13-nov.
+    final slot = DateTime.utc(2026, 11, 13, 2, 30);
+    expect(slotsOnDate([slot], DateTime(2026, 11, 12)), hasLength(1));
+    expect(slotsOnDate([slot], DateTime(2026, 11, 13)), isEmpty);
   });
 }

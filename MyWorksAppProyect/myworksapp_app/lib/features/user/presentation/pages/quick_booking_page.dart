@@ -52,7 +52,8 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
   WorkerModel? _worker;
   UserModel? _workerUser;
   String? _serviceName;
-  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  DateTime _selectedDate =
+      SantiagoTime.day(DateTime.now()).add(const Duration(days: 1));
   TimeOfDay? _selectedTime;
   List<DateTime> _freeSlots = [];
   bool _loading = true;

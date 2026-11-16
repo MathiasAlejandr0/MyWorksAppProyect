@@ -83,6 +83,8 @@ String? addWorkerHourError(List<WorkerHourSlot> slots, WorkerHourSlot next) {
   return null;
 }
 
+/// [freeSlots] son instantes absolutos; [date] es un día civil de Santiago.
+/// El resultado no depende del huso del teléfono.
 List<DateTime> slotsOnDate(List<DateTime> freeSlots, DateTime date) {
   final day = DateTime(date.year, date.month, date.day);
   return freeSlots.where((slot) {
@@ -102,7 +104,7 @@ List<DateTime> openSlotsOnDate(
 }) {
   final clock = now ?? DateTime.now();
   return slotsOnDate(freeSlots, date)
-      .where((slot) => slot.toLocal().isAfter(clock))
+      .where((slot) => slot.isAfter(clock))
       .toList();
 }
 
