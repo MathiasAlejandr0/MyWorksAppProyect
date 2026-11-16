@@ -99,6 +99,204 @@ Además se documentan, por primera vez en este diccionario, las políticas RLS (
 | 51 | ranking | `ranking_aprendizaje` | 6 | sí | Ajuste de los pesos del ranking y las métricas de ese cambio. |
 | 52 | ranking | `eventos_ranking` | 6 | sí | Evento que alimenta el ranking de un profesional. |
 
+## 2b. Modelo entidad-relación
+
+El modelo tiene **52 tablas**, 437 columnas, 52 claves primarias y **78 claves foráneas** (77 entre tablas de public y 1 de `perfiles` a `auth.users`), hasta la migración `20261116044049`. Las figuras salen del mismo snapshot que este diccionario. Fuentes editables (DBML, SQL PostgreSQL, SQL MySQL Workbench y Graphviz) y el LEEME: [`Fase 2/modelo_entidad_relacion/`](../../Fase%202/modelo_entidad_relacion/LEEME.txt).
+
+Notación crow's foot: la pata de gallo es «muchos», la barra es «uno» y el círculo es «opcional». PK subrayada, FK en cursiva y FK* para una relación lógica sin FOREIGN KEY (línea punteada). `?` marca una columna que admite NULL.
+
+### 2b.1 Dominios
+
+| Dominio | Tablas |
+|---|---|
+| Usuarios, autenticación y territorio | `perfiles`, `codigos_restablecimiento`, `consentimientos_usuario`, `dispositivos_push`, `verificacion_eventos`, `suscripciones`, `bloqueos_usuario`, `paises`, `regiones`, `comunas` |
+| Profesionales, servicios y precios | `trabajadores`, `trabajador_precios`, `trabajador_servicios`, `trabajador_servicios_extra`, `trabajador_horarios`, `portafolio_trabajador`, `impulsos`, `servicios`, `configuraciones_servicio` |
+| Trabajos, reservas, reprogramación y PIN | `trabajos`, `propuestas_cotizacion`, `acuerdos_trabajo`, `cancelaciones_trabajo`, `reprogramaciones_trabajo`, `pines_inicio_trabajo`, `bloqueos_pin_inicio`, `intentos_pin_inicio`, `fotos_trabajo`, `ubicacion_en_vivo` |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `pagos`, `ordenes_cambio`, `liquidaciones`, `metodos_pago_oneclick`, `cuentas_bancarias` |
+| Comunicación, notificaciones, disputas y soporte | `mensajes`, `notificaciones`, `disputas`, `disputa_mensajes`, `tickets_soporte` |
+| Calificaciones y ranking | `calificaciones`, `calificaciones_cliente`, `senales_resena`, `eventos_ranking`, `ranking_aprendizaje`, `ranking_config` |
+| Administración, moderación y auditoría | `acciones_pendientes`, `reportes`, `eventos_abuso`, `registros_error_app`, `eventos_analitica`, `banderas_funcionalidad`, `app_config` |
+
+![Mapa de dominios](../../Fase%202/modelo_entidad_relacion/figuras/er_00_dominios.png)
+
+*Figura ER-1. Mapa de dominios: tablas de cada dominio y número de FK entre dominios.*
+
+![Modelo ER general](../../Fase%202/modelo_entidad_relacion/figuras/er_00_general.png)
+
+*Figura ER-2. Modelo ER general: las 52 tablas con su PK y todas las FK. Para leer el detalle, abrir el SVG (`er_00_general.svg`) o ver el diagrama del dominio.*
+
+### 2b.2 Usuarios, autenticación y territorio
+
+Centro del modelo. `perfiles` es 1:1 con `auth.users` de Supabase (misma clave, borrado en cascada) y guarda el rol (`usuario` = cliente, `trabajador`, `administrador`, `soporte` o `qa`). Casi todas las tablas cuelgan de `perfiles`: códigos de restablecimiento, consentimientos, dispositivos push, suscripciones, bloqueos entre usuarios y el historial de verificación (`verificacion_eventos`, con el administrador que actuó en `id_actor`). El territorio es una jerarquía estricta `paises` 1─N `regiones` 1─N `comunas`, usada por trabajos y profesionales.
+
+![Usuarios, autenticación y territorio](../../Fase%202/modelo_entidad_relacion/figuras/er_01_usuarios_territorio.png)
+
+*Figura ER-3. Usuarios, autenticación y territorio: columnas, tipos, PK/FK y cardinalidad.*
+
+### 2b.3 Profesionales, servicios y precios
+
+`trabajadores` extiende a `perfiles` 1:1 (PK = `id_usuario`) con la ficha pública, la base de atención, el radio, la verificación y los agregados de ranking. Del profesional dependen sus precios por código (`trabajador_precios`, PK compuesta), los servicios extra, la plantilla semanal de horarios (una fila por día), el portafolio, los impulsos y las categorías que atiende. `servicios` es el catálogo global y `configuraciones_servicio` su esquema de preguntas (1:0..1).
+
+![Profesionales, servicios y precios](../../Fase%202/modelo_entidad_relacion/figuras/er_02_profesionales_catalogo.png)
+
+*Figura ER-4. Profesionales, servicios y precios: columnas, tipos, PK/FK y cardinalidad.*
+
+### 2b.4 Trabajos, reservas, reprogramación y PIN
+
+`trabajos` es la entidad transaccional: une a un cliente (`id_usuario`), un profesional (`id_trabajador`, opcional hasta que se asigna), un servicio y una comuna. Alrededor están las cotizaciones (0..N por trabajo; la elegida queda en `id_cotizacion_seleccionada`), acuerdos, la cancelación (0..1), las reprogramaciones (CU-33, solo una pendiente a la vez por índice único parcial), el PIN de inicio (`pines_inicio_trabajo` y `bloqueos_pin_inicio`, 1:0..1, más los intentos auditados), las fotos y la ubicación en vivo del profesional (1:0..1).
+
+![Trabajos, reservas, reprogramación y PIN](../../Fase%202/modelo_entidad_relacion/figuras/er_03_trabajos_reservas.png)
+
+*Figura ER-5. Trabajos, reservas, reprogramación y PIN: columnas, tipos, PK/FK y cardinalidad.*
+
+### 2b.5 Pagos, escrow, liquidaciones y cuentas bancarias
+
+Cada trabajo tiene 0..N `pagos`, pero solo un pago principal activo (índice único parcial). Las `ordenes_cambio` agregan alcance o precio y generan su propio pago (`tipo_pago = 'orden_cambio'`). La liberación del escrow fija una `liquidaciones` por pago (1:0..1 por índice único). La tarjeta Oneclick (`metodos_pago_oneclick`) y la cuenta bancaria (`cuentas_bancarias`) son 1:0..1 con el perfil y solo las leen el dueño, un administrador o el backend.
+
+![Pagos, escrow, liquidaciones y cuentas bancarias](../../Fase%202/modelo_entidad_relacion/figuras/er_04_pagos_escrow.png)
+
+*Figura ER-6. Pagos, escrow, liquidaciones y cuentas bancarias: columnas, tipos, PK/FK y cardinalidad.*
+
+### 2b.6 Comunicación, notificaciones, disputas y soporte
+
+El chat del trabajo (`mensajes`, con remitente y destinatario), las notificaciones in-app por usuario, las disputas de un trabajo con su hilo (`disputa_mensajes`) y los tickets de soporte, que guardan una instantánea de nombres y del monto en escrow.
+
+![Comunicación, notificaciones, disputas y soporte](../../Fase%202/modelo_entidad_relacion/figuras/er_05_comunicacion_disputas.png)
+
+*Figura ER-7. Comunicación, notificaciones, disputas y soporte: columnas, tipos, PK/FK y cardinalidad.*
+
+### 2b.7 Calificaciones y ranking
+
+`calificaciones` es bidireccional (`direccion`) y única por trabajo y dirección; `calificaciones_cliente` es la nota del profesional al cliente (1:0..1 por trabajo). Las reseñas dudosas generan `senales_resena`. `eventos_ranking` alimenta el puntaje del profesional; `ranking_config` (una fila) y `ranking_aprendizaje` guardan los pesos y su historial. La nota y el número de trabajos que muestra la app se recalculan desde estas tablas (fuente única, migración 20261116044049).
+
+![Calificaciones y ranking](../../Fase%202/modelo_entidad_relacion/figuras/er_06_calificaciones_ranking.png)
+
+*Figura ER-8. Calificaciones y ranking: columnas, tipos, PK/FK y cardinalidad.*
+
+### 2b.8 Administración, moderación y auditoría
+
+Tablas de operación: cola de acciones pendientes del modo sin conexión, reportes entre usuarios, eventos de abuso, errores de la app, analítica, banderas de funcionalidad y `app_config` (clave/valor, solo backend). Todas, salvo `app_config`, referencian a `perfiles`.
+
+![Administración, moderación y auditoría](../../Fase%202/modelo_entidad_relacion/figuras/er_07_admin_auditoria.png)
+
+*Figura ER-9. Administración, moderación y auditoría: columnas, tipos, PK/FK y cardinalidad.*
+
+### 2b.9 Flujo de pago y escrow en el modelo
+
+1. El cliente crea un `trabajos` (estado `pendiente` o `esperando_cotizaciones`, con su `modalidad_cobro`). En cotización abierta, cada profesional envía una `propuestas_cotizacion` y la elegida queda en `trabajos.id_cotizacion_seleccionada`.
+2. `crear_intencion_pago` inserta un `pagos` con `tipo_pago = 'principal'`, `estado = 'pendiente'` y `monto` en CLP. Con Webpay se guardan `token_tbk`, `url_tbk` y `buy_order`. Con Oneclick se usa la tarjeta de `metodos_pago_oneclick` (`tbk_user`); si aún no está inscrita, `id_trabajo_pendiente` recuerda qué trabajo cobrar al terminar la inscripción.
+3. Transbank autoriza y el pago pasa a `retenido` (escrow). `sincronizar_estado_pago_trabajo` copia ese estado a `trabajos.estado_pago`.
+4. Si cambia el alcance, el profesional crea una `ordenes_cambio`. Al aceptarla se cobra un segundo pago (`tipo_pago = 'orden_cambio'`), enlazado en ambos sentidos (`pagos.id_orden_cambio` y `ordenes_cambio.id_pago`).
+5. El trabajo se inicia con el PIN del cliente (`pines_inicio_trabajo`, `intentos_pin_inicio` y `bloqueos_pin_inicio`) y se termina. Con la conformidad del cliente o la liberación automática, `liberar_escrow` deja el pago en `liberado` y `fijar_liquidacion_desde_pago` crea la `liquidaciones` (una por pago), con `monto_clp`, `proveedor` y `estado_transferencia` (`pendiente` → `transferido`). La transferencia usa la `cuentas_bancarias` del profesional.
+6. Si hay una `disputas`, la decisión (`liberar`, `reembolsar` o `humano`) termina en `liberar_escrow` o `reembolsar_escrow` (`reembolso_pendiente` → `reembolsado`).
+
+### 2b.10 Decisiones de diseño
+
+- **Claves primarias.** `perfiles.id` es `uuid` porque es la misma clave de `auth.users`. La mayoría de las tablas usa `id text` (41 tablas): la app y las funciones generan el identificador (un UUID en texto, un slug como `comunas.id` o un código como `paises.id`). Tienen PK `uuid` cuentas_bancarias, metodos_pago_oneclick, perfiles, reprogramaciones_trabajo, trabajador_horarios, trabajadores, verificacion_eventos; `intentos_pin_inicio` usa `bigint` identidad. Las tablas 1:1 usan la FK como PK (`trabajadores`, `cuentas_bancarias`, `metodos_pago_oneclick`, `pines_inicio_trabajo`, `bloqueos_pin_inicio`, `ubicacion_en_vivo`), y las de catálogo del profesional usan PK compuesta (trabajador_precios, trabajador_servicios, trabajador_servicios_extra).
+- **Seguridad por filas.** RLS está activo en 52 de 52 tablas, con 108 políticas. Las tablas sensibles (`app_config`, `bloqueos_pin_inicio`, `intentos_pin_inicio`, `metodos_pago_oneclick`) no tienen políticas para el cliente: solo se acceden con funciones o con service_role.
+- **Funciones SECURITY DEFINER.** 119 de las 148 funciones de public son SECURITY DEFINER. Las escrituras con reglas de negocio (transiciones de trabajo, PIN, pagos, escrow, reseñas, reprogramación) pasan por estas RPC, que validan al usuario con auth.uid() antes de escribir. Así una tabla no queda abierta a un UPDATE directo.
+- **Columnas id_usuario de texto.** Hasta la migración 20261115234447, `trabajador_precios.id_usuario` y `trabajador_servicios_extra.id_usuario` eran `text` sin FK. La auditoría 20261116042559 las pasó a `uuid` con FK a `trabajadores.id_usuario` (ON DELETE CASCADE), y hoy son relaciones físicas. Quedan como relaciones lógicas, dibujadas con línea punteada, las columnas de la tabla siguiente.
+- **Fechas.** Varias columnas `creado_en` y `actualizado_en` son `text`, herencia de la primera versión del esquema. La auditoría agregó CHECK `es_marca_tiempo_iso(...)` para que siempre guarden ISO 8601. Las tablas nuevas usan `timestamptz`.
+- **Estados.** No hay ENUM. Los conjuntos cerrados (estado del trabajo, del pago, de la disputa, etc.) se restringen con CHECK, que se amplía en una migración sin recrear tipos.
+
+| Relación lógica (sin FK) | Apunta a | Motivo |
+|---|---|---|
+| `liquidaciones.id_trabajador` | `perfiles.id` | profesional liquidado; text que guarda el uuid del perfil |
+| `liquidaciones.id_operador` | `perfiles.id` | administrador que confirmó la transferencia; text con uuid o 'sistema' |
+| `metodos_pago_oneclick.id_trabajo_pendiente` | `trabajos.id` | trabajo que espera la inscripción Oneclick para cobrarse |
+| `bloqueos_pin_inicio.pin_ok_usuario` | `perfiles.id` | usuario que validó el PIN (ventana pin_ok_hasta) |
+| `trabajos.id_trabajador, id_sku_servicio` | `trabajador_precios.id_usuario, codigo` | SKU de precio elegido; también admite 'tier_<n>', por eso no es FK |
+| `trabajador_servicios.categoria_servicio` | `servicios.categoria` | categoría ofrecida; servicios.categoria no es única |
+| `notificaciones.id_relacionado` | (varias) | id de trabajo, pago, disputa u otra entidad según notificaciones.tipo |
+| `acciones_pendientes.id_entidad` | (varias) | id de la entidad indicada en tipo_entidad (cola offline) |
+| `tickets_soporte.nombre_cliente / nombre_trabajador` | (varias) | nombres copiados (instantánea) para el ticket |
+| `pagos.id_transaccion / buy_order / token_tbk` | (varias) | identificadores externos de Transbank |
+
+### 2b.11 Cardinalidad de cada clave foránea
+
+Se lee «padre ─ hijo»: `1 ─ 0..N` es un padre obligatorio con cero o más hijos; `0..1 ─ 0..N` es un padre opcional (FK que admite NULL); `1 ─ 0..1` es una relación uno a uno.
+
+| Dominio | FK (hija) | Referencia (padre) | Cardinalidad | ON DELETE |
+|---|---|---|---|---|
+| Administración, moderación y auditoría | `acciones_pendientes.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `banderas_funcionalidad.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `eventos_abuso.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `eventos_analitica.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
+| Administración, moderación y auditoría | `registros_error_app.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | NO ACTION |
+| Administración, moderación y auditoría | `reportes.id_reportante` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `reportes.id_usuario_reportado` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones.id_calificado` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
+| Calificaciones y ranking | `calificaciones_cliente.id_cliente` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones_cliente.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones_cliente.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
+| Calificaciones y ranking | `eventos_ranking.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `eventos_ranking.id_trabajo` | `trabajos.id` | 0..1 ─ 0..N | SET NULL |
+| Calificaciones y ranking | `senales_resena.id_calificacion` | `calificaciones.id` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `senales_resena.resuelto_por` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
+| Comunicación, notificaciones, disputas y soporte | `disputa_mensajes.id_autor` | `perfiles.id` | 0..1 ─ 0..N | NO ACTION |
+| Comunicación, notificaciones, disputas y soporte | `disputa_mensajes.id_disputa` | `disputas.id` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `disputas.abierta_por` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `disputas.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `disputas.resuelta_por` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
+| Comunicación, notificaciones, disputas y soporte | `mensajes.id_destinatario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `mensajes.id_remitente` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `mensajes.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `notificaciones.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `tickets_soporte.id_trabajo` | `trabajos.id` | 0..1 ─ 0..N | SET NULL |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `cuentas_bancarias.id_usuario` | `perfiles.id` | 1 ─ 0..1 | CASCADE |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `liquidaciones.id_pago` | `pagos.id` | 1 ─ 0..1 | NO ACTION |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `liquidaciones.id_trabajo` | `trabajos.id` | 1 ─ 0..N | NO ACTION |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `metodos_pago_oneclick.id_usuario` | `perfiles.id` | 1 ─ 0..1 | CASCADE |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `ordenes_cambio.id_pago` | `pagos.id` | 0..1 ─ 0..N | SET NULL |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `ordenes_cambio.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `ordenes_cambio.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `pagos.id_orden_cambio` | `ordenes_cambio.id` | 0..1 ─ 0..N | SET NULL |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `pagos.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `configuraciones_servicio.id_servicio` | `servicios.id` | 1 ─ 0..1 | CASCADE |
+| Profesionales, servicios y precios | `impulsos.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `portafolio_trabajador.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajador_horarios.id_usuario` | `trabajadores.id_usuario` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajador_precios.id_usuario` | `trabajadores.id_usuario` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajador_servicios.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajador_servicios_extra.id_usuario` | `trabajadores.id_usuario` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajadores.id_comuna` | `comunas.id` | 0..1 ─ 0..N | SET NULL |
+| Profesionales, servicios y precios | `trabajadores.id_region` | `regiones.id` | 0..1 ─ 0..N | SET NULL |
+| Profesionales, servicios y precios | `trabajadores.id_usuario` | `perfiles.id` | 1 ─ 0..1 | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `acuerdos_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `acuerdos_trabajo.propuesto_por` | `perfiles.id` | 1 ─ 0..N | NO ACTION |
+| Trabajos, reservas, reprogramación y PIN | `bloqueos_pin_inicio.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `cancelaciones_trabajo.cancelado_por` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `cancelaciones_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `fotos_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `intentos_pin_inicio.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `intentos_pin_inicio.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `pines_inicio_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `propuestas_cotizacion.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `propuestas_cotizacion.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `reprogramaciones_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `reprogramaciones_trabajo.propuesta_por` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `reprogramaciones_trabajo.respondida_por` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_comuna` | `comunas.id` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_cotizacion_seleccionada` | `propuestas_cotizacion.id` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_servicio` | `servicios.id` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_trabajador` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `ubicacion_en_vivo.id_trabajador` | `trabajadores.id_usuario` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `ubicacion_en_vivo.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
+| Usuarios, autenticación y territorio | `bloqueos_usuario.id_bloqueado` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `bloqueos_usuario.id_bloqueador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `codigos_restablecimiento.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `comunas.id_region` | `regiones.id` | 1 ─ 0..N | NO ACTION |
+| Usuarios, autenticación y territorio | `consentimientos_usuario.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `dispositivos_push.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `perfiles.id` | `auth.users.id` | 1 ─ 0..1 | CASCADE |
+| Usuarios, autenticación y territorio | `regiones.id_pais` | `paises.id` | 1 ─ 0..N | NO ACTION |
+| Usuarios, autenticación y territorio | `suscripciones.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `verificacion_eventos.id_actor` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
+| Usuarios, autenticación y territorio | `verificacion_eventos.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+
 ## 3. Columnas por tabla
 
 ### 3.1 perfiles

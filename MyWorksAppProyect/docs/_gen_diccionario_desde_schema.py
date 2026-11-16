@@ -4,7 +4,9 @@
 Fuente: docs/_schema_public.json (information_schema / pg_catalog de
 wxqrfcqifkfgawrnqmnj, solo lectura, 2026-11-16 America/Santiago).
 
-Uso, desde la raíz del repo grupal:
+Uso, desde la raíz del repo grupal (primero los diagramas ER, que se
+incrustan en la sección «Modelo entidad-relación»):
+    python3 "Fase 2/modelo_entidad_relacion/_gen_modelo_er.py"
     python3 MyWorksAppProyect/docs/_gen_diccionario_desde_schema.py
 """
 from __future__ import annotations
@@ -455,6 +457,16 @@ FUNC_PURPOSE = {
 }
 
 
+def _seccion_er():
+    """Sección 2b/3b «Modelo entidad-relación» (figuras de Fase 2/modelo_entidad_relacion)."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_seccion_modelo_er", DOCS / "_seccion_modelo_er.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def load_schema():
     return json.loads(SNAPSHOT.read_text(encoding="utf-8"))
 
@@ -861,6 +873,7 @@ def write_md(schema, tables, functions, ordered):
         desc = md_escape(short_note(tb["note"]))
         a(f"| {i} | {group_of(tb['name'])} | `{tb['name']}` | {len(tb['columns'])} | {rls} | {desc} |")
     a("")
+    lines.extend(_seccion_er().md_lineas())
     a("## 3. Columnas por tabla")
     a("")
     for i, tb in enumerate(ordered, 1):
@@ -973,6 +986,7 @@ def write_anexo(schema, tables, ordered):
     a("")
     a(f"Fuente: elaboración propia a partir del esquema real (modelo entidad-relación {MODEL_VERSION}).")
     a("")
+    lines.extend(_seccion_er().anexo_lineas())
     a(
         "Respecto del anexo v2.3 (43 tablas, 2026-11-08) se agregan nueve tablas: "
         "acuerdos_trabajo, disputa_mensajes, reprogramaciones_trabajo (CU-33), pines_inicio_trabajo, "
@@ -1360,6 +1374,8 @@ def write_docx(schema, tables, functions, ordered):
         ]
         for i, tb in enumerate(ordered, 1)
     ])
+
+    _seccion_er().agregar_docx(doc, add_heading, add_body, add_table)
 
     add_heading(doc, "4. Columnas por tabla", 1)
     for i, tb in enumerate(ordered, 1):

@@ -1,0 +1,116 @@
+MODELO ENTIDAD-RELACIÓN DE MYWORKSAPP
+=====================================
+
+Qué es
+------
+El modelo de datos de MyWorksApp: PostgreSQL en Supabase, esquema public,
+proyecto wxqrfcqifkfgawrnqmnj. Las figuras y los scripts salen del esquema
+real de la base, leído en modo solo lectura (migración 20261116044049,
+16-11-2026, hora de Chile).
+
+  52 tablas · 437 columnas · 52 claves primarias
+  78 claves foráneas (77 entre tablas de public + perfiles.id -> auth.users.id)
+  RLS activo en las 52 tablas · sin ENUM ni vistas (los estados usan CHECK)
+
+Cómo leer los diagramas (notación crow's foot)
+----------------------------------------------
+  PK          clave primaria (subrayada)
+  FK          clave foránea física (cursiva)
+  FK*         relación lógica sin FOREIGN KEY (línea punteada gris)
+  ?           la columna admite NULL
+  caja gris   tabla de otro dominio (se muestra solo para la relación)
+  pata de gallo = muchos · barra = uno · círculo = opcional
+  Ejemplo: perfiles ||──o< trabajos = un perfil tiene 0..N trabajos y cada
+  trabajo tiene exactamente un cliente.
+
+Figuras (carpeta figuras/, PNG de ~2400 px y SVG vectorial)
+-----------------------------------------------------------
+  er_00_dominios       Mapa de los 7 dominios, con sus tablas y las FK que
+                       cruzan de un dominio a otro. Es la mejor figura para
+                       una presentación.
+  er_00_general        Las 52 tablas con su PK y todas las FK. Es densa:
+                       para leerla, abrir el SVG y hacer zoom.
+  er_01 ... er_07      Un diagrama por dominio, con todas las columnas, el
+                       tipo, PK/FK y la cardinalidad.
+
+Dominios
+--------
+  01 Usuarios, autenticación y territorio (10): perfiles, codigos_restablecimiento,
+     consentimientos_usuario, dispositivos_push, verificacion_eventos, suscripciones,
+     bloqueos_usuario, paises, regiones, comunas
+  02 Profesionales, servicios y precios (9): trabajadores, trabajador_precios,
+     trabajador_servicios, trabajador_servicios_extra, trabajador_horarios,
+     portafolio_trabajador, impulsos, servicios, configuraciones_servicio
+  03 Trabajos, reservas, reprogramación y PIN (10): trabajos, propuestas_cotizacion,
+     acuerdos_trabajo, cancelaciones_trabajo, reprogramaciones_trabajo,
+     pines_inicio_trabajo, bloqueos_pin_inicio, intentos_pin_inicio, fotos_trabajo,
+     ubicacion_en_vivo
+  04 Pagos, escrow, liquidaciones y cuentas bancarias (5): pagos, ordenes_cambio,
+     liquidaciones, metodos_pago_oneclick, cuentas_bancarias
+  05 Comunicación, notificaciones, disputas y soporte (5): mensajes, notificaciones,
+     disputas, disputa_mensajes, tickets_soporte
+  06 Calificaciones y ranking (6): calificaciones, calificaciones_cliente,
+     senales_resena, eventos_ranking, ranking_aprendizaje, ranking_config
+  07 Administración, moderación y auditoría (7): acciones_pendientes, reportes,
+     eventos_abuso, registros_error_app, eventos_analitica, banderas_funcionalidad,
+     app_config
+
+Relaciones principales
+----------------------
+  - perfiles 1:1 auth.users. perfiles es el centro del modelo: 33 tablas lo
+    referencian (42 FK).
+  - trabajadores 1:0..1 perfiles (la PK de trabajadores es id_usuario).
+  - trabajos N:1 perfiles dos veces: el cliente (id_usuario, obligatorio) y el
+    profesional (id_trabajador, opcional hasta que se asigna).
+  - trabajos 1:N pagos, con un solo pago principal activo por índice único
+    parcial. pagos 1:0..1 liquidaciones (índice único en id_pago).
+  - pagos y ordenes_cambio se referencian mutuamente: la orden genera su pago.
+  - paises 1:N regiones 1:N comunas.
+
+Relaciones lógicas (sin FOREIGN KEY física)
+-------------------------------------------
+  liquidaciones.id_trabajador         -> perfiles.id (text con uuid, validado por CHECK)
+  liquidaciones.id_operador           -> perfiles.id (admin que confirmó la transferencia)
+  metodos_pago_oneclick.id_trabajo_pendiente -> trabajos.id
+  bloqueos_pin_inicio.pin_ok_usuario  -> perfiles.id
+  trabajos.(id_trabajador, id_sku_servicio) -> trabajador_precios.(id_usuario, codigo)
+  trabajador_servicios.categoria_servicio -> servicios.categoria (no es única)
+  Polimórficas: notificaciones.id_relacionado y acciones_pendientes.id_entidad.
+  Nota: trabajador_precios.id_usuario y trabajador_servicios_extra.id_usuario
+  eran text sin FK hasta la auditoría 20261116042559. Hoy son uuid con FK a
+  trabajadores.id_usuario.
+
+Archivos
+--------
+  modelo_er.dbml                 Abrir en https://dbdiagram.io (Import > DBML).
+  modelo_er_postgres.sql         DDL PostgreSQL: tablas, PK, UNIQUE y FK. Se probó
+                                 en un Postgres vacío: crea 52 tablas y 77 FK. No
+                                 incluye RLS, funciones ni datos. No ejecutarlo
+                                 contra producción.
+  modelo_er_mysql_workbench.sql  Mismo modelo en MySQL 8 para MySQL Workbench:
+                                 File > Import > Reverse Engineer MySQL Create Script.
+                                 Los tipos se adaptan (uuid -> CHAR(36), jsonb -> JSON,
+                                 timestamptz -> DATETIME(6), text -> VARCHAR/TEXT).
+  fuentes/er_*.dot               Fuente Graphviz de cada figura.
+  _gen_modelo_er.py              Regenera todo lo anterior.
+  validacion_modelo_er.txt       Conteos y chequeos de la última generación.
+
+Cómo regenerar (desde la raíz del repo grupal)
+----------------------------------------------
+  1. Actualizar el snapshot MyWorksAppProyect/docs/_schema_public.json desde la
+     base, en modo solo lectura. Es el mismo snapshot que usa el diccionario.
+  2. python3 "Fase 2/modelo_entidad_relacion/_gen_modelo_er.py"   (requiere Graphviz)
+  3. python3 MyWorksAppProyect/docs/_gen_diccionario_desde_schema.py
+     Incrusta las figuras en DICCIONARIO_BASE_DATOS.md/.docx (sección
+     «Modelo entidad-relación»), con la explicación de cada dominio, el flujo de
+     pago y escrow y las decisiones de diseño.
+  Revisar validacion_modelo_er.txt: debe decir «ninguna» en tablas sin dominio
+  y en FK ausentes.
+
+Dónde más aparece
+-----------------
+  - MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md y .docx, sección 2b/3b.
+  - Fase 2/Anexo_A_Diccionario_de_tablas.md, que remite a esta carpeta.
+  - Fase 2/figuras/diagrama_er_01..06: fichas por grupo (PK y FK de cada tabla)
+    que usa el anexo del informe. Salen del mismo snapshot y no contradicen
+    estos diagramas.
