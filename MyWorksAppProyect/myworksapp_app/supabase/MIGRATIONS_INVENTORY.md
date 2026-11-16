@@ -55,7 +55,7 @@ Verificado en `supabase_migrations.schema_migrations` del proyecto `wxqrfcqifkfg
 | 20261115232900 | `reprogramar_trabajo.sql` | Tabla `reprogramaciones_trabajo` y RPC `proponer_reprogramacion`, `responder_reprogramacion`, `retirar_reprogramacion`; notificación `job_rescheduled`; `fecha_programada` solo cambia por RPC. Sin filas nuevas. |
 | 20261115232902 | `consola_roles_soporte_qa.sql` | Roles de consola `soporte` y `qa` con mínimo privilegio (`rol_consola`, `consola_disputas_abiertas`, `evidencia_disputa`, `soporte_comentar_disputa`, trigger `perfiles_rol_inicial_seguro`). Sin filas nuevas. |
 | 20261115234447 | `catalogo_plomeria_gasfiteria_distintos.sql` | Renombra los servicios para distinguir «Plomería» de «Gasfitería (gas)». Solo actualiza nombres; sin filas nuevas. |
-| 20261116020001 | `stats_profesional_fuente_unica.sql` | RPC `stats_profesional` / `stats_profesionales` como fuente única de la nota (promedio simple de reseñas reales) y de los trabajos completados. El catálogo las calcula en vivo. Recalcula las columnas cacheadas (sin inventar filas). Requiere OK para aplicarse en producción. |
+| 20261116044049 | `stats_profesional_fuente_unica.sql` | RPC `stats_profesional` / `stats_profesionales` como fuente única de la nota (promedio simple de reseñas reales) y de los trabajos completados. El catálogo las calcula en vivo. Recalcula las columnas cacheadas (sin inventar filas). El cálculo definer vive en el esquema `privado`; las RPC públicas son INVOKER. Aplicada en producción el 16-nov-2026 con OK de Mathias. |
 
 ## Snapshot CLI (2026-09-07)
 
