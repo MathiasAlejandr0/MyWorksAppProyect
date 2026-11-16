@@ -138,7 +138,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
           name: user?.name ?? '',
           profession: worker.profession,
         );
-        final matchesRating = worker.rating >= _minRating;
+        final matchesRating = passesMinRating(worker.rating, _minRating);
         final schedule = _schedules[worker.userId];
         final matchesNow =
             !_onlyNow ||

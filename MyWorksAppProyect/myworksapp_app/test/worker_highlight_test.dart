@@ -29,6 +29,19 @@ WorkerModel _worker({
 }
 
 void main() {
+  group('passesMinRating', () {
+    test('sin reseñas entra con el piso por defecto', () {
+      expect(passesMinRating(0, lowRatingFloor), isTrue);
+    });
+    test('sin reseñas no entra si se pide 4.5+', () {
+      expect(passesMinRating(0, 4.5), isFalse);
+    });
+    test('nota real bajo el piso queda fuera', () {
+      expect(passesMinRating(2.5, lowRatingFloor), isFalse);
+      expect(passesMinRating(4.8, 4.5), isTrue);
+    });
+  });
+
   test('élite exige nota alta y volumen, o la marca del servidor', () {
     expect(
       isEliteWorker(_worker(id: 'a', rating: 4.9, completed: 5)),
