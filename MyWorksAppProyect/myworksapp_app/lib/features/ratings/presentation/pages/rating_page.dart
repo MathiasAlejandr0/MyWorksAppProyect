@@ -148,6 +148,7 @@ class _RatingPageState extends State<RatingPage> {
                   children: List.generate(5, (index) {
                     final rating = index + 1;
                     return IconButton(
+                      tooltip: '$rating de 5 estrellas',
                       icon: Icon(
                         rating <= _selectedRating
                             ? Icons.star

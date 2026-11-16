@@ -13,10 +13,6 @@ const AuthModal = lazy(() =>
   import('../components/AuthModal').then((m) => ({ default: m.AuthModal })),
 );
 
-const U = 'https://images.unsplash.com';
-const img = (id: string) =>
-  `${U}/photo-${id}?auto=format&fit=crop&w=640&h=400&q=70`;
-
 type LandingHomeProps = {
   activeNav: string;
   setActiveNav: (value: 'servicios' | 'como-funciona') => void;
@@ -165,6 +161,8 @@ export function LandingHome({
 
       </nav>
 
+      <main id="contenido">
+
 
 
       {orders && (
@@ -305,7 +303,11 @@ export function LandingHome({
 
               className="hero-photo"
 
-              src={img('1621905251189-08b45d6a269e')}
+              src="/hero/tecnico-640.webp"
+
+              srcSet="/hero/tecnico-480.webp 480w, /hero/tecnico-640.webp 640w, /hero/tecnico-960.webp 960w"
+
+              sizes="(max-width: 900px) 100vw, 560px"
 
               alt="Técnico profesional en domicilio"
 
@@ -315,7 +317,7 @@ export function LandingHome({
 
               fetchPriority="high"
 
-              decoding="async"
+              decoding="sync"
 
             />
 
@@ -576,6 +578,8 @@ export function LandingHome({
       </section>
 
 
+
+      </main>
 
       <Suspense fallback={null}>
         <AuthModal

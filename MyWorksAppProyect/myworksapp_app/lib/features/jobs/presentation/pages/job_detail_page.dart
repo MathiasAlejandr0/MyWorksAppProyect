@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/utils/error_handler.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/database/models/change_order_model.dart';
 import '../../../../core/database/models/dispute_model.dart';
@@ -31,6 +30,7 @@ import '../../../../core/services/pricing_service.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../widgets/quote_proposals_section.dart';
 import '../widgets/worker_quote_form_dialog.dart';
+import '../widgets/reschedule_section.dart';
 import '../../../../core/utils/open_quote_utils.dart';
 import '../../../../core/widgets/escrow_checkout_sheet.dart';
 import '../../../../core/domain/price_quote.dart';
@@ -56,6 +56,7 @@ import '../widgets/client_live_tracking.dart';
 import '../widgets/client_start_pin_card.dart';
 import '../../../../core/widgets/design_system/service_pin_dialog.dart';
 import '../../../../core/services/gps_publish_gate.dart';
+import '../../../../core/utils/plural.dart';
 
 part 'job_detail_workflows.dart';
 part 'job_detail_status.dart';
@@ -338,8 +339,9 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     final user = authState.user;
     if (user == null || user.id != job.userId) return;
     if (job.status != AppConstants.jobStatusCancelled) return;
-    if (job.serviceMetadata?['rejection_reason'] != 'worker_unavailable')
+    if (job.serviceMetadata?['rejection_reason'] != 'worker_unavailable') {
       return;
+    }
 
     _rejectionDialogShown = true;
     final rejectedWorkerId =

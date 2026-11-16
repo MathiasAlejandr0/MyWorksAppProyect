@@ -26,6 +26,7 @@ class RoleSelectorPage extends StatelessWidget {
       appBar: AppGradientAppBar(
         title: const Text('Selecciona tu rol'),
         leading: IconButton(
+          tooltip: 'Volver',
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),

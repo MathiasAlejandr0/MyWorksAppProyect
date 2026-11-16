@@ -1,4 +1,7 @@
-export type UserRole = 'usuario' | 'trabajador' | 'administrador';
+export type UserRole = 'usuario' | 'trabajador' | 'administrador' | 'soporte' | 'qa';
+
+/** Roles internos invitados a la consola de operación (escritorio). */
+export type ConsoleRole = 'administrador' | 'soporte' | 'qa';
 export type AccountStatus = 'activo' | 'suspendido' | 'bloqueado';
 export type DisputeStatus =
   | 'abierta'

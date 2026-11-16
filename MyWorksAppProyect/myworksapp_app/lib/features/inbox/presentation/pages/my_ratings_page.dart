@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:myworksapp/core/utils/santiago_time.dart';
 
 import '../../../../core/database/models/rating_model.dart';
 import '../../../../core/database/repositories/rating_repository.dart';
@@ -59,9 +60,9 @@ class _MyRatingsPageState extends ConsumerState<MyRatingsPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppGradientAppBar(
-          title: const Text('Mis calificaciones'),
-          bottom: const TabBar(
+        appBar: const AppGradientAppBar(
+          title: Text('Mis calificaciones'),
+          bottom: TabBar(
             tabs: [
               Tab(text: 'Recibidas'),
               Tab(text: 'Entregadas'),
@@ -124,7 +125,7 @@ class _RatingList extends StatelessWidget {
             [
               if (rating.comment != null && rating.comment!.trim().isNotEmpty)
                 rating.comment!.trim(),
-              date.format(rating.createdAt.toLocal()),
+              date.format(SantiagoTime.wall(rating.createdAt)),
             ].join('\n'),
           ),
           isThreeLine:

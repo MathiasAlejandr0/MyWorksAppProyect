@@ -29,9 +29,12 @@ type Item = { id: string; url: string; video: boolean };
 export function JobEvidencePanel({
   jobId,
   userId,
+  readOnly = false,
 }: {
   jobId: string;
   userId: string;
+  /** Trabajo cerrado (completado o anulado): se ven las pruebas, pero ya no se suben nuevas. */
+  readOnly?: boolean;
 }) {
   const [items, setItems] = useState<Item[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +114,9 @@ export function JobEvidencePanel({
             ),
           )}
         </div>
+        {readOnly ? (
+          items.length === 0 ? <p>Este trabajo se cerró sin evidencia.</p> : null
+        ) : (
         <label className="btn-ghost" style={{ display: 'inline-block', marginTop: 8 }}>
           {busy ? 'Subiendo…' : 'Agregar evidencia'}
           <input
@@ -121,6 +127,7 @@ export function JobEvidencePanel({
             onChange={(event) => void onFile(event.target.files?.[0])}
           />
         </label>
+        )}
       </div>
     </section>
   );

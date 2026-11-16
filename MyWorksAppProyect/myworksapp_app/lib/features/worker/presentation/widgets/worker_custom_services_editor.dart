@@ -171,6 +171,7 @@ class WorkerCustomServicesEditor extends StatelessWidget {
                     if (enabled) ...[
                       const SizedBox(width: 4),
                       IconButton(
+                        tooltip: 'Eliminar',
                         icon: const Icon(Icons.delete_outline, size: 20),
                         color: AppColors.error,
                         onPressed: () {

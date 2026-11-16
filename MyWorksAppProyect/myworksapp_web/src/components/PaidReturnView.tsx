@@ -29,6 +29,7 @@ export function PaidReturnView({
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordReady, setPasswordReady] = useState(false);
   const [emailConfirmed, setEmailConfirmed] = useState(true);
+  const [emailNotice, setEmailNotice] = useState<string | null>(null);
   if (verifying) {
     return (
       <div className="min-h-screen app-shell paid-return">
@@ -96,7 +97,13 @@ export function PaidReturnView({
               void supabase.functions.invoke('definir-clave-invitado', {
                 body: { token: passwordToken, password, nonce },
               }).then(async ({ data, error }) => {
-                const payload = data as { error?: string; ok?: boolean; emailConfirmed?: boolean } | null;
+                const payload = data as {
+                  error?: string;
+                  ok?: boolean;
+                  emailConfirmed?: boolean;
+                  emailSent?: boolean;
+                  notice?: string;
+                } | null;
                 if (error || payload?.error || !payload?.ok) {
                   setPasswordError(
                     payload?.error ||
@@ -108,6 +115,7 @@ export function PaidReturnView({
                   return;
                 }
                 setEmailConfirmed(payload.emailConfirmed !== false);
+                setEmailNotice(payload.notice ?? null);
                 setPasswordReady(true);
                 setPasswordBusy(false);
               });
@@ -124,6 +132,7 @@ export function PaidReturnView({
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Mínimo 8, con letra y número"
+              aria-label="Contraseña nueva"
             />
             <input
               type="password"
@@ -131,6 +140,7 @@ export function PaidReturnView({
               value={passwordAgain}
               onChange={(event) => setPasswordAgain(event.target.value)}
               placeholder="Repite la contraseña"
+              aria-label="Repite la contraseña"
             />
             {passwordError ? <p role="alert">{passwordError}</p> : null}
             <button type="submit" className="btn-primary" disabled={passwordBusy}>
@@ -142,7 +152,7 @@ export function PaidReturnView({
           <p role="status">
             {emailConfirmed
               ? 'Contraseña lista. Entra con tu correo en la próxima visita.'
-              : 'Te enviamos un correo para confirmar.'}
+              : emailNotice ?? 'Te enviamos un correo para confirmar.'}
           </p>
         ) : null}
         {passwordToken ? (

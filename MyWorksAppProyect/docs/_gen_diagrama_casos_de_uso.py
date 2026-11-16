@@ -20,17 +20,18 @@ uc={
 '19':('Calificar al\ncliente',14.7,9.8),'25':('Perfil y\nverificación',14.7,8.7),'26':('Tarifas, horario\ny disponibilidad',14.7,7.6),
 '27':('Cobros y cuenta\nbancaria',14.7,6.5),'28':('Consola con\nsegundo factor',14.7,5.3),'29':('Verificar\nprofesionales',14.7,4.2),
 '30':('Métricas, pagos\ny liquidación',14.7,3.1),'31':('Invitar\ncolaborador',14.7,2.0),'32':('Procesos\nautomáticos',14.7,0.9),
+'33':('Reagendar\nla visita',8.5,3.2),'34':('Atender cola de\nsoporte (soporte/QA)',11.6,2.1),
 }
 act={'V':('Visitante',1.3,8.6),'CI':('Cliente\ninvitado',1.3,11.9),'CR':('Cliente\nregistrado',1.3,4.6),
-     'P':('Profesional',18.7,10.4),'A':('Administrador',18.7,3.8),'S':('Sistema\n(pg_cron)',18.7,0.9),'T':('Transbank\nWebpay',1.5,14.4)}
+     'P':('Profesional',18.7,10.4),'A':('Administrador',18.7,3.8),'C':('Colaborador\ninterno',18.7,6.6),'S':('Sistema\n(pg_cron)',18.7,0.9),'T':('Transbank\nWebpay',1.5,14.4)}
 W,H=2.55,0.92
 def edge(x0,y0,x1,y1):
     # punto en el borde de la elipse destino (x1,y1) desde (x0,y0)
     import math
     dx,dy=x0-x1,y0-y1; t=1/math.sqrt((dx/(W/2))**2+(dy/(H/2))**2); return x1+dx*t,y1+dy*t
-col={'V':'#57606a','CI':'#8250df','CR':ORANGE,'P':NAVY,'A':'#1a7f37','S':'#6e7781','T':'#cf222e'}
-assoc={'V':['01','05','06'],'CI':['09','10'],'CR':['02','03','04','07','13','17','18','20','21','23','24','15'],
-       'P':['02','03','04','11','12','14','15','16','19','21','23','24','25','26','27'],'A':['28','29','30','31','22'],'S':['32','22'],'T':['08','09']}
+col={'V':'#57606a','CI':'#8250df','CR':ORANGE,'P':NAVY,'A':'#1a7f37','C':'#0969da','S':'#6e7781','T':'#cf222e'}
+assoc={'V':['01','05','06'],'CI':['09','10'],'CR':['02','03','04','07','13','17','18','20','21','23','24','15','33'],
+       'P':['02','03','04','11','12','14','15','16','19','21','23','24','25','26','27','33'],'A':['28','29','30','31','22'],'C':['28','34'],'S':['32','22'],'T':['08','09']}
 for a,lst in assoc.items():
     _,ax0,ay0=act[a]
     sx = ax0+0.45 if ax0<10 and a!='T' else (ax0-0.45 if a!='T' else ax0+0.9)

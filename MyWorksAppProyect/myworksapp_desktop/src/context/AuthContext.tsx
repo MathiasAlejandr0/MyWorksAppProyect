@@ -19,7 +19,7 @@ import {
   signOut,
   updateAccountPassword,
 } from '@myworksapp/shared';
-import { canAccessDesktopHub } from '../authAccess';
+import { CONSOLE_ACCESS_DENIED, CONSOLE_ROLES, canAccessDesktopHub } from '../authAccess';
 import { supabase } from '../supabaseClient';
 
 interface AuthContextValue {
@@ -90,9 +90,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setNeedsMfa(false);
         return;
       }
-      requireRole(current, ['administrador']);
+      requireRole(current, [...CONSOLE_ROLES]);
       if (!canAccessDesktopHub(current.role)) {
-        throw new AuthError('Solo el rol administrador puede usar la consola ops.');
+        throw new AuthError(CONSOLE_ACCESS_DENIED);
       }
       if (await sessionNeedsMfa()) {
         setProfile(null);
@@ -141,9 +141,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const nextProfile = await signIn(supabase, email, password);
     try {
-      requireRole(nextProfile, ['administrador']);
+      requireRole(nextProfile, [...CONSOLE_ROLES]);
       if (!canAccessDesktopHub(nextProfile.role)) {
-        throw new AuthError('Solo el rol administrador puede usar la consola ops.');
+        throw new AuthError(CONSOLE_ACCESS_DENIED);
       }
       if (await sessionNeedsMfa()) {
         setProfile(null);
@@ -158,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setNeedsMfa(false);
       throw err instanceof AuthError
         ? err
-        : new AuthError('Solo el rol administrador puede usar la consola ops.');
+        : new AuthError(CONSOLE_ACCESS_DENIED);
     }
   }, [sessionNeedsMfa]);
 

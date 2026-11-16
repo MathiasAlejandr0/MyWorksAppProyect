@@ -113,7 +113,7 @@ class _AdminPayoutsPageState extends ConsumerState<AdminPayoutsPage> {
       appBar: AppGradientAppBar(
         title: const Text('Liquidaciones'),
         actions: [
-          IconButton(onPressed: _load, icon: const Icon(Icons.refresh)),
+          IconButton(tooltip: 'Actualizar', onPressed: _load, icon: const Icon(Icons.refresh)),
         ],
       ),
       body: _loading

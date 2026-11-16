@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:myworksapp/core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/job_status_copy.dart';
+import '../../../../core/utils/santiago_time.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/widgets/loading_widget.dart';
@@ -194,58 +195,14 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return AppColors.warning;
-      case AppConstants.jobStatusAccepted:
-        return AppColors.brandOrange;
-      case AppConstants.jobStatusInProgress:
-        return AppColors.brandOrangeDark;
-      case AppConstants.jobStatusCompleted:
-        return AppColors.success;
-      case AppConstants.jobStatusCancelled:
-        return AppColors.error;
-      default:
-        return AppColors.grayMedium;
-    }
-  }
+  Color _getStatusColor(String status) => JobStatusCopy.color(status);
 
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return Icons.pending;
-      case AppConstants.jobStatusAccepted:
-        return Icons.check_circle_outline;
-      case AppConstants.jobStatusInProgress:
-        return Icons.work;
-      case AppConstants.jobStatusCompleted:
-        return Icons.check_circle;
-      case AppConstants.jobStatusCancelled:
-        return Icons.cancel;
-      default:
-        return Icons.help_outline;
-    }
-  }
+  IconData _getStatusIcon(String status) => JobStatusCopy.icon(status);
 
-  String _getStatusText(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return 'Pendiente';
-      case AppConstants.jobStatusAccepted:
-        return 'Aceptado';
-      case AppConstants.jobStatusInProgress:
-        return 'En Curso';
-      case AppConstants.jobStatusCompleted:
-        return 'Completado';
-      case AppConstants.jobStatusCancelled:
-        return 'Cancelado';
-      default:
-        return status;
-    }
-  }
+  String _getStatusText(String status) => JobStatusCopy.label(status);
 
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    final local = SantiagoTime.wall(date);
+    return '${local.day}/${local.month}/${local.year}';
   }
 }

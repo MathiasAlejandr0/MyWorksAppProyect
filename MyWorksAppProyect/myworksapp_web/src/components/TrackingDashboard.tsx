@@ -49,6 +49,45 @@ interface TrackingDashboardProps {
   pendingAgreement?: { id: string; tipo: string } | null;
   evidencePhotos?: JobEvidencePhoto[];
   evidence?: ReactNode;
+  /** Cancelar, reagendar y calificar (JobClientActions). */
+  clientActions?: ReactNode;
+}
+
+const CLOSED_STATUSES = ['completado', 'cancelado', 'expirado', 'no_asistio'];
+/** Mismos estados que acepta abrir_disputa en la base. */
+const DISPUTE_STATUSES = [
+  'aceptado',
+  'en_camino',
+  'en_curso',
+  'esperando_aprobacion_cliente',
+  'pausado_orden_cambio',
+];
+
+function escrowCopy(jobStatus: string | null | undefined, paymentStatus: string | null | undefined): string {
+  const payment = paymentStatusLabel(paymentStatus);
+  switch (jobStatus) {
+    case 'cancelado':
+    case 'expirado':
+    case 'no_asistio':
+      return `${payment}. El trabajo se cerró sin entregar el cobro al profesional.`;
+    case 'completado':
+      return `${payment}. Diste tu conformidad y el pago se entregó al profesional.`;
+    case 'esperando_pago':
+      return 'Todavía no hay un cobro retenido: el pedido espera el pago.';
+    default:
+      return `${payment}. Se libera cuando das tu conformidad. Si abres una disputa, solo el equipo de atención puede liberarlo o devolverlo.`;
+  }
+}
+
+function agreementLabel(tipo: string): string {
+  if (tipo === 'aceptar') return 'aceptar la entrega';
+  if (tipo === 'rehacer') return 'rehacer el trabajo';
+  if (tipo === 'anular') return 'anular y devolver el pago';
+  return tipo;
+}
+
+function jobsLabel(count: number): string {
+  return `${count} ${count === 1 ? 'trabajo' : 'trabajos'}`;
 }
 
 export function TrackingDashboard({
@@ -88,6 +127,7 @@ export function TrackingDashboard({
   pendingAgreement = null,
   evidencePhotos = [],
   evidence,
+  clientActions,
 }: TrackingDashboardProps) {
   const [showPayment, setShowPayment] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
@@ -102,7 +142,8 @@ export function TrackingDashboard({
     && Number.isFinite(workerLatitude) && Number.isFinite(workerLongitude);
   const statusLabel = jobStatusLabel(jobStatus);
   const statusDetail = jobStatusDetail(jobStatus);
-  const closedJob = jobStatus === 'completado' || jobStatus === 'cancelado';
+  const closedJob = CLOSED_STATUSES.includes(jobStatus ?? '');
+  const disputeAllowed = DISPUTE_STATUSES.includes(jobStatus ?? '');
   const arrivalHint = gpsError
     ?? (etaMinutes != null
       ? `A ${distanceKm?.toFixed(1) ?? '—'} km. Estimación a 28 km/h, sin tráfico en vivo.`
@@ -189,11 +230,11 @@ export function TrackingDashboard({
           <div className="tracking-worker-block">
             <p className="tracking-block-label">TRABAJADOR</p>
             <div className="tracking-worker-row">
-              <img src={workerPhoto} alt="" className="tracking-worker-photo" />
+              <img src={workerPhoto} alt={`Foto de ${workerName}`} className="tracking-worker-photo" />
               <div>
                 <strong>{workerName}</strong>
                 <div className="tracking-worker-rating">
-                  ★ {workerRating.toFixed(1)} ({workerJobs} trabajos)
+                  <span aria-hidden>★</span> {workerRating > 0 ? workerRating.toFixed(1) : 'Nuevo'} ({jobsLabel(workerJobs)})
                 </div>
               </div>
             </div>
@@ -254,12 +295,12 @@ export function TrackingDashboard({
 
           {closedJob ? (
             <div className="tracking-complete-card">
-              <strong>{jobStatus === 'cancelado' ? 'Trabajo anulado' : 'Pago liberado'}</strong>
+              <strong>{jobStatus === 'completado' ? 'Pago liberado' : 'Trabajo cerrado sin cobro al profesional'}</strong>
               <p>
                 {paymentNotice
-                  ?? (jobStatus === 'cancelado'
-                    ? 'El trabajo se anuló y el cobro retenido no se entregó al profesional.'
-                    : 'El trabajo quedó cerrado y el retenido se liberó al profesional.')}
+                  ?? (jobStatus === 'completado'
+                    ? 'El trabajo quedó cerrado y el retenido se liberó al profesional.'
+                    : 'El trabajo se anuló y el cobro retenido no se entregó al profesional.')}
               </p>
               <button type="button" className="btn-primary" onClick={onGoHome}>
                 Volver al inicio
@@ -268,17 +309,18 @@ export function TrackingDashboard({
           ) : null}
 
 
+          {clientActions}
           {evidence}
           <button type="button" className="btn-primary tracking-chat-btn" onClick={onOpenChat}>
             <MessageCircle size={18} /> Abrir chat
           </button>
 
-          {!closedJob && onProposeAgreement ? (
+          {disputeAllowed && onProposeAgreement ? (
             <div className="tracking-escrow-card">
               <strong>Resolver entre ustedes</strong>
               <p>Si los dos están de acuerdo, el sistema cierra el caso sin una persona de soporte.</p>
               {pendingAgreement ? (
-                <p>Hay un acuerdo pendiente: {pendingAgreement.tipo}.</p>
+                <p>Hay un acuerdo pendiente: {agreementLabel(pendingAgreement.tipo)}.</p>
               ) : null}
               <div>
                 <button type="button" className="btn-primary" onClick={() => void onProposeAgreement('aceptar').then(() => setDisputeNote('Acuerdo enviado. Falta que la otra parte lo confirme.')).catch((error: unknown) => setDisputeNote(error instanceof Error ? error.message : 'No se pudo proponer el acuerdo.'))}>Aceptar la entrega</button>
@@ -294,7 +336,7 @@ export function TrackingDashboard({
             </div>
           ) : null}
 
-          {!closedJob && onOpenDispute ? (
+          {disputeAllowed && onOpenDispute ? (
             <form
               className="tracking-escrow-card"
               onSubmit={(event) => {
@@ -333,7 +375,7 @@ export function TrackingDashboard({
               </div>
             </form>
           ) : null}
-          {!closedJob && onAddDisputeComment ? (
+          {disputeAllowed && onAddDisputeComment ? (
             <form
               className="tracking-escrow-card"
               onSubmit={(event) => {
@@ -370,11 +412,8 @@ export function TrackingDashboard({
           <div className="tracking-escrow-card">
             <ShieldCheck size={22} className="tracking-escrow-icon" />
             <div>
-              <strong>Pago protegido</strong>
-              <p>
-                {paymentStatusLabel(paymentStatus)}. Se libera cuando das tu conformidad.
-                Si abres una disputa, solo el equipo de atención puede liberarlo o devolverlo.
-              </p>
+              <strong>{closedJob ? 'Pago' : 'Pago protegido'}</strong>
+              <p>{escrowCopy(jobStatus, paymentStatus)}</p>
               <button
                 type="button"
                 className="tracking-escrow-link"

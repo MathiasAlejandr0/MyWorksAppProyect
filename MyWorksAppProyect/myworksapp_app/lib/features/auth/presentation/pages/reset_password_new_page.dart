@@ -116,6 +116,7 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
                   labelText: 'Nueva contraseña',
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
+                    tooltip: 'Mostrar u ocultar contraseña',
                     icon: Icon(
                       _obscurePassword
                           ? Icons.visibility
@@ -135,6 +136,7 @@ class _ResetPasswordNewPageState extends ConsumerState<ResetPasswordNewPage> {
                   labelText: 'Confirmar contraseña',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
+                    tooltip: 'Mostrar u ocultar contraseña',
                     icon: Icon(
                       _obscureConfirmPassword
                           ? Icons.visibility

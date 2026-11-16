@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../design_system/app_radius.dart';
 import '../../design_system/app_spacing.dart';
+import '../../utils/plural.dart';
 
 /// Indicadores de confianza basados en métricas medibles (cuando existen).
 class PredictiveTrustMeterWidget extends StatelessWidget {
@@ -127,7 +128,7 @@ class PredictiveTrustMeterWidget extends StatelessWidget {
           if (reviewsCount != null) ...[
             const SizedBox(height: 8),
             Text(
-              '$reviewsCount reseñas',
+              plural(reviewsCount!, 'reseña'),
               style: TextStyle(
                 fontSize: 11,
                 color: isDark ? Colors.white60 : AppColors.grayMedium,

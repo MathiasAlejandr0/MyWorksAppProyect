@@ -5,9 +5,7 @@ import {
 } from '../catalog';
 import { uniqueIsoSlots } from '../jobs/bookingSlot';
 import type { WebWorkerCard, WorkerWithProfile } from '../types';
-
-const DEFAULT_AVATAR =
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&q=70';
+import { initialsAvatarDataUrl } from '../avatar';
 
 type WorkerQueryRow = {
   id_usuario: string;
@@ -43,8 +41,8 @@ export type WorkersCatalogPage = {
   nextCursor: CatalogCursor | null;
 };
 
-function listPhotoUrl(url?: string | null): string {
-  if (!url) return DEFAULT_AVATAR;
+function listPhotoUrl(url: string | null | undefined, name: string, seed: string): string {
+  if (!url) return initialsAvatarDataUrl(name, seed);
   if (url.includes('images.unsplash.com')) {
     return url
       .replace(/([?&])w=\d+/g, '$1w=200')
@@ -257,7 +255,7 @@ export function toWebWorkerCard(worker: WorkerWithProfile, jobsDone = 0): WebWor
     category: worker.serviceCategory,
     rating: worker.rating,
     jobsDone: jobsDone || worker.completedJobs || 0,
-    photoUrl: listPhotoUrl(worker.profilePhotoPath),
+    photoUrl: listPhotoUrl(worker.profilePhotoPath, worker.name, worker.userId),
     pricePerVisit: worker.visitFee,
     latitude: worker.baseLatitude ?? null,
     longitude: worker.baseLongitude ?? null,

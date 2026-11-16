@@ -368,6 +368,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
         actions: [
           if (_isEditing)
             IconButton(
+              tooltip: 'Cerrar',
               icon: const Icon(Icons.close),
               onPressed: () {
                 setState(() {
@@ -378,6 +379,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
             )
           else
             IconButton(
+              tooltip: 'Editar',
               icon: const Icon(Icons.edit),
               onPressed: () {
                 setState(() => _isEditing = true);
@@ -652,6 +654,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
                                       color: Colors.white,
                                       shape: const CircleBorder(),
                                       child: IconButton(
+                                        tooltip: 'Eliminar',
                                         icon: const Icon(
                                           Icons.delete,
                                           color: AppColors.error,

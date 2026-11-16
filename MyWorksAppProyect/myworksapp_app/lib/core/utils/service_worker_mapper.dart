@@ -13,6 +13,11 @@ class ServiceWorkerMapper {
     ServiceCategories.techSupport: 'Soporte técnico',
     ServiceCategories.gardening: 'Jardinería',
     ServiceCategories.moving: 'Mudanzas',
+    // Categorías que vienen solo de la base (sin constante propia).
+    'gasfiteria': 'Gasfitería (gas)',
+    'cerrajeria': 'Cerrajería',
+    'pintura': 'Pintura',
+    'climatizacion': 'Climatización',
   };
 
   /// Profesiones disponibles al registrarse (una por categoría de servicio).

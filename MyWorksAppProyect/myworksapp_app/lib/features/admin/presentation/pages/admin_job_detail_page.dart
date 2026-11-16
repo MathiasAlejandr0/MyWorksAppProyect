@@ -1,3 +1,4 @@
+import 'package:myworksapp/core/utils/santiago_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -153,6 +154,7 @@ class _AdminJobDetailPageState extends ConsumerState<AdminJobDetailPage>
               onPressed: _cancelJob,
             ),
           IconButton(
+            tooltip: 'Actualizar',
             icon: const Icon(Icons.refresh),
             onPressed: _load,
           ),
@@ -203,8 +205,8 @@ class _SummaryTab extends StatelessWidget {
             _InfoRow('Estado', job.status),
             _InfoRow('Pago', job.paymentStatus),
             _InfoRow('Modo precio', job.pricingMode),
-            _InfoRow('Creado', dateFmt.format(job.createdAt)),
-            _InfoRow('Actualizado', dateFmt.format(job.updatedAt)),
+            _InfoRow('Creado', dateFmt.format(SantiagoTime.wall(job.createdAt))),
+            _InfoRow('Actualizado', dateFmt.format(SantiagoTime.wall(job.updatedAt))),
           ],
         ),
         _InfoCard(
@@ -282,7 +284,7 @@ class _ChatTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${m.senderId.substring(0, 8)}… · ${dateFmt.format(m.createdAt)}',
+                  '${m.senderId.substring(0, 8)}… · ${dateFmt.format(SantiagoTime.wall(m.createdAt))}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -323,7 +325,7 @@ class _PaymentsTab extends StatelessWidget {
             ),
             subtitle: Text(
               '${p.status} · ${p.paymentType}\n'
-              '${p.paymentMethod ?? '—'} · ${dateFmt.format(p.createdAt)}',
+              '${p.paymentMethod ?? '—'} · ${dateFmt.format(SantiagoTime.wall(p.createdAt))}',
             ),
             isThreeLine: true,
           ),
@@ -356,7 +358,7 @@ class _HistoryTab extends StatelessWidget {
           children: [
             _InfoRow('Puntuación', '${r.score}/5'),
             if (r.comment != null) _InfoRow('Comentario', r.comment!),
-            _InfoRow('Fecha', dateFmt.format(r.createdAt)),
+            _InfoRow('Fecha', dateFmt.format(SantiagoTime.wall(r.createdAt))),
           ],
         ),
       );
@@ -396,7 +398,7 @@ class _HistoryTab extends StatelessWidget {
           children: [
             _InfoRow('Motivo', c.reason),
             _InfoRow('Cancelado por', c.cancelledBy),
-            _InfoRow('Fecha', dateFmt.format(c.cancelledAt)),
+            _InfoRow('Fecha', dateFmt.format(SantiagoTime.wall(c.cancelledAt))),
           ],
         ),
       );

@@ -31,14 +31,14 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
   {
     id: 'plomeria',
     title: 'Plomería',
-    subtitle: 'Fugas, instalaciones y más',
+    subtitle: 'Fugas de agua, cañerías y grifería',
     photo: '/categories/plomeria.webp',
     searchQuery: 'plomería',
   },
   {
     id: 'gasfiteria',
-    title: 'Gasfitería',
-    subtitle: 'Conexiones, revisiones y más',
+    title: 'Gasfitería (gas)',
+    subtitle: 'Calefont, cocinas y conexiones de gas',
     photo: '/categories/gasfiteria.webp',
     searchQuery: 'gasfitería',
   },

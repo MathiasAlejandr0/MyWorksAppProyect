@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/design_system/app_radius.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/santiago_time.dart';
 import '../../../../core/widgets/job_location_map.dart';
 
 /// Resumen compacto de ubicación y agenda para el trabajador tras aceptar.
@@ -27,7 +28,7 @@ class JobAcceptedLocationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheduleText = scheduledDate == null
         ? 'Fecha y hora: a coordinar con el cliente'
-        : DateFormat('EEE d MMM · HH:mm', 'es_CL').format(scheduledDate!);
+        : DateFormat('EEE d MMM · HH:mm', 'es_CL').format(SantiagoTime.wall(scheduledDate!));
 
     return Card(
       elevation: 0,

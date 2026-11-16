@@ -8,6 +8,7 @@ import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/utils/plural.dart';
 
 class AdminRankingPage extends ConsumerStatefulWidget {
   const AdminRankingPage({super.key});
@@ -94,7 +95,7 @@ class _AdminRankingPageState extends ConsumerState<AdminRankingPage>
         SnackBar(
           content: Text(
             ok
-                ? 'El ranking aprendió de ${result['positivos']} trabajos bien cerrados y ${result['negativos']} fallidos.'
+                ? 'El ranking aprendió de ${plural((result['positivos'] as num?)?.toInt() ?? 0, 'trabajo bien cerrado', 'trabajos bien cerrados')} y ${plural((result['negativos'] as num?)?.toInt() ?? 0, 'fallido')}.'
                 : 'Aún no hay muestra suficiente (${result['motivo'] ?? 'sin datos'}).',
           ),
         ),
@@ -342,7 +343,8 @@ class _SignalsTab extends StatelessWidget {
           child: signals.isEmpty
               ? const Center(child: Text('No hay reseñas en esta cola'))
               : ListView.builder(
-                  padding: LayoutUtils.scrollPadding(context, top: AppSpacing.sm),
+                  padding:
+                      LayoutUtils.scrollPadding(context, top: AppSpacing.sm),
                   itemCount: signals.length,
                   itemBuilder: (context, index) {
                     final s = signals[index];

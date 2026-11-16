@@ -30,7 +30,7 @@ export function resolveCategory(text: string): ResolvedServiceQuery | null {
   if (lower.includes('gasfiter') || lower.includes('gas ')) {
     return {
       category: 'gasfiteria',
-      categoryName: 'Gasfitería',
+      categoryName: 'Gasfitería (gas)',
       problem: 'Conexiones, revisiones y mantención de gas',
       minPrice: 30000,
       maxPrice: 80000,

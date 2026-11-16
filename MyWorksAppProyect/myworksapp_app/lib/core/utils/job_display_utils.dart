@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../database/models/job_model.dart';
 import '../domain/price_quote.dart';
 import '../services/job_price.dart';
+import 'santiago_time.dart';
 
 /// Textos legibles para listas y tarjetas de trabajos.
 class JobDisplayUtils {
@@ -73,9 +74,9 @@ class JobDisplayUtils {
   static String dateLine(JobModel job) {
     final scheduled = job.scheduledDate;
     if (scheduled != null) {
-      return 'Programado: ${DateFormat('d MMM y · HH:mm', 'es_CL').format(scheduled)}';
+      return 'Programado: ${DateFormat('d MMM y · HH:mm', 'es_CL').format(SantiagoTime.wall(scheduled))}';
     }
-    return 'Solicitado: ${DateFormat('d MMM y', 'es_CL').format(job.createdAt)}';
+    return 'Solicitado: ${DateFormat('d MMM y', 'es_CL').format(SantiagoTime.wall(job.createdAt))}';
   }
 
   static String _formatClp(int amount) {

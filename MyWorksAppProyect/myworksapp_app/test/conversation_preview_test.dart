@@ -25,7 +25,7 @@ MessageModel _message({
 void main() {
   test('agrupa por trabajo, deja el más reciente primero y cuenta no leídos',
       () {
-    final me = 'cliente-1';
+    const me = 'cliente-1';
     final previews = groupConversations([
       _message(
         id: '1',

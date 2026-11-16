@@ -9,11 +9,11 @@ import 'package:myworksapp/features/worker/presentation/widgets/worker_job_card.
 void main() {
   test('la escala de texto llega a 2.0 y no pasa de ahí', () {
     expect(
-      AppTextScaling.clamp(TextScaler.linear(2)).scale(10),
+      AppTextScaling.clamp(const TextScaler.linear(2)).scale(10),
       20,
     );
     expect(
-      AppTextScaling.clamp(TextScaler.linear(3)).scale(10),
+      AppTextScaling.clamp(const TextScaler.linear(3)).scale(10),
       20,
     );
   });

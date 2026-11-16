@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/database/models/dispute_model.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
+import '../utils/job_detail_helpers.dart';
 
 typedef OpenDisputeCallback = Future<void> Function(
   String reason,
@@ -19,6 +20,7 @@ class DisputeSection extends StatelessWidget {
     required this.dispute,
     required this.canOpenDispute,
     required this.isParticipant,
+    this.canNegotiate = false,
     this.onOpenDispute,
     this.onAddComment,
     this.onProposeAgreement,
@@ -30,6 +32,9 @@ class DisputeSection extends StatelessWidget {
   final DisputeModel? dispute;
   final bool canOpenDispute;
   final bool isParticipant;
+
+  /// Con la disputa cerrada o el trabajo terminado no se ofrecen acuerdos.
+  final bool canNegotiate;
   final OpenDisputeCallback? onOpenDispute;
   final AddDisputeCommentCallback? onAddComment;
   final ProposeAgreementCallback? onProposeAgreement;
@@ -45,10 +50,10 @@ class DisputeSection extends StatelessWidget {
       return _DisputeStatusCard(
         dispute: dispute!,
         onAddComment: onAddComment,
-        onProposeAgreement: onProposeAgreement,
-        onRespondAgreement: onRespondAgreement,
-        pendingAgreementType: pendingAgreementType,
-        pendingAgreementId: pendingAgreementId,
+        onProposeAgreement: canNegotiate ? onProposeAgreement : null,
+        onRespondAgreement: canNegotiate ? onRespondAgreement : null,
+        pendingAgreementType: canNegotiate ? pendingAgreementType : null,
+        pendingAgreementId: canNegotiate ? pendingAgreementId : null,
       );
     }
 
@@ -80,7 +85,10 @@ class DisputeSection extends StatelessWidget {
             ),
             if (pendingAgreementType != null) ...[
               const SizedBox(height: 8),
-              Text('Acuerdo pendiente: $pendingAgreementType'),
+              Text(
+                'Acuerdo pendiente: '
+                '${JobDetailHelpers.agreementTypeLabel(pendingAgreementType)}',
+              ),
               if (onRespondAgreement != null && pendingAgreementId != null)
                 Row(
                   children: [
@@ -252,8 +260,11 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
             Text('Motivo: ${_reasonLabel(dispute.reason)}'),
             if (dispute.rule != null) Text('Regla: ${dispute.rule}'),
             if (widget.pendingAgreementType != null)
-              Text('Acuerdo pendiente: ${widget.pendingAgreementType}'),
-            if (widget.onProposeAgreement != null)
+              Text(
+                'Acuerdo pendiente: '
+                '${JobDetailHelpers.agreementTypeLabel(widget.pendingAgreementType)}',
+              ),
+            if (isOpen && widget.onProposeAgreement != null)
               Wrap(
                 spacing: 8,
                 children: [
@@ -271,7 +282,9 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
                   ),
                 ],
               ),
-            if (widget.onRespondAgreement != null && widget.pendingAgreementId != null)
+            if (isOpen &&
+                widget.onRespondAgreement != null &&
+                widget.pendingAgreementId != null)
               Row(
                 children: [
                   TextButton(

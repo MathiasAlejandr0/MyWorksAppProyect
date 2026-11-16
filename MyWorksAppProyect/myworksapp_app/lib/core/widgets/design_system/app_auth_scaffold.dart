@@ -30,6 +30,7 @@ class AppAuthScaffold extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
+                  tooltip: 'Volver',
                   onPressed: () => Navigator.of(context).maybePop(),
                   icon: const Icon(Icons.arrow_back_rounded),
                   color: Theme.of(context).colorScheme.onSurface,

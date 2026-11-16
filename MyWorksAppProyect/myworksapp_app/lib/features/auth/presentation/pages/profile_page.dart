@@ -15,7 +15,6 @@ import '../../../../core/services/profile_photo_service.dart';
 import '../../../ratings/presentation/widgets/client_reputation_card.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../providers/auth_provider.dart';

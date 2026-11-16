@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/job_display_utils.dart';
+import '../../../../core/utils/job_status_copy.dart';
+import '../../../../core/utils/santiago_time.dart';
 import '../../../../core/utils/location_utils.dart';
 import '../../../ratings/presentation/widgets/client_rating_badge.dart';
 
@@ -64,20 +66,7 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
     }
   }
 
-  String _statusLabel(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return 'PENDIENTE';
-      case AppConstants.jobStatusInProgress:
-        return 'EN CURSO';
-      case AppConstants.jobStatusCompleted:
-        return 'FINALIZADO';
-      case AppConstants.jobStatusAccepted:
-        return 'ACEPTADO';
-      default:
-        return status.toUpperCase();
-    }
-  }
+  String _statusLabel(String status) => JobStatusCopy.chipLabel(status);
 
   Color _statusColor(String status) {
     switch (status) {
@@ -88,7 +77,7 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
       case AppConstants.jobStatusCompleted:
         return AppColors.emerald;
       default:
-        return AppColors.brandOrange;
+        return JobStatusCopy.color(status);
     }
   }
 
@@ -99,15 +88,16 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
   }
 
   (String date, String? time) _scheduleParts() {
-    final scheduled = widget.job.scheduledDate;
-    if (scheduled != null) {
+    final rawScheduled = widget.job.scheduledDate;
+    if (rawScheduled != null) {
+      final scheduled = SantiagoTime.wall(rawScheduled);
       return (
         DateFormat('d MMM y', 'es_CL').format(scheduled),
         DateFormat('HH:mm', 'es_CL').format(scheduled),
       );
     }
     return (
-      DateFormat('d MMM y', 'es_CL').format(widget.job.createdAt),
+      DateFormat('d MMM y', 'es_CL').format(SantiagoTime.wall(widget.job.createdAt)),
       null,
     );
   }
@@ -224,7 +214,7 @@ class _WorkerJobCardState extends State<WorkerJobCard> {
                           Text(
                             widget.priceLabel ??
                                 JobDisplayUtils.offeredAmountLabel(widget.job),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                               color: AppColors.brandOrange,

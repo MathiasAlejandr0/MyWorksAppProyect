@@ -165,7 +165,7 @@ class WorkerCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        rating!.toStringAsFixed(1),
+                        rating! > 0 ? rating!.toStringAsFixed(1) : 'Nuevo',
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),

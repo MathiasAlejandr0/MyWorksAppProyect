@@ -114,6 +114,7 @@ class _NotificationListenerScopeState
                         ),
                       ),
                       IconButton(
+                        tooltip: 'Cerrar',
                         icon: const Icon(Icons.close, size: 20),
                         onPressed: () => setState(() => _latest = null),
                       ),

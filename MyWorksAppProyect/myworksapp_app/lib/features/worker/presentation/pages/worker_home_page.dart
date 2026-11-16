@@ -643,6 +643,7 @@ class _WorkerTopBar extends StatelessWidget {
             ),
           ),
           IconButton(
+            tooltip: 'Notificaciones',
             onPressed: onNotifications,
             icon: Badge(
               isLabelVisible: unreadNotifications > 0,

@@ -72,7 +72,7 @@ function workerPopup(
   role.textContent = worker.isElite ? `${worker.profession} · Élite` : worker.profession;
   const meta = document.createElement('span');
   const price = clp(worker.pricePerVisit);
-  meta.textContent = `★ ${worker.rating.toFixed(1)} · desde $${price}`;
+  meta.textContent = `${worker.rating > 0 ? `★ ${worker.rating.toFixed(1)}` : 'Nuevo'} · desde $${price}`;
   const radar = document.createElement('span');
   radar.className = 'mwa-map-radar';
   const radiusKm = resolveServiceRadiusKm(worker.serviceRadiusKm);
@@ -96,6 +96,16 @@ function workerPopup(
   root.append(title, role, meta, radar);
   return root;
 }
+
+/**
+ * El recuento y la leyenda tapan la franja superior y la búsqueda de
+ * dirección la inferior: los globos se acomodan dentro del espacio libre.
+ */
+const POPUP_OPTIONS: L.PopupOptions = {
+  autoPanPaddingTopLeft: L.point(16, 150),
+  autoPanPaddingBottomRight: L.point(16, 130),
+  maxWidth: 240,
+};
 
 type PremiumSearchMapProps = {
   workers: SearchWorker[];
@@ -220,8 +230,17 @@ export function PremiumSearchMap({
       if (!position) continue;
       positions.push(position);
       const elite = worker.isElite === true;
-      const marker = L.marker(position, { icon: elite ? pinIconElite : pinIcon });
-      marker.bindPopup(workerPopup(worker, clientLocRef.current));
+      const marker = L.marker(position, {
+        icon: elite ? pinIconElite : pinIcon,
+        title: worker.name,
+        keyboard: true,
+      });
+      marker.on('add', () => {
+        marker
+          .getElement()
+          ?.setAttribute('aria-label', `${worker.name}, ${worker.profession}. Ver en el mapa`);
+      });
+      marker.bindPopup(workerPopup(worker, clientLocRef.current), POPUP_OPTIONS);
       marker.on('click', () => onSelectRef.current(worker));
       marker.addTo(map);
       markersRef.current.set(worker.id, marker);
@@ -305,8 +324,12 @@ export function PremiumSearchMap({
       icon: clientIcon,
       draggable: true,
       zIndexOffset: 400,
+      title: 'Ubicación de tu trabajo',
     });
-    marker.bindPopup(clientText);
+    marker.on('add', () => {
+      marker.getElement()?.setAttribute('aria-label', 'Ubicación de tu trabajo (se puede arrastrar)');
+    });
+    marker.bindPopup(clientText, POPUP_OPTIONS);
     marker.on('dragend', () => {
       const point = marker.getLatLng();
       onPickRef.current?.({ latitude: point.lat, longitude: point.lng });
@@ -340,7 +363,7 @@ export function PremiumSearchMap({
             className="premium-search-map-card"
             onClick={() => onSelectWorker(selected)}
           >
-            <img src={selected.photoUrl} alt="" />
+            <img src={selected.photoUrl} alt="" width={44} height={44} />
             <div>
               <strong>{selected.name}</strong>
               <span>

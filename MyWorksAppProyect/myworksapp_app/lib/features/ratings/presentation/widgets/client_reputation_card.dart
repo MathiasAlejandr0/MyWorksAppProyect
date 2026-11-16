@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/database/repositories/client_rating_repository.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/plural.dart';
 
 /// Nota que los especialistas dejan al cliente, más las disputas que abrió.
 class ClientReputationCard extends StatelessWidget {
@@ -16,7 +17,8 @@ class ClientReputationCard extends StatelessWidget {
       builder: (context, snapshot) {
         final data = snapshot.data;
         final score = data?.score;
-        final scoreLabel = score == null ? 'Sin notas aún' : score.toStringAsFixed(1);
+        final scoreLabel =
+            score == null ? 'Sin notas aún' : score.toStringAsFixed(1);
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -33,7 +35,8 @@ class ClientReputationCard extends StatelessWidget {
                 if (snapshot.connectionState == ConnectionState.waiting)
                   const LinearProgressIndicator()
                 else if (snapshot.hasError)
-                  const Text('La reputación no está disponible en este momento.')
+                  const Text(
+                      'La reputación no está disponible en este momento.')
                 else ...[
                   Row(
                     children: [
@@ -41,17 +44,19 @@ class ClientReputationCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         scoreLabel,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                       ),
                       const SizedBox(width: 8),
-                      Text('${data?.ratings ?? 0} notas de especialistas'),
+                      Text(
+                          '${plural(data?.ratings ?? 0, 'nota')} de especialistas'),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${data?.disputes ?? 0} disputas abiertas por esta cuenta. '
+                    '${plural(data?.disputes ?? 0, 'disputa abierta', 'disputas abiertas')} por esta cuenta. '
                     'Sirve para ver si se rechaza la conformidad sin fundamento.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),

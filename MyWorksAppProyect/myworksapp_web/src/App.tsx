@@ -48,6 +48,8 @@ import {
   type JobEvidencePhoto,
   type CatalogCursor,
   type WorkerWithProfile,
+  initialsAvatarDataUrl,
+  profilePhotoOrInitials,
 } from '@myworksapp/shared';
 
 type ScheduleRow = {
@@ -182,6 +184,11 @@ const JobEvidencePanel = lazy(() =>
   })),
 );
 
+const JobClientActions = lazy(() =>
+  import('./components/JobClientActions').then((m) => ({
+    default: m.JobClientActions,
+  })),
+);
 const TrackingDashboard = lazy(() =>
   import('./components/TrackingDashboard').then((m) => ({
     default: m.TrackingDashboard,
@@ -192,8 +199,6 @@ function ViewFallback() {
   return <div className="min-h-screen app-shell" />;
 }
 
-const FALLBACK_PHOTO =
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&q=70';
 
 type AppView = 'landing' | 'categories' | 'search' | 'tracking' | 'paid';
 
@@ -469,13 +474,13 @@ export function App() {
         category: '',
         rating: 0,
         jobsDone: 0,
-        photoUrl: FALLBACK_PHOTO,
+        photoUrl: initialsAvatarDataUrl('Profesional', snapshot.workerId ?? 'sin-profesional'),
         pricePerVisit: 0,
       };
       if (snapshot.workerId) {
         const { data } = await supabase
           .from('trabajadores')
-          .select('id_usuario, profesion, calificacion, tarifa_visita, categoria_servicio, perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)')
+          .select('id_usuario, profesion, calificacion, tarifa_visita, categoria_servicio, trabajos_completados, perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)')
           .eq('id_usuario', snapshot.workerId)
           .maybeSingle();
         if (data) {
@@ -490,23 +495,17 @@ export function App() {
             profession: String(data.profesion ?? 'Visita'),
             category: String(data.categoria_servicio ?? ''),
             rating: Number(data.calificacion ?? 0),
-            jobsDone: 0,
-            photoUrl: profileRow?.ruta_foto_perfil || FALLBACK_PHOTO,
+            // Conteo real de la ficha: el catálogo excluye a quien está ocupado
+            // y antes el seguimiento mostraba "(0 trabajos)".
+            jobsDone: Number(data.trabajos_completados ?? 0),
+            photoUrl: profilePhotoOrInitials(
+              profileRow?.ruta_foto_perfil,
+              profileRow?.nombre ?? 'Profesional',
+              String(data.id_usuario),
+            ),
             pricePerVisit: Number(data.tarifa_visita ?? 0),
           };
         }
-      }
-      if (worker.category && snapshot.workerId) {
-        // Mismo conteo que la tarjeta del catálogo (trabajos completados reales).
-        const catalog = await supabase.rpc('listar_profesionales_catalogo', {
-          p_categoria: worker.category,
-          p_limit: 40,
-        });
-        const rows = Array.isArray(catalog.data)
-          ? (catalog.data as { id_usuario: string; trabajos_completados?: number | null }[])
-          : [];
-        const row = rows.find((r) => String(r.id_usuario) === String(snapshot.workerId));
-        if (row) worker = { ...worker, jobsDone: Number(row.trabajos_completados ?? 0) };
       }
       setSelectedWorker(worker);
       setServiceMatch((prev) => prev ?? {
@@ -1210,8 +1209,8 @@ export function App() {
           onGoHome={goHome}
 
           onBack={() => {
-            const closed = jobSnapshot?.status === 'completado'
-              || jobSnapshot?.status === 'cancelado';
+            const closed = ['completado', 'cancelado', 'expirado', 'no_asistio']
+              .includes(jobSnapshot?.status ?? '');
             if (closed) {
               goHome();
               return;
@@ -1223,8 +1222,32 @@ export function App() {
 
           onOpenChat={() => setShowChat(true)}
 
+          clientActions={checkoutJobId && profile && jobSnapshot && jobSnapshot.userId === profile.id ? (
+            <JobClientActions
+              jobId={checkoutJobId}
+              status={jobSnapshot.status}
+              scheduledAt={jobSnapshot.scheduledAt}
+              workerId={jobSnapshot.workerId}
+              workerName={selectedWorker.name}
+              userId={profile.id}
+              onChanged={() => {
+                void fetchJobTrackingSnapshot(supabase, checkoutJobId)
+                  .then((snapshot) => {
+                    if (snapshot) setJobSnapshot(snapshot);
+                  })
+                  .catch(() => {
+                    // El refresco periódico vuelve a intentarlo.
+                  });
+              }}
+            />
+          ) : null}
+
           evidence={checkoutJobId && profile ? (
-            <JobEvidencePanel jobId={checkoutJobId} userId={profile.id} />
+            <JobEvidencePanel
+              jobId={checkoutJobId}
+              userId={profile.id}
+              readOnly={['completado', 'cancelado', 'expirado', 'rechazado'].includes(jobSnapshot?.status ?? '')}
+            />
           ) : null}
 
           onOpenNotifications={() => setShowNotifications(true)}
@@ -1243,7 +1266,15 @@ export function App() {
               p_motivo: reason,
               p_descripcion: detail,
             });
-            if (error) throw new Error('No se pudo abrir la disputa.');
+            if (error) {
+              throw new Error(
+                /cerrado/i.test(error.message)
+                  ? 'El trabajo ya está cerrado: no admite disputas.'
+                  : /ya existe/i.test(error.message)
+                    ? 'Ya hay una disputa abierta para este trabajo.'
+                    : 'No se pudo abrir la disputa.',
+              );
+            }
           } : undefined}
 
           pendingAgreement={pendingAgreement}

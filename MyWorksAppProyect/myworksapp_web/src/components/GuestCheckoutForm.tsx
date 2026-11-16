@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Lock, MapPin, Phone, User, Mail, X, ExternalLink } from 'lucide-react';
-import { transportCheckoutCopy } from '@myworksapp/shared';
+import { reservedEmailMessage, transportCheckoutCopy } from '@myworksapp/shared';
 import { TurnstileWidget } from './TurnstileWidget';
 import { turnstileSiteKey } from './turnstileSite';
 
@@ -64,6 +64,11 @@ export function GuestCheckoutForm({
     setError(null);
     if (!name.trim() || !email.trim() || !phone.trim() || !address.trim()) {
       setError('Completa tus datos personales y la dirección del trabajo.');
+      return;
+    }
+    const reserved = reservedEmailMessage(email);
+    if (reserved) {
+      setError(reserved);
       return;
     }
     if (import.meta.env.PROD && !turnstileSiteKey()) {

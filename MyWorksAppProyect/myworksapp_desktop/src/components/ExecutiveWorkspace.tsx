@@ -19,7 +19,7 @@ import { ExecutivePeriodPanel } from './ExecutivePeriodPanel';
 import { FinancialSettlementModal } from './FinancialSettlementModal';
 import { DigitalContractModal } from './DigitalContractModal';
 import { KpiCardsSkeleton, TableRowsSkeleton } from './LoadingState';
-import { fetchAdminMetrics, fetchBusinessPeriod, fetchWorkersForAdmin, periodRange, setWorkerVerification, verificationLabel } from '@myworksapp/shared';
+import { fetchAdminMetrics, fetchBusinessPeriod, fetchWorkersForAdmin, periodRange, pluralize, setWorkerVerification, verificationLabel } from '@myworksapp/shared';
 import { PaymentAttentionBanner } from './PaymentAttentionBanner';
 import { supabase } from '../supabaseClient';
 import { queryKeys } from '../queryClient';
@@ -211,7 +211,7 @@ export function ExecutiveWorkspace({ headerActions }: ExecutiveWorkspaceProps) {
 
       trend: csat == null
         ? (businessQuery.isError ? 'No se pudieron leer las calificaciones' : 'Sin calificaciones en 7 días')
-        : `${businessQuery.data?.ratingCount ?? 0} reseñas`,
+        : pluralize(businessQuery.data?.ratingCount ?? 0, 'reseña'),
 
       up: true,
 

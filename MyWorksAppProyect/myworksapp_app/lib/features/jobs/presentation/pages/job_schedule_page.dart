@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:myworksapp/core/theme/app_colors.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
@@ -8,7 +7,7 @@ import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/domain/worker_hours.dart';
 import '../../../../core/providers/repository_providers.dart';
-import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/job_status_copy.dart';
 import '../../../../core/utils/mock_reserved_slots.dart';
 import '../../../../core/utils/job_schedule_grouping.dart';
 import '../../../../core/utils/santiago_time.dart';
@@ -45,12 +44,6 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
   }
 
   DateTime _dayKey(DateTime date) => DateTime(date.year, date.month, date.day);
-
-  DateTime _jobDay(JobModel job) {
-    final scheduled = job.scheduledDate?.toLocal();
-    final source = scheduled ?? job.createdAt.toLocal();
-    return _dayKey(source);
-  }
 
   Future<void> _loadHours() async {
     final user = ref.read(authProvider).user;
@@ -121,12 +114,6 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
 
   List<JobModel> _getJobsForDay(DateTime day) {
     return _jobsByDate[_dayKey(day)] ?? [];
-  }
-
-  String _jobTimeLabel(JobModel job) {
-    final scheduled = job.scheduledDate?.toLocal();
-    if (scheduled == null) return 'Sin hora de visita';
-    return DateFormat('HH:mm').format(scheduled);
   }
 
   @override
@@ -218,48 +205,9 @@ class _JobSchedulePageState extends ConsumerState<JobSchedulePage> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return AppColors.warning;
-      case AppConstants.jobStatusAccepted:
-        return AppColors.brandOrange;
-      case AppConstants.jobStatusInProgress:
-        return AppColors.brandOrangeDark;
-      case AppConstants.jobStatusCompleted:
-        return AppColors.success;
-      default:
-        return AppColors.grayMedium;
-    }
-  }
+  Color _getStatusColor(String status) => JobStatusCopy.color(status);
 
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return Icons.pending;
-      case AppConstants.jobStatusAccepted:
-        return Icons.check_circle_outline;
-      case AppConstants.jobStatusInProgress:
-        return Icons.work;
-      case AppConstants.jobStatusCompleted:
-        return Icons.check_circle;
-      default:
-        return Icons.help_outline;
-    }
-  }
+  IconData _getStatusIcon(String status) => JobStatusCopy.icon(status);
 
-  String _getStatusText(String status) {
-    switch (status) {
-      case AppConstants.jobStatusPending:
-        return 'Pendiente';
-      case AppConstants.jobStatusAccepted:
-        return 'Aceptado';
-      case AppConstants.jobStatusInProgress:
-        return 'En Curso';
-      case AppConstants.jobStatusCompleted:
-        return 'Completado';
-      default:
-        return status;
-    }
-  }
+  String _getStatusText(String status) => JobStatusCopy.label(status);
 }

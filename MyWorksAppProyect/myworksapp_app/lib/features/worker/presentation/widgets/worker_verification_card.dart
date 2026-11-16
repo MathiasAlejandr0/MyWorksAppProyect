@@ -1,3 +1,5 @@
+import 'package:myworksapp/core/utils/santiago_time.dart';
+import 'package:intl/intl.dart';
 import 'package:myworksapp/core/utils/error_handler.dart';
 import 'dart:typed_data';
 
@@ -192,7 +194,8 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
                     [
                       if (event.note != null && event.note!.trim().isNotEmpty)
                         event.note!.trim(),
-                      '${event.createdAt.toLocal()}',
+                      DateFormat('d MMM y · HH:mm', 'es_CL')
+                          .format(SantiagoTime.wall(event.createdAt)),
                     ].join('\n'),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

@@ -10,7 +10,8 @@ extension JobDetailStatusActions on _JobDetailPageState {
 
   Future<void> _startJob() async {
     String? serverError;
-    while (mounted) {
+    while (true) {
+      if (!mounted) return;
       final pin = await ServicePinDialog.show(
         context,
         title: 'Iniciar trabajo',

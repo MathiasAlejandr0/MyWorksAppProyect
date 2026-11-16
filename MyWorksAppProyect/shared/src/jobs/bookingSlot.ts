@@ -1,3 +1,4 @@
+import { normalizeDbTimestamp } from './reschedule';
 export const CHILE_TIME_ZONE = 'America/Santiago';
 
 export interface WorkerHourSlot {
@@ -86,7 +87,7 @@ export function formatBookingSlotLabel(
   iso: string,
   timeZone = CHILE_TIME_ZONE,
 ): string {
-  const date = new Date(iso);
+  const date = new Date(normalizeDbTimestamp(iso));
   if (Number.isNaN(date.getTime())) return iso;
   const formatted = new Intl.DateTimeFormat('es-CL', {
     timeZone,

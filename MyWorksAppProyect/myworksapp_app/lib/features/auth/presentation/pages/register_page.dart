@@ -178,6 +178,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 labelText: 'Contraseña',
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
+                  tooltip: 'Mostrar u ocultar contraseña',
                   icon: Icon(
                     _obscurePassword
                         ? Icons.visibility_outlined
@@ -201,6 +202,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 labelText: 'Confirmar contraseña',
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
+                  tooltip: 'Mostrar u ocultar contraseña',
                   icon: Icon(
                     _obscureConfirmPassword
                         ? Icons.visibility_outlined

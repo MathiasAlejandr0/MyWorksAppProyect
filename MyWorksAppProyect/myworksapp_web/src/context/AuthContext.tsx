@@ -9,10 +9,14 @@ import type { Profile } from '@myworksapp/shared';
 import {
   AuthError,
   getSessionProfile,
+  PASSWORD_RESET_PARAM,
+  passwordResetRedirect,
+  requestPasswordReset,
   signIn,
   signInWithOAuthProvider,
   signOut,
   signUpUser,
+  updateAccountPassword,
   type OAuthProviderId,
 } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
@@ -37,8 +41,22 @@ async function enforceWebClientRole(profile: Profile | null): Promise<Profile | 
   return profile;
 }
 
+function urlMarksPasswordReset(): boolean {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).has(PASSWORD_RESET_PARAM);
+}
+
+function clearPasswordResetParam(): void {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has(PASSWORD_RESET_PARAM)) return;
+  url.searchParams.delete(PASSWORD_RESET_PARAM);
+  window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [recoveringPassword, setRecoveringPassword] = useState(urlMarksPasswordReset);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void run();
     const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setRecoveringPassword(true);
       if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;
       void run();
     });
@@ -106,6 +125,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(allowed);
   }, []);
 
+  const sendPasswordReset = useCallback(async (email: string) => {
+    await requestPasswordReset(supabase, email, passwordResetRedirect(window.location.origin));
+  }, []);
+
+  const finishPasswordReset = useCallback(async (password: string) => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      throw new AuthError('El enlace venció, ya se usó o se abrió en otro navegador. Pide uno nuevo desde «¿Olvidaste tu contraseña?» y ábrelo en este mismo navegador.');
+    }
+    await updateAccountPassword(supabase, password);
+    clearPasswordResetParam();
+    setRecoveringPassword(false);
+  }, []);
+
+  const cancelPasswordReset = useCallback(async () => {
+    clearPasswordResetParam();
+    setRecoveringPassword(false);
+    await signOut(supabase);
+    setProfile(null);
+  }, []);
+
   const logout = useCallback(async () => {
     await signOut(supabase);
     setProfile(null);
@@ -122,8 +162,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       clearError: () => setError(null),
+      recoveringPassword,
+      sendPasswordReset,
+      finishPasswordReset,
+      cancelPasswordReset,
     }),
-    [profile, loading, error, login, loginWithOAuth, register, logout],
+    [
+      profile,
+      loading,
+      error,
+      login,
+      loginWithOAuth,
+      register,
+      logout,
+      recoveringPassword,
+      sendPasswordReset,
+      finishPasswordReset,
+      cancelPasswordReset,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

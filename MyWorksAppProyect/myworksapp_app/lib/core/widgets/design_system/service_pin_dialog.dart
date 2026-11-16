@@ -180,6 +180,7 @@ class _ServicePinDialogState extends State<ServicePinDialog> {
                 if (index == 9) return const SizedBox.shrink();
                 if (index == 11) {
                   return IconButton(
+                    tooltip: 'Borrar dígito',
                     onPressed: _onBackspace,
                     icon: const Icon(Icons.backspace_rounded, size: 22),
                   );

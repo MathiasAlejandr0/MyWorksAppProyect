@@ -41,7 +41,7 @@ export function AdminMfaGate() {
       }
       const enrolled = await supabase.auth.mfa.enroll({
         factorType: 'totp',
-        friendlyName: 'Consola administrador',
+        friendlyName: 'Consola MyWorksApp',
       });
       if (cancelled) return;
       if (enrolled.error || !enrolled.data) {
@@ -87,7 +87,7 @@ export function AdminMfaGate() {
         <p className="login-security-title">
           <ShieldCheck size={16} /> Segundo factor
         </p>
-        <h1>Confirma que eres el administrador</h1>
+        <h1>Confirma tu identidad</h1>
         <p>
           {qr
             ? 'Escanea el código con tu aplicación de autenticación y escribe el código de 6 dígitos.'

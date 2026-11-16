@@ -19,11 +19,16 @@ export * from './catalog';
 export * from './database.types';
 export * from './client';
 export * from './auth';
+export * from './emailDomain';
+export * from './avatar';
+export * from './plural';
 export type {
   Profile,
   ServiceRow,
   WorkerWithProfile,
   WebWorkerCard,
+  ConsoleRole,
+  UserRole,
 } from './types';
 export * from './payments/webpay';
 export * from './payments/oneclick';
@@ -39,6 +44,8 @@ export * from './repositories/notifications';
 export * from './jobs/statusCopy';
 export * from './jobs/startPin';
 export * from './jobs/bookingSlot';
+export * from './jobs/reschedule';
+export * from './jobs/clientActions';
 export * from './chat/messages';
 export { contactBlockedMessage, contactBlockedTitle } from './chat/contactFilter';
 export * from './verification';

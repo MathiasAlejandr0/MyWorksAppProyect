@@ -172,7 +172,7 @@ export function DesktopLoginScreen() {
               </div>
               <div className="login-security-item">
                 <ShieldCheck size={16} />
-                <span>Acceso solo con rol administrador</span>
+                <span>Solo equipo: administración, soporte o QA</span>
               </div>
               <div className="login-security-item">
                 <BadgeCheck size={16} />

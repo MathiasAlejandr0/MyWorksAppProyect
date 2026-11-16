@@ -1,6 +1,7 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import {
   guestPasswordConfirmPlan,
+  guestPasswordOutcome,
   paymentHoldTransitioned,
   sha256Hex,
 } from "../_shared/guest_ticket.ts";
@@ -111,14 +112,18 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "No se pudo guardar la contraseña" }, 400);
     }
 
-    if (plan.resendSignup && owner.user.email) {
+    // La clave ya quedó guardada. Si el correo falla (SMTP o dominio
+    // rechazado) no se revierte: se avisa y se puede reenviar al iniciar sesión.
+    const resendAttempted = Boolean(plan.resendSignup && owner.user.email);
+    let resendFailed = false;
+    if (resendAttempted) {
       const { error: resendErr } = await admin.auth.resend({
         type: "signup",
-        email: owner.user.email,
+        email: owner.user.email!,
       });
       if (resendErr) {
-        await releaseClaim();
-        return jsonResponse(req, { error: "No se pudo enviar el correo de confirmación" }, 502);
+        resendFailed = true;
+        console.warn("definir-clave-invitado: correo de confirmación no enviado", resendErr.status ?? "");
       }
     }
 
@@ -130,7 +135,14 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "No se pudo guardar la contraseña" }, 400);
     }
 
-    return jsonResponse(req, { ok: true, emailConfirmed: plan.emailConfirmed });
+    return jsonResponse(
+      req,
+      guestPasswordOutcome({
+        emailConfirmed: plan.emailConfirmed,
+        resendAttempted,
+        resendFailed,
+      }),
+    );
   } catch (e) {
     const msg = e instanceof Error ? e.message : "No se pudo guardar la contraseña";
     const status = msg.includes("WEBPAY_HANDOFF_SECRET") ? 503 : 500;

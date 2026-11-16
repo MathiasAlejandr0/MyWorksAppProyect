@@ -287,6 +287,7 @@ class _PortfolioVideoPageState extends State<_PortfolioVideoPage> {
               child: Row(
                 children: [
                   IconButton(
+                    tooltip: isPlaying ? 'Pausar' : 'Reproducir',
                     onPressed: _togglePlay,
                     icon: Icon(
                       isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,

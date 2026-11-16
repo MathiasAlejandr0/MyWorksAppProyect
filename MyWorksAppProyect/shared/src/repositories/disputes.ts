@@ -146,3 +146,36 @@ export async function updateDisputeStatus(
     actualizado_en: String(row.actualizado_en ?? new Date().toISOString()),
   };
 }
+
+/**
+ * Cola de disputas para la consola (administrador, soporte o QA).
+ * Usa el RPC `consola_disputas_abiertas`, que valida el rol en la base y
+ * devuelve solo nombres y el monto retenido (sin leer perfiles ni pagos).
+ */
+export async function fetchConsoleDisputes(
+  supabase: AppSupabase,
+): Promise<DisputeWithContext[]> {
+  const { data, error } = await supabase.rpc('consola_disputas_abiertas');
+  if (error) throw error;
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    ...mapDispute({ ...row, abierta_por: '', resolucion: null, origen: null, actualizado_en: row.creado_en }),
+    clientName: (row.nombre_cliente as string | null) ?? 'Cliente',
+    workerName: (row.nombre_profesional as string | null) ?? 'Profesional',
+    escrowAmount: Number(row.monto_retenido) || 0,
+  }));
+}
+
+/** Nota interna de soporte en una disputa (RPC `soporte_comentar_disputa`). */
+export async function addSupportDisputeNote(
+  supabase: AppSupabase,
+  disputeId: string,
+  note: string,
+): Promise<void> {
+  const text = note.trim();
+  if (!text) throw new Error('Escribe la nota antes de guardarla.');
+  const { error } = await supabase.rpc('soporte_comentar_disputa', {
+    p_id: disputeId,
+    p_comentario: text,
+  });
+  if (error) throw error;
+}

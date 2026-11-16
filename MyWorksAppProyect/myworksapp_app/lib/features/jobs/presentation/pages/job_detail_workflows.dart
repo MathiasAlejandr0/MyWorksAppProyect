@@ -644,7 +644,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
                 _job!.hourlyBlockHours != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Bloque prepagado: ${_job!.hourlyBlockHours} horas',
+                'Bloque prepagado: ${plural(_job!.hourlyBlockHours!, 'hora')}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
@@ -670,10 +670,18 @@ extension JobDetailWorkflows on _JobDetailPageState {
               onReview: !isWorker ? _approveChangeOrder : null,
             ),
             const SizedBox(height: 16),
+            if (isOwner)
+              RescheduleSection(
+                job: _job!,
+                currentUserId: currentUser?.id,
+                onChanged: _loadJobDetails,
+              ),
             DisputeSection(
               dispute: _dispute,
               isParticipant: isOwner,
               canOpenDispute: _canOpenDispute(_job!),
+              canNegotiate:
+                  JobDetailHelpers.canNegotiateDispute(_job!, _dispute),
               onOpenDispute: _openDispute,
               onAddComment: _addDisputeComment,
               onProposeAgreement: _proposeAgreement,

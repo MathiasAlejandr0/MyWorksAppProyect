@@ -395,6 +395,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                                       top: 4,
                                       right: 4,
                                       child: IconButton(
+                                        tooltip: 'Eliminar',
                                         icon: const Icon(Icons.delete,
                                             color: AppColors.error),
                                         onPressed: () => _deletePhoto(photo.id),
@@ -498,6 +499,7 @@ class _EvidenceViewerState extends State<_EvidenceViewer> {
         actions: [
           if (widget.onDelete != null)
             IconButton(
+              tooltip: 'Eliminar',
               icon: const Icon(Icons.delete, color: AppColors.error),
               onPressed: () {
                 widget.onDelete!();

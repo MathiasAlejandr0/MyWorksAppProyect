@@ -48,7 +48,7 @@ export function QuickBookingBar({
       <div className="quick-booking-inner">
         <div className="quick-booking-copy">
           <p className="quick-booking-kicker">RESERVA RÁPIDA</p>
-          <h3>¿Cuándo necesitas el servicio?</h3>
+          <h2>¿Cuándo necesitas el servicio?</h2>
           <p className="quick-booking-hint">
             {loadingSlots
               ? 'Cargando horarios del profesional…'
