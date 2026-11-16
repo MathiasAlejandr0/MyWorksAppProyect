@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """Arma el diccionario del Anexo A: una tabla con cada tabla y sus atributos.
 
-Fuente: Fase 2/modelo_entidad_relacion.dbml (modelo lógico v2.3).
+Fuente: Fase 2/modelo_entidad_relacion.dbml.
+El diccionario vigente y el Anexo A en Markdown se generan con
+MyWorksAppProyect/docs/_gen_diccionario_desde_schema.py.
+Este script se conserva como apoyo; no inserta el anexo en el
+informe final salvo que se pase --informe.
 """
 import importlib.util
 import re
@@ -394,12 +398,14 @@ def main():
     ordered = [by_name[n] for n in order if n in by_name]
     ordered += [t for t in tables if t["name"] not in order]
     items = entradas(ordered, groups, fk_map(refs), notas_de_tabla(text))
-    if len(items) != 43:
-        raise SystemExit(f"Se esperaban 43 tablas y hay {len(items)}")
-    respaldo = insertar_en_informe(items)
     write_md(items)
-    print(f"{len(items)} tablas insertadas en {INFORME.name}")
-    print(f"respaldo {respaldo}")
+    print(f"{len(items)} tablas escritas en {OUT_MD.name}")
+    if "--informe" in __import__("sys").argv:
+        respaldo = insertar_en_informe(items)
+        print(f"{len(items)} tablas insertadas en {INFORME.name}")
+        print(f"respaldo {respaldo}")
+    else:
+        print("No se modificó el informe final (pasa --informe para insertar el anexo).")
 
 
 if __name__ == "__main__":

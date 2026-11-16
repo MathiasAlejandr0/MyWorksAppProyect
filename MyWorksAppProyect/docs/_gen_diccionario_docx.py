@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Genera docs/DICCIONARIO_BASE_DATOS.docx y .md desde el modelo ER (DBML).
+"""Parser DBML y estilos del diccionario (se conserva para el diagrama ER).
 
-Fuente única: Fase 2/modelo_entidad_relacion.dbml (raíz del repo grupal).
-No agrega tablas ni columnas que no estén en el DBML.
-
-Uso: python docs/_gen_diccionario_docx.py
+El diccionario vigente se genera desde el esquema real con
+`docs/_gen_diccionario_desde_schema.py` (snapshot `_schema_public.json`).
+No uses este script para sobrescribir DICCIONARIO_BASE_DATOS.*: quedaría
+sin RLS, funciones ni las tablas posteriores al modelo v2.3.
 """
 import re
 from pathlib import Path
