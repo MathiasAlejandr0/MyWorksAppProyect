@@ -1,0 +1,786 @@
+// MyWorksApp — modelo entidad-relación generado desde la BD viva
+// Proyecto wxqrfcqifkfgawrnqmnj · migración 20261116044049 · abrir en https://dbdiagram.io
+Project MyWorksApp { database_type: 'PostgreSQL' }
+
+Table acciones_pendientes {
+  id text [pk]
+  id_usuario uuid [not null]
+  tipo_accion text [not null]
+  tipo_entidad text [not null]
+  id_entidad text
+  datos text [not null]
+  estado text [not null]
+  conteo_reintentos integer
+  mensaje_error text
+  creado_en text [not null]
+  actualizado_en text [not null]
+}
+
+Table acuerdos_trabajo {
+  id text [pk]
+  id_trabajo text [not null]
+  tipo text [not null]
+  propuesto_por uuid [not null]
+  acepta_cliente boolean
+  acepta_trabajador boolean
+  estado text [not null]
+  creado_en "timestamp with time zone" [not null]
+  aplicado_en "timestamp with time zone"
+}
+
+Table app_config {
+  clave text [pk]
+  valor text [not null]
+  actualizado_en "timestamp with time zone" [not null]
+}
+
+Table banderas_funcionalidad {
+  id text [pk]
+  nombre_bandera text [not null]
+  habilitada integer [not null]
+  version_app text
+  rol text
+  id_usuario uuid
+  creado_en text [not null]
+  actualizado_en text [not null]
+}
+
+Table bloqueos_pin_inicio {
+  id_trabajo text [pk]
+  fallos integer [not null]
+  bloqueado_hasta "timestamp with time zone"
+  pin_ok_hasta "timestamp with time zone"
+  pin_ok_usuario uuid
+  actualizado_en "timestamp with time zone" [not null]
+}
+
+Table bloqueos_usuario {
+  id text [pk]
+  id_bloqueador uuid [not null]
+  id_bloqueado uuid [not null]
+  creado_en text [not null]
+  indexes {
+    (id_bloqueador, id_bloqueado) [unique]
+  }
+}
+
+Table calificaciones {
+  id text [pk]
+  id_trabajo text [not null]
+  id_usuario uuid
+  puntaje integer [not null]
+  comentario text
+  creado_en text [not null]
+  peso_confianza "numeric(4,3)" [not null]
+  estado_revision text [not null]
+  motivo_revision text
+  direccion text [not null]
+  id_calificado uuid [not null]
+  indexes {
+    (id_trabajo, direccion) [unique]
+  }
+}
+
+Table calificaciones_cliente {
+  id text [pk]
+  id_trabajo text [not null]
+  id_cliente uuid [not null]
+  id_trabajador uuid [not null]
+  puntaje smallint [not null]
+  comentario text
+  creado_en "timestamp with time zone" [not null]
+  indexes {
+    (id_trabajo) [unique]
+  }
+}
+
+Table cancelaciones_trabajo {
+  id text [pk]
+  id_trabajo text [not null]
+  cancelado_por uuid [not null]
+  motivo text [not null]
+  cancelado_en text [not null]
+  indexes {
+    (id_trabajo) [unique]
+  }
+}
+
+Table codigos_restablecimiento {
+  id text [pk]
+  id_usuario uuid [not null]
+  codigo text [not null]
+  correo text [not null]
+  expira_en text [not null]
+  usado integer
+  creado_en text [not null]
+}
+
+Table comunas {
+  id text [pk]
+  id_region text [not null]
+  nombre text [not null]
+  latitud "double precision"
+  longitud "double precision"
+  activa integer [not null]
+}
+
+Table configuraciones_servicio {
+  id text [pk]
+  id_servicio text [not null]
+  esquema_config text [not null]
+  creado_en text [not null]
+  actualizado_en text [not null]
+  indexes {
+    (id_servicio) [unique]
+  }
+}
+
+Table consentimientos_usuario {
+  id text [pk]
+  id_usuario uuid [not null]
+  version_consentimiento text [not null]
+  aceptado integer [not null]
+  aceptado_en text [not null]
+  direccion_ip text
+  agente_usuario text
+}
+
+Table cuentas_bancarias {
+  id_usuario uuid [pk]
+  banco text [not null]
+  tipo_cuenta text [not null]
+  numero_cuenta text [not null]
+  rut_titular text [not null]
+  nombre_titular text [not null]
+  actualizado_en "timestamp with time zone" [not null]
+}
+
+Table dispositivos_push {
+  token text [pk]
+  id_usuario uuid [not null]
+  plataforma text [not null]
+  creado_en "timestamp with time zone" [not null]
+  actualizado_en "timestamp with time zone" [not null]
+}
+
+Table disputa_mensajes {
+  id text [pk]
+  id_disputa text [not null]
+  id_autor uuid
+  cuerpo text [not null]
+  creado_en "timestamp with time zone" [not null]
+}
+
+Table disputas {
+  id text [pk]
+  id_trabajo text [not null]
+  abierta_por uuid [not null]
+  motivo text [not null]
+  descripcion text
+  estado text [not null]
+  resolucion text
+  resuelta_por uuid
+  resuelta_en text
+  creado_en text [not null]
+  actualizado_en text [not null]
+  origen text [not null]
+  decision_sugerida text
+  motivo_regla text
+  vence_en "timestamp with time zone"
+}
+
+Table eventos_abuso {
+  id text [pk]
+  id_usuario uuid [not null]
+  tipo_abuso text [not null]
+  conteo integer [not null]
+  detectado_en text [not null]
+  accion_tomada text
+  accion_tomada_en text
+  resuelto integer
+}
+
+Table eventos_analitica {
+  id text [pk]
+  nombre_evento text [not null]
+  id_usuario uuid
+  rol text
+  marca_tiempo text [not null]
+  metadatos text
+}
+
+Table eventos_ranking {
+  id text [pk]
+  id_trabajador uuid [not null]
+  id_trabajo text
+  tipo_evento text [not null]
+  factores jsonb [not null]
+  creado_en "timestamp with time zone" [not null]
+}
+
+Table fotos_trabajo {
+  id text [pk]
+  id_trabajo text [not null]
+  ruta_foto text [not null]
+  creado_en text [not null]
+  tipo_medio text [not null]
+  imagen_webp bytea
+}
+
+Table impulsos {
+  id text [pk]
+  id_trabajador uuid [not null]
+  tipo_impulso text [not null]
+  fecha_inicio text [not null]
+  fecha_fin text [not null]
+  creado_en text [not null]
+}
+
+Table intentos_pin_inicio {
+  id bigint [pk]
+  id_trabajo text [not null]
+  id_usuario uuid
+  resultado text [not null]
+  intentos_restantes integer [not null]
+  creado_en "timestamp with time zone" [not null]
+}
+
+Table liquidaciones {
+  id text [pk]
+  id_pago text [not null]
+  id_trabajo text [not null]
+  id_trabajador text
+  monto_clp numeric [not null]
+  proveedor text [not null]
+  referencia_transferencia text [not null]
+  notas text
+  id_operador text [not null]
+  creado_en "timestamp with time zone" [not null]
+  estado_transferencia text [not null]
+  indexes {
+    (id_pago) [unique]
+  }
+}
+
+Table mensajes {
+  id text [pk]
+  id_trabajo text [not null]
+  id_remitente uuid [not null]
+  id_destinatario uuid [not null]
+  contenido text [not null]
+  tipo text [not null]
+  ruta_imagen text
+  leido integer [not null]
+  creado_en text [not null]
+}
+
+Table metodos_pago_oneclick {
+  id_usuario uuid [pk]
+  username text [not null]
+  tbk_user text
+  tipo_tarjeta text
+  ultimos4 text
+  estado text [not null]
+  token_inscripcion text
+  id_trabajo_pendiente text
+  creado_en "timestamp with time zone" [not null]
+  actualizado_en "timestamp with time zone" [not null]
+  url_inscripcion text
+  ticket_handoff text
+}
+
+Table notificaciones {
+  id text [pk]
+  id_usuario uuid [not null]
+  tipo text [not null]
+  titulo text [not null]
+  cuerpo text [not null]
+  id_relacionado text
+  leido integer [not null]
+  creado_en text [not null]
+}
+
+Table ordenes_cambio {
+  id text [pk]
+  id_trabajo text [not null]
+  id_trabajador uuid [not null]
+  tipo text [not null]
+  titulo text [not null]
+  descripcion text [not null]
+  monto_clp integer [not null]
+  estado text [not null]
+  id_pago text
+  creado_en text [not null]
+  respondido_en text
+}
+
+Table pagos {
+  id text [pk]
+  id_trabajo text [not null]
+  id_orden_cambio text
+  tipo_pago text [not null]
+  monto "numeric(12,0)" [not null]
+  moneda text [not null]
+  estado text [not null]
+  metodo_pago text
+  id_transaccion text
+  autorizado_en text
+  liberado_en text
+  reembolsado_en text
+  creado_en text [not null]
+  actualizado_en text [not null]
+  ambiente text
+  token_tbk text
+  url_tbk text
+  buy_order text
+  handoff_consumido_en "timestamp with time zone"
+  reembolso_solicitado_en "timestamp with time zone"
+  orden_detalle_oneclick text
+  cobro_reclamado_en "timestamp with time zone"
+  origen_retorno text
+  alta_nonce_hash text
+  alta_jti text
+  alta_consumido_en "timestamp with time zone"
+}
+
+Table paises {
+  id text [pk]
+  nombre text [not null]
+  iso2 text [not null]
+  indexes {
+    (iso2) [unique]
+  }
+}
+
+Table perfiles {
+  id uuid [pk]
+  nombre text [not null]
+  correo text
+  rol text [not null]
+  estado_cuenta text [not null]
+  ruta_foto_perfil text
+  creado_en text [not null]
+  reputacion_cliente "numeric(3,2)"
+  calificaciones_cliente integer [not null]
+}
+
+Table pines_inicio_trabajo {
+  id_trabajo text [pk]
+  pin text [not null]
+  creado_en "timestamp with time zone" [not null]
+}
+
+Table portafolio_trabajador {
+  id text [pk]
+  id_trabajador uuid [not null]
+  ruta_foto text [not null]
+  descripcion text
+  creado_en text [not null]
+  tipo_medio text [not null]
+}
+
+Table propuestas_cotizacion {
+  id text [pk]
+  id_trabajo text [not null]
+  id_trabajador uuid [not null]
+  monto_total_clp integer [not null]
+  descripcion text [not null]
+  validez_hasta text
+  desglose text
+  estado text [not null]
+  creado_en text [not null]
+}
+
+Table ranking_aprendizaje {
+  id text [pk]
+  motivo text [not null]
+  pesos_antes jsonb [not null]
+  pesos_despues jsonb [not null]
+  metricas jsonb
+  creado_en "timestamp with time zone" [not null]
+}
+
+Table ranking_config {
+  id text [pk]
+  peso_calificacion numeric [not null]
+  peso_completados numeric [not null]
+  peso_rechazos numeric [not null]
+  peso_verificacion numeric [not null]
+  peso_impulso numeric [not null]
+  peso_recencia numeric [not null]
+  peso_confianza numeric [not null]
+  prior_bayes numeric [not null]
+  n_bayes numeric [not null]
+  umbral_revision numeric [not null]
+  umbral_auto_excluir numeric [not null]
+  aprendizaje_activo integer [not null]
+  tasa_aprendizaje numeric [not null]
+  pesos_senal jsonb [not null]
+  actualizado_en "timestamp with time zone" [not null]
+}
+
+Table regiones {
+  id text [pk]
+  id_pais text [not null]
+  nombre text [not null]
+  codigo_oficial text
+}
+
+Table registros_error_app {
+  id text [pk]
+  id_usuario uuid
+  tipo_error text [not null]
+  mensaje text [not null]
+  traza_pila text
+  metadatos jsonb
+  estado text [not null]
+  version_app text
+  plataforma text
+  creado_en text [not null]
+}
+
+Table reportes {
+  id text [pk]
+  id_reportante uuid [not null]
+  id_usuario_reportado uuid [not null]
+  motivo text [not null]
+  descripcion text
+  estado text [not null]
+  creado_en text [not null]
+}
+
+Table reprogramaciones_trabajo {
+  id uuid [pk]
+  id_trabajo text [not null]
+  propuesta_por uuid [not null]
+  rol_proponente text [not null]
+  fecha_anterior "timestamp with time zone" [not null]
+  fecha_propuesta "timestamp with time zone" [not null]
+  motivo text
+  estado text [not null]
+  respondida_por uuid
+  respondida_en "timestamp with time zone"
+  creado_en "timestamp with time zone" [not null]
+}
+
+Table senales_resena {
+  id text [pk]
+  id_calificacion text [not null]
+  tipo_senal text [not null]
+  puntaje numeric [not null]
+  detalle text
+  estado text [not null]
+  resuelto_por uuid
+  resuelto_en "timestamp with time zone"
+  creado_en "timestamp with time zone" [not null]
+  indexes {
+    (id_calificacion, tipo_senal) [unique]
+  }
+}
+
+Table servicios {
+  id text [pk]
+  nombre text [not null]
+  descripcion text
+  categoria text [not null]
+  activo integer [not null]
+  requiere_certificacion integer [not null]
+  modelo_precio text [not null]
+  aviso_legal text
+  creado_en text
+  actualizado_en text
+}
+
+Table suscripciones {
+  id text [pk]
+  id_usuario uuid [not null]
+  tipo_plan text [not null]
+  estado text [not null]
+  fecha_inicio text [not null]
+  fecha_fin text
+  creado_en text [not null]
+  actualizado_en text [not null]
+}
+
+Table tickets_soporte {
+  id text [pk]
+  id_trabajo text
+  nombre_cliente text [not null]
+  nombre_trabajador text [not null]
+  asunto text [not null]
+  monto_escrow integer [not null]
+  estado text
+  creado_en "timestamp with time zone"
+}
+
+Table trabajador_horarios {
+  id_usuario uuid [not null]
+  horarios jsonb [not null]
+  actualizado_en "timestamp with time zone" [not null]
+  id uuid [pk]
+  dia_semana smallint
+  hora_inicio "time without time zone"
+  hora_fin "time without time zone"
+  activo boolean
+  creado_en "timestamp with time zone"
+  indexes {
+    (id_usuario, dia_semana) [unique]
+  }
+}
+
+Table trabajador_precios {
+  id_usuario uuid [not null]
+  codigo text [not null]
+  monto_clp "numeric(12,0)" [not null]
+  indexes {
+    (id_usuario, codigo) [pk]
+  }
+}
+
+Table trabajador_servicios {
+  id_trabajador uuid [not null]
+  categoria_servicio text [not null]
+  indexes {
+    (id_trabajador, categoria_servicio) [pk]
+  }
+}
+
+Table trabajador_servicios_extra {
+  id text [not null]
+  id_usuario uuid [not null]
+  titulo text [not null]
+  subtitulo text [not null]
+  monto_clp "numeric(12,0)" [not null]
+  unidad text [not null]
+  indexes {
+    (id_usuario, id) [pk]
+  }
+}
+
+Table trabajadores {
+  id_usuario uuid [pk]
+  profesion text [not null]
+  descripcion text
+  calificacion "numeric(4,2)" [not null]
+  disponible integer [not null]
+  tarifa_visita "numeric(12,0)" [not null]
+  categoria_servicio text [not null]
+  niveles_precio jsonb [not null]
+  conteo_rechazos integer [not null]
+  servicios_personalizados jsonb [not null]
+  precios_configurados integer [not null]
+  zona_trabajo text
+  estado_verificacion text [not null]
+  nota_verificacion text
+  latitud_base "double precision"
+  longitud_base "double precision"
+  radio_servicio_km numeric [not null]
+  origen_base text
+  score_listado "numeric(8,4)" [not null]
+  prioridad_manual integer [not null]
+  score_desglose jsonb [not null]
+  ranking_actualizado_en "timestamp with time zone"
+  radio_urbano_km "numeric(5,2)" [not null]
+  tarifa_fuera_radio_clp integer [not null]
+  trabajos_completados integer [not null]
+  es_elite boolean
+  id_comuna text
+  id_region text
+  usa_horario boolean [not null]
+  pausa_por_trabajo boolean [not null]
+}
+
+Table trabajos {
+  id text [pk]
+  id_usuario uuid [not null]
+  id_trabajador uuid
+  id_servicio text
+  estado text [not null]
+  direccion text [not null]
+  latitud "double precision"
+  longitud "double precision"
+  descripcion text
+  fecha_programada text
+  metadatos_servicio text
+  modalidad_cobro text
+  estado_pago text
+  id_comuna text
+  instantanea_precio text
+  id_sku_servicio text
+  horas_bloque integer
+  id_cotizacion_seleccionada text
+  creado_en text [not null]
+  actualizado_en text [not null]
+}
+
+Table ubicacion_en_vivo {
+  id_trabajo text [pk]
+  id_trabajador uuid [not null]
+  latitud "double precision" [not null]
+  longitud "double precision" [not null]
+  precision_metros "double precision"
+  actualizado_en "timestamp with time zone" [not null]
+}
+
+Table verificacion_eventos {
+  id uuid [pk]
+  id_usuario uuid [not null]
+  estado text [not null]
+  nota text
+  id_actor uuid
+  creado_en "timestamp with time zone" [not null]
+}
+
+Ref: acciones_pendientes.id_usuario > perfiles.id [delete: cascade]
+Ref: acuerdos_trabajo.id_trabajo > trabajos.id [delete: cascade]
+Ref: acuerdos_trabajo.propuesto_por > perfiles.id [delete: no action]
+Ref: banderas_funcionalidad.id_usuario > perfiles.id [delete: cascade]
+Ref: bloqueos_pin_inicio.id_trabajo - trabajos.id [delete: cascade]
+Ref: bloqueos_usuario.id_bloqueado > perfiles.id [delete: cascade]
+Ref: bloqueos_usuario.id_bloqueador > perfiles.id [delete: cascade]
+Ref: calificaciones.id_calificado > perfiles.id [delete: cascade]
+Ref: calificaciones.id_usuario > perfiles.id [delete: set null]
+Ref: calificaciones.id_trabajo > trabajos.id [delete: cascade]
+Ref: calificaciones_cliente.id_cliente > perfiles.id [delete: cascade]
+Ref: calificaciones_cliente.id_trabajador > perfiles.id [delete: cascade]
+Ref: calificaciones_cliente.id_trabajo - trabajos.id [delete: cascade]
+Ref: cancelaciones_trabajo.cancelado_por > perfiles.id [delete: cascade]
+Ref: cancelaciones_trabajo.id_trabajo - trabajos.id [delete: cascade]
+Ref: codigos_restablecimiento.id_usuario > perfiles.id [delete: cascade]
+Ref: comunas.id_region > regiones.id [delete: no action]
+Ref: configuraciones_servicio.id_servicio - servicios.id [delete: cascade]
+Ref: consentimientos_usuario.id_usuario > perfiles.id [delete: cascade]
+Ref: cuentas_bancarias.id_usuario - perfiles.id [delete: cascade]
+Ref: dispositivos_push.id_usuario > perfiles.id [delete: cascade]
+Ref: disputa_mensajes.id_autor > perfiles.id [delete: no action]
+Ref: disputa_mensajes.id_disputa > disputas.id [delete: cascade]
+Ref: disputas.abierta_por > perfiles.id [delete: cascade]
+Ref: disputas.resuelta_por > perfiles.id [delete: set null]
+Ref: disputas.id_trabajo > trabajos.id [delete: cascade]
+Ref: eventos_abuso.id_usuario > perfiles.id [delete: cascade]
+Ref: eventos_analitica.id_usuario > perfiles.id [delete: set null]
+Ref: eventos_ranking.id_trabajador > perfiles.id [delete: cascade]
+Ref: eventos_ranking.id_trabajo > trabajos.id [delete: set null]
+Ref: fotos_trabajo.id_trabajo > trabajos.id [delete: cascade]
+Ref: impulsos.id_trabajador > perfiles.id [delete: cascade]
+Ref: intentos_pin_inicio.id_trabajo > trabajos.id [delete: cascade]
+Ref: intentos_pin_inicio.id_usuario > perfiles.id [delete: set null]
+Ref: liquidaciones.id_pago - pagos.id [delete: no action]
+Ref: liquidaciones.id_trabajo > trabajos.id [delete: no action]
+Ref: mensajes.id_destinatario > perfiles.id [delete: cascade]
+Ref: mensajes.id_remitente > perfiles.id [delete: cascade]
+Ref: mensajes.id_trabajo > trabajos.id [delete: cascade]
+Ref: metodos_pago_oneclick.id_usuario - perfiles.id [delete: cascade]
+Ref: notificaciones.id_usuario > perfiles.id [delete: cascade]
+Ref: ordenes_cambio.id_trabajo > trabajos.id [delete: cascade]
+Ref: ordenes_cambio.id_pago > pagos.id [delete: set null]
+Ref: ordenes_cambio.id_trabajador > perfiles.id [delete: cascade]
+Ref: pagos.id_orden_cambio > ordenes_cambio.id [delete: set null]
+Ref: pagos.id_trabajo > trabajos.id [delete: cascade]
+Ref: pines_inicio_trabajo.id_trabajo - trabajos.id [delete: cascade]
+Ref: portafolio_trabajador.id_trabajador > perfiles.id [delete: cascade]
+Ref: propuestas_cotizacion.id_trabajo > trabajos.id [delete: cascade]
+Ref: propuestas_cotizacion.id_trabajador > perfiles.id [delete: cascade]
+Ref: regiones.id_pais > paises.id [delete: no action]
+Ref: registros_error_app.id_usuario > perfiles.id [delete: no action]
+Ref: reportes.id_reportante > perfiles.id [delete: cascade]
+Ref: reportes.id_usuario_reportado > perfiles.id [delete: cascade]
+Ref: reprogramaciones_trabajo.propuesta_por > perfiles.id [delete: cascade]
+Ref: reprogramaciones_trabajo.respondida_por > perfiles.id [delete: set null]
+Ref: reprogramaciones_trabajo.id_trabajo > trabajos.id [delete: cascade]
+Ref: senales_resena.id_calificacion > calificaciones.id [delete: cascade]
+Ref: senales_resena.resuelto_por > perfiles.id [delete: set null]
+Ref: suscripciones.id_usuario > perfiles.id [delete: cascade]
+Ref: tickets_soporte.id_trabajo > trabajos.id [delete: set null]
+Ref: trabajador_horarios.id_usuario > trabajadores.id_usuario [delete: cascade]
+Ref: trabajador_precios.id_usuario > trabajadores.id_usuario [delete: cascade]
+Ref: trabajador_servicios.id_trabajador > perfiles.id [delete: cascade]
+Ref: trabajador_servicios_extra.id_usuario > trabajadores.id_usuario [delete: cascade]
+Ref: trabajadores.id_comuna > comunas.id [delete: set null]
+Ref: trabajadores.id_region > regiones.id [delete: set null]
+Ref: trabajadores.id_usuario - perfiles.id [delete: cascade]
+Ref: trabajos.id_servicio > servicios.id [delete: set null]
+Ref: trabajos.id_usuario > perfiles.id [delete: cascade]
+Ref: trabajos.id_trabajador > perfiles.id [delete: set null]
+Ref: trabajos.id_comuna > comunas.id [delete: set null]
+Ref: trabajos.id_cotizacion_seleccionada > propuestas_cotizacion.id [delete: set null]
+Ref: ubicacion_en_vivo.id_trabajo - trabajos.id [delete: cascade]
+Ref: ubicacion_en_vivo.id_trabajador > trabajadores.id_usuario [delete: cascade]
+Ref: verificacion_eventos.id_actor > perfiles.id [delete: set null]
+Ref: verificacion_eventos.id_usuario > perfiles.id [delete: cascade]
+// perfiles.id referencia auth.users.id (esquema auth de Supabase, ON DELETE CASCADE)
+
+// Relaciones lógicas (sin FOREIGN KEY física):
+//   liquidaciones.(id_trabajador) -> perfiles.(id) — profesional liquidado; text que guarda el uuid del perfil
+//   liquidaciones.(id_operador) -> perfiles.(id) — administrador que confirmó la transferencia; text con uuid o 'sistema'
+//   metodos_pago_oneclick.(id_trabajo_pendiente) -> trabajos.(id) — trabajo que espera la inscripción Oneclick para cobrarse
+//   bloqueos_pin_inicio.(pin_ok_usuario) -> perfiles.(id) — usuario que validó el PIN (ventana pin_ok_hasta)
+//   trabajos.(id_trabajador, id_sku_servicio) -> trabajador_precios.(id_usuario, codigo) — SKU de precio elegido; también admite 'tier_<n>', por eso no es FK
+//   trabajador_servicios.(categoria_servicio) -> servicios.(categoria) — categoría ofrecida; servicios.categoria no es única
+
+TableGroup usuarios_territorio { // Usuarios, autenticación y territorio
+  perfiles
+  codigos_restablecimiento
+  consentimientos_usuario
+  dispositivos_push
+  verificacion_eventos
+  suscripciones
+  bloqueos_usuario
+  paises
+  regiones
+  comunas
+}
+TableGroup profesionales_catalogo { // Profesionales, servicios y precios
+  trabajadores
+  trabajador_precios
+  trabajador_servicios
+  trabajador_servicios_extra
+  trabajador_horarios
+  portafolio_trabajador
+  impulsos
+  servicios
+  configuraciones_servicio
+}
+TableGroup trabajos_reservas { // Trabajos, reservas, reprogramación y PIN
+  trabajos
+  propuestas_cotizacion
+  acuerdos_trabajo
+  cancelaciones_trabajo
+  reprogramaciones_trabajo
+  pines_inicio_trabajo
+  bloqueos_pin_inicio
+  intentos_pin_inicio
+  fotos_trabajo
+  ubicacion_en_vivo
+}
+TableGroup pagos_escrow { // Pagos, escrow, liquidaciones y cuentas bancarias
+  pagos
+  ordenes_cambio
+  liquidaciones
+  metodos_pago_oneclick
+  cuentas_bancarias
+}
+TableGroup comunicacion_disputas { // Comunicación, notificaciones, disputas y soporte
+  mensajes
+  notificaciones
+  disputas
+  disputa_mensajes
+  tickets_soporte
+}
+TableGroup calificaciones_ranking { // Calificaciones y ranking
+  calificaciones
+  calificaciones_cliente
+  senales_resena
+  eventos_ranking
+  ranking_aprendizaje
+  ranking_config
+}
+TableGroup admin_auditoria { // Administración, moderación y auditoría
+  acciones_pendientes
+  reportes
+  eventos_abuso
+  registros_error_app
+  eventos_analitica
+  banderas_funcionalidad
+  app_config
+}

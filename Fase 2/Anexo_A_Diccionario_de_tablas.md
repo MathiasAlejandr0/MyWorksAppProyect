@@ -4,6 +4,8 @@ A continuación se describe cada una de las 52 tablas del esquema public, alinea
 
 Fuente: elaboración propia a partir del esquema real (modelo entidad-relación v2.5).
 
+Modelo entidad-relación: las figuras (mapa de dominios, diagrama general con las 52 tablas y un diagrama por dominio con columnas, tipos, PK/FK y cardinalidad) están en `Fase 2/modelo_entidad_relacion/figuras/`, con fuentes editables y un LEEME en la misma carpeta. La explicación de cada dominio, el flujo de pago y las decisiones de diseño están en la sección 2b de `MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`.
+
 Respecto del anexo v2.3 (43 tablas, 2026-11-08) se agregan nueve tablas: acuerdos_trabajo, disputa_mensajes, reprogramaciones_trabajo (CU-33), pines_inicio_trabajo, bloqueos_pin_inicio, intentos_pin_inicio, cuentas_bancarias, dispositivos_push y verificacion_eventos. También se documentan los roles de consola soporte y qa, el alta de invitado (columnas de pagos) y los cambios de calificación bidireccional, horarios semanales y soporte automático de disputas.
 
 ## Identidad y cuenta
