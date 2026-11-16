@@ -75,12 +75,16 @@ Ninguna tabla está por debajo de 2FN. Las tres que no llegan a 3FN en sentido e
 | `trabajadores.id_region` | `comunas.id_region` | Profesionales con región pero sin comuna. | 0 (59 fichas con comuna) |
 | `perfiles.correo` | `auth.users.email` | Mostrar y buscar sin salir de `public`. | 0 |
 | `tickets_soporte.nombre_*`, `monto_escrow` | perfiles y pagos del trabajo | Foto del caso al abrir el ticket (trigger `fijar_ticket_desde_trabajo`). | 0 (tabla vacía) |
-| `trabajadores.calificacion`, `trabajos_completados`, `score_listado` | calificaciones y trabajos | Ordenar el catálogo sin recalcular en cada consulta. | Ver 3.3 |
+| `trabajadores.calificacion`, `trabajos_completados`, `score_listado` | calificaciones y trabajos | Ordenar el catálogo sin recalcular en cada consulta. | 0 (ver 3.3) |
 | `trabajador_horarios.horarios` (jsonb) | columnas por día | Formato antiguo que aún leen versiones previas de la app (64 de 66 filas lo tienen). | — |
 
 ### 3.3 Observación sobre los datos de demostración
 
-Los 24 profesionales sembrados para la demo (ids `11111111-…-0004xx`) tienen `calificacion` y `trabajos_completados` cargados a mano, sin historial de trabajos que los respalde. No se recalcularon para no alterar la demo que se presenta; quedan documentados como datos semilla. Para los profesionales reales esos valores salen de los triggers de calificación y cierre.
+Durante la auditoría se encontró que los 24 profesionales sembrados para la demo (ids `11111111-…-0004xx`) tenían `calificacion` y `trabajos_completados` cargados a mano, sin trabajos ni reseñas que los respaldaran. Es una dependencia transitiva rota: la nota debe depender de las reseñas, no escribirse aparte.
+
+**Corrección:** la migración `20261116044049_stats_profesional_fuente_unica.sql` (aplicada el 16-nov con el visto bueno de Mathias) definió una sola fuente: `privado.stats_profesional()` calcula la nota como el promedio simple de las reseñas reales y los trabajos como los trabajos en estado `completado`. El catálogo, la ficha y el panel de administración usan esa función, y las columnas cacheadas se recalcularon desde las filas reales, sin inventar reseñas ni trabajos.
+
+**Verificación (16-nov, 02:08):** en los 64 profesionales, la nota y los trabajos guardados coinciden con el cálculo desde los datos reales (0 diferencias). 40 tienen nota respaldada por reseñas; los que no tienen reseñas se muestran como "Nuevo".
 
 ### 3.4 Listas en 4FN
 
@@ -141,7 +145,7 @@ En total la base pasó de 44 a 78 claves foráneas (31 de este punto y 3 del pun
 
 1. **`perfiles.correo` sin índice único.** No hay duplicados hoy (0), pero un índice único podría impedir el registro de alguien cuyo correo ya figure en uno de los 8 perfiles de demo sin Auth. Se recomienda limpiar esos 8 perfiles antes de agregarlo.
 2. **Fechas en texto.** Están validadas, pero conviene migrarlas a `timestamptz` en una versión futura de los clientes.
-3. **Datos semilla de la demo.** Los 24 profesionales de demo tienen calificaciones sin historial; antes de producción hay que borrarlos o recalcular.
+3. **Cifras cacheadas del profesional.** Ya se recalculan desde los datos reales (3.3). Si en el futuro se cargan reseñas o trabajos por fuera de las funciones de la app, hay que volver a correr el recálculo de esa migración.
 4. **`notificaciones.id_relacionado`.** Es una referencia polimórfica (apunta a distintas tablas según el tipo) y por diseño no puede tener FK.
 
 ## 6. Reproducibilidad

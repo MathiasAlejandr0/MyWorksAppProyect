@@ -1,7 +1,7 @@
 # Pruebas de seguridad de la base de datos
 
 **Proyecto:** My Works App · **Base:** Supabase `wxqrfcqifkfgawrnqmnj` (PostgreSQL 17.6, PostgREST, Edge Functions)
-**Fecha:** 16 de noviembre de 2026. Primera corrida 01:13, corrida final 01:32 (hora de Chile, UTC−3).
+**Fecha:** 16 de noviembre de 2026. Primera corrida 01:13, corrida final 01:32 y reprueba de Edge Functions tras redesplegarlas 02:06 (hora de Chile, UTC−3).
 **Parte 4 de 4** de la auditoría de base de datos (ver `auditoria_base_datos.md`).
 
 ## 1. Objetivo
@@ -67,7 +67,7 @@ Dos fallas del script resultaron ser falsos resultados y se corrigieron antes de
 | S1 | El trigger `protect_profile_sensitive_fields` también rechaza cambios de `reputacion_cliente` y `calificaciones_cliente` cuando quien escribe es `authenticated`/`anon` y no es administrador. La función `calificar_cliente()` (SECURITY DEFINER) sigue pudiendo actualizarlos. El trigger pasó a `SECURITY INVOKER` para que `current_user` refleje quién escribe. Un trigger nuevo deja la reputación en cero si alguien intenta crear su perfil con un valor inventado. | Migración `20261116042629_auditoria_bd_seguridad.sql` |
 | S2 | La política `impulsos_write` (dueño o admin) se reemplaza por INSERT/UPDATE/DELETE solo para administración. La lectura no cambia. | Misma migración |
 | S3 | `suscripciones_all` se reemplaza por lectura del propio plan y escritura solo de administración. | Misma migración |
-| S4 | `resolveCorsAllowOrigin` responde con la web pública (primer origen de la lista) en vez de `null` cuando el origen es desconocido. Se actualizaron las pruebas y se agregó una para `Origin: null`. 18 suites de Deno pasan. | `supabase/functions/_shared/cors_origin.ts`, `security_round6.test.ts` |
+| S4 | `resolveCorsAllowOrigin` responde con la web pública (primer origen de la lista) en vez de `null` cuando el origen es desconocido. Se actualizaron las pruebas y se agregó una para `Origin: null`. 18 suites de Deno pasan. Las 16 Edge Functions que usan ese código se redesplegaron en producción el 16-nov a las 02:03 (hora de Chile). | `supabase/functions/_shared/cors_origin.ts`, `security_round6.test.ts`; despliegue en wxqrfcqifkfgawrnqmnj |
 | S5 | `REVOKE TRUNCATE, TRIGGER, REFERENCES` a `anon` y `authenticated` en las 52 tablas, `REVOKE INSERT, UPDATE, DELETE` a `anon`, y lo mismo en los privilegios por defecto de tablas futuras. | Migración de seguridad |
 | S6 | La función exige `es_rol_trabajador(auth.uid())` o `is_admin()`. | Migración de seguridad |
 | S7 | Políticas de lectura solo para administración en ambas tablas. | Migración de seguridad |
@@ -84,14 +84,27 @@ Antes de restringir impulsos y suscripciones se revisó el código de las tres a
 | Vertical (admin) | 30/30 | 30/30 |
 | Anónimo | 63/63 | 63/63 |
 | Inyección SQL | 13/13 | 13/13 |
-| Edge Functions | 17/24 | 17/24 (3 fallas, 4 N/A) |
-| **Total** | **175/185** | **178/185 (3 fallas, 4 N/A)** |
+| Edge Functions | 17/24 | **20/24** (0 fallas, 4 N/A) |
+| **Total** | **175/185** | **181/185 (0 fallas, 4 N/A)** |
 
 ![Casos que pasan por categoría, antes y después](graficos/seg_01_resultados_categoria.png)
 
-Las tres fallas que quedan son S4 (CORS) en `webpay-status`, `webpay-create` y `guest-checkout`. El código ya está corregido y probado en el repositorio; se aplica cuando esas funciones se vuelvan a desplegar. Las cuatro N/A son las dos funciones no desplegadas.
+En la primera corrida después de las migraciones quedaban tres fallas: S4 (CORS) en `webpay-status`, `webpay-create` y `guest-checkout`, porque el código corregido aún no estaba desplegado. Se redesplegaron las 16 Edge Functions que incluyen `_shared/cors_origin.ts`. Para no arrastrar otros cambios, cada función se publicó con el mismo código que ya estaba en producción y solo esa línea cambiada (la diferencia de cada una fue de una línea). Luego se volvió a correr la parte de Edge Functions con `seguridad/pruebas_cors_edge.py`, que no necesita usuarios de prueba:
 
-**Asesor de Supabase después:**
+| Prueba (16-nov 02:06) | Casos | Pasan |
+|------------------------|-------|-------|
+| CORS con origen ajeno (`https://evil.example.com`) | 16 | 16 |
+| CORS con `Origin: null` (iframe en sandbox, archivo local) | 16 | 16 |
+| CORS con la web oficial | 16 | 16 |
+| Funciones con sesión obligatoria llamadas sin token | 9 | 9 |
+| `webpay-reconcile` sin secreto, retorno Webpay y OneClick falsificados, ticket de invitado falso | 4 | 4 |
+| **Total** | **61** | **61** |
+
+Ahora un origen ajeno o `null` recibe `Access-Control-Allow-Origin: https://myworksapp-cl.vercel.app`, que no coincide con el suyo, y el navegador bloquea la lectura. La web oficial sigue funcionando igual. El archivo `resultados_seguridad_final.json` es la corrida "después" con esos tres casos reprobados; las cuatro N/A son las dos funciones que no están desplegadas (`send-push` y `soporte-automatico`).
+
+**Análisis:** con esto no queda ningún caso de seguridad fallando. Las 181 pruebas aplicables pasan: ningún usuario lee ni modifica datos de otro, nadie se sube de rol, el visitante anónimo no escribe, las inyecciones se tratan como texto y las Edge Functions exigen sesión o secreto y ya no devuelven `null` en CORS.
+
+**Asesor de Supabase después** (revisado de nuevo el 16-nov a las 02:05; mismo resultado, en `seguridad/advisors_seg_final.json`):
 - Advertencias de RLS, de políticas permisivas múltiples y de `auth.uid()` evaluado por fila: 0.
 - `anon_security_definer_function_executable` (4): `base_publica_profesional`, `categorias_con_disponibles`, `horarios_libres_profesional`, `listar_profesionales_catalogo`. Son el catálogo público a propósito; devuelven coordenadas redondeadas y nada personal.
 - `authenticated_security_definer_function_executable` (61): son las RPC de la app. Cada una valida dentro quién llama, y las 30 de administración fallaron para un usuario normal en las pruebas verticales.
@@ -105,15 +118,17 @@ Se borraron solo los datos de prueba, filtrando por los ids de los usuarios `qa.
 
 ## 7. Riesgos que quedan
 
-1. **Desplegar las Edge Functions** que usan `_shared/cors_origin.ts` para cerrar S4 en producción.
-2. **`send-push` y `soporte-automatico` no están desplegadas.** Si la base dispara avisos push a `send-push`, esos avisos no salen. Hay que desplegarlas o retirar el disparador.
+1. **Despliegues desde ramas antiguas.** Durante la auditoría otro trabajo publicó `webpay-release` desde una rama que no tenía la corrección de CORS; se volvió a publicar con ambos cambios. Toda Edge Function debe desplegarse desde `main` actualizado, y después conviene correr `seguridad/pruebas_cors_edge.py`.
+2. **`send-push` y `soporte-automatico` no están desplegadas.** Se revisó la base: ningún trigger ni tarea de `pg_cron` las llama (el soporte automático corre como `resolver_soporte_automatico()` en `pg_cron` cada 10 minutos). `send-push` necesita el secreto `FCM_SERVICE_ACCOUNT` de Firebase y un Database Webhook sobre `notificaciones`; hasta configurarlos, los avisos se ven dentro de la app, pero no llegan como notificación push al teléfono.
 3. **Protección de contraseñas filtradas** de Supabase Auth: activarla al pasar a un plan pagado.
 4. Las funciones SECURITY DEFINER concentran la seguridad. Toda función nueva debe validar `auth.uid()` dentro, y conviene agregar su caso a la batería de pruebas.
 
 ## 8. Archivos
 
 - `docs/pruebas/seguridad/pruebas_seguridad.py`: batería de 185 casos (variables `SB_URL`, `SB_ANON`, `QA_PW`; la contraseña no se guarda).
-- `docs/pruebas/seguridad/resultados_seguridad_antes.json` y `resultados_seguridad_despues.json`: cada caso con su respuesta HTTP.
+- `docs/pruebas/seguridad/resultados_seguridad_antes.json`, `resultados_seguridad_despues.json` y `resultados_seguridad_final.json` (después del redespliegue): cada caso con su respuesta HTTP.
+- `docs/pruebas/seguridad/pruebas_cors_edge.py` y `resultados_cors_edge.json`: reprueba de las 16 Edge Functions (61 casos).
+- `docs/pruebas/seguridad/advisors_seg_final.json`: asesor de seguridad al cierre.
 - `docs/pruebas/seguridad/tablas.json`: lista de tablas que recorre la batería anónima.
 - `docs/pruebas/seguridad/advisors_seg_despues.txt`: asesor de seguridad después de las correcciones.
 - `docs/pruebas/seguridad/semgrep/`: resultados JSON y reglas propias.

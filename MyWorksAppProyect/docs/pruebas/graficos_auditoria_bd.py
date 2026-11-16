@@ -2,7 +2,8 @@
 """Gráficos de la auditoría de base de datos (rendimiento y seguridad).
 
 Lee rendimiento/escala_sintetica_resultados.json y
-seguridad/resultados_seguridad_{antes,despues}.json, y escribe en graficos/:
+seguridad/resultados_seguridad_{antes,final}.json (final = después de corregir
+y de redesplegar las Edge Functions), y escribe en graficos/:
   - rend_01_prueba_sintetica.png  (antes vs. después, escala logarítmica)
   - seg_01_resultados_categoria.png (casos que pasan por categoría)
 Uso, desde docs/pruebas:  python3 graficos_auditoria_bd.py
@@ -47,11 +48,11 @@ fig.tight_layout(); fig.savefig(GRAF / "rend_01_prueba_sintetica.png", dpi=150);
 # Seguridad: casos por categoría antes y después.
 orden = ["Control", "RLS horizontal", "Escalada", "Vertical", "Anónimo", "Inyección SQL", "Edge Functions"]
 res = {}
-for k in ("antes", "despues"):
-    casos_s = json.load(open(BASE / "seguridad" / f"resultados_seguridad_{k}.json"))["casos"]
+for k, archivo in (("antes", "antes"), ("despues", "final")):
+    casos_s = json.load(open(BASE / "seguridad" / f"resultados_seguridad_{archivo}.json"))["casos"]
     res[k] = Counter((c["categoria"], c["resultado"]) for c in casos_s)
 fig, axs = plt.subplots(1, 2, figsize=(11, 4.8), sharey=True)
-for ax, k, titulo in ((axs[0], "antes", "Antes de las correcciones"), (axs[1], "despues", "Después de las correcciones")):
+for ax, k, titulo in ((axs[0], "antes", "Antes de las correcciones"), (axs[1], "despues", "Después (con funciones redesplegadas)")):
     pasa = [res[k][(c, "PASA")] for c in orden]
     falla = [res[k][(c, "FALLA")] for c in orden]
     na = [res[k][(c, "N/A")] for c in orden]

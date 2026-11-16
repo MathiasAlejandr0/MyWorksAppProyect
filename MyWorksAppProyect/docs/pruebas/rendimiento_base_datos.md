@@ -101,15 +101,15 @@ Ninguna consulta de la app supera 1,5 ms de media y todas se sirven desde memori
 
 ### 5.4 Asesor de rendimiento
 
-| Aviso | Antes | Después |
-|-------|-------|---------|
-| `multiple_permissive_policies` | 10 | 0 |
-| `unindexed_foreign_keys` | 0 | 0 (24 creadas e indexadas) |
-| `auth_rls_initplan` | 0 | 0 |
-| `unused_index` | 13 | 13 |
-| `no_primary_key` | 26 | 26 |
+| Aviso | Antes | Después | Al cierre (16-nov 02:05) |
+|-------|-------|---------|--------------------------|
+| `multiple_permissive_policies` | 10 | 0 | 0 |
+| `unindexed_foreign_keys` | 0 | 0 (24 creadas e indexadas) | 0 |
+| `auth_rls_initplan` | 0 | 0 | 0 |
+| `unused_index` | 13 | 13 | 18 |
+| `no_primary_key` | 26 | 26 | 26 |
 
-Los 13 índices "sin uso" no se eliminaron: las estadísticas son recientes y la base es pequeña, así que el planificador aún no los necesita, pero cubren filtros reales del catálogo (zona, disponibilidad, región, comuna). Los 26 avisos de tablas sin clave primaria están en los esquemas de respaldo `backup_20261115*`, no en `public`; no los usa la aplicación y se pueden borrar cuando el equipo confirme que ya no los necesita.
+Al cierre, `unused_index` sube de 13 a 18 porque el asesor ya registra algunos de los índices de claves foráneas creados en la auditoría (por ejemplo `idx_disputas_resuelta_por_fkey` o `idx_pagos_id_orden_cambio_fkey`). Es esperable: se crearon hace minutos y protegen los borrados y uniones por esas claves, que hoy casi no ocurren. Ninguno de esos índices se elimina. Los 13 índices "sin uso" originales tampoco se eliminaron: las estadísticas son recientes y la base es pequeña, así que el planificador aún no los necesita, pero cubren filtros reales del catálogo (zona, disponibilidad, región, comuna). Los 26 avisos de tablas sin clave primaria están en los esquemas de respaldo `backup_20261115*`, no en `public`; no los usa la aplicación y se pueden borrar cuando el equipo confirme que ya no los necesita.
 
 ## 6. Conclusiones
 
@@ -122,5 +122,5 @@ Los 13 índices "sin uso" no se eliminaron: las estadísticas son recientes y la
 - `docs/pruebas/rendimiento/gen_explain.py`, `explain_real.sql`, `explain_run.sql`, `consultas.json`: las 15 consultas y su medición.
 - `docs/pruebas/rendimiento/explain_antes.json`, `explain_despues.json`: planes completos.
 - `docs/pruebas/rendimiento/escala_sintetica.sql`, `escala_sintetica_resultados.json`.
-- `docs/pruebas/rendimiento/pg_stat_statements_top.json`, `advisors_perf_despues.txt`.
+- `docs/pruebas/rendimiento/pg_stat_statements_top.json`, `advisors_perf_despues.txt` y `advisors_perf_final.json` (asesor al cierre).
 - `docs/pruebas/graficos_auditoria_bd.py` y `docs/pruebas/graficos/rend_01_prueba_sintetica.png`: gráfico de la prueba sintética.
