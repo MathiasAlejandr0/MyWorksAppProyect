@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../utils/santiago_time.dart';
+
 /// Límites del calendario de visita. [first] y [initial] son el mismo día
 /// civil, así el selector no falla cuando `DateTime.now()` se llama dos veces.
+/// «Hoy» es el día civil de Santiago, no el del huso del teléfono.
 class BookingSchedule {
   BookingSchedule._();
 
@@ -14,7 +17,7 @@ class BookingSchedule {
     int horizonDays = 90,
   }) {
     final clock = now ?? DateTime.now();
-    final first = dateOnly(clock);
+    final first = SantiagoTime.day(clock);
     final last = first.add(Duration(days: horizonDays));
     var initial = selected == null ? first : dateOnly(selected);
     if (initial.isBefore(first)) initial = first;
