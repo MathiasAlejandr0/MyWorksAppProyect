@@ -121,12 +121,12 @@ Línea de tiempo (`features/jobs/presentation/widgets/job_status_timeline.dart`;
 - Si el cliente no responde en **48 h** (valor en vivo `soporte_plazo_silencio_horas = 48`) y hay evidencia, el sistema libera solo («El cliente no respondió dentro del plazo. El pago queda liberado.» — cron `mwa_resolver_soporte_automatico`).
 - **Calificar** (solo app, `ratings/presentation/pages/rating_page.dart`): «Calificar Trabajo — ¿Cómo fue tu experiencia?» estrellas 1‑5, «Comentario (opcional)», **«Enviar Calificación»**. Bloqueada si hay disputa abierta. Las notas alimentan el ranking y el «Élite del mes».
 
-### 2.7 Cancelación, rechazo y disputas
+### 2.7 Cancelación, rechazo, reprogramación y disputas
 
 - **Cliente cancela** solo mientras está **Pendiente** («Cancelar Solicitud» → «¿Estás seguro…?» → «Sí, cancelar»). Si había pago retenido se devuelve a la tarjeta (`webpay-refund-cancellation`).
 - **Profesional rechaza** un pedido pendiente («Rechazar» → «Sí, rechazar») → reembolso automático a la tarjeta y trabajo cancelado (`webpay-refund-rejection`).
+- **Reprogramar la visita** (CU-33; app `reschedule_section.dart`, web `JobClientActions.tsx`): en **«Cambiar la hora»**, el cliente o el profesional proponen otra hora publicada y libre del profesional («Proponer otra hora» / «Proponer nueva hora»), con al menos 1 h de antelación, mientras el trabajo está **Pendiente** o **Aceptado** (antes de que el profesional salga en camino). La otra parte pulsa **«Aceptar nueva hora»** o **«Rechazar»**; quien la envió puede **«Retirar mi propuesta»**. Si se acepta, cambia la fecha programada; el pago retenido no cambia. A lo más una propuesta pendiente y 6 en total. Queda el «Historial de cambios de hora».
 - **Disputa** («Abrir disputa», app y web): el pago **sigue retenido**. «Resolver entre ustedes»: **Aceptar la entrega / Pedir que lo rehaga / Anular y devolver el pago**; la otra parte confirma o rechaza. Casos simples se cierran solos al vencer el plazo (24 h, montos hasta $80.000); conducta, reincidencia o montos altos los ve una persona en la consola (`webpay-resolve-dispute`).
-- No existe «reprogramar» en ningún cliente (verificado en E2E del 15‑nov).
 
 ### 2.8 Chat y notificaciones
 
