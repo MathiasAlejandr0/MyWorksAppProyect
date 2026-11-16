@@ -1,0 +1,426 @@
+[
+ {
+  "name": "no_primary_key",
+  "title": "No Primary Key",
+  "level": "INFO",
+  "facing": "EXTERNAL",
+  "categories": [
+   "PERFORMANCE"
+  ],
+  "description": "Detects if a table does not have a primary key. Tables without a primary key can be inefficient to interact with at scale.",
+  "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0004_no_primary_key",
+  "count": 26,
+  "findings": [
+   {
+    "detail": "Table \\`backup_20261115.politicas\\` does not have a primary key",
+    "metadata": {
+     "name": "politicas",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.calificaciones\\` does not have a primary key",
+    "metadata": {
+     "name": "calificaciones",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115c.privilegios_tabla_trabajos\\` does not have a primary key",
+    "metadata": {
+     "name": "privilegios_tabla_trabajos",
+     "type": "table",
+     "schema": "backup_20261115c"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.triggers\\` does not have a primary key",
+    "metadata": {
+     "name": "triggers",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.cron_jobs\\` does not have a primary key",
+    "metadata": {
+     "name": "cron_jobs",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.trabajadores\\` does not have a primary key",
+    "metadata": {
+     "name": "trabajadores",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115c.triggers_trabajos\\` does not have a primary key",
+    "metadata": {
+     "name": "triggers_trabajos",
+     "type": "table",
+     "schema": "backup_20261115c"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115b.funciones\\` does not have a primary key",
+    "metadata": {
+     "name": "funciones",
+     "type": "table",
+     "schema": "backup_20261115b"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.migraciones\\` does not have a primary key",
+    "metadata": {
+     "name": "migraciones",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.pagos\\` does not have a primary key",
+    "metadata": {
+     "name": "pagos",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.indices\\` does not have a primary key",
+    "metadata": {
+     "name": "indices",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.constraints\\` does not have a primary key",
+    "metadata": {
+     "name": "constraints",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.perfiles\\` does not have a primary key",
+    "metadata": {
+     "name": "perfiles",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.trabajos\\` does not have a primary key",
+    "metadata": {
+     "name": "trabajos",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.funciones\\` does not have a primary key",
+    "metadata": {
+     "name": "funciones",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115c.trabajos_metadatos\\` does not have a primary key",
+    "metadata": {
+     "name": "trabajos_metadatos",
+     "type": "table",
+     "schema": "backup_20261115c"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.liquidaciones\\` does not have a primary key",
+    "metadata": {
+     "name": "liquidaciones",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.storage_buckets\\` does not have a primary key",
+    "metadata": {
+     "name": "storage_buckets",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115b.privilegios_columnas_trabajadores\\` does not have a primary key",
+    "metadata": {
+     "name": "privilegios_columnas_trabajadores",
+     "type": "table",
+     "schema": "backup_20261115b"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.notificaciones\\` does not have a primary key",
+    "metadata": {
+     "name": "notificaciones",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115b.trabajador_horarios\\` does not have a primary key",
+    "metadata": {
+     "name": "trabajador_horarios",
+     "type": "table",
+     "schema": "backup_20261115b"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115c.acl_trabajos\\` does not have a primary key",
+    "metadata": {
+     "name": "acl_trabajos",
+     "type": "table",
+     "schema": "backup_20261115c"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115c.privilegios_columnas_trabajos\\` does not have a primary key",
+    "metadata": {
+     "name": "privilegios_columnas_trabajos",
+     "type": "table",
+     "schema": "backup_20261115c"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115.trabajador_horarios\\` does not have a primary key",
+    "metadata": {
+     "name": "trabajador_horarios",
+     "type": "table",
+     "schema": "backup_20261115"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115c.funciones\\` does not have a primary key",
+    "metadata": {
+     "name": "funciones",
+     "type": "table",
+     "schema": "backup_20261115c"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Table \\`backup_20261115c.politicas_trabajos\\` does not have a primary key",
+    "metadata": {
+     "name": "politicas_trabajos",
+     "type": "table",
+     "schema": "backup_20261115c"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   }
+  ]
+ },
+ {
+  "name": "unused_index",
+  "title": "Unused Index",
+  "level": "INFO",
+  "facing": "EXTERNAL",
+  "categories": [
+   "PERFORMANCE"
+  ],
+  "description": "Detects if an index has never been used and may be a candidate for removal.",
+  "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+  "count": 18,
+  "findings": [
+   {
+    "detail": "Index \\`idx_disputas_abierta_por_fkey\\` on table \\`public.disputas\\` has not been used",
+    "metadata": {
+     "name": "disputas",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`idx_disputas_resuelta_por_fkey\\` on table \\`public.disputas\\` has not been used",
+    "metadata": {
+     "name": "disputas",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`idx_eventos_ranking_id_trabajo_fkey\\` on table \\`public.eventos_ranking\\` has not been used",
+    "metadata": {
+     "name": "eventos_ranking",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`idx_pagos_id_orden_cambio_fkey\\` on table \\`public.pagos\\` has not been used",
+    "metadata": {
+     "name": "pagos",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`idx_senales_resena_resuelto_por_fkey\\` on table \\`public.senales_resena\\` has not been used",
+    "metadata": {
+     "name": "senales_resena",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`idx_verificacion_eventos_id_actor_fkey\\` on table \\`public.verificacion_eventos\\` has not been used",
+    "metadata": {
+     "name": "verificacion_eventos",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`pagos_token_tbk_idx\\` on table \\`public.pagos\\` has not been used",
+    "metadata": {
+     "name": "pagos",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`pagos_buy_order_idx\\` on table \\`public.pagos\\` has not been used",
+    "metadata": {
+     "name": "pagos",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`metodos_pago_oneclick_token_idx\\` on table \\`public.metodos_pago_oneclick\\` has not been used",
+    "metadata": {
+     "name": "metodos_pago_oneclick",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`trabajadores_base_geo_idx\\` on table \\`public.trabajadores\\` has not been used",
+    "metadata": {
+     "name": "trabajadores",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`comunas_region_idx\\` on table \\`public.comunas\\` has not been used",
+    "metadata": {
+     "name": "comunas",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`comunas_nombre_idx\\` on table \\`public.comunas\\` has not been used",
+    "metadata": {
+     "name": "comunas",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`idx_registros_error_app_id_usuario_fkey\\` on table \\`public.registros_error_app\\` has not been used",
+    "metadata": {
+     "name": "registros_error_app",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`trabajadores_zona_trabajo_idx\\` on table \\`public.trabajadores\\` has not been used",
+    "metadata": {
+     "name": "trabajadores",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`trabajadores_disponible_cat_idx\\` on table \\`public.trabajadores\\` has not been used",
+    "metadata": {
+     "name": "trabajadores",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`servicios_activo_categoria_idx\\` on table \\`public.servicios\\` has not been used",
+    "metadata": {
+     "name": "servicios",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`idx_ubicacion_en_vivo_id_trabajador_fkey\\` on table \\`public.ubicacion_en_vivo\\` has not been used",
+    "metadata": {
+     "name": "ubicacion_en_vivo",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   },
+   {
+    "detail": "Index \\`idx_regiones_id_pais_fkey\\` on table \\`public.regiones\\` has not been used",
+    "metadata": {
+     "name": "regiones",
+     "type": "table",
+     "schema": "public"
+    },
+    "observed_at": "2026-11-16T05:04:27.225Z"
+   }
+  ]
+ }
+]

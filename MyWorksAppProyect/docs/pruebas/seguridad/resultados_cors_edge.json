@@ -1,0 +1,559 @@
+{
+ "ejecutado": "2026-11-16 02:06:20 -0300",
+ "casos": [
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-create",
+   "caso": "CORS de webpay-create con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-create",
+   "caso": "CORS de webpay-create con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-create",
+   "caso": "CORS de webpay-create para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-status",
+   "caso": "CORS de webpay-status con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-status",
+   "caso": "CORS de webpay-status con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-status",
+   "caso": "CORS de webpay-status para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-commit",
+   "caso": "CORS de webpay-commit con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-commit",
+   "caso": "CORS de webpay-commit con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-commit",
+   "caso": "CORS de webpay-commit para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-refund",
+   "caso": "CORS de webpay-refund con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-refund",
+   "caso": "CORS de webpay-refund con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-refund",
+   "caso": "CORS de webpay-refund para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-release",
+   "caso": "CORS de webpay-release con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-release",
+   "caso": "CORS de webpay-release con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-release",
+   "caso": "CORS de webpay-release para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-resolve-dispute",
+   "caso": "CORS de webpay-resolve-dispute con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-resolve-dispute",
+   "caso": "CORS de webpay-resolve-dispute con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-resolve-dispute",
+   "caso": "CORS de webpay-resolve-dispute para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-refund-rejection",
+   "caso": "CORS de webpay-refund-rejection con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-refund-rejection",
+   "caso": "CORS de webpay-refund-rejection con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-refund-rejection",
+   "caso": "CORS de webpay-refund-rejection para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-refund-cancellation",
+   "caso": "CORS de webpay-refund-cancellation con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-refund-cancellation",
+   "caso": "CORS de webpay-refund-cancellation con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-refund-cancellation",
+   "caso": "CORS de webpay-refund-cancellation para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-create-transaction",
+   "caso": "CORS de webpay-create-transaction con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-create-transaction",
+   "caso": "CORS de webpay-create-transaction con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-create-transaction",
+   "caso": "CORS de webpay-create-transaction para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-commit-transaction",
+   "caso": "CORS de webpay-commit-transaction con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-commit-transaction",
+   "caso": "CORS de webpay-commit-transaction con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-commit-transaction",
+   "caso": "CORS de webpay-commit-transaction para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-webpay-reconcile",
+   "caso": "CORS de webpay-reconcile con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-webpay-reconcile",
+   "caso": "CORS de webpay-reconcile con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-reconcile",
+   "caso": "CORS de webpay-reconcile para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-guest-checkout",
+   "caso": "CORS de guest-checkout con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-guest-checkout",
+   "caso": "CORS de guest-checkout con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-guest-checkout",
+   "caso": "CORS de guest-checkout para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-oneclick-charge",
+   "caso": "CORS de oneclick-charge con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-oneclick-charge",
+   "caso": "CORS de oneclick-charge con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-oneclick-charge",
+   "caso": "CORS de oneclick-charge para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-oneclick-return",
+   "caso": "CORS de oneclick-return con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-oneclick-return",
+   "caso": "CORS de oneclick-return con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-oneclick-return",
+   "caso": "CORS de oneclick-return para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-invitar-colaborador",
+   "caso": "CORS de invitar-colaborador con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-invitar-colaborador",
+   "caso": "CORS de invitar-colaborador con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-invitar-colaborador",
+   "caso": "CORS de invitar-colaborador para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ajeno-definir-clave-invitado",
+   "caso": "CORS de definir-clave-invitado con Origin https://evil.example.com",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-null-definir-clave-invitado",
+   "caso": "CORS de definir-clave-invitado con Origin null",
+   "esperado": "no refleja el origen; nunca * ni null",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-definir-clave-invitado",
+   "caso": "CORS de definir-clave-invitado para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-create",
+   "caso": "webpay-create sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-status",
+   "caso": "webpay-status sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-refund",
+   "caso": "webpay-refund sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-release",
+   "caso": "webpay-release sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-resolve-dispute",
+   "caso": "webpay-resolve-dispute sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-oneclick-charge",
+   "caso": "oneclick-charge sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-invitar-colaborador",
+   "caso": "invitar-colaborador sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-refund-cancellation",
+   "caso": "webpay-refund-cancellation sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-refund-rejection",
+   "caso": "webpay-refund-rejection sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-reconcile",
+   "caso": "webpay-reconcile sin secreto del cron",
+   "esperado": "401/403",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"error\":\"No autorizado\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-commit-falso",
+   "caso": "Retorno Webpay falsificado",
+   "esperado": "rechazo o redirección a error",
+   "http": 404,
+   "resultado": "PASA",
+   "detalle": "{\"error\":\"Pago no encontrado\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-oneclick-falso",
+   "caso": "Retorno OneClick falsificado",
+   "esperado": "rechazo o redirección a error",
+   "http": 302,
+   "resultado": "PASA",
+   "detalle": "http://localhost:5173/?tarjeta=fail"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-clave-invitado",
+   "caso": "definir-clave-invitado con ticket falso",
+   "esperado": "rechazo",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"error\":\"La contraseña debe tener al menos 8 caracteres\"}"
+  }
+ ],
+ "resumen": {
+  "total": 61,
+  "pasa": 61,
+  "falla": 0
+ }
+}
