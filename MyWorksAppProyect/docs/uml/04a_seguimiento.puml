@@ -1,0 +1,53 @@
+@startuml
+title Casos de uso — MyWorksApp\nSeguimiento y ejecución del trabajo
+skinparam shadowing false
+skinparam handwritten false
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 16
+skinparam ActorFontSize 16
+skinparam UseCaseFontSize 16
+skinparam PackageFontSize 16
+skinparam RectangleFontSize 16
+skinparam ArrowFontSize 14
+skinparam linetype ortho
+left to right direction
+hide circle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam rectangle {
+  BackgroundColor #FCFCFD
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam package {
+  BackgroundColor #F4F6F8
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+
+actor "Cliente registrado" as CR
+actor "Profesional" as P
+
+rectangle "MyWorksApp — Seguimiento y comunicación (a)" {
+  usecase "CU-11 Aceptar o rechazar\nun pedido" as UC11
+  usecase "CU-12 Avisar «voy en camino»\ny compartir ubicación" as UC12
+  usecase "CU-13 Seguir el pedido en vivo" as UC13
+  usecase "CU-14 Iniciar el trabajo\ncon PIN" as UC14
+  usecase "CU-16 Subir evidencia y\nfinalizar el trabajo" as UC16
+}
+
+P -- UC11
+P -- UC12
+CR -- UC13
+P -- UC14
+CR -- UC14
+P -- UC16
+@enduml

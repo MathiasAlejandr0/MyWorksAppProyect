@@ -1,0 +1,77 @@
+@startuml
+title Casos de uso — MyWorksApp\nDiagrama de contexto — MyWorksApp
+skinparam shadowing false
+skinparam handwritten false
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 16
+skinparam ActorFontSize 16
+skinparam UseCaseFontSize 16
+skinparam PackageFontSize 16
+skinparam RectangleFontSize 16
+skinparam ArrowFontSize 14
+skinparam linetype ortho
+left to right direction
+hide circle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam rectangle {
+  BackgroundColor #FCFCFD
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam package {
+  BackgroundColor #F4F6F8
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+
+actor "Visitante" as V
+actor "Cliente invitado" as CI
+actor "Cliente registrado" as CR
+actor "Profesional" as P
+actor "Administrador" as A
+actor "Colaborador interno (soporte / QA)" as C
+actor "Supabase Auth / correo" as AUTH <<sistema externo>>
+actor "Transbank Webpay" as TBK <<sistema externo>>
+actor "Sistema (planificador)" as S <<planificador>>
+
+rectangle "MyWorksApp" {
+  package "Seguridad / Auth" as P07
+  package "Búsqueda y reserva" as P01
+  package "Pagos / escrow" as P03
+  package "Seguimiento y comunicación" as P04
+  package "Reagendamiento" as P05
+  package "Gestión del profesional" as P02
+  package "Administración" as P06
+}
+
+V -- P07
+V -- P01
+CI -- P03
+CR -- P07
+CR -- P01
+CR -- P03
+CR -- P04
+CR -- P05
+P -- P07
+P -- P02
+P -- P03
+P -- P04
+P -- P05
+A -- P06
+C -- P06
+S -- P06
+S -- P03
+TBK -- P03
+AUTH -- P07
+CI --|> V
+CR --|> V
+@enduml

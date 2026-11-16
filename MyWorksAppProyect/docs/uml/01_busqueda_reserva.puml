@@ -1,0 +1,54 @@
+@startuml
+title Casos de uso — MyWorksApp\nBúsqueda y reserva
+skinparam shadowing false
+skinparam handwritten false
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 16
+skinparam ActorFontSize 16
+skinparam UseCaseFontSize 16
+skinparam PackageFontSize 16
+skinparam RectangleFontSize 16
+skinparam ArrowFontSize 14
+skinparam linetype ortho
+left to right direction
+hide circle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam rectangle {
+  BackgroundColor #FCFCFD
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam package {
+  BackgroundColor #F4F6F8
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+
+actor "Visitante" as V
+actor "Cliente registrado" as CR
+actor "Transbank Webpay" as TBK <<sistema externo>>
+
+rectangle "MyWorksApp — Búsqueda y reserva" {
+  usecase "CU-05 Buscar profesionales\ncon mapa y filtros" as UC05
+  usecase "CU-06 Ver perfil del profesional\ny horas libres" as UC06
+  usecase "CU-07 Solicitar servicio\ny reservar hora" as UC07
+}
+
+' Caso referenciado de otro paquete (fuera del límite)
+usecase "CU-08 Pagar con Webpay\nen garantía" as UC08
+
+V -- UC05
+V -- UC06
+CR -- UC07
+TBK -- UC08
+UC07 ..> UC08 : <<include>>
+@enduml

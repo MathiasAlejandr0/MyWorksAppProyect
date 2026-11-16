@@ -1,0 +1,64 @@
+@startuml
+title Casos de uso — MyWorksApp\nAdministración
+skinparam shadowing false
+skinparam handwritten false
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 16
+skinparam ActorFontSize 16
+skinparam UseCaseFontSize 16
+skinparam PackageFontSize 16
+skinparam RectangleFontSize 16
+skinparam ArrowFontSize 14
+skinparam linetype ortho
+left to right direction
+hide circle
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam rectangle {
+  BackgroundColor #FCFCFD
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam package {
+  BackgroundColor #F4F6F8
+  BorderColor #00205B
+  FontColor #00205B
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #00205B
+  FontColor #00205B
+}
+
+actor "Administrador" as A
+actor "Colaborador interno (soporte / QA)" as C
+actor "Sistema (planificador)" as S <<planificador>>
+
+rectangle "MyWorksApp — Administración" {
+  usecase "CU-22 Resolver una disputa" as UC22
+  usecase "CU-28 Acceder a la consola\ncon segundo factor" as UC28
+  usecase "CU-29 Verificar profesionales" as UC29
+  usecase "CU-30 Supervisar métricas, pagos\ny liquidar al profesional" as UC30
+  usecase "CU-31 Invitar colaborador interno" as UC31
+  usecase "CU-32 Ejecutar procesos automáticos\nde pagos y soporte" as UC32
+  usecase "CU-34 Atender la cola de soporte\ncon mínimo privilegio" as UC34
+}
+
+' Caso referenciado de otro paquete (fuera del límite)
+usecase "CU-21 Abrir disputa y\nproponer un acuerdo" as UC21
+
+A -- UC22
+S -- UC22
+A -- UC28
+C -- UC28
+A -- UC29
+A -- UC30
+A -- UC31
+C -- UC31
+S -- UC32
+C -- UC34
+UC22 ..> UC21 : <<extend>>
+@enduml

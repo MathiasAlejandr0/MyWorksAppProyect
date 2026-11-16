@@ -1,0 +1,747 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xmi:XMI xmlns:uml="http://www.omg.org/spec/UML/20110701" xmlns:xmi="http://schema.omg.org/spec/XMI/2.1" xmi:version="2.1">
+  <xmi:Documentation exporter="MyWorksApp" exporterVersion="2.0"/>
+  <uml:Model xmi:id="id_model" xmi:type="uml:Model" name="MyWorksApp — Casos de uso" visibility="public">
+    <packagedElement xmi:type="uml:Component" xmi:id="id_sys" name="MyWorksApp"/>
+    <packagedElement xmi:type="uml:Actor" xmi:id="id_act_V" name="Visitante" visibility="public">
+      <ownedComment xmi:type="uml:Comment" xmi:id="id_act_V_cmt">
+        <body>Persona sin sesión que navega el catálogo.</body>
+        <annotatedElement xmi:idref="id_act_V"/>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Actor" xmi:id="id_act_CI" name="Cliente invitado" visibility="public">
+      <ownedComment xmi:type="uml:Comment" xmi:id="id_act_CI_cmt">
+        <body>Visitante que compra sin crear cuenta antes de pagar.</body>
+        <annotatedElement xmi:idref="id_act_CI"/>
+      </ownedComment>
+      <generalization xmi:type="uml:Generalization" xmi:id="id_gen_CI_V" general="id_act_V"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Actor" xmi:id="id_act_CR" name="Cliente registrado" visibility="public">
+      <ownedComment xmi:type="uml:Comment" xmi:id="id_act_CR_cmt">
+        <body>Usuario con rol cliente que contrata servicios.</body>
+        <annotatedElement xmi:idref="id_act_CR"/>
+      </ownedComment>
+      <generalization xmi:type="uml:Generalization" xmi:id="id_gen_CR_V" general="id_act_V"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Actor" xmi:id="id_act_P" name="Profesional" visibility="public">
+      <ownedComment xmi:type="uml:Comment" xmi:id="id_act_P_cmt">
+        <body>Ofrece y ejecuta servicios (rol trabajador).</body>
+        <annotatedElement xmi:idref="id_act_P"/>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Actor" xmi:id="id_act_A" name="Administrador" visibility="public">
+      <ownedComment xmi:type="uml:Comment" xmi:id="id_act_A_cmt">
+        <body>Administra la plataforma (verificación, pagos, disputas).</body>
+        <annotatedElement xmi:idref="id_act_A"/>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Actor" xmi:id="id_act_C" name="Colaborador interno (soporte / QA)" visibility="public">
+      <ownedComment xmi:type="uml:Comment" xmi:id="id_act_C_cmt">
+        <body>Colaborador interno de soporte o QA, con mínimo privilegio.</body>
+        <annotatedElement xmi:idref="id_act_C"/>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Actor" xmi:id="id_act_S" name="Sistema (planificador)" visibility="public" stereotype="planificador">
+      <ownedComment xmi:type="uml:Comment" xmi:id="id_act_S_cmt">
+        <body>Planificador: tareas pg_cron y Edge Functions automáticas.</body>
+        <annotatedElement xmi:idref="id_act_S"/>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Actor" xmi:id="id_act_TBK" name="Transbank Webpay" visibility="public" stereotype="sistema externo">
+      <ownedComment xmi:type="uml:Comment" xmi:id="id_act_TBK_cmt">
+        <body>Pasarela de pago Webpay (sistema externo).</body>
+        <annotatedElement xmi:idref="id_act_TBK"/>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Actor" xmi:id="id_act_AUTH" name="Supabase Auth / correo" visibility="public" stereotype="sistema externo">
+      <ownedComment xmi:type="uml:Comment" xmi:id="id_act_AUTH_cmt">
+        <body>Autenticación y correo de alta y recuperación (sistema externo).</body>
+        <annotatedElement xmi:idref="id_act_AUTH"/>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="id_pkg_P07" name="Seguridad / Auth">
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_01" name="CU-01 Registrarse" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_01_cmt">
+          <body>Paquete: Seguridad / Auth.</body>
+          <annotatedElement xmi:idref="id_uc_01"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_02" name="CU-02 Iniciar sesión" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_02_cmt">
+          <body>Paquete: Seguridad / Auth.</body>
+          <annotatedElement xmi:idref="id_uc_02"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_03" name="CU-03 Recuperar contraseña" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_03_cmt">
+          <body>Paquete: Seguridad / Auth.</body>
+          <annotatedElement xmi:idref="id_uc_03"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_04" name="CU-04 Ejercer derechos sobre los datos (exportar / eliminar cuenta)" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_04_cmt">
+          <body>Paquete: Seguridad / Auth.</body>
+          <annotatedElement xmi:idref="id_uc_04"/>
+        </ownedComment>
+      </packagedElement>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="id_pkg_P01" name="Búsqueda y reserva">
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_05" name="CU-05 Buscar profesionales con mapa y filtros" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_05_cmt">
+          <body>Paquete: Búsqueda y reserva.</body>
+          <annotatedElement xmi:idref="id_uc_05"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_06" name="CU-06 Ver perfil del profesional y horas libres" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_06_cmt">
+          <body>Paquete: Búsqueda y reserva.</body>
+          <annotatedElement xmi:idref="id_uc_06"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_07" name="CU-07 Solicitar servicio y reservar hora" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_07_cmt">
+          <body>Paquete: Búsqueda y reserva.</body>
+          <annotatedElement xmi:idref="id_uc_07"/>
+        </ownedComment>
+        <include xmi:type="uml:Include" xmi:id="id_inc_07_08" addition="id_uc_08"/>
+      </packagedElement>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="id_pkg_P03" name="Pagos / escrow">
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_08" name="CU-08 Pagar con Webpay en garantía" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_08_cmt">
+          <body>Paquete: Pagos / escrow.</body>
+          <annotatedElement xmi:idref="id_uc_08"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_09" name="CU-09 Comprar como invitado" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_09_cmt">
+          <body>Paquete: Pagos / escrow.</body>
+          <annotatedElement xmi:idref="id_uc_09"/>
+        </ownedComment>
+        <include xmi:type="uml:Include" xmi:id="id_inc_09_08" addition="id_uc_08"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_10" name="CU-10 Definir contraseña tras pagar como invitado" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_10_cmt">
+          <body>Paquete: Pagos / escrow.</body>
+          <annotatedElement xmi:idref="id_uc_10"/>
+        </ownedComment>
+        <extend xmi:type="uml:Extend" xmi:id="id_ext_10_09" extendedCase="id_uc_09"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_15" name="CU-15 Solicitar y aprobar un cobro adicional (orden de cambio)" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_15_cmt">
+          <body>Paquete: Pagos / escrow.</body>
+          <annotatedElement xmi:idref="id_uc_15"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_17" name="CU-17 Recibir conforme y liberar el pago" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_17_cmt">
+          <body>Paquete: Pagos / escrow.</body>
+          <annotatedElement xmi:idref="id_uc_17"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_20" name="CU-20 Cancelar una solicitud con reembolso" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_20_cmt">
+          <body>Paquete: Pagos / escrow.</body>
+          <annotatedElement xmi:idref="id_uc_20"/>
+        </ownedComment>
+      </packagedElement>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="id_pkg_P04" name="Seguimiento y comunicación">
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_11" name="CU-11 Aceptar o rechazar un pedido" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_11_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_11"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_12" name="CU-12 Avisar «voy en camino» y compartir ubicación" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_12_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_12"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_13" name="CU-13 Seguir el pedido en vivo" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_13_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_13"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_14" name="CU-14 Iniciar el trabajo con PIN" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_14_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_14"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_16" name="CU-16 Subir evidencia y finalizar el trabajo" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_16_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_16"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_18" name="CU-18 Calificar al profesional" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_18_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_18"/>
+        </ownedComment>
+        <extend xmi:type="uml:Extend" xmi:id="id_ext_18_17" extendedCase="id_uc_17"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_19" name="CU-19 Calificar al cliente" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_19_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_19"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_21" name="CU-21 Abrir disputa y proponer un acuerdo" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_21_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_21"/>
+        </ownedComment>
+        <extend xmi:type="uml:Extend" xmi:id="id_ext_21_17" extendedCase="id_uc_17"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_23" name="CU-23 Chatear sobre un trabajo" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_23_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_23"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_24" name="CU-24 Recibir y gestionar notificaciones" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_24_cmt">
+          <body>Paquete: Seguimiento y comunicación.</body>
+          <annotatedElement xmi:idref="id_uc_24"/>
+        </ownedComment>
+      </packagedElement>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="id_pkg_P05" name="Reagendamiento">
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_33" name="CU-33 Reagendar la visita" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_33_cmt">
+          <body>Paquete: Reagendamiento.</body>
+          <annotatedElement xmi:idref="id_uc_33"/>
+        </ownedComment>
+      </packagedElement>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="id_pkg_P02" name="Gestión del profesional">
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_25" name="CU-25 Completar perfil y solicitar verificación" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_25_cmt">
+          <body>Paquete: Gestión del profesional.</body>
+          <annotatedElement xmi:idref="id_uc_25"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_26" name="CU-26 Configurar tarifas, horario y disponibilidad" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_26_cmt">
+          <body>Paquete: Gestión del profesional.</body>
+          <annotatedElement xmi:idref="id_uc_26"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_27" name="CU-27 Consultar cobros y registrar cuenta bancaria" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_27_cmt">
+          <body>Paquete: Gestión del profesional.</body>
+          <annotatedElement xmi:idref="id_uc_27"/>
+        </ownedComment>
+      </packagedElement>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="id_pkg_P06" name="Administración">
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_22" name="CU-22 Resolver una disputa" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_22_cmt">
+          <body>Paquete: Administración.</body>
+          <annotatedElement xmi:idref="id_uc_22"/>
+        </ownedComment>
+        <extend xmi:type="uml:Extend" xmi:id="id_ext_22_21" extendedCase="id_uc_21"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_28" name="CU-28 Acceder a la consola con segundo factor" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_28_cmt">
+          <body>Paquete: Administración.</body>
+          <annotatedElement xmi:idref="id_uc_28"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_29" name="CU-29 Verificar profesionales" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_29_cmt">
+          <body>Paquete: Administración.</body>
+          <annotatedElement xmi:idref="id_uc_29"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_30" name="CU-30 Supervisar métricas, pagos y liquidar al profesional" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_30_cmt">
+          <body>Paquete: Administración.</body>
+          <annotatedElement xmi:idref="id_uc_30"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_31" name="CU-31 Invitar colaborador interno" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_31_cmt">
+          <body>Paquete: Administración.</body>
+          <annotatedElement xmi:idref="id_uc_31"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_32" name="CU-32 Ejecutar procesos automáticos de pagos y soporte" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_32_cmt">
+          <body>Paquete: Administración.</body>
+          <annotatedElement xmi:idref="id_uc_32"/>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="id_uc_34" name="CU-34 Atender la cola de soporte con mínimo privilegio" visibility="public">
+        <subject xmi:idref="id_sys"/>
+        <ownedComment xmi:type="uml:Comment" xmi:id="id_uc_34_cmt">
+          <body>Paquete: Administración.</body>
+          <annotatedElement xmi:idref="id_uc_34"/>
+        </ownedComment>
+      </packagedElement>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_01_V_05" visibility="public">
+      <memberEnd xmi:idref="id_assoc_01_V_05_end1"/>
+      <memberEnd xmi:idref="id_assoc_01_V_05_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_01_V_05_end1" name="" type="id_act_V" association="id_assoc_01_V_05" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_01_V_05_end2" name="" type="id_uc_05" association="id_assoc_01_V_05" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_02_V_06" visibility="public">
+      <memberEnd xmi:idref="id_assoc_02_V_06_end1"/>
+      <memberEnd xmi:idref="id_assoc_02_V_06_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_02_V_06_end1" name="" type="id_act_V" association="id_assoc_02_V_06" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_02_V_06_end2" name="" type="id_uc_06" association="id_assoc_02_V_06" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_03_CR_07" visibility="public">
+      <memberEnd xmi:idref="id_assoc_03_CR_07_end1"/>
+      <memberEnd xmi:idref="id_assoc_03_CR_07_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_03_CR_07_end1" name="" type="id_act_CR" association="id_assoc_03_CR_07" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_03_CR_07_end2" name="" type="id_uc_07" association="id_assoc_03_CR_07" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_04_TBK_08" visibility="public">
+      <memberEnd xmi:idref="id_assoc_04_TBK_08_end1"/>
+      <memberEnd xmi:idref="id_assoc_04_TBK_08_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_04_TBK_08_end1" name="" type="id_act_TBK" association="id_assoc_04_TBK_08" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_04_TBK_08_end2" name="" type="id_uc_08" association="id_assoc_04_TBK_08" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_05_P_25" visibility="public">
+      <memberEnd xmi:idref="id_assoc_05_P_25_end1"/>
+      <memberEnd xmi:idref="id_assoc_05_P_25_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_05_P_25_end1" name="" type="id_act_P" association="id_assoc_05_P_25" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_05_P_25_end2" name="" type="id_uc_25" association="id_assoc_05_P_25" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_06_P_26" visibility="public">
+      <memberEnd xmi:idref="id_assoc_06_P_26_end1"/>
+      <memberEnd xmi:idref="id_assoc_06_P_26_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_06_P_26_end1" name="" type="id_act_P" association="id_assoc_06_P_26" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_06_P_26_end2" name="" type="id_uc_26" association="id_assoc_06_P_26" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_07_P_27" visibility="public">
+      <memberEnd xmi:idref="id_assoc_07_P_27_end1"/>
+      <memberEnd xmi:idref="id_assoc_07_P_27_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_07_P_27_end1" name="" type="id_act_P" association="id_assoc_07_P_27" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_07_P_27_end2" name="" type="id_uc_27" association="id_assoc_07_P_27" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_08_CR_08" visibility="public">
+      <memberEnd xmi:idref="id_assoc_08_CR_08_end1"/>
+      <memberEnd xmi:idref="id_assoc_08_CR_08_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_08_CR_08_end1" name="" type="id_act_CR" association="id_assoc_08_CR_08" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_08_CR_08_end2" name="" type="id_uc_08" association="id_assoc_08_CR_08" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_09_CI_09" visibility="public">
+      <memberEnd xmi:idref="id_assoc_09_CI_09_end1"/>
+      <memberEnd xmi:idref="id_assoc_09_CI_09_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_09_CI_09_end1" name="" type="id_act_CI" association="id_assoc_09_CI_09" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_09_CI_09_end2" name="" type="id_uc_09" association="id_assoc_09_CI_09" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_10_CI_10" visibility="public">
+      <memberEnd xmi:idref="id_assoc_10_CI_10_end1"/>
+      <memberEnd xmi:idref="id_assoc_10_CI_10_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_10_CI_10_end1" name="" type="id_act_CI" association="id_assoc_10_CI_10" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_10_CI_10_end2" name="" type="id_uc_10" association="id_assoc_10_CI_10" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_11_P_15" visibility="public">
+      <memberEnd xmi:idref="id_assoc_11_P_15_end1"/>
+      <memberEnd xmi:idref="id_assoc_11_P_15_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_11_P_15_end1" name="" type="id_act_P" association="id_assoc_11_P_15" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_11_P_15_end2" name="" type="id_uc_15" association="id_assoc_11_P_15" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_12_CR_15" visibility="public">
+      <memberEnd xmi:idref="id_assoc_12_CR_15_end1"/>
+      <memberEnd xmi:idref="id_assoc_12_CR_15_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_12_CR_15_end1" name="" type="id_act_CR" association="id_assoc_12_CR_15" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_12_CR_15_end2" name="" type="id_uc_15" association="id_assoc_12_CR_15" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_13_CR_17" visibility="public">
+      <memberEnd xmi:idref="id_assoc_13_CR_17_end1"/>
+      <memberEnd xmi:idref="id_assoc_13_CR_17_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_13_CR_17_end1" name="" type="id_act_CR" association="id_assoc_13_CR_17" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_13_CR_17_end2" name="" type="id_uc_17" association="id_assoc_13_CR_17" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_14_S_17" visibility="public">
+      <memberEnd xmi:idref="id_assoc_14_S_17_end1"/>
+      <memberEnd xmi:idref="id_assoc_14_S_17_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_14_S_17_end1" name="" type="id_act_S" association="id_assoc_14_S_17" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_14_S_17_end2" name="" type="id_uc_17" association="id_assoc_14_S_17" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_15_CR_20" visibility="public">
+      <memberEnd xmi:idref="id_assoc_15_CR_20_end1"/>
+      <memberEnd xmi:idref="id_assoc_15_CR_20_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_15_CR_20_end1" name="" type="id_act_CR" association="id_assoc_15_CR_20" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_15_CR_20_end2" name="" type="id_uc_20" association="id_assoc_15_CR_20" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_16_TBK_09" visibility="public">
+      <memberEnd xmi:idref="id_assoc_16_TBK_09_end1"/>
+      <memberEnd xmi:idref="id_assoc_16_TBK_09_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_16_TBK_09_end1" name="" type="id_act_TBK" association="id_assoc_16_TBK_09" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_16_TBK_09_end2" name="" type="id_uc_09" association="id_assoc_16_TBK_09" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_17_TBK_15" visibility="public">
+      <memberEnd xmi:idref="id_assoc_17_TBK_15_end1"/>
+      <memberEnd xmi:idref="id_assoc_17_TBK_15_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_17_TBK_15_end1" name="" type="id_act_TBK" association="id_assoc_17_TBK_15" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_17_TBK_15_end2" name="" type="id_uc_15" association="id_assoc_17_TBK_15" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_18_P_11" visibility="public">
+      <memberEnd xmi:idref="id_assoc_18_P_11_end1"/>
+      <memberEnd xmi:idref="id_assoc_18_P_11_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_18_P_11_end1" name="" type="id_act_P" association="id_assoc_18_P_11" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_18_P_11_end2" name="" type="id_uc_11" association="id_assoc_18_P_11" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_19_P_12" visibility="public">
+      <memberEnd xmi:idref="id_assoc_19_P_12_end1"/>
+      <memberEnd xmi:idref="id_assoc_19_P_12_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_19_P_12_end1" name="" type="id_act_P" association="id_assoc_19_P_12" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_19_P_12_end2" name="" type="id_uc_12" association="id_assoc_19_P_12" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_20_CR_13" visibility="public">
+      <memberEnd xmi:idref="id_assoc_20_CR_13_end1"/>
+      <memberEnd xmi:idref="id_assoc_20_CR_13_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_20_CR_13_end1" name="" type="id_act_CR" association="id_assoc_20_CR_13" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_20_CR_13_end2" name="" type="id_uc_13" association="id_assoc_20_CR_13" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_21_P_14" visibility="public">
+      <memberEnd xmi:idref="id_assoc_21_P_14_end1"/>
+      <memberEnd xmi:idref="id_assoc_21_P_14_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_21_P_14_end1" name="" type="id_act_P" association="id_assoc_21_P_14" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_21_P_14_end2" name="" type="id_uc_14" association="id_assoc_21_P_14" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_22_CR_14" visibility="public">
+      <memberEnd xmi:idref="id_assoc_22_CR_14_end1"/>
+      <memberEnd xmi:idref="id_assoc_22_CR_14_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_22_CR_14_end1" name="" type="id_act_CR" association="id_assoc_22_CR_14" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_22_CR_14_end2" name="" type="id_uc_14" association="id_assoc_22_CR_14" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_23_P_16" visibility="public">
+      <memberEnd xmi:idref="id_assoc_23_P_16_end1"/>
+      <memberEnd xmi:idref="id_assoc_23_P_16_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_23_P_16_end1" name="" type="id_act_P" association="id_assoc_23_P_16" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_23_P_16_end2" name="" type="id_uc_16" association="id_assoc_23_P_16" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_24_CR_18" visibility="public">
+      <memberEnd xmi:idref="id_assoc_24_CR_18_end1"/>
+      <memberEnd xmi:idref="id_assoc_24_CR_18_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_24_CR_18_end1" name="" type="id_act_CR" association="id_assoc_24_CR_18" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_24_CR_18_end2" name="" type="id_uc_18" association="id_assoc_24_CR_18" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_25_P_19" visibility="public">
+      <memberEnd xmi:idref="id_assoc_25_P_19_end1"/>
+      <memberEnd xmi:idref="id_assoc_25_P_19_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_25_P_19_end1" name="" type="id_act_P" association="id_assoc_25_P_19" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_25_P_19_end2" name="" type="id_uc_19" association="id_assoc_25_P_19" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_26_CR_21" visibility="public">
+      <memberEnd xmi:idref="id_assoc_26_CR_21_end1"/>
+      <memberEnd xmi:idref="id_assoc_26_CR_21_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_26_CR_21_end1" name="" type="id_act_CR" association="id_assoc_26_CR_21" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_26_CR_21_end2" name="" type="id_uc_21" association="id_assoc_26_CR_21" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_27_P_21" visibility="public">
+      <memberEnd xmi:idref="id_assoc_27_P_21_end1"/>
+      <memberEnd xmi:idref="id_assoc_27_P_21_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_27_P_21_end1" name="" type="id_act_P" association="id_assoc_27_P_21" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_27_P_21_end2" name="" type="id_uc_21" association="id_assoc_27_P_21" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_28_CR_23" visibility="public">
+      <memberEnd xmi:idref="id_assoc_28_CR_23_end1"/>
+      <memberEnd xmi:idref="id_assoc_28_CR_23_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_28_CR_23_end1" name="" type="id_act_CR" association="id_assoc_28_CR_23" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_28_CR_23_end2" name="" type="id_uc_23" association="id_assoc_28_CR_23" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_29_P_23" visibility="public">
+      <memberEnd xmi:idref="id_assoc_29_P_23_end1"/>
+      <memberEnd xmi:idref="id_assoc_29_P_23_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_29_P_23_end1" name="" type="id_act_P" association="id_assoc_29_P_23" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_29_P_23_end2" name="" type="id_uc_23" association="id_assoc_29_P_23" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_30_CR_24" visibility="public">
+      <memberEnd xmi:idref="id_assoc_30_CR_24_end1"/>
+      <memberEnd xmi:idref="id_assoc_30_CR_24_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_30_CR_24_end1" name="" type="id_act_CR" association="id_assoc_30_CR_24" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_30_CR_24_end2" name="" type="id_uc_24" association="id_assoc_30_CR_24" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_31_P_24" visibility="public">
+      <memberEnd xmi:idref="id_assoc_31_P_24_end1"/>
+      <memberEnd xmi:idref="id_assoc_31_P_24_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_31_P_24_end1" name="" type="id_act_P" association="id_assoc_31_P_24" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_31_P_24_end2" name="" type="id_uc_24" association="id_assoc_31_P_24" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_32_CR_33" visibility="public">
+      <memberEnd xmi:idref="id_assoc_32_CR_33_end1"/>
+      <memberEnd xmi:idref="id_assoc_32_CR_33_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_32_CR_33_end1" name="" type="id_act_CR" association="id_assoc_32_CR_33" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_32_CR_33_end2" name="" type="id_uc_33" association="id_assoc_32_CR_33" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_33_P_33" visibility="public">
+      <memberEnd xmi:idref="id_assoc_33_P_33_end1"/>
+      <memberEnd xmi:idref="id_assoc_33_P_33_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_33_P_33_end1" name="" type="id_act_P" association="id_assoc_33_P_33" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_33_P_33_end2" name="" type="id_uc_33" association="id_assoc_33_P_33" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_34_A_22" visibility="public">
+      <memberEnd xmi:idref="id_assoc_34_A_22_end1"/>
+      <memberEnd xmi:idref="id_assoc_34_A_22_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_34_A_22_end1" name="" type="id_act_A" association="id_assoc_34_A_22" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_34_A_22_end2" name="" type="id_uc_22" association="id_assoc_34_A_22" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_35_S_22" visibility="public">
+      <memberEnd xmi:idref="id_assoc_35_S_22_end1"/>
+      <memberEnd xmi:idref="id_assoc_35_S_22_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_35_S_22_end1" name="" type="id_act_S" association="id_assoc_35_S_22" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_35_S_22_end2" name="" type="id_uc_22" association="id_assoc_35_S_22" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_36_A_28" visibility="public">
+      <memberEnd xmi:idref="id_assoc_36_A_28_end1"/>
+      <memberEnd xmi:idref="id_assoc_36_A_28_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_36_A_28_end1" name="" type="id_act_A" association="id_assoc_36_A_28" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_36_A_28_end2" name="" type="id_uc_28" association="id_assoc_36_A_28" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_37_C_28" visibility="public">
+      <memberEnd xmi:idref="id_assoc_37_C_28_end1"/>
+      <memberEnd xmi:idref="id_assoc_37_C_28_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_37_C_28_end1" name="" type="id_act_C" association="id_assoc_37_C_28" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_37_C_28_end2" name="" type="id_uc_28" association="id_assoc_37_C_28" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_38_A_29" visibility="public">
+      <memberEnd xmi:idref="id_assoc_38_A_29_end1"/>
+      <memberEnd xmi:idref="id_assoc_38_A_29_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_38_A_29_end1" name="" type="id_act_A" association="id_assoc_38_A_29" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_38_A_29_end2" name="" type="id_uc_29" association="id_assoc_38_A_29" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_39_A_30" visibility="public">
+      <memberEnd xmi:idref="id_assoc_39_A_30_end1"/>
+      <memberEnd xmi:idref="id_assoc_39_A_30_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_39_A_30_end1" name="" type="id_act_A" association="id_assoc_39_A_30" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_39_A_30_end2" name="" type="id_uc_30" association="id_assoc_39_A_30" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_40_A_31" visibility="public">
+      <memberEnd xmi:idref="id_assoc_40_A_31_end1"/>
+      <memberEnd xmi:idref="id_assoc_40_A_31_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_40_A_31_end1" name="" type="id_act_A" association="id_assoc_40_A_31" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_40_A_31_end2" name="" type="id_uc_31" association="id_assoc_40_A_31" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_41_C_31" visibility="public">
+      <memberEnd xmi:idref="id_assoc_41_C_31_end1"/>
+      <memberEnd xmi:idref="id_assoc_41_C_31_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_41_C_31_end1" name="" type="id_act_C" association="id_assoc_41_C_31" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_41_C_31_end2" name="" type="id_uc_31" association="id_assoc_41_C_31" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_42_S_32" visibility="public">
+      <memberEnd xmi:idref="id_assoc_42_S_32_end1"/>
+      <memberEnd xmi:idref="id_assoc_42_S_32_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_42_S_32_end1" name="" type="id_act_S" association="id_assoc_42_S_32" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_42_S_32_end2" name="" type="id_uc_32" association="id_assoc_42_S_32" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_43_C_34" visibility="public">
+      <memberEnd xmi:idref="id_assoc_43_C_34_end1"/>
+      <memberEnd xmi:idref="id_assoc_43_C_34_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_43_C_34_end1" name="" type="id_act_C" association="id_assoc_43_C_34" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_43_C_34_end2" name="" type="id_uc_34" association="id_assoc_43_C_34" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_44_V_01" visibility="public">
+      <memberEnd xmi:idref="id_assoc_44_V_01_end1"/>
+      <memberEnd xmi:idref="id_assoc_44_V_01_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_44_V_01_end1" name="" type="id_act_V" association="id_assoc_44_V_01" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_44_V_01_end2" name="" type="id_uc_01" association="id_assoc_44_V_01" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_45_AUTH_01" visibility="public">
+      <memberEnd xmi:idref="id_assoc_45_AUTH_01_end1"/>
+      <memberEnd xmi:idref="id_assoc_45_AUTH_01_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_45_AUTH_01_end1" name="" type="id_act_AUTH" association="id_assoc_45_AUTH_01" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_45_AUTH_01_end2" name="" type="id_uc_01" association="id_assoc_45_AUTH_01" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_46_CR_02" visibility="public">
+      <memberEnd xmi:idref="id_assoc_46_CR_02_end1"/>
+      <memberEnd xmi:idref="id_assoc_46_CR_02_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_46_CR_02_end1" name="" type="id_act_CR" association="id_assoc_46_CR_02" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_46_CR_02_end2" name="" type="id_uc_02" association="id_assoc_46_CR_02" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_47_P_02" visibility="public">
+      <memberEnd xmi:idref="id_assoc_47_P_02_end1"/>
+      <memberEnd xmi:idref="id_assoc_47_P_02_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_47_P_02_end1" name="" type="id_act_P" association="id_assoc_47_P_02" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_47_P_02_end2" name="" type="id_uc_02" association="id_assoc_47_P_02" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_48_CR_03" visibility="public">
+      <memberEnd xmi:idref="id_assoc_48_CR_03_end1"/>
+      <memberEnd xmi:idref="id_assoc_48_CR_03_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_48_CR_03_end1" name="" type="id_act_CR" association="id_assoc_48_CR_03" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_48_CR_03_end2" name="" type="id_uc_03" association="id_assoc_48_CR_03" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_49_P_03" visibility="public">
+      <memberEnd xmi:idref="id_assoc_49_P_03_end1"/>
+      <memberEnd xmi:idref="id_assoc_49_P_03_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_49_P_03_end1" name="" type="id_act_P" association="id_assoc_49_P_03" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_49_P_03_end2" name="" type="id_uc_03" association="id_assoc_49_P_03" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_50_AUTH_03" visibility="public">
+      <memberEnd xmi:idref="id_assoc_50_AUTH_03_end1"/>
+      <memberEnd xmi:idref="id_assoc_50_AUTH_03_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_50_AUTH_03_end1" name="" type="id_act_AUTH" association="id_assoc_50_AUTH_03" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_50_AUTH_03_end2" name="" type="id_uc_03" association="id_assoc_50_AUTH_03" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_51_CR_04" visibility="public">
+      <memberEnd xmi:idref="id_assoc_51_CR_04_end1"/>
+      <memberEnd xmi:idref="id_assoc_51_CR_04_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_51_CR_04_end1" name="" type="id_act_CR" association="id_assoc_51_CR_04" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_51_CR_04_end2" name="" type="id_uc_04" association="id_assoc_51_CR_04" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_assoc_52_P_04" visibility="public">
+      <memberEnd xmi:idref="id_assoc_52_P_04_end1"/>
+      <memberEnd xmi:idref="id_assoc_52_P_04_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_52_P_04_end1" name="" type="id_act_P" association="id_assoc_52_P_04" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_assoc_52_P_04_end2" name="" type="id_uc_04" association="id_assoc_52_P_04" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_01_V_P07" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_01_V_P07_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_01_V_P07_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_01_V_P07_end1" name="" type="id_act_V" association="id_pkgassoc_01_V_P07" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_01_V_P07_end2" name="" type="id_pkg_P07" association="id_pkgassoc_01_V_P07" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_02_V_P01" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_02_V_P01_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_02_V_P01_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_02_V_P01_end1" name="" type="id_act_V" association="id_pkgassoc_02_V_P01" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_02_V_P01_end2" name="" type="id_pkg_P01" association="id_pkgassoc_02_V_P01" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_03_CI_P03" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_03_CI_P03_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_03_CI_P03_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_03_CI_P03_end1" name="" type="id_act_CI" association="id_pkgassoc_03_CI_P03" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_03_CI_P03_end2" name="" type="id_pkg_P03" association="id_pkgassoc_03_CI_P03" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_04_CR_P07" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_04_CR_P07_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_04_CR_P07_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_04_CR_P07_end1" name="" type="id_act_CR" association="id_pkgassoc_04_CR_P07" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_04_CR_P07_end2" name="" type="id_pkg_P07" association="id_pkgassoc_04_CR_P07" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_05_CR_P01" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_05_CR_P01_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_05_CR_P01_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_05_CR_P01_end1" name="" type="id_act_CR" association="id_pkgassoc_05_CR_P01" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_05_CR_P01_end2" name="" type="id_pkg_P01" association="id_pkgassoc_05_CR_P01" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_06_CR_P03" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_06_CR_P03_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_06_CR_P03_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_06_CR_P03_end1" name="" type="id_act_CR" association="id_pkgassoc_06_CR_P03" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_06_CR_P03_end2" name="" type="id_pkg_P03" association="id_pkgassoc_06_CR_P03" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_07_CR_P04" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_07_CR_P04_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_07_CR_P04_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_07_CR_P04_end1" name="" type="id_act_CR" association="id_pkgassoc_07_CR_P04" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_07_CR_P04_end2" name="" type="id_pkg_P04" association="id_pkgassoc_07_CR_P04" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_08_CR_P05" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_08_CR_P05_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_08_CR_P05_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_08_CR_P05_end1" name="" type="id_act_CR" association="id_pkgassoc_08_CR_P05" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_08_CR_P05_end2" name="" type="id_pkg_P05" association="id_pkgassoc_08_CR_P05" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_09_P_P07" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_09_P_P07_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_09_P_P07_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_09_P_P07_end1" name="" type="id_act_P" association="id_pkgassoc_09_P_P07" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_09_P_P07_end2" name="" type="id_pkg_P07" association="id_pkgassoc_09_P_P07" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_10_P_P02" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_10_P_P02_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_10_P_P02_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_10_P_P02_end1" name="" type="id_act_P" association="id_pkgassoc_10_P_P02" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_10_P_P02_end2" name="" type="id_pkg_P02" association="id_pkgassoc_10_P_P02" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_11_P_P03" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_11_P_P03_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_11_P_P03_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_11_P_P03_end1" name="" type="id_act_P" association="id_pkgassoc_11_P_P03" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_11_P_P03_end2" name="" type="id_pkg_P03" association="id_pkgassoc_11_P_P03" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_12_P_P04" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_12_P_P04_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_12_P_P04_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_12_P_P04_end1" name="" type="id_act_P" association="id_pkgassoc_12_P_P04" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_12_P_P04_end2" name="" type="id_pkg_P04" association="id_pkgassoc_12_P_P04" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_13_P_P05" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_13_P_P05_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_13_P_P05_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_13_P_P05_end1" name="" type="id_act_P" association="id_pkgassoc_13_P_P05" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_13_P_P05_end2" name="" type="id_pkg_P05" association="id_pkgassoc_13_P_P05" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_14_A_P06" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_14_A_P06_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_14_A_P06_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_14_A_P06_end1" name="" type="id_act_A" association="id_pkgassoc_14_A_P06" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_14_A_P06_end2" name="" type="id_pkg_P06" association="id_pkgassoc_14_A_P06" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_15_C_P06" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_15_C_P06_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_15_C_P06_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_15_C_P06_end1" name="" type="id_act_C" association="id_pkgassoc_15_C_P06" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_15_C_P06_end2" name="" type="id_pkg_P06" association="id_pkgassoc_15_C_P06" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_16_S_P06" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_16_S_P06_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_16_S_P06_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_16_S_P06_end1" name="" type="id_act_S" association="id_pkgassoc_16_S_P06" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_16_S_P06_end2" name="" type="id_pkg_P06" association="id_pkgassoc_16_S_P06" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_17_S_P03" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_17_S_P03_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_17_S_P03_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_17_S_P03_end1" name="" type="id_act_S" association="id_pkgassoc_17_S_P03" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_17_S_P03_end2" name="" type="id_pkg_P03" association="id_pkgassoc_17_S_P03" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_18_TBK_P03" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_18_TBK_P03_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_18_TBK_P03_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_18_TBK_P03_end1" name="" type="id_act_TBK" association="id_pkgassoc_18_TBK_P03" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_18_TBK_P03_end2" name="" type="id_pkg_P03" association="id_pkgassoc_18_TBK_P03" isNavigable="true"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="id_pkgassoc_19_AUTH_P07" visibility="public">
+      <memberEnd xmi:idref="id_pkgassoc_19_AUTH_P07_end1"/>
+      <memberEnd xmi:idref="id_pkgassoc_19_AUTH_P07_end2"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_19_AUTH_P07_end1" name="" type="id_act_AUTH" association="id_pkgassoc_19_AUTH_P07" isNavigable="false"/>
+      <ownedEnd xmi:type="uml:Property" xmi:id="id_pkgassoc_19_AUTH_P07_end2" name="" type="id_pkg_P07" association="id_pkgassoc_19_AUTH_P07" isNavigable="true"/>
+    </packagedElement>
+  </uml:Model>
+</xmi:XMI>
