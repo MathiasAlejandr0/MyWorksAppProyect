@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="2490" viewBox="0 0 2400 2490">
+<rect width='100%' height='100%' fill='#ffffff'/>
+<style>text{font-family:'Liberation Sans',Arial,Helvetica,sans-serif;}</style>
+<text x="1200.0" y="58.0" font-size="72" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Casos de uso — MyWorksApp</text>
+<text x="1200.0" y="126.4" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Pagos / escrow</text>
+<rect x="560.0" y="170.0" width="1280.0" height="2240.8" rx="18" fill="#fcfcfd" stroke="#00205b" stroke-width="6"/>
+<text x="1200.0" y="218.0" font-size="48" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">MyWorksApp — Pagos / escrow</text>
+<ellipse cx="1200.0" cy="443.7" rx="457.5" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="406.9" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-08 Pagar con Webpay</text>
+<text x="1200.0" y="480.5" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">en garantía</text>
+<ellipse cx="1200.0" cy="791.2" rx="530.5" ry="100.0" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="791.2" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-09 Comprar como invitado</text>
+<ellipse cx="1200.0" cy="1138.7" rx="520.0" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="1101.9" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-10 Definir contraseña tras</text>
+<text x="1200.0" y="1175.5" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">pagar como invitado</text>
+<ellipse cx="1200.0" cy="1486.1" rx="500.5" ry="155.4" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="1412.5" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-15 Solicitar y aprobar un</text>
+<text x="1200.0" y="1486.1" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">cobro adicional</text>
+<text x="1200.0" y="1559.7" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">(orden de cambio)</text>
+<ellipse cx="1200.0" cy="1833.6" rx="461.5" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="1796.8" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-17 Recibir conforme y</text>
+<text x="1200.0" y="1870.4" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">liberar el pago</text>
+<ellipse cx="1200.0" cy="2181.1" rx="513.0" ry="118.6" fill="#ffffff" stroke="#00205b" stroke-width="5"/>
+<text x="1200.0" y="2144.3" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">CU-20 Cancelar una solicitud</text>
+<text x="1200.0" y="2217.9" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">con reembolso</text>
+<circle cx="280.0" cy="910.9" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="280.0" y1="948.7" x2="280.0" y2="1054.0" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="232.8" y1="978.2" x2="327.2" y2="978.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="1054.0" x2="242.2" y2="1137.7" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="1054.0" x2="317.8" y2="1137.7" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="280.0" y="1165.7" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Cliente invitado</text>
+<circle cx="280.0" cy="1443.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="280.0" y1="1480.9" x2="280.0" y2="1586.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="232.8" y1="1510.4" x2="327.2" y2="1510.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="1586.2" x2="242.2" y2="1669.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="1586.2" x2="317.8" y2="1669.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="280.0" y="1697.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Cliente registrado</text>
+<circle cx="280.0" cy="1963.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="280.0" y1="2000.9" x2="280.0" y2="2106.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="232.8" y1="2030.4" x2="327.2" y2="2030.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="2106.2" x2="242.2" y2="2189.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="280.0" y1="2106.2" x2="317.8" y2="2189.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="280.0" y="2217.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Profesional</text>
+<circle cx="2120.0" cy="861.6" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="2120.0" y1="899.4" x2="2120.0" y2="1004.7" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2072.8" y1="928.9" x2="2167.2" y2="928.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2120.0" y1="1004.7" x2="2082.2" y2="1088.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2120.0" y1="1004.7" x2="2157.8" y2="1088.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<rect x="1897.5" y="1090.9" width="445.0" height="51.0" fill="#fff"/>
+<text x="2120.0" y="1116.4" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«sistema externo»</text>
+<text x="2120.0" y="1182.4" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Transbank Webpay</text>
+<circle cx="2120.0" cy="1807.7" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="2120.0" y1="1845.5" x2="2120.0" y2="1950.8" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2072.8" y1="1875.0" x2="2167.2" y2="1875.0" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2120.0" y1="1950.8" x2="2082.2" y2="2034.5" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2120.0" y1="1950.8" x2="2157.8" y2="2034.5" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<rect x="1948.0" y="2032.0" width="344.0" height="61.0" fill="#fff"/>
+<text x="2120.0" y="2062.5" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«planificador»</text>
+<text x="2120.0" y="2128.5" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Sistema</text>
+<text x="2120.0" y="2192.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">(planificador)</text>
+<line x1="327.2" y1="1510.4" x2="526.0" y2="1510.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="1510.4" x2="526.0" y2="443.7" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="443.7" x2="742.5" y2="443.7" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="327.2" y1="978.2" x2="540.0" y2="978.2" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="978.2" x2="540.0" y2="791.2" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="791.2" x2="669.5" y2="791.2" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="327.2" y1="978.2" x2="540.0" y2="978.2" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="978.2" x2="540.0" y2="1138.7" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="540.0" y1="1138.7" x2="680.0" y2="1138.7" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="327.2" y1="2030.4" x2="512.0" y2="2030.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="512.0" y1="2030.4" x2="512.0" y2="1486.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="512.0" y1="1486.1" x2="699.5" y2="1486.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="327.2" y1="1510.4" x2="526.0" y2="1510.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="1510.4" x2="526.0" y2="1486.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="1486.1" x2="699.5" y2="1486.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="327.2" y1="1510.4" x2="526.0" y2="1510.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="1510.4" x2="526.0" y2="1833.6" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="1833.6" x2="738.5" y2="1833.6" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2072.8" y1="1875.0" x2="1874.0" y2="1875.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1874.0" y1="1875.0" x2="1874.0" y2="1833.6" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1874.0" y1="1833.6" x2="1661.5" y2="1833.6" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="327.2" y1="1510.4" x2="526.0" y2="1510.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="1510.4" x2="526.0" y2="2181.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="526.0" y1="2181.1" x2="687.0" y2="2181.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2072.8" y1="928.9" x2="1860.0" y2="928.9" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1860.0" y1="928.9" x2="1860.0" y2="443.7" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1860.0" y1="443.7" x2="1657.5" y2="443.7" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2072.8" y1="928.9" x2="1860.0" y2="928.9" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1860.0" y1="928.9" x2="1860.0" y2="791.2" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1860.0" y1="791.2" x2="1730.5" y2="791.2" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2072.8" y1="928.9" x2="1860.0" y2="928.9" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1860.0" y1="928.9" x2="1860.0" y2="1486.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1860.0" y1="1486.1" x2="1700.5" y2="1486.1" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1200.0" y1="691.2" x2="1200.0" y2="568.3" stroke="#464646" stroke-width="4" stroke-linecap="round" stroke-dasharray="16 14"/>
+<polygon points="1200.0,562.3 1213.2,586.3 1186.8,586.3" fill="#464646" stroke="#464646" stroke-linejoin="round"/>
+<rect x="1118.5" y="601.3" width="243.0" height="51.0" fill="#fff"/>
+<text x="1240.0" y="626.8" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«include»</text>
+<line x1="1200.0" y1="1020.1" x2="1200.0" y2="897.2" stroke="#464646" stroke-width="4" stroke-linecap="round" stroke-dasharray="16 14"/>
+<polygon points="1200.0,891.2 1213.2,915.2 1186.8,915.2" fill="#464646" stroke="#464646" stroke-linejoin="round"/>
+<rect x="1123.0" y="930.1" width="234.0" height="51.0" fill="#fff"/>
+<text x="1240.0" y="955.6" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«extend»</text>
+</svg>

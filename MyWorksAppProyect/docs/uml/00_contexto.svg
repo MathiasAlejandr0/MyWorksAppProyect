@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="3370" viewBox="0 0 2400 3370">
+<rect width='100%' height='100%' fill='#ffffff'/>
+<style>text{font-family:'Liberation Sans',Arial,Helvetica,sans-serif;}</style>
+<text x="1200.0" y="58.0" font-size="72" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Casos de uso — MyWorksApp</text>
+<text x="1200.0" y="126.4" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Diagrama de contexto — MyWorksApp</text>
+<rect x="620.0" y="986.0" width="1180.0" height="1488.0" rx="18" fill="#fcfcfd" stroke="#00205b" stroke-width="6"/>
+<text x="1210.0" y="1034.0" font-size="54" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">MyWorksApp</text>
+<rect x="680.0" y="1086.0" width="1060.0" height="168.0" rx="14" fill="#f4f6f8" stroke="#00205b" stroke-width="5"/>
+<text x="1210.0" y="1170.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Seguridad / Auth</text>
+<rect x="680.0" y="1282.0" width="1060.0" height="168.0" rx="14" fill="#f4f6f8" stroke="#00205b" stroke-width="5"/>
+<text x="1210.0" y="1366.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Búsqueda y reserva</text>
+<rect x="680.0" y="1478.0" width="1060.0" height="168.0" rx="14" fill="#f4f6f8" stroke="#00205b" stroke-width="5"/>
+<text x="1210.0" y="1562.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Pagos / escrow</text>
+<rect x="680.0" y="1674.0" width="1060.0" height="168.0" rx="14" fill="#f4f6f8" stroke="#00205b" stroke-width="5"/>
+<text x="1210.0" y="1721.2" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Seguimiento y</text>
+<text x="1210.0" y="1794.8" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">comunicación</text>
+<rect x="680.0" y="1870.0" width="1060.0" height="168.0" rx="14" fill="#f4f6f8" stroke="#00205b" stroke-width="5"/>
+<text x="1210.0" y="1954.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Reagendamiento</text>
+<rect x="680.0" y="2066.0" width="1060.0" height="168.0" rx="14" fill="#f4f6f8" stroke="#00205b" stroke-width="5"/>
+<text x="1210.0" y="2150.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Gestión del profesional</text>
+<rect x="680.0" y="2262.0" width="1060.0" height="168.0" rx="14" fill="#f4f6f8" stroke="#00205b" stroke-width="5"/>
+<text x="1210.0" y="2346.0" font-size="64" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Administración</text>
+<circle cx="320.0" cy="243.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="320.0" y1="280.9" x2="320.0" y2="386.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="272.8" y1="310.4" x2="367.2" y2="310.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="386.2" x2="282.2" y2="469.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="386.2" x2="357.8" y2="469.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="320.0" y="497.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Visitante</text>
+<circle cx="320.0" cy="763.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="320.0" y1="800.9" x2="320.0" y2="906.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="272.8" y1="830.4" x2="367.2" y2="830.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="906.2" x2="282.2" y2="989.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="906.2" x2="357.8" y2="989.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="320.0" y="1017.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Cliente invitado</text>
+<circle cx="320.0" cy="1283.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="320.0" y1="1320.9" x2="320.0" y2="1426.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="272.8" y1="1350.4" x2="367.2" y2="1350.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="1426.2" x2="282.2" y2="1509.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="1426.2" x2="357.8" y2="1509.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="320.0" y="1537.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Cliente registrado</text>
+<circle cx="320.0" cy="1803.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="320.0" y1="1840.9" x2="320.0" y2="1946.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="272.8" y1="1870.4" x2="367.2" y2="1870.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="1946.2" x2="282.2" y2="2029.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="1946.2" x2="357.8" y2="2029.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="320.0" y="2057.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Profesional</text>
+<circle cx="320.0" cy="2323.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="320.0" y1="2360.9" x2="320.0" y2="2466.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="272.8" y1="2390.4" x2="367.2" y2="2390.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="2466.2" x2="282.2" y2="2549.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="2466.2" x2="357.8" y2="2549.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="320.0" y="2577.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Administrador</text>
+<circle cx="320.0" cy="2843.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="320.0" y1="2880.9" x2="320.0" y2="2986.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="272.8" y1="2910.4" x2="367.2" y2="2910.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="2986.2" x2="282.2" y2="3069.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="320.0" y1="2986.2" x2="357.8" y2="3069.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<text x="320.0" y="3097.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Colaborador</text>
+<text x="320.0" y="3162.3" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">interno</text>
+<text x="320.0" y="3226.7" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">(soporte / QA)</text>
+<circle cx="2100.0" cy="1133.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="2100.0" y1="1170.9" x2="2100.0" y2="1276.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2052.8" y1="1200.4" x2="2147.2" y2="1200.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2100.0" y1="1276.2" x2="2062.2" y2="1359.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2100.0" y1="1276.2" x2="2137.8" y2="1359.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<rect x="1877.5" y="1362.4" width="445.0" height="51.0" fill="#fff"/>
+<text x="2100.0" y="1387.9" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«sistema externo»</text>
+<text x="2100.0" y="1453.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Supabase Auth</text>
+<text x="2100.0" y="1518.3" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">/ correo</text>
+<circle cx="2100.0" cy="1653.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="2100.0" y1="1690.9" x2="2100.0" y2="1796.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2052.8" y1="1720.4" x2="2147.2" y2="1720.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2100.0" y1="1796.2" x2="2062.2" y2="1879.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2100.0" y1="1796.2" x2="2137.8" y2="1879.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<rect x="1877.5" y="1882.4" width="445.0" height="51.0" fill="#fff"/>
+<text x="2100.0" y="1907.9" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«sistema externo»</text>
+<text x="2100.0" y="1973.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Transbank Webpay</text>
+<circle cx="2100.0" cy="2173.1" r="37.8" fill="none" stroke="#00205b" stroke-width="5"/>
+<line x1="2100.0" y1="2210.9" x2="2100.0" y2="2316.2" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2052.8" y1="2240.4" x2="2147.2" y2="2240.4" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2100.0" y1="2316.2" x2="2062.2" y2="2399.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<line x1="2100.0" y1="2316.2" x2="2137.8" y2="2399.9" stroke="#00205b" stroke-width="5" stroke-linecap="round"/>
+<rect x="1928.0" y="2397.4" width="344.0" height="61.0" fill="#fff"/>
+<text x="2100.0" y="2427.9" font-size="52" font-weight="400" fill="#191919" text-anchor="middle" dominant-baseline="central">«planificador»</text>
+<text x="2100.0" y="2493.9" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">Sistema</text>
+<text x="2100.0" y="2558.3" font-size="56" font-weight="700" fill="#00205b" text-anchor="middle" dominant-baseline="central">(planificador)</text>
+<line x1="367.2" y1="310.4" x2="592.0" y2="310.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="592.0" y1="310.4" x2="592.0" y2="1170.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="592.0" y1="1170.0" x2="680.0" y2="1170.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="310.4" x2="592.0" y2="310.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="592.0" y1="310.4" x2="592.0" y2="1366.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="592.0" y1="1366.0" x2="680.0" y2="1366.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="830.4" x2="578.0" y2="830.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="578.0" y1="830.4" x2="578.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="578.0" y1="1562.0" x2="680.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1350.4" x2="564.0" y2="1350.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1350.4" x2="564.0" y2="1170.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1170.0" x2="680.0" y2="1170.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1350.4" x2="564.0" y2="1350.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1350.4" x2="564.0" y2="1366.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1366.0" x2="680.0" y2="1366.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1350.4" x2="564.0" y2="1350.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1350.4" x2="564.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1562.0" x2="680.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1350.4" x2="564.0" y2="1350.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1350.4" x2="564.0" y2="1758.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1758.0" x2="680.0" y2="1758.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1350.4" x2="564.0" y2="1350.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1350.4" x2="564.0" y2="1954.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="564.0" y1="1954.0" x2="680.0" y2="1954.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1870.4" x2="550.0" y2="1870.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="1870.4" x2="550.0" y2="1170.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="1170.0" x2="680.0" y2="1170.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1870.4" x2="550.0" y2="1870.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="1870.4" x2="550.0" y2="2150.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="2150.0" x2="680.0" y2="2150.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1870.4" x2="550.0" y2="1870.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="1870.4" x2="550.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="1562.0" x2="680.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1870.4" x2="550.0" y2="1870.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="1870.4" x2="550.0" y2="1758.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="1758.0" x2="680.0" y2="1758.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="1870.4" x2="550.0" y2="1870.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="1870.4" x2="550.0" y2="1954.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="550.0" y1="1954.0" x2="680.0" y2="1954.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="2390.4" x2="536.0" y2="2390.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="536.0" y1="2390.4" x2="536.0" y2="2346.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="536.0" y1="2346.0" x2="680.0" y2="2346.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="367.2" y1="2910.4" x2="522.0" y2="2910.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="522.0" y1="2910.4" x2="522.0" y2="2346.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="522.0" y1="2346.0" x2="680.0" y2="2346.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2052.8" y1="2240.4" x2="1856.0" y2="2240.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1856.0" y1="2240.4" x2="1856.0" y2="2346.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1856.0" y1="2346.0" x2="1740.0" y2="2346.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2052.8" y1="2240.4" x2="1856.0" y2="2240.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1856.0" y1="2240.4" x2="1856.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1856.0" y1="1562.0" x2="1740.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2052.8" y1="1720.4" x2="1842.0" y2="1720.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1842.0" y1="1720.4" x2="1842.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1842.0" y1="1562.0" x2="1740.0" y2="1562.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="2052.8" y1="1200.4" x2="1828.0" y2="1200.4" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1828.0" y1="1200.4" x2="1828.0" y2="1170.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="1828.0" y1="1170.0" x2="1740.0" y2="1170.0" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="103.5" y1="795.3" x2="67.5" y2="795.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="67.5" y1="795.3" x2="67.5" y2="275.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="67.5" y1="275.3" x2="196.0" y2="275.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<polygon points="196.0,275.3 170.0,289.6 170.0,261.0" fill="#fff" stroke="#282828" stroke-width="4" stroke-linejoin="round"/>
+<line x1="74.0" y1="1315.3" x2="38.0" y2="1315.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="38.0" y1="1315.3" x2="38.0" y2="275.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<line x1="38.0" y1="275.3" x2="196.0" y2="275.3" stroke="#282828" stroke-width="4" stroke-linecap="round"/>
+<polygon points="196.0,275.3 170.0,289.6 170.0,261.0" fill="#fff" stroke="#282828" stroke-width="4" stroke-linejoin="round"/>
+</svg>
