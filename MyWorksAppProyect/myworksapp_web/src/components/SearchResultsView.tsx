@@ -325,8 +325,11 @@ export function SearchResultsView({
                     <span className="pro-card-role">{w.profession}</span>
                     <div className="pro-card-rating">
                       <Star size={13} fill="var(--orange-accent)" color="var(--orange-accent)" aria-hidden />
-                      {w.jobsDone === 0 && w.rating <= 0 ? (
-                        <strong>Nuevo · sin reseñas aún</strong>
+                      {w.rating <= 0 ? (
+                        <>
+                          <strong>Nuevo · sin reseñas aún</strong>
+                          {w.jobsDone > 0 && <span>{pluralize(w.jobsDone, 'trabajo')}</span>}
+                        </>
                       ) : (
                         <>
                           <strong>{w.rating.toFixed(1)}</strong>
