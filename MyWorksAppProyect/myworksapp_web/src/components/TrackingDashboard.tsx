@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   Bell,
@@ -131,6 +131,15 @@ export function TrackingDashboard({
 }: TrackingDashboardProps) {
   const [showPayment, setShowPayment] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  // La evidencia ampliada se cierra también con Escape, como cualquier diálogo.
+  useEffect(() => {
+    if (!previewSrc) return undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPreviewSrc(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [previewSrc]);
   const [disputeReason, setDisputeReason] = useState('calidad');
   const [disputeDetail, setDisputeDetail] = useState('');
   const [disputeComment, setDisputeComment] = useState('');
