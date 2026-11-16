@@ -22,6 +22,10 @@ from docx.oxml.ns import nsdecls, qn
 from docx.shared import Cm, Pt, RGBColor
 from PIL import Image, ImageDraw, ImageFont
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _normalizacion_bd import METODO as NF_METODO, forma_normal, relaciones_en_palabras  # noqa: E402
+
 DOCS = Path(__file__).resolve().parent
 ROOT_DOCS = DOCS
 REPO = DOCS.parent.parent
@@ -39,7 +43,7 @@ OUT_FIG = FASE2 / "figuras"
 
 GENERATED_AT = "2026-11-16"
 TZ_LABEL = "America/Santiago"
-MODEL_VERSION = "v2.4"
+MODEL_VERSION = "v2.5"
 PROJECT_ID = "wxqrfcqifkfgawrnqmnj"
 
 GROUPS = {
@@ -126,15 +130,16 @@ GROUP_COLORS = {
 TABLE_NOTES = {
     "perfiles": (
         "Identidad de la aplicación: perfiles.id coincide con auth.users.id "
-        "(esquema auth de Supabase, fuera de public). El default de rol es "
-        "'user' y el de estado_cuenta es 'active' (valores en inglés de las "
-        "primeras migraciones). En la práctica también se usan valores en "
-        "español: usuario, trabajador, administrador, soporte y qa; "
-        "activo, suspendido, bloqueado y eliminado. is_admin() reconoce "
-        "'admin' y 'administrador'. Los roles privileados (administrador, "
+        "(esquema auth de Supabase, fuera de public; clave foránea con ON DELETE "
+        "CASCADE desde la auditoría 2026-11-16). El default de rol es 'usuario' y "
+        "el de estado_cuenta es 'activo'. Los CHECK perfiles_rol_chk y "
+        "perfiles_estado_cuenta_chk cierran los conjuntos: usuario, trabajador, "
+        "administrador, soporte y qa; activo, suspendido, bloqueado y eliminado. "
+        "Los roles privilegiados (administrador, "
         "soporte, qa) no se pueden autoasignar: el trigger "
         "perfiles_rol_inicial_seguro y protect_profile_sensitive_fields lo impiden. "
-        "reputacion_cliente la actualiza el trigger al calificar al cliente."
+        "reputacion_cliente y calificaciones_cliente los calcula calificar_cliente(); "
+        "el usuario no puede editarlos (trigger protect_profile_sensitive_fields)."
     ),
     "notificaciones": "Aviso dentro de la aplicación dirigido a un usuario.",
     "suscripciones": "Plan de suscripción contratado por un usuario.",
@@ -162,13 +167,13 @@ TABLE_NOTES = {
         "disponible = 0, y se restablece al terminar."
     ),
     "trabajador_precios": (
-        "Precio por código de servicio del profesional. En la base viva "
-        "id_usuario es text (cast del uuid de trabajadores.id_usuario); "
-        "no hay clave foránea física."
+        "Precio por código de servicio del profesional. id_usuario es uuid "
+        "con clave foránea a trabajadores (ON DELETE CASCADE) desde la "
+        "auditoría 2026-11-16; antes era text sin FK."
     ),
     "trabajador_servicios_extra": (
-        "Servicio adicional definido por el profesional. id_usuario es text "
-        "en la base viva, igual que en trabajador_precios."
+        "Servicio adicional definido por el profesional. id_usuario es uuid "
+        "con clave foránea a trabajadores, igual que en trabajador_precios."
     ),
     "trabajador_servicios": "Oficios del catálogo que el profesional declara atender.",
     "trabajador_horarios": (
@@ -221,12 +226,12 @@ TABLE_NOTES = {
     "bloqueos_pin_inicio": (
         "Contador de intentos fallidos del PIN, bloqueo temporal (15 minutos "
         "tras 5 fallos) y ventana en la que el PIN ya fue validado. "
-        "RLS está activo y no hay políticas: solo acceden las funciones "
-        "SECURITY DEFINER o el rol service_role."
+        "Escriben solo las funciones SECURITY DEFINER o service_role; "
+        "un administrador puede leerla."
     ),
     "intentos_pin_inicio": (
-        "Auditoría de cada intento de PIN de inicio. RLS activo sin políticas: "
-        "solo funciones SECURITY DEFINER o service_role."
+        "Auditoría de cada intento de PIN de inicio. Escriben solo funciones "
+        "SECURITY DEFINER; un administrador puede leerla."
     ),
     "propuestas_cotizacion": "Cotización que un profesional envía para un trabajo.",
     "pagos": (
@@ -256,7 +261,7 @@ RLS_SUMMARY = {
     "acuerdos_trabajo": "Solo lectura para las partes del trabajo (es_parte_trabajo) o un administrador. El alta y la respuesta se hacen por RPC (proponer_acuerdo, responder_acuerdo).",
     "app_config": "Política ALL con USING/CHECK false para anon y authenticated. Nadie del cliente lee ni escribe; solo service_role (bypass RLS) o funciones definer.",
     "banderas_funcionalidad": "Lectura restringida a banderas activas aplicables al usuario, o a un administrador.",
-    "bloqueos_pin_inicio": "RLS activo, sin políticas. Nadie accede por la API; solo funciones SECURITY DEFINER (intentar_pin_inicio, transicionar_trabajo, etc.) o service_role.",
+    "bloqueos_pin_inicio": "Solo un administrador puede leer (política agregada en la auditoría 2026-11-16). Nadie escribe por la API; lo hacen funciones SECURITY DEFINER (intentar_pin_inicio, transicionar_trabajo) o service_role.",
     "bloqueos_usuario": "El usuario ve los bloqueos en los que participa; solo él (o un administrador) puede crearlos.",
     "calificaciones": "Se inserta una calificación propia, con direccion e id_calificado coherentes con el trabajo terminado. Se leen las de cliente_a_trabajador (públicas para el listado) y las propias o de un administrador.",
     "calificaciones_cliente": "El profesional califica a su cliente en un trabajo 1:1; leen las partes o un administrador.",
@@ -273,8 +278,8 @@ RLS_SUMMARY = {
     "eventos_analitica": "El usuario o el backend registra eventos de uso; no es un listado público.",
     "eventos_ranking": "Lectura de administración; la escritura la hacen triggers y funciones definer.",
     "fotos_trabajo": "Las partes del trabajo o un administrador ven la evidencia. Hay reglas extra sobre el formato (p. ej. exigir webp/video).",
-    "impulsos": "El profesional gestiona sus propios impulsos; el catálogo puede leer los vigentes.",
-    "intentos_pin_inicio": "RLS activo, sin políticas. Auditoría solo visible vía funciones SECURITY DEFINER o service_role.",
+    "impulsos": "Lectura para usuarios con sesión (el catálogo muestra los vigentes). Crear, cambiar o borrar un impulso es solo de administración: antes de la auditoría 2026-11-16 un profesional podía darse un impulso sin pagar.",
+    "intentos_pin_inicio": "Solo un administrador puede leer la bitácora (política agregada en la auditoría 2026-11-16). La escritura la hacen funciones SECURITY DEFINER.",
     "liquidaciones": "El profesional ve la liquidación de sus pagos; un administrador ve todas. La confirmación de transferencia es por RPC de admin.",
     "mensajes": "Solo las partes del chat (remitente o destinatario) o un administrador. Un trigger bloquea datos de contacto en el cuerpo.",
     "metodos_pago_oneclick": "Política ALL con USING/CHECK false para anon y authenticated. Las tarjetas solo las maneja service_role (Edge Functions).",
@@ -282,7 +287,7 @@ RLS_SUMMARY = {
     "ordenes_cambio": "Las partes del trabajo o un administrador leen y proponen según el flujo; el cobro asociado va por RPC de pago.",
     "pagos": "El cliente dueño del trabajo, el profesional asignado o un administrador pueden leer el pago. Tokens, URL de Webpay y datos de alta de invitado no se exponen al cliente (columnas acotadas o solo service_role en la práctica de las Edge Functions). La creación de la intención de pago es por RPC.",
     "paises": "Lectura pública del catálogo. Hoy solo CL.",
-    "perfiles": "El usuario lee su ficha y, con límites, fichas públicas (nombre y foto) de otros; no ve correo ajeno por esta vía. La escritura de campos sensibles (rol, estado_cuenta) está protegida por trigger. El contacto completo solo se entrega con perfil_contacto_si_trabajo_activo.",
+    "perfiles": "El usuario lee su ficha y, con límites, fichas públicas (nombre y foto) de otros; no ve correo ajeno por esta vía. La escritura de campos sensibles (rol, estado_cuenta, reputacion_cliente, calificaciones_cliente) está protegida por trigger. El contacto completo solo se entrega con perfil_contacto_si_trabajo_activo.",
     "pines_inicio_trabajo": "SELECT para el cliente dueño del trabajo o un administrador (obtener_pin_inicio). El profesional no lee el PIN: lo valida por RPC. La inserción la hace el trigger trabajos_crear_pin_inicio.",
     "portafolio_trabajador": "El profesional gestiona su portafolio; hay lectura de catálogo de los ítems visibles.",
     "propuestas_cotizacion": "El cliente del trabajo, el profesional autor o un administrador leen la cotización. El monto no lo cambia el cliente (trigger).",
@@ -294,7 +299,7 @@ RLS_SUMMARY = {
     "reprogramaciones_trabajo": "SELECT para las partes del trabajo. El alta, la respuesta y el retiro se hacen solo por RPC (CU-33).",
     "senales_resena": "Cola de reseñas dudosas: la ve y resuelve un administrador.",
     "servicios": "Lectura pública del catálogo de oficios. La escritura es de administración.",
-    "suscripciones": "El usuario ve su plan; la escritura la hace el backend de cobro.",
+    "suscripciones": "El usuario ve solo su plan; crear o cambiar una suscripción es de administración o del backend (antes de la auditoría 2026-11-16 un usuario podía activarse un plan premium).",
     "tickets_soporte": "Las partes del trabajo o un administrador ven el ticket.",
     "trabajador_horarios": "SELECT y escritura solo para el dueño de la ficha (o un administrador). El cliente no lee esta tabla: usa horarios_libres_profesional.",
     "trabajador_precios": "El dueño y el catálogo (según política de precios) leen los montos ya publicados; la escritura es del dueño o de un trigger que parte el JSON.",
@@ -723,14 +728,23 @@ def changelog(tables):
         ("disputas", "Se agregan `decision_sugerida`, `motivo_regla`, `origen` y `vence_en` (soporte automático)."),
         ("liquidaciones", "Se agrega `estado_transferencia` para el seguimiento de la transferencia al profesional."),
         ("trabajador_horarios", "Deja de ser una fila 1:1 con tres columnas. Ahora es una plantilla semanal: `id`, `dia_semana`, `hora_inicio`, `hora_fin`, `activo`, `creado_en`, única por (id_usuario, dia_semana)."),
-        ("trabajador_precios", "En la base viva `id_usuario` es text (el diccionario v2.3 lo modelaba como uuid con FK). Se documenta el tipo real; no hay FK física."),
-        ("trabajador_servicios_extra", "Igual que precios: `id_usuario` es text en la base viva."),
+        ("trabajador_precios", "`id_usuario` pasa de text a uuid con FK a trabajadores (auditoría 2026-11-16)."),
+        ("trabajador_servicios_extra", "Igual que precios: `id_usuario` pasa a uuid con FK."),
+        ("metodos_pago_oneclick", "`id_usuario` pasa de text a uuid con FK a perfiles (auditoría 2026-11-16)."),
         ("trabajadores", "Se agregan `usa_horario` y `pausa_por_trabajo`. `es_elite` se documenta como columna GENERATED ALWAYS."),
-        ("perfiles", "Se documentan los defaults reales (`'user'`, `'active'`) y los roles de consola soporte y qa, que el v2.3 no incluía. El comentario de columna de rol en la BD aún lista solo usuario, trabajador y administrador."),
+        ("perfiles", "Defaults en español (`'usuario'`, `'activo'`), CHECK de rol y estado, FK a auth.users y reputación protegida contra edición del propio usuario (auditoría 2026-11-16)."),
         ("pagos", "Las columnas de alta de invitado (`alta_nonce_hash`, `alta_jti`, `alta_consumido_en`) ya estaban en el v2.3 (26 columnas). Se aclara su papel y el índice único de `alta_jti`."),
         ("trabajos", "Sigue con 20 columnas. Cambia el comportamiento: la fecha programada solo se altera por las RPC de CU-33 y hay un índice único de agenda por profesional y minuto."),
     ]
     return added, removed, modified
+
+
+def nf_paragraph(tb):
+    fn, why, den = forma_normal(tb["name"])
+    txt = f"**Forma normal: {fn}.** {why}"
+    if den:
+        txt += f" Dato repetido a propósito: {den}"
+    return txt
 
 
 def rls_text(tb):
@@ -875,10 +889,16 @@ def write_md(schema, tables, functions, ordered):
             a("")
         a("**RLS.** " + rls_text(tb))
         a("")
+        a(nf_paragraph(tb))
+        a("")
+        rel = relaciones_en_palabras(tb)
+        if rel:
+            a("**Relaciones en palabras.** " + "; ".join(rel) + ".")
+            a("")
 
     a("## 4. Relaciones (claves foráneas físicas)")
     a("")
-    a("Se listan solo las FK declaradas en Postgres. Algunas dependencias lógicas (por ejemplo `trabajador_precios.id_usuario` → `trabajadores.id_usuario`) no tienen FK física porque el tipo en la base viva es text y no uuid.")
+    a("Se listan las FK declaradas en Postgres. La auditoría 2026-11-16 agregó las que faltaban (todas con 0 huérfanos verificados antes de validarlas). Las únicas referencias sin FK física son polimórficas (`notificaciones.id_relacionado`) o libros contables con id en texto (`liquidaciones.id_trabajador`).")
     a("")
     a("| Tabla | Columnas | Referencia | ON DELETE |")
     a("|-------|----------|------------|-----------|")
@@ -888,6 +908,18 @@ def write_md(schema, tables, functions, ordered):
             dest_sch = "" if fk["schema"] == "public" else fk["schema"] + "."
             dest = dest_sch + fk["table"] + "(" + ", ".join(fk["ref_columns"]) + ")"
             a(f"| `{tb['name']}` | `{src}` | `{dest}` | {fk['on_delete'] or '—'} |")
+    a("")
+    a("## 4b. Normalización (auditoría 2026-11-16)")
+    a("")
+    a(NF_METODO)
+    a("")
+    a("| Tabla | Forma normal | Dato repetido a propósito y cómo se mantiene |")
+    a("|-------|--------------|-----------------------------------------------|")
+    for tb in ordered:
+        fn, _, den = forma_normal(tb["name"])
+        a(f"| `{tb['name']}` | {fn} | {md_escape(den or '—')} |")
+    a("")
+    a("Detalle del método, consultas de verificación y migraciones: `docs/pruebas/auditoria_base_datos.md`.")
     a("")
     a("## 5. Enums y vistas")
     a("")
@@ -988,6 +1020,12 @@ def write_anexo(schema, tables, ordered):
             a("")
         a(rls_text(tb))
         a("")
+        a(nf_paragraph(tb))
+        a("")
+        rel = relaciones_en_palabras(tb)
+        if rel:
+            a("Relaciones: " + "; ".join(rel) + ".")
+            a("")
     a("## Funciones relevantes")
     a("")
     a(
@@ -1128,8 +1166,8 @@ def write_sql(schema, tables, ordered):
     a("--")
     a("-- perfiles.id coincide con auth.users.id.")
     a("-- No hay ENUM ni vistas en public.")
-    a("-- trabajador_precios.id_usuario y trabajador_servicios_extra.id_usuario son text")
-    a("-- en la base viva (no hay FK física a trabajadores.id_usuario uuid).")
+    a("-- trabajador_precios.id_usuario y trabajador_servicios_extra.id_usuario son uuid")
+    a("-- con FK a trabajadores.id_usuario (auditoría 2026-11-16).")
     a("")
     a("BEGIN;")
     a("")
@@ -1336,6 +1374,10 @@ def write_docx(schema, tables, functions, ordered):
         if idxs:
             add_body(doc, "Índices: " + "; ".join(idxs))
         add_body(doc, "RLS. " + rls_text(tb))
+        add_body(doc, nf_paragraph(tb).replace("**", ""))
+        rel = relaciones_en_palabras(tb)
+        if rel:
+            add_body(doc, "Relaciones en palabras: " + "; ".join(rel) + ".")
 
     add_heading(doc, "5. Relaciones (claves foráneas físicas)", 1)
     add_body(doc, "Solo se listan las FK declaradas en Postgres.")
@@ -1346,6 +1388,10 @@ def write_docx(schema, tables, functions, ordered):
             rows.append([tb["name"], ", ".join(fk["columns"]), dest, fk["on_delete"] or "—"])
     add_table(doc, ["Tabla", "Columnas", "Referencia", "ON DELETE"], rows)
 
+    add_heading(doc, "5b. Normalización (auditoría 2026-11-16)", 1)
+    add_body(doc, NF_METODO)
+    add_table(doc, ["Tabla", "Forma normal", "Dato repetido a propósito y cómo se mantiene"],
+              [[tb["name"], forma_normal(tb["name"])[0], forma_normal(tb["name"])[2] or "—"] for tb in ordered])
     add_heading(doc, "6. Enums y vistas", 1)
     add_body(doc, "El esquema public no define tipos ENUM ni vistas. Los estados se restringen con CHECK sobre columnas text o boolean.")
 
@@ -1477,9 +1523,9 @@ def write_er(tables):
             if name == "perfiles":
                 nota = "Coincide con auth.users.id"
             elif name in ("trabajador_precios", "trabajador_servicios_extra"):
-                nota = "id_usuario es text; sin FK física"
+                nota = "4FN: lista separada de la ficha"
             elif name in ("bloqueos_pin_inicio", "intentos_pin_inicio"):
-                nota = "RLS sin políticas; solo funciones definer"
+                nota = "Escribe solo el servidor; lee administración"
             cards.append({"nombre": name, "pks": tb["pk"] or ["—"], "fks": fks, "nota": nota})
         img = draw_group(f"{title}  ·  {len(cards)} tablas", color, cards)
         path = OUT_FIG / f"diagrama_er_{n:02d}_{key}.png"

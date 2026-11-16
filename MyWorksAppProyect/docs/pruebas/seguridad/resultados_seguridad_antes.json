@@ -1,0 +1,1675 @@
+{
+ "ejecutado": "2026-11-16 01:13:36 -0300",
+ "casos": [
+  {
+   "categoria": "Control",
+   "id": "C-01",
+   "caso": "El cliente dueño ve su trabajo (control positivo)",
+   "esperado": "200 con 1 fila",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[{\"id\": \"qa-audit-job-1\"}]"
+  },
+  {
+   "categoria": "Control",
+   "id": "C-02",
+   "caso": "El profesional asignado ve el chat (control positivo)",
+   "esperado": "200 con 2 filas",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[{\"id\": \"qa-audit-msg-1\"}, {\"id\": \"qa-audit-msg-2\"}]"
+  },
+  {
+   "categoria": "Control",
+   "id": "C-03",
+   "caso": "El cliente dueño ve su pago sin columnas Transbank",
+   "esperado": "200 con 1 fila",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[{\"id\": \"qa-audit-pay-1\", \"estado\": \"retenido\", \"monto\": 30000}]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-trabajos-cliente2",
+   "caso": "otro cliente intenta leer trabajos de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-pagos-cliente2",
+   "caso": "otro cliente intenta leer pagos de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-mensajes-cliente2",
+   "caso": "otro cliente intenta leer mensajes de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-pines_inicio_trabajo-cliente2",
+   "caso": "otro cliente intenta leer pines_inicio_trabajo de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-fotos_trabajo-cliente2",
+   "caso": "otro cliente intenta leer fotos_trabajo de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-disputas-cliente2",
+   "caso": "otro cliente intenta leer disputas de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-ubicacion_en_vivo-cliente2",
+   "caso": "otro cliente intenta leer ubicacion_en_vivo de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-trabajos-pro2",
+   "caso": "otro profesional intenta leer trabajos de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-pagos-pro2",
+   "caso": "otro profesional intenta leer pagos de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-mensajes-pro2",
+   "caso": "otro profesional intenta leer mensajes de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-pines_inicio_trabajo-pro2",
+   "caso": "otro profesional intenta leer pines_inicio_trabajo de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-fotos_trabajo-pro2",
+   "caso": "otro profesional intenta leer fotos_trabajo de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-disputas-pro2",
+   "caso": "otro profesional intenta leer disputas de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-ubicacion_en_vivo-pro2",
+   "caso": "otro profesional intenta leer ubicacion_en_vivo de un trabajo ajeno",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-perfil",
+   "caso": "Otro cliente intenta leer el perfil (correo) de un cliente ajeno",
+   "esperado": "0 filas",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-perfiles-masivo",
+   "caso": "Un cliente lista perfiles: solo debe ver el suyo",
+   "esperado": "solo su fila",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "1 filas"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-trabajos-masivo",
+   "caso": "Un cliente sin pedidos lista trabajos",
+   "esperado": "0 filas",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-msg-insert",
+   "caso": "Otro cliente intenta escribir en un chat ajeno",
+   "esperado": "403 (violación RLS)",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"new row violates row-level security policy for table \\\"mensajes\\\"\"}"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-msg-suplantar",
+   "caso": "Cliente intenta enviar un mensaje a nombre del profesional",
+   "esperado": "403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"new row violates row-level security policy for table \\\"mensajes\\\"\"}"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-msg-editar",
+   "caso": "Cliente intenta editar el texto de un mensaje del profesional",
+   "esperado": "error del trigger",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"solo se puede marcar el mensaje como leido\"}"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-trab-update",
+   "caso": "Otro cliente intenta modificar un trabajo ajeno",
+   "esperado": "401/403 o 0 filas",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT UPDATE ON public.trabajos TO authenticated;\", \"message\": \"permission denied for table trabajos\"}"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-trab-delete",
+   "caso": "Otro cliente intenta borrar un trabajo ajeno",
+   "esperado": "401/403 o 0 filas",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT DELETE ON public.trabajos TO authenticated;\", \"message\": \"permission denied for table trabajos\"}"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-rpc-cerrar_trabajo_conforme",
+   "caso": "Otro cliente llama cerrar_trabajo_conforme sobre un trabajo ajeno",
+   "esperado": "error o false/vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"solo el cliente puede recibir conforme\"}"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-rpc-abrir_disputa",
+   "caso": "Otro cliente llama abrir_disputa sobre un trabajo ajeno",
+   "esperado": "error o false/vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"forbidden\"}"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-rpc-crear_intencion_pago",
+   "caso": "Otro cliente llama crear_intencion_pago sobre un trabajo ajeno",
+   "esperado": "error o false/vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"Solo el cliente del trabajo puede crear la intención de pago\"}"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-rpc-pin_inicio_trabajo",
+   "caso": "Otro cliente llama pin_inicio_trabajo sobre un trabajo ajeno",
+   "esperado": "error o false/vacío",
+   "http": 404,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"PGRST202\", \"details\": \"Searched for the function public.pin_inicio_trabajo with parameter p_trabajo_id or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\", \"hint\": \"Perhaps you meant to call the function public.publicar_ubicacion_trabajo\", \"messag"
+  },
+  {
+   "categoria": "RLS horizontal",
+   "id": "H-rpc-es_parte_trabajo",
+   "caso": "Otro cliente llama es_parte_trabajo sobre un trabajo ajeno",
+   "esperado": "error o false/vacío",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "false"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-perfil-rol-administrador",
+   "caso": "Cliente intenta cambiar su propio rol a administrador",
+   "esperado": "rechazado",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"No puedes cambiar tu rol\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-perfil-rol-trabajador",
+   "caso": "Cliente intenta cambiar su propio rol a trabajador",
+   "esperado": "rechazado",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"No puedes cambiar tu rol\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-perfil-estado_cuenta-activo",
+   "caso": "Cliente intenta cambiar su propio estado_cuenta a activo",
+   "esperado": "rechazado",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[{\"id\": \"e6b8aec6-28e5-41ac-9d16-c4bb01bde3f6\", \"nombre\": \"QA Auditoria cliente1\", \"correo\": \"qa.audit.cliente1@test.myworksapp.cl\", \"rol\": \"usuario\", \"estado_cuenta\": \"activo\", \"ruta_foto_perfil\": null, \"creado_en\": \"2026-11-16T04:10:46.092896\", \"reputacion_cliente\": null, \"calificaciones_cliente\":"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-perfil-reputacion_cliente-5",
+   "caso": "Cliente intenta cambiar su propio reputacion_cliente a 5",
+   "esperado": "rechazado",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[{\"id\": \"e6b8aec6-28e5-41ac-9d16-c4bb01bde3f6\", \"nombre\": \"QA Auditoria cliente1\", \"correo\": \"qa.audit.cliente1@test.myworksapp.cl\", \"rol\": \"usuario\", \"estado_cuenta\": \"activo\", \"ruta_foto_perfil\": null, \"creado_en\": \"2026-11-16T04:10:46.092896\", \"reputacion_cliente\": 5.0, \"calificaciones_cliente\": "
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-perfil-calificaciones_cliente-999",
+   "caso": "Cliente intenta cambiar su propio calificaciones_cliente a 999",
+   "esperado": "rechazado",
+   "http": 200,
+   "resultado": "FALLA",
+   "detalle": "[{\"id\": \"e6b8aec6-28e5-41ac-9d16-c4bb01bde3f6\", \"nombre\": \"QA Auditoria cliente1\", \"correo\": \"qa.audit.cliente1@test.myworksapp.cl\", \"rol\": \"usuario\", \"estado_cuenta\": \"activo\", \"ruta_foto_perfil\": null, \"creado_en\": \"2026-11-16T04:10:46.092896\", \"reputacion_cliente\": 5.0, \"calificaciones_cliente\": "
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-perfil-estado",
+   "caso": "Cliente intenta cambiar su estado_cuenta",
+   "esperado": "rechazado",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"No puedes cambiar el estado de tu cuenta\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-perfil-insert-admin",
+   "caso": "Cliente intenta crear un perfil administrador",
+   "esperado": "rechazado",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"No puedes crear un perfil con ese rol\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-estado_verificacion",
+   "caso": "Profesional intenta fijarse estado_verificacion=verificado",
+   "esperado": "rechazado (sin permiso de columna o trigger)",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT UPDATE ON public.trabajadores TO authenticated;\", \"message\": \"permission denied for table trabajadores\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-calificacion",
+   "caso": "Profesional intenta fijarse calificacion=5",
+   "esperado": "rechazado (sin permiso de columna o trigger)",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT UPDATE ON public.trabajadores TO authenticated;\", \"message\": \"permission denied for table trabajadores\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-score_listado",
+   "caso": "Profesional intenta fijarse score_listado=99",
+   "esperado": "rechazado (sin permiso de columna o trigger)",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT UPDATE ON public.trabajadores TO authenticated;\", \"message\": \"permission denied for table trabajadores\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-prioridad_manual",
+   "caso": "Profesional intenta fijarse prioridad_manual=50",
+   "esperado": "rechazado (sin permiso de columna o trigger)",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT UPDATE ON public.trabajadores TO authenticated;\", \"message\": \"permission denied for table trabajadores\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-es_elite",
+   "caso": "Profesional intenta fijarse es_elite=True",
+   "esperado": "rechazado (sin permiso de columna o trigger)",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"428C9\", \"details\": \"Column \\\"es_elite\\\" is a generated column.\", \"hint\": null, \"message\": \"column \\\"es_elite\\\" can only be updated to DEFAULT\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-trabajos_completados",
+   "caso": "Profesional intenta fijarse trabajos_completados=500",
+   "esperado": "rechazado (sin permiso de columna o trigger)",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT UPDATE ON public.trabajadores TO authenticated;\", \"message\": \"permission denied for table trabajadores\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-conteo_rechazos",
+   "caso": "Profesional intenta fijarse conteo_rechazos=0",
+   "esperado": "rechazado (sin permiso de columna o trigger)",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT UPDATE ON public.trabajadores TO authenticated;\", \"message\": \"permission denied for table trabajadores\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-impulso-gratis",
+   "caso": "Profesional intenta darse un impulso de ranking sin pagar",
+   "esperado": "rechazado",
+   "http": 201,
+   "resultado": "FALLA",
+   "detalle": "[{\"id\": \"qa-audit-imp-1\", \"id_trabajador\": \"bbcfbf20-75bf-41c5-81b5-87528442d779\", \"tipo_impulso\": \"destacado\", \"fecha_inicio\": \"2026-11-16\", \"fecha_fin\": \"2027-11-16\", \"creado_en\": \"2026-11-16\"}]"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-suscripcion-gratis",
+   "caso": "Cliente intenta activarse una suscripción premium",
+   "esperado": "rechazado",
+   "http": 201,
+   "resultado": "FALLA",
+   "detalle": "[{\"id\": \"qa-audit-sus-1\", \"id_usuario\": \"e6b8aec6-28e5-41ac-9d16-c4bb01bde3f6\", \"tipo_plan\": \"premium\", \"estado\": \"activa\", \"fecha_inicio\": \"2026-11-16\", \"fecha_fin\": null, \"creado_en\": \"2026-11-16\", \"actualizado_en\": \"2026-11-16\"}]"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-pago-liberar",
+   "caso": "Cliente intenta marcar su pago como liberado",
+   "esperado": "401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT, UPDATE ON public.pagos TO authenticated;\", \"message\": \"permission denied for table pagos\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-pago-monto",
+   "caso": "Profesional intenta liberar el pago y subir el monto",
+   "esperado": "401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT, UPDATE ON public.pagos TO authenticated;\", \"message\": \"permission denied for table pagos\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-pago-insert",
+   "caso": "Cliente intenta insertar un pago aprobado",
+   "esperado": "401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT, INSERT ON public.pagos TO authenticated;\", \"message\": \"permission denied for table pagos\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-pago-token",
+   "caso": "Cliente intenta leer el token Transbank de su pago",
+   "esperado": "401/403 (sin permiso de columna)",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.pagos TO authenticated;\", \"message\": \"permission denied for table pagos\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-estado",
+   "caso": "Cliente intenta marcar su trabajo como completado/liberado",
+   "esperado": "401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT UPDATE ON public.trabajos TO authenticated;\", \"message\": \"permission denied for table trabajos\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-precio",
+   "caso": "Profesional intenta cambiar el precio pactado del trabajo",
+   "esperado": "401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT UPDATE ON public.trabajos TO authenticated;\", \"message\": \"permission denied for table trabajos\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-trab-insert-completado",
+   "caso": "Cliente intenta crear un trabajo ya completado y liberado",
+   "esperado": "403 (política)",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"un trabajo nuevo solo puede empezar pendiente, esperando pago o esperando cotizaciones\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-liquidacion",
+   "caso": "Profesional intenta registrarse una liquidación (pago a su cuenta)",
+   "esperado": "403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"new row violates row-level security policy for table \\\"liquidaciones\\\"\"}"
+  },
+  {
+   "categoria": "Escalada",
+   "id": "V-resena-antes",
+   "caso": "Cliente intenta calificar antes de que el trabajo termine",
+   "esperado": "403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"new row violates row-level security policy for table \\\"calificaciones\\\"\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-app_config",
+   "caso": "Cliente intenta leer la tabla interna app_config",
+   "esperado": "0 filas o 401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.app_config TO authenticated;\", \"message\": \"permission denied for table app_config\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-metodos_pago_oneclick",
+   "caso": "Cliente intenta leer la tabla interna metodos_pago_oneclick",
+   "esperado": "0 filas o 401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.metodos_pago_oneclick TO authenticated;\", \"message\": \"permission denied for table metodos_pago_oneclick\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-eventos_analitica",
+   "caso": "Cliente intenta leer la tabla interna eventos_analitica",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-senales_resena",
+   "caso": "Cliente intenta leer la tabla interna senales_resena",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-ranking_config",
+   "caso": "Cliente intenta leer la tabla interna ranking_config",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-tickets_soporte",
+   "caso": "Cliente intenta leer la tabla interna tickets_soporte",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-liquidaciones",
+   "caso": "Cliente intenta leer la tabla interna liquidaciones",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-eventos_ranking",
+   "caso": "Cliente intenta leer la tabla interna eventos_ranking",
+   "esperado": "0 filas o 401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.eventos_ranking TO authenticated;\", \"message\": \"permission denied for table eventos_ranking\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-bloqueos_pin_inicio",
+   "caso": "Cliente intenta leer la tabla interna bloqueos_pin_inicio",
+   "esperado": "0 filas o 401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.bloqueos_pin_inicio TO authenticated;\", \"message\": \"permission denied for table bloqueos_pin_inicio\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-intentos_pin_inicio",
+   "caso": "Cliente intenta leer la tabla interna intentos_pin_inicio",
+   "esperado": "0 filas o 401/403",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.intentos_pin_inicio TO authenticated;\", \"message\": \"permission denied for table intentos_pin_inicio\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-registros_error_app",
+   "caso": "Cliente intenta leer la tabla interna registros_error_app",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-leer-verificacion_eventos",
+   "caso": "Cliente intenta leer la tabla interna verificacion_eventos",
+   "esperado": "0 filas o 401/403",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-admin_metricas_resumen-cliente1",
+   "caso": "Cliente llama la función de administración admin_metricas_resumen",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"Solo administradores\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-admin_metricas_resumen-pro1",
+   "caso": "Profesional llama la función de administración admin_metricas_resumen",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"Solo administradores\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-fichas_sensibles_admin-cliente1",
+   "caso": "Cliente llama la función de administración fichas_sensibles_admin",
+   "esperado": "error o vacío",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-fichas_sensibles_admin-pro1",
+   "caso": "Profesional llama la función de administración fichas_sensibles_admin",
+   "esperado": "error o vacío",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "[]"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-consola_disputas_abiertas-cliente1",
+   "caso": "Cliente llama la función de administración consola_disputas_abiertas",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"forbidden\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-consola_disputas_abiertas-pro1",
+   "caso": "Profesional llama la función de administración consola_disputas_abiertas",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"forbidden\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-aprender_pesos_ranking_admin-cliente1",
+   "caso": "Cliente llama la función de administración aprender_pesos_ranking_admin",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"solo administrador\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-aprender_pesos_ranking_admin-pro1",
+   "caso": "Profesional llama la función de administración aprender_pesos_ranking_admin",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"solo administrador\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-fijar_verificacion_profesional-cliente1",
+   "caso": "Cliente llama la función de administración fijar_verificacion_profesional",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"Solo un administrador puede fijar la verificación\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-fijar_verificacion_profesional-pro1",
+   "caso": "Profesional llama la función de administración fijar_verificacion_profesional",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"Solo un administrador puede fijar la verificación\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-fijar_prioridad_trabajador-cliente1",
+   "caso": "Cliente llama la función de administración fijar_prioridad_trabajador",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"solo administrador\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-fijar_prioridad_trabajador-pro1",
+   "caso": "Profesional llama la función de administración fijar_prioridad_trabajador",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"solo administrador\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-guardar_config_ranking-cliente1",
+   "caso": "Cliente llama la función de administración guardar_config_ranking",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"solo administrador\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-guardar_config_ranking-pro1",
+   "caso": "Profesional llama la función de administración guardar_config_ranking",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"solo administrador\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-admin_actualizar_estado_disputa-cliente1",
+   "caso": "Cliente llama la función de administración admin_actualizar_estado_disputa",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"Solo administradores\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-admin_actualizar_estado_disputa-pro1",
+   "caso": "Profesional llama la función de administración admin_actualizar_estado_disputa",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"Solo administradores\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-evidencia_disputa-cliente1",
+   "caso": "Cliente llama la función de administración evidencia_disputa",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"forbidden\"}"
+  },
+  {
+   "categoria": "Vertical",
+   "id": "V-rpc-evidencia_disputa-pro1",
+   "caso": "Profesional llama la función de administración evidencia_disputa",
+   "esperado": "error o vacío",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"forbidden\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-acciones_pendientes",
+   "caso": "Anónimo lee acciones_pendientes",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-acuerdos_trabajo",
+   "caso": "Anónimo lee acuerdos_trabajo",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-app_config",
+   "caso": "Anónimo lee app_config",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.app_config TO anon;\", \"message\": \"permission denied for table app_config\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-banderas_funcionalidad",
+   "caso": "Anónimo lee banderas_funcionalidad",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-bloqueos_pin_inicio",
+   "caso": "Anónimo lee bloqueos_pin_inicio",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.bloqueos_pin_inicio TO anon;\", \"message\": \"permission denied for table bloqueos_pin_inicio\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-bloqueos_usuario",
+   "caso": "Anónimo lee bloqueos_usuario",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-calificaciones",
+   "caso": "Anónimo lee calificaciones",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-calificaciones_cliente",
+   "caso": "Anónimo lee calificaciones_cliente",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.calificaciones_cliente TO anon;\", \"message\": \"permission denied for table calificaciones_cliente\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-cancelaciones_trabajo",
+   "caso": "Anónimo lee cancelaciones_trabajo",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-codigos_restablecimiento",
+   "caso": "Anónimo lee codigos_restablecimiento",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-comunas",
+   "caso": "Anónimo lee comunas",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "5 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-configuraciones_servicio",
+   "caso": "Anónimo lee configuraciones_servicio",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-consentimientos_usuario",
+   "caso": "Anónimo lee consentimientos_usuario",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-cuentas_bancarias",
+   "caso": "Anónimo lee cuentas_bancarias",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.cuentas_bancarias TO anon;\", \"message\": \"permission denied for table cuentas_bancarias\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-dispositivos_push",
+   "caso": "Anónimo lee dispositivos_push",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.dispositivos_push TO anon;\", \"message\": \"permission denied for table dispositivos_push\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-disputa_mensajes",
+   "caso": "Anónimo lee disputa_mensajes",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-disputas",
+   "caso": "Anónimo lee disputas",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-eventos_abuso",
+   "caso": "Anónimo lee eventos_abuso",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-eventos_analitica",
+   "caso": "Anónimo lee eventos_analitica",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-eventos_ranking",
+   "caso": "Anónimo lee eventos_ranking",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.eventos_ranking TO anon;\", \"message\": \"permission denied for table eventos_ranking\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-fotos_trabajo",
+   "caso": "Anónimo lee fotos_trabajo",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-impulsos",
+   "caso": "Anónimo lee impulsos",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-intentos_pin_inicio",
+   "caso": "Anónimo lee intentos_pin_inicio",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.intentos_pin_inicio TO anon;\", \"message\": \"permission denied for table intentos_pin_inicio\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-liquidaciones",
+   "caso": "Anónimo lee liquidaciones",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-mensajes",
+   "caso": "Anónimo lee mensajes",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.mensajes TO anon;\", \"message\": \"permission denied for table mensajes\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-metodos_pago_oneclick",
+   "caso": "Anónimo lee metodos_pago_oneclick",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.metodos_pago_oneclick TO anon;\", \"message\": \"permission denied for table metodos_pago_oneclick\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-notificaciones",
+   "caso": "Anónimo lee notificaciones",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-ordenes_cambio",
+   "caso": "Anónimo lee ordenes_cambio",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-pagos",
+   "caso": "Anónimo lee pagos",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.pagos TO anon;\", \"message\": \"permission denied for table pagos\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-paises",
+   "caso": "Anónimo lee paises",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "1 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-perfiles",
+   "caso": "Anónimo lee perfiles",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.perfiles TO anon;\", \"message\": \"permission denied for table perfiles\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-pines_inicio_trabajo",
+   "caso": "Anónimo lee pines_inicio_trabajo",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.pines_inicio_trabajo TO anon;\", \"message\": \"permission denied for table pines_inicio_trabajo\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-portafolio_trabajador",
+   "caso": "Anónimo lee portafolio_trabajador",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-propuestas_cotizacion",
+   "caso": "Anónimo lee propuestas_cotizacion",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-ranking_aprendizaje",
+   "caso": "Anónimo lee ranking_aprendizaje",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.ranking_aprendizaje TO anon;\", \"message\": \"permission denied for table ranking_aprendizaje\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-ranking_config",
+   "caso": "Anónimo lee ranking_config",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.ranking_config TO anon;\", \"message\": \"permission denied for table ranking_config\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-regiones",
+   "caso": "Anónimo lee regiones",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "5 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-registros_error_app",
+   "caso": "Anónimo lee registros_error_app",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-reportes",
+   "caso": "Anónimo lee reportes",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-reprogramaciones_trabajo",
+   "caso": "Anónimo lee reprogramaciones_trabajo",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.reprogramaciones_trabajo TO anon;\", \"message\": \"permission denied for table reprogramaciones_trabajo\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-senales_resena",
+   "caso": "Anónimo lee senales_resena",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.senales_resena TO anon;\", \"message\": \"permission denied for table senales_resena\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-servicios",
+   "caso": "Anónimo lee servicios",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "5 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-suscripciones",
+   "caso": "Anónimo lee suscripciones",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-tickets_soporte",
+   "caso": "Anónimo lee tickets_soporte",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-trabajador_horarios",
+   "caso": "Anónimo lee trabajador_horarios",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "5 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-trabajador_precios",
+   "caso": "Anónimo lee trabajador_precios",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.trabajador_precios TO anon;\", \"message\": \"permission denied for table trabajador_precios\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-trabajador_servicios",
+   "caso": "Anónimo lee trabajador_servicios",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-trabajador_servicios_extra",
+   "caso": "Anónimo lee trabajador_servicios_extra",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.trabajador_servicios_extra TO anon;\", \"message\": \"permission denied for table trabajador_servicios_extra\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-trabajadores",
+   "caso": "Anónimo lee trabajadores",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.trabajadores TO anon;\", \"message\": \"permission denied for table trabajadores\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-trabajos",
+   "caso": "Anónimo lee trabajos",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.trabajos TO anon;\", \"message\": \"permission denied for table trabajos\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-ubicacion_en_vivo",
+   "caso": "Anónimo lee ubicacion_en_vivo",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.ubicacion_en_vivo TO anon;\", \"message\": \"permission denied for table ubicacion_en_vivo\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-verificacion_eventos",
+   "caso": "Anónimo lee verificacion_eventos",
+   "esperado": "0 filas/401 (salvo catálogos públicos)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.verificacion_eventos TO anon;\", \"message\": \"permission denied for table verificacion_eventos\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-insert-trabajos",
+   "caso": "Anónimo intenta insertar en trabajos",
+   "esperado": "401/403",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT, INSERT ON public.trabajos TO anon;\", \"message\": \"permission denied for table trabajos\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-insert-mensajes",
+   "caso": "Anónimo intenta insertar en mensajes",
+   "esperado": "401/403",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT, INSERT ON public.mensajes TO anon;\", \"message\": \"permission denied for table mensajes\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-insert-registros_error_app",
+   "caso": "Anónimo intenta insertar en registros_error_app",
+   "esperado": "401/403",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"new row violates row-level security policy for table \\\"registros_error_app\\\"\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-insert-reportes",
+   "caso": "Anónimo intenta insertar en reportes",
+   "esperado": "401/403",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"new row violates row-level security policy for table \\\"reportes\\\"\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-rpc-admin_metricas_resumen",
+   "caso": "Anónimo llama la función privada admin_metricas_resumen",
+   "esperado": "401/404 (sin EXECUTE)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"permission denied for function admin_metricas_resumen\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-rpc-cerrar_trabajo_conforme",
+   "caso": "Anónimo llama la función privada cerrar_trabajo_conforme",
+   "esperado": "401/404 (sin EXECUTE)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"permission denied for function cerrar_trabajo_conforme\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-rpc-es_parte_trabajo",
+   "caso": "Anónimo llama la función privada es_parte_trabajo",
+   "esperado": "401/404 (sin EXECUTE)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"permission denied for function es_parte_trabajo\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-rpc-listar_trabajos_marketplace",
+   "caso": "Anónimo llama la función privada listar_trabajos_marketplace",
+   "esperado": "401/404 (sin EXECUTE)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"permission denied for function listar_trabajos_marketplace\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-rpc-resumen_calificacion_clientes",
+   "caso": "Anónimo llama la función privada resumen_calificacion_clientes",
+   "esperado": "401/404 (sin EXECUTE)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"permission denied for function resumen_calificacion_clientes\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-rpc-is_admin",
+   "caso": "Anónimo llama la función privada is_admin",
+   "esperado": "401/404 (sin EXECUTE)",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": null, \"message\": \"permission denied for function is_admin\"}"
+  },
+  {
+   "categoria": "Anónimo",
+   "id": "A-catalogo-pii",
+   "caso": "El catálogo público no expone correo ni ubicación exacta",
+   "esperado": "sin PII; coordenadas a 2 decimales (~1 km)",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "9 filas, campos PII=[], coords precisas=0"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-rpc-0",
+   "caso": "Payload en parámetro RPC: gasfiteria' OR '1'='1",
+   "esperado": "200 con 0 filas (tratado como texto), sin demora",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas, 109 ms"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-rpc-1",
+   "caso": "Payload en parámetro RPC: x'; DROP TABLE trabajos; --",
+   "esperado": "200 con 0 filas (tratado como texto), sin demora",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas, 129 ms"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-rpc-2",
+   "caso": "Payload en parámetro RPC: %' OR 1=1 --",
+   "esperado": "200 con 0 filas (tratado como texto), sin demora",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas, 106 ms"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-rpc-3",
+   "caso": "Payload en parámetro RPC: gasfiteria\\'; select pg_sleep(5); --",
+   "esperado": "200 con 0 filas (tratado como texto), sin demora",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas, 95 ms"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-rpc-4",
+   "caso": "Payload en parámetro RPC: ' UNION SELECT correo FROM perfiles --",
+   "esperado": "200 con 0 filas (tratado como texto), sin demora",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas, 98 ms"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-filtro-0",
+   "caso": "Filtro PostgREST manipulado: trabajos?id=eq.1;DROP TABLE trabajos",
+   "esperado": "0 filas propias de terceros o 400",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-filtro-1",
+   "caso": "Filtro PostgREST manipulado: trabajos?or=(id_usuario.neq.00000000-0000-0000-0000-000000000000)",
+   "esperado": "0 filas propias de terceros o 400",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-filtro-2",
+   "caso": "Filtro PostgREST manipulado: trabajos?select=*,perfiles!trabajos_id_usuario_fkey(correo)",
+   "esperado": "0 filas propias de terceros o 400",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"PGRST200\", \"details\": \"Searched for a foreign key relationship between 'trabajos' and 'perfiles' using the hint 'trabajos_id_usuario_fkey' in the schema 'public', but no matches were found.\", \"hint\": null, \"message\": \"Could not find a relationship between 'trabajos' and 'perfiles' in the s"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-filtro-3",
+   "caso": "Filtro PostgREST manipulado: perfiles?select=correo&correo=like.*@*",
+   "esperado": "0 filas propias de terceros o 400",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "1 filas"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-filtro-4",
+   "caso": "Filtro PostgREST manipulado: trabajos?id=eq.x') OR ('1'='1",
+   "esperado": "0 filas propias de terceros o 400",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0 filas"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-filtro-5",
+   "caso": "Filtro PostgREST manipulado: pagos?select=id,token_tbk::text",
+   "esperado": "0 filas propias de terceros o 400",
+   "http": 403,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"42501\", \"details\": null, \"hint\": \"Grant the required privileges to the current role with: GRANT SELECT ON public.pagos TO authenticated;\", \"message\": \"permission denied for table pagos\"}"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-limite-dias",
+   "caso": "Parámetro p_dias gigantesco (DoS) se acota a 21",
+   "esperado": "200, acotado",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "0"
+  },
+  {
+   "categoria": "Inyección SQL",
+   "id": "I-limite-ids",
+   "caso": "Arreglo de 51 ids se rechaza (máx. 50)",
+   "esperado": "error 'demasiados clientes'",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"code\": \"P0001\", \"details\": null, \"hint\": null, \"message\": \"demasiados clientes\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-create",
+   "caso": "webpay-create sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-status",
+   "caso": "webpay-status sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-refund",
+   "caso": "webpay-refund sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-release",
+   "caso": "webpay-release sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-resolve-dispute",
+   "caso": "webpay-resolve-dispute sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-oneclick-charge",
+   "caso": "oneclick-charge sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-invitar-colaborador",
+   "caso": "invitar-colaborador sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-refund-cancellation",
+   "caso": "webpay-refund-cancellation sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-noauth-webpay-refund-rejection",
+   "caso": "webpay-refund-rejection sin token de sesión",
+   "esperado": "401",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"code\":\"UNAUTHORIZED_NO_AUTH_HEADER\",\"message\":\"Missing authorization header\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-webpay-status",
+   "caso": "CORS de webpay-status ante un origen ajeno",
+   "esperado": "no refleja el origen ajeno",
+   "http": 200,
+   "resultado": "FALLA",
+   "detalle": "ACAO=null"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-status",
+   "caso": "CORS de webpay-status para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-webpay-create",
+   "caso": "CORS de webpay-create ante un origen ajeno",
+   "esperado": "no refleja el origen ajeno",
+   "http": 200,
+   "resultado": "FALLA",
+   "detalle": "ACAO=null"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-webpay-create",
+   "caso": "CORS de webpay-create para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-guest-checkout",
+   "caso": "CORS de guest-checkout ante un origen ajeno",
+   "esperado": "no refleja el origen ajeno",
+   "http": 200,
+   "resultado": "FALLA",
+   "detalle": "ACAO=null"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-guest-checkout",
+   "caso": "CORS de guest-checkout para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 200,
+   "resultado": "PASA",
+   "detalle": "ACAO=https://myworksapp-cl.vercel.app"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-send-push",
+   "caso": "CORS de send-push ante un origen ajeno",
+   "esperado": "no refleja el origen ajeno",
+   "http": 404,
+   "resultado": "FALLA",
+   "detalle": "ACAO=*"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-cors-ok-send-push",
+   "caso": "CORS de send-push para la web oficial",
+   "esperado": "ACAO = web oficial",
+   "http": 404,
+   "resultado": "FALLA",
+   "detalle": "ACAO=*"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-reconcile",
+   "caso": "webpay-reconcile sin secreto del cron",
+   "esperado": "401/403",
+   "http": 401,
+   "resultado": "PASA",
+   "detalle": "{\"error\":\"No autorizado\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-push",
+   "caso": "send-push sin secreto interno (envío de notificaciones falsas)",
+   "esperado": "401/403",
+   "http": 404,
+   "resultado": "FALLA",
+   "detalle": "{\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-commit-falso",
+   "caso": "Retorno Webpay falsificado con token inventado",
+   "esperado": "rechazo o redirección a error; sin cambio de estado",
+   "http": 404,
+   "resultado": "PASA",
+   "detalle": "{\"error\":\"Pago no encontrado\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-oneclick-falso",
+   "caso": "Retorno OneClick falsificado",
+   "esperado": "rechazo o redirección a error",
+   "http": 302,
+   "resultado": "PASA",
+   "detalle": "http://localhost:5173/?tarjeta=fail"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-soporte",
+   "caso": "soporte-automatico sin secreto del cron",
+   "esperado": "401/403",
+   "http": 404,
+   "resultado": "FALLA",
+   "detalle": "{\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-clave-invitado",
+   "caso": "definir-clave-invitado con ticket falso",
+   "esperado": "rechazo",
+   "http": 400,
+   "resultado": "PASA",
+   "detalle": "{\"error\":\"La contraseña debe tener al menos 8 caracteres\"}"
+  },
+  {
+   "categoria": "Edge Functions",
+   "id": "E-status-ajeno",
+   "caso": "Otro cliente consulta el estado de un pago ajeno",
+   "esperado": "403/404",
+   "http": 404,
+   "resultado": "PASA",
+   "detalle": "{\"error\":\"No encontrado\"}"
+  }
+ ],
+ "resumen": {
+  "total": 185,
+  "pasa": 175,
+  "falla": 10
+ }
+}

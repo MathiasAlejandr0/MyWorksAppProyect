@@ -274,6 +274,8 @@ describe("pago abandonado en Webpay", () => {
   });
 });
 
+const WEB_PUBLICA = "https://myworksapp-cl.vercel.app";
+
 describe("CORS", () => {
   it("no refleja un origen supabase.co si no está en la lista", () => {
     assert.equal(
@@ -282,8 +284,16 @@ describe("CORS", () => {
         allowlist: [],
         tbkEnv: "integration",
       }),
-      "null",
+      WEB_PUBLICA,
     );
+  });
+
+  it("no acepta Origin: null (iframe sandbox, file://)", () => {
+    for (const tbkEnv of ["integration", "production"]) {
+      const acao = resolveCorsAllowOrigin({ origin: "null", allowlist: [], tbkEnv });
+      assert.notEqual(acao, "null");
+      assert.equal(acao, WEB_PUBLICA);
+    }
   });
 
   it("en integración acepta el vite local y el escritorio", () => {
@@ -328,7 +338,7 @@ describe("CORS", () => {
         allowlist: [],
         tbkEnv: "integration",
       }),
-      "null",
+      WEB_PUBLICA,
     );
   });
 
@@ -339,7 +349,7 @@ describe("CORS", () => {
         allowlist: [],
         tbkEnv: "production",
       }),
-      "null",
+      WEB_PUBLICA,
     );
     assert.equal(
       resolveCorsAllowOrigin({
@@ -347,7 +357,7 @@ describe("CORS", () => {
         allowlist: [],
         tbkEnv: "production",
       }),
-      "null",
+      WEB_PUBLICA,
     );
     assert.equal(
       resolveCorsAllowOrigin({
@@ -390,7 +400,7 @@ describe("web pública en Vercel", () => {
     ]) {
       assert.equal(
         resolveCorsAllowOrigin({ origin, allowlist: corsAllowlist(""), tbkEnv: "production" }),
-        "null",
+        WEB_PUBLICA,
         origin,
       );
     }
@@ -405,7 +415,7 @@ describe("web pública en Vercel", () => {
     );
     assert.equal(
       resolveCorsAllowOrigin({ origin: "http://localhost:5173", allowlist: list, tbkEnv: "production" }),
-      "null",
+      WEB_PUBLICA,
     );
   });
 

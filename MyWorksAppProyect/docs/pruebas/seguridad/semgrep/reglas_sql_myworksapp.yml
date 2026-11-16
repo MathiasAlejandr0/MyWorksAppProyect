@@ -1,0 +1,29 @@
+rules:
+  - id: plpgsql-execute-concatenado
+    languages: [generic]
+    severity: WARNING
+    message: >-
+      EXECUTE con SQL armado por concatenación (||). Si algún trozo viene de un
+      parámetro, es inyección SQL. Usar format() con %I/%L o EXECUTE ... USING.
+    paths: {include: ["*.sql"]}
+    pattern-either:
+      - pattern: EXECUTE '...' || $X
+      - pattern: EXECUTE $X || '...'
+  - id: grant-escritura-anon
+    languages: [generic]
+    severity: ERROR
+    message: Se concede escritura al rol anon (cualquiera sin iniciar sesión).
+    paths: {include: ["*.sql"]}
+    pattern-regex: (?i)grant\s+[^;]*(insert|update|delete|truncate|all)[^;]*\bto\s+[^;]*\banon\b
+  - id: politica-using-true-escritura
+    languages: [generic]
+    severity: WARNING
+    message: Política de escritura abierta (USING/WITH CHECK true).
+    paths: {include: ["*.sql"]}
+    pattern-regex: (?i)create\s+policy[^;]*for\s+(insert|update|delete|all)[^;]*(using|with\s+check)\s*\(\s*true\s*\)
+  - id: security-definer-sin-search-path
+    languages: [generic]
+    severity: WARNING
+    message: Función SECURITY DEFINER sin SET search_path (secuestro de search_path).
+    paths: {include: ["*.sql"]}
+    pattern-regex: (?is)create\s+(or\s+replace\s+)?function(?:(?!\$\$|\$function\$|set\s+search_path).)*?security\s+definer(?:(?!set\s+search_path).)*?as\s+\$

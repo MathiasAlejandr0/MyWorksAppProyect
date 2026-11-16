@@ -1,0 +1,6 @@
+{"ejecutado":"2026-11-16 01:50 -03",
+ "borrado_qa":{"mensajes":1847,"eventos_analitica":1155,"notificaciones":0,"pines_inicio_trabajo":1,"pagos":1,"trabajos":1,"trabajador_servicios_extra":1,"trabajador_precios":0,"trabajador_servicios":2,"trabajador_horarios":2,"verificacion_eventos":2,"trabajadores":2,"perfiles":6,"auth.identities":6,"auth.users":6},
+ "restos_qa":{"usuarios":0,"filas_qa_audit":0},
+ "comparacion_linea_base":{"iguales":"todas las tablas que tocaron las pruebas (mensajes 8, eventos_analitica 0, trabajadores 64, trabajador_horarios 64, trabajador_servicios 48, trabajador_servicios_extra 0, verificacion_eventos 16, impulsos 0, suscripciones 0)",
+  "diferencias_por_E2E_paralela":{"trabajos":"+3","pagos":"+3","pines_inicio_trabajo":"+3","perfiles":"+1","auth.users":"+1","calificaciones":"+1","liquidaciones":"+1","notificaciones":"+4","fotos_trabajo":"+1","eventos_ranking":"+1","bloqueos_pin_inicio":"+1","intentos_pin_inicio":"+1"},
+  "cambio_intencional":"comunas.santiago_centro activa=0 (no se borra; 38 filas)"}}

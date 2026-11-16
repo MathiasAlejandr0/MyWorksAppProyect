@@ -1,20 +1,20 @@
 Project MyWorksApp {
   database_type: 'PostgreSQL'
-  Note: 'Modelo lógico v2.4 · 52 tablas public · 2026-11-16 (America/Santiago) · alineado a la BD viva wxqrfcqifkfgawrnqmnj hasta la migración 20261115234447 (catalogo_plomeria_gasfiteria_distintos). Archivo de migración en el repo: 20261115234447_catalogo_plomeria_gasfiteria_distintos.sql. Diccionario generado desde information_schema y pg_catalog (solo lectura). No hay tipos ENUM ni vistas en public: los estados se restringen con CHECK. No ejecutar el SQL de consulta contra producción.'
+  Note: 'Modelo lógico v2.5 · 52 tablas public · 2026-11-16 (America/Santiago) · alineado a la BD viva wxqrfcqifkfgawrnqmnj hasta la migración 20261116044049 (stats_profesional_fuente_unica). Archivo de migración en el repo: 20261116044049_stats_profesional_fuente_unica.sql. Diccionario generado desde information_schema y pg_catalog (solo lectura). No hay tipos ENUM ni vistas en public: los estados se restringen con CHECK. No ejecutar el SQL de consulta contra producción.'
 }
 
 Table perfiles {
   id uuid [pk, not null, default: gen_random_uuid()]
   nombre text [not null, default: "''"]
   correo text
-  rol text [not null, default: "'user'", note: 'usuario | trabajador | administrador']
-  estado_cuenta text [not null, default: "'active'", note: 'activo | suspendido | bloqueado | eliminado']
+  rol text [not null, default: "'usuario'", note: 'usuario | trabajador | administrador']
+  estado_cuenta text [not null, default: "'activo'", note: 'activo | suspendido | bloqueado | eliminado']
   ruta_foto_perfil text
   creado_en text [not null, default: "to_char((now() AT TIME ZONE 'utc'::text), 'YYYY-MM-DD\"T\"HH24:MI:SS.US'::text)"]
   reputacion_cliente numeric(3,2)
   calificaciones_cliente integer [not null, default: 0]
 
-  Note: 'Identidad de la aplicación: perfiles.id coincide con auth.users.id (esquema auth de Supabase, fuera de public). El default de rol es ’user’ y el de estado_cuenta es ’active’ (valores en inglés de las primeras migraciones). En la práctica también se usan valores en español: usuario, trabajador, administrador, soporte y qa; activo, suspendido, bloqueado y eliminado. is_admin() reconoce ’admin’ y ’administrador’. Los roles privilegiados (administrador, soporte, qa) no se pueden autoasignar: el trigger perfiles_rol_inicial_seguro y protect_profile_sensitive_fields lo impiden. reputacion_cliente la actualiza el trigger al calificar al cliente.'
+  Note: 'Identidad de la aplicación: perfiles.id coincide con auth.users.id (esquema auth de Supabase, fuera de public; clave foránea con ON DELETE CASCADE desde la auditoría 2026-11-16). El default de rol es ’usuario’ y el de estado_cuenta es ’activo’. Los CHECK perfiles_rol_chk y perfiles_estado_cuenta_chk cierran los conjuntos: usuario, trabajador, administrador, soporte y qa; activo, suspendido, bloqueado y eliminado. Los roles privilegiados (administrador, soporte, qa) no se pueden autoasignar: el trigger perfiles_rol_inicial_seguro y protect_profile_sensitive_fields lo impiden. reputacion_cliente y calificaciones_cliente los calcula calificar_cliente(); el usuario no puede editarlos (trigger protect_profile_sensitive_fields).'
 }
 
 Table notificaciones {
@@ -86,7 +86,7 @@ Table reportes {
   id_usuario_reportado uuid [not null]
   motivo text [not null]
   descripcion text
-  estado text [not null, default: "'pending'"]
+  estado text [not null, default: "'pendiente'"]
   creado_en text [not null]
 
   Note: 'Denuncia de un usuario contra otro.'
@@ -128,7 +128,7 @@ Table registros_error_app {
   mensaje text [not null]
   traza_pila text
   metadatos jsonb
-  estado text [not null, default: "'new'"]
+  estado text [not null, default: "'nuevo'"]
   version_app text
   plataforma text
   creado_en text [not null, default: "to_char((now() AT TIME ZONE 'utc'::text), 'YYYY-MM-DD\"T\"HH24:MI:SS.US'::text)"]
@@ -210,6 +210,10 @@ Table comunas {
   longitud double precision
   activa integer [not null, default: 1]
 
+  indexes {
+    (id_region, (expr)) [unique, note: 'CREATE UNIQUE INDEX comunas_region_nombre_activa_uidx ON public.comunas USING btree (id_region, lower(nombre)) WHERE (activa = 1)']
+  }
+
   Note: 'Comuna de cobertura. Su identificador es el slug usado por trabajos y trabajadores.'
 }
 
@@ -249,7 +253,7 @@ Table trabajadores {
 }
 
 Table trabajador_precios {
-  id_usuario text [not null]
+  id_usuario uuid [not null]
   codigo text [not null]
   monto_clp numeric(12,0) [not null]
 
@@ -257,12 +261,12 @@ Table trabajador_precios {
     (id_usuario, codigo) [pk]
   }
 
-  Note: 'Precio por código de servicio del profesional. En la base viva id_usuario es text (cast del uuid de trabajadores.id_usuario); no hay clave foránea física.'
+  Note: 'Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE) desde la auditoría 2026-11-16; antes era text sin FK.'
 }
 
 Table trabajador_servicios_extra {
   id text [not null]
-  id_usuario text [not null]
+  id_usuario uuid [not null]
   titulo text [not null]
   subtitulo text [not null, default: "''"]
   monto_clp numeric(12,0) [not null]
@@ -272,7 +276,7 @@ Table trabajador_servicios_extra {
     (id_usuario, id) [pk]
   }
 
-  Note: 'Servicio adicional definido por el profesional. id_usuario es text en la base viva, igual que en trabajador_precios.'
+  Note: 'Servicio adicional definido por el profesional. id_usuario es uuid con clave foránea a trabajadores, igual que en trabajador_precios.'
 }
 
 Table trabajador_servicios {
@@ -310,7 +314,7 @@ Table portafolio_trabajador {
   ruta_foto text [not null]
   descripcion text
   creado_en text [not null]
-  tipo_medio text [default: "'photo'"]
+  tipo_medio text [not null, default: "'foto'"]
 
   Note: 'Foto o medio del portafolio de un profesional.'
 }
@@ -333,7 +337,7 @@ Table servicios {
   categoria text [not null, default: "'general'"]
   activo integer [not null, default: 1]
   requiere_certificacion integer [not null, default: 0]
-  modelo_precio text [not null, default: "'hourly'"]
+  modelo_precio text [not null, default: "'por_hora'"]
   aviso_legal text
   creado_en text
   actualizado_en text
@@ -378,7 +382,7 @@ Table trabajos {
   actualizado_en text [not null]
 
   indexes {
-    (id_trabajador) [unique, note: 'CREATE UNIQUE INDEX trabajos_trabajador_minuto_activo_uidx ON public.trabajos USING btree (id_trabajador, minuto_utc(fecha_programada)) WHERE ((fecha_programada IS NOT NULL) AND (id_trabajador IS NOT NULL) AND (estado <> ALL (ARRAY[’cancelado’::text, ’expirado’::text, ’completado’::text, ’no_asistio’::text])))']
+    (id_trabajador, (expr)) [unique, note: 'CREATE UNIQUE INDEX trabajos_trabajador_minuto_activo_uidx ON public.trabajos USING btree (id_trabajador, minuto_utc(fecha_programada)) WHERE ((fecha_programada IS NOT NULL) AND (id_trabajador IS NOT NULL) AND (estado <> ALL (ARRAY[’cancelado’::text, ’expirado’::text, ’completado’::text, ’no_asistio’::text])))']
   }
 
   Note: 'Pedido de un cliente a un profesional (o abierto a cotizaciones). estado_pago es una copia derivada del pago principal. La fecha programada se guarda como texto y, desde CU-33, solo cambia por las RPC de reagendamiento (trabajos_fecha_solo_por_rpc). Hay un índice único que impide dos trabajos activos del mismo profesional en el mismo minuto (minuto_utc de fecha_programada).'
@@ -390,7 +394,7 @@ Table mensajes {
   id_remitente uuid [not null]
   id_destinatario uuid [not null]
   contenido text [not null]
-  tipo text [not null, default: "'text'"]
+  tipo text [not null, default: "'texto'"]
   ruta_imagen text
   leido integer [not null, default: 0]
   creado_en text [not null]
@@ -403,7 +407,7 @@ Table fotos_trabajo {
   id_trabajo text [not null]
   ruta_foto text [not null]
   creado_en text [not null]
-  tipo_medio text [not null, default: "'photo'", note: 'photo or video evidence']
+  tipo_medio text [not null, default: "'foto'", note: 'photo or video evidence']
   imagen_webp bytea [note: 'Imagen de evidencia en WebP. Se guarda en la fila para no depender de archivos locales y ocupar menos espacio que JPEG/PNG.']
 
   Note: 'Evidencia fotográfica o de video de un trabajo (bucket de evidencias).'
@@ -420,7 +424,7 @@ Table calificaciones {
   estado_revision text [not null, default: "'vigente'"]
   motivo_revision text
   direccion text [not null, default: "'cliente_a_trabajador'"]
-  id_calificado uuid
+  id_calificado uuid [not null]
 
   indexes {
     (id_trabajo, direccion) [unique]
@@ -567,7 +571,7 @@ Table bloqueos_pin_inicio {
   pin_ok_usuario uuid
   actualizado_en timestamptz [not null, default: now()]
 
-  Note: 'Contador de intentos fallidos del PIN, bloqueo temporal (15 minutos tras 5 fallos) y ventana en la que el PIN ya fue validado. RLS está activo y no hay políticas: solo acceden las funciones SECURITY DEFINER o el rol service_role.'
+  Note: 'Contador de intentos fallidos del PIN, bloqueo temporal (15 minutos tras 5 fallos) y ventana en la que el PIN ya fue validado. Escriben solo las funciones SECURITY DEFINER o service_role; un administrador puede leerla.'
 }
 
 Table intentos_pin_inicio {
@@ -578,7 +582,7 @@ Table intentos_pin_inicio {
   intentos_restantes integer [not null]
   creado_en timestamptz [not null, default: now()]
 
-  Note: 'Auditoría de cada intento de PIN de inicio. RLS activo sin políticas: solo funciones SECURITY DEFINER o service_role.'
+  Note: 'Auditoría de cada intento de PIN de inicio. Escriben solo funciones SECURITY DEFINER; un administrador puede leerla.'
 }
 
 Table propuestas_cotizacion {
@@ -599,7 +603,7 @@ Table pagos {
   id text [pk, not null]
   id_trabajo text [not null]
   id_orden_cambio text
-  tipo_pago text [not null, default: "'primary'"]
+  tipo_pago text [not null, default: "'principal'"]
   monto numeric(12,0) [not null]
   moneda text [not null, default: "'CLP'"]
   estado text [not null]
@@ -639,7 +643,7 @@ Table ordenes_cambio {
   titulo text [not null]
   descripcion text [not null]
   monto_clp integer [not null]
-  estado text [not null, default: "'pending_client'"]
+  estado text [not null, default: "'pendiente_cliente'"]
   id_pago text
   creado_en text [not null]
   respondido_en text
@@ -668,7 +672,7 @@ Table liquidaciones {
 }
 
 Table metodos_pago_oneclick {
-  id_usuario text [pk, not null]
+  id_usuario uuid [pk, not null]
   username text [not null]
   tbk_user text
   tipo_tarjeta text
@@ -773,19 +777,30 @@ Table eventos_ranking {
 // Relaciones (solo FK físicas de la BD viva)
 // ---------------------------------------------------------------------------
 
+Ref: perfiles.id - auth.users.id [delete: cascade_not_valid]
 Ref: notificaciones.id_usuario > perfiles.id [delete: cascade]
 Ref: suscripciones.id_usuario > perfiles.id [delete: cascade]
+Ref: codigos_restablecimiento.id_usuario > perfiles.id [delete: cascade]
 Ref: consentimientos_usuario.id_usuario > perfiles.id [delete: cascade]
+Ref: bloqueos_usuario.id_bloqueado > perfiles.id [delete: cascade]
+Ref: bloqueos_usuario.id_bloqueador > perfiles.id [delete: cascade]
+Ref: reportes.id_reportante > perfiles.id [delete: cascade]
+Ref: reportes.id_usuario_reportado > perfiles.id [delete: cascade]
 Ref: eventos_abuso.id_usuario > perfiles.id [delete: cascade]
 Ref: acciones_pendientes.id_usuario > perfiles.id [delete: cascade]
 Ref: registros_error_app.id_usuario > perfiles.id
+Ref: eventos_analitica.id_usuario > perfiles.id [delete: set_null]
+Ref: banderas_funcionalidad.id_usuario > perfiles.id [delete: cascade]
 Ref: dispositivos_push.id_usuario > perfiles.id [delete: cascade]
+Ref: verificacion_eventos.id_actor > perfiles.id [delete: set_null]
 Ref: verificacion_eventos.id_usuario > perfiles.id [delete: cascade]
 Ref: regiones.id_pais > paises.id
 Ref: comunas.id_region > regiones.id
 Ref: trabajadores.id_comuna > comunas.id [delete: set_null]
 Ref: trabajadores.id_region > regiones.id [delete: set_null]
 Ref: trabajadores.id_usuario - perfiles.id [delete: cascade]
+Ref: trabajador_precios.id_usuario > trabajadores.id_usuario [delete: cascade]
+Ref: trabajador_servicios_extra.id_usuario > trabajadores.id_usuario [delete: cascade]
 Ref: trabajador_servicios.id_trabajador > perfiles.id [delete: cascade]
 Ref: trabajador_horarios.id_usuario > trabajadores.id_usuario [delete: cascade]
 Ref: portafolio_trabajador.id_trabajador > perfiles.id [delete: cascade]
@@ -795,28 +810,51 @@ Ref: trabajos.id_servicio > servicios.id [delete: set_null]
 Ref: trabajos.id_usuario > perfiles.id [delete: cascade]
 Ref: trabajos.id_trabajador > perfiles.id [delete: set_null]
 Ref: trabajos.id_comuna > comunas.id [delete: set_null]
+Ref: trabajos.id_cotizacion_seleccionada > propuestas_cotizacion.id [delete: set_null]
+Ref: mensajes.id_destinatario > perfiles.id [delete: cascade]
+Ref: mensajes.id_remitente > perfiles.id [delete: cascade]
 Ref: mensajes.id_trabajo > trabajos.id [delete: cascade]
 Ref: fotos_trabajo.id_trabajo > trabajos.id [delete: cascade]
+Ref: calificaciones.id_calificado > perfiles.id [delete: cascade]
+Ref: calificaciones.id_usuario > perfiles.id [delete: set_null]
 Ref: calificaciones.id_trabajo > trabajos.id [delete: cascade]
+Ref: calificaciones_cliente.id_cliente > perfiles.id [delete: cascade]
+Ref: calificaciones_cliente.id_trabajador > perfiles.id [delete: cascade]
+Ref: calificaciones_cliente.id_trabajo > trabajos.id [delete: cascade]
+Ref: disputas.abierta_por > perfiles.id [delete: cascade]
+Ref: disputas.resuelta_por > perfiles.id [delete: set_null]
 Ref: disputas.id_trabajo > trabajos.id [delete: cascade]
 Ref: disputa_mensajes.id_autor > perfiles.id
 Ref: disputa_mensajes.id_disputa > disputas.id [delete: cascade]
 Ref: acuerdos_trabajo.id_trabajo > trabajos.id [delete: cascade]
 Ref: acuerdos_trabajo.propuesto_por > perfiles.id
+Ref: cancelaciones_trabajo.cancelado_por > perfiles.id [delete: cascade]
 Ref: cancelaciones_trabajo.id_trabajo > trabajos.id [delete: cascade]
+Ref: tickets_soporte.id_trabajo > trabajos.id [delete: set_null]
 Ref: ubicacion_en_vivo.id_trabajo - trabajos.id [delete: cascade]
 Ref: ubicacion_en_vivo.id_trabajador > trabajadores.id_usuario [delete: cascade]
+Ref: reprogramaciones_trabajo.propuesta_por > perfiles.id [delete: cascade]
+Ref: reprogramaciones_trabajo.respondida_por > perfiles.id [delete: set_null]
 Ref: reprogramaciones_trabajo.id_trabajo > trabajos.id [delete: cascade]
 Ref: pines_inicio_trabajo.id_trabajo - trabajos.id [delete: cascade]
 Ref: bloqueos_pin_inicio.id_trabajo - trabajos.id [delete: cascade]
+Ref: intentos_pin_inicio.id_trabajo > trabajos.id [delete: cascade]
+Ref: intentos_pin_inicio.id_usuario > perfiles.id [delete: set_null]
 Ref: propuestas_cotizacion.id_trabajo > trabajos.id [delete: cascade]
 Ref: propuestas_cotizacion.id_trabajador > perfiles.id [delete: cascade]
+Ref: pagos.id_orden_cambio > ordenes_cambio.id [delete: set_null]
 Ref: pagos.id_trabajo > trabajos.id [delete: cascade]
 Ref: ordenes_cambio.id_trabajo > trabajos.id [delete: cascade]
+Ref: ordenes_cambio.id_pago > pagos.id [delete: set_null]
+Ref: ordenes_cambio.id_trabajador > perfiles.id [delete: cascade]
 Ref: liquidaciones.id_pago > pagos.id
 Ref: liquidaciones.id_trabajo > trabajos.id
+Ref: metodos_pago_oneclick.id_usuario - perfiles.id [delete: cascade]
 Ref: cuentas_bancarias.id_usuario - perfiles.id [delete: cascade]
 Ref: senales_resena.id_calificacion > calificaciones.id [delete: cascade]
+Ref: senales_resena.resuelto_por > perfiles.id [delete: set_null]
+Ref: eventos_ranking.id_trabajador > perfiles.id [delete: cascade]
+Ref: eventos_ranking.id_trabajo > trabajos.id [delete: set_null]
 
 // Grupos para el lienzo de dbdiagram.io
 
