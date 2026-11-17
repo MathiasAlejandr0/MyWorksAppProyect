@@ -118,7 +118,11 @@ class WorkerJobRejectionService {
             worker.userId != excludeWorkerId && worker.isAvailable)
         .toList();
 
-    WorkerReputationService.instance.sortForListing(available);
+    WorkerReputationService.instance.sortForListing(
+      available,
+      clientLatitude: job.latitude,
+      clientLongitude: job.longitude,
+    );
     return available.take(5).toList();
   }
 

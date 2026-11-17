@@ -12,7 +12,7 @@ WEB = "https://myworksapp-cl.vercel.app"
 EF = f"{URL}/functions/v1"
 FUNCS = ["webpay-create", "webpay-status", "webpay-commit", "webpay-refund", "webpay-release",
          "webpay-resolve-dispute", "webpay-refund-rejection", "webpay-refund-cancellation",
-         "webpay-create-transaction", "webpay-commit-transaction", "webpay-reconcile",
+         "webpay-reconcile",
          "guest-checkout", "oneclick-charge", "oneclick-return", "invitar-colaborador",
          "definir-clave-invitado"]
 NOAUTH = ["webpay-create", "webpay-status", "webpay-refund", "webpay-release", "webpay-resolve-dispute",

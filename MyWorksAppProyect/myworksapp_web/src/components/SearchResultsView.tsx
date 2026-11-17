@@ -12,6 +12,7 @@ import {
 import { pluralize } from '@myworksapp/shared';
 import { BrandLogo } from './BrandLogo';
 import { profileLabel } from '../profileLabel';
+import { sortSearchWorkers, type CatalogSort } from '../catalogSort';
 
 const PremiumSearchMap = lazy(() =>
   import('./PremiumSearchMap').then((m) => ({ default: m.PremiumSearchMap })),
@@ -117,7 +118,7 @@ export function SearchResultsView({
     void onSearchAddress(text);
   };
 
-  const [sort, setSort] = useState<'relevance' | 'price' | 'rating'>('relevance');
+  const [sort, setSort] = useState<CatalogSort>('recommended');
   const [minRating, setMinRating] = useState(0);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const visibleWorkers = useMemo(() => {
@@ -126,14 +127,8 @@ export function SearchResultsView({
       if (onlyAvailable && worker.availableNow === false) return false;
       return true;
     });
-    if (sort === 'price') {
-      return [...filtered].sort((a, b) => a.pricePerVisit - b.pricePerVisit);
-    }
-    if (sort === 'rating') {
-      return [...filtered].sort((a, b) => b.rating - a.rating);
-    }
-    return filtered;
-  }, [workers, sort, minRating, onlyAvailable]);
+    return sortSearchWorkers(filtered, sort, clientLocation);
+  }, [workers, sort, minRating, onlyAvailable, clientLocation]);
   const total = visibleWorkers.length;
 
   return (
@@ -203,7 +198,7 @@ export function SearchResultsView({
               type="button"
               className="search-filters-clear"
               onClick={() => {
-                setSort('relevance');
+                setSort('recommended');
                 setMinRating(0);
                 setOnlyAvailable(false);
               }}
@@ -261,9 +256,9 @@ export function SearchResultsView({
               className="search-sort"
               value={sort}
               aria-label="Ordenar por"
-              onChange={(event) => setSort(event.target.value as 'relevance' | 'price' | 'rating')}
+              onChange={(event) => setSort(event.target.value as CatalogSort)}
             >
-              <option value="relevance">Ordenar por: Relevancia</option>
+              <option value="recommended">Ordenar por: Cercanía, nota y precio</option>
               <option value="price">Precio</option>
               <option value="rating">Calificación</option>
             </select>

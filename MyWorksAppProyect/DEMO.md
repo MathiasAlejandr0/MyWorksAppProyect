@@ -93,13 +93,7 @@ Si el dashboard muestra otra cadena de versión, usa esa en `migration repair` y
 
 ## 2. Edge Functions
 
-`webpay-create-transaction` y `webpay-commit-transaction` siguen vivas y el MCP no las puede borrar. En el repo hay un stub con el mismo nombre que responde **410 Gone**. Despliégalos para pisar las viejas. El camino vigente sigue siendo `webpay-create` y `webpay-commit`.
-
-```bash
-cd myworksapp_app
-npx supabase functions deploy webpay-create-transaction --project-ref wxqrfcqifkfgawrnqmnj --no-verify-jwt
-npx supabase functions deploy webpay-commit-transaction --project-ref wxqrfcqifkfgawrnqmnj --no-verify-jwt
-```
+El camino de Webpay es `webpay-create` y `webpay-commit`. Las funciones viejas `webpay-create-transaction` y `webpay-commit-transaction` ya no existen en el proyecto ni en el repo.
 
 Volver a desplegar `invitar-colaborador`: Admin queda `administrador`; Soporte queda `soporte` y QA queda `qa`. Esos dos no entran al hub.
 

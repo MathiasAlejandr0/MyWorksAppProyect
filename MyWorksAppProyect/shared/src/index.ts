@@ -16,6 +16,7 @@ export {
 export type { JobStatus, PaymentStatus, PricingMode } from './domain';
 
 export * from './catalog';
+export * from './catalogOrder';
 export * from './database.types';
 export * from './client';
 export * from './auth';

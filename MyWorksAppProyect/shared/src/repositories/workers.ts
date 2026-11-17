@@ -3,6 +3,7 @@ import {
   CATALOG_PAGE_SIZE,
   type CatalogCursor,
 } from '../catalog';
+import { sortCatalog, type CatalogOrderOrigin } from '../catalogOrder';
 import { uniqueIsoSlots } from '../jobs/bookingSlot';
 import type { WebWorkerCard, WorkerWithProfile } from '../types';
 import { initialsAvatarDataUrl } from '../avatar';
@@ -95,16 +96,13 @@ function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
 function pageFromRows(
   rows: WorkerQueryRow[],
   limit: number,
+  offset: number,
 ): WorkersCatalogPage {
   const workers = rows.map(mapWorkerRow);
   if (workers.length < limit) {
     return { workers, nextCursor: null };
   }
-  const last = workers[workers.length - 1];
-  return {
-    workers,
-    nextCursor: { rating: last.listingScore ?? last.rating, id: last.userId },
-  };
+  return { workers, nextCursor: { offset: offset + workers.length } };
 }
 
 
@@ -173,27 +171,33 @@ export async function fetchWorkersCatalog(
     zone?: string;
     cursor?: CatalogCursor | null;
     limit?: number;
+    /** Ubicación del cliente (GPS, dirección o mapa). Ordena por cercanía. */
+    origin?: { latitude: number; longitude: number } | null;
   },
 ): Promise<WorkersCatalogPage> {
   const limit = Math.min(
     Math.max(opts.limit ?? CATALOG_PAGE_SIZE, 1),
     40,
   );
+  const offset = Math.max(opts.cursor?.offset ?? 0, 0);
 
+  // Orden único (cercanía, nota, precio): lo define la RPC; ver catalogOrder.ts.
   const rpc = await supabase.rpc('listar_profesionales_catalogo', {
     p_categoria: opts.category,
     p_zona: opts.zone ?? null,
-    p_cursor_calificacion: opts.cursor?.rating ?? null,
-    p_cursor_id: opts.cursor?.id ?? null,
+    p_latitud: opts.origin?.latitude ?? null,
+    p_longitud: opts.origin?.longitude ?? null,
     p_limit: limit,
+    p_offset: offset,
   });
 
   if (!rpc.error && Array.isArray(rpc.data)) {
-    const page = pageFromRows(rpc.data as WorkerQueryRow[], limit);
-    return { ...page, workers: await overlayPublicStats(supabase, page.workers) };
+    const page = pageFromRows(rpc.data as WorkerQueryRow[], limit, offset);
+    const workers = await overlayPublicStats(supabase, page.workers);
+    return { ...page, workers: sortWorkersForCatalog(workers, opts.origin) };
   }
 
-  let query = supabase
+  const query = supabase
     .from('trabajadores')
     .select(
       'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, precios_configurados, zona_trabajo, radio_servicio_km, origen_base, trabajos_completados, score_listado, radio_urbano_km, tarifa_fuera_radio_clp, es_elite, trabajador_servicios!inner(categoria_servicio)',
@@ -202,20 +206,31 @@ export async function fetchWorkersCatalog(
     .eq('disponible', 1)
     .eq('precios_configurados', 1)
     .eq('estado_verificacion', 'verificado')
-    .order('score_listado', { ascending: false })
     .order('id_usuario', { ascending: true })
-    .limit(limit);
-
-  if (opts.cursor) {
-    query = query.or(
-      `calificacion.lt.${opts.cursor.rating},and(calificacion.eq.${opts.cursor.rating},id_usuario.gt.${opts.cursor.id})`,
-    );
-  }
+    .range(offset, offset + limit - 1);
 
   const { data, error } = await query;
   if (error) throw error;
-  const page = pageFromRows((data ?? []) as WorkerQueryRow[], limit);
-  return { ...page, workers: await overlayPublicStats(supabase, page.workers) };
+  const page = pageFromRows((data ?? []) as WorkerQueryRow[], limit, offset);
+  const workers = await overlayPublicStats(supabase, page.workers);
+  return { ...page, workers: sortWorkersForCatalog(workers, opts.origin) };
+}
+
+/** Orden único del catálogo aplicado a profesionales ya cargados. */
+export function sortWorkersForCatalog<
+  T extends Pick<WorkerWithProfile, 'userId' | 'rating' | 'visitFee' | 'baseLatitude' | 'baseLongitude'>,
+>(workers: readonly T[], origin: CatalogOrderOrigin): T[] {
+  return sortCatalog(
+    workers,
+    (w) => ({
+      id: w.userId,
+      rating: w.rating,
+      price: w.visitFee,
+      latitude: w.baseLatitude,
+      longitude: w.baseLongitude,
+    }),
+    origin,
+  );
 }
 
 /** Oficios con al menos un profesional disponible y con precio. Null si la RPC no está. */

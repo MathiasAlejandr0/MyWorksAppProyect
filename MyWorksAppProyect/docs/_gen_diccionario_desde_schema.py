@@ -372,7 +372,7 @@ FUNC_PURPOSE = {
     "limpiar_alta_trabajo": "Limpia los datos de alta de invitado ya consumidos o vencidos (servicio).",
     "limpiar_invitados_sin_pago": "Borra cuentas de invitado sin cobro retenido, liberado ni autorizado, pasadas 24 h (service_role).",
     "listar_cuentas_demo_acceso": "Lista las cuentas demo permitidas (servicio / modo demo cerrado).",
-    "listar_profesionales_catalogo": "Listado paginado del marketplace (también anon), ordenado por el ranking.",
+    "listar_profesionales_catalogo": "Listado paginado del marketplace (también anon): cercanía, luego nota, luego precio.",
     "listar_senales_resena": "Cola de señales de reseña para un administrador.",
     "listar_trabajos_marketplace": "Trabajos abiertos que un profesional puede tomar.",
     "marcar_orden_cambio_pagada": "Asocia el pago a la orden de cambio cuando Webpay confirma el cobro.",

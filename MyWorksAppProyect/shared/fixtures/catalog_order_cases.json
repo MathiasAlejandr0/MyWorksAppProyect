@@ -1,0 +1,206 @@
+{
+  "_comment": "Casos compartidos por shared/src/catalogOrder.test.ts y myworksapp_app/test/catalog_order_test.dart. Los dos lados deben dar el mismo orden que la RPC listar_profesionales_catalogo.",
+  "cases": [
+    {
+      "name": "gasfiteres de Puerto Montt desde el centro (datos reales del 17-nov)",
+      "origin": {
+        "latitude": -41.4693,
+        "longitude": -72.9424
+      },
+      "workers": [
+        {
+          "id": "ricardo",
+          "rating": 4.9,
+          "price": 38000,
+          "latitude": -41.45,
+          "longitude": -72.81
+        },
+        {
+          "id": "valeria",
+          "rating": 4.8,
+          "price": 37000,
+          "latitude": -41.49,
+          "longitude": -72.81
+        },
+        {
+          "id": "ignacio",
+          "rating": 4.6,
+          "price": 36000,
+          "latitude": -41.4,
+          "longitude": -72.91
+        },
+        {
+          "id": "patricia",
+          "rating": 4.2,
+          "price": 34000,
+          "latitude": -41.45,
+          "longitude": -72.94
+        },
+        {
+          "id": "claudio",
+          "rating": 4.1,
+          "price": 33000,
+          "latitude": -41.46,
+          "longitude": -72.99
+        },
+        {
+          "id": "lorena",
+          "rating": 4.0,
+          "price": 32000,
+          "latitude": -41.48,
+          "longitude": -72.97
+        },
+        {
+          "id": "manuel",
+          "rating": 3.4,
+          "price": 30000,
+          "latitude": -41.49,
+          "longitude": -72.9
+        },
+        {
+          "id": "beatriz",
+          "rating": 3.0,
+          "price": 29000,
+          "latitude": -41.48,
+          "longitude": -72.96
+        }
+      ],
+      "expected": [
+        "beatriz",
+        "patricia",
+        "lorena",
+        "claudio",
+        "manuel",
+        "ignacio",
+        "ricardo",
+        "valeria"
+      ]
+    },
+    {
+      "name": "sin ubicación del cliente: nota y luego precio",
+      "origin": null,
+      "workers": [
+        {
+          "id": "b",
+          "rating": 4.5,
+          "price": 30000,
+          "latitude": -41.47,
+          "longitude": -72.94
+        },
+        {
+          "id": "a",
+          "rating": 4.5,
+          "price": 25000,
+          "latitude": -41.3,
+          "longitude": -72.9
+        },
+        {
+          "id": "c",
+          "rating": 4.9,
+          "price": 40000,
+          "latitude": -41.47,
+          "longitude": -72.94
+        },
+        {
+          "id": "d",
+          "rating": 0,
+          "price": 10000,
+          "latitude": -41.47,
+          "longitude": -72.94
+        }
+      ],
+      "expected": [
+        "c",
+        "a",
+        "b",
+        "d"
+      ]
+    },
+    {
+      "name": "misma banda y misma nota: gana el más barato; empate total por id",
+      "origin": {
+        "latitude": -41.4718,
+        "longitude": -72.9396
+      },
+      "workers": [
+        {
+          "id": "z",
+          "rating": 4.7,
+          "price": 30000,
+          "latitude": -41.47,
+          "longitude": -72.94
+        },
+        {
+          "id": "y",
+          "rating": 4.7,
+          "price": 20000,
+          "latitude": -41.47,
+          "longitude": -72.95
+        },
+        {
+          "id": "x",
+          "rating": 4.7,
+          "price": 30000,
+          "latitude": -41.47,
+          "longitude": -72.94
+        }
+      ],
+      "expected": [
+        "y",
+        "x",
+        "z"
+      ]
+    },
+    {
+      "name": "sin base, sin precio o con tarifa 0 van al final de su criterio",
+      "origin": {
+        "latitude": -41.4718,
+        "longitude": -72.9396
+      },
+      "workers": [
+        {
+          "id": "sinbase",
+          "rating": 5,
+          "price": 10000,
+          "latitude": null,
+          "longitude": null
+        },
+        {
+          "id": "lejos",
+          "rating": 3.5,
+          "price": 20000,
+          "latitude": -41.32,
+          "longitude": -72.99
+        },
+        {
+          "id": "sinprecio",
+          "rating": 4,
+          "price": null,
+          "latitude": -41.47,
+          "longitude": -72.94
+        },
+        {
+          "id": "cerca",
+          "rating": 4,
+          "price": 50000,
+          "latitude": -41.47,
+          "longitude": -72.94
+        },
+        {
+          "id": "tarifacero",
+          "rating": 4,
+          "price": 0,
+          "latitude": -41.47,
+          "longitude": -72.94
+        }
+      ],
+      "expected": [
+        "cerca",
+        "sinprecio",
+        "tarifacero",
+        "lejos",
+        "sinbase"
+      ]
+    }
+  ]
+}

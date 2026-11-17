@@ -541,7 +541,7 @@ BEGIN
       LIMIT 1
     ),
     'completado',
-    'liberado',
+    NULL,
     'Trabajo cerrado de la demo, Santiago',
     'Visita cerrada para la calificación publicada.',
     n.lat,
@@ -552,21 +552,6 @@ BEGIN
   FROM demo_notas n
   JOIN LATERAL generate_series(1, n.n_notas) AS g(i) ON true;
 
-  INSERT INTO public.pagos (
-    id, id_trabajo, monto, moneda, estado, tipo_pago, metodo_pago, creado_en, actualizado_en
-  )
-  SELECT
-    'demo-pago-nota-' || n.slug || '-' || g.i,
-    'demo-job-nota-' || n.slug || '-' || g.i,
-    25000,
-    'CLP',
-    'liberado',
-    'principal',
-    'webpay',
-    v_now,
-    v_now
-  FROM demo_notas n
-  JOIN LATERAL generate_series(1, n.n_notas) AS g(i) ON true;
 
   INSERT INTO public.calificaciones (id, id_trabajo, id_usuario, puntaje, comentario, creado_en)
   SELECT
@@ -619,7 +604,7 @@ BEGIN
       LIMIT 1
     ),
     'completado',
-    'liberado',
+    NULL,
     'Trabajo cerrado de la demo, Puerto Montt',
     'Visita cerrada para la calificación publicada.',
     n.lat,
@@ -630,21 +615,6 @@ BEGIN
   FROM demo_notas_pm n
   JOIN LATERAL unnest(n.puntajes) WITH ORDINALITY AS g(puntaje, ord) ON true;
 
-  INSERT INTO public.pagos (
-    id, id_trabajo, monto, moneda, estado, tipo_pago, metodo_pago, creado_en, actualizado_en
-  )
-  SELECT
-    'demo-pago-nota-' || n.slug || '-' || g.ord,
-    'demo-job-nota-' || n.slug || '-' || g.ord,
-    25000,
-    'CLP',
-    'liberado',
-    'principal',
-    'webpay',
-    v_now,
-    v_now
-  FROM demo_notas_pm n
-  JOIN LATERAL unnest(n.puntajes) WITH ORDINALITY AS g(puntaje, ord) ON true;
 
   INSERT INTO public.calificaciones (id, id_trabajo, id_usuario, puntaje, comentario, creado_en)
   SELECT

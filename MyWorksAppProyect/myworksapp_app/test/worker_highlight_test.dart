@@ -79,7 +79,7 @@ void main() {
     expect(outside.text, contains('traslado'));
   });
 
-  test('el feed sube a la élite cercana y baja la nota floja', () {
+  test('el listado usa el orden único: cercanía, luego nota', () {
     final eliteNear = _worker(
       id: 'elite',
       rating: 4.9,
@@ -110,7 +110,8 @@ void main() {
       clientLatitude: -41.4718,
       clientLongitude: -72.9396,
     );
-    expect(ordered.first.userId, 'elite');
-    expect(ordered.last.userId, 'weak');
+    // Mismo km que el cliente: gana la mejor nota aunque su score sea menor.
+    // El lejano va al final aunque tenga la nota más alta.
+    expect(ordered.map((w) => w.userId), ['elite', 'weak', 'far']);
   });
 }
