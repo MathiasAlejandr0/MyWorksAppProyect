@@ -78,14 +78,16 @@ export async function listLiquidaciones(
     provider: string;
     transferRef: string;
     notes: string | null;
-    operatorId: string;
+    /** Null cuando la liberó el sistema (`liberada_por_sistema`). */
+    operatorId: string | null;
+    releasedBySystem: boolean;
     createdAt: string;
   }[]
 > {
   const { data, error } = await supabase
     .from('liquidaciones')
     .select(
-      'id, id_pago, id_trabajo, monto_clp, proveedor, referencia_transferencia, notas, id_operador, creado_en',
+      'id, id_pago, id_trabajo, monto_clp, proveedor, referencia_transferencia, notas, id_operador, liberada_por_sistema, creado_en',
     )
     .order('creado_en', { ascending: false })
     .limit(limit);
@@ -100,7 +102,8 @@ export async function listLiquidaciones(
     provider: String(r.proveedor),
     transferRef: String(r.referencia_transferencia),
     notes: r.notas ? String(r.notas) : null,
-    operatorId: String(r.id_operador),
+    operatorId: r.id_operador ? String(r.id_operador) : null,
+    releasedBySystem: r.liberada_por_sistema === true,
     createdAt: String(r.creado_en),
   }));
 }

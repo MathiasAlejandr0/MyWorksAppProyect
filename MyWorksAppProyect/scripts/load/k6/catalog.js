@@ -111,7 +111,7 @@ export default function () {
   });
 
   const t = get(
-    'trabajadores?select=id_usuario,profesion,calificacion,disponible,tarifa_visita,categoria_servicio&disponible=eq.1&limit=40',
+    'trabajadores?select=id_usuario,profesion,calificacion,disponible,tarifa_visita,trabajador_servicios(categoria_servicio)&disponible=eq.1&limit=40',
     'trabajadores',
   );
   trabajadoresMs.add(t.timings.duration);

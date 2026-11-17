@@ -4,6 +4,7 @@ import '../../domain/worker_public_stats.dart';
 import '../../domain/distance_match.dart';
 import '../../domain/transport_surcharge.dart';
 import '../../domain/user_location_context.dart';
+import '../../domain/worker_service_options_catalog.dart';
 import '../../domain/worker_login_item.dart';
 import '../../services/worker_reputation_service.dart';
 import '../../utils/worker_zone_matcher.dart';
@@ -18,21 +19,97 @@ class WorkerRepository {
 
   /// Columnas que anon y authenticated pueden leer. La base exacta sale de
   /// `mi_ficha_propia`, solo para el dueño.
-  static const String _publicColumns =
+  static const String _baseColumns =
       'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, '
-      'categoria_servicio, niveles_precio, conteo_rechazos, servicios_personalizados, '
-      'precios_configurados, zona_trabajo, estado_verificacion, radio_servicio_km, '
-      'origen_base, score_listado, radio_urbano_km, tarifa_fuera_radio_clp, '
-      'trabajos_completados, es_elite';
+      'conteo_rechazos, precios_configurados, zona_trabajo, estado_verificacion, '
+      'radio_servicio_km, origen_base, score_listado, radio_urbano_km, '
+      'tarifa_fuera_radio_clp, trabajos_completados, es_elite';
+
+  /// Precios, servicios propios y categoría viven en tablas hijas
+  /// (`trabajador_precios`, `trabajador_servicios_extra`, `trabajador_servicios`).
+  /// Con [byCategory] el embed de categorías pasa a `!inner` para poder filtrar.
+  static String _selectColumns({bool byCategory = false}) =>
+      '$_baseColumns, '
+      'trabajador_precios(codigo, monto_clp), '
+      'trabajador_servicios_extra(id, titulo, subtitulo, monto_clp, unidad), '
+      'trabajador_servicios${byCategory ? '!inner' : ''}(categoria_servicio)';
 
   Future<void> createWorker(WorkerModel worker) async {
     await supabase.from(_table).upsert(worker.toMap());
+    await _saveOffer(worker, includeCategory: true);
+  }
+
+  /// Guarda precios, servicios propios y categoría en sus tablas. Lo que ya
+  /// no está en el modelo se borra, para que la base quede igual a la pantalla.
+  Future<void> _saveOffer(
+    WorkerModel worker, {
+    bool includeCategory = false,
+  }) async {
+    final userId = worker.userId;
+    if (worker.pricingTiers.isEmpty) {
+      await supabase.from('trabajador_precios').delete().eq('id_usuario', userId);
+    } else {
+      await supabase.from('trabajador_precios').upsert(
+        [
+          for (final entry in worker.pricingTiers.entries)
+            {
+              'id_usuario': userId,
+              'codigo': entry.key,
+              'monto_clp': entry.value,
+            },
+        ],
+        onConflict: 'id_usuario,codigo',
+      );
+      await supabase
+          .from('trabajador_precios')
+          .delete()
+          .eq('id_usuario', userId)
+          .not('codigo', 'in', '(${worker.pricingTiers.keys.join(',')})');
+    }
+
+    if (worker.customServices.isEmpty) {
+      await supabase
+          .from('trabajador_servicios_extra')
+          .delete()
+          .eq('id_usuario', userId);
+    } else {
+      await supabase.from('trabajador_servicios_extra').upsert(
+        [
+          for (final service in worker.customServices)
+            {
+              'id': service.id,
+              'id_usuario': userId,
+              'titulo': service.title,
+              'subtitulo': service.subtitle,
+              'monto_clp': service.priceClp,
+              'unidad': service.unit == WorkerPriceUnit.perSqm ? 'por_m2' : 'fijo',
+            },
+        ],
+        onConflict: 'id_usuario,id',
+      );
+      await supabase
+          .from('trabajador_servicios_extra')
+          .delete()
+          .eq('id_usuario', userId)
+          .not('id', 'in',
+              '(${worker.customServices.map((s) => s.id).join(',')})');
+    }
+
+    if (includeCategory && worker.serviceCategory != 'general') {
+      await supabase.from('trabajador_servicios').upsert(
+        {
+          'id_trabajador': userId,
+          'categoria_servicio': worker.serviceCategory,
+        },
+        onConflict: 'id_trabajador,categoria_servicio',
+      );
+    }
   }
 
   Future<WorkerModel?> getWorkerByUserId(String userId) async {
     final row = await supabase
         .from(_table)
-        .select(_publicColumns)
+        .select(_selectColumns())
         .eq('id_usuario', userId)
         .maybeSingle();
     if (row == null) return null;
@@ -189,6 +266,7 @@ class WorkerRepository {
         .from(_table)
         .update(worker.toMap())
         .eq('id_usuario', worker.userId);
+    await _saveOffer(worker);
   }
 
   Future<void> updateAvailableHours({
@@ -201,20 +279,9 @@ class WorkerRepository {
     final slots = uniqueWorkerHours(hours)
         .map((slot) => slot.toJson())
         .toList();
-    // La PK viva es `id`, no `id_usuario`. Se actualizan todas las filas
-    // del profesional para que horarios_libres_profesional vea los bloques
-    // aunque también existan filas por día.
-    final updated = await supabase
-        .from('trabajador_horarios')
-        .update({'horarios': slots})
-        .eq('id_usuario', userId)
-        .select('id');
-    if (updated.isEmpty) {
-      await supabase.from('trabajador_horarios').insert({
-        'id_usuario': userId,
-        'horarios': slots,
-      });
-    }
+    // Las horas publicadas viven en `trabajador_horas_publicadas`; la RPC
+    // reemplaza las del profesional y deja sus 7 ventanas por día intactas.
+    await supabase.rpc('guardar_horarios_propios', params: {'p_horarios': slots});
   }
 
   Future<List<DateTime>> fetchFreeSlots(String workerId) async {
@@ -386,14 +453,15 @@ class WorkerRepository {
       // Si la RPC no está, un autenticado todavía puede leer el marketplace.
     }
     try {
+      final byCategory = categoria != null && categoria.isNotEmpty;
       var query = supabase
           .from(_table)
-          .select(_publicColumns)
+          .select(_selectColumns(byCategory: byCategory))
           .eq('disponible', 1)
           .eq('precios_configurados', 1)
           .eq('estado_verificacion', 'verificado');
-      if (categoria != null && categoria.isNotEmpty) {
-        query = query.eq('categoria_servicio', categoria);
+      if (byCategory) {
+        query = query.eq('trabajador_servicios.categoria_servicio', categoria);
       }
       final rows = await query
           .order('score_listado', ascending: false)

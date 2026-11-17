@@ -136,12 +136,12 @@ BEGIN
   BEGIN
     INSERT INTO public.trabajadores (
       id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita,
-      categoria_servicio, precios_configurados, zona_trabajo, estado_verificacion,
+      precios_configurados, zona_trabajo, estado_verificacion,
       nota_verificacion, latitud_base, longitud_base, radio_servicio_km, origen_base
     )
     SELECT
       c.uid, v.profesion, v.descripcion, v.calificacion, 1, v.tarifa,
-      'gasfiteria', 1, 'Puerto Montt', 'verificado',
+      1, 'Puerto Montt', 'verificado',
       'Cédula revisada para la demo.', v.lat, v.lng, 7, 'mapa'
     FROM (
       VALUES
@@ -162,7 +162,6 @@ BEGIN
       calificacion = EXCLUDED.calificacion,
       disponible = 1,
       tarifa_visita = EXCLUDED.tarifa_visita,
-      categoria_servicio = 'gasfiteria',
       precios_configurados = 1,
       zona_trabajo = 'Puerto Montt',
       estado_verificacion = 'verificado',
@@ -178,10 +177,21 @@ BEGIN
       RAISE;
   END;
 
-  UPDATE public.trabajadores t
-  SET niveles_precio = '{"service_basic":30000,"service_standard":50000,"service_premium":80000}'::jsonb
+  -- Oficio y tarifas viven en trabajador_servicios y trabajador_precios.
+  INSERT INTO public.trabajador_servicios (id_trabajador, categoria_servicio)
+  SELECT c.uid, 'gasfiteria'
   FROM demo_cuentas_pm c
-  WHERE t.id_usuario = c.uid;
+  JOIN public.trabajadores t ON t.id_usuario = c.uid
+  ON CONFLICT (id_trabajador, categoria_servicio) DO NOTHING;
+
+  INSERT INTO public.trabajador_precios (id_usuario, codigo, monto_clp)
+  SELECT c.uid, k.codigo, k.monto
+  FROM demo_cuentas_pm c
+  JOIN public.trabajadores t ON t.id_usuario = c.uid
+  CROSS JOIN (
+    VALUES ('service_basic', 30000), ('service_standard', 50000), ('service_premium', 80000)
+  ) AS k(codigo, monto)
+  ON CONFLICT (id_usuario, codigo) DO UPDATE SET monto_clp = EXCLUDED.monto_clp;
 
   SELECT id INTO v_svc
   FROM public.servicios

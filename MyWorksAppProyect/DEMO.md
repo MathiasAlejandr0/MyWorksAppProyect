@@ -25,7 +25,7 @@ En el SQL Editor del proyecto. Ya están aplicadas, con otros nombres de versió
 
 No vuelvas a correr `000007` a `000010`. Esta ronda no trae migración nueva ni función nueva.
 
-Antes de la demo, vuelve a correr `scripts/demo/seed_demo.sql`. El `UPDATE` de `niveles_precio` ya no referencia la tabla de afuera dentro del `JOIN` (eso daba `42P01` y cortaba el seed). Restaura la calificación del seed y, si hay notas, la pisa con el promedio real. Pedro queda en 4.8 con 5 trabajos. Los perfiles ajenos a `@demo.myworksapp.cl` que estaban `pendiente` pasan a `rechazado` con la nota «Archivado para la demo»; Luis Contreras sigue `en_revision`.
+Antes de la demo, vuelve a correr `scripts/demo/seed_demo.sql`. La carga de tarifas en `trabajador_precios` ya no referencia la tabla de afuera dentro del `JOIN` (eso daba `42P01` y cortaba el seed). Restaura la calificación del seed y, si hay notas, la pisa con el promedio real. Pedro queda en 4.8 con 5 trabajos. Los perfiles ajenos a `@demo.myworksapp.cl` que estaban `pendiente` pasan a `rechazado` con la nota «Archivado para la demo»; Luis Contreras sigue `en_revision`.
 
 Después corre `docs/PRUEBAS_RLS_20261008.sql`, `docs/PRUEBAS_RLS_20261009.sql`, `docs/PRUEBAS_RLS_20261010.sql` y `docs/PRUEBAS_RLS_20261011.sql`. Tienen que terminar en `RLS 20261008 ok`, `RLS 20261009 ok`, `RLS 20261010 ok` y `RLS 20261011 ok`. Los de 20261009, 20261010 y 20261011 hacen `ROLLBACK`. El de 20261011 falla si falta `000010`.
 
@@ -293,7 +293,7 @@ En debug, si omites los `dart-define`, la app usa el proyecto de demo y la clave
 4. Paga con la Visa de prueba. Transbank vuelve a `http://localhost:5173/?pago=ok&paymentId=…&jobId=…`. El trabajo queda pendiente y el pago `retenido`. La hora de la barra (10:00, 14:00 o 18:00 del próximo viernes) queda en `fecha_programada`. Camila, que ya tenía sesión, entra directo al seguimiento. **Ver mi pedido** solo aparece en el retorno del invitado. Si lo toca antes de entrar, se abre **Ingresar** y, al entrar, el seguimiento de ese pedido. Si recarga, la portada tiene **Mis pedidos** y vuelve a abrir ese trabajo desde la base. **Mis pedidos** separa los que siguen abiertos de los completados recientes. Si el pago fue de invitado, la misma URL trae `invitado=1` y un token `alta`: la web muestra **Crea tu contraseña** y **Ver mi pedido**. Con `demo_modo = 1` el correo queda confirmado y el texto es «Contraseña lista. Entra con tu correo en la próxima visita.» El invitado entra con el correo y la clave que acaba de crear.
 5. Si en Transbank se cancela, la vuelta es `http://localhost:5173/?pago=fail` y la portada muestra «Pago cancelado. No se realizó ningún cargo.» El pedido queda cancelado. Se elige de nuevo al profesional.
 
-En la app, una invitación por tarifa cobra el precio publicado en `niveles_precio` (por ejemplo «Arreglo menor» de Pedro, $28.000), el mismo que valida el servidor. Luis Contreras sigue `en_revision`: intentar pagarle responde «Este profesional todavía no está verificado para cobrar», no un aviso de tarifa faltante.
+En la app, una invitación por tarifa cobra el precio publicado en `trabajador_precios` (por ejemplo «Arreglo menor» de Pedro, $28.000), el mismo que valida el servidor. Luis Contreras sigue `en_revision`: intentar pagarle responde «Este profesional todavía no está verificado para cobrar», no un aviso de tarifa faltante.
 
 ### Profesional en la app — aceptar y GPS
 
@@ -349,11 +349,11 @@ Si algo del pago en vivo se traba, no improvises producción.
 | La app rechaza el pedido con profesional | El alta con profesional va en `esperando_pago` (o `esperando_cotizaciones`) y después el pago. `pendiente` con profesional lo niega `trabajos_insert`. Hace falta `20261008000008` en vivo y esta rama de la app. |
 | El catálogo muestra Ana Volt u otros nombres que no son `@demo` | Vuelve a correr el seed. Esos perfiles quedan no disponibles. |
 | En Trabajadores salen muchos Pendiente (Ana Volt, Felipe Ensambla) | Vuelve a correr el seed de esta rama. Esos perfiles pasan a `rechazado` y la lista del escritorio los oculta. Luis queda **En revisión**. |
-| El seed se cae con `42P01` al guardar `niveles_precio` | Corre el `scripts/demo/seed_demo.sql` de esta rama. El `UPDATE` ya no mete la tabla de afuera dentro del `JOIN`. |
+| El seed se cae con `42P01` al guardar `trabajador_precios` | Corre el `scripts/demo/seed_demo.sql` de esta rama. La carga de tarifas ya no mete la tabla de afuera dentro del `JOIN`. |
 | Armado, Gasfitería u otro oficio sale vacío | Vuelve a correr el seed después de `20261008000006`. Tiene que haber un profesional verificado por cada categoría de la web. Si una categoría queda en cero, la portada la oculta; al abrirla, el texto es «Todavía no hay profesionales». |
 | Al cancelar en Webpay no aparece ningún aviso | La portada tiene que mostrar «Pago cancelado. No se realizó ningún cargo.» Hace falta esta rama de la web. El cobro queda `anulado` y el trabajo `cancelado` con `webpay-commit` ya desplegado. |
 | Pagar a Luis dice que no hay tarifa | Aplica `20261008000010` y redesplega `guest-checkout`. El texto es «Este profesional todavía no está verificado para cobrar». |
-| La app rechaza el pago de una tarifa publicada | Aplica `20261008000010` y vuelve a correr el seed, que llena `niveles_precio`. El monto del checkout es esa tarifa, sin recargo de comuna. |
+| La app rechaza el pago de una tarifa publicada | Aplica `20261008000010` y vuelve a correr el seed, que llena `trabajador_precios`. El monto del checkout es esa tarifa, sin recargo de comuna. |
 | Pedro sale con 0 trabajos o la nota no es 4.8 | Vuelve a correr el seed. Tiene 5 trabajos completados y notas que promedian 4.8. |
 | `definir-clave-invitado` responde 503 | Esa función en el proyecto es el stub viejo. Redesplega la de esta rama. |
 | La disputa no se abre | Aplica `20261008000004`. Cliente y profesional usan **Abrir disputa**; el comentario va por `comentar_disputa`. Resolver solo desde el escritorio admin. |

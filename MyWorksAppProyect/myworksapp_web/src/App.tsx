@@ -484,7 +484,7 @@ export function App() {
       if (snapshot.workerId) {
         const { data } = await supabase
           .from('trabajadores')
-          .select('id_usuario, profesion, calificacion, tarifa_visita, categoria_servicio, trabajos_completados, perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)')
+          .select('id_usuario, profesion, calificacion, tarifa_visita, trabajos_completados, trabajador_servicios(categoria_servicio), perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)')
           .eq('id_usuario', snapshot.workerId)
           .maybeSingle();
         if (data) {
@@ -497,7 +497,11 @@ export function App() {
             id: String(data.id_usuario),
             name: profileRow?.nombre ?? 'Profesional',
             profession: String(data.profesion ?? 'Visita'),
-            category: String(data.categoria_servicio ?? ''),
+            category: String(
+              ((data.trabajador_servicios ?? []) as { categoria_servicio: string }[])
+                .map((s) => s.categoria_servicio)
+                .sort()[0] ?? '',
+            ),
             rating: Number(data.calificacion ?? 0),
             // Preferimos la RPC canónica: la columna puede estar sembrada.
             jobsDone: Number(data.trabajos_completados ?? 0),

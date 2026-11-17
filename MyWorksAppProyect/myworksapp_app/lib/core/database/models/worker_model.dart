@@ -1,4 +1,5 @@
 import '../../domain/worker_custom_service.dart';
+import '../../domain/worker_service_options_catalog.dart';
 import '../../domain/worker_hours.dart';
 
 class WorkerModel {
@@ -70,23 +71,56 @@ class WorkerModel {
       'descripcion': description,
       'disponible': isAvailable ? 1 : 0,
       'tarifa_visita': visitFee,
-      'categoria_servicio': serviceCategory,
-      'niveles_precio': pricingTiers,
-      'servicios_personalizados': customServices.map((s) => s.toMap()).toList(),
       'precios_configurados': pricingConfigured ? 1 : 0,
       'zona_trabajo': workZone,
     };
   }
 
+  /// Precios publicados: filas de `trabajador_precios` (codigo, monto_clp).
   static Map<String, int> _parsePricingTiers(dynamic raw) {
-    if (raw == null) return {};
-    if (raw is! Map) return {};
-    return raw.map(
-      (key, value) => MapEntry(
-        key.toString(),
-        (value as num).toInt(),
-      ),
-    );
+    if (raw is! List) return {};
+    final tiers = <String, int>{};
+    for (final row in raw) {
+      if (row is! Map) continue;
+      final code = row['codigo'];
+      final amount = row['monto_clp'];
+      if (code is String && amount is num) tiers[code] = amount.toInt();
+    }
+    return tiers;
+  }
+
+  /// Servicios propios: filas de `trabajador_servicios_extra`.
+  static List<WorkerCustomService> _parseCustomServices(dynamic raw) {
+    if (raw is! List) return const [];
+    return [
+      for (final row in raw)
+        if (row is Map && row['id'] is String && row['titulo'] is String)
+          WorkerCustomService(
+            id: row['id'] as String,
+            title: row['titulo'] as String,
+            subtitle: row['subtitulo'] as String? ?? '',
+            priceClp: (row['monto_clp'] as num).toInt(),
+            unit: row['unidad'] == 'por_m2'
+                ? WorkerPriceUnit.perSqm
+                : WorkerPriceUnit.fixed,
+          ),
+    ];
+  }
+
+  /// Categoría del profesional: la menor de sus filas en `trabajador_servicios`
+  /// (misma regla que `listar_profesionales_catalogo`). La RPC del catálogo
+  /// ya la entrega como `categoria_servicio`.
+  static String _parseCategory(Map<String, dynamic> map) {
+    final linked = map['trabajador_servicios'];
+    if (linked is List) {
+      final codes = [
+        for (final row in linked)
+          if (row is Map && row['categoria_servicio'] is String)
+            row['categoria_servicio'] as String,
+      ]..sort();
+      if (codes.isNotEmpty) return codes.first;
+    }
+    return map['categoria_servicio'] as String? ?? 'general';
   }
 
   factory WorkerModel.fromMap(Map<String, dynamic> map) {
@@ -99,9 +133,9 @@ class WorkerModel {
           0.0,
       isAvailable: (map['disponible'] as int? ?? 0) == 1,
       visitFee: (map['tarifa_visita'] as num?)?.toDouble() ?? 15000,
-      serviceCategory: map['categoria_servicio'] as String? ?? 'general',
-      pricingTiers: _parsePricingTiers(map['niveles_precio']),
-      customServices: WorkerCustomService.listFromJson(map['servicios_personalizados']),
+      serviceCategory: _parseCategory(map),
+      pricingTiers: _parsePricingTiers(map['trabajador_precios']),
+      customServices: _parseCustomServices(map['trabajador_servicios_extra']),
       pricingConfigured: (map['precios_configurados'] as int? ?? 0) == 1,
       workZone: map['zona_trabajo'] as String?,
       baseLatitude: (map['latitud_base'] as num?)?.toDouble(),
@@ -116,7 +150,7 @@ class WorkerModel {
       urbanRadiusKm: (map['radio_urbano_km'] as num?)?.toDouble() ?? 5,
       outsideMobilizationFeeClp:
           (map['tarifa_fuera_radio_clp'] as num?)?.toInt() ?? 0,
-      availableHours: parseWorkerHours(map['horarios']),
+      availableHours: parseWorkerHours(map['horas_publicadas']),
     );
   }
 

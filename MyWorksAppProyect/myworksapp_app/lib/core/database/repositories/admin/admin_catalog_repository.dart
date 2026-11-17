@@ -18,10 +18,12 @@ class AdminCatalogRepository {
         .from('trabajadores')
         .select(
           'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, '
-          'categoria_servicio, niveles_precio, conteo_rechazos, servicios_personalizados, '
-          'precios_configurados, zona_trabajo, estado_verificacion, radio_servicio_km, '
-          'origen_base, score_listado, radio_urbano_km, tarifa_fuera_radio_clp, '
-          'trabajos_completados, es_elite, '
+          'conteo_rechazos, precios_configurados, zona_trabajo, estado_verificacion, '
+          'radio_servicio_km, origen_base, score_listado, radio_urbano_km, '
+          'tarifa_fuera_radio_clp, trabajos_completados, es_elite, '
+          'trabajador_precios(codigo, monto_clp), '
+          'trabajador_servicios_extra(id, titulo, subtitulo, monto_clp, unidad), '
+          'trabajador_servicios(categoria_servicio), '
           'perfiles!trabajadores_id_usuario_fkey(nombre, correo, estado_cuenta)',
         );
     if (availableOnly == true) {

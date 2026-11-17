@@ -115,18 +115,9 @@ BEGIN
       RAISE;
   END;
 
-  ALTER TABLE public.trabajadores DISABLE TRIGGER trabajadores_proteger_verificacion;
-  BEGIN
-    INSERT INTO public.trabajadores (
-      id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita,
-      categoria_servicio, precios_configurados, zona_trabajo, estado_verificacion,
-      nota_verificacion, latitud_base, longitud_base, radio_servicio_km, origen_base,
-      radio_urbano_km, tarifa_fuera_radio_clp, trabajos_completados
-    )
-    SELECT
-      c.uid, v.profesion, v.descripcion, v.calificacion, 1, v.tarifa,
-      v.categoria, 1, v.zona, 'verificado', 'Ficha de muestra, Puerto Montt.',
-      v.lat, v.lng, v.radio, 'mapa', v.urbano, v.fuera, v.hechos
+  DROP TABLE IF EXISTS pm_trab;
+  CREATE TEMP TABLE pm_trab AS
+  SELECT c.uid, v.*
     FROM (
       -- calificacion = round(promedio de las reseñas de seed_historial_puerto_montt.sql, 2).
       -- Con notas enteras no siempre cae en el decimal publicado a ojo:
@@ -144,14 +135,27 @@ BEGIN
         ('clemente.navarro@demo.myworksapp.cl', 'Cerrajero', 'Aperturas en La Paloma. Relevancia media.', 4.00, 25000, 'cerrajeria', 'La Paloma', -41.4550, -72.9550, 10, 5, 6000, 4),
         ('rosa.millalonco@demo.myworksapp.cl', 'Soporte técnico', 'Élite en Chinquihue. Radio urbano corto, sin cobro fuera.', 4.71, 24000, 'soporte_tecnico', 'Chinquihue', -41.5050, -73.0100, 14, 5, 0, 7)
     ) AS v(email, profesion, descripcion, calificacion, tarifa, categoria, zona, lat, lng, radio, urbano, fuera, hechos)
-    JOIN pm_cuentas c ON c.email = v.email
+  JOIN pm_cuentas c ON c.email = v.email;
+
+  ALTER TABLE public.trabajadores DISABLE TRIGGER trabajadores_proteger_verificacion;
+  BEGIN
+    INSERT INTO public.trabajadores (
+      id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita,
+      precios_configurados, zona_trabajo, estado_verificacion,
+      nota_verificacion, latitud_base, longitud_base, radio_servicio_km, origen_base,
+      radio_urbano_km, tarifa_fuera_radio_clp, trabajos_completados
+    )
+    SELECT
+      v.uid, v.profesion, v.descripcion, v.calificacion, 1, v.tarifa,
+      1, v.zona, 'verificado', 'Ficha de muestra, Puerto Montt.',
+      v.lat, v.lng, v.radio, 'mapa', v.urbano, v.fuera, v.hechos
+    FROM pm_trab v
     ON CONFLICT (id_usuario) DO UPDATE SET
       profesion = EXCLUDED.profesion,
       descripcion = EXCLUDED.descripcion,
       calificacion = EXCLUDED.calificacion,
       disponible = 1,
       tarifa_visita = EXCLUDED.tarifa_visita,
-      categoria_servicio = EXCLUDED.categoria_servicio,
       precios_configurados = 1,
       zona_trabajo = EXCLUDED.zona_trabajo,
       estado_verificacion = 'verificado',
@@ -169,6 +173,14 @@ BEGIN
       ALTER TABLE public.trabajadores ENABLE TRIGGER trabajadores_proteger_verificacion;
       RAISE;
   END;
+
+  -- El oficio vive en trabajador_servicios.
+  DELETE FROM public.trabajador_servicios ts
+  USING pm_trab v
+  WHERE ts.id_trabajador = v.uid AND ts.categoria_servicio <> v.categoria;
+  INSERT INTO public.trabajador_servicios (id_trabajador, categoria_servicio)
+  SELECT v.uid, v.categoria FROM pm_trab v
+  ON CONFLICT (id_trabajador, categoria_servicio) DO NOTHING;
 
   -- Las cuentas de Santiago que ya son élite por nota quedan con volumen suficiente
   -- para la insignia, si todavía no tienen 5 trabajos reales.
