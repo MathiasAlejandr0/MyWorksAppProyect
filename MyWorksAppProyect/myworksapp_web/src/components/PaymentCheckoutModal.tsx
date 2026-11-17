@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { ShieldCheck, CheckCircle2, Lock, X, CreditCard, MapPin } from 'lucide-react';
 import {
   orderConfirmedMessage,
   transportCheckoutCopy,
   type OneclickChargeResult,
+  type SavedCardStatus,
 } from '@myworksapp/shared';
 
 export type CheckoutPayResult =
@@ -22,8 +23,15 @@ interface PaymentCheckoutModalProps {
   locatingAddress?: boolean;
   hasJobSite?: boolean;
   onClose: () => void;
-  /** Cobra la tarjeta guardada. Si no hay, redirige a Webpay Plus. */
-  onPayWithWebpay: () => Promise<CheckoutPayResult>;
+  /**
+   * Cobra la tarjeta guardada. Si no hay, inscribe la tarjeta (`saveCard`) o
+   * redirige a Webpay Plus para pagar solo este pedido.
+   */
+  onPayWithWebpay: (options: { saveCard: boolean }) => Promise<CheckoutPayResult>;
+  /** Tarjeta que ya tiene guardada el cliente. */
+  loadSavedCard?: () => Promise<SavedCardStatus>;
+  /** Quita la tarjeta guardada para inscribir otra. */
+  onRemoveSavedCard?: () => Promise<void>;
   onSuccess: (details: { notice: string }) => void;
 }
 
@@ -40,12 +48,50 @@ export function PaymentCheckoutModal({
   hasJobSite = false,
   onClose,
   onPayWithWebpay,
+  loadSavedCard,
+  onRemoveSavedCard,
   onSuccess,
 }: PaymentCheckoutModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addressQuery, setAddressQuery] = useState('');
+  const [savedCard, setSavedCard] = useState<SavedCardStatus | null>(null);
+  const [saveCard, setSaveCard] = useState(true);
+  const [changingCard, setChangingCard] = useState(false);
+
+  // Se consulta una sola vez al abrir el pedido, aunque el padre se vuelva a pintar.
+  const [loadOnce] = useState(() => loadSavedCard);
+
+  useEffect(() => {
+    if (!loadOnce) return;
+    let cancelled = false;
+    loadOnce()
+      .then((card) => {
+        if (!cancelled) setSavedCard(card.enrolled ? card : null);
+      })
+      .catch(() => {
+        // Sin saber si hay tarjeta guardada, el cobro decide al confirmar.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadOnce]);
+
+  const changeCard = async () => {
+    if (!onRemoveSavedCard) return;
+    setChangingCard(true);
+    setError(null);
+    try {
+      await onRemoveSavedCard();
+      setSavedCard(null);
+      setSaveCard(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo quitar la tarjeta.');
+    } finally {
+      setChangingCard(false);
+    }
+  };
   const totalAmount = basePrice + Math.max(0, transportExtraClp);
   const needsManualSite = !hasJobSite && Boolean(onUseAddress);
 
@@ -69,7 +115,7 @@ export function PaymentCheckoutModal({
     setIsProcessing(true);
     setError(null);
     try {
-      const result = await onPayWithWebpay();
+      const result = await onPayWithWebpay({ saveCard: saveCard && !savedCard });
       if ('redirected' in result && result.redirected) return;
       if (result.charged) {
         setIsDone(true);
@@ -82,6 +128,7 @@ export function PaymentCheckoutModal({
         });
         return;
       }
+      setSavedCard(null);
       setError('No se pudo abrir Webpay. Intenta de nuevo.');
       setIsProcessing(false);
     } catch (e) {
@@ -129,13 +176,46 @@ export function PaymentCheckoutModal({
                 <div>
                   <strong>El pago queda retenido</strong>
                   <p>
-                    Si ya inscribiste una tarjeta en la app, se cobra esa. Si
-                    no, Transbank pide la tarjeta en Webpay Plus. El monto queda
-                    retenido hasta que recibas el trabajo.
+                    Si ya guardaste una tarjeta, se cobra esa sin pedirla otra
+                    vez. Si no, Transbank pide la tarjeta una sola vez y puedes
+                    dejarla guardada. El monto queda retenido hasta que recibas
+                    el trabajo.
                   </p>
                 </div>
               </div>
             </div>
+
+            {savedCard ? (
+              <div className="checkout-v2-saved-card" data-testid="saved-card">
+                <CreditCard size={16} />
+                <span>
+                  Se cobrará a tu tarjeta {savedCard.cardType || 'guardada'} •••• {savedCard.last4}
+                </span>
+                {onRemoveSavedCard ? (
+                  <button
+                    type="button"
+                    className="checkout-v2-link"
+                    onClick={() => void changeCard()}
+                    disabled={isProcessing || changingCard}
+                  >
+                    {changingCard ? 'Quitando…' : 'Cambiar tarjeta'}
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <label className="checkout-v2-save-card">
+                <input
+                  type="checkbox"
+                  checked={saveCard}
+                  onChange={(event) => setSaveCard(event.target.checked)}
+                  disabled={isProcessing}
+                />
+                <span>
+                  Guardar mi tarjeta para pagar los próximos pedidos sin volver a
+                  ingresarla
+                </span>
+              </label>
+            )}
 
             <div className="checkout-v2-details">
               <h3>Detalles</h3>

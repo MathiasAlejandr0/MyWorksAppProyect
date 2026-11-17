@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_error.dart';
 import '../../../../core/utils/transbank_checkout.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/widgets/saved_card_tile.dart';
 import '../../../../core/widgets/webpay_webview_page.dart';
 import 'card_enrollment_page.dart';
 
@@ -65,7 +66,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     return 'No se pudo iniciar el pago';
   }
 
-  Future<void> _openWebpay(String url) async {
+  Future<void> _openWebpay(String url, {String? paymentId}) async {
     if (kIsWeb) {
       await openTransbankCheckout(url);
       return;
@@ -75,6 +76,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       context,
       paymentUrl: url,
       title: 'Pago Webpay',
+      watchOutcome: () => ref
+          .read(paymentServiceProvider)
+          .webpayCheckoutSettled(paymentId ?? ''),
     );
     if (!mounted) return;
     if (ok) Navigator.of(context).pop(true);
@@ -92,7 +96,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 amount: widget.amount,
               );
       if (!mounted) return;
-      await _openWebpay(session.redirectUrl ?? session.url);
+      await _openWebpay(
+        session.redirectUrl ?? session.url,
+        paymentId: session.paymentId,
+      );
     } on AppError catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
@@ -238,7 +245,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             const SizedBox(height: 16),
             Text(_error!, style: const TextStyle(color: AppColors.error)),
           ],
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          SavedCardTile(
+            enabled: !_processing,
+            onCardRemoved: _enrollCard,
+          ),
+          const SizedBox(height: 8),
           FilledButton.icon(
             onPressed: _processing
                 ? null

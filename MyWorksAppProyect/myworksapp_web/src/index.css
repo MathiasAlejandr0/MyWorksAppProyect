@@ -1997,6 +1997,45 @@ button.search-nav-profile {
 }
 .orders-row strong { font-size: 14px; }
 .orders-row span { color: var(--text-muted-dark); font-size: 13px; }
+.checkout-v2-saved-card,
+.checkout-v2-save-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.checkout-v2-save-card {
+  cursor: pointer;
+}
+
+.checkout-v2-save-card input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--orange-accent, #f97316);
+}
+
+.checkout-v2-link {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--orange-accent, #f97316);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.checkout-v2-link:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .checkout-v2-escrow-banner {
   display: flex;
   justify-content: space-between;

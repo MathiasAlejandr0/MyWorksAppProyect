@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   assertTransbankAction,
+  TRANSBANK_BRIDGE_ORIGIN,
+  transbankBridgeUrl,
   transbankRedirectResponse,
   transbankRedirectUrl,
 } from "./transbank_form.ts";
 
 describe("redirect a Transbank", () => {
-  it("agrega token_ws por query y responde 303", () => {
+  it("agrega token_ws por query", () => {
     const location = transbankRedirectUrl({
       action: "https://webpay3gint.transbank.cl/webpayserver/initTransaction",
       fieldName: "token_ws",
@@ -15,16 +17,38 @@ describe("redirect a Transbank", () => {
     });
     const url = new URL(location);
     assert.equal(url.searchParams.get("token_ws"), "tok-1");
+  });
 
+  it("redirige a la página puente que hace el POST (no sirve HTML desde Supabase)", () => {
     const res = transbankRedirectResponse({
       action: "https://webpay3gint.transbank.cl/webpayserver/initTransaction",
       fieldName: "token_ws",
-      token: "tok-1",
+      token: 'tok"1<',
     });
     assert.equal(res.status, 303);
-    assert.equal(res.headers.get("Location"), location);
-    assert.equal(res.headers.get("Cache-Control"), "no-store");
-    assert.equal(res.headers.get("Referrer-Policy"), "no-referrer");
+    const location = new URL(res.headers.get("location") || "");
+    assert.equal(location.origin, TRANSBANK_BRIDGE_ORIGIN);
+    assert.equal(location.pathname, "/tbk-post.html");
+    assert.equal(location.search, "");
+    const frag = new URLSearchParams(location.hash.slice(1));
+    assert.equal(frag.get("f"), "token_ws");
+    assert.equal(frag.get("t"), 'tok"1<');
+    assert.equal(
+      frag.get("a"),
+      "https://webpay3gint.transbank.cl/webpayserver/initTransaction",
+    );
+  });
+
+  it("no arma la puente para un host que no es Transbank", () => {
+    assert.throws(
+      () =>
+        transbankBridgeUrl({
+          action: "https://ejemplo.cl/x",
+          fieldName: "token_ws",
+          token: "t",
+        }),
+      /URL de pago inválida/,
+    );
   });
 
   it("usa TBK_TOKEN en la inscripción Oneclick", () => {

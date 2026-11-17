@@ -17,6 +17,9 @@ import {
   CATALOG_STALE_MS,
   chargeSavedCard,
   createGuestWebpayCheckout,
+  getSavedCard,
+  removeSavedCard,
+  startCardEnrollment,
   createPendingJob,
   createWebpaySession,
   fetchActiveServices,
@@ -972,7 +975,7 @@ export function App() {
     setBookingError(null);
   };
 
-  const payWithWebpay = async () => {
+  const payWithWebpay = async (options?: { saveCard?: boolean }) => {
     if (!selectedWorker || !selectedServiceId || !profile) {
       throw new Error('Falta el trabajo para confirmar el pedido.');
     }
@@ -1047,6 +1050,14 @@ export function App() {
     if (charged.charged) {
       await openJobForWorker(supabase, jobId);
       return charged;
+    }
+    const cardDroppedByBank = !charged.charged && charged.reason === 'tarjeta_inactiva';
+    if (options?.saveCard || cardDroppedByBank) {
+      // Se inscribe la tarjeta una vez y al volver el servidor cobra este pedido.
+      // Los siguientes pedidos se cobran solos, sin volver a escribir la tarjeta.
+      const enrollment = await startCardEnrollment(supabase, { jobId });
+      window.location.assign(enrollment.handoffUrl);
+      return { charged: false, redirected: true } as const;
     }
     const session = await createWebpaySession(supabase, {
       jobId,
@@ -1498,6 +1509,8 @@ export function App() {
             }}
 
             onPayWithWebpay={payWithWebpay}
+            loadSavedCard={() => getSavedCard(supabase)}
+            onRemoveSavedCard={() => removeSavedCard(supabase)}
 
             onSuccess={(details) => {
               sessionStorage.removeItem('mwa-pending-checkout');

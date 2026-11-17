@@ -337,6 +337,45 @@ class PaymentService {
     return data['enrolled'] == true;
   }
 
+  /// Tarjeta que el cliente ya guardó (últimos 4 y tipo). Sin tarjeta: [enrolled] es false.
+  Future<({bool enrolled, String last4, String cardType})> savedCard() async {
+    final sessionId = supabase.auth.currentUser?.id;
+    if (sessionId == null || sessionId.isEmpty) {
+      return (enrolled: false, last4: '', cardType: '');
+    }
+    final response = await supabase.functions.invoke(
+      'oneclick-charge',
+      body: {'action': 'status'},
+    );
+    final data = _asMap(response.data);
+    if (data['error'] != null) {
+      throw AppError.validation(data['error'].toString());
+    }
+    return (
+      enrolled: data['enrolled'] == true,
+      last4: data['last4']?.toString() ?? '',
+      cardType: data['cardType']?.toString() ?? '',
+    );
+  }
+
+  /// Quita la tarjeta guardada para poder inscribir otra.
+  Future<void> removeSavedCard() async {
+    try {
+      final response = await supabase.functions.invoke(
+        'oneclick-charge',
+        body: {'action': 'remove'},
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null) {
+        throw AppError.validation(data['error'].toString());
+      }
+    } catch (e) {
+      if (e is AppError) rethrow;
+      AppLogger.e('Error quitando tarjeta', e);
+      throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
   /// Primera vez en la app: URL del servidor que abre Transbank. Vacía si ya hay tarjeta.
   Future<String> startCardEnrollment() async {
     final sessionId = supabase.auth.currentUser?.id;
@@ -346,7 +385,10 @@ class PaymentService {
     try {
       final response = await supabase.functions.invoke(
         'oneclick-charge',
-        body: {'action': 'enroll'},
+        body: {
+          'action': 'enroll',
+          if (!kIsWeb) 'client': 'app',
+        },
       );
       final data = _asMap(response.data);
       if (data['error'] != null) {
@@ -447,6 +489,37 @@ class PaymentService {
       if (e is AppError) rethrow;
       AppLogger.e('Error iniciando Webpay', e);
       throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
+  /// null = sigue pendiente. true = retenido o liberado. false = rechazado.
+  /// Sirve para cerrar el WebView cuando Transbank ya cobró y la vuelta
+  /// no llega a abrirse en el teléfono.
+  Future<bool?> webpayCheckoutSettled(String paymentId) async {
+    final id = paymentId.trim();
+    if (id.isEmpty) return null;
+    try {
+      final response = await supabase.functions.invoke(
+        'webpay-status',
+        body: {'paymentId': id},
+      );
+      final data = _asMap(response.data);
+      final payment = data['payment'];
+      if (payment is! Map) return null;
+      final estado = payment['estado']?.toString() ?? '';
+      if (PricingConstants.isEscrowSecured(estado) ||
+          estado == PricingConstants.paymentReleased) {
+        return true;
+      }
+      if (estado == PricingConstants.paymentFailed ||
+          estado == PricingConstants.paymentVoided ||
+          estado == PricingConstants.paymentRefunded) {
+        return false;
+      }
+      return null;
+    } catch (e) {
+      AppLogger.e('Estado Webpay', e);
+      return null;
     }
   }
 

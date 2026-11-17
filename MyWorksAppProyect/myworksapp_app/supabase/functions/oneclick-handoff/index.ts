@@ -2,7 +2,7 @@ import { allowRate, clientIp } from "../_shared/rate_limit.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { transbankRedirectResponse } from "../_shared/transbank_form.ts";
 
-/** La app abre esta URL. Transbank recibe TBK_TOKEN por GET. */
+/** La app abre esta URL. El HTML hace POST de TBK_TOKEN a Transbank. */
 Deno.serve(async (req) => {
   if (req.method !== "GET" && req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });

@@ -7,21 +7,57 @@ import {
   rateLimitExceededMessage,
 } from "../_shared/rate_limit.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
+import { resolveCallerReturnOrigin } from "../_shared/security.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 import { assertTransbankAction } from "../_shared/transbank_form.ts";
-import { tbkOneclickStart } from "../_shared/tbk.ts";
+import {
+  activatePendingInscription,
+  isEnrolled,
+} from "../_shared/oneclick_inscription.ts";
+import {
+  OneclickInscriptionInactiveError,
+  tbkOneclickDeleteInscription,
+  tbkOneclickStart,
+} from "../_shared/tbk.ts";
 
-async function cardSetup(req: Request, userId: string, email: string, action: string) {
+const CARD_COLUMNS =
+  "ultimos4, tipo_tarjeta, estado, tbk_user, token_inscripcion, username";
+
+/** Un pedido solo se deja pendiente de la inscripción si es del cliente y espera pago. */
+async function pendingJobFor(
+  admin: ReturnType<typeof serviceClient>,
+  userId: string,
+  jobId: string,
+): Promise<string | null> {
+  if (!jobId) return null;
+  const { data: job } = await admin
+    .from("trabajos")
+    .select("id_usuario, estado")
+    .eq("id", jobId)
+    .maybeSingle();
+  if (!job || String(job.id_usuario) !== userId) return null;
+  return String(job.estado || "") === "esperando_pago" ? jobId : null;
+}
+
+async function cardSetup(
+  req: Request,
+  userId: string,
+  email: string,
+  action: string,
+  fromApp: boolean,
+  jobId: string,
+) {
   const admin = serviceClient();
-  const { data: card, error: cardErr } = await admin
+  const { data: stored, error: cardErr } = await admin
     .from("metodos_pago_oneclick")
-    .select("ultimos4, tipo_tarjeta, estado, tbk_user")
+    .select(CARD_COLUMNS)
     .eq("id_usuario", userId)
     .maybeSingle();
   if (cardErr) {
     return jsonResponse(req, { error: "No se pudo leer la tarjeta guardada." }, 500);
   }
-  const enrolled = card?.estado === "activa" && Boolean(card.tbk_user);
+  const card = await activatePendingInscription(admin, userId, stored);
+  const enrolled = isEnrolled(card);
   if (action === "status" || enrolled) {
     return jsonResponse(req, {
       enrolled,
@@ -42,10 +78,16 @@ async function cardSetup(req: Request, userId: string, email: string, action: st
   if (!base.startsWith("https://")) {
     return jsonResponse(req, { error: "No se pudo preparar la inscripción de la tarjeta." }, 500);
   }
+  // La web vuelve al mismo sitio desde el que inscribió la tarjeta.
+  const webOrigin = fromApp ? null : resolveCallerReturnOrigin(req);
   const started = await tbkOneclickStart({
     username: userId,
     email: mail,
-    responseUrl: `${base}/functions/v1/oneclick-return`,
+    responseUrl: fromApp
+      ? `${base}/functions/v1/oneclick-return?desde=app`
+      : webOrigin
+        ? `${base}/functions/v1/oneclick-return?o=${encodeURIComponent(webOrigin)}`
+        : `${base}/functions/v1/oneclick-return`,
   });
   assertTransbankAction(started.url);
   const ticket = crypto.randomUUID();
@@ -57,7 +99,7 @@ async function cardSetup(req: Request, userId: string, email: string, action: st
       token_inscripcion: started.token,
       url_inscripcion: started.url,
       ticket_handoff: ticket,
-      id_trabajo_pendiente: null,
+      id_trabajo_pendiente: await pendingJobFor(admin, userId, jobId),
       tbk_user: null,
       actualizado_en: new Date().toISOString(),
     },
@@ -73,6 +115,46 @@ async function cardSetup(req: Request, userId: string, email: string, action: st
   });
 }
 
+/** El cliente quita su tarjeta para inscribir otra. Los pedidos ya cobrados no cambian. */
+async function removeCard(req: Request, userId: string) {
+  const admin = serviceClient();
+  const { data: card, error } = await admin
+    .from("metodos_pago_oneclick")
+    .select("tbk_user, username")
+    .eq("id_usuario", userId)
+    .maybeSingle();
+  if (error) {
+    return jsonResponse(req, { error: "No se pudo leer la tarjeta guardada." }, 500);
+  }
+  if (card?.tbk_user) {
+    await tbkOneclickDeleteInscription({
+      username: String(card.username || userId),
+      tbkUser: String(card.tbk_user),
+    });
+  }
+  const { error: delErr } = await admin
+    .from("metodos_pago_oneclick")
+    .delete()
+    .eq("id_usuario", userId);
+  if (delErr) {
+    return jsonResponse(req, { error: "No se pudo quitar la tarjeta." }, 500);
+  }
+  return jsonResponse(req, { enrolled: false, removed: true, last4: "", cardType: "" });
+}
+
+/** Transbank ya no reconoce la tarjeta: se marca para que el cliente inscriba otra. */
+async function markCardInactive(userId: string) {
+  await serviceClient()
+    .from("metodos_pago_oneclick")
+    .update({
+      estado: "rechazada",
+      tbk_user: null,
+      token_inscripcion: null,
+      actualizado_en: new Date().toISOString(),
+    })
+    .eq("id_usuario", userId);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeadersFor(req) });
@@ -86,8 +168,15 @@ Deno.serve(async (req) => {
       return jsonResponse(req, killSwitchResponse(), 503);
     }
 
+    const body = await req.json().catch(() => ({}));
+    const action = String(body.action || "");
+    // La app consulta "status" cada 2 s mientras el cliente inscribe la tarjeta.
+    // Con el tope de cobro (8 por minuto) el cobro que sigue a la inscripción
+    // salía rechazado con "Demasiados intentos". La consulta tiene su propio tope.
+    const polling = action === "status";
+
     const ip = clientIp(req);
-    if (!allowRate(`oneclick:ip:${ip}`, 20, 60_000)) {
+    if (!allowRate(`oneclick${polling ? ":status" : ""}:ip:${ip}`, polling ? 240 : 20, 60_000)) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
@@ -99,14 +188,22 @@ Deno.serve(async (req) => {
     if (authErr || !user) {
       return jsonResponse(req, { error: "No autenticado" }, 401);
     }
-    if (!allowRate(`oneclick:user:${user.id}`, 8, 60_000)) {
+    if (!allowRate(`oneclick${polling ? ":status" : ""}:user:${user.id}`, polling ? 120 : 8, 60_000)) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
-    const body = await req.json();
-    const action = String(body.action || "");
     if (action === "status" || action === "enroll") {
-      return await cardSetup(req, user.id, String(user.email || ""), action);
+      return await cardSetup(
+        req,
+        user.id,
+        String(user.email || ""),
+        action,
+        body.client === "app",
+        String(body.jobId || ""),
+      );
+    }
+    if (action === "remove") {
+      return await removeCard(req, user.id);
     }
 
     const jobId = String(body.jobId || "");
@@ -157,9 +254,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data: card, error: cardErr } = await admin
+    const { data: storedCard, error: cardErr } = await admin
       .from("metodos_pago_oneclick")
-      .select("username, tbk_user, ultimos4, tipo_tarjeta, estado")
+      .select(CARD_COLUMNS)
       .eq("id_usuario", user.id)
       .maybeSingle();
     if (cardErr) {
@@ -169,8 +266,9 @@ Deno.serve(async (req) => {
         500,
       );
     }
+    const card = await activatePendingInscription(admin, user.id, storedCard);
 
-    if (card?.estado === "activa" && card.tbk_user) {
+    if (isEnrolled(card) && card) {
       const { data: payment, error: payErr } = await userSb.rpc(
         "crear_intencion_pago",
         {
@@ -188,14 +286,27 @@ Deno.serve(async (req) => {
         );
       }
 
-      const charged = await chargeInscribedCard(admin, {
-        userId: user.id,
-        username: String(card.username || user.id),
-        tbkUser: String(card.tbk_user),
-        jobId,
-        amountClp: Number(paymentRow.monto || amountClp),
-        payment: paymentRow,
-      });
+      let charged: Awaited<ReturnType<typeof chargeInscribedCard>>;
+      try {
+        charged = await chargeInscribedCard(admin, {
+          userId: user.id,
+          username: String(card.username || user.id),
+          tbkUser: String(card.tbk_user),
+          jobId,
+          amountClp: Number(paymentRow.monto || amountClp),
+          payment: paymentRow,
+        });
+      } catch (e) {
+        if (e instanceof OneclickInscriptionInactiveError) {
+          await markCardInactive(user.id);
+          return jsonResponse(req, {
+            charged: false,
+            needsCard: true,
+            reason: "tarjeta_inactiva",
+          });
+        }
+        throw e;
+      }
 
       return jsonResponse(req, {
         charged: true,

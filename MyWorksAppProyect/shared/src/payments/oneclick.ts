@@ -13,6 +13,14 @@ export type OneclickCharged = {
 export type OneclickNeedsCard = {
   charged: false;
   needsCard: true;
+  /** `tarjeta_inactiva`: Transbank dio de baja la tarjeta guardada y hay que inscribir otra. */
+  reason?: string;
+};
+
+export type SavedCardStatus = {
+  enrolled: boolean;
+  last4: string;
+  cardType: string;
 };
 
 /** Invitado y sesión sin tarjeta van a Webpay Plus. Con tarjeta inscrita se cobra Oneclick. */
@@ -73,7 +81,11 @@ export function parseOneclickCharge(payload: unknown): OneclickChargeResult {
     };
   }
   if (data.needsCard === true) {
-    return { charged: false, needsCard: true };
+    return {
+      charged: false,
+      needsCard: true,
+      ...(typeof data.reason === 'string' && data.reason ? { reason: data.reason } : {}),
+    };
   }
   throw new Error('Respuesta de pago inválida');
 }
@@ -94,4 +106,58 @@ export async function chargeSavedCard(
     throw new Error(await errorMessage(error));
   }
   return parseOneclickCharge(data);
+}
+
+export function parseSavedCardStatus(payload: unknown): SavedCardStatus {
+  const data = payload as Record<string, unknown> | null;
+  if (!data || data.error) {
+    throw new Error(String(data?.error || 'Respuesta de tarjeta inválida'));
+  }
+  return {
+    enrolled: data.enrolled === true,
+    last4: String(data.last4 || '').replace(/\D/g, '').slice(-4),
+    cardType: String(data.cardType || ''),
+  };
+}
+
+/** Tarjeta guardada del cliente (últimos 4 y tipo). Si Transbank ya la dejó lista, la confirma. */
+export async function getSavedCard(supabase: AppSupabase): Promise<SavedCardStatus> {
+  const { data, error } = await supabase.functions.invoke('oneclick-charge', {
+    body: { action: 'status' },
+  });
+  if (error) throw new Error(await errorMessage(error));
+  return parseSavedCardStatus(data);
+}
+
+/**
+ * Prepara la inscripción de la tarjeta. Con `jobId`, al volver de Transbank el servidor
+ * cobra ese pedido con la tarjeta recién guardada. Devuelve la URL que hay que abrir.
+ */
+export async function startCardEnrollment(
+  supabase: AppSupabase,
+  input: { jobId?: string } = {},
+): Promise<{ handoffUrl: string }> {
+  const { data, error } = await supabase.functions.invoke('oneclick-charge', {
+    body: { action: 'enroll', ...(input.jobId ? { jobId: input.jobId } : {}) },
+  });
+  if (error) throw new Error(await errorMessage(error));
+  const payload = data as Record<string, unknown> | null;
+  if (!payload || payload.error) {
+    throw new Error(String(payload?.error || 'No se pudo preparar la tarjeta'));
+  }
+  const handoffUrl = String(payload.handoffUrl || '');
+  if (!handoffUrl.startsWith('https://')) {
+    throw new Error('Esa tarjeta ya está guardada.');
+  }
+  return { handoffUrl };
+}
+
+/** Quita la tarjeta guardada para poder inscribir otra. */
+export async function removeSavedCard(supabase: AppSupabase): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('oneclick-charge', {
+    body: { action: 'remove' },
+  });
+  if (error) throw new Error(await errorMessage(error));
+  const payload = data as Record<string, unknown> | null;
+  if (payload?.error) throw new Error(String(payload.error));
 }

@@ -10,6 +10,7 @@ import '../utils/app_error.dart';
 import '../utils/transbank_checkout.dart';
 import '../../features/payments/presentation/pages/card_enrollment_page.dart';
 import 'pricing_quote_card.dart';
+import 'saved_card_tile.dart';
 import 'webpay_webview_page.dart';
 
 /// Checkout: pagar este pedido en Transbank, o inscribir tarjeta y cobrarla.
@@ -70,7 +71,10 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
     return 'No se pudo iniciar el pago';
   }
 
-  Future<void> _openWebpay(String url) async {
+  Future<void> _openWebpay(
+    String url, {
+    String? paymentId,
+  }) async {
     if (kIsWeb) {
       await openTransbankCheckout(url);
       return;
@@ -80,6 +84,9 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       context,
       paymentUrl: url,
       title: 'Pago Webpay',
+      watchOutcome: () => ref
+          .read(paymentServiceProvider)
+          .webpayCheckoutSettled(paymentId ?? ''),
     );
     if (!mounted) return;
     if (ok) Navigator.of(context).pop(true);
@@ -96,7 +103,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
               );
       final url = session.redirectUrl ?? session.url;
       if (!mounted) return;
-      await _openWebpay(url);
+      await _openWebpay(url, paymentId: session.paymentId);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -248,7 +255,13 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
               workerName: widget.workerName,
               serviceName: widget.serviceName,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            if (widget.changeOrderId == null || widget.changeOrderId!.isEmpty)
+              SavedCardTile(
+                enabled: !_processing,
+                onCardRemoved: _enrollCard,
+              ),
+            const SizedBox(height: 4),
             FilledButton.icon(
               onPressed: _processing
                   ? null
