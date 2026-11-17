@@ -13,10 +13,7 @@ import { asCoord, transportExtraClp } from "./transport.ts";
 
 type Admin = ReturnType<typeof serviceClient>;
 
-export function cardLast4(cardNumber: unknown): string {
-  const digits = String(cardNumber || "").replace(/\D/g, "");
-  return digits.slice(-4);
-}
+export { cardLast4 } from "./oneclick_inscription.ts";
 
 async function markHeld(
   admin: Admin,
@@ -174,13 +171,20 @@ export async function chargeInscribedCard(
     );
   }
 
-  const commit = await tbkOneclickAuthorize({
-    username: input.username,
-    tbkUser: input.tbkUser,
-    buyOrder,
-    detailBuyOrder: detail,
-    amount,
-  });
+  let commit: Record<string, unknown>;
+  try {
+    commit = await tbkOneclickAuthorize({
+      username: input.username,
+      tbkUser: input.tbkUser,
+      buyOrder,
+      detailBuyOrder: detail,
+      amount,
+    });
+  } catch (e) {
+    // Sin esto el cobro queda reclamado 90 s y el reintento choca con "cobro en curso".
+    await releaseClaim(admin, input.payment.id);
+    throw e;
+  }
 
   if (!oneclickAuthorized(commit)) {
     await releaseClaim(admin, input.payment.id);

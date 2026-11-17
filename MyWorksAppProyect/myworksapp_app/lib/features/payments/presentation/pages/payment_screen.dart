@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_error.dart';
 import '../../../../core/utils/transbank_checkout.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/widgets/saved_card_tile.dart';
 import '../../../../core/widgets/webpay_webview_page.dart';
 import 'card_enrollment_page.dart';
 
@@ -244,7 +245,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             const SizedBox(height: 16),
             Text(_error!, style: const TextStyle(color: AppColors.error)),
           ],
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          SavedCardTile(
+            enabled: !_processing,
+            onCardRemoved: _enrollCard,
+          ),
+          const SizedBox(height: 8),
           FilledButton.icon(
             onPressed: _processing
                 ? null

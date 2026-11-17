@@ -10,6 +10,7 @@ import '../utils/app_error.dart';
 import '../utils/transbank_checkout.dart';
 import '../../features/payments/presentation/pages/card_enrollment_page.dart';
 import 'pricing_quote_card.dart';
+import 'saved_card_tile.dart';
 import 'webpay_webview_page.dart';
 
 /// Checkout: pagar este pedido en Transbank, o inscribir tarjeta y cobrarla.
@@ -254,7 +255,13 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
               workerName: widget.workerName,
               serviceName: widget.serviceName,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            if (widget.changeOrderId == null || widget.changeOrderId!.isEmpty)
+              SavedCardTile(
+                enabled: !_processing,
+                onCardRemoved: _enrollCard,
+              ),
+            const SizedBox(height: 4),
             FilledButton.icon(
               onPressed: _processing
                   ? null

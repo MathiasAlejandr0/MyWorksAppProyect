@@ -5,6 +5,7 @@ import {
   checkoutLane,
   orderConfirmedMessage,
   parseOneclickCharge,
+  parseSavedCardStatus,
 } from './oneclick.ts';
 
 describe('oneclick', () => {
@@ -52,5 +53,28 @@ describe('oneclick', () => {
     assert.equal(checkoutLane({ signedIn: false, cardEnrolled: false }), 'webpay');
     assert.equal(checkoutLane({ signedIn: true, cardEnrolled: false }), 'webpay');
     assert.equal(checkoutLane({ signedIn: true, cardEnrolled: true }), 'charge');
+  });
+
+  it('avisa cuando Transbank dio de baja la tarjeta guardada', () => {
+    const result = parseOneclickCharge({
+      charged: false,
+      needsCard: true,
+      reason: 'tarjeta_inactiva',
+    });
+    assert.equal(result.charged, false);
+    if (!result.charged) assert.equal(result.reason, 'tarjeta_inactiva');
+  });
+
+  it('lee la tarjeta guardada con sus últimos 4', () => {
+    assert.deepEqual(
+      parseSavedCardStatus({ enrolled: true, last4: '6623', cardType: 'Visa' }),
+      { enrolled: true, last4: '6623', cardType: 'Visa' },
+    );
+    assert.deepEqual(parseSavedCardStatus({ enrolled: false }), {
+      enrolled: false,
+      last4: '',
+      cardType: '',
+    });
+    assert.throws(() => parseSavedCardStatus({ error: 'x' }), /x/);
   });
 });

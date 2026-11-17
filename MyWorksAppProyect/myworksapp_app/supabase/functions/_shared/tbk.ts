@@ -413,12 +413,52 @@ export async function tbkOneclickAuthorize(input: {
       }),
     },
   );
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     console.error("oneclick authorize", res.status);
+    if (isInactiveInscription(res.status, data)) {
+      throw new OneclickInscriptionInactiveError();
+    }
     throw new Error("El banco rechazó el cobro a tu tarjeta.");
   }
   return data as Record<string, unknown>;
+}
+
+/** Transbank ya no reconoce la tarjeta inscrita (422 "not found or inactive"). */
+export class OneclickInscriptionInactiveError extends Error {
+  constructor() {
+    super("La tarjeta guardada ya no está activa en Transbank.");
+    this.name = "OneclickInscriptionInactiveError";
+  }
+}
+
+export function isInactiveInscription(status: number, data: unknown): boolean {
+  if (status !== 422 && status !== 404) return false;
+  const text = String((data as Record<string, unknown> | null)?.error_message || "");
+  return /not found or inactive/i.test(text);
+}
+
+/** Quita la inscripción en Transbank. 404 = ya no existía, se da por quitada. */
+export async function tbkOneclickDeleteInscription(input: {
+  username: string;
+  tbkUser: string;
+}): Promise<void> {
+  const { host } = oneclickConfig();
+  const res = await tbkFetch(
+    `${host}/rswebpaytransaction/api/oneclick/v1.2/inscriptions`,
+    {
+      method: "DELETE",
+      headers: oneclickHeaders(),
+      body: JSON.stringify({
+        username: input.username.slice(0, 40),
+        tbk_user: input.tbkUser,
+      }),
+    },
+  );
+  if (!res.ok && res.status !== 404 && res.status !== 422) {
+    console.error("oneclick delete inscription", res.status);
+    throw new Error("No se pudo quitar la tarjeta en Transbank.");
+  }
 }
 
 export async function tbkOneclickRefund(input: {

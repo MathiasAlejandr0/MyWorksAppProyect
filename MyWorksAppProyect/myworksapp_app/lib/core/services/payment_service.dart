@@ -337,6 +337,45 @@ class PaymentService {
     return data['enrolled'] == true;
   }
 
+  /// Tarjeta que el cliente ya guardó (últimos 4 y tipo). Sin tarjeta: [enrolled] es false.
+  Future<({bool enrolled, String last4, String cardType})> savedCard() async {
+    final sessionId = supabase.auth.currentUser?.id;
+    if (sessionId == null || sessionId.isEmpty) {
+      return (enrolled: false, last4: '', cardType: '');
+    }
+    final response = await supabase.functions.invoke(
+      'oneclick-charge',
+      body: {'action': 'status'},
+    );
+    final data = _asMap(response.data);
+    if (data['error'] != null) {
+      throw AppError.validation(data['error'].toString());
+    }
+    return (
+      enrolled: data['enrolled'] == true,
+      last4: data['last4']?.toString() ?? '',
+      cardType: data['cardType']?.toString() ?? '',
+    );
+  }
+
+  /// Quita la tarjeta guardada para poder inscribir otra.
+  Future<void> removeSavedCard() async {
+    try {
+      final response = await supabase.functions.invoke(
+        'oneclick-charge',
+        body: {'action': 'remove'},
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null) {
+        throw AppError.validation(data['error'].toString());
+      }
+    } catch (e) {
+      if (e is AppError) rethrow;
+      AppLogger.e('Error quitando tarjeta', e);
+      throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
   /// Primera vez en la app: URL del servidor que abre Transbank. Vacía si ya hay tarjeta.
   Future<String> startCardEnrollment() async {
     final sessionId = supabase.auth.currentUser?.id;
