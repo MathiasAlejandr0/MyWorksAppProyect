@@ -1,6 +1,6 @@
 # Objetivos del proyecto — My Works App
 
-**Institución:** Duoc UC, sede Puerto Montt · **Asignatura:** Capstone PTY4614 (APT)
+**Institución:** Duoc UC, sede Puerto Montt · **Asignatura:** Capstone PTY4614
 **Equipo:** Mathias Alejandro Jara Alvarado, Nicolas Chiguay y Gabriel Valderas (según `README.md`, sección Equipo).
 **Estado del documento:** 2026-11-17. Versión del código revisada: `main` en `8b18b3f` (repositorio canónico `nicoussj/Proyecto-Titulo-MyWorksApp`).
 
