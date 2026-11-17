@@ -36,9 +36,10 @@ DOMINIOS = [
         "verificacion_eventos", "suscripciones", "bloqueos_usuario", "paises", "regiones", "comunas"]),
     ("02_profesionales_catalogo", "Profesionales, servicios y precios", "#8A5A12", "#F6EBD6", [
         "trabajadores", "trabajador_precios", "trabajador_servicios", "trabajador_servicios_extra",
-        "trabajador_horarios", "portafolio_trabajador", "impulsos", "servicios", "configuraciones_servicio"]),
+        "trabajador_horarios", "trabajador_horas_publicadas", "portafolio_trabajador", "impulsos",
+        "categorias_servicio", "servicios", "configuraciones_servicio"]),
     ("03_trabajos_reservas", "Trabajos, reservas, reprogramación y PIN", "#A24A1C", "#F8E1D6", [
-        "trabajos", "propuestas_cotizacion", "acuerdos_trabajo", "cancelaciones_trabajo",
+        "trabajos", "propuestas_cotizacion", "propuesta_cotizacion_items", "acuerdos_trabajo", "cancelaciones_trabajo",
         "reprogramaciones_trabajo", "pines_inicio_trabajo", "bloqueos_pin_inicio", "intentos_pin_inicio",
         "fotos_trabajo", "ubicacion_en_vivo"]),
     ("04_pagos_escrow", "Pagos, escrow, liquidaciones y cuentas bancarias", "#5C4578", "#E9E1F2", [
@@ -50,7 +51,7 @@ DOMINIOS = [
         "ranking_aprendizaje", "ranking_config"]),
     ("07_admin_auditoria", "Administración, moderación y auditoría", "#6B2737", "#F3DDE2", [
         "acciones_pendientes", "reportes", "eventos_abuso", "registros_error_app", "eventos_analitica",
-        "banderas_funcionalidad", "app_config"]),
+        "banderas_funcionalidad", "app_config", "encuestas_testing", "encuesta_testing_respuestas"]),
 ]
 
 CORTO = {
@@ -63,18 +64,12 @@ CORTO = {
 # Relaciones lógicas: columnas que apuntan a otra tabla sin FOREIGN KEY física.
 # (tabla, columnas, tabla destino, columnas destino, explicación)
 LOGICAS = [
-    ("liquidaciones", ["id_trabajador"], "perfiles", ["id"],
-     "profesional liquidado; text que guarda el uuid del perfil"),
-    ("liquidaciones", ["id_operador"], "perfiles", ["id"],
-     "administrador que confirmó la transferencia; text con uuid o 'sistema'"),
     ("metodos_pago_oneclick", ["id_trabajo_pendiente"], "trabajos", ["id"],
      "trabajo que espera la inscripción Oneclick para cobrarse"),
     ("bloqueos_pin_inicio", ["pin_ok_usuario"], "perfiles", ["id"],
      "usuario que validó el PIN (ventana pin_ok_hasta)"),
     ("trabajos", ["id_trabajador", "id_sku_servicio"], "trabajador_precios", ["id_usuario", "codigo"],
      "SKU de precio elegido; también admite 'tier_<n>', por eso no es FK"),
-    ("trabajador_servicios", ["categoria_servicio"], "servicios", ["categoria"],
-     "categoría ofrecida; servicios.categoria no es única"),
 ]
 POLIMORFICAS = [
     ("notificaciones", "id_relacionado", "id de trabajo, pago, disputa u otra entidad según notificaciones.tipo"),
@@ -248,7 +243,7 @@ def diagrama_dominios(cols, pk, fks):
     """Mapa de dominios: cada dominio con sus tablas y las FK que cruzan dominios."""
     out = ['digraph dominios {', GRAPH_ATTR, 'rankdir="TB"; nodesep="0.35"; ranksep="0.9"; concentrate="false"; splines="spline";',
            '<font point-size="34"><b>MyWorksApp · Mapa de dominios del modelo de datos</b></font>'
-           '<br/><font point-size="22" color="#555555">52 tablas en 7 dominios · el número en cada flecha = claves foráneas que cruzan de un dominio a otro</font>'.join(['label=<', '>;'])]
+           '<br/><font point-size="22" color="#555555">57 tablas en 7 dominios · el número en cada flecha = claves foráneas que cruzan de un dominio a otro</font>'.join(['label=<', '>;'])]
     nfk = defaultdict(int)
     for key, nombre, color, bg, ts in DOMINIOS:
         n_int = sum(1 for f in fks if f["rs"] == "public" and f["t"] in ts and f["rt"] in ts)
@@ -393,7 +388,7 @@ def diagrama_general(cols, pk, fks, uq):
     out = [f'digraph general {{', GRAPH_ATTR,
            'rankdir="LR"; nodesep="0.15"; ranksep="0.6"; concentrate="true";',
            f'label=<<font point-size="56"><b>MyWorksApp · Modelo entidad-relación general</b></font>'
-           f'<br/><font point-size="34" color="#555555">52 tablas del esquema public agrupadas en 7 dominios · '
+           f'<br/><font point-size="34" color="#555555">57 tablas del esquema public agrupadas en 7 dominios · '
            f'líneas = claves foráneas (pata de gallo = muchos) · punteadas = relaciones lógicas</font>>;']
     for key, nombre, color, bg, ts in DOMINIOS:
         out.append(f'subgraph "cluster_{key}" {{ style="rounded,filled"; fillcolor="{bg}"; color="{color}"; penwidth="2.5";'

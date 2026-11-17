@@ -1,27 +1,27 @@
 # Diccionario de base de datos — My Works App
 
-> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-16 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. No editar a mano: actualizar el snapshot o volver a introspectar y regenerar.
+> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-17 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. No editar a mano: actualizar el snapshot o volver a introspectar y regenerar.
 
 | Campo | Valor |
 |-------|-------|
 | Proyecto | My Works App |
 | Motor | PostgreSQL (Supabase), esquema `public` |
 | Convención | Nombres en español, `snake_case` |
-| Modelo fuente | Modelo lógico v2.5 · 52 tablas public · 2026-11-16 (America/Santiago) · alineado a la BD viva wxqrfcqifkfgawrnqmnj hasta la migración 20261116044049 (stats_profesional_fuente_unica). Archivo de migración en el repo: 20261116044049_stats_profesional_fuente_unica.sql. Diccionario generado desde information_schema y pg_catalog (solo lectura). No hay tipos ENUM ni vistas en public: los estados se restringen con CHECK. No ejecutar el SQL de consulta contra producción. |
-| Tablas en el esquema | 52 |
-| Columnas | 437 |
-| Claves foráneas físicas | 78 |
-| Políticas RLS | 108 |
-| Funciones public | 148 |
-| Última migración aplicada | `20261116044049` — stats_profesional_fuente_unica |
-| Archivo de migración (repo) | `20261116044049_stats_profesional_fuente_unica.sql` |
-| Fecha de generación | 2026-11-16 (America/Santiago) |
+| Modelo fuente | Modelo lógico v2.5 · 57 tablas public · 2026-11-17 (America/Santiago) · alineado a la BD viva wxqrfcqifkfgawrnqmnj hasta la migración 20261117223850 (quitar_indice_duplicado_servicios). Archivo de migración en el repo: 20261117223850_quitar_indice_duplicado_servicios.sql. Diccionario generado desde information_schema y pg_catalog (solo lectura). No hay tipos ENUM en public (los estados se restringen con CHECK) y hay una vista, encuestas_testing_con_puntaje. No ejecutar el SQL de consulta contra producción. |
+| Tablas en el esquema | 57 |
+| Columnas | 458 |
+| Claves foráneas físicas | 85 |
+| Políticas RLS | 129 |
+| Funciones public | 150 |
+| Última migración aplicada | `20261117223850` — quitar_indice_duplicado_servicios |
+| Archivo de migración (repo) | `20261117223850_quitar_indice_duplicado_servicios.sql` |
+| Fecha de generación | 2026-11-17 (America/Santiago) |
 
-`perfiles.id` coincide con `auth.users.id` (Auth de Supabase, fuera de `public`). No hay tipos ENUM ni vistas en `public`.
+`perfiles.id` coincide con `auth.users.id` (Auth de Supabase, fuera de `public`). No hay tipos ENUM en `public`; hay una vista, `encuestas_testing_con_puntaje`.
 
 ## 1. Cambios respecto del diccionario v2.3 (2026-11-08, 43 tablas, hasta 20261108000005)
 
-**Tablas agregadas (9):** `acuerdos_trabajo`, `bloqueos_pin_inicio`, `cuentas_bancarias`, `dispositivos_push`, `disputa_mensajes`, `intentos_pin_inicio`, `pines_inicio_trabajo`, `reprogramaciones_trabajo`, `verificacion_eventos`.
+**Tablas agregadas (14):** `acuerdos_trabajo`, `bloqueos_pin_inicio`, `cuentas_bancarias`, `dispositivos_push`, `disputa_mensajes`, `intentos_pin_inicio`, `pines_inicio_trabajo`, `reprogramaciones_trabajo`, `verificacion_eventos`, `categorias_servicio`, `encuesta_testing_respuestas`, `encuestas_testing`, `propuesta_cotizacion_items`, `trabajador_horas_publicadas`.
 
 **Tablas eliminadas:** ninguna.
 
@@ -30,12 +30,15 @@
 - `calificaciones`: Se agregan `direccion` (cliente_a_trabajador | trabajador_a_cliente) e `id_calificado`. Unicidad por (id_trabajo, direccion).
 - `calificaciones_cliente`: `puntaje` pasa de integer a smallint.
 - `disputas`: Se agregan `decision_sugerida`, `motivo_regla`, `origen` y `vence_en` (soporte automático).
-- `liquidaciones`: Se agrega `estado_transferencia` para el seguimiento de la transferencia al profesional.
-- `trabajador_horarios`: Deja de ser una fila 1:1 con tres columnas. Ahora es una plantilla semanal: `id`, `dia_semana`, `hora_inicio`, `hora_fin`, `activo`, `creado_en`, única por (id_usuario, dia_semana).
-- `trabajador_precios`: `id_usuario` pasa de text a uuid con FK a trabajadores (auditoría 2026-11-16).
-- `trabajador_servicios_extra`: Igual que precios: `id_usuario` pasa a uuid con FK.
+- `liquidaciones`: Se agregan `estado_transferencia` y `liberada_por_sistema`. `id_trabajador` e `id_operador` pasan de text a uuid con FK a perfiles.
+- `trabajador_horarios`: Deja de ser una fila 1:1 con tres columnas. Ahora es una ventana semanal: `id`, `dia_semana`, `hora_inicio`, `hora_fin`, `activo`, `creado_en`, única por (id_usuario, dia_semana). Las horas reservables están en `trabajador_horas_publicadas`.
+- `trabajador_precios`: `id_usuario` pasa de text a uuid con FK a trabajadores. Es la única fuente de los precios.
+- `trabajador_servicios_extra`: Igual que precios: `id_usuario` pasa a uuid con FK y es la única fuente de los servicios adicionales.
 - `metodos_pago_oneclick`: `id_usuario` pasa de text a uuid con FK a perfiles (auditoría 2026-11-16).
-- `trabajadores`: Se agregan `usa_horario` y `pausa_por_trabajo`. `es_elite` se documenta como columna GENERATED ALWAYS.
+- `trabajadores`: Se agregan `usa_horario` y `pausa_por_trabajo`. `es_elite` se documenta como columna GENERATED ALWAYS. Se quitan `niveles_precio`, `servicios_personalizados`, `categoria_servicio` e `id_region`.
+- `propuestas_cotizacion`: Se agrega `horas_estimadas`; se quita `desglose`, que pasa a `propuesta_cotizacion_items`.
+- `servicios`: `categoria` pasa a ser clave foránea a `categorias_servicio`.
+- `trabajador_servicios`: `id_trabajador` apunta a `trabajadores` y `categoria_servicio` a `categorias_servicio`.
 - `perfiles`: Defaults en español (`'usuario'`, `'activo'`), CHECK de rol y estado, FK a auth.users y reputación protegida contra edición del propio usuario (auditoría 2026-11-16).
 - `pagos`: Las columnas de alta de invitado (`alta_nonce_hash`, `alta_jti`, `alta_consumido_en`) ya estaban en el v2.3 (26 columnas). Se aclara su papel y el índice único de `alta_jti`.
 - `trabajos`: Sigue con 20 columnas. Cambia el comportamiento: la fecha programada solo se altera por las RPC de CU-33 y hay un índice único de agenda por profesional y minuto.
@@ -63,45 +66,50 @@ Además se documentan, por primera vez en este diccionario, las políticas RLS (
 | 15 | territorio | `paises` | 3 | sí | País operativo. Hoy solo CL. |
 | 16 | territorio | `regiones` | 4 | sí | Región administrativa de un país. |
 | 17 | territorio | `comunas` | 6 | sí | Comuna de cobertura. Su identificador es el slug usado por trabajos y trabajadores. |
-| 18 | catalogo_4nf | `trabajadores` | 30 | sí | Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en tablas hijas; los JSON niveles_precio y servicios_personalizados son solo formato de escritura (un trigger… |
-| 19 | catalogo_4nf | `trabajador_precios` | 3 | sí | Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE) desde la auditoría 2026-11-16; antes era text sin FK. |
-| 20 | catalogo_4nf | `trabajador_servicios_extra` | 6 | sí | Servicio adicional definido por el profesional. id_usuario es uuid con clave foránea a trabajadores, igual que en trabajador_precios. |
-| 21 | catalogo_4nf | `trabajador_servicios` | 2 | sí | Oficios del catálogo que el profesional declara atender. |
-| 22 | catalogo_4nf | `trabajador_horarios` | 9 | sí | Plantilla semanal: una fila por día (1 = lunes … 7 = domingo), única por (id_usuario, dia_semana). Solo el dueño lee y escribe (RLS). El cliente consulta los huecos con la RPC… |
-| 23 | catalogo_4nf | `portafolio_trabajador` | 6 | sí | Foto o medio del portafolio de un profesional. |
-| 24 | catalogo_4nf | `impulsos` | 6 | sí | Promoción temporal de visibilidad de un profesional. |
-| 25 | catalogo_4nf | `servicios` | 10 | sí | Catálogo de oficios que la plataforma ofrece. |
-| 26 | catalogo_4nf | `configuraciones_servicio` | 5 | sí | Esquema de configuración asociado a un servicio. |
-| 27 | pedido | `trabajos` | 20 | sí | Pedido de un cliente a un profesional (o abierto a cotizaciones). estado_pago es una copia derivada del pago principal. La fecha programada se guarda como texto y, desde CU-33,… |
-| 28 | pedido | `mensajes` | 9 | sí | Mensaje del chat de un trabajo. |
-| 29 | pedido | `fotos_trabajo` | 6 | sí | Evidencia fotográfica o de video de un trabajo (bucket de evidencias). |
-| 30 | pedido | `calificaciones` | 11 | sí | Valoración de un trabajo. Desde la calificación bidireccional admite direccion cliente_a_trabajador o trabajador_a_cliente, con unicidad por (id_trabajo, direccion). Alimenta… |
-| 31 | pedido | `calificaciones_cliente` | 7 | sí | El profesional nota al cliente. 1:1 con el trabajo. Alimenta perfiles.reputacion_cliente. puntaje es smallint en la base viva. |
-| 32 | pedido | `disputas` | 15 | sí | Disputa abierta sobre un trabajo y su resolución (incluye sugerencia automática y vencimiento). |
-| 33 | pedido | `disputa_mensajes` | 5 | sí | Mensajes del hilo de una disputa, de las partes o de soporte. |
-| 34 | pedido | `acuerdos_trabajo` | 9 | sí | Acuerdo entre cliente y profesional para rehacer, aceptar o anular un trabajo. Como máximo un acuerdo pendiente por trabajo. |
-| 35 | pedido | `cancelaciones_trabajo` | 5 | sí | Como máximo una cancelación por trabajo. |
-| 36 | pedido | `tickets_soporte` | 8 | sí | Ticket de soporte asociado a un trabajo. |
-| 37 | pedido | `ubicacion_en_vivo` | 6 | sí | GPS en vivo durante el trabajo. 1:1 con el trabajo. |
-| 38 | pedido | `reprogramaciones_trabajo` | 11 | sí | Historial de propuestas para reagendar un trabajo (CU-33). Como máximo una propuesta pendiente por trabajo. Solo se escribe por las RPC proponer_reprogramacion,… |
-| 39 | pedido | `pines_inicio_trabajo` | 3 | sí | PIN que el cliente muestra al profesional para iniciar el trabajo (aceptado o en_camino → en_curso). El cliente (o un administrador) puede leerlo; el profesional lo valida con… |
-| 40 | pedido | `bloqueos_pin_inicio` | 6 | sí | Contador de intentos fallidos del PIN, bloqueo temporal (15 minutos tras 5 fallos) y ventana en la que el PIN ya fue validado. Escriben solo las funciones SECURITY DEFINER o… |
-| 41 | pedido | `intentos_pin_inicio` | 6 | sí | Auditoría de cada intento de PIN de inicio. Escriben solo funciones SECURITY DEFINER; un administrador puede leerla. |
-| 42 | cobro | `propuestas_cotizacion` | 9 | sí | Cotización que un profesional envía para un trabajo. |
-| 43 | cobro | `pagos` | 26 | sí | Cobro asociado a un trabajo o a una orden de cambio, con retención (escrow) vía Transbank Webpay / Oneclick. Las columnas alta_nonce_hash, alta_jti y alta_consumido_en sustentan… |
-| 44 | cobro | `ordenes_cambio` | 11 | sí | Cambio de alcance o de precio durante un trabajo. |
-| 45 | cobro | `liquidaciones` | 11 | sí | Un pago → una liquidación al profesional. manual = transferencia externa confirmada por admin; khipu/fintoc = PSP futuro. |
-| 46 | cobro | `metodos_pago_oneclick` | 12 | sí | Tarjeta inscrita Oneclick. RLS niega el acceso a anon y authenticated: solo service_role (Edge Functions). |
-| 47 | cobro | `cuentas_bancarias` | 7 | sí | Datos bancarios del profesional para pagar la liquidación. RLS: solo el dueño y un administrador. No es un dato público. |
-| 48 | cobro | `app_config` | 3 | sí | Pares clave/valor de configuración (demo_modo, admin_requiere_aal2, etc.). RLS niega el acceso a clientes; lo lee el backend. |
-| 49 | ranking | `ranking_config` | 16 | sí | Una fila default. Pesos del listado de profesionales. |
-| 50 | ranking | `senales_resena` | 9 | sí | Señales de reseña dudosa. Un falso positivo baja el peso de esa señal. |
-| 51 | ranking | `ranking_aprendizaje` | 6 | sí | Ajuste de los pesos del ranking y las métricas de ese cambio. |
-| 52 | ranking | `eventos_ranking` | 6 | sí | Evento que alimenta el ranking de un profesional. |
+| 18 | catalogo_4nf | `trabajadores` | 26 | sí | Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios adicionales y oficios están en trabajador_precios, trabajador_servicios_extra y trabajador_servicios; la… |
+| 19 | catalogo_4nf | `trabajador_precios` | 3 | sí | Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE). Es la única fuente de los precios del profesional. |
+| 20 | catalogo_4nf | `trabajador_servicios_extra` | 6 | sí | Servicio adicional definido por el profesional (título, subtítulo, monto y unidad fijo o por m²). id_usuario es uuid con clave foránea a trabajadores. Es la única fuente de sus… |
+| 21 | catalogo_4nf | `trabajador_servicios` | 2 | sí | Oficios del catálogo que el profesional declara atender. categoria_servicio es clave foránea a categorias_servicio. |
+| 22 | catalogo_4nf | `trabajador_horarios` | 8 | sí | Ventana de atención semanal: siete filas por profesional, una por día (1 = lunes … 7 = domingo), con hora_inicio y hora_fin, únicas por (id_usuario, dia_semana). Las horas… |
+| 23 | catalogo_4nf | `trabajador_horas_publicadas` | 4 | sí | Horas que el profesional publica como reservables en cada día (clave id_usuario, dia_semana, hora). Un trigger de reserva acepta solo horas publicadas y libres. El cliente las ve… |
+| 24 | catalogo_4nf | `portafolio_trabajador` | 6 | sí | Foto o medio del portafolio de un profesional. |
+| 25 | catalogo_4nf | `impulsos` | 6 | sí | Promoción temporal de visibilidad de un profesional. |
+| 26 | catalogo_4nf | `categorias_servicio` | 4 | sí | Categorías u oficios del catálogo (gasfitería, electricidad y otros). Las usan servicios y trabajador_servicios. |
+| 27 | catalogo_4nf | `servicios` | 10 | sí | Catálogo de oficios que la plataforma ofrece. |
+| 28 | catalogo_4nf | `configuraciones_servicio` | 5 | sí | Esquema de configuración asociado a un servicio. |
+| 29 | pedido | `trabajos` | 20 | sí | Pedido de un cliente a un profesional (o abierto a cotizaciones). estado_pago es una copia derivada del pago principal. La fecha programada se guarda como texto y, desde CU-33,… |
+| 30 | pedido | `mensajes` | 9 | sí | Mensaje del chat de un trabajo. |
+| 31 | pedido | `fotos_trabajo` | 6 | sí | Evidencia fotográfica o de video de un trabajo (bucket de evidencias). |
+| 32 | pedido | `calificaciones` | 11 | sí | Valoración de un trabajo. Desde la calificación bidireccional admite direccion cliente_a_trabajador o trabajador_a_cliente, con unicidad por (id_trabajo, direccion). Alimenta… |
+| 33 | pedido | `calificaciones_cliente` | 7 | sí | El profesional nota al cliente. 1:1 con el trabajo. Alimenta perfiles.reputacion_cliente. puntaje es smallint en la base viva. |
+| 34 | pedido | `disputas` | 15 | sí | Disputa abierta sobre un trabajo y su resolución (incluye sugerencia automática y vencimiento). |
+| 35 | pedido | `disputa_mensajes` | 5 | sí | Mensajes del hilo de una disputa, de las partes o de soporte. |
+| 36 | pedido | `acuerdos_trabajo` | 9 | sí | Acuerdo entre cliente y profesional para rehacer, aceptar o anular un trabajo. Como máximo un acuerdo pendiente por trabajo. |
+| 37 | pedido | `cancelaciones_trabajo` | 5 | sí | Como máximo una cancelación por trabajo. |
+| 38 | pedido | `tickets_soporte` | 8 | sí | Ticket de soporte asociado a un trabajo. |
+| 39 | pedido | `ubicacion_en_vivo` | 6 | sí | GPS en vivo durante el trabajo. 1:1 con el trabajo. |
+| 40 | pedido | `reprogramaciones_trabajo` | 11 | sí | Historial de propuestas para reagendar un trabajo (CU-33). Como máximo una propuesta pendiente por trabajo. Solo se escribe por las RPC proponer_reprogramacion,… |
+| 41 | pedido | `pines_inicio_trabajo` | 3 | sí | PIN que el cliente muestra al profesional para iniciar el trabajo (aceptado o en_camino → en_curso). El cliente (o un administrador) puede leerlo; el profesional lo valida con… |
+| 42 | pedido | `bloqueos_pin_inicio` | 6 | sí | Contador de intentos fallidos del PIN, bloqueo temporal (15 minutos tras 5 fallos) y ventana en la que el PIN ya fue validado. Escriben solo las funciones SECURITY DEFINER o… |
+| 43 | pedido | `intentos_pin_inicio` | 6 | sí | Auditoría de cada intento de PIN de inicio. Escriben solo funciones SECURITY DEFINER; un administrador puede leerla. |
+| 44 | cobro | `propuestas_cotizacion` | 9 | sí | Cotización que un profesional envía para un trabajo. Guarda el total y las horas estimadas; las líneas están en propuesta_cotizacion_items. |
+| 45 | cobro | `propuesta_cotizacion_items` | 4 | sí | Línea de una cotización: concepto y monto, numeradas por propuesta (clave id_propuesta, linea). |
+| 46 | cobro | `pagos` | 26 | sí | Cobro asociado a un trabajo o a una orden de cambio, con retención (escrow) vía Transbank Webpay / Oneclick. Las columnas alta_nonce_hash, alta_jti y alta_consumido_en sustentan… |
+| 47 | cobro | `ordenes_cambio` | 11 | sí | Cambio de alcance o de precio durante un trabajo. |
+| 48 | cobro | `liquidaciones` | 12 | sí | Un pago → una liquidación al profesional. manual = transferencia externa confirmada por admin; khipu/fintoc = PSP futuro. |
+| 49 | cobro | `metodos_pago_oneclick` | 12 | sí | Tarjeta inscrita Oneclick. RLS niega el acceso a anon y authenticated: solo service_role (Edge Functions). |
+| 50 | cobro | `cuentas_bancarias` | 7 | sí | Datos bancarios del profesional para pagar la liquidación. RLS: solo el dueño y un administrador. No es un dato público. |
+| 51 | cobro | `app_config` | 3 | sí | Pares clave/valor de configuración (demo_modo, admin_requiere_aal2, etc.). RLS niega el acceso a clientes; lo lee el backend. |
+| 52 | ranking | `ranking_config` | 16 | sí | Una fila default. Pesos del listado de profesionales. |
+| 53 | ranking | `senales_resena` | 9 | sí | Señales de reseña dudosa. Un falso positivo baja el peso de esa señal. |
+| 54 | ranking | `ranking_aprendizaje` | 6 | sí | Ajuste de los pesos del ranking y las métricas de ese cambio. |
+| 55 | ranking | `eventos_ranking` | 6 | sí | Evento que alimenta el ranking de un profesional. |
+| 56 | testing | `encuestas_testing` | 10 | sí | Encuesta de usabilidad de quienes prueban la app: plataforma, rol, si completó la tarea, satisfacción y comentarios. Las respuestas SUS están en encuesta_testing_respuestas y el… |
+| 57 | testing | `encuesta_testing_respuestas` | 3 | sí | Respuesta a cada uno de los 10 ítems SUS de una encuesta (item de 1 a 10, valor de 1 a 5). |
 
 ## 2b. Modelo entidad-relación
 
-El modelo tiene **52 tablas**, 437 columnas, 52 claves primarias y **78 claves foráneas** (77 entre tablas de public y 1 de `perfiles` a `auth.users`), hasta la migración `20261116044049`. Las figuras salen del mismo snapshot que este diccionario. Fuentes editables (DBML, SQL PostgreSQL, SQL MySQL Workbench y Graphviz) y el LEEME: [`Fase 2/modelo_entidad_relacion/`](../../Fase%202/modelo_entidad_relacion/LEEME.txt).
+El modelo tiene **57 tablas**, 458 columnas, 57 claves primarias y **85 claves foráneas** (84 entre tablas de public y 1 de `perfiles` a `auth.users`), hasta la migración `20261117223850`. Las figuras salen del mismo snapshot que este diccionario. Fuentes editables (DBML, SQL PostgreSQL, SQL MySQL Workbench y Graphviz) y el LEEME: [`Fase 2/modelo_entidad_relacion/`](../../Fase%202/modelo_entidad_relacion/LEEME.txt).
 
 Notación crow's foot: la pata de gallo es «muchos», la barra es «uno» y el círculo es «opcional». PK subrayada, FK en cursiva y FK* para una relación lógica sin FOREIGN KEY (línea punteada). `?` marca una columna que admite NULL.
 
@@ -110,12 +118,12 @@ Notación crow's foot: la pata de gallo es «muchos», la barra es «uno» y el 
 | Dominio | Tablas |
 |---|---|
 | Usuarios, autenticación y territorio | `perfiles`, `codigos_restablecimiento`, `consentimientos_usuario`, `dispositivos_push`, `verificacion_eventos`, `suscripciones`, `bloqueos_usuario`, `paises`, `regiones`, `comunas` |
-| Profesionales, servicios y precios | `trabajadores`, `trabajador_precios`, `trabajador_servicios`, `trabajador_servicios_extra`, `trabajador_horarios`, `portafolio_trabajador`, `impulsos`, `servicios`, `configuraciones_servicio` |
-| Trabajos, reservas, reprogramación y PIN | `trabajos`, `propuestas_cotizacion`, `acuerdos_trabajo`, `cancelaciones_trabajo`, `reprogramaciones_trabajo`, `pines_inicio_trabajo`, `bloqueos_pin_inicio`, `intentos_pin_inicio`, `fotos_trabajo`, `ubicacion_en_vivo` |
+| Profesionales, servicios y precios | `trabajadores`, `trabajador_precios`, `trabajador_servicios`, `trabajador_servicios_extra`, `trabajador_horarios`, `trabajador_horas_publicadas`, `portafolio_trabajador`, `impulsos`, `categorias_servicio`, `servicios`, `configuraciones_servicio` |
+| Trabajos, reservas, reprogramación y PIN | `trabajos`, `propuestas_cotizacion`, `propuesta_cotizacion_items`, `acuerdos_trabajo`, `cancelaciones_trabajo`, `reprogramaciones_trabajo`, `pines_inicio_trabajo`, `bloqueos_pin_inicio`, `intentos_pin_inicio`, `fotos_trabajo`, `ubicacion_en_vivo` |
 | Pagos, escrow, liquidaciones y cuentas bancarias | `pagos`, `ordenes_cambio`, `liquidaciones`, `metodos_pago_oneclick`, `cuentas_bancarias` |
 | Comunicación, notificaciones, disputas y soporte | `mensajes`, `notificaciones`, `disputas`, `disputa_mensajes`, `tickets_soporte` |
 | Calificaciones y ranking | `calificaciones`, `calificaciones_cliente`, `senales_resena`, `eventos_ranking`, `ranking_aprendizaje`, `ranking_config` |
-| Administración, moderación y auditoría | `acciones_pendientes`, `reportes`, `eventos_abuso`, `registros_error_app`, `eventos_analitica`, `banderas_funcionalidad`, `app_config` |
+| Administración, moderación y auditoría | `acciones_pendientes`, `reportes`, `eventos_abuso`, `registros_error_app`, `eventos_analitica`, `banderas_funcionalidad`, `app_config`, `encuestas_testing`, `encuesta_testing_respuestas` |
 
 ![Mapa de dominios](../../Fase%202/modelo_entidad_relacion/figuras/er_00_dominios.png)
 
@@ -123,7 +131,7 @@ Notación crow's foot: la pata de gallo es «muchos», la barra es «uno» y el 
 
 ![Modelo ER general](../../Fase%202/modelo_entidad_relacion/figuras/er_00_general.png)
 
-*Figura ER-2. Modelo ER general: las 52 tablas con su PK y todas las FK. Para leer el detalle, abrir el SVG (`er_00_general.svg`) o ver el diagrama del dominio.*
+*Figura ER-2. Modelo ER general: las 57 tablas con su PK y todas las FK. Para leer el detalle, abrir el SVG (`er_00_general.svg`) o ver el diagrama del dominio.*
 
 ### 2b.2 Usuarios, autenticación y territorio
 
@@ -135,7 +143,7 @@ Centro del modelo. `perfiles` es 1:1 con `auth.users` de Supabase (misma clave, 
 
 ### 2b.3 Profesionales, servicios y precios
 
-`trabajadores` extiende a `perfiles` 1:1 (PK = `id_usuario`) con la ficha pública, la base de atención, el radio, la verificación y los agregados de ranking. Del profesional dependen sus precios por código (`trabajador_precios`, PK compuesta), los servicios extra, la plantilla semanal de horarios (una fila por día), el portafolio, los impulsos y las categorías que atiende. `servicios` es el catálogo global y `configuraciones_servicio` su esquema de preguntas (1:0..1).
+`trabajadores` extiende a `perfiles` 1:1 (PK = `id_usuario`) con la ficha pública, la base de atención, el radio, la verificación y los agregados de ranking. Del profesional dependen sus precios por código (`trabajador_precios`, PK compuesta), los servicios extra, la ventana semanal de atención (`trabajador_horarios`, una fila por día), las horas reservables (`trabajador_horas_publicadas`), el portafolio, los impulsos y las categorías que atiende (`trabajador_servicios`). `categorias_servicio` es la tabla de categorías: la usan `servicios` y `trabajador_servicios`. `servicios` es el catálogo global y `configuraciones_servicio` su esquema de preguntas (1:0..1).
 
 ![Profesionales, servicios y precios](../../Fase%202/modelo_entidad_relacion/figuras/er_02_profesionales_catalogo.png)
 
@@ -143,7 +151,7 @@ Centro del modelo. `perfiles` es 1:1 con `auth.users` de Supabase (misma clave, 
 
 ### 2b.4 Trabajos, reservas, reprogramación y PIN
 
-`trabajos` es la entidad transaccional: une a un cliente (`id_usuario`), un profesional (`id_trabajador`, opcional hasta que se asigna), un servicio y una comuna. Alrededor están las cotizaciones (0..N por trabajo; la elegida queda en `id_cotizacion_seleccionada`), acuerdos, la cancelación (0..1), las reprogramaciones (CU-33, solo una pendiente a la vez por índice único parcial), el PIN de inicio (`pines_inicio_trabajo` y `bloqueos_pin_inicio`, 1:0..1, más los intentos auditados), las fotos y la ubicación en vivo del profesional (1:0..1).
+`trabajos` es la entidad transaccional: une a un cliente (`id_usuario`), un profesional (`id_trabajador`, opcional hasta que se asigna), un servicio y una comuna. Alrededor están las cotizaciones (0..N por trabajo; la elegida queda en `id_cotizacion_seleccionada`; cada línea está en `propuesta_cotizacion_items`), acuerdos, la cancelación (0..1), las reprogramaciones (CU-33, solo una pendiente a la vez por índice único parcial), el PIN de inicio (`pines_inicio_trabajo` y `bloqueos_pin_inicio`, 1:0..1, más los intentos auditados), las fotos y la ubicación en vivo del profesional (1:0..1).
 
 ![Trabajos, reservas, reprogramación y PIN](../../Fase%202/modelo_entidad_relacion/figuras/er_03_trabajos_reservas.png)
 
@@ -175,7 +183,7 @@ El chat del trabajo (`mensajes`, con remitente y destinatario), las notificacion
 
 ### 2b.8 Administración, moderación y auditoría
 
-Tablas de operación: cola de acciones pendientes del modo sin conexión, reportes entre usuarios, eventos de abuso, errores de la app, analítica, banderas de funcionalidad y `app_config` (clave/valor, solo backend). Todas, salvo `app_config`, referencian a `perfiles`.
+Tablas de operación: cola de acciones pendientes del modo sin conexión, reportes entre usuarios, eventos de abuso, errores de la app, analítica, banderas de funcionalidad y `app_config` (clave/valor, solo backend), más la encuesta de testing (`encuestas_testing` y sus 10 respuestas SUS en `encuesta_testing_respuestas`). Todas, salvo `app_config`, referencian a `perfiles`.
 
 ![Administración, moderación y auditoría](../../Fase%202/modelo_entidad_relacion/figuras/er_07_admin_auditoria.png)
 
@@ -192,21 +200,18 @@ Tablas de operación: cola de acciones pendientes del modo sin conexión, report
 
 ### 2b.10 Decisiones de diseño
 
-- **Claves primarias.** `perfiles.id` es `uuid` porque es la misma clave de `auth.users`. La mayoría de las tablas usa `id text` (41 tablas): la app y las funciones generan el identificador (un UUID en texto, un slug como `comunas.id` o un código como `paises.id`). Tienen PK `uuid` cuentas_bancarias, metodos_pago_oneclick, perfiles, reprogramaciones_trabajo, trabajador_horarios, trabajadores, verificacion_eventos; `intentos_pin_inicio` usa `bigint` identidad. Las tablas 1:1 usan la FK como PK (`trabajadores`, `cuentas_bancarias`, `metodos_pago_oneclick`, `pines_inicio_trabajo`, `bloqueos_pin_inicio`, `ubicacion_en_vivo`), y las de catálogo del profesional usan PK compuesta (trabajador_precios, trabajador_servicios, trabajador_servicios_extra).
-- **Seguridad por filas.** RLS está activo en 52 de 52 tablas, con 108 políticas. Las tablas sensibles (`app_config`, `bloqueos_pin_inicio`, `intentos_pin_inicio`, `metodos_pago_oneclick`) no tienen políticas para el cliente: solo se acceden con funciones o con service_role.
-- **Funciones SECURITY DEFINER.** 119 de las 148 funciones de public son SECURITY DEFINER. Las escrituras con reglas de negocio (transiciones de trabajo, PIN, pagos, escrow, reseñas, reprogramación) pasan por estas RPC, que validan al usuario con auth.uid() antes de escribir. Así una tabla no queda abierta a un UPDATE directo.
-- **Columnas id_usuario de texto.** Hasta la migración 20261115234447, `trabajador_precios.id_usuario` y `trabajador_servicios_extra.id_usuario` eran `text` sin FK. La auditoría 20261116042559 las pasó a `uuid` con FK a `trabajadores.id_usuario` (ON DELETE CASCADE), y hoy son relaciones físicas. Quedan como relaciones lógicas, dibujadas con línea punteada, las columnas de la tabla siguiente.
+- **Claves primarias.** `perfiles.id` es `uuid` porque es la misma clave de `auth.users`. La mayoría de las tablas usa `id text` (42 tablas): la app y las funciones generan el identificador (un UUID en texto, un slug como `comunas.id` o un código como `paises.id`). Tienen PK `uuid` cuentas_bancarias, encuestas_testing, metodos_pago_oneclick, perfiles, reprogramaciones_trabajo, trabajador_horarios, trabajadores, verificacion_eventos; `intentos_pin_inicio` usa `bigint` identidad. Las tablas 1:1 usan la FK como PK (`trabajadores`, `cuentas_bancarias`, `metodos_pago_oneclick`, `pines_inicio_trabajo`, `bloqueos_pin_inicio`, `ubicacion_en_vivo`), y las de catálogo del profesional usan PK compuesta (encuesta_testing_respuestas, propuesta_cotizacion_items, trabajador_horas_publicadas, trabajador_precios, trabajador_servicios, trabajador_servicios_extra).
+- **Seguridad por filas.** RLS está activo en 57 de 57 tablas, con 129 políticas. Las tablas sensibles (`app_config`, `bloqueos_pin_inicio`, `intentos_pin_inicio`, `metodos_pago_oneclick`) no tienen políticas para el cliente: solo se acceden con funciones o con service_role.
+- **Funciones SECURITY DEFINER.** 120 de las 150 funciones de public son SECURITY DEFINER. Las escrituras con reglas de negocio (transiciones de trabajo, PIN, pagos, escrow, reseñas, reprogramación) pasan por estas RPC, que validan al usuario con auth.uid() antes de escribir. Así una tabla no queda abierta a un UPDATE directo.
+- **Relaciones físicas y lógicas.** Los precios, los servicios extra, los oficios y los horarios del profesional apuntan por FK a `trabajadores.id_usuario`, y `liquidaciones.id_trabajador` e `id_operador` son `uuid` con FK a `perfiles`. Quedan como relaciones lógicas, dibujadas con línea punteada, las columnas de la tabla siguiente.
 - **Fechas.** Varias columnas `creado_en` y `actualizado_en` son `text`, herencia de la primera versión del esquema. La auditoría agregó CHECK `es_marca_tiempo_iso(...)` para que siempre guarden ISO 8601. Las tablas nuevas usan `timestamptz`.
 - **Estados.** No hay ENUM. Los conjuntos cerrados (estado del trabajo, del pago, de la disputa, etc.) se restringen con CHECK, que se amplía en una migración sin recrear tipos.
 
 | Relación lógica (sin FK) | Apunta a | Motivo |
 |---|---|---|
-| `liquidaciones.id_trabajador` | `perfiles.id` | profesional liquidado; text que guarda el uuid del perfil |
-| `liquidaciones.id_operador` | `perfiles.id` | administrador que confirmó la transferencia; text con uuid o 'sistema' |
 | `metodos_pago_oneclick.id_trabajo_pendiente` | `trabajos.id` | trabajo que espera la inscripción Oneclick para cobrarse |
 | `bloqueos_pin_inicio.pin_ok_usuario` | `perfiles.id` | usuario que validó el PIN (ventana pin_ok_hasta) |
 | `trabajos.id_trabajador, id_sku_servicio` | `trabajador_precios.id_usuario, codigo` | SKU de precio elegido; también admite 'tier_<n>', por eso no es FK |
-| `trabajador_servicios.categoria_servicio` | `servicios.categoria` | categoría ofrecida; servicios.categoria no es única |
 | `notificaciones.id_relacionado` | (varias) | id de trabajo, pago, disputa u otra entidad según notificaciones.tipo |
 | `acciones_pendientes.id_entidad` | (varias) | id de la entidad indicada en tipo_entidad (cola offline) |
 | `tickets_soporte.nombre_cliente / nombre_trabajador` | (varias) | nombres copiados (instantánea) para el ticket |
@@ -218,84 +223,91 @@ Se lee «padre ─ hijo»: `1 ─ 0..N` es un padre obligatorio con cero o más 
 
 | Dominio | FK (hija) | Referencia (padre) | Cardinalidad | ON DELETE |
 |---|---|---|---|---|
-| Administración, moderación y auditoría | `acciones_pendientes.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Administración, moderación y auditoría | `banderas_funcionalidad.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | CASCADE |
-| Administración, moderación y auditoría | `eventos_abuso.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Administración, moderación y auditoría | `eventos_analitica.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
-| Administración, moderación y auditoría | `registros_error_app.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | NO ACTION |
-| Administración, moderación y auditoría | `reportes.id_reportante` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Administración, moderación y auditoría | `reportes.id_usuario_reportado` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Calificaciones y ranking | `calificaciones.id_calificado` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Calificaciones y ranking | `calificaciones.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Calificaciones y ranking | `calificaciones.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
-| Calificaciones y ranking | `calificaciones_cliente.id_cliente` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Calificaciones y ranking | `calificaciones_cliente.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Calificaciones y ranking | `calificaciones_cliente.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
-| Calificaciones y ranking | `eventos_ranking.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Calificaciones y ranking | `eventos_ranking.id_trabajo` | `trabajos.id` | 0..1 ─ 0..N | SET NULL |
-| Calificaciones y ranking | `senales_resena.id_calificacion` | `calificaciones.id` | 1 ─ 0..N | CASCADE |
-| Calificaciones y ranking | `senales_resena.resuelto_por` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
-| Comunicación, notificaciones, disputas y soporte | `disputa_mensajes.id_autor` | `perfiles.id` | 0..1 ─ 0..N | NO ACTION |
-| Comunicación, notificaciones, disputas y soporte | `disputa_mensajes.id_disputa` | `disputas.id` | 1 ─ 0..N | CASCADE |
-| Comunicación, notificaciones, disputas y soporte | `disputas.abierta_por` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Comunicación, notificaciones, disputas y soporte | `disputas.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Comunicación, notificaciones, disputas y soporte | `disputas.resuelta_por` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
-| Comunicación, notificaciones, disputas y soporte | `mensajes.id_destinatario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Comunicación, notificaciones, disputas y soporte | `mensajes.id_remitente` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Comunicación, notificaciones, disputas y soporte | `mensajes.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Comunicación, notificaciones, disputas y soporte | `notificaciones.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Comunicación, notificaciones, disputas y soporte | `tickets_soporte.id_trabajo` | `trabajos.id` | 0..1 ─ 0..N | SET NULL |
-| Pagos, escrow, liquidaciones y cuentas bancarias | `cuentas_bancarias.id_usuario` | `perfiles.id` | 1 ─ 0..1 | CASCADE |
-| Pagos, escrow, liquidaciones y cuentas bancarias | `liquidaciones.id_pago` | `pagos.id` | 1 ─ 0..1 | NO ACTION |
-| Pagos, escrow, liquidaciones y cuentas bancarias | `liquidaciones.id_trabajo` | `trabajos.id` | 1 ─ 0..N | NO ACTION |
-| Pagos, escrow, liquidaciones y cuentas bancarias | `metodos_pago_oneclick.id_usuario` | `perfiles.id` | 1 ─ 0..1 | CASCADE |
-| Pagos, escrow, liquidaciones y cuentas bancarias | `ordenes_cambio.id_pago` | `pagos.id` | 0..1 ─ 0..N | SET NULL |
-| Pagos, escrow, liquidaciones y cuentas bancarias | `ordenes_cambio.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Pagos, escrow, liquidaciones y cuentas bancarias | `ordenes_cambio.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Pagos, escrow, liquidaciones y cuentas bancarias | `pagos.id_orden_cambio` | `ordenes_cambio.id` | 0..1 ─ 0..N | SET NULL |
-| Pagos, escrow, liquidaciones y cuentas bancarias | `pagos.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Profesionales, servicios y precios | `configuraciones_servicio.id_servicio` | `servicios.id` | 1 ─ 0..1 | CASCADE |
-| Profesionales, servicios y precios | `impulsos.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Profesionales, servicios y precios | `portafolio_trabajador.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Profesionales, servicios y precios | `trabajador_horarios.id_usuario` | `trabajadores.id_usuario` | 1 ─ 0..N | CASCADE |
-| Profesionales, servicios y precios | `trabajador_precios.id_usuario` | `trabajadores.id_usuario` | 1 ─ 0..N | CASCADE |
-| Profesionales, servicios y precios | `trabajador_servicios.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Profesionales, servicios y precios | `trabajador_servicios_extra.id_usuario` | `trabajadores.id_usuario` | 1 ─ 0..N | CASCADE |
-| Profesionales, servicios y precios | `trabajadores.id_comuna` | `comunas.id` | 0..1 ─ 0..N | SET NULL |
-| Profesionales, servicios y precios | `trabajadores.id_region` | `regiones.id` | 0..1 ─ 0..N | SET NULL |
-| Profesionales, servicios y precios | `trabajadores.id_usuario` | `perfiles.id` | 1 ─ 0..1 | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `acuerdos_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `acuerdos_trabajo.propuesto_por` | `perfiles.id` | 1 ─ 0..N | NO ACTION |
-| Trabajos, reservas, reprogramación y PIN | `bloqueos_pin_inicio.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `cancelaciones_trabajo.cancelado_por` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `cancelaciones_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `fotos_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `intentos_pin_inicio.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `intentos_pin_inicio.id_usuario` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
-| Trabajos, reservas, reprogramación y PIN | `pines_inicio_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `propuestas_cotizacion.id_trabajador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `propuestas_cotizacion.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `reprogramaciones_trabajo.id_trabajo` | `trabajos.id` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `reprogramaciones_trabajo.propuesta_por` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `reprogramaciones_trabajo.respondida_por` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
-| Trabajos, reservas, reprogramación y PIN | `trabajos.id_comuna` | `comunas.id` | 0..1 ─ 0..N | SET NULL |
-| Trabajos, reservas, reprogramación y PIN | `trabajos.id_cotizacion_seleccionada` | `propuestas_cotizacion.id` | 0..1 ─ 0..N | SET NULL |
-| Trabajos, reservas, reprogramación y PIN | `trabajos.id_servicio` | `servicios.id` | 0..1 ─ 0..N | SET NULL |
-| Trabajos, reservas, reprogramación y PIN | `trabajos.id_trabajador` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
-| Trabajos, reservas, reprogramación y PIN | `trabajos.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `ubicacion_en_vivo.id_trabajador` | `trabajadores.id_usuario` | 1 ─ 0..N | CASCADE |
-| Trabajos, reservas, reprogramación y PIN | `ubicacion_en_vivo.id_trabajo` | `trabajos.id` | 1 ─ 0..1 | CASCADE |
-| Usuarios, autenticación y territorio | `bloqueos_usuario.id_bloqueado` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Usuarios, autenticación y territorio | `bloqueos_usuario.id_bloqueador` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Usuarios, autenticación y territorio | `codigos_restablecimiento.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Usuarios, autenticación y territorio | `comunas.id_region` | `regiones.id` | 1 ─ 0..N | NO ACTION |
-| Usuarios, autenticación y territorio | `consentimientos_usuario.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Usuarios, autenticación y territorio | `dispositivos_push.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Usuarios, autenticación y territorio | `perfiles.id` | `auth.users.id` | 1 ─ 0..1 | CASCADE |
-| Usuarios, autenticación y territorio | `regiones.id_pais` | `paises.id` | 1 ─ 0..N | NO ACTION |
-| Usuarios, autenticación y territorio | `suscripciones.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
-| Usuarios, autenticación y territorio | `verificacion_eventos.id_actor` | `perfiles.id` | 0..1 ─ 0..N | SET NULL |
-| Usuarios, autenticación y territorio | `verificacion_eventos.id_usuario` | `perfiles.id` | 1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `acciones_pendientes.id_usuario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `banderas_funcionalidad.id_usuario` | `perfiles.{id}` | 0..1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `encuesta_testing_respuestas.id_encuesta` | `encuestas_testing.{id}` | 1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `encuestas_testing.id_usuario` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Administración, moderación y auditoría | `eventos_abuso.id_usuario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `eventos_analitica.id_usuario` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Administración, moderación y auditoría | `registros_error_app.id_usuario` | `perfiles.{id}` | 0..1 ─ 0..N | NO ACTION |
+| Administración, moderación y auditoría | `reportes.id_reportante` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Administración, moderación y auditoría | `reportes.id_usuario_reportado` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones.id_calificado` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones.id_usuario` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Calificaciones y ranking | `calificaciones_cliente.id_cliente` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones_cliente.id_trabajador` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `calificaciones_cliente.id_trabajo` | `trabajos.{id}` | 1 ─ 0..1 | CASCADE |
+| Calificaciones y ranking | `eventos_ranking.id_trabajador` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `eventos_ranking.id_trabajo` | `trabajos.{id}` | 0..1 ─ 0..N | SET NULL |
+| Calificaciones y ranking | `senales_resena.id_calificacion` | `calificaciones.{id}` | 1 ─ 0..N | CASCADE |
+| Calificaciones y ranking | `senales_resena.resuelto_por` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Comunicación, notificaciones, disputas y soporte | `disputa_mensajes.id_autor` | `perfiles.{id}` | 0..1 ─ 0..N | NO ACTION |
+| Comunicación, notificaciones, disputas y soporte | `disputa_mensajes.id_disputa` | `disputas.{id}` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `disputas.abierta_por` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `disputas.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `disputas.resuelta_por` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Comunicación, notificaciones, disputas y soporte | `mensajes.id_destinatario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `mensajes.id_remitente` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `mensajes.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `notificaciones.id_usuario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Comunicación, notificaciones, disputas y soporte | `tickets_soporte.id_trabajo` | `trabajos.{id}` | 0..1 ─ 0..N | SET NULL |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `cuentas_bancarias.id_usuario` | `perfiles.{id}` | 1 ─ 0..1 | CASCADE |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `liquidaciones.id_operador` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `liquidaciones.id_pago` | `pagos.{id}` | 1 ─ 0..1 | NO ACTION |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `liquidaciones.id_trabajador` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `liquidaciones.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | NO ACTION |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `metodos_pago_oneclick.id_usuario` | `perfiles.{id}` | 1 ─ 0..1 | CASCADE |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `ordenes_cambio.id_pago` | `pagos.{id}` | 0..1 ─ 0..N | SET NULL |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `ordenes_cambio.id_trabajador` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `ordenes_cambio.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `pagos.id_orden_cambio` | `ordenes_cambio.{id}` | 0..1 ─ 0..N | SET NULL |
+| Pagos, escrow, liquidaciones y cuentas bancarias | `pagos.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `configuraciones_servicio.id_servicio` | `servicios.{id}` | 1 ─ 0..1 | CASCADE |
+| Profesionales, servicios y precios | `impulsos.id_trabajador` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `portafolio_trabajador.id_trabajador` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `servicios.categoria` | `categorias_servicio.{id}` | 1 ─ 0..N | NO ACTION |
+| Profesionales, servicios y precios | `trabajador_horarios.id_usuario` | `trabajadores.{id_usuario}` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajador_horas_publicadas.id_usuario` | `trabajadores.{id_usuario}` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajador_precios.id_usuario` | `trabajadores.{id_usuario}` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajador_servicios.categoria_servicio` | `categorias_servicio.{id}` | 1 ─ 0..N | NO ACTION |
+| Profesionales, servicios y precios | `trabajador_servicios.id_trabajador` | `trabajadores.{id_usuario}` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajador_servicios_extra.id_usuario` | `trabajadores.{id_usuario}` | 1 ─ 0..N | CASCADE |
+| Profesionales, servicios y precios | `trabajadores.id_comuna` | `comunas.{id}` | 0..1 ─ 0..N | SET NULL |
+| Profesionales, servicios y precios | `trabajadores.id_usuario` | `perfiles.{id}` | 1 ─ 0..1 | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `acuerdos_trabajo.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `acuerdos_trabajo.propuesto_por` | `perfiles.{id}` | 1 ─ 0..N | NO ACTION |
+| Trabajos, reservas, reprogramación y PIN | `bloqueos_pin_inicio.id_trabajo` | `trabajos.{id}` | 1 ─ 0..1 | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `cancelaciones_trabajo.cancelado_por` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `cancelaciones_trabajo.id_trabajo` | `trabajos.{id}` | 1 ─ 0..1 | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `fotos_trabajo.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `intentos_pin_inicio.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `intentos_pin_inicio.id_usuario` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `pines_inicio_trabajo.id_trabajo` | `trabajos.{id}` | 1 ─ 0..1 | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `propuesta_cotizacion_items.id_propuesta` | `propuestas_cotizacion.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `propuestas_cotizacion.id_trabajador` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `propuestas_cotizacion.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `reprogramaciones_trabajo.id_trabajo` | `trabajos.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `reprogramaciones_trabajo.propuesta_por` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `reprogramaciones_trabajo.respondida_por` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_comuna` | `comunas.{id}` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_cotizacion_seleccionada` | `propuestas_cotizacion.{id}` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_servicio` | `servicios.{id}` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_trabajador` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Trabajos, reservas, reprogramación y PIN | `trabajos.id_usuario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `ubicacion_en_vivo.id_trabajador` | `trabajadores.{id_usuario}` | 1 ─ 0..N | CASCADE |
+| Trabajos, reservas, reprogramación y PIN | `ubicacion_en_vivo.id_trabajo` | `trabajos.{id}` | 1 ─ 0..1 | CASCADE |
+| Usuarios, autenticación y territorio | `bloqueos_usuario.id_bloqueado` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `bloqueos_usuario.id_bloqueador` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `codigos_restablecimiento.id_usuario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `comunas.id_region` | `regiones.{id}` | 1 ─ 0..N | NO ACTION |
+| Usuarios, autenticación y territorio | `consentimientos_usuario.id_usuario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `dispositivos_push.id_usuario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `perfiles.id` | `auth.users.{id}` | 1 ─ 0..1 | CASCADE |
+| Usuarios, autenticación y territorio | `regiones.id_pais` | `paises.{id}` | 1 ─ 0..N | NO ACTION |
+| Usuarios, autenticación y territorio | `suscripciones.id_usuario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
+| Usuarios, autenticación y territorio | `verificacion_eventos.id_actor` | `perfiles.{id}` | 0..1 ─ 0..N | SET NULL |
+| Usuarios, autenticación y territorio | `verificacion_eventos.id_usuario` | `perfiles.{id}` | 1 ─ 0..N | CASCADE |
 
 ## 3. Columnas por tabla
 
@@ -761,7 +773,7 @@ Comuna de cobertura. Su identificador es el slug usado por trabajos y trabajador
 | Columna | Tipo | Restricciones | Nota |
 |---------|------|---------------|------|
 | `id` | `text` | pk, not null |  |
-| `id_region` | `text` | fk → regiones.id, not null |  |
+| `id_region` | `text` | fk → regiones.id, not null, unique |  |
 | `nombre` | `text` | not null |  |
 | `latitud` | `double precision` |  |  |
 | `longitud` | `double precision` |  |  |
@@ -787,7 +799,7 @@ CHECK:
 
 ### 3.18 trabajadores
 
-Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en tablas hijas; los JSON niveles_precio y servicios_personalizados son solo formato de escritura (un trigger los parte a filas). es_elite es una columna GENERATED. La agenda semanal está en trabajador_horarios; usa_horario enciende el filtro. pausa_por_trabajo queda en true cuando un trabajo activo dejó disponible = 0, y se restablece al terminar.
+Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios adicionales y oficios están en trabajador_precios, trabajador_servicios_extra y trabajador_servicios; la región se obtiene desde la comuna. es_elite es una columna GENERATED. La agenda semanal está en trabajador_horarios y trabajador_horas_publicadas; usa_horario enciende el filtro. pausa_por_trabajo queda en true cuando un trabajo activo dejó disponible = 0, y se restablece al terminar.
 
 | Columna | Tipo | Restricciones | Nota |
 |---------|------|---------------|------|
@@ -797,10 +809,7 @@ Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en tablas hi
 | `calificacion` | `numeric(4,2)` | not null, default: 0 |  |
 | `disponible` | `integer` | not null, default: 1 |  |
 | `tarifa_visita` | `numeric(12,0)` | not null, default: 15000 |  |
-| `categoria_servicio` | `text` | not null, default: 'general' |  |
-| `niveles_precio` | `jsonb` | not null, default: '{}' |  |
 | `conteo_rechazos` | `integer` | not null, default: 0 | Rechazos de invitaciones; penaliza orden en listados (no visible en UI) |
-| `servicios_personalizados` | `jsonb` | not null, default: '[]' | Servicios adicionales definidos por el trabajador (JSON array) |
 | `precios_configurados` | `integer` | not null, default: 0 | 1 si el trabajador completó la guía de configuración de precios |
 | `zona_trabajo` | `text` |  | Comuna o zona donde atiende el trabajador |
 | `estado_verificacion` | `text` | not null, default: 'pendiente' |  |
@@ -818,7 +827,6 @@ Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en tablas hi
 | `trabajos_completados` | `integer` | not null, default: 0 |  |
 | `es_elite` | `boolean` | generated always | Destacado del mes: nota >= 4.7 y al menos 5 trabajos completados. GENERATED ALWAYS AS ((COALESCE(calificacion, (0)::numeric) >= 4.7) AND (trabajos_completados >= 5)) |
 | `id_comuna` | `text` | fk → comunas.id | Comuna de cobertura. zona_trabajo sigue como texto de UI. |
-| `id_region` | `text` | fk → regiones.id | Cobertura regional (p. ej. RM todas). |
 | `usa_horario` | `boolean` | not null, default: false |  |
 | `pausa_por_trabajo` | `boolean` | not null, default: false | true cuando disponible = 0 lo dejó un trabajo activo; se restablece al terminar. |
 
@@ -840,25 +848,21 @@ CHECK:
 
 Índices:
 
-- `CREATE INDEX idx_trabajadores_categoria ON public.trabajadores USING btree (categoria_servicio)`
 - `CREATE INDEX idx_trabajadores_id_comuna_fkey ON public.trabajadores USING btree (id_comuna)`
-- `CREATE INDEX idx_trabajadores_id_region_fkey ON public.trabajadores USING btree (id_region)`
 - `CREATE INDEX trabajadores_base_geo_idx ON public.trabajadores USING btree (latitud_base, longitud_base) WHERE ((latitud_base IS NOT NULL) AND (longitud_base IS NOT NULL))`
 - `CREATE INDEX trabajadores_calificacion_idx ON public.trabajadores USING btree (calificacion DESC NULLS LAST) WHERE (COALESCE(disponible, 0) = 1)`
-- `CREATE INDEX trabajadores_catalog_list_idx ON public.trabajadores USING btree (categoria_servicio, calificacion DESC NULLS LAST, id_usuario) WHERE ((COALESCE(disponible, 0) = 1) AND (COALESCE(precios_configurados, 0) = 1))`
-- `CREATE INDEX trabajadores_disponible_cat_idx ON public.trabajadores USING btree (disponible, categoria_servicio) WHERE (COALESCE(disponible, 0) = 1)`
 - `CREATE INDEX trabajadores_score_listado_idx ON public.trabajadores USING btree (score_listado DESC, id_usuario)`
 - `CREATE INDEX trabajadores_zona_trabajo_idx ON public.trabajadores USING btree (zona_trabajo) WHERE ((COALESCE(disponible, 0) = 1) AND (zona_trabajo IS NOT NULL))`
 
 **RLS.** RLS activo. El listado público solo muestra fichas disponibles con precios configurados. El dueño, un administrador o el cliente con un trabajo conjunto también pueden leer la ficha. El UPDATE es del dueño o de un administrador; campos como verificación, score y pausa están protegidos por trigger. Políticas: INSERT «trabajadores_insert», SELECT «trabajadores_select_authenticated», UPDATE «trabajadores_update».
 
-**Forma normal: 2FN con datos derivados documentados.** Ficha 1:1 del profesional. Las listas (precios, servicios extra, oficios) viven en tablas hijas en 4FN. id_region depende de id_comuna (dependencia transitiva), así que en rigor la ficha no llega a 3FN. Dato repetido a propósito: niveles_precio y servicios_personalizados son el formato de escritura de la app; un trigger los parte en trabajador_precios y trabajador_servicios_extra. calificacion, trabajos_completados, score_listado y es_elite son valores calculados para ordenar el catálogo sin recalcular en cada consulta. id_region se deduce de id_comuna cuando hay comuna (diferencias: 0).
+**Forma normal: BCNF con valores calculados documentados.** Ficha 1:1 del profesional. Los precios, los servicios extra y los oficios viven en tablas hijas en 4FN; la región se obtiene desde la comuna. Dato repetido a propósito: calificacion, trabajos_completados, score_listado y es_elite son valores calculados para ordenar el catálogo sin recalcular en cada consulta.
 
-**Relaciones en palabras.** id_comuna apunta a comunas (si se borra la fila de comunas, la columna queda vacía y el registro se conserva); id_region apunta a regiones (si se borra la fila de regiones, la columna queda vacía y el registro se conserva); id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
+**Relaciones en palabras.** id_comuna apunta a comunas (si se borra la fila de comunas, la columna queda vacía y el registro se conserva); id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
 ### 3.19 trabajador_precios
 
-Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE) desde la auditoría 2026-11-16; antes era text sin FK.
+Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE). Es la única fuente de los precios del profesional.
 
 | Columna | Tipo | Restricciones | Nota |
 |---------|------|---------------|------|
@@ -870,15 +874,15 @@ CHECK:
 
 - `trabajador_precios_monto_clp_check`: `CHECK ((monto_clp >= (0)::numeric))`
 
-**RLS.** RLS activo. El dueño y el catálogo (según política de precios) leen los montos ya publicados; la escritura es del dueño o de un trigger que parte el JSON. Políticas: ALL «trabajador_precios_propio».
+**RLS.** RLS activo. Un usuario con sesión lee los precios de los profesionales que existen; solo el dueño crea, cambia o borra los suyos. Políticas: DELETE «trabajador_precios_delete», INSERT «trabajador_precios_insert», SELECT «trabajador_precios_select», UPDATE «trabajador_precios_update».
 
-**Forma normal: 4FN.** Nace de separar la lista de precios del profesional (antes un JSON en trabajadores). Clave (id_usuario, codigo). Desde la auditoría id_usuario es uuid con clave foránea a trabajadores.
+**Forma normal: 4FN.** Lista de precios del profesional separada de su ficha. Clave (id_usuario, codigo); id_usuario es uuid con clave foránea a trabajadores.
 
 **Relaciones en palabras.** id_usuario apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
 ### 3.20 trabajador_servicios_extra
 
-Servicio adicional definido por el profesional. id_usuario es uuid con clave foránea a trabajadores, igual que en trabajador_precios.
+Servicio adicional definido por el profesional (título, subtítulo, monto y unidad fijo o por m²). id_usuario es uuid con clave foránea a trabajadores. Es la única fuente de sus servicios adicionales.
 
 | Columna | Tipo | Restricciones | Nota |
 |---------|------|---------------|------|
@@ -894,58 +898,83 @@ CHECK:
 - `trabajador_servicios_extra_monto_clp_check`: `CHECK ((monto_clp >= (0)::numeric))`
 - `trabajador_servicios_extra_unidad_check`: `CHECK ((unidad = ANY (ARRAY['fijo'::text, 'por_m2'::text])))`
 
-**RLS.** RLS activo. Servicios extra del profesional; misma idea que los precios. Políticas: ALL «trabajador_servicios_extra_propio».
+**RLS.** RLS activo. Misma regla que los precios: lectura con sesión, escritura solo del dueño. Políticas: DELETE «trabajador_servicios_extra_delete», INSERT «trabajador_servicios_extra_insert», SELECT «trabajador_servicios_extra_select», UPDATE «trabajador_servicios_extra_update».
 
-**Forma normal: 4FN.** Servicios adicionales del profesional, separados del JSON servicios_personalizados. Desde la auditoría id_usuario es uuid con clave foránea.
+**Forma normal: 4FN.** Servicios adicionales del profesional, separados de su ficha. id_usuario es uuid con clave foránea a trabajadores.
 
 **Relaciones en palabras.** id_usuario apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
 ### 3.21 trabajador_servicios
 
-Oficios del catálogo que el profesional declara atender.
+Oficios del catálogo que el profesional declara atender. categoria_servicio es clave foránea a categorias_servicio.
 
 | Columna | Tipo | Restricciones | Nota |
 |---------|------|---------------|------|
-| `id_trabajador` | `uuid` | pk, fk → perfiles.id, not null |  |
-| `categoria_servicio` | `text` | pk, not null |  |
+| `id_trabajador` | `uuid` | pk, fk → trabajadores.id_usuario, not null |  |
+| `categoria_servicio` | `text` | pk, fk → categorias_servicio.id, not null |  |
+
+Índices:
+
+- `CREATE INDEX trabajador_servicios_categoria_idx ON public.trabajador_servicios USING btree (categoria_servicio, id_trabajador)`
 
 **RLS.** RLS activo. Oficios declarados: lectura de catálogo y escritura del dueño. Políticas: DELETE «trabajador_servicios_delete», INSERT «trabajador_servicios_insert», SELECT «trabajador_servicios_select», UPDATE «trabajador_servicios_update».
 
-**Forma normal: 4FN.** Lista de oficios del profesional separada de su ficha: un profesional atiende varios oficios, independiente de sus precios. Clave (id_trabajador, categoria_servicio).
+**Forma normal: 4FN.** Lista de oficios del profesional separada de su ficha: un profesional atiende varios oficios, independiente de sus precios. Clave (id_trabajador, categoria_servicio); cada oficio es una categoría de categorias_servicio.
 
-**Relaciones en palabras.** id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
+**Relaciones en palabras.** categoria_servicio apunta a categorias_servicio (no se puede borrar la fila de categorias_servicio mientras tenga registros asociados); id_trabajador apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
 ### 3.22 trabajador_horarios
 
-Plantilla semanal: una fila por día (1 = lunes … 7 = domingo), única por (id_usuario, dia_semana). Solo el dueño lee y escribe (RLS). El cliente consulta los huecos con la RPC horarios_libres_profesional. usa_horario en trabajadores enciende el filtro.
+Ventana de atención semanal: siete filas por profesional, una por día (1 = lunes … 7 = domingo), con hora_inicio y hora_fin, únicas por (id_usuario, dia_semana). Las horas reservables dentro de la ventana están en trabajador_horas_publicadas. usa_horario en trabajadores enciende el filtro.
 
 | Columna | Tipo | Restricciones | Nota |
 |---------|------|---------------|------|
 | `id_usuario` | `uuid` | fk → trabajadores.id_usuario, not null |  |
-| `horarios` | `jsonb` | not null, default: '[]' |  |
 | `actualizado_en` | `timestamptz` | not null, default: now() |  |
 | `id` | `uuid` | pk, not null, default: gen_random_uuid() |  |
-| `dia_semana` | `smallint` |  |  |
-| `hora_inicio` | `time` |  |  |
-| `hora_fin` | `time` |  |  |
-| `activo` | `boolean` | default: true |  |
+| `dia_semana` | `smallint` | not null |  |
+| `hora_inicio` | `time` | not null |  |
+| `hora_fin` | `time` | not null |  |
+| `activo` | `boolean` | not null, default: true |  |
 | `creado_en` | `timestamptz` | default: now() |  |
 
 CHECK:
 
 - `trabajador_horarios_dia_chk`: `CHECK (((dia_semana IS NULL) OR ((dia_semana >= 1) AND (dia_semana <= 7))))`
+- `trabajador_horarios_rango_chk`: `CHECK (((NOT activo) OR (hora_inicio < hora_fin)))`
 
 Índices:
 
 - `CREATE UNIQUE INDEX trabajador_horarios_usuario_dia_uidx ON public.trabajador_horarios USING btree (id_usuario, dia_semana)`
 
-**RLS.** RLS activo. SELECT y escritura solo para el dueño de la ficha (o un administrador). El cliente no lee esta tabla: usa horarios_libres_profesional. Políticas: DELETE «trabajador_horarios_delete», INSERT «trabajador_horarios_insert», SELECT «trabajador_horarios_select», UPDATE «trabajador_horarios_update».
+**RLS.** RLS activo. SELECT para anon y authenticated (la ventana semanal es pública para mostrar la agenda); insertar, cambiar y borrar es solo del dueño de la ficha o de un administrador. Políticas: DELETE «trabajador_horarios_delete», INSERT «trabajador_horarios_insert», SELECT «trabajador_horarios_select», UPDATE «trabajador_horarios_update».
 
-**Forma normal: BCNF con una columna heredada.** La forma actual es una fila por día (id_usuario, dia_semana) con hora de inicio y fin: cumple BCNF. Dato repetido a propósito: horarios (jsonb) es el formato antiguo de la semana completa que aún leen versiones previas de la app; la fuente de verdad son las columnas por día.
+**Forma normal: BCNF.** Una fila por día de la semana (id_usuario, dia_semana) con hora de inicio y de fin: la clave candidata determina el resto de la fila.
 
 **Relaciones en palabras.** id_usuario apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
-### 3.23 portafolio_trabajador
+### 3.23 trabajador_horas_publicadas
+
+Horas que el profesional publica como reservables en cada día (clave id_usuario, dia_semana, hora). Un trigger de reserva acepta solo horas publicadas y libres. El cliente las ve con la RPC horarios_libres_profesional.
+
+| Columna | Tipo | Restricciones | Nota |
+|---------|------|---------------|------|
+| `id_usuario` | `uuid` | pk, fk → trabajadores.id_usuario, not null |  |
+| `dia_semana` | `smallint` | pk, not null |  |
+| `hora` | `time` | pk, not null |  |
+| `creado_en` | `timestamptz` | not null, default: now() |  |
+
+CHECK:
+
+- `trabajador_horas_publicadas_dia_semana_check`: `CHECK (((dia_semana >= 1) AND (dia_semana <= 7)))`
+
+**RLS.** RLS activo. SELECT para anon y authenticated (las horas publicadas se muestran al reservar); insertar, cambiar y borrar es solo del dueño de la ficha o de un administrador, por la RPC guardar_horarios_propios. Políticas: DELETE «trabajador_horas_publicadas_delete», INSERT «trabajador_horas_publicadas_insert», SELECT «trabajador_horas_publicadas_select», UPDATE «trabajador_horas_publicadas_update».
+
+**Forma normal: 4FN.** Lista de horas reservables del profesional, separada de su ventana diaria. Clave (id_usuario, dia_semana, hora).
+
+**Relaciones en palabras.** id_usuario apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
+
+### 3.24 portafolio_trabajador
 
 Foto o medio del portafolio de un profesional.
 
@@ -973,7 +1002,7 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### 3.24 impulsos
+### 3.25 impulsos
 
 Promoción temporal de visibilidad de un profesional.
 
@@ -1002,7 +1031,27 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### 3.25 servicios
+### 3.26 categorias_servicio
+
+Categorías u oficios del catálogo (gasfitería, electricidad y otros). Las usan servicios y trabajador_servicios.
+
+| Columna | Tipo | Restricciones | Nota |
+|---------|------|---------------|------|
+| `id` | `text` | pk, not null |  |
+| `nombre` | `text` | not null |  |
+| `activa` | `boolean` | not null, default: true |  |
+| `creado_en` | `timestamptz` | not null, default: now() |  |
+
+CHECK:
+
+- `categorias_servicio_id_check`: `CHECK ((id ~ '^[a-z][a-z0-9_]*$'::text))`
+- `categorias_servicio_nombre_check`: `CHECK ((length(btrim(nombre)) > 0))`
+
+**RLS.** RLS activo. Lectura pública de las categorías activas (anon y authenticated; un administrador ve todas). La escritura es de administración. Políticas: DELETE «categorias_servicio_admin_delete», INSERT «categorias_servicio_admin_insert», UPDATE «categorias_servicio_admin_update», SELECT «categorias_servicio_select», SELECT «categorias_servicio_select_anon».
+
+**Forma normal: BCNF.** La clave es el id de la categoría; nombre y activa dependen solo de ella.
+
+### 3.27 servicios
 
 Catálogo de oficios que la plataforma ofrece.
 
@@ -1011,7 +1060,7 @@ Catálogo de oficios que la plataforma ofrece.
 | `id` | `text` | pk, not null |  |
 | `nombre` | `text` | not null |  |
 | `descripcion` | `text` |  |  |
-| `categoria` | `text` | not null, default: 'general' |  |
+| `categoria` | `text` | fk → categorias_servicio.id, not null, default: 'general' |  |
 | `activo` | `integer` | not null, default: 1 |  |
 | `requiere_certificacion` | `integer` | not null, default: 0 |  |
 | `modelo_precio` | `text` | not null, default: 'por_hora' |  |
@@ -1033,9 +1082,11 @@ CHECK:
 
 **RLS.** RLS activo. Lectura pública del catálogo de oficios. La escritura es de administración. Políticas: DELETE «servicios_admin_delete», INSERT «servicios_admin_insert», UPDATE «servicios_admin_update», SELECT «servicios_select», SELECT «servicios_select_authenticated».
 
-**Forma normal: BCNF.** La clave primaria es un identificador propio y cada columna describe solo a esa fila; ninguna columna depende de otra que no sea clave.
+**Forma normal: BCNF.** La clave es el id del servicio; la categoría es una clave foránea a categorias_servicio.
 
-### 3.26 configuraciones_servicio
+**Relaciones en palabras.** categoria apunta a categorias_servicio (no se puede borrar la fila de categorias_servicio mientras tenga registros asociados).
+
+### 3.28 configuraciones_servicio
 
 Esquema de configuración asociado a un servicio.
 
@@ -1063,7 +1114,7 @@ CHECK:
 
 **Relaciones en palabras.** id_servicio apunta a servicios (si se borra la fila de servicios, también se borran las filas que la usan).
 
-### 3.27 trabajos
+### 3.29 trabajos
 
 Pedido de un cliente a un profesional (o abierto a cotizaciones). estado_pago es una copia derivada del pago principal. La fecha programada se guarda como texto y, desde CU-33, solo cambia por las RPC de reagendamiento (trabajos_fecha_solo_por_rpc). Hay un índice único que impide dos trabajos activos del mismo profesional en el mismo minuto (minuto_utc de fecha_programada).
 
@@ -1071,7 +1122,7 @@ Pedido de un cliente a un profesional (o abierto a cotizaciones). estado_pago es
 |---------|------|---------------|------|
 | `id` | `text` | pk, not null |  |
 | `id_usuario` | `uuid` | fk → perfiles.id, not null |  |
-| `id_trabajador` | `uuid` | fk → perfiles.id |  |
+| `id_trabajador` | `uuid` | fk → perfiles.id, unique |  |
 | `id_servicio` | `text` | fk → servicios.id |  |
 | `estado` | `text` | not null |  |
 | `direccion` | `text` | not null, default: '' |  |
@@ -1120,7 +1171,7 @@ CHECK:
 
 **Relaciones en palabras.** id_servicio apunta a servicios (si se borra la fila de servicios, la columna queda vacía y el registro se conserva); id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajador apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_comuna apunta a comunas (si se borra la fila de comunas, la columna queda vacía y el registro se conserva); id_cotizacion_seleccionada apunta a propuestas_cotizacion (si se borra la fila de propuestas_cotizacion, la columna queda vacía y el registro se conserva).
 
-### 3.28 mensajes
+### 3.30 mensajes
 
 Mensaje del chat de un trabajo.
 
@@ -1153,7 +1204,7 @@ CHECK:
 
 **Relaciones en palabras.** id_destinatario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_remitente apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.29 fotos_trabajo
+### 3.31 fotos_trabajo
 
 Evidencia fotográfica o de video de un trabajo (bucket de evidencias).
 
@@ -1181,7 +1232,7 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.30 calificaciones
+### 3.32 calificaciones
 
 Valoración de un trabajo. Desde la calificación bidireccional admite direccion cliente_a_trabajador o trabajador_a_cliente, con unicidad por (id_trabajo, direccion). Alimenta trabajadores.calificacion.
 
@@ -1221,7 +1272,7 @@ CHECK:
 
 **Relaciones en palabras.** id_calificado apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_usuario apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.31 calificaciones_cliente
+### 3.33 calificaciones_cliente
 
 El profesional nota al cliente. 1:1 con el trabajo. Alimenta perfiles.reputacion_cliente. puntaje es smallint en la base viva.
 
@@ -1252,7 +1303,7 @@ CHECK:
 
 **Relaciones en palabras.** id_cliente apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.32 disputas
+### 3.34 disputas
 
 Disputa abierta sobre un trabajo y su resolución (incluye sugerencia automática y vencimiento).
 
@@ -1295,7 +1346,7 @@ CHECK:
 
 **Relaciones en palabras.** abierta_por apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); resuelta_por apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.33 disputa_mensajes
+### 3.35 disputa_mensajes
 
 Mensajes del hilo de una disputa, de las partes o de soporte.
 
@@ -1318,7 +1369,7 @@ Mensajes del hilo de una disputa, de las partes o de soporte.
 
 **Relaciones en palabras.** id_autor apunta a perfiles (no se puede borrar la fila de perfiles mientras tenga registros asociados); id_disputa apunta a disputas (si se borra la fila de disputas, también se borran las filas que la usan).
 
-### 3.34 acuerdos_trabajo
+### 3.36 acuerdos_trabajo
 
 Acuerdo entre cliente y profesional para rehacer, aceptar o anular un trabajo. Como máximo un acuerdo pendiente por trabajo.
 
@@ -1351,7 +1402,7 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan); propuesto_por apunta a perfiles (no se puede borrar la fila de perfiles mientras tenga registros asociados).
 
-### 3.35 cancelaciones_trabajo
+### 3.37 cancelaciones_trabajo
 
 Como máximo una cancelación por trabajo.
 
@@ -1379,7 +1430,7 @@ CHECK:
 
 **Relaciones en palabras.** cancelado_por apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.36 tickets_soporte
+### 3.38 tickets_soporte
 
 Ticket de soporte asociado a un trabajo.
 
@@ -1409,7 +1460,7 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajo apunta a trabajos (si se borra la fila de trabajos, la columna queda vacía y el registro se conserva).
 
-### 3.37 ubicacion_en_vivo
+### 3.39 ubicacion_en_vivo
 
 GPS en vivo durante el trabajo. 1:1 con el trabajo.
 
@@ -1437,7 +1488,7 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan); id_trabajador apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
-### 3.38 reprogramaciones_trabajo
+### 3.40 reprogramaciones_trabajo
 
 Historial de propuestas para reagendar un trabajo (CU-33). Como máximo una propuesta pendiente por trabajo. Solo se escribe por las RPC proponer_reprogramacion, responder_reprogramacion y retirar_reprogramacion.
 
@@ -1475,7 +1526,7 @@ CHECK:
 
 **Relaciones en palabras.** propuesta_por apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); respondida_por apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.39 pines_inicio_trabajo
+### 3.41 pines_inicio_trabajo
 
 PIN que el cliente muestra al profesional para iniciar el trabajo (aceptado o en_camino → en_curso). El cliente (o un administrador) puede leerlo; el profesional lo valida con intentar_pin_inicio o transicionar_trabajo. Lo crea el trigger trabajos_crear_pin_inicio.
 
@@ -1495,7 +1546,7 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.40 bloqueos_pin_inicio
+### 3.42 bloqueos_pin_inicio
 
 Contador de intentos fallidos del PIN, bloqueo temporal (15 minutos tras 5 fallos) y ventana en la que el PIN ya fue validado. Escriben solo las funciones SECURITY DEFINER o service_role; un administrador puede leerla.
 
@@ -1518,7 +1569,7 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.41 intentos_pin_inicio
+### 3.43 intentos_pin_inicio
 
 Auditoría de cada intento de PIN de inicio. Escriben solo funciones SECURITY DEFINER; un administrador puede leerla.
 
@@ -1546,9 +1597,9 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan); id_usuario apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva).
 
-### 3.42 propuestas_cotizacion
+### 3.44 propuestas_cotizacion
 
-Cotización que un profesional envía para un trabajo.
+Cotización que un profesional envía para un trabajo. Guarda el total y las horas estimadas; las líneas están en propuesta_cotizacion_items.
 
 | Columna | Tipo | Restricciones | Nota |
 |---------|------|---------------|------|
@@ -1558,13 +1609,14 @@ Cotización que un profesional envía para un trabajo.
 | `monto_total_clp` | `integer` | not null |  |
 | `descripcion` | `text` | not null |  |
 | `validez_hasta` | `text` |  |  |
-| `desglose` | `text` |  |  |
 | `estado` | `text` | not null |  |
 | `creado_en` | `text` | not null |  |
+| `horas_estimadas` | `numeric` |  |  |
 
 CHECK:
 
 - `propuestas_cotizacion_creado_en_iso_chk`: `CHECK (es_marca_tiempo_iso(creado_en))`
+- `propuestas_cotizacion_horas_estimadas_check`: `CHECK (((horas_estimadas IS NULL) OR (horas_estimadas >= (0)::numeric)))`
 - `propuestas_cotizacion_validez_hasta_iso_chk`: `CHECK (es_marca_tiempo_iso(validez_hasta))`
 - `propuestas_monto_chk`: `CHECK ((monto_total_clp > 0))`
 
@@ -1575,11 +1627,34 @@ CHECK:
 
 **RLS.** RLS activo. El cliente del trabajo, el profesional autor o un administrador leen la cotización. El monto no lo cambia el cliente (trigger). Políticas: INSERT «propuestas_insert», SELECT «propuestas_select», UPDATE «propuestas_update».
 
-**Forma normal: BCNF.** desglose es el detalle de la cotización como un documento; el total vive en monto_total_clp.
+**Forma normal: BCNF.** Guarda el total (monto_total_clp) y las horas estimadas; el detalle de la cotización está en propuesta_cotizacion_items, una fila por línea.
 
 **Relaciones en palabras.** id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan); id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### 3.43 pagos
+### 3.45 propuesta_cotizacion_items
+
+Línea de una cotización: concepto y monto, numeradas por propuesta (clave id_propuesta, linea).
+
+| Columna | Tipo | Restricciones | Nota |
+|---------|------|---------------|------|
+| `id_propuesta` | `text` | pk, fk → propuestas_cotizacion.id, not null |  |
+| `linea` | `smallint` | pk, not null |  |
+| `concepto` | `text` | not null |  |
+| `monto` | `numeric` | not null |  |
+
+CHECK:
+
+- `propuesta_cotizacion_items_concepto_check`: `CHECK ((length(btrim(concepto)) > 0))`
+- `propuesta_cotizacion_items_linea_check`: `CHECK ((linea >= 1))`
+- `propuesta_cotizacion_items_monto_check`: `CHECK ((monto >= (0)::numeric))`
+
+**RLS.** RLS activo. Se lee si se puede leer la cotización. Solo el profesional autor crea, cambia o borra líneas, mientras la cotización no esté aceptada ni seleccionada. Políticas: DELETE «propuesta_items_delete», INSERT «propuesta_items_insert», SELECT «propuesta_items_select», UPDATE «propuesta_items_update».
+
+**Forma normal: BCNF.** Clave (id_propuesta, linea): concepto y monto describen esa línea de esa cotización y nada más.
+
+**Relaciones en palabras.** id_propuesta apunta a propuestas_cotizacion (si se borra la fila de propuestas_cotizacion, también se borran las filas que la usan).
+
+### 3.46 pagos
 
 Cobro asociado a un trabajo o a una orden de cambio, con retención (escrow) vía Transbank Webpay / Oneclick. Las columnas alta_nonce_hash, alta_jti y alta_consumido_en sustentan el alta del invitado después del pago: el nonce solo lo tiene el navegador y el jti es de un solo uso. El default de tipo_pago es 'primary' (inglés legado); el índice de un solo pago principal activo busca el valor 'principal'.
 
@@ -1642,7 +1717,7 @@ CHECK:
 
 **Relaciones en palabras.** id_orden_cambio apunta a ordenes_cambio (si se borra la fila de ordenes_cambio, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### 3.44 ordenes_cambio
+### 3.47 ordenes_cambio
 
 Cambio de alcance o de precio durante un trabajo.
 
@@ -1678,7 +1753,7 @@ CHECK:
 
 **Relaciones en palabras.** id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan); id_pago apunta a pagos (si se borra la fila de pagos, la columna queda vacía y el registro se conserva); id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### 3.45 liquidaciones
+### 3.48 liquidaciones
 
 Un pago → una liquidación al profesional. manual = transferencia externa confirmada por admin; khipu/fintoc = PSP futuro.
 
@@ -1687,36 +1762,38 @@ Un pago → una liquidación al profesional. manual = transferencia externa conf
 | `id` | `text` | pk, not null, default: (gen_random_uuid())::text |  |
 | `id_pago` | `text` | fk → pagos.id, not null, unique |  |
 | `id_trabajo` | `text` | fk → trabajos.id, not null |  |
-| `id_trabajador` | `text` |  |  |
+| `id_trabajador` | `uuid` | fk → perfiles.id |  |
 | `monto_clp` | `numeric` | not null |  |
 | `proveedor` | `text` | not null, default: 'manual' |  |
 | `referencia_transferencia` | `text` | not null |  |
 | `notas` | `text` |  |  |
-| `id_operador` | `text` | not null |  |
+| `id_operador` | `uuid` | fk → perfiles.id |  |
 | `creado_en` | `timestamptz` | not null, default: now() |  |
 | `estado_transferencia` | `text` | not null, default: 'transferido' |  |
+| `liberada_por_sistema` | `boolean` | not null, default: false |  |
 
 CHECK:
 
 - `liquidaciones_estado_transferencia_chk`: `CHECK ((estado_transferencia = ANY (ARRAY['pendiente'::text, 'transferido'::text, 'fallido'::text])))`
-- `liquidaciones_id_trabajador_uuid_chk`: `CHECK (((id_trabajador IS NULL) OR (id_trabajador ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text)))`
 - `liquidaciones_monto_clp_check`: `CHECK ((monto_clp > (0)::numeric))`
+- `liquidaciones_operador_chk`: `CHECK (((id_operador IS NOT NULL) OR liberada_por_sistema))`
 - `liquidaciones_proveedor_check`: `CHECK ((proveedor = ANY (ARRAY['manual'::text, 'khipu'::text, 'fintoc'::text, 'conformidad'::text])))`
 
 Índices:
 
 - `CREATE INDEX idx_liquidaciones_id_trabajo_fkey ON public.liquidaciones USING btree (id_trabajo)`
 - `CREATE INDEX liquidaciones_creado_idx ON public.liquidaciones USING btree (creado_en DESC)`
+- `CREATE INDEX liquidaciones_operador_idx ON public.liquidaciones USING btree (id_operador) WHERE (id_operador IS NOT NULL)`
 - `CREATE UNIQUE INDEX liquidaciones_pago_uidx ON public.liquidaciones USING btree (id_pago)`
 - `CREATE INDEX liquidaciones_trabajador_creado_idx ON public.liquidaciones USING btree (id_trabajador, creado_en DESC)`
 
 **RLS.** RLS activo. El profesional ve la liquidación de sus pagos; un administrador ve todas. La confirmación de transferencia es por RPC de admin. Políticas: DELETE «liquidaciones_admin_delete», INSERT «liquidaciones_admin_insert», UPDATE «liquidaciones_admin_update», SELECT «liquidaciones_select».
 
-**Forma normal: BCNF.** id_pago es único (clave candidata) y determina el trabajo y el profesional, así que la tabla cumple BCNF. Dato repetido a propósito: id_trabajo e id_trabajador repiten datos del pago y del trabajo. Es un libro contable: debe conservar a quién se pagó aunque el trabajo cambie. Diferencias: 0.
+**Forma normal: BCNF.** id_pago es único (clave candidata) y determina el trabajo y el profesional, así que la tabla cumple BCNF. id_trabajador e id_operador son uuid con clave foránea a perfiles; liberada_por_sistema marca las liberaciones automáticas, que no tienen operador. Dato repetido a propósito: id_trabajo e id_trabajador repiten datos del pago y del trabajo. Es un libro contable: debe conservar a quién se pagó aunque el trabajo cambie. Diferencias: 0.
 
-**Relaciones en palabras.** id_pago apunta a pagos (no se puede borrar la fila de pagos mientras tenga registros asociados); id_trabajo apunta a trabajos (no se puede borrar la fila de trabajos mientras tenga registros asociados).
+**Relaciones en palabras.** id_operador apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_pago apunta a pagos (no se puede borrar la fila de pagos mientras tenga registros asociados); id_trabajador apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (no se puede borrar la fila de trabajos mientras tenga registros asociados).
 
-### 3.46 metodos_pago_oneclick
+### 3.49 metodos_pago_oneclick
 
 Tarjeta inscrita Oneclick. RLS niega el acceso a anon y authenticated: solo service_role (Edge Functions).
 
@@ -1750,7 +1827,7 @@ CHECK:
 
 **Relaciones en palabras.** id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### 3.47 cuentas_bancarias
+### 3.50 cuentas_bancarias
 
 Datos bancarios del profesional para pagar la liquidación. RLS: solo el dueño y un administrador. No es un dato público.
 
@@ -1775,7 +1852,7 @@ CHECK:
 
 **Relaciones en palabras.** id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### 3.48 app_config
+### 3.51 app_config
 
 Pares clave/valor de configuración (demo_modo, admin_requiere_aal2, etc.). RLS niega el acceso a clientes; lo lee el backend.
 
@@ -1789,7 +1866,7 @@ Pares clave/valor de configuración (demo_modo, admin_requiere_aal2, etc.). RLS 
 
 **Forma normal: BCNF.** Tabla clave-valor: la clave determina el valor y nada más.
 
-### 3.49 ranking_config
+### 3.52 ranking_config
 
 Una fila default. Pesos del listado de profesionales.
 
@@ -1821,7 +1898,7 @@ CHECK:
 
 **Forma normal: BCNF.** Una sola fila de configuración del ranking.
 
-### 3.50 senales_resena
+### 3.53 senales_resena
 
 Señales de reseña dudosa. Un falso positivo baja el peso de esa señal.
 
@@ -1854,7 +1931,7 @@ CHECK:
 
 **Relaciones en palabras.** id_calificacion apunta a calificaciones (si se borra la fila de calificaciones, también se borran las filas que la usan); resuelto_por apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva).
 
-### 3.51 ranking_aprendizaje
+### 3.54 ranking_aprendizaje
 
 Ajuste de los pesos del ranking y las métricas de ese cambio.
 
@@ -1871,7 +1948,7 @@ Ajuste de los pesos del ranking y las métricas de ese cambio.
 
 **Forma normal: BCNF.** Bitácora: pesos antes y después de cada ajuste.
 
-### 3.52 eventos_ranking
+### 3.55 eventos_ranking
 
 Evento que alimenta el ranking de un profesional.
 
@@ -1895,9 +1972,68 @@ Evento que alimenta el ranking de un profesional.
 
 **Relaciones en palabras.** id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajo apunta a trabajos (si se borra la fila de trabajos, la columna queda vacía y el registro se conserva).
 
+### 3.56 encuestas_testing
+
+Encuesta de usabilidad de quienes prueban la app: plataforma, rol, si completó la tarea, satisfacción y comentarios. Las respuestas SUS están en encuesta_testing_respuestas y el puntaje lo calcula la vista encuestas_testing_con_puntaje.
+
+| Columna | Tipo | Restricciones | Nota |
+|---------|------|---------------|------|
+| `id` | `uuid` | pk, not null, default: gen_random_uuid() |  |
+| `creado_en` | `timestamptz` | not null, default: now() |  |
+| `id_usuario` | `uuid` | fk → perfiles.id, default: auth.uid() |  |
+| `plataforma` | `text` | not null |  |
+| `rol` | `text` | not null |  |
+| `tarea_completada` | `text` | not null |  |
+| `satisfaccion` | `smallint` | not null |  |
+| `que_funciono` | `text` |  |  |
+| `que_mejorar` | `text` |  |  |
+| `version_app` | `text` |  |  |
+
+CHECK:
+
+- `encuestas_testing_plataforma_check`: `CHECK ((plataforma = ANY (ARRAY['web'::text, 'app'::text, 'escritorio'::text])))`
+- `encuestas_testing_que_funciono_check`: `CHECK (((que_funciono IS NULL) OR (char_length(que_funciono) <= 1000)))`
+- `encuestas_testing_que_mejorar_check`: `CHECK (((que_mejorar IS NULL) OR (char_length(que_mejorar) <= 1000)))`
+- `encuestas_testing_rol_check`: `CHECK ((rol = ANY (ARRAY['visitante'::text, 'cliente'::text, 'profesional'::text, 'administrador'::text])))`
+- `encuestas_testing_satisfaccion_check`: `CHECK (((satisfaccion >= 1) AND (satisfaccion <= 5)))`
+- `encuestas_testing_tarea_completada_check`: `CHECK ((tarea_completada = ANY (ARRAY['si'::text, 'parcial'::text, 'no'::text])))`
+- `encuestas_testing_version_app_check`: `CHECK (((version_app IS NULL) OR (char_length(version_app) <= 40)))`
+
+Índices:
+
+- `CREATE INDEX encuestas_testing_creado_en_idx ON public.encuestas_testing USING btree (creado_en DESC)`
+- `CREATE INDEX encuestas_testing_id_usuario_idx ON public.encuestas_testing USING btree (id_usuario)`
+
+**RLS.** RLS activo. Solo un administrador lee las encuestas. Nadie escribe directo: se responde con la RPC enviar_encuesta_testing (también anon). Políticas: SELECT «encuestas_testing_leer_admin».
+
+**Forma normal: BCNF.** Una fila por encuesta. El puntaje SUS no se guarda: lo calculan la función sus_puntaje y la vista encuestas_testing_con_puntaje.
+
+**Relaciones en palabras.** id_usuario apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva).
+
+### 3.57 encuesta_testing_respuestas
+
+Respuesta a cada uno de los 10 ítems SUS de una encuesta (item de 1 a 10, valor de 1 a 5).
+
+| Columna | Tipo | Restricciones | Nota |
+|---------|------|---------------|------|
+| `id_encuesta` | `uuid` | pk, fk → encuestas_testing.id, not null |  |
+| `item` | `smallint` | pk, not null |  |
+| `valor` | `smallint` | not null |  |
+
+CHECK:
+
+- `encuesta_testing_respuestas_item_check`: `CHECK (((item >= 1) AND (item <= 10)))`
+- `encuesta_testing_respuestas_valor_check`: `CHECK (((valor >= 1) AND (valor <= 5)))`
+
+**RLS.** RLS activo. Solo un administrador lee las respuestas. Se escriben por la RPC enviar_encuesta_testing. Políticas: SELECT «encuesta_respuestas_leer_admin».
+
+**Forma normal: BCNF.** Clave (id_encuesta, item): el valor depende de la encuesta y del ítem.
+
+**Relaciones en palabras.** id_encuesta apunta a encuestas_testing (si se borra la fila de encuestas_testing, también se borran las filas que la usan).
+
 ## 4. Relaciones (claves foráneas físicas)
 
-Se listan las FK declaradas en Postgres. La auditoría 2026-11-16 agregó las que faltaban (todas con 0 huérfanos verificados antes de validarlas). Las únicas referencias sin FK física son polimórficas (`notificaciones.id_relacionado`) o libros contables con id en texto (`liquidaciones.id_trabajador`).
+Se listan las FK declaradas en Postgres. La auditoría 2026-11-16 agregó las que faltaban (todas con 0 huérfanos verificados antes de validarlas). Las únicas referencias sin FK física son polimórficas (`notificaciones.id_relacionado`, `acciones_pendientes.id_entidad`) o apuntan a más de una clave (`trabajos.id_sku_servicio`).
 
 | Tabla | Columnas | Referencia | ON DELETE |
 |-------|----------|------------|-----------|
@@ -1921,14 +2057,16 @@ Se listan las FK declaradas en Postgres. La auditoría 2026-11-16 agregó las qu
 | `regiones` | `id_pais` | `paises(id)` | — |
 | `comunas` | `id_region` | `regiones(id)` | — |
 | `trabajadores` | `id_comuna` | `comunas(id)` | SET NULL |
-| `trabajadores` | `id_region` | `regiones(id)` | SET NULL |
 | `trabajadores` | `id_usuario` | `perfiles(id)` | CASCADE |
 | `trabajador_precios` | `id_usuario` | `trabajadores(id_usuario)` | CASCADE |
 | `trabajador_servicios_extra` | `id_usuario` | `trabajadores(id_usuario)` | CASCADE |
-| `trabajador_servicios` | `id_trabajador` | `perfiles(id)` | CASCADE |
+| `trabajador_servicios` | `categoria_servicio` | `categorias_servicio(id)` | — |
+| `trabajador_servicios` | `id_trabajador` | `trabajadores(id_usuario)` | CASCADE |
 | `trabajador_horarios` | `id_usuario` | `trabajadores(id_usuario)` | CASCADE |
+| `trabajador_horas_publicadas` | `id_usuario` | `trabajadores(id_usuario)` | CASCADE |
 | `portafolio_trabajador` | `id_trabajador` | `perfiles(id)` | CASCADE |
 | `impulsos` | `id_trabajador` | `perfiles(id)` | CASCADE |
+| `servicios` | `categoria` | `categorias_servicio(id)` | — |
 | `configuraciones_servicio` | `id_servicio` | `servicios(id)` | CASCADE |
 | `trabajos` | `id_servicio` | `servicios(id)` | SET NULL |
 | `trabajos` | `id_usuario` | `perfiles(id)` | CASCADE |
@@ -1966,12 +2104,15 @@ Se listan las FK declaradas en Postgres. La auditoría 2026-11-16 agregó las qu
 | `intentos_pin_inicio` | `id_usuario` | `perfiles(id)` | SET NULL |
 | `propuestas_cotizacion` | `id_trabajo` | `trabajos(id)` | CASCADE |
 | `propuestas_cotizacion` | `id_trabajador` | `perfiles(id)` | CASCADE |
+| `propuesta_cotizacion_items` | `id_propuesta` | `propuestas_cotizacion(id)` | CASCADE |
 | `pagos` | `id_orden_cambio` | `ordenes_cambio(id)` | SET NULL |
 | `pagos` | `id_trabajo` | `trabajos(id)` | CASCADE |
 | `ordenes_cambio` | `id_trabajo` | `trabajos(id)` | CASCADE |
 | `ordenes_cambio` | `id_pago` | `pagos(id)` | SET NULL |
 | `ordenes_cambio` | `id_trabajador` | `perfiles(id)` | CASCADE |
+| `liquidaciones` | `id_operador` | `perfiles(id)` | SET NULL |
 | `liquidaciones` | `id_pago` | `pagos(id)` | — |
+| `liquidaciones` | `id_trabajador` | `perfiles(id)` | SET NULL |
 | `liquidaciones` | `id_trabajo` | `trabajos(id)` | — |
 | `metodos_pago_oneclick` | `id_usuario` | `perfiles(id)` | CASCADE |
 | `cuentas_bancarias` | `id_usuario` | `perfiles(id)` | CASCADE |
@@ -1979,10 +2120,12 @@ Se listan las FK declaradas en Postgres. La auditoría 2026-11-16 agregó las qu
 | `senales_resena` | `resuelto_por` | `perfiles(id)` | SET NULL |
 | `eventos_ranking` | `id_trabajador` | `perfiles(id)` | CASCADE |
 | `eventos_ranking` | `id_trabajo` | `trabajos(id)` | SET NULL |
+| `encuestas_testing` | `id_usuario` | `perfiles(id)` | SET NULL |
+| `encuesta_testing_respuestas` | `id_encuesta` | `encuestas_testing(id)` | CASCADE |
 
 ## 4b. Normalización (auditoría 2026-11-16)
 
-Cada tabla se revisó con las dependencias funcionales reales (qué columna determina a cuál). 1FN: cada celda guarda un solo valor y hay clave primaria. 2FN: ninguna columna depende solo de una parte de una clave compuesta. 3FN: ninguna columna que no es clave depende de otra columna que tampoco es clave. BCNF: todo lo que determina a otra columna es una clave candidata. 4FN: no se mezclan en una tabla dos listas independientes del mismo dueño. Las columnas JSON/text con un documento completo (payload de sincronización, desglose, configuración) se tratan como un valor atómico: la base no consulta su interior por separado. Cuando una tabla repite un dato de otra a propósito, se indica por qué y cómo se mantiene consistente; en todas se verificó 0 diferencias.
+Cada tabla se revisó con las dependencias funcionales reales (qué columna determina a cuál). 1FN: cada celda guarda un solo valor y hay clave primaria. 2FN: ninguna columna depende solo de una parte de una clave compuesta. 3FN: ninguna columna que no es clave depende de otra columna que tampoco es clave. BCNF: todo lo que determina a otra columna es una clave candidata. 4FN: no se mezclan en una tabla dos listas independientes del mismo dueño. Las columnas JSON/text con un documento completo (payload de sincronización, configuración) se tratan como un valor atómico: la base no consulta su interior por separado. Cuando una tabla repite un dato de otra a propósito, se indica por qué y cómo se mantiene consistente; en todas se verificó 0 diferencias.
 
 | Tabla | Forma normal | Dato repetido a propósito y cómo se mantiene |
 |-------|--------------|-----------------------------------------------|
@@ -2003,13 +2146,15 @@ Cada tabla se revisó con las dependencias funcionales reales (qué columna dete
 | `paises` | BCNF | — |
 | `regiones` | BCNF | — |
 | `comunas` | BCNF | — |
-| `trabajadores` | 2FN con datos derivados documentados | niveles_precio y servicios_personalizados son el formato de escritura de la app; un trigger los parte en trabajador_precios y trabajador_servicios_extra. calificacion, trabajos_completados, score_listado y es_elite son valores calculados para ordenar el catálogo sin recalcular en cada consulta. id_region se deduce de id_comuna cuando hay comuna (diferencias: 0). |
+| `trabajadores` | BCNF con valores calculados documentados | calificacion, trabajos_completados, score_listado y es_elite son valores calculados para ordenar el catálogo sin recalcular en cada consulta. |
 | `trabajador_precios` | 4FN | — |
 | `trabajador_servicios_extra` | 4FN | — |
 | `trabajador_servicios` | 4FN | — |
-| `trabajador_horarios` | BCNF con una columna heredada | horarios (jsonb) es el formato antiguo de la semana completa que aún leen versiones previas de la app; la fuente de verdad son las columnas por día. |
+| `trabajador_horarios` | BCNF | — |
+| `trabajador_horas_publicadas` | 4FN | — |
 | `portafolio_trabajador` | BCNF | — |
 | `impulsos` | BCNF | — |
+| `categorias_servicio` | BCNF | — |
 | `servicios` | BCNF | — |
 | `configuraciones_servicio` | BCNF | — |
 | `trabajos` | BCNF con una copia mantenida por trigger | estado_pago copia el estado del pago principal (trigger copiar_estado_pago_trabajo) para filtrar listas sin unir con pagos. Diferencias: 0. |
@@ -2028,6 +2173,7 @@ Cada tabla se revisó con las dependencias funcionales reales (qué columna dete
 | `bloqueos_pin_inicio` | BCNF | — |
 | `intentos_pin_inicio` | BCNF | — |
 | `propuestas_cotizacion` | BCNF | — |
+| `propuesta_cotizacion_items` | BCNF | — |
 | `pagos` | BCNF | — |
 | `ordenes_cambio` | BCNF | — |
 | `liquidaciones` | BCNF | id_trabajo e id_trabajador repiten datos del pago y del trabajo. Es un libro contable: debe conservar a quién se pagó aunque el trabajo cambie. Diferencias: 0. |
@@ -2038,16 +2184,18 @@ Cada tabla se revisó con las dependencias funcionales reales (qué columna dete
 | `senales_resena` | BCNF | — |
 | `ranking_aprendizaje` | BCNF | — |
 | `eventos_ranking` | BCNF | — |
+| `encuestas_testing` | BCNF | — |
+| `encuesta_testing_respuestas` | BCNF | — |
 
 Detalle del método, consultas de verificación y migraciones: `docs/pruebas/auditoria_base_datos.md`.
 
 ## 5. Enums y vistas
 
-El esquema `public` no define tipos ENUM ni vistas (ni materializadas). Los estados y conjuntos cerrados (rol de una reprogramación, tipo de acuerdo, estado de verificación, etc.) se restringen con CHECK sobre columnas `text` o `boolean`.
+El esquema `public` no define tipos ENUM ni vistas materializadas; su única vista es `encuestas_testing_con_puntaje` (con `security_invoker`, calcula el puntaje SUS). Los estados y conjuntos cerrados (rol de una reprogramación, tipo de acuerdo, estado de verificación, etc.) se restringen con CHECK sobre columnas `text` o `boolean`.
 
 ## 6. Funciones RPC y SECURITY DEFINER
 
-Hay 148 funciones (o procedimientos) en `public`. 119 son SECURITY DEFINER. A continuación se documentan las que forman la API de cliente (GRANT a `anon` o `authenticated`) y, en un segundo listado, las de backend / disparadores (solo `service_role` o uso interno).
+Hay 150 funciones (o procedimientos) en `public`. 120 son SECURITY DEFINER. A continuación se documentan las que forman la API de cliente (GRANT a `anon` o `authenticated`) y, en un segundo listado, las de backend / disparadores (solo `service_role` o uso interno).
 
 ### 6.1 API de cliente (`anon` / `authenticated`)
 
@@ -2058,6 +2206,7 @@ Hay 148 funciones (o procedimientos) en `public`. 119 son SECURITY DEFINER. A co
 
 | Función | Argumentos | Retorno | Seguridad | Propósito |
 |---------|------------|---------|-----------|-----------|
+| `_asegurar_ventanas_horario` | p_id uuid | void | SECURITY DEFINER | Apoyo: deja las siete ventanas semanales de un profesional. |
 | `_evaluar_resena_trigger` | — | trigger | SECURITY DEFINER | Disparador que encola la evaluación automática de una reseña nueva. |
 | `_hora_santiago` | p_ts timestamp with time zone | text | SECURITY INVOKER | Convierte un timestamptz a la hora oficial de Chile (America/Santiago), con horario de verano. |
 | `_normalizar_pesos_ranking` | p_cal numeric, p_comp numeric, p_rech numeric, p_ver numeric, p_imp numeric, p_rec numeric, p_conf numeric | numeric[] | SECURITY INVOKER | Normaliza los pesos del ranking para que sumen 1. |
@@ -2088,6 +2237,7 @@ Hay 148 funciones (o procedimientos) en `public`. 119 son SECURITY DEFINER. A co
 | `crear_intencion_pago_orden_cambio` | p_id_trabajo text, p_id_orden_cambio text, p_monto numeric, p_buy_order text | pagos | SECURITY DEFINER | Crea la intención de pago de una orden de cambio. |
 | `crear_intencion_pago_servicio` | p_id_usuario text, p_id_trabajo text, p_monto numeric | pagos | SECURITY DEFINER | Variante de servicio (Edge Function / service_role) para crear la intención de pago. |
 | `disputa_esta_activa` | p_estado text | boolean | SECURITY INVOKER | Indica si el estado de una disputa se considera activo. |
+| `enviar_encuesta_testing` | p_plataforma text, p_rol text, p_tarea_completada text, p_satisfaccion smallint, p_sus smallint[], p_que_funciono text, p_que_mejorar text, p_version_app text | uuid | SECURITY DEFINER | Guarda una encuesta de testing con sus 10 respuestas SUS (también anon). |
 | `enviar_verificacion_profesional` | p_nota text | void | SECURITY DEFINER | El profesional envía o reenvía su solicitud de verificación. |
 | `es_marca_tiempo_iso` | p_valor text | boolean | SECURITY INVOKER | true si el texto es una fecha u hora ISO-8601 (o NULL). Lo usan los CHECK de las columnas *_en guardadas como text. |
 | `es_parte_trabajo` | p_trabajo_id text | boolean | SECURITY DEFINER | True si el usuario autenticado es el cliente o el profesional del trabajo. |
@@ -2095,7 +2245,6 @@ Hay 148 funciones (o procedimientos) en `public`. 119 son SECURITY DEFINER. A co
 | `evaluar_resena` | p_id text | numeric | SECURITY DEFINER | Evalúa una reseña y genera señales si parece dudosa (interno). |
 | `evidencia_disputa` | p_id_disputa text | TABLE(id text, imagen_base64 text) | SECURITY DEFINER | Devuelve la evidencia del trabajo en disputa. Administrador o soporte; qa no la ve. |
 | `expirar_pagos_abandonados` | — | integer | SECURITY DEFINER | Marca o limpia pagos abandonados (tarea de servicio / cron). |
-| `explotar_oferta_trabajador` | — | trigger | SECURITY DEFINER | Parte los JSON de oferta a las tablas 4NF (trigger). |
 | `fichas_sensibles_admin` | — | TABLE(id_usuario uuid, latitud_base double precision, longitud_base double precision, nota_verificacion text) | SECURITY DEFINER | Lectura de fichas con datos sensibles, solo administrador. |
 | `fijar_correo_codigo` | — | trigger | SECURITY DEFINER | Trigger de apoyo para códigos de restablecimiento. |
 | `fijar_geo_trabajador` | — | trigger | SECURITY INVOKER | Normaliza la geografía (comuna, región, base) de la ficha del profesional. |
@@ -2105,10 +2254,10 @@ Hay 148 funciones (o procedimientos) en `public`. 119 son SECURITY DEFINER. A co
 | `fijar_verificacion_profesional` | p_id_usuario uuid, p_estado text, p_nota text | void | SECURITY DEFINER | Un administrador cambia el estado de verificación y deja nota. |
 | `fotos_trabajo_exigir_webp` | — | trigger | SECURITY INVOKER | Trigger: valida el formato de la evidencia. |
 | `guardar_config_ranking` | p_cfg jsonb | jsonb | SECURITY DEFINER | Un administrador guarda los pesos y umbrales de ranking_config. |
-| `guardar_horarios_propios` | p_horarios jsonb | jsonb | SECURITY DEFINER | El profesional guarda su plantilla semanal (reemplazo atómico). |
+| `guardar_horarios_propios` | p_horarios jsonb | jsonb | SECURITY DEFINER | El profesional guarda su ventana semanal y sus horas publicadas (reemplazo atómico). |
 | `handle_new_user` | — | trigger | SECURITY DEFINER | Trigger de auth: crea el perfil public al registrarse un usuario. |
-| `horarios_disponibles_propios` | — | jsonb | SECURITY DEFINER | El profesional lee su propia plantilla semanal. |
-| `horarios_libres_profesional` | p_id_trabajador uuid, p_dias integer | TABLE(inicio timestamp with time zone) | SECURITY DEFINER | Huecos libres de un profesional en los próximos n días (también anon). No expone la tabla trabajador_horarios. |
+| `horarios_disponibles_propios` | — | jsonb | SECURITY DEFINER | El profesional lee su propia ventana semanal y sus horas publicadas. |
+| `horarios_libres_profesional` | p_id_trabajador uuid, p_dias integer | TABLE(inicio timestamp with time zone) | SECURITY DEFINER | Huecos libres de un profesional en los próximos n días (también anon). Se calcula desde trabajador_horas_publicadas. |
 | `intentar_pin_inicio` | p_trabajo_id text, p_pin text | jsonb | SECURITY DEFINER | El profesional prueba el PIN del cliente. Tras 5 fallos, bloquea 15 minutos. |
 | `is_admin` | — | boolean | SECURITY DEFINER | True si el usuario autenticado tiene rol admin o administrador. |
 | `km_entre_puntos` | p_lat1 double precision, p_lng1 double precision, p_lat2 double precision, p_lng2 double precision | double precision | SECURITY INVOKER | Distancia en kilómetros entre dos coordenadas (uso interno de recargo). |
@@ -2118,7 +2267,7 @@ Hay 148 funciones (o procedimientos) en `public`. 119 son SECURITY DEFINER. A co
 | `limpiar_alta_trabajo` | — | trigger | SECURITY INVOKER | Limpia los datos de alta de invitado ya consumidos o vencidos (servicio). |
 | `limpiar_invitados_sin_pago` | — | integer | SECURITY DEFINER | Borra cuentas de invitado sin cobro retenido, liberado ni autorizado, pasadas 24 h (service_role). |
 | `listar_cuentas_demo_acceso` | — | TABLE(id uuid, nombre text, correo text, rol text, profesion text, categoria_servicio text) | SECURITY DEFINER | Lista las cuentas demo permitidas (servicio / modo demo cerrado). |
-| `listar_profesionales_catalogo` | p_categoria text, p_zona text, p_cursor_calificacion numeric, p_cursor_id uuid, p_limit integer | TABLE(id_usuario uuid, profesion text, descripcion text, calificacion numeric, tarifa_visita numeric, categoria_servicio text, zona_trabajo text, nombre text, ruta_foto_perfil text, latitud_base double precision, longitud_base double precision, radio_servicio_km numeric, origen_base text, trabajos_completados integer, score_listado numeric, prioridad_manual integer, radio_urbano_km numeric, tarifa_fuera_radio_clp integer, es_elite boolean) | SECURITY DEFINER | Listado paginado del marketplace (también anon), ordenado por el ranking. |
+| `listar_profesionales_catalogo` | p_categoria text, p_zona text, p_cursor_calificacion numeric, p_cursor_id uuid, p_limit integer, p_latitud double precision, p_longitud double precision, p_offset integer | TABLE(id_usuario uuid, profesion text, descripcion text, calificacion numeric, tarifa_visita numeric, categoria_servicio text, zona_trabajo text, nombre text, ruta_foto_perfil text, latitud_base double precision, longitud_base double precision, radio_servicio_km numeric, origen_base text, trabajos_completados integer, score_listado numeric, prioridad_manual integer, radio_urbano_km numeric, tarifa_fuera_radio_clp integer, es_elite boolean, distancia_km double precision) | SECURITY DEFINER | Catálogo público. Orden único: banda de 1 km de cercanía ASC (NULL al final), nota pública DESC (0 sin reseñas), tarifa_visita ASC (sin tarifa o 0 al final), id_usuario ASC. p_cursor_* se ignoran; paginar con p_offset. |
 | `listar_senales_resena` | p_estado text, p_limit integer | TABLE(id text, id_calificacion text, tipo_senal text, puntaje numeric, detalle text, estado text, creado_en timestamp with time zone, puntaje_resena integer, comentario text, estado_revision text, peso_confianza numeric, id_trabajo text, id_trabajador uuid, nombre_trabajador text, nombre_cliente text) | SECURITY DEFINER | Cola de señales de reseña para un administrador. |
 | `listar_trabajos_marketplace` | p_limite integer | TABLE(id text, estado text, descripcion text, creado_en text, actualizado_en text, id_servicio text, modalidad_cobro text, metadatos_servicio text) | SECURITY DEFINER | Trabajos abiertos que un profesional puede tomar. |
 | `marcar_orden_cambio_pagada` | p_id_orden_cambio text, p_id_pago text | ordenes_cambio | SECURITY DEFINER | Asocia el pago a la orden de cambio cuando Webpay confirma el cobro. |
@@ -2183,10 +2332,11 @@ Hay 148 funciones (o procedimientos) en `public`. 119 son SECURITY DEFINER. A co
 | `soporte_numero` | p_clave text, p_default numeric | numeric | SECURITY DEFINER | Lee un número de configuración de soporte automático. |
 | `stats_profesional` | p_id uuid | TABLE(id_usuario uuid, calificacion numeric, n_calificaciones integer, trabajos_completados integer, es_elite boolean) | SECURITY INVOKER | Nota, reseñas y trabajos completados reales de un profesional. Fuente única para app, web y panel. |
 | `stats_profesionales` | p_ids uuid[] | TABLE(id_usuario uuid, calificacion numeric, n_calificaciones integer, trabajos_completados integer, es_elite boolean) | SECURITY INVOKER | Función interna, disparador o tarea de servicio. |
+| `sus_puntaje` | p_id_encuesta uuid | numeric | SECURITY INVOKER | Calcula el puntaje SUS (0 a 100) de una encuesta con la fórmula de Brooke. |
 | `texto_a_timestamptz` | p_valor text | timestamp with time zone | SECURITY INVOKER | Interpreta un texto de fecha/hora como timestamptz (agenda y CU-33). |
 | `texto_tiene_contacto` | p_texto text | boolean | SECURITY INVOKER | Detecta si un texto parece incluir teléfono o correo. También anon (validación de formularios). |
 | `trabajador_horarios_desde_alta` | — | trigger | SECURITY DEFINER | Trigger de apoyo al crear la plantilla semanal en el alta. |
-| `trabajador_horarios_normalizar` | — | trigger | SECURITY INVOKER | Trigger: normaliza día y horas al guardar un horario. |
+| `trabajador_horarios_tocar` | — | trigger | SECURITY INVOKER | Trigger: actualiza la fecha de cambio al guardar un horario. |
 | `trabajador_reservable` | p_trabajador uuid | boolean | SECURITY DEFINER | True si el profesional puede tomarse en la fecha consultada (horario y ocupación). |
 | `trabajadores_marcar_pausa_por_trabajo` | — | trigger | SECURITY DEFINER | Trigger: enciende o apaga pausa_por_trabajo y disponible según los trabajos activos. |
 | `trabajo_admite_disputa` | p_estado text | boolean | SECURITY INVOKER | True si el estado del trabajo permite abrir una disputa. |

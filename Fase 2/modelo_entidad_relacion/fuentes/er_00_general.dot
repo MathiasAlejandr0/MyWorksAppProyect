@@ -4,7 +4,7 @@ node [shape=plaintext, fontname="DejaVu Sans"];
 edge [fontname="DejaVu Sans", color="#444444", penwidth="1.6", arrowsize="1.3", dir="both"];
 
 rankdir="LR"; nodesep="0.15"; ranksep="0.6"; concentrate="true";
-label=<<font point-size="56"><b>MyWorksApp · Modelo entidad-relación general</b></font><br/><font point-size="34" color="#555555">52 tablas del esquema public agrupadas en 7 dominios · líneas = claves foráneas (pata de gallo = muchos) · punteadas = relaciones lógicas</font>>;
+label=<<font point-size="56"><b>MyWorksApp · Modelo entidad-relación general</b></font><br/><font point-size="34" color="#555555">57 tablas del esquema public agrupadas en 7 dominios · líneas = claves foráneas (pata de gallo = muchos) · punteadas = relaciones lógicas</font>>;
 subgraph "cluster_01_usuarios_territorio" { style="rounded,filled"; fillcolor="#DCE8F5"; color="#1F4E79"; penwidth="2.5";label=<<font point-size="42" color="#1F4E79"><b>Usuarios, autenticación y territorio</b></font>>;
 "perfiles" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#1F4E79"><tr><td bgcolor="#1F4E79"><font color="white" point-size="34"><b>perfiles</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 "codigos_restablecimiento" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#1F4E79"><tr><td bgcolor="#1F4E79"><font color="white" point-size="34"><b>codigos_restablecimiento</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
@@ -23,14 +23,17 @@ subgraph "cluster_02_profesionales_catalogo" { style="rounded,filled"; fillcolor
 "trabajador_servicios" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#8A5A12"><tr><td bgcolor="#8A5A12"><font color="white" point-size="34"><b>trabajador_servicios</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id_trabajador, categoria_servicio</font></td></tr></table>>];
 "trabajador_servicios_extra" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#8A5A12"><tr><td bgcolor="#8A5A12"><font color="white" point-size="34"><b>trabajador_servicios_extra</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id_usuario, id</font></td></tr></table>>];
 "trabajador_horarios" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#8A5A12"><tr><td bgcolor="#8A5A12"><font color="white" point-size="34"><b>trabajador_horarios</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
+"trabajador_horas_publicadas" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#8A5A12"><tr><td bgcolor="#8A5A12"><font color="white" point-size="34"><b>trabajador_horas_publicadas</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id_usuario, dia_semana, hora</font></td></tr></table>>];
 "portafolio_trabajador" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#8A5A12"><tr><td bgcolor="#8A5A12"><font color="white" point-size="34"><b>portafolio_trabajador</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 "impulsos" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#8A5A12"><tr><td bgcolor="#8A5A12"><font color="white" point-size="34"><b>impulsos</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
+"categorias_servicio" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#8A5A12"><tr><td bgcolor="#8A5A12"><font color="white" point-size="34"><b>categorias_servicio</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 "servicios" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#8A5A12"><tr><td bgcolor="#8A5A12"><font color="white" point-size="34"><b>servicios</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 "configuraciones_servicio" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#8A5A12"><tr><td bgcolor="#8A5A12"><font color="white" point-size="34"><b>configuraciones_servicio</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 }
 subgraph "cluster_03_trabajos_reservas" { style="rounded,filled"; fillcolor="#F8E1D6"; color="#A24A1C"; penwidth="2.5";label=<<font point-size="42" color="#A24A1C"><b>Trabajos, reservas, reprogramación y PIN</b></font>>;
 "trabajos" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#A24A1C"><tr><td bgcolor="#A24A1C"><font color="white" point-size="34"><b>trabajos</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 "propuestas_cotizacion" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#A24A1C"><tr><td bgcolor="#A24A1C"><font color="white" point-size="34"><b>propuestas_cotizacion</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
+"propuesta_cotizacion_items" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#A24A1C"><tr><td bgcolor="#A24A1C"><font color="white" point-size="34"><b>propuesta_cotizacion_items</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id_propuesta, linea</font></td></tr></table>>];
 "acuerdos_trabajo" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#A24A1C"><tr><td bgcolor="#A24A1C"><font color="white" point-size="34"><b>acuerdos_trabajo</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 "cancelaciones_trabajo" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#A24A1C"><tr><td bgcolor="#A24A1C"><font color="white" point-size="34"><b>cancelaciones_trabajo</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 "reprogramaciones_trabajo" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#A24A1C"><tr><td bgcolor="#A24A1C"><font color="white" point-size="34"><b>reprogramaciones_trabajo</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
@@ -70,6 +73,8 @@ subgraph "cluster_07_admin_auditoria" { style="rounded,filled"; fillcolor="#F3DD
 "eventos_analitica" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#6B2737"><tr><td bgcolor="#6B2737"><font color="white" point-size="34"><b>eventos_analitica</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 "banderas_funcionalidad" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#6B2737"><tr><td bgcolor="#6B2737"><font color="white" point-size="34"><b>banderas_funcionalidad</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
 "app_config" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#6B2737"><tr><td bgcolor="#6B2737"><font color="white" point-size="34"><b>app_config</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK clave</font></td></tr></table>>];
+"encuestas_testing" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#6B2737"><tr><td bgcolor="#6B2737"><font color="white" point-size="34"><b>encuestas_testing</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id</font></td></tr></table>>];
+"encuesta_testing_respuestas" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#6B2737"><tr><td bgcolor="#6B2737"><font color="white" point-size="34"><b>encuesta_testing_respuestas</b></font></td></tr><tr><td bgcolor="white"><font point-size="30" color="#333333">PK id_encuesta, item</font></td></tr></table>>];
 }
 "acciones_pendientes" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#6B2737", penwidth="2"];
 "acuerdos_trabajo" -> "trabajos" [arrowtail="crowodot", arrowhead="teetee", color="#A24A1C", penwidth="2"];
@@ -97,6 +102,8 @@ subgraph "cluster_07_admin_auditoria" { style="rounded,filled"; fillcolor="#F3DD
 "disputas" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#1B6B4A", penwidth="2"];
 "disputas" -> "perfiles" [arrowtail="crowodot", arrowhead="teeodot", color="#1B6B4A", penwidth="2"];
 "disputas" -> "trabajos" [arrowtail="crowodot", arrowhead="teetee", color="#1B6B4A", penwidth="2"];
+"encuesta_testing_respuestas" -> "encuestas_testing" [arrowtail="crowodot", arrowhead="teetee", color="#6B2737", penwidth="2"];
+"encuestas_testing" -> "perfiles" [arrowtail="crowodot", arrowhead="teeodot", color="#6B2737", penwidth="2"];
 "eventos_abuso" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#6B2737", penwidth="2"];
 "eventos_analitica" -> "perfiles" [arrowtail="crowodot", arrowhead="teeodot", color="#6B2737", penwidth="2"];
 "eventos_ranking" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#2C4A6E", penwidth="2"];
@@ -105,7 +112,9 @@ subgraph "cluster_07_admin_auditoria" { style="rounded,filled"; fillcolor="#F3DD
 "impulsos" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
 "intentos_pin_inicio" -> "trabajos" [arrowtail="crowodot", arrowhead="teetee", color="#A24A1C", penwidth="2"];
 "intentos_pin_inicio" -> "perfiles" [arrowtail="crowodot", arrowhead="teeodot", color="#A24A1C", penwidth="2"];
+"liquidaciones" -> "perfiles" [arrowtail="crowodot", arrowhead="teeodot", color="#5C4578", penwidth="2"];
 "liquidaciones" -> "pagos" [arrowtail="teeodot", arrowhead="teetee", color="#5C4578", penwidth="2"];
+"liquidaciones" -> "perfiles" [arrowtail="crowodot", arrowhead="teeodot", color="#5C4578", penwidth="2"];
 "liquidaciones" -> "trabajos" [arrowtail="crowodot", arrowhead="teetee", color="#5C4578", penwidth="2"];
 "mensajes" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#1B6B4A", penwidth="2"];
 "mensajes" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#1B6B4A", penwidth="2"];
@@ -119,6 +128,7 @@ subgraph "cluster_07_admin_auditoria" { style="rounded,filled"; fillcolor="#F3DD
 "pagos" -> "trabajos" [arrowtail="crowodot", arrowhead="teetee", color="#5C4578", penwidth="2"];
 "pines_inicio_trabajo" -> "trabajos" [arrowtail="teeodot", arrowhead="teetee", color="#A24A1C", penwidth="2"];
 "portafolio_trabajador" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
+"propuesta_cotizacion_items" -> "propuestas_cotizacion" [arrowtail="crowodot", arrowhead="teetee", color="#A24A1C", penwidth="2"];
 "propuestas_cotizacion" -> "trabajos" [arrowtail="crowodot", arrowhead="teetee", color="#A24A1C", penwidth="2"];
 "propuestas_cotizacion" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#A24A1C", penwidth="2"];
 "regiones" -> "paises" [arrowtail="crowodot", arrowhead="teetee", color="#1F4E79", penwidth="2"];
@@ -130,14 +140,16 @@ subgraph "cluster_07_admin_auditoria" { style="rounded,filled"; fillcolor="#F3DD
 "reprogramaciones_trabajo" -> "trabajos" [arrowtail="crowodot", arrowhead="teetee", color="#A24A1C", penwidth="2"];
 "senales_resena" -> "calificaciones" [arrowtail="crowodot", arrowhead="teetee", color="#2C4A6E", penwidth="2"];
 "senales_resena" -> "perfiles" [arrowtail="crowodot", arrowhead="teeodot", color="#2C4A6E", penwidth="2"];
+"servicios" -> "categorias_servicio" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
 "suscripciones" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#1F4E79", penwidth="2"];
 "tickets_soporte" -> "trabajos" [arrowtail="crowodot", arrowhead="teeodot", color="#1B6B4A", penwidth="2"];
 "trabajador_horarios" -> "trabajadores" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
+"trabajador_horas_publicadas" -> "trabajadores" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
 "trabajador_precios" -> "trabajadores" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
-"trabajador_servicios" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
+"trabajador_servicios" -> "categorias_servicio" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
+"trabajador_servicios" -> "trabajadores" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
 "trabajador_servicios_extra" -> "trabajadores" [arrowtail="crowodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
 "trabajadores" -> "comunas" [arrowtail="crowodot", arrowhead="teeodot", color="#8A5A12", penwidth="2"];
-"trabajadores" -> "regiones" [arrowtail="crowodot", arrowhead="teeodot", color="#8A5A12", penwidth="2"];
 "trabajadores" -> "perfiles" [arrowtail="teeodot", arrowhead="teetee", color="#8A5A12", penwidth="2"];
 "trabajos" -> "servicios" [arrowtail="crowodot", arrowhead="teeodot", color="#A24A1C", penwidth="2"];
 "trabajos" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#A24A1C", penwidth="2"];
@@ -148,12 +160,9 @@ subgraph "cluster_07_admin_auditoria" { style="rounded,filled"; fillcolor="#F3DD
 "ubicacion_en_vivo" -> "trabajadores" [arrowtail="crowodot", arrowhead="teetee", color="#A24A1C", penwidth="2"];
 "verificacion_eventos" -> "perfiles" [arrowtail="crowodot", arrowhead="teeodot", color="#1F4E79", penwidth="2"];
 "verificacion_eventos" -> "perfiles" [arrowtail="crowodot", arrowhead="teetee", color="#1F4E79", penwidth="2"];
-"liquidaciones" -> "perfiles" [style="dashed", arrowtail="crowodot", arrowhead="teeodot", color="#888888", penwidth="2"];
-"liquidaciones" -> "perfiles" [style="dashed", arrowtail="crowodot", arrowhead="teeodot", color="#888888", penwidth="2"];
 "metodos_pago_oneclick" -> "trabajos" [style="dashed", arrowtail="crowodot", arrowhead="teeodot", color="#888888", penwidth="2"];
 "bloqueos_pin_inicio" -> "perfiles" [style="dashed", arrowtail="crowodot", arrowhead="teeodot", color="#888888", penwidth="2"];
 "trabajos" -> "trabajador_precios" [style="dashed", arrowtail="crowodot", arrowhead="teeodot", color="#888888", penwidth="2"];
-"trabajador_servicios" -> "servicios" [style="dashed", arrowtail="crowodot", arrowhead="teeodot", color="#888888", penwidth="2"];
 auth_users [label=<<table border="1" cellborder="0" cellpadding="6" color="#7F7F7F" style="dashed"><tr><td bgcolor="#EFEFEF"><font point-size="22"><b>auth.users</b></font></td></tr><tr><td><font point-size="18" color="#555555">esquema auth (Supabase)</font></td></tr></table>>];
 "perfiles" -> auth_users [arrowtail="teetee", arrowhead="teetee", color="#7F7F7F", penwidth="2"];
 }

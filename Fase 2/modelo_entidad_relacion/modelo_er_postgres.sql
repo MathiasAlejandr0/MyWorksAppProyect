@@ -1,5 +1,5 @@
 -- MyWorksApp — modelo entidad-relación (PostgreSQL)
--- Generado desde la BD viva wxqrfcqifkfgawrnqmnj (migración 20261116044049).
+-- Generado desde la BD viva wxqrfcqifkfgawrnqmnj (migración 20261117223850).
 -- Solo estructura (tablas, PK, UNIQUE, FK). Sin RLS, funciones ni datos.
 -- Esquema de referencia: no ejecutar contra producción.
 
@@ -109,6 +109,14 @@ CREATE TABLE cancelaciones_trabajo (
   UNIQUE (id_trabajo)
 );
 
+CREATE TABLE categorias_servicio (
+  id text NOT NULL,
+  nombre text NOT NULL,
+  activa boolean NOT NULL,
+  creado_en timestamp with time zone NOT NULL,
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE codigos_restablecimiento (
   id text NOT NULL,
   id_usuario uuid NOT NULL,
@@ -199,6 +207,27 @@ CREATE TABLE disputas (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE encuesta_testing_respuestas (
+  id_encuesta uuid NOT NULL,
+  item smallint NOT NULL,
+  valor smallint NOT NULL,
+  PRIMARY KEY (id_encuesta, item)
+);
+
+CREATE TABLE encuestas_testing (
+  id uuid NOT NULL,
+  creado_en timestamp with time zone NOT NULL,
+  id_usuario uuid,
+  plataforma text NOT NULL,
+  rol text NOT NULL,
+  tarea_completada text NOT NULL,
+  satisfaccion smallint NOT NULL,
+  que_funciono text,
+  que_mejorar text,
+  version_app text,
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE eventos_abuso (
   id text NOT NULL,
   id_usuario uuid NOT NULL,
@@ -265,14 +294,15 @@ CREATE TABLE liquidaciones (
   id text NOT NULL,
   id_pago text NOT NULL,
   id_trabajo text NOT NULL,
-  id_trabajador text,
+  id_trabajador uuid,
   monto_clp numeric NOT NULL,
   proveedor text NOT NULL,
   referencia_transferencia text NOT NULL,
   notas text,
-  id_operador text NOT NULL,
+  id_operador uuid,
   creado_en timestamp with time zone NOT NULL,
   estado_transferencia text NOT NULL,
+  liberada_por_sistema boolean NOT NULL,
   PRIMARY KEY (id),
   UNIQUE (id_pago)
 );
@@ -401,6 +431,14 @@ CREATE TABLE portafolio_trabajador (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE propuesta_cotizacion_items (
+  id_propuesta text NOT NULL,
+  linea smallint NOT NULL,
+  concepto text NOT NULL,
+  monto numeric NOT NULL,
+  PRIMARY KEY (id_propuesta, linea)
+);
+
 CREATE TABLE propuestas_cotizacion (
   id text NOT NULL,
   id_trabajo text NOT NULL,
@@ -408,9 +446,9 @@ CREATE TABLE propuestas_cotizacion (
   monto_total_clp integer NOT NULL,
   descripcion text NOT NULL,
   validez_hasta text,
-  desglose text,
   estado text NOT NULL,
   creado_en text NOT NULL,
+  horas_estimadas numeric,
   PRIMARY KEY (id)
 );
 
@@ -546,16 +584,23 @@ CREATE TABLE tickets_soporte (
 
 CREATE TABLE trabajador_horarios (
   id_usuario uuid NOT NULL,
-  horarios jsonb NOT NULL,
   actualizado_en timestamp with time zone NOT NULL,
   id uuid NOT NULL,
-  dia_semana smallint,
-  hora_inicio time without time zone,
-  hora_fin time without time zone,
-  activo boolean,
+  dia_semana smallint NOT NULL,
+  hora_inicio time without time zone NOT NULL,
+  hora_fin time without time zone NOT NULL,
+  activo boolean NOT NULL,
   creado_en timestamp with time zone,
   PRIMARY KEY (id),
   UNIQUE (id_usuario, dia_semana)
+);
+
+CREATE TABLE trabajador_horas_publicadas (
+  id_usuario uuid NOT NULL,
+  dia_semana smallint NOT NULL,
+  hora time without time zone NOT NULL,
+  creado_en timestamp with time zone NOT NULL,
+  PRIMARY KEY (id_usuario, dia_semana, hora)
 );
 
 CREATE TABLE trabajador_precios (
@@ -588,10 +633,7 @@ CREATE TABLE trabajadores (
   calificacion numeric(4,2) NOT NULL,
   disponible integer NOT NULL,
   tarifa_visita numeric(12,0) NOT NULL,
-  categoria_servicio text NOT NULL,
-  niveles_precio jsonb NOT NULL,
   conteo_rechazos integer NOT NULL,
-  servicios_personalizados jsonb NOT NULL,
   precios_configurados integer NOT NULL,
   zona_trabajo text,
   estado_verificacion text NOT NULL,
@@ -609,7 +651,6 @@ CREATE TABLE trabajadores (
   trabajos_completados integer NOT NULL,
   es_elite boolean,
   id_comuna text,
-  id_region text,
   usa_horario boolean NOT NULL,
   pausa_por_trabajo boolean NOT NULL,
   PRIMARY KEY (id_usuario)
@@ -659,88 +700,92 @@ CREATE TABLE verificacion_eventos (
   PRIMARY KEY (id)
 );
 
-ALTER TABLE acciones_pendientes ADD CONSTRAINT "pending_actions_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE acuerdos_trabajo ADD CONSTRAINT acuerdos_trabajo_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE acuerdos_trabajo ADD CONSTRAINT acuerdos_trabajo_propuesto_por_fkey FOREIGN KEY (propuesto_por) REFERENCES perfiles (id) ON DELETE NO ACTION;
-ALTER TABLE banderas_funcionalidad ADD CONSTRAINT banderas_funcionalidad_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE bloqueos_pin_inicio ADD CONSTRAINT bloqueos_pin_inicio_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE bloqueos_usuario ADD CONSTRAINT bloqueos_usuario_id_bloqueado_fkey FOREIGN KEY (id_bloqueado) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE bloqueos_usuario ADD CONSTRAINT bloqueos_usuario_id_bloqueador_fkey FOREIGN KEY (id_bloqueador) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE calificaciones ADD CONSTRAINT calificaciones_id_calificado_fkey FOREIGN KEY (id_calificado) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE calificaciones ADD CONSTRAINT calificaciones_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE SET NULL;
-ALTER TABLE calificaciones ADD CONSTRAINT "ratings_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE calificaciones_cliente ADD CONSTRAINT calificaciones_cliente_id_cliente_fkey FOREIGN KEY (id_cliente) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE calificaciones_cliente ADD CONSTRAINT calificaciones_cliente_id_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE calificaciones_cliente ADD CONSTRAINT calificaciones_cliente_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE cancelaciones_trabajo ADD CONSTRAINT cancelaciones_trabajo_cancelado_por_fkey FOREIGN KEY (cancelado_por) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE cancelaciones_trabajo ADD CONSTRAINT "job_cancellations_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE codigos_restablecimiento ADD CONSTRAINT codigos_restablecimiento_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE comunas ADD CONSTRAINT comunas_id_region_fkey FOREIGN KEY (id_region) REFERENCES regiones (id) ON DELETE NO ACTION;
-ALTER TABLE configuraciones_servicio ADD CONSTRAINT "service_configs_serviceId_fkey" FOREIGN KEY (id_servicio) REFERENCES servicios (id) ON DELETE CASCADE;
-ALTER TABLE consentimientos_usuario ADD CONSTRAINT "user_consents_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE cuentas_bancarias ADD CONSTRAINT cuentas_bancarias_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE dispositivos_push ADD CONSTRAINT dispositivos_push_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE disputa_mensajes ADD CONSTRAINT disputa_mensajes_id_autor_fkey FOREIGN KEY (id_autor) REFERENCES perfiles (id) ON DELETE NO ACTION;
-ALTER TABLE disputa_mensajes ADD CONSTRAINT disputa_mensajes_id_disputa_fkey FOREIGN KEY (id_disputa) REFERENCES disputas (id) ON DELETE CASCADE;
-ALTER TABLE disputas ADD CONSTRAINT disputas_abierta_por_fkey FOREIGN KEY (abierta_por) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE disputas ADD CONSTRAINT disputas_resuelta_por_fkey FOREIGN KEY (resuelta_por) REFERENCES perfiles (id) ON DELETE SET NULL;
-ALTER TABLE disputas ADD CONSTRAINT "disputes_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE eventos_abuso ADD CONSTRAINT "abuse_events_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE eventos_analitica ADD CONSTRAINT eventos_analitica_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE SET NULL;
-ALTER TABLE eventos_ranking ADD CONSTRAINT eventos_ranking_id_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE eventos_ranking ADD CONSTRAINT eventos_ranking_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE SET NULL;
-ALTER TABLE fotos_trabajo ADD CONSTRAINT "job_photos_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE impulsos ADD CONSTRAINT "boosts_workerId_fkey" FOREIGN KEY (id_trabajador) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE intentos_pin_inicio ADD CONSTRAINT intentos_pin_inicio_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE intentos_pin_inicio ADD CONSTRAINT intentos_pin_inicio_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE SET NULL;
-ALTER TABLE liquidaciones ADD CONSTRAINT liquidaciones_id_pago_fkey FOREIGN KEY (id_pago) REFERENCES pagos (id) ON DELETE NO ACTION;
-ALTER TABLE liquidaciones ADD CONSTRAINT liquidaciones_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE NO ACTION;
-ALTER TABLE mensajes ADD CONSTRAINT mensajes_id_destinatario_fkey FOREIGN KEY (id_destinatario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE mensajes ADD CONSTRAINT mensajes_id_remitente_fkey FOREIGN KEY (id_remitente) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE mensajes ADD CONSTRAINT "messages_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE metodos_pago_oneclick ADD CONSTRAINT metodos_pago_oneclick_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE notificaciones ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE ordenes_cambio ADD CONSTRAINT "change_orders_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE ordenes_cambio ADD CONSTRAINT ordenes_cambio_id_pago_fkey FOREIGN KEY (id_pago) REFERENCES pagos (id) ON DELETE SET NULL;
-ALTER TABLE ordenes_cambio ADD CONSTRAINT ordenes_cambio_id_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE pagos ADD CONSTRAINT pagos_id_orden_cambio_fkey FOREIGN KEY (id_orden_cambio) REFERENCES ordenes_cambio (id) ON DELETE SET NULL;
-ALTER TABLE pagos ADD CONSTRAINT "payments_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE pines_inicio_trabajo ADD CONSTRAINT pines_inicio_trabajo_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE portafolio_trabajador ADD CONSTRAINT "worker_portfolio_workerId_fkey" FOREIGN KEY (id_trabajador) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE propuestas_cotizacion ADD CONSTRAINT "quote_proposals_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE propuestas_cotizacion ADD CONSTRAINT "quote_proposals_workerId_fkey" FOREIGN KEY (id_trabajador) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE regiones ADD CONSTRAINT regiones_id_pais_fkey FOREIGN KEY (id_pais) REFERENCES paises (id) ON DELETE NO ACTION;
-ALTER TABLE registros_error_app ADD CONSTRAINT "app_error_logs_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE NO ACTION;
-ALTER TABLE reportes ADD CONSTRAINT reportes_id_reportante_fkey FOREIGN KEY (id_reportante) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE reportes ADD CONSTRAINT reportes_id_usuario_reportado_fkey FOREIGN KEY (id_usuario_reportado) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE reprogramaciones_trabajo ADD CONSTRAINT reprogramaciones_propuesta_por_fkey FOREIGN KEY (propuesta_por) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE reprogramaciones_trabajo ADD CONSTRAINT reprogramaciones_respondida_por_fkey FOREIGN KEY (respondida_por) REFERENCES perfiles (id) ON DELETE SET NULL;
-ALTER TABLE reprogramaciones_trabajo ADD CONSTRAINT reprogramaciones_trabajo_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE senales_resena ADD CONSTRAINT senales_resena_id_calificacion_fkey FOREIGN KEY (id_calificacion) REFERENCES calificaciones (id) ON DELETE CASCADE;
-ALTER TABLE senales_resena ADD CONSTRAINT senales_resena_resuelto_por_fkey FOREIGN KEY (resuelto_por) REFERENCES perfiles (id) ON DELETE SET NULL;
-ALTER TABLE suscripciones ADD CONSTRAINT "subscriptions_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE tickets_soporte ADD CONSTRAINT tickets_soporte_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE SET NULL;
-ALTER TABLE trabajador_horarios ADD CONSTRAINT trabajador_horarios_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES trabajadores (id_usuario) ON DELETE CASCADE;
-ALTER TABLE trabajador_precios ADD CONSTRAINT trabajador_precios_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES trabajadores (id_usuario) ON DELETE CASCADE;
-ALTER TABLE trabajador_servicios ADD CONSTRAINT "worker_services_workerId_fkey" FOREIGN KEY (id_trabajador) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE trabajador_servicios_extra ADD CONSTRAINT trabajador_servicios_extra_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES trabajadores (id_usuario) ON DELETE CASCADE;
-ALTER TABLE trabajadores ADD CONSTRAINT trabajadores_id_comuna_fkey FOREIGN KEY (id_comuna) REFERENCES comunas (id) ON DELETE SET NULL;
-ALTER TABLE trabajadores ADD CONSTRAINT trabajadores_id_region_fkey FOREIGN KEY (id_region) REFERENCES regiones (id) ON DELETE SET NULL;
-ALTER TABLE trabajadores ADD CONSTRAINT trabajadores_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE trabajos ADD CONSTRAINT "jobs_serviceId_fkey" FOREIGN KEY (id_servicio) REFERENCES servicios (id) ON DELETE SET NULL;
-ALTER TABLE trabajos ADD CONSTRAINT "jobs_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
-ALTER TABLE trabajos ADD CONSTRAINT "jobs_workerId_fkey" FOREIGN KEY (id_trabajador) REFERENCES perfiles (id) ON DELETE SET NULL;
-ALTER TABLE trabajos ADD CONSTRAINT trabajos_id_comuna_fkey FOREIGN KEY (id_comuna) REFERENCES comunas (id) ON DELETE SET NULL;
-ALTER TABLE trabajos ADD CONSTRAINT trabajos_id_cotizacion_seleccionada_fkey FOREIGN KEY (id_cotizacion_seleccionada) REFERENCES propuestas_cotizacion (id) ON DELETE SET NULL;
-ALTER TABLE ubicacion_en_vivo ADD CONSTRAINT ubicacion_en_vivo_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos (id) ON DELETE CASCADE;
-ALTER TABLE ubicacion_en_vivo ADD CONSTRAINT ubicacion_en_vivo_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES trabajadores (id_usuario) ON DELETE CASCADE;
-ALTER TABLE verificacion_eventos ADD CONSTRAINT verificacion_eventos_id_actor_fkey FOREIGN KEY (id_actor) REFERENCES perfiles (id) ON DELETE SET NULL;
-ALTER TABLE verificacion_eventos ADD CONSTRAINT verificacion_eventos_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles (id) ON DELETE CASCADE;
+ALTER TABLE acciones_pendientes ADD CONSTRAINT "pending_actions_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE acuerdos_trabajo ADD CONSTRAINT acuerdos_trabajo_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE acuerdos_trabajo ADD CONSTRAINT acuerdos_trabajo_propuesto_por_fkey FOREIGN KEY (propuesto_por) REFERENCES perfiles ("{id}") ON DELETE NO ACTION;
+ALTER TABLE banderas_funcionalidad ADD CONSTRAINT banderas_funcionalidad_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE bloqueos_pin_inicio ADD CONSTRAINT bloqueos_pin_inicio_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE bloqueos_usuario ADD CONSTRAINT bloqueos_usuario_id_bloqueado_fkey FOREIGN KEY (id_bloqueado) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE bloqueos_usuario ADD CONSTRAINT bloqueos_usuario_id_bloqueador_fkey FOREIGN KEY (id_bloqueador) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE calificaciones ADD CONSTRAINT calificaciones_id_calificado_fkey FOREIGN KEY (id_calificado) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE calificaciones ADD CONSTRAINT calificaciones_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE calificaciones ADD CONSTRAINT "ratings_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE calificaciones_cliente ADD CONSTRAINT calificaciones_cliente_id_cliente_fkey FOREIGN KEY (id_cliente) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE calificaciones_cliente ADD CONSTRAINT calificaciones_cliente_id_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE calificaciones_cliente ADD CONSTRAINT calificaciones_cliente_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE cancelaciones_trabajo ADD CONSTRAINT cancelaciones_trabajo_cancelado_por_fkey FOREIGN KEY (cancelado_por) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE cancelaciones_trabajo ADD CONSTRAINT "job_cancellations_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE codigos_restablecimiento ADD CONSTRAINT codigos_restablecimiento_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE comunas ADD CONSTRAINT comunas_id_region_fkey FOREIGN KEY (id_region) REFERENCES regiones ("{id}") ON DELETE NO ACTION;
+ALTER TABLE configuraciones_servicio ADD CONSTRAINT "service_configs_serviceId_fkey" FOREIGN KEY (id_servicio) REFERENCES servicios ("{id}") ON DELETE CASCADE;
+ALTER TABLE consentimientos_usuario ADD CONSTRAINT "user_consents_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE cuentas_bancarias ADD CONSTRAINT cuentas_bancarias_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE dispositivos_push ADD CONSTRAINT dispositivos_push_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE disputa_mensajes ADD CONSTRAINT disputa_mensajes_id_autor_fkey FOREIGN KEY (id_autor) REFERENCES perfiles ("{id}") ON DELETE NO ACTION;
+ALTER TABLE disputa_mensajes ADD CONSTRAINT disputa_mensajes_id_disputa_fkey FOREIGN KEY (id_disputa) REFERENCES disputas ("{id}") ON DELETE CASCADE;
+ALTER TABLE disputas ADD CONSTRAINT disputas_abierta_por_fkey FOREIGN KEY (abierta_por) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE disputas ADD CONSTRAINT disputas_resuelta_por_fkey FOREIGN KEY (resuelta_por) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE disputas ADD CONSTRAINT "disputes_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE encuesta_testing_respuestas ADD CONSTRAINT encuesta_testing_respuestas_id_encuesta_fkey FOREIGN KEY (id_encuesta) REFERENCES encuestas_testing ("{id}") ON DELETE CASCADE;
+ALTER TABLE encuestas_testing ADD CONSTRAINT encuestas_testing_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE eventos_abuso ADD CONSTRAINT "abuse_events_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE eventos_analitica ADD CONSTRAINT eventos_analitica_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE eventos_ranking ADD CONSTRAINT eventos_ranking_id_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE eventos_ranking ADD CONSTRAINT eventos_ranking_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE SET NULL;
+ALTER TABLE fotos_trabajo ADD CONSTRAINT "job_photos_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE impulsos ADD CONSTRAINT "boosts_workerId_fkey" FOREIGN KEY (id_trabajador) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE intentos_pin_inicio ADD CONSTRAINT intentos_pin_inicio_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE intentos_pin_inicio ADD CONSTRAINT intentos_pin_inicio_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE liquidaciones ADD CONSTRAINT liquidaciones_id_operador_fkey FOREIGN KEY (id_operador) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE liquidaciones ADD CONSTRAINT liquidaciones_id_pago_fkey FOREIGN KEY (id_pago) REFERENCES pagos ("{id}") ON DELETE NO ACTION;
+ALTER TABLE liquidaciones ADD CONSTRAINT liquidaciones_id_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE liquidaciones ADD CONSTRAINT liquidaciones_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE NO ACTION;
+ALTER TABLE mensajes ADD CONSTRAINT mensajes_id_destinatario_fkey FOREIGN KEY (id_destinatario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE mensajes ADD CONSTRAINT mensajes_id_remitente_fkey FOREIGN KEY (id_remitente) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE mensajes ADD CONSTRAINT "messages_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE metodos_pago_oneclick ADD CONSTRAINT metodos_pago_oneclick_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE notificaciones ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE ordenes_cambio ADD CONSTRAINT "change_orders_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE ordenes_cambio ADD CONSTRAINT ordenes_cambio_id_pago_fkey FOREIGN KEY (id_pago) REFERENCES pagos ("{id}") ON DELETE SET NULL;
+ALTER TABLE ordenes_cambio ADD CONSTRAINT ordenes_cambio_id_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE pagos ADD CONSTRAINT pagos_id_orden_cambio_fkey FOREIGN KEY (id_orden_cambio) REFERENCES ordenes_cambio ("{id}") ON DELETE SET NULL;
+ALTER TABLE pagos ADD CONSTRAINT "payments_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE pines_inicio_trabajo ADD CONSTRAINT pines_inicio_trabajo_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE portafolio_trabajador ADD CONSTRAINT "worker_portfolio_workerId_fkey" FOREIGN KEY (id_trabajador) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE propuesta_cotizacion_items ADD CONSTRAINT propuesta_cotizacion_items_id_propuesta_fkey FOREIGN KEY (id_propuesta) REFERENCES propuestas_cotizacion ("{id}") ON DELETE CASCADE;
+ALTER TABLE propuestas_cotizacion ADD CONSTRAINT "quote_proposals_jobId_fkey" FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE propuestas_cotizacion ADD CONSTRAINT "quote_proposals_workerId_fkey" FOREIGN KEY (id_trabajador) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE regiones ADD CONSTRAINT regiones_id_pais_fkey FOREIGN KEY (id_pais) REFERENCES paises ("{id}") ON DELETE NO ACTION;
+ALTER TABLE registros_error_app ADD CONSTRAINT "app_error_logs_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE NO ACTION;
+ALTER TABLE reportes ADD CONSTRAINT reportes_id_reportante_fkey FOREIGN KEY (id_reportante) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE reportes ADD CONSTRAINT reportes_id_usuario_reportado_fkey FOREIGN KEY (id_usuario_reportado) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE reprogramaciones_trabajo ADD CONSTRAINT reprogramaciones_propuesta_por_fkey FOREIGN KEY (propuesta_por) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE reprogramaciones_trabajo ADD CONSTRAINT reprogramaciones_respondida_por_fkey FOREIGN KEY (respondida_por) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE reprogramaciones_trabajo ADD CONSTRAINT reprogramaciones_trabajo_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE senales_resena ADD CONSTRAINT senales_resena_id_calificacion_fkey FOREIGN KEY (id_calificacion) REFERENCES calificaciones ("{id}") ON DELETE CASCADE;
+ALTER TABLE senales_resena ADD CONSTRAINT senales_resena_resuelto_por_fkey FOREIGN KEY (resuelto_por) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE servicios ADD CONSTRAINT servicios_categoria_fkey FOREIGN KEY (categoria) REFERENCES categorias_servicio ("{id}") ON DELETE NO ACTION;
+ALTER TABLE suscripciones ADD CONSTRAINT "subscriptions_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE tickets_soporte ADD CONSTRAINT tickets_soporte_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE SET NULL;
+ALTER TABLE trabajador_horarios ADD CONSTRAINT trabajador_horarios_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES trabajadores ("{id_usuario}") ON DELETE CASCADE;
+ALTER TABLE trabajador_horas_publicadas ADD CONSTRAINT trabajador_horas_publicadas_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES trabajadores ("{id_usuario}") ON DELETE CASCADE;
+ALTER TABLE trabajador_precios ADD CONSTRAINT trabajador_precios_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES trabajadores ("{id_usuario}") ON DELETE CASCADE;
+ALTER TABLE trabajador_servicios ADD CONSTRAINT trabajador_servicios_categoria_fkey FOREIGN KEY (categoria_servicio) REFERENCES categorias_servicio ("{id}") ON DELETE NO ACTION;
+ALTER TABLE trabajador_servicios ADD CONSTRAINT trabajador_servicios_id_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES trabajadores ("{id_usuario}") ON DELETE CASCADE;
+ALTER TABLE trabajador_servicios_extra ADD CONSTRAINT trabajador_servicios_extra_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES trabajadores ("{id_usuario}") ON DELETE CASCADE;
+ALTER TABLE trabajadores ADD CONSTRAINT trabajadores_id_comuna_fkey FOREIGN KEY (id_comuna) REFERENCES comunas ("{id}") ON DELETE SET NULL;
+ALTER TABLE trabajadores ADD CONSTRAINT trabajadores_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE trabajos ADD CONSTRAINT "jobs_serviceId_fkey" FOREIGN KEY (id_servicio) REFERENCES servicios ("{id}") ON DELETE SET NULL;
+ALTER TABLE trabajos ADD CONSTRAINT "jobs_userId_fkey" FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
+ALTER TABLE trabajos ADD CONSTRAINT "jobs_workerId_fkey" FOREIGN KEY (id_trabajador) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE trabajos ADD CONSTRAINT trabajos_id_comuna_fkey FOREIGN KEY (id_comuna) REFERENCES comunas ("{id}") ON DELETE SET NULL;
+ALTER TABLE trabajos ADD CONSTRAINT trabajos_id_cotizacion_seleccionada_fkey FOREIGN KEY (id_cotizacion_seleccionada) REFERENCES propuestas_cotizacion ("{id}") ON DELETE SET NULL;
+ALTER TABLE ubicacion_en_vivo ADD CONSTRAINT ubicacion_en_vivo_id_trabajo_fkey FOREIGN KEY (id_trabajo) REFERENCES trabajos ("{id}") ON DELETE CASCADE;
+ALTER TABLE ubicacion_en_vivo ADD CONSTRAINT ubicacion_en_vivo_trabajador_fkey FOREIGN KEY (id_trabajador) REFERENCES trabajadores ("{id_usuario}") ON DELETE CASCADE;
+ALTER TABLE verificacion_eventos ADD CONSTRAINT verificacion_eventos_id_actor_fkey FOREIGN KEY (id_actor) REFERENCES perfiles ("{id}") ON DELETE SET NULL;
+ALTER TABLE verificacion_eventos ADD CONSTRAINT verificacion_eventos_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES perfiles ("{id}") ON DELETE CASCADE;
 
 -- Relaciones lógicas (sin FOREIGN KEY física en la BD real):
---   liquidaciones(id_trabajador) -> perfiles(id): profesional liquidado; text que guarda el uuid del perfil
---   liquidaciones(id_operador) -> perfiles(id): administrador que confirmó la transferencia; text con uuid o 'sistema'
 --   metodos_pago_oneclick(id_trabajo_pendiente) -> trabajos(id): trabajo que espera la inscripción Oneclick para cobrarse
 --   bloqueos_pin_inicio(pin_ok_usuario) -> perfiles(id): usuario que validó el PIN (ventana pin_ok_hasta)
 --   trabajos(id_trabajador, id_sku_servicio) -> trabajador_precios(id_usuario, codigo): SKU de precio elegido; también admite 'tier_<n>', por eso no es FK
---   trabajador_servicios(categoria_servicio) -> servicios(categoria): categoría ofrecida; servicios.categoria no es única

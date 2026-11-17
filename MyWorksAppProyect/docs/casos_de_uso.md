@@ -608,7 +608,7 @@ Reglas transversales que impone el servidor:
 - 2a. La foto no está en WebP: el trigger `fotos_trabajo_exigir_webp` la rechaza.
 - 1a. El cliente no se presentó: el profesional puede marcar `no_asistio` si no hay pago retenido. Si lo hay, debe abrir una disputa.
 
-**Trazabilidad**: `myworksapp_app/lib/features/jobs/presentation/pages/job_photos_page.dart`; `shared/src/evidence/save.ts`; migraciones `20261108000001_evidencia_webp.sql`, `20261115050002_bucket_evidencias.sql`, `20261115050008_evidencias_video_20mb.sql`.
+**Trazabilidad**: `myworksapp_app/lib/features/jobs/presentation/pages/job_photos_page.dart`; `shared/src/evidence/save.ts`; migraciones `20261108000001_evidencia_webp.sql`, `20261115051455_bucket_evidencias.sql`, `20261115051532_evidencias_video_20mb.sql`.
 
 ---
 
@@ -685,7 +685,7 @@ Reglas transversales que impone el servidor:
 - 3b. El trabajo no está completado: «califica al cliente cuando el trabajo ya esta completado».
 - 3c. Hay una disputa abierta: «la reputacion queda en pausa».
 
-**Trazabilidad**: SQL `calificar_cliente` (migraciones `20261025000001_revision_patrocinante.sql` y `20261115050004_calificacion_bidireccional.sql`).
+**Trazabilidad**: SQL `calificar_cliente` (migraciones `20261025000001_revision_patrocinante.sql` y `20261115051507_calificacion_bidireccional.sql`).
 
 ---
 
@@ -828,7 +828,7 @@ Reglas transversales que impone el servidor:
 - 4a. El administrador rechaza (CU-29): estado `rechazado` con una nota, y el profesional puede corregir y reenviar.
 - 3a. Intenta cambiarse el estado él mismo: el trigger `trabajadores_proteger_verificacion` lo impide.
 
-**Trazabilidad**: `myworksapp_app/lib/features/worker/presentation/pages/worker_register_page.dart`, `worker_verification_card.dart`; migración `20261115050007_verificacion_eventos.sql`.
+**Trazabilidad**: `myworksapp_app/lib/features/worker/presentation/pages/worker_register_page.dart`, `worker_verification_card.dart`; migración `20261115051527_verificacion_eventos.sql`.
 
 ---
 
@@ -852,7 +852,7 @@ Reglas transversales que impone el servidor:
 
 **Reglas de negocio**: las horas libres del cliente (CU-06) salen de este horario menos los trabajos ya tomados.
 
-**Trazabilidad**: `myworksapp_app/lib/features/worker/presentation/pages/worker_pricing_setup_page.dart`, `worker_schedule_page.dart`, `worker_home_page.dart`; migraciones `20261115050006_horarios_semanales.sql` y `20261115052827_trabajador_horarios_pk_por_dia.sql`.
+**Trazabilidad**: `myworksapp_app/lib/features/worker/presentation/pages/worker_pricing_setup_page.dart`, `worker_schedule_page.dart`, `worker_home_page.dart`; migraciones `20261115051520_horarios_semanales.sql` y `20261115052827_trabajador_horarios_pk_por_dia.sql`.
 
 ---
 
@@ -876,7 +876,7 @@ Reglas transversales que impone el servidor:
 
 **Reglas de negocio**: hoy la transferencia la registra un administrador de forma manual (CU-30).
 
-**Trazabilidad**: `myworksapp_app/lib/features/worker/presentation/pages/worker_payouts_page.dart`, `statistics_page.dart`; `shared/src/payments/payout.ts`; migración `20261115050005_pagos_cuenta_bancaria.sql`.
+**Trazabilidad**: `myworksapp_app/lib/features/worker/presentation/pages/worker_payouts_page.dart`, `statistics_page.dart`; `shared/src/payments/payout.ts`; migración `20261115051513_pagos_cuenta_bancaria.sql`.
 
 ---
 

@@ -76,9 +76,9 @@ Fecha inventario: 2026-09-13
 | rating | calificacion |
 | isAvailable | disponible |
 | visitFee | tarifa_visita |
-| serviceCategory | categoria_servicio |
-| pricingTiers | niveles_precio |
-| customServices | servicios_personalizados |
+| serviceCategory | `trabajador_servicios.categoria_servicio` |
+| pricingTiers | filas de `trabajador_precios` (`codigo`, `monto_clp`) |
+| customServices | filas de `trabajador_servicios_extra` |
 | pricingConfigured | precios_configurados |
 | workZone | zona_trabajo |
 | rejectionCount | conteo_rechazos |

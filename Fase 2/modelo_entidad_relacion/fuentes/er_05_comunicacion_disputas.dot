@@ -13,7 +13,7 @@ label=<<font point-size="26" color="#1B6B4A"><b>Modelo ER · Comunicación, noti
 "perfiles" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#7F7F7F" style="dashed"><tr><td bgcolor="#EFEFEF"><font point-size="19" color="#333333"><b>perfiles</b></font></td></tr><tr><td><font point-size="16" color="#555555">PK id · otro dominio</font></td></tr></table>>];
 "trabajos" [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="5" color="#7F7F7F" style="dashed"><tr><td bgcolor="#EFEFEF"><font point-size="19" color="#333333"><b>trabajos</b></font></td></tr><tr><td><font point-size="16" color="#555555">PK id · otro dominio</font></td></tr></table>>];
 "disputa_mensajes":"id_autor_e":e -> "perfiles":w [arrowtail="crowodot", arrowhead="teeodot", color="#1B6B4A"];
-"disputa_mensajes":"id_disputa_e":e -> "disputas":"id_w":w [arrowtail="crowodot", arrowhead="teetee", color="#1B6B4A"];
+"disputa_mensajes":"id_disputa_e":e -> "disputas":"{id}_w":w [arrowtail="crowodot", arrowhead="teetee", color="#1B6B4A"];
 "disputas":"abierta_por_e":e -> "perfiles":w [arrowtail="crowodot", arrowhead="teetee", color="#1B6B4A"];
 "disputas":"resuelta_por_e":e -> "perfiles":w [arrowtail="crowodot", arrowhead="teeodot", color="#1B6B4A"];
 "disputas":"id_trabajo_e":e -> "trabajos":w [arrowtail="crowodot", arrowhead="teetee", color="#1B6B4A"];

@@ -5,12 +5,13 @@ Qué es
 ------
 El modelo de datos de MyWorksApp: PostgreSQL en Supabase, esquema public,
 proyecto wxqrfcqifkfgawrnqmnj. Las figuras y los scripts salen del esquema
-real de la base, leído en modo solo lectura (migración 20261116044049,
-16-11-2026, hora de Chile).
+real de la base, leído en modo solo lectura (migración 20261117223850,
+17-11-2026, hora de Chile).
 
-  52 tablas · 437 columnas · 52 claves primarias
-  78 claves foráneas (77 entre tablas de public + perfiles.id -> auth.users.id)
-  RLS activo en las 52 tablas · sin ENUM ni vistas (los estados usan CHECK)
+  57 tablas · 458 columnas · 57 claves primarias
+  85 claves foráneas (84 entre tablas de public + perfiles.id -> auth.users.id)
+  RLS activo en las 57 tablas · sin ENUM (los estados usan CHECK) · una vista
+  (encuestas_testing_con_puntaje), que no se dibuja
 
 Cómo leer los diagramas (notación crow's foot)
 ----------------------------------------------
@@ -28,7 +29,7 @@ Figuras (carpeta figuras/, PNG de ~2400 px y SVG vectorial)
   er_00_dominios       Mapa de los 7 dominios, con sus tablas y las FK que
                        cruzan de un dominio a otro. Es la mejor figura para
                        una presentación.
-  er_00_general        Las 52 tablas con su PK y todas las FK. Es densa:
+  er_00_general        Las 57 tablas con su PK y todas las FK. Es densa:
                        para leerla, abrir el SVG y hacer zoom.
   er_01 ... er_07      Un diagrama por dominio, con todas las columnas, el
                        tipo, PK/FK y la cardinalidad.
@@ -38,11 +39,12 @@ Dominios
   01 Usuarios, autenticación y territorio (10): perfiles, codigos_restablecimiento,
      consentimientos_usuario, dispositivos_push, verificacion_eventos, suscripciones,
      bloqueos_usuario, paises, regiones, comunas
-  02 Profesionales, servicios y precios (9): trabajadores, trabajador_precios,
+  02 Profesionales, servicios y precios (11): trabajadores, trabajador_precios,
      trabajador_servicios, trabajador_servicios_extra, trabajador_horarios,
-     portafolio_trabajador, impulsos, servicios, configuraciones_servicio
-  03 Trabajos, reservas, reprogramación y PIN (10): trabajos, propuestas_cotizacion,
-     acuerdos_trabajo, cancelaciones_trabajo, reprogramaciones_trabajo,
+     trabajador_horas_publicadas, portafolio_trabajador, impulsos,
+     categorias_servicio, servicios, configuraciones_servicio
+  03 Trabajos, reservas, reprogramación y PIN (11): trabajos, propuestas_cotizacion,
+     propuesta_cotizacion_items, acuerdos_trabajo, cancelaciones_trabajo, reprogramaciones_trabajo,
      pines_inicio_trabajo, bloqueos_pin_inicio, intentos_pin_inicio, fotos_trabajo,
      ubicacion_en_vivo
   04 Pagos, escrow, liquidaciones y cuentas bancarias (5): pagos, ordenes_cambio,
@@ -51,14 +53,14 @@ Dominios
      disputas, disputa_mensajes, tickets_soporte
   06 Calificaciones y ranking (6): calificaciones, calificaciones_cliente,
      senales_resena, eventos_ranking, ranking_aprendizaje, ranking_config
-  07 Administración, moderación y auditoría (7): acciones_pendientes, reportes,
+  07 Administración, moderación y auditoría (9): acciones_pendientes, reportes,
      eventos_abuso, registros_error_app, eventos_analitica, banderas_funcionalidad,
-     app_config
+     app_config, encuestas_testing, encuesta_testing_respuestas
 
 Relaciones principales
 ----------------------
-  - perfiles 1:1 auth.users. perfiles es el centro del modelo: 33 tablas lo
-    referencian (42 FK).
+  - perfiles 1:1 auth.users. perfiles es el centro del modelo: 34 tablas lo
+    referencian (44 FK).
   - trabajadores 1:0..1 perfiles (la PK de trabajadores es id_usuario).
   - trabajos N:1 perfiles dos veces: el cliente (id_usuario, obligatorio) y el
     profesional (id_trabajador, opcional hasta que se asigna).
@@ -69,22 +71,16 @@ Relaciones principales
 
 Relaciones lógicas (sin FOREIGN KEY física)
 -------------------------------------------
-  liquidaciones.id_trabajador         -> perfiles.id (text con uuid, validado por CHECK)
-  liquidaciones.id_operador           -> perfiles.id (admin que confirmó la transferencia)
   metodos_pago_oneclick.id_trabajo_pendiente -> trabajos.id
   bloqueos_pin_inicio.pin_ok_usuario  -> perfiles.id
   trabajos.(id_trabajador, id_sku_servicio) -> trabajador_precios.(id_usuario, codigo)
-  trabajador_servicios.categoria_servicio -> servicios.categoria (no es única)
   Polimórficas: notificaciones.id_relacionado y acciones_pendientes.id_entidad.
-  Nota: trabajador_precios.id_usuario y trabajador_servicios_extra.id_usuario
-  eran text sin FK hasta la auditoría 20261116042559. Hoy son uuid con FK a
-  trabajadores.id_usuario.
 
 Archivos
 --------
   modelo_er.dbml                 Abrir en https://dbdiagram.io (Import > DBML).
-  modelo_er_postgres.sql         DDL PostgreSQL: tablas, PK, UNIQUE y FK. Se probó
-                                 en un Postgres vacío: crea 52 tablas y 77 FK. No
+  modelo_er_postgres.sql         DDL PostgreSQL: tablas, PK, UNIQUE y FK. Se revisó
+                                 con el analizador de PostgreSQL: crea 57 tablas y 84 FK. No
                                  incluye RLS, funciones ni datos. No ejecutarlo
                                  contra producción.
   modelo_er_mysql_workbench.sql  Mismo modelo en MySQL 8 para MySQL Workbench:

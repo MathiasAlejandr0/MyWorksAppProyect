@@ -1,6 +1,6 @@
 # Normalización del modelo de datos (hasta la cuarta forma normal)
 
-Este documento explica qué son las formas normales y muestra, con tablas reales de MyWorksApp, dónde se aplica la **cuarta forma normal (4FN)**. Se revisó el esquema `public` de la base viva (proyecto Supabase `wxqrfcqifkfgawrnqmnj`, 17-11-2026, 53 tablas, última migración `20261116051054`). La lista completa de tablas y sus diagramas está en [`modelo-datos.md`](modelo-datos.md).
+Este documento explica qué son las formas normales y muestra, con tablas reales de MyWorksApp, dónde se aplica la **cuarta forma normal (4FN)**. Se revisó el esquema `public` de la base viva (proyecto Supabase `wxqrfcqifkfgawrnqmnj`, 17-11-2026, 57 tablas, última migración `20261117223850`). La lista completa de tablas y sus diagramas está en [`modelo-datos.md`](modelo-datos.md).
 
 ## 1. Qué es normalizar
 
@@ -66,12 +66,13 @@ La oferta del profesional se guarda en una tabla por cada lista independiente. T
 
 | Columna | Tipo | Clave |
 |---|---|---|
-| `id_trabajador` | uuid | PK, FK → `perfiles.id` |
-| `categoria_servicio` | text | PK |
+| `id_trabajador` | uuid | PK, FK → `trabajadores.id_usuario` |
+| `categoria_servicio` | text | PK, FK → `categorias_servicio.id` |
 
 - La clave primaria es (`id_trabajador`, `categoria_servicio`): la tabla solo dice «este profesional atiende este oficio». No tiene otras columnas, así que no hay nada más que pueda depender de una parte de la clave.
 - Un profesional puede tener muchos oficios sin repetir su ficha ni mezclarlos con precios, fotos o horarios.
-- Datos de la base viva al 17-11-2026: 48 filas.
+- El oficio es siempre una categoría válida: `categorias_servicio` es la tabla de categorías y `servicios` y `trabajador_servicios` apuntan a ella.
+- Datos de la base viva al 17-11-2026: 64 filas, una por cada uno de los 64 profesionales.
 
 ### 3.2 `portafolio_trabajador`: las fotos y videos del profesional
 
@@ -97,7 +98,7 @@ La oferta del profesional se guarda en una tabla por cada lista independiente. T
 
 - Cada fila dice cuánto cobra un profesional por un código de servicio del catálogo. La clave (`id_usuario`, `codigo`) determina `monto_clp` y solo eso: cumple BCNF.
 - La lista de precios se guarda aparte de la ficha `trabajadores`, igual que los oficios y las fotos, para que cada lista crezca por su cuenta.
-- Datos de la base viva al 17-11-2026: 126 filas que pertenecen a 40 profesionales.
+- Datos de la base viva al 17-11-2026: 174 filas que pertenecen a 56 profesionales.
 
 ### 3.4 Otras listas independientes con su propia tabla
 
@@ -106,6 +107,8 @@ El mismo patrón se repite en las demás listas que dependen de un usuario. Cada
 | Tabla | Lista que guarda | Clave primaria |
 |---|---|---|
 | `trabajador_servicios_extra` | Servicios adicionales con precio propio del profesional | (`id_usuario`, `id`) |
+| `trabajador_horarios` | Ventana de atención de cada día de la semana (7 filas por profesional: `dia_semana`, `hora_inicio`, `hora_fin`) | `id`; única por (`id_usuario`, `dia_semana`) |
+| `trabajador_horas_publicadas` | Horas reservables que el profesional publica en cada día | (`id_usuario`, `dia_semana`, `hora`) |
 | `dispositivos_push` | Dispositivos del usuario para avisos push | `token` |
 | `consentimientos_usuario` | Versiones de los términos aceptadas por el usuario | `id` |
 | `bloqueos_usuario` | Usuarios bloqueados por un usuario (única por par bloqueador/bloqueado) | `id` |
@@ -113,15 +116,29 @@ El mismo patrón se repite en las demás listas que dependen de un usuario. Cada
 
 Un usuario puede tener dispositivos, consentimientos y bloqueos a la vez, sin relación entre ellos; al estar en tablas distintas no se combinan entre sí.
 
+### 3.5 Listas que antes iban dentro de una columna
+
+Tres listas se guardan como filas y no como un arreglo o un JSON dentro de otra tabla (1FN):
+
+| Tabla | Lista que guarda | Clave primaria | Qué reemplaza |
+|---|---|---|---|
+| `propuesta_cotizacion_items` | Líneas de cada cotización: `concepto` y `monto` | (`id_propuesta`, `linea`) | El detalle ya no va como JSON dentro de `propuestas_cotizacion`; allí quedan el total y `horas_estimadas`. |
+| `encuesta_testing_respuestas` | Las 10 respuestas SUS de cada encuesta (`item` de 1 a 10, `valor` de 1 a 5) | (`id_encuesta`, `item`) | Las respuestas ya no son una lista dentro de `encuestas_testing`. El puntaje SUS lo calculan la función `sus_puntaje` y la vista `encuestas_testing_con_puntaje`; no se guarda. |
+| `trabajador_horarios` | Una ventana por día de la semana | `id`; única por (`id_usuario`, `dia_semana`) | Los horarios ya no son un JSON dentro de la fila. |
+
+Cada dato depende de la clave completa de su tabla (2FN) y ninguna columna depende de otra que no sea clave (3FN). El precio, los oficios y los servicios adicionales del profesional se leen solo de `trabajador_precios`, `trabajador_servicios` y `trabajador_servicios_extra`: `trabajadores` ya no repite esos datos. La región de un profesional se obtiene desde la comuna (`comunas` → `regiones`).
+
+`liquidaciones.id_trabajador` e `id_operador` son uuid con clave foránea a `perfiles`; la columna `liberada_por_sistema` indica las liberaciones automáticas, que no tienen operador.
+
 ## 4. Veredicto
 
-- **La 4FN se cumple en la oferta del profesional**: sus oficios (`trabajador_servicios`), fotos (`portafolio_trabajador`), precios (`trabajador_precios`) y servicios adicionales (`trabajador_servicios_extra`) están en tablas separadas, cada una con una sola lista y una clave que determina todas sus columnas. Lo mismo ocurre con las listas de un usuario de la sección 3.4.
+- **La 4FN se cumple en la oferta del profesional**: sus oficios (`trabajador_servicios`), fotos (`portafolio_trabajador`), precios (`trabajador_precios`), servicios adicionales (`trabajador_servicios_extra`) y horarios (`trabajador_horarios`, `trabajador_horas_publicadas`) están en tablas separadas, cada una con una sola lista y una clave que determina todas sus columnas. Lo mismo ocurre con las listas de un usuario de la sección 3.4.
 - Esas tablas cumplen además 1FN, 2FN, 3FN y BCNF, que son requisito de la 4FN.
-- Este documento declara 4FN **solo para las tablas indicadas en las secciones 3.1 a 3.4**. No se afirma que las 53 tablas del modelo estén en 4FN.
+- Este documento declara 4FN **solo para las tablas indicadas en las secciones 3.1 a 3.5**. No se afirma que las 57 tablas del modelo estén en 4FN.
 
 ## 5. Cómo se revisó
 
-1. Se leyeron las columnas, claves primarias, claves únicas y claves foráneas de las 53 tablas en la base viva (consultas de solo lectura al catálogo de PostgreSQL).
+1. Se leyeron las columnas, claves primarias, claves únicas y claves foráneas de las 57 tablas en la base viva (consultas de solo lectura al catálogo de PostgreSQL).
 2. Se buscaron tablas que pudieran mezclar dos listas independientes de un mismo dueño. Las tablas de la sección 3 guardan una sola lista cada una.
-3. Se contaron las filas reales de las tablas de las secciones 3.1 a 3.3. En `trabajador_precios` y `portafolio_trabajador` hay varios valores por profesional; en `trabajador_servicios` hoy cada profesional tiene un oficio, pero la estructura permite varios sin cambios.
-4. No se modificó el esquema ni los datos.
+3. Se contaron las filas reales de las tablas de las secciones 3.1 a 3.3. En `trabajador_precios` y `portafolio_trabajador` hay varios valores por profesional; en `trabajador_servicios` hoy cada profesional tiene un oficio, pero la estructura permite varios sin cambios. `trabajador_horarios` tiene 448 filas (7 por cada uno de los 64 profesionales) y `trabajador_horas_publicadas` 1.600.
+4. La revisión fue de solo lectura sobre el catálogo; los cambios de estructura están en las migraciones `20261117213633` a `20261117214622`.
