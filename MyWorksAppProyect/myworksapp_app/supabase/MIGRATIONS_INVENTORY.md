@@ -1,49 +1,33 @@
 # Inventario de migraciones
 
-## Unificación con el PR #55 (2026-11-15)
+La base viva es `wxqrfcqifkfgawrnqmnj`. Cada versión de
+`supabase_migrations.schema_migrations` tiene su archivo en
+`supabase/migrations/` con el mismo número, y cada archivo tiene su fila en la
+base. Hoy hay 113 versiones en los dos lados (verificado el 17-nov-2026).
 
-La base viva es `wxqrfcqifkfgawrnqmnj`. Las migraciones del equipo hasta
-`20261115000001_base_solo_dueno_y_demo_cerrado.sql` ya están aplicadas con
-el mismo número de versión que el archivo.
+Los archivos se ordenan por número. Para un entorno nuevo basta `supabase db push`.
+Para una base que ya tiene el historial no hay nada que reparar.
 
-El PR #55 del otro repo se aplicó encima, con versiones que Supabase anotó
-al subirlas. Esos archivos, en este repo, se nombraron para ordenar
-**después** de `20261115000001`. El SQL ya está en vivo: no hay que volver
-a ejecutarlo. Antes de un `supabase db push` hay que marcar las versiones
-locales que no coinciden con `schema_migrations`.
+## Versiones que vinieron del PR #55
 
-| Versión en este repo | Archivo | En vivo |
-|----------------------|---------|---------|
-| 20261115050001 | `asesor_acuerdos_search_path_fk` | Una de `20261115051320`–`20261115051532` |
-| 20261115050002 | `bucket_evidencias` | Una de `20261115051320`–`20261115051532` |
-| 20261115050003 | `pago_por_confirmar` | Una de `20261115051320`–`20261115051532` |
-| 20261115050004 | `calificacion_bidireccional` | Una de `20261115051320`–`20261115051532` |
-| 20261115050005 | `pagos_cuenta_bancaria` | Una de `20261115051320`–`20261115051532` |
-| 20261115050006 | `horarios_semanales` | Una de `20261115051320`–`20261115051532` |
-| 20261115050007 | `verificacion_eventos` | Una de `20261115051320`–`20261115051532` |
-| 20261115050008 | `evidencias_video_20mb` | Una de `20261115051320`–`20261115051532` |
-| 20261115052827 | `trabajador_horarios_pk_por_dia` | **La misma** `20261115052827`. No reparar. |
-| 20261115060002 | `cron_webpay_reconcile` | El job `mwa_webpay_reconcile` corre cada 5 minutos. No hay fila en `schema_migrations`. |
+Estas migraciones se aplicaron con la fecha en que Supabase las anotó. Sus
+archivos llevan ese mismo número.
 
-Las ocho versiones remotas `20261115051320`–`20261115051532` se quedan en el
-historial sin archivo de ese número. Son el mismo SQL, no una segunda copia
-para correr.
+| Versión | Archivo |
+|---------|---------|
+| 20261115051320 | `asesor_acuerdos_search_path_fk` |
+| 20261115051455 | `bucket_evidencias` |
+| 20261115051501 | `pago_por_confirmar` |
+| 20261115051507 | `calificacion_bidireccional` |
+| 20261115051513 | `pagos_cuenta_bancaria` |
+| 20261115051520 | `horarios_semanales` |
+| 20261115051527 | `verificacion_eventos` |
+| 20261115051532 | `evidencias_video_20mb` |
+| 20261115052827 | `trabajador_horarios_pk_por_dia` |
+| 20261115060002 | `cron_webpay_reconcile` (el job `mwa_webpay_reconcile` corre cada 5 minutos) |
+| 20261115171533 | `usa_horario_select_authenticated` |
 
-```bash
-supabase migration repair --status applied 20261115050001
-supabase migration repair --status applied 20261115050002
-supabase migration repair --status applied 20261115050003
-supabase migration repair --status applied 20261115050004
-supabase migration repair --status applied 20261115050005
-supabase migration repair --status applied 20261115050006
-supabase migration repair --status applied 20261115050007
-supabase migration repair --status applied 20261115050008
-supabase migration repair --status applied 20261115060002
-```
-
-## Aplicadas en vivo el 15-nov-2026
-
-Verificado en `supabase_migrations.schema_migrations` del proyecto `wxqrfcqifkfgawrnqmnj` (las tres primeras figuraban antes como pendientes y ya están aplicadas).
+## Aplicadas en vivo el 15 y 16-nov-2026
 
 | Versión | Archivo | Qué hace |
 |---------|---------|----------|
@@ -62,42 +46,25 @@ Verificado en `supabase_migrations.schema_migrations` del proyecto `wxqrfcqifkfg
 | 20261116043033 | `auditoria_bd_indices_fk.sql` | Auditoría BD 4/5: 24 índices para FK sin índice (`idx_<tabla>_<columna>_fkey`). |
 | 20261116043212 | `auditoria_bd_rls_initplan.sql` | Auditoría BD 5/5: envuelve `is_admin()` en `(SELECT is_admin())` en 42 políticas (se evalúa una vez por consulta). Idempotente. |
 | 20261116044049 | `stats_profesional_fuente_unica.sql` | RPC `stats_profesional` / `stats_profesionales` como fuente única de la nota (promedio simple de reseñas reales) y de los trabajos completados. El catálogo las calcula en vivo. Recalcula las columnas cacheadas (sin inventar filas). El cálculo definer vive en el esquema `privado`; las RPC públicas son INVOKER. Aplicada en producción el 16-nov-2026 con OK de Mathias. |
+| 20261116051051 | `cita_en_aviso_nuevo_pedido.sql` | El aviso de nuevo pedido incluye la cita acordada. |
+| 20261116051054 | `encuestas_testing.sql` | Primera versión de la encuesta de testing (respuestas SUS en una lista). La reemplaza `20261117214622`. |
 
-## Snapshot CLI (2026-09-07)
+## Normalización del 17-nov-2026
 
-Generado tras `npx supabase login` + `npx supabase link --project-ref wxqrfcqifkfgawrnqmnj`
-y `npx supabase migration list` (2026-09-07).
+| Versión | Archivo | Qué hace |
+|---------|---------|----------|
+| 20261117213633 | `eliminar_respaldos_20261115.sql` | Elimina los esquemas de respaldo `backup_20261115*`. |
+| 20261117213644 | `respaldo_20261117_normalizacion.sql` | Copia previa de las tablas que cambian, en el esquema `backup_20261117` (sin acceso para `anon` ni `authenticated`). |
+| 20261117214120 | `normalizar_categorias_servicio.sql` | Tabla `categorias_servicio` con PK y FK desde `servicios` y `trabajador_servicios`. |
+| 20261117214219 | `normalizar_oferta_profesional.sql` | Precios, servicios propios y oficio del profesional solo en `trabajador_precios`, `trabajador_servicios_extra` y `trabajador_servicios`. Quita de `trabajadores` las columnas `niveles_precio`, `servicios_personalizados`, `categoria_servicio` e `id_region`, y el trigger de sincronización. |
+| 20261117214336 | `normalizar_horarios_publicados.sql` | Siete ventanas por profesional en `trabajador_horarios` (`dia_semana`, `hora_inicio`, `hora_fin`) y las horas reservables en `trabajador_horas_publicadas`. RPC `guardar_horarios_propios`. |
+| 20261117214418 | `normalizar_cotizacion_items.sql` | `propuesta_cotizacion_items` y `propuestas_cotizacion.horas_estimadas` en lugar del JSON `desglose`. |
+| 20261117214528 | `normalizar_liquidaciones_uuid.sql` | `liquidaciones.id_trabajador` e `id_operador` pasan a uuid con FK a `perfiles`; `liberada_por_sistema` marca las liberaciones automáticas. |
+| 20261117214622 | `normalizar_encuesta_respuestas.sql` | `encuesta_testing_respuestas`, función `sus_puntaje`, vista `encuestas_testing_con_puntaje` y RPC `enviar_encuesta_testing`. |
+| 20261117223850 | `quitar_indice_duplicado_servicios.sql` | Quita `servicios_categoria_idx`, que repetía `idx_servicios_categoria`. |
 
-## Local (en repo) sin marca remota
+## Dump del esquema
 
-| Version | Archivo |
-|---------|---------|
-| 20250607000001 | hardening roles/profiles |
-| 20250607000002 | fix is_admin RLS |
-| 20250607000003 | revoke trigger execute |
-| 20250819120000 | oauth profile names |
-| 20250907120000 | schema baseline documented |
-
-## Remoto (historial en Supabase) sin archivo local
-
-Estas versiones existen en el proyecto remoto `wxqrfcqifkfgawrnqmnj` pero **no** están como `.sql` en este repo (se aplicaron fuera de git o se perdieron):
-
-`20260608002641`, `20260608005805`, `20260608010157`, `20260608014121`, `20260608022226`, `20260608023535`, `20260608031838`, `20260608041437`, `20260608045812`, `20260608050536`, `20260608154349`, `20260608154638`, `20260608155420`, `20260608155910`, `20260608160410`, `20260608234142`, `20260610154519`, `20260610154705`, `20260610163326`, `20260610163655`, `20260610164532`, `20260610164622`, `20260610171103`, `20260819180559`
-
-## Dump oficial (completado)
-
-Archivo: [`schema_remote_dump.sql`](./schema_remote_dump.sql)  
-Generado con Docker + `npx supabase db dump --schema public` (proyecto `wxqrfcqifkfgawrnqmnj`).
-
-Contenido aproximado del schema `public`:
-- **28 tablas**: `abuse_events`, `analytics_events`, `app_error_logs`, `boosts`, `change_orders`, `disputes`, `feature_flags`, `job_cancellations`, `job_photos`, `jobs`, `messages`, `notifications`, `password_reset_codes`, `payments`, `pending_actions`, `profiles`, `quote_proposals`, `ratings`, `reports`, `service_configs`, `services`, `subscriptions`, `tickets`, `user_blocks`, `user_consents`, `worker_portfolio`, `worker_services`, `workers`
-- Funciones clave: `handle_new_user`, `is_admin`, …
-- ~75 RLS policies
-
-**Nota:** el historial de migraciones remoto sigue desalineado respecto a los `.sql` locales; el dump es la fuente de verdad del schema actual. `db pull` puede seguir fallando por ese conflicto; no es necesario si el dump está versionado.
-
-Para regenerar:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\supabase-db-pull.ps1
-```
+Archivo: [`schema_remote_dump.sql`](./schema_remote_dump.sql). Es una copia
+anterior del esquema `public`; el esquema vigente está en
+`docs/DICCIONARIO_BASE_DATOS.md` y en `docs/modelo-datos.md`.

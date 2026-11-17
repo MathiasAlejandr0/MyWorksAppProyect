@@ -1,14 +1,14 @@
 -- MyWorksApp — modelo entidad-relación (PostgreSQL)
--- Versión 2.5 · 52 tablas public · generado 2026-11-16 (America/Santiago)
+-- Versión 2.5 · 57 tablas public · generado 2026-11-17 (America/Santiago)
 --
 -- Documentación del esquema REAL de wxqrfcqifkfgawrnqmnj
--- hasta 20261116044049_stats_profesional_fuente_unica.
+-- hasta 20261117223850_quitar_indice_duplicado_servicios.
 -- Incluye tipos, nulos, defaults, PK, FK, UNIQUE, CHECK e índices.
 -- No incluye RLS, triggers ni el cuerpo de las funciones (van en el diccionario).
 -- No es un script de restauración completa. No ejecutar contra producción.
 --
 -- perfiles.id coincide con auth.users.id.
--- No hay ENUM ni vistas en public.
+-- No hay ENUM en public; la vista encuestas_testing_con_puntaje no se incluye.
 -- trabajador_precios.id_usuario y trabajador_servicios_extra.id_usuario son uuid
 -- con FK a trabajadores.id_usuario (auditoría 2026-11-16).
 
@@ -275,10 +275,7 @@ CREATE TABLE trabajadores (
   calificacion numeric(4,2) NOT NULL DEFAULT 0,
   disponible integer NOT NULL DEFAULT 1,
   tarifa_visita numeric(12,0) NOT NULL DEFAULT 15000,
-  categoria_servicio text NOT NULL DEFAULT 'general',
-  niveles_precio jsonb NOT NULL DEFAULT '{}',
   conteo_rechazos integer NOT NULL DEFAULT 0,
-  servicios_personalizados jsonb NOT NULL DEFAULT '[]',
   precios_configurados integer NOT NULL DEFAULT 0,
   zona_trabajo text,
   estado_verificacion text NOT NULL DEFAULT 'pendiente',
@@ -296,7 +293,6 @@ CREATE TABLE trabajadores (
   trabajos_completados integer NOT NULL DEFAULT 0,
   es_elite boolean GENERATED ALWAYS AS (((COALESCE(calificacion, (0)::numeric) >= 4.7) AND (trabajos_completados >= 5))) STORED,
   id_comuna text,
-  id_region text,
   usa_horario boolean NOT NULL DEFAULT false,
   pausa_por_trabajo boolean NOT NULL DEFAULT false,
   PRIMARY KEY (id_usuario),
@@ -315,9 +311,8 @@ CREATE TABLE trabajadores (
   CONSTRAINT trabajadores_tarifa_visita_chk CHECK ((tarifa_visita >= (0)::numeric))
 );
 
-COMMENT ON TABLE trabajadores IS 'Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en tablas hijas; los JSON niveles_precio y servicios_personalizados son solo formato de escritura (un trigger los parte a filas). es_elite es una columna GENERATED. La agenda semanal está en trabajador_horarios; usa_horario enciende el filtro. pausa_por_trabajo queda en true cuando un trabajo activo dejó disponible = 0, y se restablece al terminar.';
+COMMENT ON TABLE trabajadores IS 'Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios adicionales y oficios están en trabajador_precios, trabajador_servicios_extra y trabajador_servicios; la región se obtiene desde la comuna. es_elite es una columna GENERATED. La agenda semanal está en trabajador_horarios y trabajador_horas_publicadas; usa_horario enciende el filtro. pausa_por_trabajo queda en true cuando un trabajo activo dejó disponible = 0, y se restablece al terminar.';
 COMMENT ON COLUMN trabajadores.conteo_rechazos IS 'Rechazos de invitaciones; penaliza orden en listados (no visible en UI)';
-COMMENT ON COLUMN trabajadores.servicios_personalizados IS 'Servicios adicionales definidos por el trabajador (JSON array)';
 COMMENT ON COLUMN trabajadores.precios_configurados IS '1 si el trabajador completó la guía de configuración de precios';
 COMMENT ON COLUMN trabajadores.zona_trabajo IS 'Comuna o zona donde atiende el trabajador';
 COMMENT ON COLUMN trabajadores.latitud_base IS 'Latitud de la base de servicio. origen_base=comuna es el centro de la comuna declarada; mapa la fijó el profesional.';
@@ -328,7 +323,6 @@ COMMENT ON COLUMN trabajadores.radio_urbano_km IS 'Kilómetros alrededor de la b
 COMMENT ON COLUMN trabajadores.tarifa_fuera_radio_clp IS 'Movilización fija si el cliente está fuera del radio urbano. 0 = tampoco cobra fuera.';
 COMMENT ON COLUMN trabajadores.es_elite IS 'Destacado del mes: nota >= 4.7 y al menos 5 trabajos completados.';
 COMMENT ON COLUMN trabajadores.id_comuna IS 'Comuna de cobertura. zona_trabajo sigue como texto de UI.';
-COMMENT ON COLUMN trabajadores.id_region IS 'Cobertura regional (p. ej. RM todas).';
 COMMENT ON COLUMN trabajadores.pausa_por_trabajo IS 'true cuando disponible = 0 lo dejó un trabajo activo; se restablece al terminar.';
 
 CREATE TABLE trabajador_precios (
@@ -339,7 +333,7 @@ CREATE TABLE trabajador_precios (
   CONSTRAINT trabajador_precios_monto_clp_check CHECK ((monto_clp >= (0)::numeric))
 );
 
-COMMENT ON TABLE trabajador_precios IS 'Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE) desde la auditoría 2026-11-16; antes era text sin FK.';
+COMMENT ON TABLE trabajador_precios IS 'Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE). Es la única fuente de los precios del profesional.';
 
 CREATE TABLE trabajador_servicios_extra (
   id text NOT NULL,
@@ -353,7 +347,7 @@ CREATE TABLE trabajador_servicios_extra (
   CONSTRAINT trabajador_servicios_extra_unidad_check CHECK ((unidad = ANY (ARRAY['fijo'::text, 'por_m2'::text])))
 );
 
-COMMENT ON TABLE trabajador_servicios_extra IS 'Servicio adicional definido por el profesional. id_usuario es uuid con clave foránea a trabajadores, igual que en trabajador_precios.';
+COMMENT ON TABLE trabajador_servicios_extra IS 'Servicio adicional definido por el profesional (título, subtítulo, monto y unidad fijo o por m²). id_usuario es uuid con clave foránea a trabajadores. Es la única fuente de sus servicios adicionales.';
 
 CREATE TABLE trabajador_servicios (
   id_trabajador uuid NOT NULL,
@@ -361,23 +355,34 @@ CREATE TABLE trabajador_servicios (
   PRIMARY KEY (id_trabajador, categoria_servicio)
 );
 
-COMMENT ON TABLE trabajador_servicios IS 'Oficios del catálogo que el profesional declara atender.';
+COMMENT ON TABLE trabajador_servicios IS 'Oficios del catálogo que el profesional declara atender. categoria_servicio es clave foránea a categorias_servicio.';
 
 CREATE TABLE trabajador_horarios (
   id_usuario uuid NOT NULL,
-  horarios jsonb NOT NULL DEFAULT '[]',
   actualizado_en timestamptz NOT NULL DEFAULT now(),
   id uuid NOT NULL DEFAULT gen_random_uuid(),
-  dia_semana smallint,
-  hora_inicio time,
-  hora_fin time,
-  activo boolean DEFAULT true,
+  dia_semana smallint NOT NULL,
+  hora_inicio time NOT NULL,
+  hora_fin time NOT NULL,
+  activo boolean NOT NULL DEFAULT true,
   creado_en timestamptz DEFAULT now(),
   PRIMARY KEY (id),
-  CONSTRAINT trabajador_horarios_dia_chk CHECK (((dia_semana IS NULL) OR ((dia_semana >= 1) AND (dia_semana <= 7))))
+  CONSTRAINT trabajador_horarios_dia_chk CHECK (((dia_semana IS NULL) OR ((dia_semana >= 1) AND (dia_semana <= 7)))),
+  CONSTRAINT trabajador_horarios_rango_chk CHECK (((NOT activo) OR (hora_inicio < hora_fin)))
 );
 
-COMMENT ON TABLE trabajador_horarios IS 'Plantilla semanal: una fila por día (1 = lunes … 7 = domingo), única por (id_usuario, dia_semana). Solo el dueño lee y escribe (RLS). El cliente consulta los huecos con la RPC horarios_libres_profesional. usa_horario en trabajadores enciende el filtro.';
+COMMENT ON TABLE trabajador_horarios IS 'Ventana de atención semanal: siete filas por profesional, una por día (1 = lunes … 7 = domingo), con hora_inicio y hora_fin, únicas por (id_usuario, dia_semana). Las horas reservables dentro de la ventana están en trabajador_horas_publicadas. usa_horario en trabajadores enciende el filtro.';
+
+CREATE TABLE trabajador_horas_publicadas (
+  id_usuario uuid NOT NULL,
+  dia_semana smallint NOT NULL,
+  hora time NOT NULL,
+  creado_en timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (id_usuario, dia_semana, hora),
+  CONSTRAINT trabajador_horas_publicadas_dia_semana_check CHECK (((dia_semana >= 1) AND (dia_semana <= 7)))
+);
+
+COMMENT ON TABLE trabajador_horas_publicadas IS 'Horas que el profesional publica como reservables en cada día (clave id_usuario, dia_semana, hora). Un trigger de reserva acepta solo horas publicadas y libres. El cliente las ve con la RPC horarios_libres_profesional.';
 
 CREATE TABLE portafolio_trabajador (
   id text NOT NULL,
@@ -407,6 +412,18 @@ CREATE TABLE impulsos (
 );
 
 COMMENT ON TABLE impulsos IS 'Promoción temporal de visibilidad de un profesional.';
+
+CREATE TABLE categorias_servicio (
+  id text NOT NULL,
+  nombre text NOT NULL,
+  activa boolean NOT NULL DEFAULT true,
+  creado_en timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (id),
+  CONSTRAINT categorias_servicio_id_check CHECK ((id ~ '^[a-z][a-z0-9_]*$'::text)),
+  CONSTRAINT categorias_servicio_nombre_check CHECK ((length(btrim(nombre)) > 0))
+);
+
+COMMENT ON TABLE categorias_servicio IS 'Categorías u oficios del catálogo (gasfitería, electricidad y otros). Las usan servicios y trabajador_servicios.';
 
 CREATE TABLE servicios (
   id text NOT NULL,
@@ -705,16 +722,30 @@ CREATE TABLE propuestas_cotizacion (
   monto_total_clp integer NOT NULL,
   descripcion text NOT NULL,
   validez_hasta text,
-  desglose text,
   estado text NOT NULL,
   creado_en text NOT NULL,
+  horas_estimadas numeric,
   PRIMARY KEY (id),
   CONSTRAINT propuestas_cotizacion_creado_en_iso_chk CHECK (es_marca_tiempo_iso(creado_en)),
+  CONSTRAINT propuestas_cotizacion_horas_estimadas_check CHECK (((horas_estimadas IS NULL) OR (horas_estimadas >= (0)::numeric))),
   CONSTRAINT propuestas_cotizacion_validez_hasta_iso_chk CHECK (es_marca_tiempo_iso(validez_hasta)),
   CONSTRAINT propuestas_monto_chk CHECK ((monto_total_clp > 0))
 );
 
-COMMENT ON TABLE propuestas_cotizacion IS 'Cotización que un profesional envía para un trabajo.';
+COMMENT ON TABLE propuestas_cotizacion IS 'Cotización que un profesional envía para un trabajo. Guarda el total y las horas estimadas; las líneas están en propuesta_cotizacion_items.';
+
+CREATE TABLE propuesta_cotizacion_items (
+  id_propuesta text NOT NULL,
+  linea smallint NOT NULL,
+  concepto text NOT NULL,
+  monto numeric NOT NULL,
+  PRIMARY KEY (id_propuesta, linea),
+  CONSTRAINT propuesta_cotizacion_items_concepto_check CHECK ((length(btrim(concepto)) > 0)),
+  CONSTRAINT propuesta_cotizacion_items_linea_check CHECK ((linea >= 1)),
+  CONSTRAINT propuesta_cotizacion_items_monto_check CHECK ((monto >= (0)::numeric))
+);
+
+COMMENT ON TABLE propuesta_cotizacion_items IS 'Línea de una cotización: concepto y monto, numeradas por propuesta (clave id_propuesta, linea).';
 
 CREATE TABLE pagos (
   id text NOT NULL,
@@ -794,18 +825,19 @@ CREATE TABLE liquidaciones (
   id text NOT NULL DEFAULT (gen_random_uuid())::text,
   id_pago text NOT NULL,
   id_trabajo text NOT NULL,
-  id_trabajador text,
+  id_trabajador uuid,
   monto_clp numeric NOT NULL,
   proveedor text NOT NULL DEFAULT 'manual',
   referencia_transferencia text NOT NULL,
   notas text,
-  id_operador text NOT NULL,
+  id_operador uuid,
   creado_en timestamptz NOT NULL DEFAULT now(),
   estado_transferencia text NOT NULL DEFAULT 'transferido',
+  liberada_por_sistema boolean NOT NULL DEFAULT false,
   PRIMARY KEY (id),
   CONSTRAINT liquidaciones_estado_transferencia_chk CHECK ((estado_transferencia = ANY (ARRAY['pendiente'::text, 'transferido'::text, 'fallido'::text]))),
-  CONSTRAINT liquidaciones_id_trabajador_uuid_chk CHECK (((id_trabajador IS NULL) OR (id_trabajador ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text))),
   CONSTRAINT liquidaciones_monto_clp_check CHECK ((monto_clp > (0)::numeric)),
+  CONSTRAINT liquidaciones_operador_chk CHECK (((id_operador IS NOT NULL) OR liberada_por_sistema)),
   CONSTRAINT liquidaciones_proveedor_check CHECK ((proveedor = ANY (ARRAY['manual'::text, 'khipu'::text, 'fintoc'::text, 'conformidad'::text])))
 );
 
@@ -918,6 +950,40 @@ CREATE TABLE eventos_ranking (
 
 COMMENT ON TABLE eventos_ranking IS 'Evento que alimenta el ranking de un profesional.';
 
+CREATE TABLE encuestas_testing (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  creado_en timestamptz NOT NULL DEFAULT now(),
+  id_usuario uuid DEFAULT auth.uid(),
+  plataforma text NOT NULL,
+  rol text NOT NULL,
+  tarea_completada text NOT NULL,
+  satisfaccion smallint NOT NULL,
+  que_funciono text,
+  que_mejorar text,
+  version_app text,
+  PRIMARY KEY (id),
+  CONSTRAINT encuestas_testing_plataforma_check CHECK ((plataforma = ANY (ARRAY['web'::text, 'app'::text, 'escritorio'::text]))),
+  CONSTRAINT encuestas_testing_que_funciono_check CHECK (((que_funciono IS NULL) OR (char_length(que_funciono) <= 1000))),
+  CONSTRAINT encuestas_testing_que_mejorar_check CHECK (((que_mejorar IS NULL) OR (char_length(que_mejorar) <= 1000))),
+  CONSTRAINT encuestas_testing_rol_check CHECK ((rol = ANY (ARRAY['visitante'::text, 'cliente'::text, 'profesional'::text, 'administrador'::text]))),
+  CONSTRAINT encuestas_testing_satisfaccion_check CHECK (((satisfaccion >= 1) AND (satisfaccion <= 5))),
+  CONSTRAINT encuestas_testing_tarea_completada_check CHECK ((tarea_completada = ANY (ARRAY['si'::text, 'parcial'::text, 'no'::text]))),
+  CONSTRAINT encuestas_testing_version_app_check CHECK (((version_app IS NULL) OR (char_length(version_app) <= 40)))
+);
+
+COMMENT ON TABLE encuestas_testing IS 'Encuesta de usabilidad de quienes prueban la app: plataforma, rol, si completó la tarea, satisfacción y comentarios. Las respuestas SUS están en encuesta_testing_respuestas y el puntaje lo calcula la vista encuestas_testing_con_puntaje.';
+
+CREATE TABLE encuesta_testing_respuestas (
+  id_encuesta uuid NOT NULL,
+  item smallint NOT NULL,
+  valor smallint NOT NULL,
+  PRIMARY KEY (id_encuesta, item),
+  CONSTRAINT encuesta_testing_respuestas_item_check CHECK (((item >= 1) AND (item <= 10))),
+  CONSTRAINT encuesta_testing_respuestas_valor_check CHECK (((valor >= 1) AND (valor <= 5)))
+);
+
+COMMENT ON TABLE encuesta_testing_respuestas IS 'Respuesta a cada uno de los 10 ítems SUS de una encuesta (item de 1 a 10, valor de 1 a 5).';
+
 -- Claves foráneas, únicos e índices
 
 ALTER TABLE perfiles ADD FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE NOT VALID;
@@ -981,15 +1047,10 @@ CREATE INDEX comunas_region_idx ON public.comunas USING btree (id_region);
 CREATE UNIQUE INDEX comunas_region_nombre_activa_uidx ON public.comunas USING btree (id_region, lower(nombre)) WHERE (activa = 1);
 
 ALTER TABLE trabajadores ADD FOREIGN KEY (id_comuna) REFERENCES comunas(id) ON DELETE SET NULL;
-ALTER TABLE trabajadores ADD FOREIGN KEY (id_region) REFERENCES regiones(id) ON DELETE SET NULL;
 ALTER TABLE trabajadores ADD FOREIGN KEY (id_usuario) REFERENCES perfiles(id) ON DELETE CASCADE;
-CREATE INDEX idx_trabajadores_categoria ON public.trabajadores USING btree (categoria_servicio);
 CREATE INDEX idx_trabajadores_id_comuna_fkey ON public.trabajadores USING btree (id_comuna);
-CREATE INDEX idx_trabajadores_id_region_fkey ON public.trabajadores USING btree (id_region);
 CREATE INDEX trabajadores_base_geo_idx ON public.trabajadores USING btree (latitud_base, longitud_base) WHERE ((latitud_base IS NOT NULL) AND (longitud_base IS NOT NULL));
 CREATE INDEX trabajadores_calificacion_idx ON public.trabajadores USING btree (calificacion DESC NULLS LAST) WHERE (COALESCE(disponible, 0) = 1);
-CREATE INDEX trabajadores_catalog_list_idx ON public.trabajadores USING btree (categoria_servicio, calificacion DESC NULLS LAST, id_usuario) WHERE ((COALESCE(disponible, 0) = 1) AND (COALESCE(precios_configurados, 0) = 1));
-CREATE INDEX trabajadores_disponible_cat_idx ON public.trabajadores USING btree (disponible, categoria_servicio) WHERE (COALESCE(disponible, 0) = 1);
 CREATE INDEX trabajadores_score_listado_idx ON public.trabajadores USING btree (score_listado DESC, id_usuario);
 CREATE INDEX trabajadores_zona_trabajo_idx ON public.trabajadores USING btree (zona_trabajo) WHERE ((COALESCE(disponible, 0) = 1) AND (zona_trabajo IS NOT NULL));
 
@@ -997,10 +1058,14 @@ ALTER TABLE trabajador_precios ADD FOREIGN KEY (id_usuario) REFERENCES trabajado
 
 ALTER TABLE trabajador_servicios_extra ADD FOREIGN KEY (id_usuario) REFERENCES trabajadores(id_usuario) ON DELETE CASCADE;
 
-ALTER TABLE trabajador_servicios ADD FOREIGN KEY (id_trabajador) REFERENCES perfiles(id) ON DELETE CASCADE;
+ALTER TABLE trabajador_servicios ADD FOREIGN KEY (categoria_servicio) REFERENCES categorias_servicio(id) ON UPDATE CASCADE;
+ALTER TABLE trabajador_servicios ADD FOREIGN KEY (id_trabajador) REFERENCES trabajadores(id_usuario) ON DELETE CASCADE;
+CREATE INDEX trabajador_servicios_categoria_idx ON public.trabajador_servicios USING btree (categoria_servicio, id_trabajador);
 
 ALTER TABLE trabajador_horarios ADD FOREIGN KEY (id_usuario) REFERENCES trabajadores(id_usuario) ON DELETE CASCADE;
 CREATE UNIQUE INDEX trabajador_horarios_usuario_dia_uidx ON public.trabajador_horarios USING btree (id_usuario, dia_semana);
+
+ALTER TABLE trabajador_horas_publicadas ADD FOREIGN KEY (id_usuario) REFERENCES trabajadores(id_usuario) ON DELETE CASCADE;
 
 ALTER TABLE portafolio_trabajador ADD FOREIGN KEY (id_trabajador) REFERENCES perfiles(id) ON DELETE CASCADE;
 CREATE INDEX idx_portfolio_worker ON public.portafolio_trabajador USING btree (id_trabajador);
@@ -1008,6 +1073,7 @@ CREATE INDEX idx_portfolio_worker ON public.portafolio_trabajador USING btree (i
 ALTER TABLE impulsos ADD FOREIGN KEY (id_trabajador) REFERENCES perfiles(id) ON DELETE CASCADE;
 CREATE INDEX idx_impulsos_id_trabajador_fkey ON public.impulsos USING btree (id_trabajador);
 
+ALTER TABLE servicios ADD FOREIGN KEY (categoria) REFERENCES categorias_servicio(id) ON UPDATE CASCADE;
 CREATE INDEX idx_servicios_categoria ON public.servicios USING btree (categoria);
 CREATE INDEX servicios_activo_categoria_idx ON public.servicios USING btree (activo, categoria) WHERE (COALESCE(activo, 1) = 1);
 
@@ -1112,6 +1178,8 @@ ALTER TABLE propuestas_cotizacion ADD FOREIGN KEY (id_trabajador) REFERENCES per
 CREATE INDEX idx_quotes_job ON public.propuestas_cotizacion USING btree (id_trabajo);
 CREATE INDEX idx_quotes_worker ON public.propuestas_cotizacion USING btree (id_trabajador);
 
+ALTER TABLE propuesta_cotizacion_items ADD FOREIGN KEY (id_propuesta) REFERENCES propuestas_cotizacion(id) ON DELETE CASCADE;
+
 ALTER TABLE pagos ADD FOREIGN KEY (id_orden_cambio) REFERENCES ordenes_cambio(id) ON DELETE SET NULL;
 ALTER TABLE pagos ADD FOREIGN KEY (id_trabajo) REFERENCES trabajos(id) ON DELETE CASCADE;
 CREATE INDEX idx_pagos_id_orden_cambio_fkey ON public.pagos USING btree (id_orden_cambio);
@@ -1129,10 +1197,13 @@ CREATE INDEX idx_change_orders_job ON public.ordenes_cambio USING btree (id_trab
 CREATE INDEX idx_ordenes_cambio_id_pago_fkey ON public.ordenes_cambio USING btree (id_pago);
 CREATE INDEX idx_ordenes_cambio_id_trabajador_fkey ON public.ordenes_cambio USING btree (id_trabajador);
 
+ALTER TABLE liquidaciones ADD FOREIGN KEY (id_operador) REFERENCES perfiles(id) ON DELETE SET NULL;
 ALTER TABLE liquidaciones ADD FOREIGN KEY (id_pago) REFERENCES pagos(id);
+ALTER TABLE liquidaciones ADD FOREIGN KEY (id_trabajador) REFERENCES perfiles(id) ON DELETE SET NULL;
 ALTER TABLE liquidaciones ADD FOREIGN KEY (id_trabajo) REFERENCES trabajos(id);
 CREATE INDEX idx_liquidaciones_id_trabajo_fkey ON public.liquidaciones USING btree (id_trabajo);
 CREATE INDEX liquidaciones_creado_idx ON public.liquidaciones USING btree (creado_en DESC);
+CREATE INDEX liquidaciones_operador_idx ON public.liquidaciones USING btree (id_operador) WHERE (id_operador IS NOT NULL);
 CREATE UNIQUE INDEX liquidaciones_pago_uidx ON public.liquidaciones USING btree (id_pago);
 CREATE INDEX liquidaciones_trabajador_creado_idx ON public.liquidaciones USING btree (id_trabajador, creado_en DESC);
 
@@ -1153,5 +1224,11 @@ ALTER TABLE eventos_ranking ADD FOREIGN KEY (id_trabajador) REFERENCES perfiles(
 ALTER TABLE eventos_ranking ADD FOREIGN KEY (id_trabajo) REFERENCES trabajos(id) ON DELETE SET NULL;
 CREATE INDEX eventos_ranking_trabajador_idx ON public.eventos_ranking USING btree (id_trabajador, tipo_evento);
 CREATE INDEX idx_eventos_ranking_id_trabajo_fkey ON public.eventos_ranking USING btree (id_trabajo);
+
+ALTER TABLE encuestas_testing ADD FOREIGN KEY (id_usuario) REFERENCES perfiles(id) ON DELETE SET NULL;
+CREATE INDEX encuestas_testing_creado_en_idx ON public.encuestas_testing USING btree (creado_en DESC);
+CREATE INDEX encuestas_testing_id_usuario_idx ON public.encuestas_testing USING btree (id_usuario);
+
+ALTER TABLE encuesta_testing_respuestas ADD FOREIGN KEY (id_encuesta) REFERENCES encuestas_testing(id) ON DELETE CASCADE;
 
 COMMIT;

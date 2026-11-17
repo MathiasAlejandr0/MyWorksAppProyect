@@ -319,57 +319,57 @@
 <!-- disputa_mensajes -->
 <g id="node4" class="node">
 <title>disputa_mensajes</title>
-<polygon fill="#1b6b4a" stroke="none" points="178.38,-1117.38 178.38,-1154.12 416.88,-1154.12 416.88,-1117.38 178.38,-1117.38"/>
-<text xml:space="preserve" text-anchor="start" x="184.38" y="-1129.17" font-family="DejaVu Sans" font-weight="bold" font-size="21.00" fill="white">disputa_mensajes</text>
-<polygon fill="#daf0e5" stroke="none" points="178.38,-1089.62 178.38,-1117.38 204.62,-1117.38 204.62,-1089.62 178.38,-1089.62"/>
-<text xml:space="preserve" text-anchor="start" x="181.38" y="-1098.05" font-family="DejaVu Sans" font-size="16.00" fill="#555555">PK</text>
-<polygon fill="#daf0e5" stroke="none" points="204.62,-1089.62 204.62,-1117.38 303.62,-1117.38 303.62,-1089.62 204.62,-1089.62"/>
-<text xml:space="preserve" text-anchor="start" x="207.62" y="-1098.28" font-family="DejaVu Sans" font-weight="bold" text-decoration="underline" font-size="18.00">id</text>
-<polygon fill="#daf0e5" stroke="none" points="303.62,-1089.62 303.62,-1117.38 416.88,-1117.38 416.88,-1089.62 303.62,-1089.62"/>
-<text xml:space="preserve" text-anchor="start" x="306.62" y="-1097.85" font-family="DejaVu Sans" font-size="17.00" fill="#444444">text</text>
-<polygon fill="#daf0e5" stroke="none" points="178.38,-1061.88 178.38,-1089.62 204.62,-1089.62 204.62,-1061.88 178.38,-1061.88"/>
-<text xml:space="preserve" text-anchor="start" x="181.38" y="-1070.3" font-family="DejaVu Sans" font-size="16.00" fill="#555555">FK</text>
-<polygon fill="#daf0e5" stroke="none" points="204.62,-1061.88 204.62,-1089.62 303.62,-1089.62 303.62,-1061.88 204.62,-1061.88"/>
-<text xml:space="preserve" text-anchor="start" x="207.62" y="-1070.53" font-family="DejaVu Sans" font-style="italic" font-size="18.00">id_disputa</text>
-<polygon fill="#daf0e5" stroke="none" points="303.62,-1061.88 303.62,-1089.62 416.88,-1089.62 416.88,-1061.88 303.62,-1061.88"/>
-<text xml:space="preserve" text-anchor="start" x="306.62" y="-1070.1" font-family="DejaVu Sans" font-size="17.00" fill="#444444">text</text>
-<polygon fill="#daf0e5" stroke="none" points="178.38,-1034.12 178.38,-1061.88 204.62,-1061.88 204.62,-1034.12 178.38,-1034.12"/>
-<text xml:space="preserve" text-anchor="start" x="181.38" y="-1042.55" font-family="DejaVu Sans" font-size="16.00" fill="#555555">FK</text>
-<polygon fill="#daf0e5" stroke="none" points="204.62,-1034.12 204.62,-1061.88 303.62,-1061.88 303.62,-1034.12 204.62,-1034.12"/>
-<text xml:space="preserve" text-anchor="start" x="207.62" y="-1042.78" font-family="DejaVu Sans" font-style="italic" font-size="18.00">id_autor</text>
-<polygon fill="#daf0e5" stroke="none" points="303.62,-1034.12 303.62,-1061.88 416.88,-1061.88 416.88,-1034.12 303.62,-1034.12"/>
-<text xml:space="preserve" text-anchor="start" x="306.62" y="-1042.35" font-family="DejaVu Sans" font-size="17.00" fill="#444444">uuid?</text>
-<polygon fill="white" stroke="none" points="178.38,-1006.38 178.38,-1034.12 204.62,-1034.12 204.62,-1006.38 178.38,-1006.38"/>
-<text xml:space="preserve" text-anchor="start" x="181.38" y="-1015.58" font-family="DejaVu Sans" font-size="14.00"> </text>
-<polygon fill="white" stroke="none" points="204.62,-1006.38 204.62,-1034.12 303.62,-1034.12 303.62,-1006.38 204.62,-1006.38"/>
-<text xml:space="preserve" text-anchor="start" x="207.62" y="-1014.02" font-family="DejaVu Sans" font-size="18.00">cuerpo</text>
-<polygon fill="white" stroke="none" points="303.62,-1006.38 303.62,-1034.12 416.88,-1034.12 416.88,-1006.38 303.62,-1006.38"/>
-<text xml:space="preserve" text-anchor="start" x="306.62" y="-1014.6" font-family="DejaVu Sans" font-size="17.00" fill="#444444">text</text>
-<polygon fill="white" stroke="none" points="178.38,-978.62 178.38,-1006.38 204.62,-1006.38 204.62,-978.62 178.38,-978.62"/>
-<text xml:space="preserve" text-anchor="start" x="181.38" y="-987.83" font-family="DejaVu Sans" font-size="14.00"> </text>
-<polygon fill="white" stroke="none" points="204.62,-978.62 204.62,-1006.38 303.62,-1006.38 303.62,-978.62 204.62,-978.62"/>
-<text xml:space="preserve" text-anchor="start" x="207.62" y="-986.27" font-family="DejaVu Sans" font-size="18.00">creado_en</text>
-<polygon fill="white" stroke="none" points="303.62,-978.62 303.62,-1006.38 416.88,-1006.38 416.88,-978.62 303.62,-978.62"/>
-<text xml:space="preserve" text-anchor="start" x="306.62" y="-986.85" font-family="DejaVu Sans" font-size="17.00" fill="#444444">timestamptz</text>
-<polygon fill="none" stroke="#1b6b4a" points="177.38,-977.62 177.38,-1155.12 417.88,-1155.12 417.88,-977.62 177.38,-977.62"/>
+<polygon fill="#1b6b4a" stroke="none" points="178.38,-1029.38 178.38,-1066.12 416.88,-1066.12 416.88,-1029.38 178.38,-1029.38"/>
+<text xml:space="preserve" text-anchor="start" x="184.38" y="-1041.17" font-family="DejaVu Sans" font-weight="bold" font-size="21.00" fill="white">disputa_mensajes</text>
+<polygon fill="#daf0e5" stroke="none" points="178.38,-1001.62 178.38,-1029.38 204.62,-1029.38 204.62,-1001.62 178.38,-1001.62"/>
+<text xml:space="preserve" text-anchor="start" x="181.38" y="-1010.05" font-family="DejaVu Sans" font-size="16.00" fill="#555555">PK</text>
+<polygon fill="#daf0e5" stroke="none" points="204.62,-1001.62 204.62,-1029.38 303.62,-1029.38 303.62,-1001.62 204.62,-1001.62"/>
+<text xml:space="preserve" text-anchor="start" x="207.62" y="-1010.27" font-family="DejaVu Sans" font-weight="bold" text-decoration="underline" font-size="18.00">id</text>
+<polygon fill="#daf0e5" stroke="none" points="303.62,-1001.62 303.62,-1029.38 416.88,-1029.38 416.88,-1001.62 303.62,-1001.62"/>
+<text xml:space="preserve" text-anchor="start" x="306.62" y="-1009.85" font-family="DejaVu Sans" font-size="17.00" fill="#444444">text</text>
+<polygon fill="#daf0e5" stroke="none" points="178.38,-973.88 178.38,-1001.62 204.62,-1001.62 204.62,-973.88 178.38,-973.88"/>
+<text xml:space="preserve" text-anchor="start" x="181.38" y="-982.3" font-family="DejaVu Sans" font-size="16.00" fill="#555555">FK</text>
+<polygon fill="#daf0e5" stroke="none" points="204.62,-973.88 204.62,-1001.62 303.62,-1001.62 303.62,-973.88 204.62,-973.88"/>
+<text xml:space="preserve" text-anchor="start" x="207.62" y="-982.52" font-family="DejaVu Sans" font-style="italic" font-size="18.00">id_disputa</text>
+<polygon fill="#daf0e5" stroke="none" points="303.62,-973.88 303.62,-1001.62 416.88,-1001.62 416.88,-973.88 303.62,-973.88"/>
+<text xml:space="preserve" text-anchor="start" x="306.62" y="-982.1" font-family="DejaVu Sans" font-size="17.00" fill="#444444">text</text>
+<polygon fill="#daf0e5" stroke="none" points="178.38,-946.12 178.38,-973.88 204.62,-973.88 204.62,-946.12 178.38,-946.12"/>
+<text xml:space="preserve" text-anchor="start" x="181.38" y="-954.55" font-family="DejaVu Sans" font-size="16.00" fill="#555555">FK</text>
+<polygon fill="#daf0e5" stroke="none" points="204.62,-946.12 204.62,-973.88 303.62,-973.88 303.62,-946.12 204.62,-946.12"/>
+<text xml:space="preserve" text-anchor="start" x="207.62" y="-954.77" font-family="DejaVu Sans" font-style="italic" font-size="18.00">id_autor</text>
+<polygon fill="#daf0e5" stroke="none" points="303.62,-946.12 303.62,-973.88 416.88,-973.88 416.88,-946.12 303.62,-946.12"/>
+<text xml:space="preserve" text-anchor="start" x="306.62" y="-954.35" font-family="DejaVu Sans" font-size="17.00" fill="#444444">uuid?</text>
+<polygon fill="white" stroke="none" points="178.38,-918.38 178.38,-946.12 204.62,-946.12 204.62,-918.38 178.38,-918.38"/>
+<text xml:space="preserve" text-anchor="start" x="181.38" y="-927.58" font-family="DejaVu Sans" font-size="14.00"> </text>
+<polygon fill="white" stroke="none" points="204.62,-918.38 204.62,-946.12 303.62,-946.12 303.62,-918.38 204.62,-918.38"/>
+<text xml:space="preserve" text-anchor="start" x="207.62" y="-926.02" font-family="DejaVu Sans" font-size="18.00">cuerpo</text>
+<polygon fill="white" stroke="none" points="303.62,-918.38 303.62,-946.12 416.88,-946.12 416.88,-918.38 303.62,-918.38"/>
+<text xml:space="preserve" text-anchor="start" x="306.62" y="-926.6" font-family="DejaVu Sans" font-size="17.00" fill="#444444">text</text>
+<polygon fill="white" stroke="none" points="178.38,-890.62 178.38,-918.38 204.62,-918.38 204.62,-890.62 178.38,-890.62"/>
+<text xml:space="preserve" text-anchor="start" x="181.38" y="-899.83" font-family="DejaVu Sans" font-size="14.00"> </text>
+<polygon fill="white" stroke="none" points="204.62,-890.62 204.62,-918.38 303.62,-918.38 303.62,-890.62 204.62,-890.62"/>
+<text xml:space="preserve" text-anchor="start" x="207.62" y="-898.27" font-family="DejaVu Sans" font-size="18.00">creado_en</text>
+<polygon fill="white" stroke="none" points="303.62,-890.62 303.62,-918.38 416.88,-918.38 416.88,-890.62 303.62,-890.62"/>
+<text xml:space="preserve" text-anchor="start" x="306.62" y="-898.85" font-family="DejaVu Sans" font-size="17.00" fill="#444444">timestamptz</text>
+<polygon fill="none" stroke="#1b6b4a" points="177.38,-889.62 177.38,-1067.12 417.88,-1067.12 417.88,-889.62 177.38,-889.62"/>
 </g>
 <!-- disputa_mensajes&#45;&gt;disputas -->
 <g id="edge2" class="edge">
 <title>disputa_mensajes:e&#45;&gt;disputas:w</title>
-<path fill="none" stroke="#1b6b4a" stroke-width="1.6" d="M443.52,-1074.73C534.46,-1067.29 563.46,-1021.26 660.32,-1017.49"/>
-<polygon fill="#1b6b4a" stroke="#1b6b4a" stroke-width="1.6" points="431.4,-1075.21 418.18,-1069.88 424.37,-1075.49 418.94,-1075.71 418.94,-1075.71 418.94,-1075.71 424.37,-1075.49 418.64,-1081.57 431.4,-1075.21"/>
-<ellipse fill="none" stroke="#1b6b4a" stroke-width="1.6" cx="439.34" cy="-1074.9" rx="5.2" ry="5.2"/>
-<polygon fill="#1b6b4a" stroke="#1b6b4a" stroke-width="1.6" points="671.7,-1010.78 671.95,-1023.77 669.35,-1023.82 669.1,-1010.83 671.7,-1010.78"/>
-<polyline fill="none" stroke="#1b6b4a" stroke-width="1.6" points="673.12,-1017.25 666.63,-1017.37"/>
-<polygon fill="#1b6b4a" stroke="#1b6b4a" stroke-width="1.6" points="665.2,-1010.9 665.45,-1023.9 662.85,-1023.95 662.6,-1010.95 665.2,-1010.9"/>
-<polyline fill="none" stroke="#1b6b4a" stroke-width="1.6" points="666.63,-1017.37 660.13,-1017.5"/>
+<path fill="none" stroke="#1b6b4a" stroke-width="1.6" d="M443.27,-986.95C515.56,-982.51 589.64,-960 653.46,-933.96"/>
+<polygon fill="#1b6b4a" stroke="#1b6b4a" stroke-width="1.6" points="431.4,-987.33 418.23,-981.89 424.37,-987.55 418.94,-987.72 418.94,-987.72 418.94,-987.72 424.37,-987.55 418.59,-993.58 431.4,-987.33"/>
+<ellipse fill="none" stroke="#1b6b4a" stroke-width="1.6" cx="439.35" cy="-987.08" rx="5.2" ry="5.2"/>
+<polygon fill="#1b6b4a" stroke="#1b6b4a" stroke-width="1.6" points="661.56,-923.55 666.54,-935.56 664.14,-936.56 659.16,-924.55 661.56,-923.55"/>
+<polyline fill="none" stroke="#1b6b4a" stroke-width="1.6" points="665.25,-929.06 659.25,-931.55"/>
+<polygon fill="#1b6b4a" stroke="#1b6b4a" stroke-width="1.6" points="655.55,-926.05 660.54,-938.05 658.14,-939.05 653.15,-927.04 655.55,-926.05"/>
+<polyline fill="none" stroke="#1b6b4a" stroke-width="1.6" points="659.25,-931.55 653.25,-934.04"/>
 </g>
 <!-- disputa_mensajes&#45;&gt;perfiles -->
 <g id="edge1" class="edge">
 <title>disputa_mensajes:e&#45;&gt;perfiles:w</title>
-<path fill="none" stroke="#1b6b4a" stroke-width="1.6" d="M443.49,-1049.13C589.52,-1060.74 905.31,-1156.05 1005.25,-1084.38 1072.6,-1036.07 994.8,-914.16 1052.05,-894.94"/>
-<polygon fill="#1b6b4a" stroke="#1b6b4a" stroke-width="1.6" points="431.4,-1048.6 418.67,-1042.18 424.37,-1048.29 418.94,-1048.05 418.94,-1048.05 418.94,-1048.05 424.37,-1048.29 418.15,-1053.87 431.4,-1048.6"/>
-<ellipse fill="none" stroke="#1b6b4a" stroke-width="1.6" cx="439.34" cy="-1048.95" rx="5.2" ry="5.2"/>
+<path fill="none" stroke="#1b6b4a" stroke-width="1.6" d="M443.29,-961.56C540.14,-974.05 551.41,-1058.08 660.25,-1084.38 734.77,-1102.38 942.95,-1129.06 1005.25,-1084.38 1072.6,-1036.07 994.8,-914.16 1052.05,-894.94"/>
+<polygon fill="#1b6b4a" stroke="#1b6b4a" stroke-width="1.6" points="431.38,-960.83 418.77,-954.19 424.36,-960.4 418.94,-960.07 418.94,-960.07 418.94,-960.07 424.36,-960.4 418.05,-965.87 431.38,-960.83"/>
+<ellipse fill="none" stroke="#1b6b4a" stroke-width="1.6" cx="439.32" cy="-961.31" rx="5.2" ry="5.2"/>
 <polygon fill="#1b6b4a" stroke="#1b6b4a" stroke-width="1.6" points="1068.06,-886.12 1069.87,-898.99 1067.3,-899.36 1065.48,-886.48 1068.06,-886.12"/>
 <polyline fill="none" stroke="#1b6b4a" stroke-width="1.6" points="1070.25,-892.38 1063.81,-893.28"/>
 <ellipse fill="none" stroke="#1b6b4a" stroke-width="1.6" cx="1057.87" cy="-894.12" rx="5.2" ry="5.2"/>
@@ -442,12 +442,12 @@
 <!-- leyenda -->
 <g id="node8" class="node">
 <title>leyenda</title>
-<text xml:space="preserve" text-anchor="start" x="13" y="-1305.72" font-family="DejaVu Sans" font-weight="bold" font-size="17.00">Leyenda</text>
-<text xml:space="preserve" text-anchor="start" x="13" y="-1276.67" font-family="DejaVu Sans" font-size="16.00">PK clave primaria (subrayada) · FK clave foránea física (cursiva)</text>
-<text xml:space="preserve" text-anchor="start" x="13" y="-1249.17" font-family="DejaVu Sans" font-size="16.00">FK* relación lógica sin FOREIGN KEY (línea punteada)</text>
-<text xml:space="preserve" text-anchor="start" x="13" y="-1221.67" font-family="DejaVu Sans" font-size="16.00">? columna que admite NULL · caja gris = tabla de otro dominio</text>
-<text xml:space="preserve" text-anchor="start" x="13" y="-1194.17" font-family="DejaVu Sans" font-size="16.00">Pata de gallo = muchos · ┼ = uno · o = opcional (notación crow&#39;s foot)</text>
-<polygon fill="none" stroke="#999999" points="8,-1184.88 8,-1325.88 587.25,-1325.88 587.25,-1184.88 8,-1184.88"/>
+<text xml:space="preserve" text-anchor="start" x="13" y="-1217.72" font-family="DejaVu Sans" font-weight="bold" font-size="17.00">Leyenda</text>
+<text xml:space="preserve" text-anchor="start" x="13" y="-1188.67" font-family="DejaVu Sans" font-size="16.00">PK clave primaria (subrayada) · FK clave foránea física (cursiva)</text>
+<text xml:space="preserve" text-anchor="start" x="13" y="-1161.17" font-family="DejaVu Sans" font-size="16.00">FK* relación lógica sin FOREIGN KEY (línea punteada)</text>
+<text xml:space="preserve" text-anchor="start" x="13" y="-1133.67" font-family="DejaVu Sans" font-size="16.00">? columna que admite NULL · caja gris = tabla de otro dominio</text>
+<text xml:space="preserve" text-anchor="start" x="13" y="-1106.17" font-family="DejaVu Sans" font-size="16.00">Pata de gallo = muchos · ┼ = uno · o = opcional (notación crow&#39;s foot)</text>
+<polygon fill="none" stroke="#999999" points="8,-1096.88 8,-1237.88 587.25,-1237.88 587.25,-1096.88 8,-1096.88"/>
 </g>
 </g>
 </svg>

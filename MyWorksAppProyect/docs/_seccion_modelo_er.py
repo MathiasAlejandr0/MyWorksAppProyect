@@ -39,14 +39,17 @@ EXPLICA = {
     "02_profesionales_catalogo": (
         "`trabajadores` extiende a `perfiles` 1:1 (PK = `id_usuario`) con la ficha pública, la base de atención, "
         "el radio, la verificación y los agregados de ranking. Del profesional dependen sus precios por código "
-        "(`trabajador_precios`, PK compuesta), los servicios extra, la plantilla semanal de horarios (una fila "
-        "por día), el portafolio, los impulsos y las categorías que atiende. `servicios` es el catálogo global "
+        "(`trabajador_precios`, PK compuesta), los servicios extra, la ventana semanal de atención "
+        "(`trabajador_horarios`, una fila por día), las horas reservables (`trabajador_horas_publicadas`), el "
+        "portafolio, los impulsos y las categorías que atiende (`trabajador_servicios`). `categorias_servicio` "
+        "es la tabla de categorías: la usan `servicios` y `trabajador_servicios`. `servicios` es el catálogo global "
         "y `configuraciones_servicio` su esquema de preguntas (1:0..1)."
     ),
     "03_trabajos_reservas": (
         "`trabajos` es la entidad transaccional: une a un cliente (`id_usuario`), un profesional "
         "(`id_trabajador`, opcional hasta que se asigna), un servicio y una comuna. Alrededor están las "
-        "cotizaciones (0..N por trabajo; la elegida queda en `id_cotizacion_seleccionada`), acuerdos, "
+        "cotizaciones (0..N por trabajo; la elegida queda en `id_cotizacion_seleccionada`; cada línea está en "
+        "`propuesta_cotizacion_items`), acuerdos, "
         "la cancelación (0..1), las reprogramaciones (CU-33, solo una pendiente a la vez por índice único "
         "parcial), el PIN de inicio (`pines_inicio_trabajo` y `bloqueos_pin_inicio`, 1:0..1, más los intentos "
         "auditados), las fotos y la ubicación en vivo del profesional (1:0..1)."
@@ -73,7 +76,8 @@ EXPLICA = {
     "07_admin_auditoria": (
         "Tablas de operación: cola de acciones pendientes del modo sin conexión, reportes entre usuarios, eventos "
         "de abuso, errores de la app, analítica, banderas de funcionalidad y `app_config` (clave/valor, solo "
-        "backend). Todas, salvo `app_config`, referencian a `perfiles`."
+        "backend), más la encuesta de testing (`encuestas_testing` y sus 10 respuestas SUS en "
+        "`encuesta_testing_respuestas`). Todas, salvo `app_config`, referencian a `perfiles`."
     ),
 }
 
@@ -140,10 +144,10 @@ def _decisiones(er, d, pk, snap, n_def, rls, pk_tipos):
         "SECURITY DEFINER. Las escrituras con reglas de negocio (transiciones de trabajo, PIN, pagos, escrow, "
         "reseñas, reprogramación) pasan por estas RPC, que validan al usuario con auth.uid() antes de escribir. "
         "Así una tabla no queda abierta a un UPDATE directo.",
-        "Columnas id_usuario de texto. Hasta la migración 20261115234447, `trabajador_precios.id_usuario` y "
-        "`trabajador_servicios_extra.id_usuario` eran `text` sin FK. La auditoría 20261116042559 las pasó a "
-        "`uuid` con FK a `trabajadores.id_usuario` (ON DELETE CASCADE), y hoy son relaciones físicas. Quedan como "
-        "relaciones lógicas, dibujadas con línea punteada, las columnas de la tabla siguiente.",
+        "Relaciones físicas y lógicas. Los precios, los servicios extra, los oficios y los horarios del "
+        "profesional apuntan por FK a `trabajadores.id_usuario`, y `liquidaciones.id_trabajador` e `id_operador` "
+        "son `uuid` con FK a `perfiles`. Quedan como relaciones lógicas, dibujadas con línea punteada, las "
+        "columnas de la tabla siguiente.",
         "Fechas. Varias columnas `creado_en` y `actualizado_en` son `text`, herencia de la primera versión del esquema. La auditoría agregó CHECK `es_marca_tiempo_iso(...)` para que siempre guarden ISO 8601. "
         "Las tablas nuevas usan `timestamptz`.",
         "Estados. No hay ENUM. Los conjuntos cerrados (estado del trabajo, del pago, de la disputa, etc.) se "
@@ -182,7 +186,7 @@ def md_lineas():
     a("")
     a(f"![Modelo ER general]({FIG_MD}/er_00_general.png)")
     a("")
-    a("*Figura ER-2. Modelo ER general: las 52 tablas con su PK y todas las FK. Para leer el detalle, "
+    a(f"*Figura ER-2. Modelo ER general: las {len(d['tables'])} tablas con su PK y todas las FK. Para leer el detalle, "
       "abrir el SVG (`er_00_general.svg`) o ver el diagrama del dominio.*")
     a("")
     for i, (key, nombre, _c, _bg, ts) in enumerate(er.DOMINIOS, 1):
@@ -229,7 +233,7 @@ def md_lineas():
 
 def anexo_lineas():
     return [
-        "Modelo entidad-relación: las figuras (mapa de dominios, diagrama general con las 52 tablas y un "
+        "Modelo entidad-relación: las figuras (mapa de dominios, diagrama general con las 57 tablas y un "
         "diagrama por dominio con columnas, tipos, PK/FK y cardinalidad) están en "
         "`Fase 2/modelo_entidad_relacion/figuras/`, con fuentes editables y un LEEME en la misma carpeta. "
         "La explicación de cada dominio, el flujo de pago y las decisiones de diseño están en la sección 2b "
@@ -291,7 +295,7 @@ def agregar_docx(doc, add_heading, add_body, add_table):
     orientar(horizontal("er_00_dominios.png"))
     figura("er_00_dominios.png", "Figura ER-1. Mapa de dominios: tablas de cada dominio y número de FK entre dominios.")
     orientar(horizontal("er_00_general.png"))
-    figura("er_00_general.png", "Figura ER-2. Modelo ER general: las 52 tablas con su PK y todas las FK "
+    figura("er_00_general.png", f"Figura ER-2. Modelo ER general: las {len(d['tables'])} tablas con su PK y todas las FK "
                                 "(detalle en el SVG o en el diagrama de cada dominio).")
     for i, (key, nombre, _c, _bg, ts) in enumerate(er.DOMINIOS, 1):
         orientar(horizontal(f"er_{key}.png"))

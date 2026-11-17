@@ -1,10 +1,10 @@
 # Anexo A. Diccionario de datos
 
-A continuación se describe cada una de las 52 tablas del esquema public, alineadas a la base viva de Supabase (`wxqrfcqifkfgawrnqmnj`) al 2026-11-16 (America/Santiago), migración `20261116044049` (stats_profesional_fuente_unica). Los atributos se listan con su tipo de dato y su restricción. PK indica la clave primaria y FK la clave foránea. perfiles.id coincide con el identificador de autenticación de Supabase (auth.users.id). No hay tipos ENUM ni vistas en public; los conjuntos cerrados se restringen con CHECK.
+A continuación se describe cada una de las 57 tablas del esquema public, alineadas a la base viva de Supabase (`wxqrfcqifkfgawrnqmnj`) al 2026-11-17 (America/Santiago), migración `20261117223850` (quitar_indice_duplicado_servicios). Los atributos se listan con su tipo de dato y su restricción. PK indica la clave primaria y FK la clave foránea. perfiles.id coincide con el identificador de autenticación de Supabase (auth.users.id). No hay tipos ENUM en public (los conjuntos cerrados se restringen con CHECK); hay una vista, encuestas_testing_con_puntaje.
 
 Fuente: elaboración propia a partir del esquema real (modelo entidad-relación v2.5).
 
-Modelo entidad-relación: las figuras (mapa de dominios, diagrama general con las 52 tablas y un diagrama por dominio con columnas, tipos, PK/FK y cardinalidad) están en `Fase 2/modelo_entidad_relacion/figuras/`, con fuentes editables y un LEEME en la misma carpeta. La explicación de cada dominio, el flujo de pago y las decisiones de diseño están en la sección 2b de `MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`.
+Modelo entidad-relación: las figuras (mapa de dominios, diagrama general con las 57 tablas y un diagrama por dominio con columnas, tipos, PK/FK y cardinalidad) están en `Fase 2/modelo_entidad_relacion/figuras/`, con fuentes editables y un LEEME en la misma carpeta. La explicación de cada dominio, el flujo de pago y las decisiones de diseño están en la sección 2b de `MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`.
 
 Respecto del anexo v2.3 (43 tablas, 2026-11-08) se agregan nueve tablas: acuerdos_trabajo, disputa_mensajes, reprogramaciones_trabajo (CU-33), pines_inicio_trabajo, bloqueos_pin_inicio, intentos_pin_inicio, cuentas_bancarias, dispositivos_push y verificacion_eventos. También se documentan los roles de consola soporte y qa, el alta de invitado (columnas de pagos) y los cambios de calificación bidireccional, horarios semanales y soporte automático de disputas.
 
@@ -380,7 +380,7 @@ Relaciones: id_region apunta a regiones (no se puede borrar la fila de regiones 
 
 ### Tabla A-18. trabajadores
 
-Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en tablas hijas; los JSON niveles_precio y servicios_personalizados son solo formato de escritura (un trigger los parte a filas). es_elite es una columna GENERATED. La agenda semanal está en trabajador_horarios; usa_horario enciende el filtro. pausa_por_trabajo queda en true cuando un trabajo activo dejó disponible = 0, y se restablece al terminar.
+Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios adicionales y oficios están en trabajador_precios, trabajador_servicios_extra y trabajador_servicios; la región se obtiene desde la comuna. es_elite es una columna GENERATED. La agenda semanal está en trabajador_horarios y trabajador_horas_publicadas; usa_horario enciende el filtro. pausa_por_trabajo queda en true cuando un trabajo activo dejó disponible = 0, y se restablece al terminar.
 
 | Atributo | Tipo de dato | Restricción |
 |----------|--------------|-------------|
@@ -390,10 +390,7 @@ Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en tablas hi
 | `calificacion` | numeric(4,2) | Obligatorio, Default 0 |
 | `disponible` | integer | Obligatorio, Default 1 |
 | `tarifa_visita` | numeric(12,0) | Obligatorio, Default 15000 |
-| `categoria_servicio` | text | Obligatorio, Default 'general' |
-| `niveles_precio` | jsonb | Obligatorio, Default '{}' |
 | `conteo_rechazos` | integer | Obligatorio, Default 0. Rechazos de invitaciones; penaliza orden en listados (no visible en UI) |
-| `servicios_personalizados` | jsonb | Obligatorio, Default '[]'. Servicios adicionales definidos por el trabajador (JSON array) |
 | `precios_configurados` | integer | Obligatorio, Default 0. 1 si el trabajador completó la guía de configuración de precios |
 | `zona_trabajo` | text | Opcional. Comuna o zona donde atiende el trabajador |
 | `estado_verificacion` | text | Obligatorio, Default 'pendiente' |
@@ -411,7 +408,6 @@ Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en tablas hi
 | `trabajos_completados` | integer | Obligatorio, Default 0 |
 | `es_elite` | boolean | Opcional, GENERATED ALWAYS. Destacado del mes: nota >= 4.7 y al menos 5 trabajos completados. GENERATED ALWAYS AS ((COALESCE(calificacion, (0)::numeric) >= 4.7) AND (trabajos_completados >= 5)) |
 | `id_comuna` | text | FK → comunas.id, Opcional. Comuna de cobertura. zona_trabajo sigue como texto de UI. |
-| `id_region` | text | FK → regiones.id, Opcional. Cobertura regional (p. ej. RM todas). |
 | `usa_horario` | boolean | Obligatorio, Default false |
 | `pausa_por_trabajo` | boolean | Obligatorio, Default false. true cuando disponible = 0 lo dejó un trabajo activo; se restablece al terminar. |
 
@@ -419,13 +415,13 @@ Restricciones CHECK: `trabajadores_base_lat_chk` CHECK (((latitud_base IS NULL) 
 
 RLS activo. El listado público solo muestra fichas disponibles con precios configurados. El dueño, un administrador o el cliente con un trabajo conjunto también pueden leer la ficha. El UPDATE es del dueño o de un administrador; campos como verificación, score y pausa están protegidos por trigger. Políticas: INSERT «trabajadores_insert», SELECT «trabajadores_select_authenticated», UPDATE «trabajadores_update».
 
-**Forma normal: 2FN con datos derivados documentados.** Ficha 1:1 del profesional. Las listas (precios, servicios extra, oficios) viven en tablas hijas en 4FN. id_region depende de id_comuna (dependencia transitiva), así que en rigor la ficha no llega a 3FN. Dato repetido a propósito: niveles_precio y servicios_personalizados son el formato de escritura de la app; un trigger los parte en trabajador_precios y trabajador_servicios_extra. calificacion, trabajos_completados, score_listado y es_elite son valores calculados para ordenar el catálogo sin recalcular en cada consulta. id_region se deduce de id_comuna cuando hay comuna (diferencias: 0).
+**Forma normal: BCNF con valores calculados documentados.** Ficha 1:1 del profesional. Los precios, los servicios extra y los oficios viven en tablas hijas en 4FN; la región se obtiene desde la comuna. Dato repetido a propósito: calificacion, trabajos_completados, score_listado y es_elite son valores calculados para ordenar el catálogo sin recalcular en cada consulta.
 
-Relaciones: id_comuna apunta a comunas (si se borra la fila de comunas, la columna queda vacía y el registro se conserva); id_region apunta a regiones (si se borra la fila de regiones, la columna queda vacía y el registro se conserva); id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
+Relaciones: id_comuna apunta a comunas (si se borra la fila de comunas, la columna queda vacía y el registro se conserva); id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
 ### Tabla A-19. trabajador_precios
 
-Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE) desde la auditoría 2026-11-16; antes era text sin FK.
+Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE). Es la única fuente de los precios del profesional.
 
 | Atributo | Tipo de dato | Restricción |
 |----------|--------------|-------------|
@@ -435,15 +431,15 @@ Precio por código de servicio del profesional. id_usuario es uuid con clave for
 
 Restricciones CHECK: `trabajador_precios_monto_clp_check` CHECK ((monto_clp >= (0)::numeric)).
 
-RLS activo. El dueño y el catálogo (según política de precios) leen los montos ya publicados; la escritura es del dueño o de un trigger que parte el JSON. Políticas: ALL «trabajador_precios_propio».
+RLS activo. Un usuario con sesión lee los precios de los profesionales que existen; solo el dueño crea, cambia o borra los suyos. Políticas: DELETE «trabajador_precios_delete», INSERT «trabajador_precios_insert», SELECT «trabajador_precios_select», UPDATE «trabajador_precios_update».
 
-**Forma normal: 4FN.** Nace de separar la lista de precios del profesional (antes un JSON en trabajadores). Clave (id_usuario, codigo). Desde la auditoría id_usuario es uuid con clave foránea a trabajadores.
+**Forma normal: 4FN.** Lista de precios del profesional separada de su ficha. Clave (id_usuario, codigo); id_usuario es uuid con clave foránea a trabajadores.
 
 Relaciones: id_usuario apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
 ### Tabla A-20. trabajador_servicios_extra
 
-Servicio adicional definido por el profesional. id_usuario es uuid con clave foránea a trabajadores, igual que en trabajador_precios.
+Servicio adicional definido por el profesional (título, subtítulo, monto y unidad fijo o por m²). id_usuario es uuid con clave foránea a trabajadores. Es la única fuente de sus servicios adicionales.
 
 | Atributo | Tipo de dato | Restricción |
 |----------|--------------|-------------|
@@ -456,52 +452,70 @@ Servicio adicional definido por el profesional. id_usuario es uuid con clave for
 
 Restricciones CHECK: `trabajador_servicios_extra_monto_clp_check` CHECK ((monto_clp >= (0)::numeric)); `trabajador_servicios_extra_unidad_check` CHECK ((unidad = ANY (ARRAY['fijo'::text, 'por_m2'::text]))).
 
-RLS activo. Servicios extra del profesional; misma idea que los precios. Políticas: ALL «trabajador_servicios_extra_propio».
+RLS activo. Misma regla que los precios: lectura con sesión, escritura solo del dueño. Políticas: DELETE «trabajador_servicios_extra_delete», INSERT «trabajador_servicios_extra_insert», SELECT «trabajador_servicios_extra_select», UPDATE «trabajador_servicios_extra_update».
 
-**Forma normal: 4FN.** Servicios adicionales del profesional, separados del JSON servicios_personalizados. Desde la auditoría id_usuario es uuid con clave foránea.
+**Forma normal: 4FN.** Servicios adicionales del profesional, separados de su ficha. id_usuario es uuid con clave foránea a trabajadores.
 
 Relaciones: id_usuario apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
 ### Tabla A-21. trabajador_servicios
 
-Oficios del catálogo que el profesional declara atender.
+Oficios del catálogo que el profesional declara atender. categoria_servicio es clave foránea a categorias_servicio.
 
 | Atributo | Tipo de dato | Restricción |
 |----------|--------------|-------------|
-| `id_trabajador` | uuid | PK, FK → perfiles.id, Obligatorio |
-| `categoria_servicio` | text | PK, Obligatorio |
+| `id_trabajador` | uuid | PK, FK → trabajadores.id_usuario, Obligatorio |
+| `categoria_servicio` | text | PK, FK → categorias_servicio.id, Obligatorio |
 
 RLS activo. Oficios declarados: lectura de catálogo y escritura del dueño. Políticas: DELETE «trabajador_servicios_delete», INSERT «trabajador_servicios_insert», SELECT «trabajador_servicios_select», UPDATE «trabajador_servicios_update».
 
-**Forma normal: 4FN.** Lista de oficios del profesional separada de su ficha: un profesional atiende varios oficios, independiente de sus precios. Clave (id_trabajador, categoria_servicio).
+**Forma normal: 4FN.** Lista de oficios del profesional separada de su ficha: un profesional atiende varios oficios, independiente de sus precios. Clave (id_trabajador, categoria_servicio); cada oficio es una categoría de categorias_servicio.
 
-Relaciones: id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
+Relaciones: categoria_servicio apunta a categorias_servicio (no se puede borrar la fila de categorias_servicio mientras tenga registros asociados); id_trabajador apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
 ### Tabla A-22. trabajador_horarios
 
-Plantilla semanal: una fila por día (1 = lunes … 7 = domingo), única por (id_usuario, dia_semana). Solo el dueño lee y escribe (RLS). El cliente consulta los huecos con la RPC horarios_libres_profesional. usa_horario en trabajadores enciende el filtro.
+Ventana de atención semanal: siete filas por profesional, una por día (1 = lunes … 7 = domingo), con hora_inicio y hora_fin, únicas por (id_usuario, dia_semana). Las horas reservables dentro de la ventana están en trabajador_horas_publicadas. usa_horario en trabajadores enciende el filtro.
 
 | Atributo | Tipo de dato | Restricción |
 |----------|--------------|-------------|
 | `id_usuario` | uuid | FK → trabajadores.id_usuario, Obligatorio |
-| `horarios` | jsonb | Obligatorio, Default '[]' |
 | `actualizado_en` | timestamptz | Obligatorio, Default now() |
 | `id` | uuid | PK, Obligatorio, Default gen_random_uuid() |
-| `dia_semana` | smallint | Opcional |
-| `hora_inicio` | time | Opcional |
-| `hora_fin` | time | Opcional |
-| `activo` | boolean | Opcional, Default true |
+| `dia_semana` | smallint | Obligatorio |
+| `hora_inicio` | time | Obligatorio |
+| `hora_fin` | time | Obligatorio |
+| `activo` | boolean | Obligatorio, Default true |
 | `creado_en` | timestamptz | Opcional, Default now() |
 
-Restricciones CHECK: `trabajador_horarios_dia_chk` CHECK (((dia_semana IS NULL) OR ((dia_semana >= 1) AND (dia_semana <= 7)))).
+Restricciones CHECK: `trabajador_horarios_dia_chk` CHECK (((dia_semana IS NULL) OR ((dia_semana >= 1) AND (dia_semana <= 7)))); `trabajador_horarios_rango_chk` CHECK (((NOT activo) OR (hora_inicio < hora_fin))).
 
-RLS activo. SELECT y escritura solo para el dueño de la ficha (o un administrador). El cliente no lee esta tabla: usa horarios_libres_profesional. Políticas: DELETE «trabajador_horarios_delete», INSERT «trabajador_horarios_insert», SELECT «trabajador_horarios_select», UPDATE «trabajador_horarios_update».
+RLS activo. SELECT para anon y authenticated (la ventana semanal es pública para mostrar la agenda); insertar, cambiar y borrar es solo del dueño de la ficha o de un administrador. Políticas: DELETE «trabajador_horarios_delete», INSERT «trabajador_horarios_insert», SELECT «trabajador_horarios_select», UPDATE «trabajador_horarios_update».
 
-**Forma normal: BCNF con una columna heredada.** La forma actual es una fila por día (id_usuario, dia_semana) con hora de inicio y fin: cumple BCNF. Dato repetido a propósito: horarios (jsonb) es el formato antiguo de la semana completa que aún leen versiones previas de la app; la fuente de verdad son las columnas por día.
+**Forma normal: BCNF.** Una fila por día de la semana (id_usuario, dia_semana) con hora de inicio y de fin: la clave candidata determina el resto de la fila.
 
 Relaciones: id_usuario apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
-### Tabla A-23. portafolio_trabajador
+### Tabla A-23. trabajador_horas_publicadas
+
+Horas que el profesional publica como reservables en cada día (clave id_usuario, dia_semana, hora). Un trigger de reserva acepta solo horas publicadas y libres. El cliente las ve con la RPC horarios_libres_profesional.
+
+| Atributo | Tipo de dato | Restricción |
+|----------|--------------|-------------|
+| `id_usuario` | uuid | PK, FK → trabajadores.id_usuario, Obligatorio |
+| `dia_semana` | smallint | PK, Obligatorio |
+| `hora` | time | PK, Obligatorio |
+| `creado_en` | timestamptz | Obligatorio, Default now() |
+
+Restricciones CHECK: `trabajador_horas_publicadas_dia_semana_check` CHECK (((dia_semana >= 1) AND (dia_semana <= 7))).
+
+RLS activo. SELECT para anon y authenticated (las horas publicadas se muestran al reservar); insertar, cambiar y borrar es solo del dueño de la ficha o de un administrador, por la RPC guardar_horarios_propios. Políticas: DELETE «trabajador_horas_publicadas_delete», INSERT «trabajador_horas_publicadas_insert», SELECT «trabajador_horas_publicadas_select», UPDATE «trabajador_horas_publicadas_update».
+
+**Forma normal: 4FN.** Lista de horas reservables del profesional, separada de su ventana diaria. Clave (id_usuario, dia_semana, hora).
+
+Relaciones: id_usuario apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
+
+### Tabla A-24. portafolio_trabajador
 
 Foto o medio del portafolio de un profesional.
 
@@ -522,7 +536,7 @@ RLS activo. El profesional gestiona su portafolio; hay lectura de catálogo de l
 
 Relaciones: id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### Tabla A-24. impulsos
+### Tabla A-25. impulsos
 
 Promoción temporal de visibilidad de un profesional.
 
@@ -543,7 +557,24 @@ RLS activo. Lectura para usuarios con sesión (el catálogo muestra los vigentes
 
 Relaciones: id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### Tabla A-25. servicios
+### Tabla A-26. categorias_servicio
+
+Categorías u oficios del catálogo (gasfitería, electricidad y otros). Las usan servicios y trabajador_servicios.
+
+| Atributo | Tipo de dato | Restricción |
+|----------|--------------|-------------|
+| `id` | text | PK, Obligatorio |
+| `nombre` | text | Obligatorio |
+| `activa` | boolean | Obligatorio, Default true |
+| `creado_en` | timestamptz | Obligatorio, Default now() |
+
+Restricciones CHECK: `categorias_servicio_id_check` CHECK ((id ~ '^[a-z][a-z0-9_]*$'::text)); `categorias_servicio_nombre_check` CHECK ((length(btrim(nombre)) > 0)).
+
+RLS activo. Lectura pública de las categorías activas (anon y authenticated; un administrador ve todas). La escritura es de administración. Políticas: DELETE «categorias_servicio_admin_delete», INSERT «categorias_servicio_admin_insert», UPDATE «categorias_servicio_admin_update», SELECT «categorias_servicio_select», SELECT «categorias_servicio_select_anon».
+
+**Forma normal: BCNF.** La clave es el id de la categoría; nombre y activa dependen solo de ella.
+
+### Tabla A-27. servicios
 
 Catálogo de oficios que la plataforma ofrece.
 
@@ -552,7 +583,7 @@ Catálogo de oficios que la plataforma ofrece.
 | `id` | text | PK, Obligatorio |
 | `nombre` | text | Obligatorio |
 | `descripcion` | text | Opcional |
-| `categoria` | text | Obligatorio, Default 'general' |
+| `categoria` | text | FK → categorias_servicio.id, Obligatorio, Default 'general' |
 | `activo` | integer | Obligatorio, Default 1 |
 | `requiere_certificacion` | integer | Obligatorio, Default 0 |
 | `modelo_precio` | text | Obligatorio, Default 'por_hora' |
@@ -564,9 +595,11 @@ Restricciones CHECK: `servicios_activo_bool_chk` CHECK (((activo IS NULL) OR (ac
 
 RLS activo. Lectura pública del catálogo de oficios. La escritura es de administración. Políticas: DELETE «servicios_admin_delete», INSERT «servicios_admin_insert», UPDATE «servicios_admin_update», SELECT «servicios_select», SELECT «servicios_select_authenticated».
 
-**Forma normal: BCNF.** La clave primaria es un identificador propio y cada columna describe solo a esa fila; ninguna columna depende de otra que no sea clave.
+**Forma normal: BCNF.** La clave es el id del servicio; la categoría es una clave foránea a categorias_servicio.
 
-### Tabla A-26. configuraciones_servicio
+Relaciones: categoria apunta a categorias_servicio (no se puede borrar la fila de categorias_servicio mientras tenga registros asociados).
+
+### Tabla A-28. configuraciones_servicio
 
 Esquema de configuración asociado a un servicio.
 
@@ -588,7 +621,7 @@ Relaciones: id_servicio apunta a servicios (si se borra la fila de servicios, ta
 
 ## Pedido y servicio
 
-### Tabla A-27. trabajos
+### Tabla A-29. trabajos
 
 Pedido de un cliente a un profesional (o abierto a cotizaciones). estado_pago es una copia derivada del pago principal. La fecha programada se guarda como texto y, desde CU-33, solo cambia por las RPC de reagendamiento (trabajos_fecha_solo_por_rpc). Hay un índice único que impide dos trabajos activos del mismo profesional en el mismo minuto (minuto_utc de fecha_programada).
 
@@ -623,7 +656,7 @@ RLS activo. SELECT y UPDATE para el cliente, el profesional asignado o un admini
 
 Relaciones: id_servicio apunta a servicios (si se borra la fila de servicios, la columna queda vacía y el registro se conserva); id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajador apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_comuna apunta a comunas (si se borra la fila de comunas, la columna queda vacía y el registro se conserva); id_cotizacion_seleccionada apunta a propuestas_cotizacion (si se borra la fila de propuestas_cotizacion, la columna queda vacía y el registro se conserva).
 
-### Tabla A-28. mensajes
+### Tabla A-30. mensajes
 
 Mensaje del chat de un trabajo.
 
@@ -647,7 +680,7 @@ RLS activo. Solo las partes del chat (remitente o destinatario) o un administrad
 
 Relaciones: id_destinatario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_remitente apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-29. fotos_trabajo
+### Tabla A-31. fotos_trabajo
 
 Evidencia fotográfica o de video de un trabajo (bucket de evidencias).
 
@@ -668,7 +701,7 @@ RLS activo. Las partes del trabajo o un administrador ven la evidencia. Hay regl
 
 Relaciones: id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-30. calificaciones
+### Tabla A-32. calificaciones
 
 Valoración de un trabajo. Desde la calificación bidireccional admite direccion cliente_a_trabajador o trabajador_a_cliente, con unicidad por (id_trabajo, direccion). Alimenta trabajadores.calificacion.
 
@@ -694,7 +727,7 @@ RLS activo. Se inserta una calificación propia, con direccion e id_calificado c
 
 Relaciones: id_calificado apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_usuario apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-31. calificaciones_cliente
+### Tabla A-33. calificaciones_cliente
 
 El profesional nota al cliente. 1:1 con el trabajo. Alimenta perfiles.reputacion_cliente. puntaje es smallint en la base viva.
 
@@ -716,7 +749,7 @@ RLS activo. El profesional califica a su cliente en un trabajo 1:1; leen las par
 
 Relaciones: id_cliente apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-32. disputas
+### Tabla A-34. disputas
 
 Disputa abierta sobre un trabajo y su resolución (incluye sugerencia automática y vencimiento).
 
@@ -746,7 +779,7 @@ RLS activo. Las partes del trabajo o un administrador leen la disputa. La apertu
 
 Relaciones: abierta_por apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); resuelta_por apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-33. disputa_mensajes
+### Tabla A-35. disputa_mensajes
 
 Mensajes del hilo de una disputa, de las partes o de soporte.
 
@@ -764,7 +797,7 @@ RLS activo. Lectura para las partes del trabajo en disputa o un administrador. L
 
 Relaciones: id_autor apunta a perfiles (no se puede borrar la fila de perfiles mientras tenga registros asociados); id_disputa apunta a disputas (si se borra la fila de disputas, también se borran las filas que la usan).
 
-### Tabla A-34. acuerdos_trabajo
+### Tabla A-36. acuerdos_trabajo
 
 Acuerdo entre cliente y profesional para rehacer, aceptar o anular un trabajo. Como máximo un acuerdo pendiente por trabajo.
 
@@ -788,7 +821,7 @@ RLS activo. Solo lectura para las partes del trabajo (es_parte_trabajo) o un adm
 
 Relaciones: id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan); propuesto_por apunta a perfiles (no se puede borrar la fila de perfiles mientras tenga registros asociados).
 
-### Tabla A-35. cancelaciones_trabajo
+### Tabla A-37. cancelaciones_trabajo
 
 Como máximo una cancelación por trabajo.
 
@@ -808,7 +841,7 @@ RLS activo. Las partes del trabajo o un administrador leen la cancelación; se i
 
 Relaciones: cancelado_por apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-36. tickets_soporte
+### Tabla A-38. tickets_soporte
 
 Ticket de soporte asociado a un trabajo.
 
@@ -831,7 +864,7 @@ RLS activo. Las partes del trabajo o un administrador ven el ticket. Políticas:
 
 Relaciones: id_trabajo apunta a trabajos (si se borra la fila de trabajos, la columna queda vacía y el registro se conserva).
 
-### Tabla A-37. ubicacion_en_vivo
+### Tabla A-39. ubicacion_en_vivo
 
 GPS en vivo durante el trabajo. 1:1 con el trabajo.
 
@@ -852,7 +885,7 @@ RLS activo. El cliente del trabajo o un administrador leen la posición. El prof
 
 Relaciones: id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan); id_trabajador apunta a trabajadores (si se borra la fila de trabajadores, también se borran las filas que la usan).
 
-### Tabla A-38. reprogramaciones_trabajo
+### Tabla A-40. reprogramaciones_trabajo
 
 Historial de propuestas para reagendar un trabajo (CU-33). Como máximo una propuesta pendiente por trabajo. Solo se escribe por las RPC proponer_reprogramacion, responder_reprogramacion y retirar_reprogramacion.
 
@@ -878,7 +911,7 @@ RLS activo. SELECT para las partes del trabajo. El alta, la respuesta y el retir
 
 Relaciones: propuesta_por apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); respondida_por apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-39. pines_inicio_trabajo
+### Tabla A-41. pines_inicio_trabajo
 
 PIN que el cliente muestra al profesional para iniciar el trabajo (aceptado o en_camino → en_curso). El cliente (o un administrador) puede leerlo; el profesional lo valida con intentar_pin_inicio o transicionar_trabajo. Lo crea el trigger trabajos_crear_pin_inicio.
 
@@ -896,7 +929,7 @@ RLS activo. SELECT para el cliente dueño del trabajo o un administrador (obtene
 
 Relaciones: id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-40. bloqueos_pin_inicio
+### Tabla A-42. bloqueos_pin_inicio
 
 Contador de intentos fallidos del PIN, bloqueo temporal (15 minutos tras 5 fallos) y ventana en la que el PIN ya fue validado. Escriben solo las funciones SECURITY DEFINER o service_role; un administrador puede leerla.
 
@@ -917,7 +950,7 @@ RLS activo. Solo un administrador puede leer (política agregada en la auditorí
 
 Relaciones: id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-41. intentos_pin_inicio
+### Tabla A-43. intentos_pin_inicio
 
 Auditoría de cada intento de PIN de inicio. Escriben solo funciones SECURITY DEFINER; un administrador puede leerla.
 
@@ -940,9 +973,9 @@ Relaciones: id_trabajo apunta a trabajos (si se borra la fila de trabajos, tambi
 
 ## Cobro
 
-### Tabla A-42. propuestas_cotizacion
+### Tabla A-44. propuestas_cotizacion
 
-Cotización que un profesional envía para un trabajo.
+Cotización que un profesional envía para un trabajo. Guarda el total y las horas estimadas; las líneas están en propuesta_cotizacion_items.
 
 | Atributo | Tipo de dato | Restricción |
 |----------|--------------|-------------|
@@ -952,19 +985,38 @@ Cotización que un profesional envía para un trabajo.
 | `monto_total_clp` | integer | Obligatorio |
 | `descripcion` | text | Obligatorio |
 | `validez_hasta` | text | Opcional |
-| `desglose` | text | Opcional |
 | `estado` | text | Obligatorio |
 | `creado_en` | text | Obligatorio |
+| `horas_estimadas` | numeric | Opcional |
 
-Restricciones CHECK: `propuestas_cotizacion_creado_en_iso_chk` CHECK (es_marca_tiempo_iso(creado_en)); `propuestas_cotizacion_validez_hasta_iso_chk` CHECK (es_marca_tiempo_iso(validez_hasta)); `propuestas_monto_chk` CHECK ((monto_total_clp > 0)).
+Restricciones CHECK: `propuestas_cotizacion_creado_en_iso_chk` CHECK (es_marca_tiempo_iso(creado_en)); `propuestas_cotizacion_horas_estimadas_check` CHECK (((horas_estimadas IS NULL) OR (horas_estimadas >= (0)::numeric))); `propuestas_cotizacion_validez_hasta_iso_chk` CHECK (es_marca_tiempo_iso(validez_hasta)); `propuestas_monto_chk` CHECK ((monto_total_clp > 0)).
 
 RLS activo. El cliente del trabajo, el profesional autor o un administrador leen la cotización. El monto no lo cambia el cliente (trigger). Políticas: INSERT «propuestas_insert», SELECT «propuestas_select», UPDATE «propuestas_update».
 
-**Forma normal: BCNF.** desglose es el detalle de la cotización como un documento; el total vive en monto_total_clp.
+**Forma normal: BCNF.** Guarda el total (monto_total_clp) y las horas estimadas; el detalle de la cotización está en propuesta_cotizacion_items, una fila por línea.
 
 Relaciones: id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan); id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### Tabla A-43. pagos
+### Tabla A-45. propuesta_cotizacion_items
+
+Línea de una cotización: concepto y monto, numeradas por propuesta (clave id_propuesta, linea).
+
+| Atributo | Tipo de dato | Restricción |
+|----------|--------------|-------------|
+| `id_propuesta` | text | PK, FK → propuestas_cotizacion.id, Obligatorio |
+| `linea` | smallint | PK, Obligatorio |
+| `concepto` | text | Obligatorio |
+| `monto` | numeric | Obligatorio |
+
+Restricciones CHECK: `propuesta_cotizacion_items_concepto_check` CHECK ((length(btrim(concepto)) > 0)); `propuesta_cotizacion_items_linea_check` CHECK ((linea >= 1)); `propuesta_cotizacion_items_monto_check` CHECK ((monto >= (0)::numeric)).
+
+RLS activo. Se lee si se puede leer la cotización. Solo el profesional autor crea, cambia o borra líneas, mientras la cotización no esté aceptada ni seleccionada. Políticas: DELETE «propuesta_items_delete», INSERT «propuesta_items_insert», SELECT «propuesta_items_select», UPDATE «propuesta_items_update».
+
+**Forma normal: BCNF.** Clave (id_propuesta, linea): concepto y monto describen esa línea de esa cotización y nada más.
+
+Relaciones: id_propuesta apunta a propuestas_cotizacion (si se borra la fila de propuestas_cotizacion, también se borran las filas que la usan).
+
+### Tabla A-46. pagos
 
 Cobro asociado a un trabajo o a una orden de cambio, con retención (escrow) vía Transbank Webpay / Oneclick. Las columnas alta_nonce_hash, alta_jti y alta_consumido_en sustentan el alta del invitado después del pago: el nonce solo lo tiene el navegador y el jti es de un solo uso. El default de tipo_pago es 'primary' (inglés legado); el índice de un solo pago principal activo busca el valor 'principal'.
 
@@ -1005,7 +1057,7 @@ RLS activo. El cliente dueño del trabajo, el profesional asignado o un administ
 
 Relaciones: id_orden_cambio apunta a ordenes_cambio (si se borra la fila de ordenes_cambio, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan).
 
-### Tabla A-44. ordenes_cambio
+### Tabla A-47. ordenes_cambio
 
 Cambio de alcance o de precio durante un trabajo.
 
@@ -1031,7 +1083,7 @@ RLS activo. Las partes del trabajo o un administrador leen y proponen según el 
 
 Relaciones: id_trabajo apunta a trabajos (si se borra la fila de trabajos, también se borran las filas que la usan); id_pago apunta a pagos (si se borra la fila de pagos, la columna queda vacía y el registro se conserva); id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### Tabla A-45. liquidaciones
+### Tabla A-48. liquidaciones
 
 Un pago → una liquidación al profesional. manual = transferencia externa confirmada por admin; khipu/fintoc = PSP futuro.
 
@@ -1040,24 +1092,25 @@ Un pago → una liquidación al profesional. manual = transferencia externa conf
 | `id` | text | PK, Obligatorio, Default (gen_random_uuid())::text |
 | `id_pago` | text | FK → pagos.id, Obligatorio |
 | `id_trabajo` | text | FK → trabajos.id, Obligatorio |
-| `id_trabajador` | text | Opcional |
+| `id_trabajador` | uuid | FK → perfiles.id, Opcional |
 | `monto_clp` | numeric | Obligatorio |
 | `proveedor` | text | Obligatorio, Default 'manual' |
 | `referencia_transferencia` | text | Obligatorio |
 | `notas` | text | Opcional |
-| `id_operador` | text | Obligatorio |
+| `id_operador` | uuid | FK → perfiles.id, Opcional |
 | `creado_en` | timestamptz | Obligatorio, Default now() |
 | `estado_transferencia` | text | Obligatorio, Default 'transferido' |
+| `liberada_por_sistema` | boolean | Obligatorio, Default false |
 
-Restricciones CHECK: `liquidaciones_estado_transferencia_chk` CHECK ((estado_transferencia = ANY (ARRAY['pendiente'::text, 'transferido'::text, 'fallido'::text]))); `liquidaciones_id_trabajador_uuid_chk` CHECK (((id_trabajador IS NULL) OR (id_trabajador ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text))); `liquidaciones_monto_clp_check` CHECK ((monto_clp > (0)::numeric)); `liquidaciones_proveedor_check` CHECK ((proveedor = ANY (ARRAY['manual'::text, 'khipu'::text, 'fintoc'::text, 'conformidad'::text]))).
+Restricciones CHECK: `liquidaciones_estado_transferencia_chk` CHECK ((estado_transferencia = ANY (ARRAY['pendiente'::text, 'transferido'::text, 'fallido'::text]))); `liquidaciones_monto_clp_check` CHECK ((monto_clp > (0)::numeric)); `liquidaciones_operador_chk` CHECK (((id_operador IS NOT NULL) OR liberada_por_sistema)); `liquidaciones_proveedor_check` CHECK ((proveedor = ANY (ARRAY['manual'::text, 'khipu'::text, 'fintoc'::text, 'conformidad'::text]))).
 
 RLS activo. El profesional ve la liquidación de sus pagos; un administrador ve todas. La confirmación de transferencia es por RPC de admin. Políticas: DELETE «liquidaciones_admin_delete», INSERT «liquidaciones_admin_insert», UPDATE «liquidaciones_admin_update», SELECT «liquidaciones_select».
 
-**Forma normal: BCNF.** id_pago es único (clave candidata) y determina el trabajo y el profesional, así que la tabla cumple BCNF. Dato repetido a propósito: id_trabajo e id_trabajador repiten datos del pago y del trabajo. Es un libro contable: debe conservar a quién se pagó aunque el trabajo cambie. Diferencias: 0.
+**Forma normal: BCNF.** id_pago es único (clave candidata) y determina el trabajo y el profesional, así que la tabla cumple BCNF. id_trabajador e id_operador son uuid con clave foránea a perfiles; liberada_por_sistema marca las liberaciones automáticas, que no tienen operador. Dato repetido a propósito: id_trabajo e id_trabajador repiten datos del pago y del trabajo. Es un libro contable: debe conservar a quién se pagó aunque el trabajo cambie. Diferencias: 0.
 
-Relaciones: id_pago apunta a pagos (no se puede borrar la fila de pagos mientras tenga registros asociados); id_trabajo apunta a trabajos (no se puede borrar la fila de trabajos mientras tenga registros asociados).
+Relaciones: id_operador apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_pago apunta a pagos (no se puede borrar la fila de pagos mientras tenga registros asociados); id_trabajador apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva); id_trabajo apunta a trabajos (no se puede borrar la fila de trabajos mientras tenga registros asociados).
 
-### Tabla A-46. metodos_pago_oneclick
+### Tabla A-49. metodos_pago_oneclick
 
 Tarjeta inscrita Oneclick. RLS niega el acceso a anon y authenticated: solo service_role (Edge Functions).
 
@@ -1084,7 +1137,7 @@ RLS activo. Política ALL con USING/CHECK false para anon y authenticated. Las t
 
 Relaciones: id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### Tabla A-47. cuentas_bancarias
+### Tabla A-50. cuentas_bancarias
 
 Datos bancarios del profesional para pagar la liquidación. RLS: solo el dueño y un administrador. No es un dato público.
 
@@ -1106,7 +1159,7 @@ RLS activo. ALL para el dueño o un administrador. No es un dato público. Polí
 
 Relaciones: id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan).
 
-### Tabla A-48. app_config
+### Tabla A-51. app_config
 
 Pares clave/valor de configuración (demo_modo, admin_requiere_aal2, etc.). RLS niega el acceso a clientes; lo lee el backend.
 
@@ -1122,7 +1175,7 @@ RLS activo. Política ALL con USING/CHECK false para anon y authenticated. Nadie
 
 ## Ranking y reputación
 
-### Tabla A-49. ranking_config
+### Tabla A-52. ranking_config
 
 Una fila default. Pesos del listado de profesionales.
 
@@ -1151,7 +1204,7 @@ RLS activo. La lectura de la fila default está permitida a autenticados (para e
 
 **Forma normal: BCNF.** Una sola fila de configuración del ranking.
 
-### Tabla A-50. senales_resena
+### Tabla A-53. senales_resena
 
 Señales de reseña dudosa. Un falso positivo baja el peso de esa señal.
 
@@ -1175,7 +1228,7 @@ RLS activo. Cola de reseñas dudosas: la ve y resuelve un administrador. Políti
 
 Relaciones: id_calificacion apunta a calificaciones (si se borra la fila de calificaciones, también se borran las filas que la usan); resuelto_por apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva).
 
-### Tabla A-51. ranking_aprendizaje
+### Tabla A-54. ranking_aprendizaje
 
 Ajuste de los pesos del ranking y las métricas de ese cambio.
 
@@ -1192,7 +1245,7 @@ RLS activo. Lectura de administración. La escritura la hace el aprendizaje de p
 
 **Forma normal: BCNF.** Bitácora: pesos antes y después de cada ajuste.
 
-### Tabla A-52. eventos_ranking
+### Tabla A-55. eventos_ranking
 
 Evento que alimenta el ranking de un profesional.
 
@@ -1210,6 +1263,51 @@ RLS activo. Lectura de administración; la escritura la hacen triggers y funcion
 **Forma normal: BCNF.** Registro de eventos; factores es la foto de los factores al momento del evento.
 
 Relaciones: id_trabajador apunta a perfiles (si se borra la fila de perfiles, también se borran las filas que la usan); id_trabajo apunta a trabajos (si se borra la fila de trabajos, la columna queda vacía y el registro se conserva).
+
+## Encuesta de testing
+
+### Tabla A-56. encuestas_testing
+
+Encuesta de usabilidad de quienes prueban la app: plataforma, rol, si completó la tarea, satisfacción y comentarios. Las respuestas SUS están en encuesta_testing_respuestas y el puntaje lo calcula la vista encuestas_testing_con_puntaje.
+
+| Atributo | Tipo de dato | Restricción |
+|----------|--------------|-------------|
+| `id` | uuid | PK, Obligatorio, Default gen_random_uuid() |
+| `creado_en` | timestamptz | Obligatorio, Default now() |
+| `id_usuario` | uuid | FK → perfiles.id, Opcional, Default auth.uid() |
+| `plataforma` | text | Obligatorio |
+| `rol` | text | Obligatorio |
+| `tarea_completada` | text | Obligatorio |
+| `satisfaccion` | smallint | Obligatorio |
+| `que_funciono` | text | Opcional |
+| `que_mejorar` | text | Opcional |
+| `version_app` | text | Opcional |
+
+Restricciones CHECK: `encuestas_testing_plataforma_check` CHECK ((plataforma = ANY (ARRAY['web'::text, 'app'::text, 'escritorio'::text]))); `encuestas_testing_que_funciono_check` CHECK (((que_funciono IS NULL) OR (char_length(que_funciono) <= 1000))); `encuestas_testing_que_mejorar_check` CHECK (((que_mejorar IS NULL) OR (char_length(que_mejorar) <= 1000))); `encuestas_testing_rol_check` CHECK ((rol = ANY (ARRAY['visitante'::text, 'cliente'::text, 'profesional'::text, 'administrador'::text]))); `encuestas_testing_satisfaccion_check` CHECK (((satisfaccion >= 1) AND (satisfaccion <= 5))); `encuestas_testing_tarea_completada_check` CHECK ((tarea_completada = ANY (ARRAY['si'::text, 'parcial'::text, 'no'::text]))); `encuestas_testing_version_app_check` CHECK (((version_app IS NULL) OR (char_length(version_app) <= 40))).
+
+RLS activo. Solo un administrador lee las encuestas. Nadie escribe directo: se responde con la RPC enviar_encuesta_testing (también anon). Políticas: SELECT «encuestas_testing_leer_admin».
+
+**Forma normal: BCNF.** Una fila por encuesta. El puntaje SUS no se guarda: lo calculan la función sus_puntaje y la vista encuestas_testing_con_puntaje.
+
+Relaciones: id_usuario apunta a perfiles (si se borra la fila de perfiles, la columna queda vacía y el registro se conserva).
+
+### Tabla A-57. encuesta_testing_respuestas
+
+Respuesta a cada uno de los 10 ítems SUS de una encuesta (item de 1 a 10, valor de 1 a 5).
+
+| Atributo | Tipo de dato | Restricción |
+|----------|--------------|-------------|
+| `id_encuesta` | uuid | PK, FK → encuestas_testing.id, Obligatorio |
+| `item` | smallint | PK, Obligatorio |
+| `valor` | smallint | Obligatorio |
+
+Restricciones CHECK: `encuesta_testing_respuestas_item_check` CHECK (((item >= 1) AND (item <= 10))); `encuesta_testing_respuestas_valor_check` CHECK (((valor >= 1) AND (valor <= 5))).
+
+RLS activo. Solo un administrador lee las respuestas. Se escriben por la RPC enviar_encuesta_testing. Políticas: SELECT «encuesta_respuestas_leer_admin».
+
+**Forma normal: BCNF.** Clave (id_encuesta, item): el valor depende de la encuesta y del ítem.
+
+Relaciones: id_encuesta apunta a encuestas_testing (si se borra la fila de encuestas_testing, también se borran las filas que la usan).
 
 ## Funciones relevantes
 

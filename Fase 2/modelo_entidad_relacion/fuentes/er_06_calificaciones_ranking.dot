@@ -21,7 +21,7 @@ label=<<font point-size="26" color="#2C4A6E"><b>Modelo ER · Calificaciones y ra
 "calificaciones_cliente":"id_trabajo_e":e -> "trabajos":w [arrowtail="teeodot", arrowhead="teetee", color="#2C4A6E"];
 "eventos_ranking":"id_trabajador_e":e -> "perfiles":w [arrowtail="crowodot", arrowhead="teetee", color="#2C4A6E"];
 "eventos_ranking":"id_trabajo_e":e -> "trabajos":w [arrowtail="crowodot", arrowhead="teeodot", color="#2C4A6E"];
-"senales_resena":"id_calificacion_e":e -> "calificaciones":"id_w":w [arrowtail="crowodot", arrowhead="teetee", color="#2C4A6E"];
+"senales_resena":"id_calificacion_e":e -> "calificaciones":"{id}_w":w [arrowtail="crowodot", arrowhead="teetee", color="#2C4A6E"];
 "senales_resena":"resuelto_por_e":e -> "perfiles":w [arrowtail="crowodot", arrowhead="teeodot", color="#2C4A6E"];
 leyenda [label=<<table border="1" cellborder="0" cellspacing="0" cellpadding="4" color="#999999"><tr><td align="left"><font point-size="17"><b>Leyenda</b></font></td></tr><tr><td align="left"><font point-size="16">PK clave primaria (subrayada) · FK clave foránea física (cursiva)</font></td></tr><tr><td align="left"><font point-size="16">FK* relación lógica sin FOREIGN KEY (línea punteada)</font></td></tr><tr><td align="left"><font point-size="16">? columna que admite NULL · caja gris = tabla de otro dominio</font></td></tr><tr><td align="left"><font point-size="16">Pata de gallo = muchos · ┼ = uno · o = opcional (notación crow's foot)</font></td></tr></table>>];
 

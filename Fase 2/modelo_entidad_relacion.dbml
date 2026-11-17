@@ -1,6 +1,6 @@
 Project MyWorksApp {
   database_type: 'PostgreSQL'
-  Note: 'Modelo lógico v2.5 · 52 tablas public · 2026-11-16 (America/Santiago) · alineado a la BD viva wxqrfcqifkfgawrnqmnj hasta la migración 20261116044049 (stats_profesional_fuente_unica). Archivo de migración en el repo: 20261116044049_stats_profesional_fuente_unica.sql. Diccionario generado desde information_schema y pg_catalog (solo lectura). No hay tipos ENUM ni vistas en public: los estados se restringen con CHECK. No ejecutar el SQL de consulta contra producción.'
+  Note: 'Modelo lógico v2.5 · 57 tablas public · 2026-11-17 (America/Santiago) · alineado a la BD viva wxqrfcqifkfgawrnqmnj hasta la migración 20261117223850 (quitar_indice_duplicado_servicios). Archivo de migración en el repo: 20261117223850_quitar_indice_duplicado_servicios.sql. Diccionario generado desde information_schema y pg_catalog (solo lectura). No hay tipos ENUM en public (los estados se restringen con CHECK) y hay una vista, encuestas_testing_con_puntaje. No ejecutar el SQL de consulta contra producción.'
 }
 
 Table perfiles {
@@ -211,7 +211,7 @@ Table comunas {
   activa integer [not null, default: 1]
 
   indexes {
-    (id_region, (expr)) [unique, note: 'CREATE UNIQUE INDEX comunas_region_nombre_activa_uidx ON public.comunas USING btree (id_region, lower(nombre)) WHERE (activa = 1)']
+    (id_region) [unique, note: 'CREATE UNIQUE INDEX comunas_region_nombre_activa_uidx ON public.comunas USING btree (id_region, lower(nombre)) WHERE (activa = 1)']
   }
 
   Note: 'Comuna de cobertura. Su identificador es el slug usado por trabajos y trabajadores.'
@@ -224,10 +224,7 @@ Table trabajadores {
   calificacion numeric(4,2) [not null, default: 0]
   disponible integer [not null, default: 1]
   tarifa_visita numeric(12,0) [not null, default: 15000]
-  categoria_servicio text [not null, default: "'general'"]
-  niveles_precio jsonb [not null, default: "'{}'"]
   conteo_rechazos integer [not null, default: 0, note: 'Rechazos de invitaciones; penaliza orden en listados (no visible en UI)']
-  servicios_personalizados jsonb [not null, default: "'[]'", note: 'Servicios adicionales definidos por el trabajador (JSON array)']
   precios_configurados integer [not null, default: 0, note: '1 si el trabajador completó la guía de configuración de precios']
   zona_trabajo text [note: 'Comuna o zona donde atiende el trabajador']
   estado_verificacion text [not null, default: "'pendiente'"]
@@ -245,11 +242,10 @@ Table trabajadores {
   trabajos_completados integer [not null, default: 0]
   es_elite boolean [note: 'GENERATED ALWAYS AS ((COALESCE(calificacion, (0)::numeric) >= 4.7) AND (trabajos_completados >= 5))']
   id_comuna text [note: 'Comuna de cobertura. zona_trabajo sigue como texto de UI.']
-  id_region text [note: 'Cobertura regional (p. ej. RM todas).']
   usa_horario boolean [not null, default: false]
   pausa_por_trabajo boolean [not null, default: false, note: 'true cuando disponible = 0 lo dejó un trabajo activo; se restablece al terminar.']
 
-  Note: 'Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en tablas hijas; los JSON niveles_precio y servicios_personalizados son solo formato de escritura (un trigger los parte a filas). es_elite es una columna GENERATED. La agenda semanal está en trabajador_horarios; usa_horario enciende el filtro. pausa_por_trabajo queda en true cuando un trabajo activo dejó disponible = 0, y se restablece al terminar.'
+  Note: 'Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios adicionales y oficios están en trabajador_precios, trabajador_servicios_extra y trabajador_servicios; la región se obtiene desde la comuna. es_elite es una columna GENERATED. La agenda semanal está en trabajador_horarios y trabajador_horas_publicadas; usa_horario enciende el filtro. pausa_por_trabajo queda en true cuando un trabajo activo dejó disponible = 0, y se restablece al terminar.'
 }
 
 Table trabajador_precios {
@@ -261,7 +257,7 @@ Table trabajador_precios {
     (id_usuario, codigo) [pk]
   }
 
-  Note: 'Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE) desde la auditoría 2026-11-16; antes era text sin FK.'
+  Note: 'Precio por código de servicio del profesional. id_usuario es uuid con clave foránea a trabajadores (ON DELETE CASCADE). Es la única fuente de los precios del profesional.'
 }
 
 Table trabajador_servicios_extra {
@@ -276,7 +272,7 @@ Table trabajador_servicios_extra {
     (id_usuario, id) [pk]
   }
 
-  Note: 'Servicio adicional definido por el profesional. id_usuario es uuid con clave foránea a trabajadores, igual que en trabajador_precios.'
+  Note: 'Servicio adicional definido por el profesional (título, subtítulo, monto y unidad fijo o por m²). id_usuario es uuid con clave foránea a trabajadores. Es la única fuente de sus servicios adicionales.'
 }
 
 Table trabajador_servicios {
@@ -287,25 +283,37 @@ Table trabajador_servicios {
     (id_trabajador, categoria_servicio) [pk]
   }
 
-  Note: 'Oficios del catálogo que el profesional declara atender.'
+  Note: 'Oficios del catálogo que el profesional declara atender. categoria_servicio es clave foránea a categorias_servicio.'
 }
 
 Table trabajador_horarios {
   id_usuario uuid [not null]
-  horarios jsonb [not null, default: "'[]'"]
   actualizado_en timestamptz [not null, default: now()]
   id uuid [pk, not null, default: gen_random_uuid()]
-  dia_semana smallint
-  hora_inicio time
-  hora_fin time
-  activo boolean [default: true]
+  dia_semana smallint [not null]
+  hora_inicio time [not null]
+  hora_fin time [not null]
+  activo boolean [not null, default: true]
   creado_en timestamptz [default: now()]
 
   indexes {
     (id_usuario, dia_semana) [unique]
   }
 
-  Note: 'Plantilla semanal: una fila por día (1 = lunes … 7 = domingo), única por (id_usuario, dia_semana). Solo el dueño lee y escribe (RLS). El cliente consulta los huecos con la RPC horarios_libres_profesional. usa_horario en trabajadores enciende el filtro.'
+  Note: 'Ventana de atención semanal: siete filas por profesional, una por día (1 = lunes … 7 = domingo), con hora_inicio y hora_fin, únicas por (id_usuario, dia_semana). Las horas reservables dentro de la ventana están en trabajador_horas_publicadas. usa_horario en trabajadores enciende el filtro.'
+}
+
+Table trabajador_horas_publicadas {
+  id_usuario uuid [not null]
+  dia_semana smallint [not null]
+  hora time [not null]
+  creado_en timestamptz [not null, default: now()]
+
+  indexes {
+    (id_usuario, dia_semana, hora) [pk]
+  }
+
+  Note: 'Horas que el profesional publica como reservables en cada día (clave id_usuario, dia_semana, hora). Un trigger de reserva acepta solo horas publicadas y libres. El cliente las ve con la RPC horarios_libres_profesional.'
 }
 
 Table portafolio_trabajador {
@@ -328,6 +336,15 @@ Table impulsos {
   creado_en text [not null]
 
   Note: 'Promoción temporal de visibilidad de un profesional.'
+}
+
+Table categorias_servicio {
+  id text [pk, not null]
+  nombre text [not null]
+  activa boolean [not null, default: true]
+  creado_en timestamptz [not null, default: now()]
+
+  Note: 'Categorías u oficios del catálogo (gasfitería, electricidad y otros). Las usan servicios y trabajador_servicios.'
 }
 
 Table servicios {
@@ -382,7 +399,7 @@ Table trabajos {
   actualizado_en text [not null]
 
   indexes {
-    (id_trabajador, (expr)) [unique, note: 'CREATE UNIQUE INDEX trabajos_trabajador_minuto_activo_uidx ON public.trabajos USING btree (id_trabajador, minuto_utc(fecha_programada)) WHERE ((fecha_programada IS NOT NULL) AND (id_trabajador IS NOT NULL) AND (estado <> ALL (ARRAY[’cancelado’::text, ’expirado’::text, ’completado’::text, ’no_asistio’::text])))']
+    (id_trabajador) [unique, note: 'CREATE UNIQUE INDEX trabajos_trabajador_minuto_activo_uidx ON public.trabajos USING btree (id_trabajador, minuto_utc(fecha_programada)) WHERE ((fecha_programada IS NOT NULL) AND (id_trabajador IS NOT NULL) AND (estado <> ALL (ARRAY[’cancelado’::text, ’expirado’::text, ’completado’::text, ’no_asistio’::text])))']
   }
 
   Note: 'Pedido de un cliente a un profesional (o abierto a cotizaciones). estado_pago es una copia derivada del pago principal. La fecha programada se guarda como texto y, desde CU-33, solo cambia por las RPC de reagendamiento (trabajos_fecha_solo_por_rpc). Hay un índice único que impide dos trabajos activos del mismo profesional en el mismo minuto (minuto_utc de fecha_programada).'
@@ -592,11 +609,24 @@ Table propuestas_cotizacion {
   monto_total_clp integer [not null]
   descripcion text [not null]
   validez_hasta text
-  desglose text
   estado text [not null]
   creado_en text [not null]
+  horas_estimadas numeric
 
-  Note: 'Cotización que un profesional envía para un trabajo.'
+  Note: 'Cotización que un profesional envía para un trabajo. Guarda el total y las horas estimadas; las líneas están en propuesta_cotizacion_items.'
+}
+
+Table propuesta_cotizacion_items {
+  id_propuesta text [not null]
+  linea smallint [not null]
+  concepto text [not null]
+  monto numeric [not null]
+
+  indexes {
+    (id_propuesta, linea) [pk]
+  }
+
+  Note: 'Línea de una cotización: concepto y monto, numeradas por propuesta (clave id_propuesta, linea).'
 }
 
 Table pagos {
@@ -655,14 +685,15 @@ Table liquidaciones {
   id text [pk, not null, default: (gen_random_uuid())::text]
   id_pago text [not null]
   id_trabajo text [not null]
-  id_trabajador text
+  id_trabajador uuid
   monto_clp numeric [not null]
   proveedor text [not null, default: "'manual'"]
   referencia_transferencia text [not null]
   notas text
-  id_operador text [not null]
+  id_operador uuid
   creado_en timestamptz [not null, default: now()]
   estado_transferencia text [not null, default: "'transferido'"]
+  liberada_por_sistema boolean [not null, default: false]
 
   indexes {
     (id_pago) [unique]
@@ -773,6 +804,33 @@ Table eventos_ranking {
   Note: 'Evento que alimenta el ranking de un profesional.'
 }
 
+Table encuestas_testing {
+  id uuid [pk, not null, default: gen_random_uuid()]
+  creado_en timestamptz [not null, default: now()]
+  id_usuario uuid [default: auth.uid()]
+  plataforma text [not null]
+  rol text [not null]
+  tarea_completada text [not null]
+  satisfaccion smallint [not null]
+  que_funciono text
+  que_mejorar text
+  version_app text
+
+  Note: 'Encuesta de usabilidad de quienes prueban la app: plataforma, rol, si completó la tarea, satisfacción y comentarios. Las respuestas SUS están en encuesta_testing_respuestas y el puntaje lo calcula la vista encuestas_testing_con_puntaje.'
+}
+
+Table encuesta_testing_respuestas {
+  id_encuesta uuid [not null]
+  item smallint [not null]
+  valor smallint [not null]
+
+  indexes {
+    (id_encuesta, item) [pk]
+  }
+
+  Note: 'Respuesta a cada uno de los 10 ítems SUS de una encuesta (item de 1 a 10, valor de 1 a 5).'
+}
+
 // ---------------------------------------------------------------------------
 // Relaciones (solo FK físicas de la BD viva)
 // ---------------------------------------------------------------------------
@@ -797,14 +855,16 @@ Ref: verificacion_eventos.id_usuario > perfiles.id [delete: cascade]
 Ref: regiones.id_pais > paises.id
 Ref: comunas.id_region > regiones.id
 Ref: trabajadores.id_comuna > comunas.id [delete: set_null]
-Ref: trabajadores.id_region > regiones.id [delete: set_null]
 Ref: trabajadores.id_usuario - perfiles.id [delete: cascade]
 Ref: trabajador_precios.id_usuario > trabajadores.id_usuario [delete: cascade]
 Ref: trabajador_servicios_extra.id_usuario > trabajadores.id_usuario [delete: cascade]
-Ref: trabajador_servicios.id_trabajador > perfiles.id [delete: cascade]
+Ref: trabajador_servicios.categoria_servicio > categorias_servicio.id
+Ref: trabajador_servicios.id_trabajador > trabajadores.id_usuario [delete: cascade]
 Ref: trabajador_horarios.id_usuario > trabajadores.id_usuario [delete: cascade]
+Ref: trabajador_horas_publicadas.id_usuario > trabajadores.id_usuario [delete: cascade]
 Ref: portafolio_trabajador.id_trabajador > perfiles.id [delete: cascade]
 Ref: impulsos.id_trabajador > perfiles.id [delete: cascade]
+Ref: servicios.categoria > categorias_servicio.id
 Ref: configuraciones_servicio.id_servicio > servicios.id [delete: cascade]
 Ref: trabajos.id_servicio > servicios.id [delete: set_null]
 Ref: trabajos.id_usuario > perfiles.id [delete: cascade]
@@ -842,12 +902,15 @@ Ref: intentos_pin_inicio.id_trabajo > trabajos.id [delete: cascade]
 Ref: intentos_pin_inicio.id_usuario > perfiles.id [delete: set_null]
 Ref: propuestas_cotizacion.id_trabajo > trabajos.id [delete: cascade]
 Ref: propuestas_cotizacion.id_trabajador > perfiles.id [delete: cascade]
+Ref: propuesta_cotizacion_items.id_propuesta > propuestas_cotizacion.id [delete: cascade]
 Ref: pagos.id_orden_cambio > ordenes_cambio.id [delete: set_null]
 Ref: pagos.id_trabajo > trabajos.id [delete: cascade]
 Ref: ordenes_cambio.id_trabajo > trabajos.id [delete: cascade]
 Ref: ordenes_cambio.id_pago > pagos.id [delete: set_null]
 Ref: ordenes_cambio.id_trabajador > perfiles.id [delete: cascade]
+Ref: liquidaciones.id_operador > perfiles.id [delete: set_null]
 Ref: liquidaciones.id_pago > pagos.id
+Ref: liquidaciones.id_trabajador > perfiles.id [delete: set_null]
 Ref: liquidaciones.id_trabajo > trabajos.id
 Ref: metodos_pago_oneclick.id_usuario - perfiles.id [delete: cascade]
 Ref: cuentas_bancarias.id_usuario - perfiles.id [delete: cascade]
@@ -855,6 +918,8 @@ Ref: senales_resena.id_calificacion > calificaciones.id [delete: cascade]
 Ref: senales_resena.resuelto_por > perfiles.id [delete: set_null]
 Ref: eventos_ranking.id_trabajador > perfiles.id [delete: cascade]
 Ref: eventos_ranking.id_trabajo > trabajos.id [delete: set_null]
+Ref: encuestas_testing.id_usuario > perfiles.id [delete: set_null]
+Ref: encuesta_testing_respuestas.id_encuesta > encuestas_testing.id [delete: cascade]
 
 // Grupos para el lienzo de dbdiagram.io
 
@@ -887,8 +952,10 @@ TableGroup catalogo_4nf {
   trabajador_servicios_extra
   trabajador_servicios
   trabajador_horarios
+  trabajador_horas_publicadas
   portafolio_trabajador
   impulsos
+  categorias_servicio
   servicios
   configuraciones_servicio
 }
@@ -913,6 +980,7 @@ TableGroup pedido {
 
 TableGroup cobro {
   propuestas_cotizacion
+  propuesta_cotizacion_items
   pagos
   ordenes_cambio
   liquidaciones
@@ -926,4 +994,9 @@ TableGroup ranking {
   senales_resena
   ranking_aprendizaje
   eventos_ranking
+}
+
+TableGroup testing {
+  encuestas_testing
+  encuesta_testing_respuestas
 }

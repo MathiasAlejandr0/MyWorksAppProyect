@@ -1,21 +1,18 @@
-Migración más reciente en la BD: 20261116044049
-Tablas public: 52 · columnas: 437 · PK: 52 · FK: 78 (77 internas + 1 a auth.users) · UNIQUE: 9
+Migración más reciente en la BD: 20261117223850
+Tablas public: 57 · columnas: 458 · PK: 57 · FK: 85 (84 internas + 1 a auth.users) · UNIQUE: 9
 Tablas sin dominio: ninguna · repetidas: ninguna · inexistentes: ninguna
 Tablas sin PK: ninguna
 FK internas ausentes de los diagramas por dominio: ninguna
 FK internas ausentes del diagrama general: ninguna
-Lógica liquidaciones.(id_trabajador) -> perfiles.(id): columnas OK
-Lógica liquidaciones.(id_operador) -> perfiles.(id): columnas OK
 Lógica metodos_pago_oneclick.(id_trabajo_pendiente) -> trabajos.(id): columnas OK
 Lógica bloqueos_pin_inicio.(pin_ok_usuario) -> perfiles.(id): columnas OK
 Lógica trabajos.(id_trabajador,id_sku_servicio) -> trabajador_precios.(id_usuario,codigo): columnas OK
-Lógica trabajador_servicios.(categoria_servicio) -> servicios.(categoria): columnas OK
-er_00_general.png: 4218x4584px · ancho natural 3893 pt · letra de columnas a 16,5 cm de ancho ≈ 4.1 pt; a 24,7 cm (hoja horizontal) ≈ 6.1 pt
-er_00_dominios.png: 2391x1966px · ancho natural 1671 pt · letra de columnas a 16,5 cm de ancho ≈ 6.2 pt; a 24,7 cm (hoja horizontal) ≈ 9.2 pt
-er_01_usuarios_territorio.png: 2400x2626px · ancho natural 1490 pt · letra de columnas a 16,5 cm de ancho ≈ 5.7 pt; a 24,7 cm (hoja horizontal) ≈ 8.5 pt
-er_02_profesionales_catalogo.png: 2404x2833px · ancho natural 1505 pt · letra de columnas a 16,5 cm de ancho ≈ 5.6 pt; a 24,7 cm (hoja horizontal) ≈ 8.4 pt
-er_03_trabajos_reservas.png: 2404x3215px · ancho natural 1749 pt · letra de columnas a 16,5 cm de ancho ≈ 4.8 pt; a 24,7 cm (hoja horizontal) ≈ 7.2 pt
-er_04_pagos_escrow.png: 2394x1901px · ancho natural 1795 pt · letra de columnas a 16,5 cm de ancho ≈ 4.7 pt; a 24,7 cm (hoja horizontal) ≈ 7.0 pt
+er_00_general.png: 4222x5416px · ancho natural 3753 pt · letra de columnas a 16,5 cm de ancho ≈ 4.2 pt; a 24,7 cm (hoja horizontal) ≈ 6.3 pt
+er_00_dominios.png: 2392x2075px · ancho natural 1688 pt · letra de columnas a 16,5 cm de ancho ≈ 6.1 pt; a 24,7 cm (hoja horizontal) ≈ 9.1 pt
+er_01_usuarios_territorio.png: 2400x2510px · ancho natural 1490 pt · letra de columnas a 16,5 cm de ancho ≈ 5.7 pt; a 24,7 cm (hoja horizontal) ≈ 8.5 pt
+er_02_profesionales_catalogo.png: 2395x2188px · ancho natural 1815 pt · letra de columnas a 16,5 cm de ancho ≈ 4.6 pt; a 24,7 cm (hoja horizontal) ≈ 6.9 pt
+er_03_trabajos_reservas.png: 2404x2971px · ancho natural 1749 pt · letra de columnas a 16,5 cm de ancho ≈ 4.8 pt; a 24,7 cm (hoja horizontal) ≈ 7.2 pt
+er_04_pagos_escrow.png: 2394x1852px · ancho natural 1795 pt · letra de columnas a 16,5 cm de ancho ≈ 4.7 pt; a 24,7 cm (hoja horizontal) ≈ 7.0 pt
 er_05_comunicacion_disputas.png: 2401x2774px · ancho natural 1300 pt · letra de columnas a 16,5 cm de ancho ≈ 6.5 pt; a 24,7 cm (hoja horizontal) ≈ 9.7 pt
-er_06_calificaciones_ranking.png: 2400x2568px · ancho natural 1261 pt · letra de columnas a 16,5 cm de ancho ≈ 6.7 pt; a 24,7 cm (hoja horizontal) ≈ 10.0 pt
-er_07_admin_auditoria.png: 2395x2875px · ancho natural 1268 pt · letra de columnas a 16,5 cm de ancho ≈ 6.6 pt; a 24,7 cm (hoja horizontal) ≈ 9.9 pt
+er_06_calificaciones_ranking.png: 2400x2492px · ancho natural 1261 pt · letra de columnas a 16,5 cm de ancho ≈ 6.7 pt; a 24,7 cm (hoja horizontal) ≈ 10.0 pt
+er_07_admin_auditoria.png: 2397x1961px · ancho natural 1659 pt · letra de columnas a 16,5 cm de ancho ≈ 5.1 pt; a 24,7 cm (hoja horizontal) ≈ 7.6 pt

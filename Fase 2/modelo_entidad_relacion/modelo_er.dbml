@@ -1,5 +1,5 @@
 // MyWorksApp — modelo entidad-relación generado desde la BD viva
-// Proyecto wxqrfcqifkfgawrnqmnj · migración 20261116044049 · abrir en https://dbdiagram.io
+// Proyecto wxqrfcqifkfgawrnqmnj · migración 20261117223850 · abrir en https://dbdiagram.io
 Project MyWorksApp { database_type: 'PostgreSQL' }
 
 Table acciones_pendientes {
@@ -105,6 +105,13 @@ Table cancelaciones_trabajo {
   }
 }
 
+Table categorias_servicio {
+  id text [pk]
+  nombre text [not null]
+  activa boolean [not null]
+  creado_en "timestamp with time zone" [not null]
+}
+
 Table codigos_restablecimiento {
   id text [pk]
   id_usuario uuid [not null]
@@ -189,6 +196,28 @@ Table disputas {
   vence_en "timestamp with time zone"
 }
 
+Table encuesta_testing_respuestas {
+  id_encuesta uuid [not null]
+  item smallint [not null]
+  valor smallint [not null]
+  indexes {
+    (id_encuesta, item) [pk]
+  }
+}
+
+Table encuestas_testing {
+  id uuid [pk]
+  creado_en "timestamp with time zone" [not null]
+  id_usuario uuid
+  plataforma text [not null]
+  rol text [not null]
+  tarea_completada text [not null]
+  satisfaccion smallint [not null]
+  que_funciono text
+  que_mejorar text
+  version_app text
+}
+
 Table eventos_abuso {
   id text [pk]
   id_usuario uuid [not null]
@@ -249,14 +278,15 @@ Table liquidaciones {
   id text [pk]
   id_pago text [not null]
   id_trabajo text [not null]
-  id_trabajador text
+  id_trabajador uuid
   monto_clp numeric [not null]
   proveedor text [not null]
   referencia_transferencia text [not null]
   notas text
-  id_operador text [not null]
+  id_operador uuid
   creado_en "timestamp with time zone" [not null]
   estado_transferencia text [not null]
+  liberada_por_sistema boolean [not null]
   indexes {
     (id_pago) [unique]
   }
@@ -379,6 +409,16 @@ Table portafolio_trabajador {
   tipo_medio text [not null]
 }
 
+Table propuesta_cotizacion_items {
+  id_propuesta text [not null]
+  linea smallint [not null]
+  concepto text [not null]
+  monto numeric [not null]
+  indexes {
+    (id_propuesta, linea) [pk]
+  }
+}
+
 Table propuestas_cotizacion {
   id text [pk]
   id_trabajo text [not null]
@@ -386,9 +426,9 @@ Table propuestas_cotizacion {
   monto_total_clp integer [not null]
   descripcion text [not null]
   validez_hasta text
-  desglose text
   estado text [not null]
   creado_en text [not null]
+  horas_estimadas numeric
 }
 
 Table ranking_aprendizaje {
@@ -515,16 +555,25 @@ Table tickets_soporte {
 
 Table trabajador_horarios {
   id_usuario uuid [not null]
-  horarios jsonb [not null]
   actualizado_en "timestamp with time zone" [not null]
   id uuid [pk]
-  dia_semana smallint
-  hora_inicio "time without time zone"
-  hora_fin "time without time zone"
-  activo boolean
+  dia_semana smallint [not null]
+  hora_inicio "time without time zone" [not null]
+  hora_fin "time without time zone" [not null]
+  activo boolean [not null]
   creado_en "timestamp with time zone"
   indexes {
     (id_usuario, dia_semana) [unique]
+  }
+}
+
+Table trabajador_horas_publicadas {
+  id_usuario uuid [not null]
+  dia_semana smallint [not null]
+  hora "time without time zone" [not null]
+  creado_en "timestamp with time zone" [not null]
+  indexes {
+    (id_usuario, dia_semana, hora) [pk]
   }
 }
 
@@ -564,10 +613,7 @@ Table trabajadores {
   calificacion "numeric(4,2)" [not null]
   disponible integer [not null]
   tarifa_visita "numeric(12,0)" [not null]
-  categoria_servicio text [not null]
-  niveles_precio jsonb [not null]
   conteo_rechazos integer [not null]
-  servicios_personalizados jsonb [not null]
   precios_configurados integer [not null]
   zona_trabajo text
   estado_verificacion text [not null]
@@ -585,7 +631,6 @@ Table trabajadores {
   trabajos_completados integer [not null]
   es_elite boolean
   id_comuna text
-  id_region text
   usa_horario boolean [not null]
   pausa_por_trabajo boolean [not null]
 }
@@ -631,92 +676,96 @@ Table verificacion_eventos {
   creado_en "timestamp with time zone" [not null]
 }
 
-Ref: acciones_pendientes.id_usuario > perfiles.id [delete: cascade]
-Ref: acuerdos_trabajo.id_trabajo > trabajos.id [delete: cascade]
-Ref: acuerdos_trabajo.propuesto_por > perfiles.id [delete: no action]
-Ref: banderas_funcionalidad.id_usuario > perfiles.id [delete: cascade]
-Ref: bloqueos_pin_inicio.id_trabajo - trabajos.id [delete: cascade]
-Ref: bloqueos_usuario.id_bloqueado > perfiles.id [delete: cascade]
-Ref: bloqueos_usuario.id_bloqueador > perfiles.id [delete: cascade]
-Ref: calificaciones.id_calificado > perfiles.id [delete: cascade]
-Ref: calificaciones.id_usuario > perfiles.id [delete: set null]
-Ref: calificaciones.id_trabajo > trabajos.id [delete: cascade]
-Ref: calificaciones_cliente.id_cliente > perfiles.id [delete: cascade]
-Ref: calificaciones_cliente.id_trabajador > perfiles.id [delete: cascade]
-Ref: calificaciones_cliente.id_trabajo - trabajos.id [delete: cascade]
-Ref: cancelaciones_trabajo.cancelado_por > perfiles.id [delete: cascade]
-Ref: cancelaciones_trabajo.id_trabajo - trabajos.id [delete: cascade]
-Ref: codigos_restablecimiento.id_usuario > perfiles.id [delete: cascade]
-Ref: comunas.id_region > regiones.id [delete: no action]
-Ref: configuraciones_servicio.id_servicio - servicios.id [delete: cascade]
-Ref: consentimientos_usuario.id_usuario > perfiles.id [delete: cascade]
-Ref: cuentas_bancarias.id_usuario - perfiles.id [delete: cascade]
-Ref: dispositivos_push.id_usuario > perfiles.id [delete: cascade]
-Ref: disputa_mensajes.id_autor > perfiles.id [delete: no action]
-Ref: disputa_mensajes.id_disputa > disputas.id [delete: cascade]
-Ref: disputas.abierta_por > perfiles.id [delete: cascade]
-Ref: disputas.resuelta_por > perfiles.id [delete: set null]
-Ref: disputas.id_trabajo > trabajos.id [delete: cascade]
-Ref: eventos_abuso.id_usuario > perfiles.id [delete: cascade]
-Ref: eventos_analitica.id_usuario > perfiles.id [delete: set null]
-Ref: eventos_ranking.id_trabajador > perfiles.id [delete: cascade]
-Ref: eventos_ranking.id_trabajo > trabajos.id [delete: set null]
-Ref: fotos_trabajo.id_trabajo > trabajos.id [delete: cascade]
-Ref: impulsos.id_trabajador > perfiles.id [delete: cascade]
-Ref: intentos_pin_inicio.id_trabajo > trabajos.id [delete: cascade]
-Ref: intentos_pin_inicio.id_usuario > perfiles.id [delete: set null]
-Ref: liquidaciones.id_pago - pagos.id [delete: no action]
-Ref: liquidaciones.id_trabajo > trabajos.id [delete: no action]
-Ref: mensajes.id_destinatario > perfiles.id [delete: cascade]
-Ref: mensajes.id_remitente > perfiles.id [delete: cascade]
-Ref: mensajes.id_trabajo > trabajos.id [delete: cascade]
-Ref: metodos_pago_oneclick.id_usuario - perfiles.id [delete: cascade]
-Ref: notificaciones.id_usuario > perfiles.id [delete: cascade]
-Ref: ordenes_cambio.id_trabajo > trabajos.id [delete: cascade]
-Ref: ordenes_cambio.id_pago > pagos.id [delete: set null]
-Ref: ordenes_cambio.id_trabajador > perfiles.id [delete: cascade]
-Ref: pagos.id_orden_cambio > ordenes_cambio.id [delete: set null]
-Ref: pagos.id_trabajo > trabajos.id [delete: cascade]
-Ref: pines_inicio_trabajo.id_trabajo - trabajos.id [delete: cascade]
-Ref: portafolio_trabajador.id_trabajador > perfiles.id [delete: cascade]
-Ref: propuestas_cotizacion.id_trabajo > trabajos.id [delete: cascade]
-Ref: propuestas_cotizacion.id_trabajador > perfiles.id [delete: cascade]
-Ref: regiones.id_pais > paises.id [delete: no action]
-Ref: registros_error_app.id_usuario > perfiles.id [delete: no action]
-Ref: reportes.id_reportante > perfiles.id [delete: cascade]
-Ref: reportes.id_usuario_reportado > perfiles.id [delete: cascade]
-Ref: reprogramaciones_trabajo.propuesta_por > perfiles.id [delete: cascade]
-Ref: reprogramaciones_trabajo.respondida_por > perfiles.id [delete: set null]
-Ref: reprogramaciones_trabajo.id_trabajo > trabajos.id [delete: cascade]
-Ref: senales_resena.id_calificacion > calificaciones.id [delete: cascade]
-Ref: senales_resena.resuelto_por > perfiles.id [delete: set null]
-Ref: suscripciones.id_usuario > perfiles.id [delete: cascade]
-Ref: tickets_soporte.id_trabajo > trabajos.id [delete: set null]
-Ref: trabajador_horarios.id_usuario > trabajadores.id_usuario [delete: cascade]
-Ref: trabajador_precios.id_usuario > trabajadores.id_usuario [delete: cascade]
-Ref: trabajador_servicios.id_trabajador > perfiles.id [delete: cascade]
-Ref: trabajador_servicios_extra.id_usuario > trabajadores.id_usuario [delete: cascade]
-Ref: trabajadores.id_comuna > comunas.id [delete: set null]
-Ref: trabajadores.id_region > regiones.id [delete: set null]
-Ref: trabajadores.id_usuario - perfiles.id [delete: cascade]
-Ref: trabajos.id_servicio > servicios.id [delete: set null]
-Ref: trabajos.id_usuario > perfiles.id [delete: cascade]
-Ref: trabajos.id_trabajador > perfiles.id [delete: set null]
-Ref: trabajos.id_comuna > comunas.id [delete: set null]
-Ref: trabajos.id_cotizacion_seleccionada > propuestas_cotizacion.id [delete: set null]
-Ref: ubicacion_en_vivo.id_trabajo - trabajos.id [delete: cascade]
-Ref: ubicacion_en_vivo.id_trabajador > trabajadores.id_usuario [delete: cascade]
-Ref: verificacion_eventos.id_actor > perfiles.id [delete: set null]
-Ref: verificacion_eventos.id_usuario > perfiles.id [delete: cascade]
+Ref: acciones_pendientes.id_usuario > perfiles.{id} [delete: cascade]
+Ref: acuerdos_trabajo.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: acuerdos_trabajo.propuesto_por > perfiles.{id} [delete: no action]
+Ref: banderas_funcionalidad.id_usuario > perfiles.{id} [delete: cascade]
+Ref: bloqueos_pin_inicio.id_trabajo - trabajos.{id} [delete: cascade]
+Ref: bloqueos_usuario.id_bloqueado > perfiles.{id} [delete: cascade]
+Ref: bloqueos_usuario.id_bloqueador > perfiles.{id} [delete: cascade]
+Ref: calificaciones.id_calificado > perfiles.{id} [delete: cascade]
+Ref: calificaciones.id_usuario > perfiles.{id} [delete: set null]
+Ref: calificaciones.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: calificaciones_cliente.id_cliente > perfiles.{id} [delete: cascade]
+Ref: calificaciones_cliente.id_trabajador > perfiles.{id} [delete: cascade]
+Ref: calificaciones_cliente.id_trabajo - trabajos.{id} [delete: cascade]
+Ref: cancelaciones_trabajo.cancelado_por > perfiles.{id} [delete: cascade]
+Ref: cancelaciones_trabajo.id_trabajo - trabajos.{id} [delete: cascade]
+Ref: codigos_restablecimiento.id_usuario > perfiles.{id} [delete: cascade]
+Ref: comunas.id_region > regiones.{id} [delete: no action]
+Ref: configuraciones_servicio.id_servicio - servicios.{id} [delete: cascade]
+Ref: consentimientos_usuario.id_usuario > perfiles.{id} [delete: cascade]
+Ref: cuentas_bancarias.id_usuario - perfiles.{id} [delete: cascade]
+Ref: dispositivos_push.id_usuario > perfiles.{id} [delete: cascade]
+Ref: disputa_mensajes.id_autor > perfiles.{id} [delete: no action]
+Ref: disputa_mensajes.id_disputa > disputas.{id} [delete: cascade]
+Ref: disputas.abierta_por > perfiles.{id} [delete: cascade]
+Ref: disputas.resuelta_por > perfiles.{id} [delete: set null]
+Ref: disputas.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: encuesta_testing_respuestas.id_encuesta > encuestas_testing.{id} [delete: cascade]
+Ref: encuestas_testing.id_usuario > perfiles.{id} [delete: set null]
+Ref: eventos_abuso.id_usuario > perfiles.{id} [delete: cascade]
+Ref: eventos_analitica.id_usuario > perfiles.{id} [delete: set null]
+Ref: eventos_ranking.id_trabajador > perfiles.{id} [delete: cascade]
+Ref: eventos_ranking.id_trabajo > trabajos.{id} [delete: set null]
+Ref: fotos_trabajo.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: impulsos.id_trabajador > perfiles.{id} [delete: cascade]
+Ref: intentos_pin_inicio.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: intentos_pin_inicio.id_usuario > perfiles.{id} [delete: set null]
+Ref: liquidaciones.id_operador > perfiles.{id} [delete: set null]
+Ref: liquidaciones.id_pago - pagos.{id} [delete: no action]
+Ref: liquidaciones.id_trabajador > perfiles.{id} [delete: set null]
+Ref: liquidaciones.id_trabajo > trabajos.{id} [delete: no action]
+Ref: mensajes.id_destinatario > perfiles.{id} [delete: cascade]
+Ref: mensajes.id_remitente > perfiles.{id} [delete: cascade]
+Ref: mensajes.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: metodos_pago_oneclick.id_usuario - perfiles.{id} [delete: cascade]
+Ref: notificaciones.id_usuario > perfiles.{id} [delete: cascade]
+Ref: ordenes_cambio.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: ordenes_cambio.id_pago > pagos.{id} [delete: set null]
+Ref: ordenes_cambio.id_trabajador > perfiles.{id} [delete: cascade]
+Ref: pagos.id_orden_cambio > ordenes_cambio.{id} [delete: set null]
+Ref: pagos.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: pines_inicio_trabajo.id_trabajo - trabajos.{id} [delete: cascade]
+Ref: portafolio_trabajador.id_trabajador > perfiles.{id} [delete: cascade]
+Ref: propuesta_cotizacion_items.id_propuesta > propuestas_cotizacion.{id} [delete: cascade]
+Ref: propuestas_cotizacion.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: propuestas_cotizacion.id_trabajador > perfiles.{id} [delete: cascade]
+Ref: regiones.id_pais > paises.{id} [delete: no action]
+Ref: registros_error_app.id_usuario > perfiles.{id} [delete: no action]
+Ref: reportes.id_reportante > perfiles.{id} [delete: cascade]
+Ref: reportes.id_usuario_reportado > perfiles.{id} [delete: cascade]
+Ref: reprogramaciones_trabajo.propuesta_por > perfiles.{id} [delete: cascade]
+Ref: reprogramaciones_trabajo.respondida_por > perfiles.{id} [delete: set null]
+Ref: reprogramaciones_trabajo.id_trabajo > trabajos.{id} [delete: cascade]
+Ref: senales_resena.id_calificacion > calificaciones.{id} [delete: cascade]
+Ref: senales_resena.resuelto_por > perfiles.{id} [delete: set null]
+Ref: servicios.categoria > categorias_servicio.{id} [delete: no action]
+Ref: suscripciones.id_usuario > perfiles.{id} [delete: cascade]
+Ref: tickets_soporte.id_trabajo > trabajos.{id} [delete: set null]
+Ref: trabajador_horarios.id_usuario > trabajadores.{id_usuario} [delete: cascade]
+Ref: trabajador_horas_publicadas.id_usuario > trabajadores.{id_usuario} [delete: cascade]
+Ref: trabajador_precios.id_usuario > trabajadores.{id_usuario} [delete: cascade]
+Ref: trabajador_servicios.categoria_servicio > categorias_servicio.{id} [delete: no action]
+Ref: trabajador_servicios.id_trabajador > trabajadores.{id_usuario} [delete: cascade]
+Ref: trabajador_servicios_extra.id_usuario > trabajadores.{id_usuario} [delete: cascade]
+Ref: trabajadores.id_comuna > comunas.{id} [delete: set null]
+Ref: trabajadores.id_usuario - perfiles.{id} [delete: cascade]
+Ref: trabajos.id_servicio > servicios.{id} [delete: set null]
+Ref: trabajos.id_usuario > perfiles.{id} [delete: cascade]
+Ref: trabajos.id_trabajador > perfiles.{id} [delete: set null]
+Ref: trabajos.id_comuna > comunas.{id} [delete: set null]
+Ref: trabajos.id_cotizacion_seleccionada > propuestas_cotizacion.{id} [delete: set null]
+Ref: ubicacion_en_vivo.id_trabajo - trabajos.{id} [delete: cascade]
+Ref: ubicacion_en_vivo.id_trabajador > trabajadores.{id_usuario} [delete: cascade]
+Ref: verificacion_eventos.id_actor > perfiles.{id} [delete: set null]
+Ref: verificacion_eventos.id_usuario > perfiles.{id} [delete: cascade]
 // perfiles.id referencia auth.users.id (esquema auth de Supabase, ON DELETE CASCADE)
 
 // Relaciones lógicas (sin FOREIGN KEY física):
-//   liquidaciones.(id_trabajador) -> perfiles.(id) — profesional liquidado; text que guarda el uuid del perfil
-//   liquidaciones.(id_operador) -> perfiles.(id) — administrador que confirmó la transferencia; text con uuid o 'sistema'
 //   metodos_pago_oneclick.(id_trabajo_pendiente) -> trabajos.(id) — trabajo que espera la inscripción Oneclick para cobrarse
 //   bloqueos_pin_inicio.(pin_ok_usuario) -> perfiles.(id) — usuario que validó el PIN (ventana pin_ok_hasta)
 //   trabajos.(id_trabajador, id_sku_servicio) -> trabajador_precios.(id_usuario, codigo) — SKU de precio elegido; también admite 'tier_<n>', por eso no es FK
-//   trabajador_servicios.(categoria_servicio) -> servicios.(categoria) — categoría ofrecida; servicios.categoria no es única
 
 TableGroup usuarios_territorio { // Usuarios, autenticación y territorio
   perfiles
@@ -736,14 +785,17 @@ TableGroup profesionales_catalogo { // Profesionales, servicios y precios
   trabajador_servicios
   trabajador_servicios_extra
   trabajador_horarios
+  trabajador_horas_publicadas
   portafolio_trabajador
   impulsos
+  categorias_servicio
   servicios
   configuraciones_servicio
 }
 TableGroup trabajos_reservas { // Trabajos, reservas, reprogramación y PIN
   trabajos
   propuestas_cotizacion
+  propuesta_cotizacion_items
   acuerdos_trabajo
   cancelaciones_trabajo
   reprogramaciones_trabajo
@@ -783,4 +835,6 @@ TableGroup admin_auditoria { // Administración, moderación y auditoría
   eventos_analitica
   banderas_funcionalidad
   app_config
+  encuestas_testing
+  encuesta_testing_respuestas
 }

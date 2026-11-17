@@ -1,33 +1,33 @@
 # Modelo de datos de MyWorksApp
 
-> **Total: 53 tablas** en el esquema `public` de la base de datos (PostgreSQL en Supabase), con 449 columnas, 53 claves primarias y 79 claves foráneas (78 entre tablas de `public` y 1 hacia `auth.users`).
+> **Total: 57 tablas** en el esquema `public` de la base de datos (PostgreSQL en Supabase), con 458 columnas, 57 claves primarias y 85 claves foráneas (84 entre tablas de `public` y 1 hacia `auth.users`).
 
 ## 1. De dónde sale el número
 
 | Fuente | Resultado |
 |---|---|
-| **Base de datos viva** (proyecto Supabase `wxqrfcqifkfgawrnqmnj`, lectura con `list_tables` y consultas al catálogo, **17-11-2026**, hora de Chile; última migración aplicada `20261116051054`) | **53 tablas** en `public`, todas tablas base (no hay vistas ni tipos ENUM) |
-| **Migraciones del repositorio** (`myworksapp_app/supabase/migrations/`, reproducidas en orden con los cambios de nombre y los borrados) | 52 de las 53 tablas coinciden con la base viva. La tabla 53, `encuestas_testing`, está aplicada en la base con la migración `20261116051054_encuestas_testing.sql`, cuyo archivo se agrega al repositorio en paralelo a este documento. Además, la migración inicial (`20250907120000_schema_baseline_documented.sql`) declara la tabla histórica `service_pricing`, que no existe en la base viva y no usa la aplicación; por eso no se cuenta. |
+| **Base de datos viva** (proyecto Supabase `wxqrfcqifkfgawrnqmnj`, lectura con `list_tables` y consultas al catálogo, **17-11-2026**, hora de Chile; última migración aplicada `20261117223850`) | **57 tablas** en `public`, más la vista `encuestas_testing_con_puntaje` (no hay tipos ENUM) |
+| **Migraciones del repositorio** (`myworksapp_app/supabase/migrations/`) | Las 113 versiones de `supabase_migrations.schema_migrations` tienen su archivo con el mismo número; reproducidas en orden dejan las mismas 57 tablas. |
 
-El conteo de la base viva es el que vale: **53 tablas**. Las tablas de otros esquemas no forman parte del modelo de la aplicación y no se cuentan:
+El conteo de la base viva es el que vale: **57 tablas**. Las tablas de otros esquemas no forman parte del modelo de la aplicación y no se cuentan:
 
 - `auth` (usuarios y sesiones), `storage` (archivos), `realtime` y `vault`: esquemas internos de Supabase. La única relación que llega hasta ellos es `perfiles.id` → `auth.users.id` (borrado en cascada): cada perfil es la ficha de una cuenta de Supabase Auth.
-- Los esquemas `backup_20261115`, `backup_20261115b` y `backup_20261115c` (26 tablas) son copias de respaldo hechas durante la auditoría del 15-11-2026; no son parte del modelo.
+- El esquema `backup_20261117` (11 tablas) guarda copias de respaldo previas a la normalización del 17-11-2026; ninguna función, vista ni política lo usa y no es parte del modelo.
 
 ## 2. Resumen por grupo
 
 | N.º | Grupo | Tablas |
 |---|---|---|
 | 1 | Usuarios, autenticación y territorio | 10 |
-| 2 | Profesionales, servicios y precios | 9 |
-| 3 | Trabajos, reservas, reprogramación y PIN | 10 |
+| 2 | Profesionales, servicios y precios | 11 |
+| 3 | Trabajos, reservas, reprogramación y PIN | 11 |
 | 4 | Pagos (Transbank), liquidaciones y cuentas bancarias | 5 |
 | 5 | Comunicación, notificaciones, disputas y soporte | 5 |
 | 6 | Calificaciones, comentarios y ranking | 6 |
-| 7 | Administración, moderación y auditoría | 8 |
-| | **Total** | **53** |
+| 7 | Administración, moderación y auditoría | 9 |
+| | **Total** | **57** |
 
-Cada tabla pertenece a un solo grupo y los grupos suman 53. Para ubicar un tema rápido:
+Cada tabla pertenece a un solo grupo y los grupos suman 57. Para ubicar un tema rápido:
 
 | Tema | Tablas | Grupo |
 |---|---|---|
@@ -37,7 +37,7 @@ Cada tabla pertenece a un solo grupo y los grupos suman 53. Para ubicar un tema 
 | Pagos con Transbank | `pagos`, `ordenes_cambio`, `liquidaciones`, `metodos_pago_oneclick`, `cuentas_bancarias` | 4 |
 | Comentarios y calificaciones | `calificaciones`, `calificaciones_cliente`, `senales_resena`, `mensajes` (chat) | 6 y 5 |
 | Notificaciones | `notificaciones`, `dispositivos_push` | 5 y 1 |
-| Catálogos | `servicios`, `configuraciones_servicio`, `paises`, `regiones`, `comunas` | 2 y 1 |
+| Catálogos | `categorias_servicio`, `servicios`, `configuraciones_servicio`, `paises`, `regiones`, `comunas` | 2 y 1 |
 | Administración y auditoría | `reportes`, `eventos_abuso`, `registros_error_app`, `eventos_analitica`, `banderas_funcionalidad`, `app_config` | 7 |
 
 ## 3. Notación de los diagramas
@@ -123,22 +123,21 @@ Claves foráneas hacia otros grupos:
 
 - `perfiles.id` → `auth.users.id` (esquema `auth` de Supabase, fuera de `public`).
 
-### Grupo 2. Profesionales, servicios y precios (9 tablas)
+### Grupo 2. Profesionales, servicios y precios (11 tablas)
 
 ```mermaid
 erDiagram
   trabajadores {
     uuid id_usuario PK, FK "→ perfiles.id"
     text id_comuna FK "→ comunas.id"
-    text id_region FK "→ regiones.id"
   }
   trabajador_precios {
     uuid id_usuario PK, FK "→ trabajadores.id_usuario"
     text codigo PK
   }
   trabajador_servicios {
-    uuid id_trabajador PK, FK "→ perfiles.id"
-    text categoria_servicio PK
+    uuid id_trabajador PK, FK "→ trabajadores.id_usuario"
+    text categoria_servicio PK, FK "→ categorias_servicio.id"
   }
   trabajador_servicios_extra {
     text id PK
@@ -148,6 +147,11 @@ erDiagram
     uuid id_usuario FK "→ trabajadores.id_usuario"
     uuid id PK
   }
+  trabajador_horas_publicadas {
+    uuid id_usuario PK, FK "→ trabajadores.id_usuario"
+    int2 dia_semana PK
+    time hora PK
+  }
   portafolio_trabajador {
     text id PK
     uuid id_trabajador FK "→ perfiles.id"
@@ -156,41 +160,49 @@ erDiagram
     text id PK
     uuid id_trabajador FK "→ perfiles.id"
   }
+  categorias_servicio {
+    text id PK
+  }
   servicios {
     text id PK
+    text categoria FK "→ categorias_servicio.id"
   }
   configuraciones_servicio {
     text id PK
     text id_servicio FK, UK "→ servicios.id"
   }
   servicios ||--o| configuraciones_servicio : "id_servicio"
+  categorias_servicio ||--o{ servicios : "categoria"
   trabajadores ||--o{ trabajador_horarios : "id_usuario"
+  trabajadores ||--o{ trabajador_horas_publicadas : "id_usuario"
   trabajadores ||--o{ trabajador_precios : "id_usuario"
+  categorias_servicio ||--o{ trabajador_servicios : "categoria_servicio"
+  trabajadores ||--o{ trabajador_servicios : "id_trabajador"
   trabajadores ||--o{ trabajador_servicios_extra : "id_usuario"
 ```
 
 | Tabla | Qué guarda |
 |---|---|
-| `trabajadores` | Ficha del profesional: oficio, descripción, verificación, base de atención (ubicación y radio) y datos del ranking. |
+| `trabajadores` | Ficha del profesional: descripción, verificación, base de atención (ubicación y radio) y datos del ranking. Sus precios, oficios y servicios propios están en las tablas `trabajador_*`. |
 | `trabajador_precios` | Precio en pesos que el profesional cobra por cada código de servicio. |
-| `trabajador_servicios` | Oficios del catálogo que el profesional declara atender. |
+| `trabajador_servicios` | Oficios del catálogo que el profesional declara atender (cada uno es una categoría de `categorias_servicio`). |
 | `trabajador_servicios_extra` | Servicios adicionales con precio propio que define el profesional. |
-| `trabajador_horarios` | Disponibilidad semanal del profesional (hora de inicio y de término por día). |
+| `trabajador_horarios` | Ventana de atención semanal del profesional: una fila por día con hora de inicio y de término. |
+| `trabajador_horas_publicadas` | Horas reservables que el profesional publica dentro de su ventana de cada día. |
 | `portafolio_trabajador` | Fotos o videos del portafolio de cada profesional. |
 | `impulsos` | Promociones temporales que dan más visibilidad a un profesional. |
-| `servicios` | Catálogo de servicios que ofrece la plataforma, con categoría y modelo de precio. |
+| `categorias_servicio` | Categorías u oficios del catálogo (gasfitería, electricidad y otros). |
+| `servicios` | Catálogo de servicios que ofrece la plataforma, con su categoría y modelo de precio. |
 | `configuraciones_servicio` | Formulario de preguntas asociado a cada servicio. |
 
 Claves foráneas hacia otros grupos:
 
 - `impulsos.id_trabajador` → `perfiles` (grupo 1).
 - `portafolio_trabajador.id_trabajador` → `perfiles` (grupo 1).
-- `trabajador_servicios.id_trabajador` → `perfiles` (grupo 1).
 - `trabajadores.id_comuna` → `comunas` (grupo 1).
-- `trabajadores.id_region` → `regiones` (grupo 1).
 - `trabajadores.id_usuario` → `perfiles` (grupo 1).
 
-### Grupo 3. Trabajos, reservas, reprogramación y PIN (10 tablas)
+### Grupo 3. Trabajos, reservas, reprogramación y PIN (11 tablas)
 
 ```mermaid
 erDiagram
@@ -206,6 +218,10 @@ erDiagram
     text id PK
     text id_trabajo FK "→ trabajos.id"
     uuid id_trabajador FK "→ perfiles.id"
+  }
+  propuesta_cotizacion_items {
+    text id_propuesta PK, FK "→ propuestas_cotizacion.id"
+    int2 linea PK
   }
   acuerdos_trabajo {
     text id PK
@@ -248,6 +264,7 @@ erDiagram
   trabajos ||--o{ fotos_trabajo : "id_trabajo"
   trabajos ||--o{ intentos_pin_inicio : "id_trabajo"
   trabajos ||--o| pines_inicio_trabajo : "id_trabajo"
+  propuestas_cotizacion ||--o{ propuesta_cotizacion_items : "id_propuesta"
   trabajos ||--o{ propuestas_cotizacion : "id_trabajo"
   trabajos ||--o{ reprogramaciones_trabajo : "id_trabajo"
   propuestas_cotizacion |o--o{ trabajos : "id_cotizacion_seleccionada"
@@ -258,6 +275,7 @@ erDiagram
 |---|---|
 | `trabajos` | Pedido de un cliente a un profesional: dirección, ubicación, fecha, estado y modalidad de cobro. |
 | `propuestas_cotizacion` | Cotizaciones que los profesionales envían para un trabajo. |
+| `propuesta_cotizacion_items` | Líneas de cada cotización: concepto y monto. |
 | `acuerdos_trabajo` | Acuerdos entre cliente y profesional para rehacer, aceptar o anular un trabajo. |
 | `cancelaciones_trabajo` | Cancelación de un trabajo: quién la pidió y por qué motivo. |
 | `reprogramaciones_trabajo` | Propuestas para cambiar la fecha de un trabajo y la respuesta a cada una. |
@@ -300,6 +318,8 @@ erDiagram
     text id PK
     text id_pago FK, UK "→ pagos.id"
     text id_trabajo FK "→ trabajos.id"
+    uuid id_trabajador FK "→ perfiles.id"
+    uuid id_operador FK "→ perfiles.id"
   }
   metodos_pago_oneclick {
     uuid id_usuario PK, FK "→ perfiles.id"
@@ -323,6 +343,8 @@ erDiagram
 Claves foráneas hacia otros grupos:
 
 - `cuentas_bancarias.id_usuario` → `perfiles` (grupo 1).
+- `liquidaciones.id_operador` → `perfiles` (grupo 1).
+- `liquidaciones.id_trabajador` → `perfiles` (grupo 1).
 - `liquidaciones.id_trabajo` → `trabajos` (grupo 3).
 - `metodos_pago_oneclick.id_usuario` → `perfiles` (grupo 1).
 - `ordenes_cambio.id_trabajo` → `trabajos` (grupo 3).
@@ -427,17 +449,17 @@ erDiagram
 
 Claves foráneas hacia otros grupos:
 
-- `calificaciones_cliente.id_cliente` → `perfiles` (grupo 1).
-- `calificaciones_cliente.id_trabajador` → `perfiles` (grupo 1).
-- `calificaciones_cliente.id_trabajo` → `trabajos` (grupo 3).
 - `calificaciones.id_calificado` → `perfiles` (grupo 1).
 - `calificaciones.id_usuario` → `perfiles` (grupo 1).
 - `calificaciones.id_trabajo` → `trabajos` (grupo 3).
+- `calificaciones_cliente.id_cliente` → `perfiles` (grupo 1).
+- `calificaciones_cliente.id_trabajador` → `perfiles` (grupo 1).
+- `calificaciones_cliente.id_trabajo` → `trabajos` (grupo 3).
 - `eventos_ranking.id_trabajador` → `perfiles` (grupo 1).
 - `eventos_ranking.id_trabajo` → `trabajos` (grupo 3).
 - `senales_resena.resuelto_por` → `perfiles` (grupo 1).
 
-### Grupo 7. Administración, moderación y auditoría (8 tablas)
+### Grupo 7. Administración, moderación y auditoría (9 tablas)
 
 ```mermaid
 erDiagram
@@ -473,6 +495,11 @@ erDiagram
     uuid id PK
     uuid id_usuario FK "→ perfiles.id"
   }
+  encuesta_testing_respuestas {
+    uuid id_encuesta PK, FK "→ encuestas_testing.id"
+    int2 item PK
+  }
+  encuestas_testing ||--o{ encuesta_testing_respuestas : "id_encuesta"
 ```
 
 | Tabla | Qué guarda |
@@ -484,7 +511,8 @@ erDiagram
 | `eventos_analitica` | Eventos de uso de la aplicación. |
 | `banderas_funcionalidad` | Interruptores para activar funciones por versión, rol o usuario. |
 | `app_config` | Configuración general en pares clave y valor (solo la lee el backend). |
-| `encuestas_testing` | Respuestas de la encuesta de usabilidad (SUS) de quienes prueban la app. |
+| `encuestas_testing` | Encuesta de usabilidad de quienes prueban la app: plataforma, rol, satisfacción y comentarios. |
+| `encuesta_testing_respuestas` | Respuesta a cada uno de los 10 ítems SUS de una encuesta (valor de 1 a 5). |
 
 Claves foráneas hacia otros grupos:
 
@@ -497,9 +525,9 @@ Claves foráneas hacia otros grupos:
 - `reportes.id_reportante` → `perfiles` (grupo 1).
 - `reportes.id_usuario_reportado` → `perfiles` (grupo 1).
 
-## 5. Diagrama completo (53 tablas)
+## 5. Diagrama completo (57 tablas)
 
-Muestra las 53 tablas y las 78 claves foráneas entre ellas (sin columnas, para que se lea). La relación `perfiles` → `auth.users` queda fuera porque `auth.users` pertenece a Supabase. Cada línea indica la columna que guarda la clave foránea.
+Muestra las 57 tablas y las 84 claves foráneas entre ellas (sin columnas, para que se lea). La relación `perfiles` → `auth.users` queda fuera porque `auth.users` pertenece a Supabase. Cada línea indica la columna que guarda la clave foránea.
 
 
 ```mermaid
@@ -511,12 +539,12 @@ erDiagram
   trabajos ||--o| bloqueos_pin_inicio : "id_trabajo"
   perfiles ||--o{ bloqueos_usuario : "id_bloqueado"
   perfiles ||--o{ bloqueos_usuario : "id_bloqueador"
-  perfiles ||--o{ calificaciones_cliente : "id_cliente"
-  perfiles ||--o{ calificaciones_cliente : "id_trabajador"
-  trabajos ||--o| calificaciones_cliente : "id_trabajo"
   perfiles ||--o{ calificaciones : "id_calificado"
   perfiles |o--o{ calificaciones : "id_usuario"
   trabajos ||--o{ calificaciones : "id_trabajo"
+  perfiles ||--o{ calificaciones_cliente : "id_cliente"
+  perfiles ||--o{ calificaciones_cliente : "id_trabajador"
+  trabajos ||--o| calificaciones_cliente : "id_trabajo"
   perfiles ||--o{ cancelaciones_trabajo : "cancelado_por"
   trabajos ||--o| cancelaciones_trabajo : "id_trabajo"
   perfiles ||--o{ codigos_restablecimiento : "id_usuario"
@@ -530,6 +558,7 @@ erDiagram
   perfiles ||--o{ disputas : "abierta_por"
   perfiles |o--o{ disputas : "resuelta_por"
   trabajos ||--o{ disputas : "id_trabajo"
+  encuestas_testing ||--o{ encuesta_testing_respuestas : "id_encuesta"
   perfiles |o--o{ encuestas_testing : "id_usuario"
   perfiles ||--o{ eventos_abuso : "id_usuario"
   perfiles |o--o{ eventos_analitica : "id_usuario"
@@ -539,7 +568,9 @@ erDiagram
   perfiles ||--o{ impulsos : "id_trabajador"
   trabajos ||--o{ intentos_pin_inicio : "id_trabajo"
   perfiles |o--o{ intentos_pin_inicio : "id_usuario"
+  perfiles |o--o{ liquidaciones : "id_operador"
   pagos ||--o| liquidaciones : "id_pago"
+  perfiles |o--o{ liquidaciones : "id_trabajador"
   trabajos ||--o{ liquidaciones : "id_trabajo"
   perfiles ||--o{ mensajes : "id_destinatario"
   perfiles ||--o{ mensajes : "id_remitente"
@@ -553,6 +584,7 @@ erDiagram
   trabajos ||--o{ pagos : "id_trabajo"
   trabajos ||--o| pines_inicio_trabajo : "id_trabajo"
   perfiles ||--o{ portafolio_trabajador : "id_trabajador"
+  propuestas_cotizacion ||--o{ propuesta_cotizacion_items : "id_propuesta"
   trabajos ||--o{ propuestas_cotizacion : "id_trabajo"
   perfiles ||--o{ propuestas_cotizacion : "id_trabajador"
   paises ||--o{ regiones : "id_pais"
@@ -564,14 +596,16 @@ erDiagram
   trabajos ||--o{ reprogramaciones_trabajo : "id_trabajo"
   calificaciones ||--o{ senales_resena : "id_calificacion"
   perfiles |o--o{ senales_resena : "resuelto_por"
+  categorias_servicio ||--o{ servicios : "categoria"
   perfiles ||--o{ suscripciones : "id_usuario"
   trabajos |o--o{ tickets_soporte : "id_trabajo"
   trabajadores ||--o{ trabajador_horarios : "id_usuario"
+  trabajadores ||--o{ trabajador_horas_publicadas : "id_usuario"
   trabajadores ||--o{ trabajador_precios : "id_usuario"
+  categorias_servicio ||--o{ trabajador_servicios : "categoria_servicio"
+  trabajadores ||--o{ trabajador_servicios : "id_trabajador"
   trabajadores ||--o{ trabajador_servicios_extra : "id_usuario"
-  perfiles ||--o{ trabajador_servicios : "id_trabajador"
   comunas |o--o{ trabajadores : "id_comuna"
-  regiones |o--o{ trabajadores : "id_region"
   perfiles ||--o| trabajadores : "id_usuario"
   servicios |o--o{ trabajos : "id_servicio"
   perfiles ||--o{ trabajos : "id_usuario"
@@ -593,18 +627,15 @@ Algunas columnas guardan el identificador de otra tabla pero no tienen `FOREIGN 
 
 | Columna | Apunta a |
 |---|---|
-| `liquidaciones.id_trabajador` | `perfiles.id` |
-| `liquidaciones.id_operador` | `perfiles.id` (administrador que confirmó la transferencia) |
 | `metodos_pago_oneclick.id_trabajo_pendiente` | `trabajos.id` |
 | `bloqueos_pin_inicio.pin_ok_usuario` | `perfiles.id` |
 | `trabajos.id_trabajador` + `id_sku_servicio` | `trabajador_precios.id_usuario` + `codigo` |
-| `trabajador_servicios.categoria_servicio` | `servicios.categoria` |
 | `notificaciones.id_relacionado` | trabajo, pago, disputa u otro objeto, según `tipo` |
 | `acciones_pendientes.id_entidad` | la entidad indicada en `tipo_entidad` |
 
 ## 7. Cómo se verificó
 
-1. `list_tables` sobre todos los esquemas del proyecto: `public` tiene 53 tablas.
-2. Consultas de solo lectura al catálogo de PostgreSQL (`information_schema.columns`, `pg_constraint`, `pg_indexes`): 449 columnas, 53 claves primarias y 79 claves foráneas.
+1. `list_tables` sobre todos los esquemas del proyecto: `public` tiene 57 tablas y una vista.
+2. Consultas de solo lectura al catálogo de PostgreSQL (`information_schema.columns`, `pg_constraint`, `pg_indexes`): 458 columnas, 57 claves primarias y 85 claves foráneas.
 3. Reproducción de las migraciones del repositorio y comparación de los nombres de tabla con la base viva.
-4. Comprobación automática de este documento: las 53 tablas aparecen en un solo grupo, los grupos suman 53 y las 78 claves foráneas internas están en el diagrama completo.
+4. Comprobación automática de este documento: las 57 tablas aparecen en un solo grupo, los grupos suman 57 y las 84 claves foráneas internas están en el diagrama completo.

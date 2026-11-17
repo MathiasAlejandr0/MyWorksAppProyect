@@ -2,7 +2,7 @@
 """Genera el diccionario de base de datos desde un snapshot del esquema real.
 
 Fuente: docs/_schema_public.json (information_schema / pg_catalog de
-wxqrfcqifkfgawrnqmnj, solo lectura, 2026-11-16 America/Santiago).
+wxqrfcqifkfgawrnqmnj, solo lectura, 2026-11-17 America/Santiago).
 
 Uso, desde la raíz del repo grupal (primero los diagramas ER, que se
 incrustan en la sección «Modelo entidad-relación»):
@@ -43,7 +43,7 @@ OUT_DBML = FASE2 / "modelo_entidad_relacion.dbml"
 OUT_SQL = FASE2 / "modelo_entidad_relacion.sql"
 OUT_FIG = FASE2 / "figuras"
 
-GENERATED_AT = "2026-11-16"
+GENERATED_AT = "2026-11-17"
 TZ_LABEL = "America/Santiago"
 MODEL_VERSION = "v2.5"
 PROJECT_ID = "wxqrfcqifkfgawrnqmnj"
@@ -72,8 +72,10 @@ GROUPS = {
         "trabajador_servicios_extra",
         "trabajador_servicios",
         "trabajador_horarios",
+        "trabajador_horas_publicadas",
         "portafolio_trabajador",
         "impulsos",
+        "categorias_servicio",
         "servicios",
         "configuraciones_servicio",
     ],
@@ -96,6 +98,7 @@ GROUPS = {
     ],
     "cobro": [
         "propuestas_cotizacion",
+        "propuesta_cotizacion_items",
         "pagos",
         "ordenes_cambio",
         "liquidaciones",
@@ -109,6 +112,10 @@ GROUPS = {
         "ranking_aprendizaje",
         "eventos_ranking",
     ],
+    "testing": [
+        "encuestas_testing",
+        "encuesta_testing_respuestas",
+    ],
 }
 
 GROUP_LABELS = {
@@ -118,6 +125,7 @@ GROUP_LABELS = {
     "pedido": "Pedido y servicio",
     "cobro": "Cobro",
     "ranking": "Ranking y reputación",
+    "testing": "Encuesta de testing",
 }
 
 GROUP_COLORS = {
@@ -127,6 +135,7 @@ GROUP_COLORS = {
     "pedido": (162, 74, 28),
     "cobro": (92, 69, 120),
     "ranking": (44, 74, 110),
+    "testing": (107, 39, 55),
 }
 
 TABLE_NOTES = {
@@ -160,29 +169,38 @@ TABLE_NOTES = {
     "regiones": "Región administrativa de un país.",
     "comunas": "Comuna de cobertura. Su identificador es el slug usado por trabajos y trabajadores.",
     "trabajadores": (
-        "Ficha 1:1 del profesional (PK = perfiles.id). La oferta en 4NF vive en "
-        "tablas hijas; los JSON niveles_precio y servicios_personalizados son "
-        "solo formato de escritura (un trigger los parte a filas). "
-        "es_elite es una columna GENERATED. La agenda semanal está en "
-        "trabajador_horarios; usa_horario enciende el filtro. "
-        "pausa_por_trabajo queda en true cuando un trabajo activo dejó "
-        "disponible = 0, y se restablece al terminar."
+        "Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios "
+        "adicionales y oficios están en trabajador_precios, "
+        "trabajador_servicios_extra y trabajador_servicios; la región se "
+        "obtiene desde la comuna. es_elite es una columna GENERATED. La "
+        "agenda semanal está en trabajador_horarios y trabajador_horas_publicadas; "
+        "usa_horario enciende el filtro. pausa_por_trabajo queda en true "
+        "cuando un trabajo activo dejó disponible = 0, y se restablece al terminar."
     ),
     "trabajador_precios": (
         "Precio por código de servicio del profesional. id_usuario es uuid "
-        "con clave foránea a trabajadores (ON DELETE CASCADE) desde la "
-        "auditoría 2026-11-16; antes era text sin FK."
+        "con clave foránea a trabajadores (ON DELETE CASCADE). Es la única "
+        "fuente de los precios del profesional."
     ),
     "trabajador_servicios_extra": (
-        "Servicio adicional definido por el profesional. id_usuario es uuid "
-        "con clave foránea a trabajadores, igual que en trabajador_precios."
+        "Servicio adicional definido por el profesional (título, subtítulo, "
+        "monto y unidad fijo o por m²). id_usuario es uuid con clave foránea "
+        "a trabajadores. Es la única fuente de sus servicios adicionales."
     ),
-    "trabajador_servicios": "Oficios del catálogo que el profesional declara atender.",
+    "trabajador_servicios": "Oficios del catálogo que el profesional declara atender. categoria_servicio es clave foránea a categorias_servicio.",
+    "categorias_servicio": "Categorías u oficios del catálogo (gasfitería, electricidad y otros). Las usan servicios y trabajador_servicios.",
     "trabajador_horarios": (
-        "Plantilla semanal: una fila por día (1 = lunes … 7 = domingo), "
-        "única por (id_usuario, dia_semana). Solo el dueño lee y escribe (RLS). "
-        "El cliente consulta los huecos con la RPC horarios_libres_profesional. "
-        "usa_horario en trabajadores enciende el filtro."
+        "Ventana de atención semanal: siete filas por profesional, una por día "
+        "(1 = lunes … 7 = domingo), con hora_inicio y hora_fin, únicas por "
+        "(id_usuario, dia_semana). Las horas reservables dentro de la ventana "
+        "están en trabajador_horas_publicadas. usa_horario en trabajadores "
+        "enciende el filtro."
+    ),
+    "trabajador_horas_publicadas": (
+        "Horas que el profesional publica como reservables en cada día "
+        "(clave id_usuario, dia_semana, hora). Un trigger de reserva acepta "
+        "solo horas publicadas y libres. El cliente las ve con la RPC "
+        "horarios_libres_profesional."
     ),
     "portafolio_trabajador": "Foto o medio del portafolio de un profesional.",
     "impulsos": "Promoción temporal de visibilidad de un profesional.",
@@ -235,7 +253,10 @@ TABLE_NOTES = {
         "Auditoría de cada intento de PIN de inicio. Escriben solo funciones "
         "SECURITY DEFINER; un administrador puede leerla."
     ),
-    "propuestas_cotizacion": "Cotización que un profesional envía para un trabajo.",
+    "propuestas_cotizacion": "Cotización que un profesional envía para un trabajo. Guarda el total y las horas estimadas; las líneas están en propuesta_cotizacion_items.",
+    "propuesta_cotizacion_items": "Línea de una cotización: concepto y monto, numeradas por propuesta (clave id_propuesta, linea).",
+    "encuestas_testing": "Encuesta de usabilidad de quienes prueban la app: plataforma, rol, si completó la tarea, satisfacción y comentarios. Las respuestas SUS están en encuesta_testing_respuestas y el puntaje lo calcula la vista encuestas_testing_con_puntaje.",
+    "encuesta_testing_respuestas": "Respuesta a cada uno de los 10 ítems SUS de una encuesta (item de 1 a 10, valor de 1 a 5).",
     "pagos": (
         "Cobro asociado a un trabajo o a una orden de cambio, con retención "
         "(escrow) vía Transbank Webpay / Oneclick. Las columnas alta_nonce_hash, "
@@ -303,10 +324,15 @@ RLS_SUMMARY = {
     "servicios": "Lectura pública del catálogo de oficios. La escritura es de administración.",
     "suscripciones": "El usuario ve solo su plan; crear o cambiar una suscripción es de administración o del backend (antes de la auditoría 2026-11-16 un usuario podía activarse un plan premium).",
     "tickets_soporte": "Las partes del trabajo o un administrador ven el ticket.",
-    "trabajador_horarios": "SELECT y escritura solo para el dueño de la ficha (o un administrador). El cliente no lee esta tabla: usa horarios_libres_profesional.",
-    "trabajador_precios": "El dueño y el catálogo (según política de precios) leen los montos ya publicados; la escritura es del dueño o de un trigger que parte el JSON.",
+    "trabajador_horarios": "SELECT para anon y authenticated (la ventana semanal es pública para mostrar la agenda); insertar, cambiar y borrar es solo del dueño de la ficha o de un administrador.",
+    "trabajador_horas_publicadas": "SELECT para anon y authenticated (las horas publicadas se muestran al reservar); insertar, cambiar y borrar es solo del dueño de la ficha o de un administrador, por la RPC guardar_horarios_propios.",
+    "trabajador_precios": "Un usuario con sesión lee los precios de los profesionales que existen; solo el dueño crea, cambia o borra los suyos.",
     "trabajador_servicios": "Oficios declarados: lectura de catálogo y escritura del dueño.",
-    "trabajador_servicios_extra": "Servicios extra del profesional; misma idea que los precios.",
+    "trabajador_servicios_extra": "Misma regla que los precios: lectura con sesión, escritura solo del dueño.",
+    "categorias_servicio": "Lectura pública de las categorías activas (anon y authenticated; un administrador ve todas). La escritura es de administración.",
+    "propuesta_cotizacion_items": "Se lee si se puede leer la cotización. Solo el profesional autor crea, cambia o borra líneas, mientras la cotización no esté aceptada ni seleccionada.",
+    "encuestas_testing": "Solo un administrador lee las encuestas. Nadie escribe directo: se responde con la RPC enviar_encuesta_testing (también anon).",
+    "encuesta_testing_respuestas": "Solo un administrador lee las respuestas. Se escriben por la RPC enviar_encuesta_testing.",
     "trabajadores": "El listado público solo muestra fichas disponibles con precios configurados. El dueño, un administrador o el cliente con un trabajo conjunto también pueden leer la ficha. El UPDATE es del dueño o de un administrador; campos como verificación, score y pausa están protegidos por trigger.",
     "trabajos": "SELECT y UPDATE para el cliente, el profesional asignado o un administrador. El INSERT lo hace el cliente (o un admin) con reglas: sin cotización preseleccionada y con estado de pago inicial pendiente o ninguno. Varios triggers cuidan el PIN, la evidencia, la fecha (solo RPC) y la disponibilidad.",
     "ubicacion_en_vivo": "El cliente del trabajo o un administrador leen la posición. El profesional la publica por RPC publicar_ubicacion_trabajo. Un trigger borra el GPS al cerrar el trabajo.",
@@ -349,7 +375,9 @@ FUNC_PURPOSE = {
     "evaluar_resena": "Evalúa una reseña y genera señales si parece dudosa (interno).",
     "evidencia_disputa": "Devuelve la evidencia del trabajo en disputa. Administrador o soporte; qa no la ve.",
     "expirar_pagos_abandonados": "Marca o limpia pagos abandonados (tarea de servicio / cron).",
-    "explotar_oferta_trabajador": "Parte los JSON de oferta a las tablas 4NF (trigger).",
+    "_asegurar_ventanas_horario": "Apoyo: deja las siete ventanas semanales de un profesional.",
+    "enviar_encuesta_testing": "Guarda una encuesta de testing con sus 10 respuestas SUS (también anon).",
+    "sus_puntaje": "Calcula el puntaje SUS (0 a 100) de una encuesta con la fórmula de Brooke.",
     "fichas_sensibles_admin": "Lectura de fichas con datos sensibles, solo administrador.",
     "fijar_correo_codigo": "Trigger de apoyo para códigos de restablecimiento.",
     "fijar_geo_trabajador": "Normaliza la geografía (comuna, región, base) de la ficha del profesional.",
@@ -359,10 +387,10 @@ FUNC_PURPOSE = {
     "fijar_verificacion_profesional": "Un administrador cambia el estado de verificación y deja nota.",
     "fotos_trabajo_exigir_webp": "Trigger: valida el formato de la evidencia.",
     "guardar_config_ranking": "Un administrador guarda los pesos y umbrales de ranking_config.",
-    "guardar_horarios_propios": "El profesional guarda su plantilla semanal (reemplazo atómico).",
+    "guardar_horarios_propios": "El profesional guarda su ventana semanal y sus horas publicadas (reemplazo atómico).",
     "handle_new_user": "Trigger de auth: crea el perfil public al registrarse un usuario.",
-    "horarios_disponibles_propios": "El profesional lee su propia plantilla semanal.",
-    "horarios_libres_profesional": "Huecos libres de un profesional en los próximos n días (también anon). No expone la tabla trabajador_horarios.",
+    "horarios_disponibles_propios": "El profesional lee su propia ventana semanal y sus horas publicadas.",
+    "horarios_libres_profesional": "Huecos libres de un profesional en los próximos n días (también anon). Se calcula desde trabajador_horas_publicadas.",
     "intentar_pin_inicio": "El profesional prueba el PIN del cliente. Tras 5 fallos, bloquea 15 minutos.",
     "is_admin": "True si el usuario autenticado tiene rol admin o administrador.",
     "km_entre_puntos": "Distancia en kilómetros entre dos coordenadas (uso interno de recargo).",
@@ -435,7 +463,7 @@ FUNC_PURPOSE = {
     "texto_a_timestamptz": "Interpreta un texto de fecha/hora como timestamptz (agenda y CU-33).",
     "texto_tiene_contacto": "Detecta si un texto parece incluir teléfono o correo. También anon (validación de formularios).",
     "trabajador_horarios_desde_alta": "Trigger de apoyo al crear la plantilla semanal en el alta.",
-    "trabajador_horarios_normalizar": "Trigger: normaliza día y horas al guardar un horario.",
+    "trabajador_horarios_tocar": "Trigger: actualiza la fecha de cambio al guardar un horario.",
     "trabajador_reservable": "True si el profesional puede tomarse en la fecha consultada (horario y ocupación).",
     "trabajadores_marcar_pausa_por_trabajo": "Trigger: enciende o apaga pausa_por_trabajo y disponible según los trabajos activos.",
     "trabajo_admite_disputa": "True si el estado del trabajo permite abrir una disputa.",
@@ -732,18 +760,26 @@ def changelog(tables):
         "pines_inicio_trabajo",
         "reprogramaciones_trabajo",
         "verificacion_eventos",
+        "categorias_servicio",
+        "encuesta_testing_respuestas",
+        "encuestas_testing",
+        "propuesta_cotizacion_items",
+        "trabajador_horas_publicadas",
     ]
     removed = []
     modified = [
         ("calificaciones", "Se agregan `direccion` (cliente_a_trabajador | trabajador_a_cliente) e `id_calificado`. Unicidad por (id_trabajo, direccion)."),
         ("calificaciones_cliente", "`puntaje` pasa de integer a smallint."),
         ("disputas", "Se agregan `decision_sugerida`, `motivo_regla`, `origen` y `vence_en` (soporte automático)."),
-        ("liquidaciones", "Se agrega `estado_transferencia` para el seguimiento de la transferencia al profesional."),
-        ("trabajador_horarios", "Deja de ser una fila 1:1 con tres columnas. Ahora es una plantilla semanal: `id`, `dia_semana`, `hora_inicio`, `hora_fin`, `activo`, `creado_en`, única por (id_usuario, dia_semana)."),
-        ("trabajador_precios", "`id_usuario` pasa de text a uuid con FK a trabajadores (auditoría 2026-11-16)."),
-        ("trabajador_servicios_extra", "Igual que precios: `id_usuario` pasa a uuid con FK."),
+        ("liquidaciones", "Se agregan `estado_transferencia` y `liberada_por_sistema`. `id_trabajador` e `id_operador` pasan de text a uuid con FK a perfiles."),
+        ("trabajador_horarios", "Deja de ser una fila 1:1 con tres columnas. Ahora es una ventana semanal: `id`, `dia_semana`, `hora_inicio`, `hora_fin`, `activo`, `creado_en`, única por (id_usuario, dia_semana). Las horas reservables están en `trabajador_horas_publicadas`."),
+        ("trabajador_precios", "`id_usuario` pasa de text a uuid con FK a trabajadores. Es la única fuente de los precios."),
+        ("trabajador_servicios_extra", "Igual que precios: `id_usuario` pasa a uuid con FK y es la única fuente de los servicios adicionales."),
         ("metodos_pago_oneclick", "`id_usuario` pasa de text a uuid con FK a perfiles (auditoría 2026-11-16)."),
-        ("trabajadores", "Se agregan `usa_horario` y `pausa_por_trabajo`. `es_elite` se documenta como columna GENERATED ALWAYS."),
+        ("trabajadores", "Se agregan `usa_horario` y `pausa_por_trabajo`. `es_elite` se documenta como columna GENERATED ALWAYS. Se quitan `niveles_precio`, `servicios_personalizados`, `categoria_servicio` e `id_region`."),
+        ("propuestas_cotizacion", "Se agrega `horas_estimadas`; se quita `desglose`, que pasa a `propuesta_cotizacion_items`."),
+        ("servicios", "`categoria` pasa a ser clave foránea a `categorias_servicio`."),
+        ("trabajador_servicios", "`id_trabajador` apunta a `trabajadores` y `categoria_servicio` a `categorias_servicio`."),
         ("perfiles", "Defaults en español (`'usuario'`, `'activo'`), CHECK de rol y estado, FK a auth.users y reputación protegida contra edición del propio usuario (auditoría 2026-11-16)."),
         ("pagos", "Las columnas de alta de invitado (`alta_nonce_hash`, `alta_jti`, `alta_consumido_en`) ya estaban en el v2.3 (26 columnas). Se aclara su papel y el índice único de `alta_jti`."),
         ("trabajos", "Sigue con 20 columnas. Cambia el comportamiento: la fecha programada solo se altera por las RPC de CU-33 y hay un índice único de agenda por profesional y minuto."),
@@ -814,7 +850,7 @@ def project_note(schema):
         f"({schema['latest_migration_name']}). "
         f"Archivo de migración en el repo: {schema['latest_migration_file']}. "
         "Diccionario generado desde information_schema y pg_catalog (solo lectura). "
-        "No hay tipos ENUM ni vistas en public: los estados se restringen con CHECK. "
+        "No hay tipos ENUM en public (los estados se restringen con CHECK) y hay una vista, encuestas_testing_con_puntaje. "
         "No ejecutar el SQL de consulta contra producción."
     )
 
@@ -844,7 +880,7 @@ def write_md(schema, tables, functions, ordered):
     a(f"| Archivo de migración (repo) | `{schema['latest_migration_file']}` |")
     a(f"| Fecha de generación | {GENERATED_AT} ({TZ_LABEL}) |")
     a("")
-    a("`perfiles.id` coincide con `auth.users.id` (Auth de Supabase, fuera de `public`). No hay tipos ENUM ni vistas en `public`.")
+    a("`perfiles.id` coincide con `auth.users.id` (Auth de Supabase, fuera de `public`). No hay tipos ENUM en `public`; hay una vista, `encuestas_testing_con_puntaje`.")
     a("")
     a("## 1. Cambios respecto del diccionario v2.3 (2026-11-08, 43 tablas, hasta 20261108000005)")
     a("")
@@ -911,7 +947,7 @@ def write_md(schema, tables, functions, ordered):
 
     a("## 4. Relaciones (claves foráneas físicas)")
     a("")
-    a("Se listan las FK declaradas en Postgres. La auditoría 2026-11-16 agregó las que faltaban (todas con 0 huérfanos verificados antes de validarlas). Las únicas referencias sin FK física son polimórficas (`notificaciones.id_relacionado`) o libros contables con id en texto (`liquidaciones.id_trabajador`).")
+    a("Se listan las FK declaradas en Postgres. La auditoría 2026-11-16 agregó las que faltaban (todas con 0 huérfanos verificados antes de validarlas). Las únicas referencias sin FK física son polimórficas (`notificaciones.id_relacionado`, `acciones_pendientes.id_entidad`) o apuntan a más de una clave (`trabajos.id_sku_servicio`).")
     a("")
     a("| Tabla | Columnas | Referencia | ON DELETE |")
     a("|-------|----------|------------|-----------|")
@@ -936,7 +972,7 @@ def write_md(schema, tables, functions, ordered):
     a("")
     a("## 5. Enums y vistas")
     a("")
-    a("El esquema `public` no define tipos ENUM ni vistas (ni materializadas). Los estados y conjuntos cerrados (rol de una reprogramación, tipo de acuerdo, estado de verificación, etc.) se restringen con CHECK sobre columnas `text` o `boolean`.")
+    a("El esquema `public` no define tipos ENUM ni vistas materializadas; su única vista es `encuestas_testing_con_puntaje` (con `security_invoker`, calcula el puntaje SUS). Los estados y conjuntos cerrados (rol de una reprogramación, tipo de acuerdo, estado de verificación, etc.) se restringen con CHECK sobre columnas `text` o `boolean`.")
     a("")
     a("## 6. Funciones RPC y SECURITY DEFINER")
     a("")
@@ -981,7 +1017,7 @@ def write_anexo(schema, tables, ordered):
         f"migración `{schema['latest_migration_version']}` ({schema['latest_migration_name']}). "
         "Los atributos se listan con su tipo de dato y su restricción. PK indica la clave primaria y FK la clave foránea. "
         "perfiles.id coincide con el identificador de autenticación de Supabase (auth.users.id). "
-        "No hay tipos ENUM ni vistas en public; los conjuntos cerrados se restringen con CHECK."
+        "No hay tipos ENUM en public (los conjuntos cerrados se restringen con CHECK); hay una vista, encuestas_testing_con_puntaje."
     )
     a("")
     a(f"Fuente: elaboración propia a partir del esquema real (modelo entidad-relación {MODEL_VERSION}).")
@@ -1179,7 +1215,7 @@ def write_sql(schema, tables, ordered):
     a("-- No es un script de restauración completa. No ejecutar contra producción.")
     a("--")
     a("-- perfiles.id coincide con auth.users.id.")
-    a("-- No hay ENUM ni vistas en public.")
+    a("-- No hay ENUM en public; la vista encuestas_testing_con_puntaje no se incluye.")
     a("-- trabajador_precios.id_usuario y trabajador_servicios_extra.id_usuario son uuid")
     a("-- con FK a trabajadores.id_usuario (auditoría 2026-11-16).")
     a("")
@@ -1409,7 +1445,7 @@ def write_docx(schema, tables, functions, ordered):
     add_table(doc, ["Tabla", "Forma normal", "Dato repetido a propósito y cómo se mantiene"],
               [[tb["name"], forma_normal(tb["name"])[0], forma_normal(tb["name"])[2] or "—"] for tb in ordered])
     add_heading(doc, "6. Enums y vistas", 1)
-    add_body(doc, "El esquema public no define tipos ENUM ni vistas. Los estados se restringen con CHECK sobre columnas text o boolean.")
+    add_body(doc, "El esquema public no define tipos ENUM; su única vista es encuestas_testing_con_puntaje. Los estados se restringen con CHECK sobre columnas text o boolean.")
 
     add_heading(doc, "7. Funciones RPC y SECURITY DEFINER", 1)
     auth = [f for f in functions if f.get("auth_exec") or f.get("anon_exec")]
