@@ -12,7 +12,7 @@ export function assertTransbankAction(url: string): string {
   return parsed.toString();
 }
 
-/** Arma la query por si hace falta abrir Transbank sin el formulario. */
+/** Query GET con el token, para el fallback sin JavaScript. */
 export function transbankRedirectUrl(input: {
   action: string;
   fieldName: "token_ws" | "TBK_TOKEN";
@@ -23,59 +23,47 @@ export function transbankRedirectUrl(input: {
   return url.toString();
 }
 
-function escapeAttr(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("<", "&lt;");
-}
+/** Página estática (Vercel) que hace el POST. *.supabase.co sirve HTML como text/plain. */
+export const TRANSBANK_BRIDGE_ORIGIN = "https://myworksapp-cl.vercel.app";
 
 /**
- * Formulario que hace POST del token. Con solo el GET, la tarjeta de prueba
- * muestra el formulario y el botón de continuar no confirma el cobro.
- * El content-type va explícito: sin él, la puerta de Supabase entrega text/plain
- * y el WebView muestra el código en vez de enviarlo.
+ * Dirección de la página puente. Lleva acción, campo y token en el fragmento (#),
+ * que el navegador no envía al servidor ni a los logs.
  */
-export function transbankAutoPostHtml(input: {
+export function transbankBridgeUrl(input: {
   action: string;
   fieldName: "token_ws" | "TBK_TOKEN";
   token: string;
+  bridgeOrigin?: string;
 }): string {
   if (input.fieldName !== "token_ws" && input.fieldName !== "TBK_TOKEN") {
     throw new Error("campo de token inválido");
   }
-  const action = escapeAttr(assertTransbankAction(input.action));
-  const token = escapeAttr(input.token);
-  return `<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Transbank</title>
-</head>
-<body>
-  <p>Conectando con Transbank…</p>
-  <form id="tbk" method="post" action="${action}">
-    <input type="hidden" name="${input.fieldName}" value="${token}">
-    <button type="submit">Continuar a Transbank</button>
-  </form>
-  <script>document.getElementById("tbk").submit();</script>
-</body>
-</html>`;
+  const frag = new URLSearchParams({
+    a: assertTransbankAction(input.action),
+    f: input.fieldName,
+    t: input.token,
+  });
+  const origin = (input.bridgeOrigin || TRANSBANK_BRIDGE_ORIGIN).replace(/\/+$/, "");
+  return `${origin}/tbk-post.html#${frag.toString()}`;
 }
 
+/**
+ * Transbank recibe el token por POST: con solo el GET, la tarjeta de prueba muestra
+ * el formulario y el botón de continuar no confirma el cobro. Como la puerta de
+ * Supabase no sirve HTML, se redirige a la página puente que envía el formulario.
+ */
 export function transbankRedirectResponse(input: {
   action: string;
   fieldName: "token_ws" | "TBK_TOKEN";
   token: string;
 }): Response {
-  return new Response(transbankAutoPostHtml(input), {
-    status: 200,
+  return new Response(null, {
+    status: 303,
     headers: {
-      "Content-Type": "text/html; charset=utf-8",
+      Location: transbankBridgeUrl(input),
       "Cache-Control": "no-store",
       "Referrer-Policy": "no-referrer",
-      "X-Content-Type-Options": "nosniff",
     },
   });
 }
