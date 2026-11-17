@@ -10,6 +10,7 @@ import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/models/worker_model.dart';
 import '../../../../core/database/models/user_model.dart';
+import '../../../../core/domain/catalog_order.dart';
 import '../../../../core/domain/user_location_context.dart';
 import '../../../../core/database/repositories/worker_schedule_repository.dart';
 import '../../../../core/domain/weekly_schedule.dart';
@@ -65,7 +66,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   UserLocationContext? _userLocation;
   bool _isLoading = true;
   bool _isAutomaticMode = false; // false = Manual, true = Inteligente
-  String _sortBy = 'rating';
+  /// `cercania` = orden único del catálogo (cercanía, nota, precio), igual que la web.
+  String _sortBy = 'cercania';
   double _minRating = lowRatingFloor;
   bool _onlyNow = false;
   Map<String, WeeklySchedule> _schedules = {};
@@ -150,18 +152,17 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
         return matchesSearch && matchesRating && matchesNow;
       }).toList();
 
-      if (_sortBy == 'rating') {
-        WorkerReputationService.instance.sortForListing(
-          _filteredWorkers,
-          clientLatitude: _userLocation?.latitude,
-          clientLongitude: _userLocation?.longitude,
-        );
-      } else {
-        _filteredWorkers.sort((a, b) {
-          final nameA = _users[a.userId]?.name ?? '';
-          final nameB = _users[b.userId]?.name ?? '';
-          return nameA.compareTo(nameB);
-        });
+      // Primero el orden único; precio y nota son vistas opcionales que
+      // desempatan con ese mismo orden (List.sort de Dart no es estable).
+      WorkerReputationService.instance.sortForListing(
+        _filteredWorkers,
+        clientLatitude: _userLocation?.latitude,
+        clientLongitude: _userLocation?.longitude,
+      );
+      if (_sortBy == 'precio') {
+        stableSortBy(_filteredWorkers, (a, b) => a.visitFee.compareTo(b.visitFee));
+      } else if (_sortBy == 'calificacion') {
+        stableSortBy(_filteredWorkers, (a, b) => b.rating.compareTo(a.rating));
       }
 
       final stillVisible = _filteredWorkers.any(

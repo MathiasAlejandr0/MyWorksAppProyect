@@ -3054,13 +3054,17 @@ export type Database = {
           p_categoria?: string
           p_cursor_calificacion?: number
           p_cursor_id?: string
+          p_latitud?: number
           p_limit?: number
+          p_longitud?: number
+          p_offset?: number
           p_zona?: string
         }
         Returns: {
           calificacion: number
           categoria_servicio: string
           descripcion: string
+          distancia_km: number
           es_elite: boolean
           id_usuario: string
           latitud_base: number

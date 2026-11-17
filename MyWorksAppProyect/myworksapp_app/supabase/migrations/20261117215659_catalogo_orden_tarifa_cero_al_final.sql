@@ -1,0 +1,135 @@
+-- Orden único del catálogo: una tarifa 0 cuenta como "sin tarifa" y va al
+-- final, igual que NULL. Así la RPC y los comparadores de la web
+-- (shared/src/catalogOrder.ts) y la app (lib/core/domain/catalog_order.dart)
+-- tratan igual a un profesional sin precio. El resto del algoritmo no cambia
+-- (ver 20261117215046_catalogo_orden_cercania_nota_precio.sql).
+
+BEGIN;
+
+
+CREATE OR REPLACE FUNCTION public.listar_profesionales_catalogo(
+  p_categoria text DEFAULT NULL,
+  p_zona text DEFAULT NULL,
+  p_cursor_calificacion numeric DEFAULT NULL,
+  p_cursor_id uuid DEFAULT NULL,
+  p_limit integer DEFAULT 20,
+  p_latitud double precision DEFAULT NULL,
+  p_longitud double precision DEFAULT NULL,
+  p_offset integer DEFAULT 0
+)
+RETURNS TABLE(
+  id_usuario uuid,
+  profesion text,
+  descripcion text,
+  calificacion numeric,
+  tarifa_visita numeric,
+  categoria_servicio text,
+  zona_trabajo text,
+  nombre text,
+  ruta_foto_perfil text,
+  latitud_base double precision,
+  longitud_base double precision,
+  radio_servicio_km numeric,
+  origen_base text,
+  trabajos_completados integer,
+  score_listado numeric,
+  prioridad_manual integer,
+  radio_urbano_km numeric,
+  tarifa_fuera_radio_clp integer,
+  es_elite boolean,
+  distancia_km double precision
+)
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+  SELECT
+    t.id_usuario,
+    t.profesion,
+    t.descripcion,
+    s.calificacion,
+    t.tarifa_visita,
+    c.categoria,
+    t.zona_trabajo,
+    p.nombre,
+    p.ruta_foto_perfil,
+    CASE
+      WHEN auth.uid() IS NOT NULL AND auth.uid() = t.id_usuario
+        THEN t.latitud_base
+      ELSE g.lat_pub
+    END AS latitud_base,
+    CASE
+      WHEN auth.uid() IS NOT NULL AND auth.uid() = t.id_usuario
+        THEN t.longitud_base
+      ELSE g.lng_pub
+    END AS longitud_base,
+    t.radio_servicio_km,
+    t.origen_base,
+    s.trabajos_completados,
+    t.score_listado,
+    t.prioridad_manual,
+    t.radio_urbano_km,
+    t.tarifa_fuera_radio_clp,
+    s.es_elite,
+    d.km AS distancia_km
+  FROM public.trabajadores t
+  LEFT JOIN public.perfiles p ON p.id = t.id_usuario
+  JOIN LATERAL public.stats_profesional(t.id_usuario) AS s ON true
+  LEFT JOIN LATERAL (
+    SELECT min(ts.categoria_servicio) AS categoria
+    FROM public.trabajador_servicios ts
+    WHERE ts.id_trabajador = t.id_usuario
+      AND (p_categoria IS NULL OR btrim(p_categoria) = '' OR ts.categoria_servicio = p_categoria)
+  ) c ON true
+  CROSS JOIN LATERAL (
+    SELECT
+      round(t.latitud_base::numeric, 2)::double precision AS lat_pub,
+      round(t.longitud_base::numeric, 2)::double precision AS lng_pub
+  ) g
+  CROSS JOIN LATERAL (
+    SELECT CASE
+      WHEN p_latitud IS NULL OR p_longitud IS NULL
+        OR g.lat_pub IS NULL OR g.lng_pub IS NULL
+        THEN NULL::double precision
+      ELSE 6371 * 2 * atan2(
+        sqrt(h.a), sqrt(1 - h.a)
+      )
+    END AS km
+    FROM (
+      SELECT
+        power(sin(radians(g.lat_pub - p_latitud) / 2), 2)
+        + cos(radians(p_latitud)) * cos(radians(g.lat_pub))
+          * power(sin(radians(g.lng_pub - p_longitud) / 2), 2) AS a
+    ) h
+  ) d
+  WHERE COALESCE(t.disponible, 0) = 1
+    AND COALESCE(t.precios_configurados, 0) = 1
+    AND t.estado_verificacion = 'verificado'
+    AND (s.n_calificaciones = 0 OR COALESCE(s.calificacion, 0) >= 3)
+    AND (
+      p_categoria IS NULL
+      OR btrim(p_categoria) = ''
+      OR c.categoria IS NOT NULL
+    )
+    AND (
+      p_zona IS NULL
+      OR btrim(p_zona) = ''
+      OR t.zona_trabajo ILIKE
+        ('%' || replace(replace(btrim(p_zona), '%', ''), '_', '') || '%')
+    )
+  ORDER BY
+    floor(d.km) ASC NULLS LAST,
+    CASE WHEN COALESCE(s.n_calificaciones, 0) > 0 THEN COALESCE(s.calificacion, 0) ELSE 0 END DESC,
+    NULLIF(t.tarifa_visita, 0) ASC NULLS LAST,
+    t.id_usuario ASC
+  LIMIT LEAST(GREATEST(COALESCE(p_limit, 20), 1), 40)
+  OFFSET GREATEST(COALESCE(p_offset, 0), 0);
+$function$;
+
+COMMENT ON FUNCTION public.listar_profesionales_catalogo(text, text, numeric, uuid, integer, double precision, double precision, integer) IS
+  'Catálogo público. Orden único: banda de 1 km de cercanía ASC (NULL al final), nota pública DESC (0 sin reseñas), tarifa_visita ASC (sin tarifa o 0 al final), id_usuario ASC. p_cursor_* se ignoran; paginar con p_offset.';
+
+REVOKE ALL ON FUNCTION public.listar_profesionales_catalogo(text, text, numeric, uuid, integer, double precision, double precision, integer) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.listar_profesionales_catalogo(text, text, numeric, uuid, integer, double precision, double precision, integer) TO anon, authenticated;
+
+COMMIT;

@@ -189,7 +189,7 @@ class WorkerRepository {
     String category, {
     UserLocationContext? near,
   }) async {
-    final workers = await _fetchCatalog(category: category);
+    final workers = await _fetchCatalog(category: category, near: near);
     return _filterListedWorkers(workers, near: near);
   }
 
@@ -213,7 +213,7 @@ class WorkerRepository {
     return WorkerZoneMatcher.serves(workZone: zone, userLocation: near);
   }
 
-  /// Solo trabajadores disponibles y ordenados por reputación
+  /// Solo trabajadores disponibles, en el orden único del catálogo
   Future<List<WorkerModel>> _filterListedWorkers(
     List<WorkerModel> workers, {
     UserLocationContext? near,
@@ -426,12 +426,16 @@ class WorkerRepository {
   Future<List<WorkerModel>> getAvailableWorkersWithoutActiveJobs({
     UserLocationContext? near,
   }) async {
-    final allWorkers = await _fetchCatalog();
+    final allWorkers = await _fetchCatalog(near: near);
     return _filterListedWorkers(allWorkers, near: near);
   }
 
-  /// Misma fuente que la web: RPC pública, no el REST de `trabajadores`.
-  Future<List<WorkerModel>> _fetchCatalog({String? category}) async {
+  /// Misma fuente y mismo orden que la web: RPC pública, no el REST de
+  /// `trabajadores`. El orden (cercanía, nota, precio) lo define la RPC.
+  Future<List<WorkerModel>> _fetchCatalog({
+    String? category,
+    UserLocationContext? near,
+  }) async {
     final categoria = category?.trim();
     try {
       final rows = await supabase.rpc(
@@ -440,6 +444,8 @@ class WorkerRepository {
           'p_categoria': (categoria == null || categoria.isEmpty)
               ? null
               : categoria,
+          'p_latitud': near?.latitude,
+          'p_longitud': near?.longitude,
           'p_limit': 40,
         },
       );
@@ -463,9 +469,7 @@ class WorkerRepository {
       if (byCategory) {
         query = query.eq('trabajador_servicios.categoria_servicio', categoria);
       }
-      final rows = await query
-          .order('score_listado', ascending: false)
-          .limit(40);
+      final rows = await query.order('id_usuario').limit(40);
       return await _overlayStats(
         rows.map<WorkerModel>((row) => WorkerModel.fromMap(row)).toList(),
       );

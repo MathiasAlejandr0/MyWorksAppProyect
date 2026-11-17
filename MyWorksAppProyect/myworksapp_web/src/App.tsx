@@ -756,6 +756,9 @@ export function App() {
     setCatalogError(null);
 
     const meta = resolveCategory(text);
+    const catalogOrigin = clientLocation
+      ? { latitude: clientLocation.latitude, longitude: clientLocation.longitude }
+      : null;
 
     if (!meta) {
       setCatalogError('No reconocimos el oficio. Elige una categoría del catálogo.');
@@ -776,8 +779,9 @@ export function App() {
         }),
 
         queryClient.fetchQuery({
-          queryKey: queryKeys.workersByCategory(meta.category),
-          queryFn: () => fetchWorkersCatalog(supabase, { category: meta.category }),
+          queryKey: queryKeys.workersByCategory(meta.category, catalogOrigin),
+          queryFn: () =>
+            fetchWorkersCatalog(supabase, { category: meta.category, origin: catalogOrigin }),
           staleTime: CATALOG_STALE_MS,
         }),
 
@@ -818,11 +822,15 @@ export function App() {
       const page = await fetchWorkersCatalog(supabase, {
         category: match.category,
         cursor: match.nextCursor,
+        origin: clientLocation
+          ? { latitude: clientLocation.latitude, longitude: clientLocation.longitude }
+          : null,
       });
       const extra: SearchWorker[] = await withScheduleAvailability(page.workers);
+      const seen = new Set(match.workers.map((worker) => worker.id));
       setServiceMatch({
         ...match,
-        workers: [...match.workers, ...extra],
+        workers: [...match.workers, ...extra.filter((worker) => !seen.has(worker.id))],
         nextCursor: page.nextCursor,
       });
     } catch {

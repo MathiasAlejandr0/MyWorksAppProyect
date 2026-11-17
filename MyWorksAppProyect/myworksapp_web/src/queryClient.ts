@@ -22,6 +22,14 @@ export const queryKeys = {
   activeServices: ['catalog', 'services'] as const,
   serviceByCategory: (category: string) =>
     ['catalog', 'services', 'byCategory', category] as const,
-  workersByCategory: (category: string) =>
-    ['catalog', 'workers', category] as const,
+  workersByCategory: (
+    category: string,
+    origin?: { latitude: number; longitude: number } | null,
+  ) =>
+    [
+      'catalog',
+      'workers',
+      category,
+      origin ? `${origin.latitude.toFixed(3)},${origin.longitude.toFixed(3)}` : 'sin-ubicacion',
+    ] as const,
 };

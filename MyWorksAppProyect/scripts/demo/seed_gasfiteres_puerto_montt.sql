@@ -293,7 +293,7 @@ BEGIN
     c.uid,
     v_svc,
     'completado',
-    'liberado',
+    NULL,
     'Trabajo cerrado de la demo, Puerto Montt',
     'Visita cerrada para la calificación publicada.',
     n.lat,
@@ -305,21 +305,6 @@ BEGIN
   JOIN demo_cuentas_pm c ON c.email = n.email
   JOIN LATERAL unnest(n.puntajes) WITH ORDINALITY AS g(puntaje, ord) ON true;
 
-  INSERT INTO public.pagos (
-    id, id_trabajo, monto, moneda, estado, tipo_pago, metodo_pago, creado_en, actualizado_en
-  )
-  SELECT
-    'demo-pago-nota-' || n.slug || '-' || g.ord,
-    'demo-job-nota-' || n.slug || '-' || g.ord,
-    25000,
-    'CLP',
-    'liberado',
-    'principal',
-    'webpay',
-    v_now,
-    v_now
-  FROM demo_notas_pm n
-  JOIN LATERAL unnest(n.puntajes) WITH ORDINALITY AS g(puntaje, ord) ON true;
 
   INSERT INTO public.calificaciones (id, id_trabajo, id_usuario, puntaje, comentario, creado_en)
   SELECT
