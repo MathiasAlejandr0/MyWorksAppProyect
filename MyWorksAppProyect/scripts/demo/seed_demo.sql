@@ -155,16 +155,9 @@ BEGIN
       RAISE;
   END;
 
-  ALTER TABLE public.trabajadores DISABLE TRIGGER trabajadores_proteger_verificacion;
-  BEGIN
-  INSERT INTO public.trabajadores (
-    id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita,
-    categoria_servicio, precios_configurados, zona_trabajo, estado_verificacion,
-    nota_verificacion, latitud_base, longitud_base, radio_servicio_km, origen_base
-  )
-  SELECT
-    c.uid, v.profesion, v.descripcion, v.calificacion, v.disponible, v.tarifa,
-    v.categoria, 1, v.zona, v.verificacion, v.nota, v.lat, v.lng, v.radio, 'mapa'
+  DROP TABLE IF EXISTS _demo_trab;
+  CREATE TEMP TABLE _demo_trab AS
+  SELECT c.uid, v.*
   FROM (
     VALUES
       ('pedro.rojas@demo.myworksapp.cl', 'Gasfíter', 'Fugas, llaves y calefont en el sector oriente.', 4.8, 1, 35000, 'plomeria', 'Providencia', 'verificado', 'Cédula revisada para la demo.', -33.4314::float8, -70.6093::float8, 12),
@@ -190,7 +183,19 @@ BEGIN
       ('paula.riquelme@demo.myworksapp.cl', 'Climatización', 'Mantención de aire acondicionado y calefacción.', 4.8, 1, 38000, 'climatizacion', 'Las Condes', 'verificado', 'Cédula revisada para la demo.', -33.4100, -70.5750, 12),
       ('luis.contreras@demo.myworksapp.cl', 'Gasfíter', 'En revisión: aún no toma pedidos.', 0, 0, 30000, 'plomeria', 'Santiago', 'en_revision', 'Documento de demo pendiente de aprobación.', -33.4489, -70.6693, 15)
   ) AS v(email, profesion, descripcion, calificacion, disponible, tarifa, categoria, zona, verificacion, nota, lat, lng, radio)
-  JOIN demo_cuentas c ON c.email = v.email
+  JOIN demo_cuentas c ON c.email = v.email;
+
+  ALTER TABLE public.trabajadores DISABLE TRIGGER trabajadores_proteger_verificacion;
+  BEGIN
+  INSERT INTO public.trabajadores (
+    id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita,
+    precios_configurados, zona_trabajo, estado_verificacion,
+    nota_verificacion, latitud_base, longitud_base, radio_servicio_km, origen_base
+  )
+  SELECT
+    v.uid, v.profesion, v.descripcion, v.calificacion, v.disponible, v.tarifa,
+    1, v.zona, v.verificacion, v.nota, v.lat, v.lng, v.radio, 'mapa'
+  FROM _demo_trab v
   ON CONFLICT (id_usuario) DO UPDATE SET
     profesion = EXCLUDED.profesion,
     descripcion = EXCLUDED.descripcion,
@@ -198,7 +203,6 @@ BEGIN
     calificacion = EXCLUDED.calificacion,
     disponible = EXCLUDED.disponible,
     tarifa_visita = EXCLUDED.tarifa_visita,
-    categoria_servicio = EXCLUDED.categoria_servicio,
     precios_configurados = 1,
     zona_trabajo = EXCLUDED.zona_trabajo,
     estado_verificacion = EXCLUDED.estado_verificacion,
@@ -214,6 +218,14 @@ BEGIN
       RAISE;
   END;
 
+  -- El oficio vive en trabajador_servicios (un profesional, una categoría en la demo).
+  DELETE FROM public.trabajador_servicios ts
+  USING _demo_trab v
+  WHERE ts.id_trabajador = v.uid AND ts.categoria_servicio <> v.categoria;
+  INSERT INTO public.trabajador_servicios (id_trabajador, categoria_servicio)
+  SELECT v.uid, v.categoria FROM _demo_trab v
+  ON CONFLICT (id_trabajador, categoria_servicio) DO NOTHING;
+
   UPDATE public.trabajadores t
   SET disponible = 0
   FROM public.perfiles p
@@ -221,8 +233,8 @@ BEGIN
     AND COALESCE(p.correo, '') NOT ILIKE '%@demo.myworksapp.cl';
 
   -- Tarifas que la app muestra y que monto_esperado_trabajo lee del servidor.
-  UPDATE public.trabajadores t
-  SET niveles_precio = v.tiers::jsonb
+  INSERT INTO public.trabajador_precios (id_usuario, codigo, monto_clp)
+  SELECT t.id_usuario, e.key, e.value::numeric
   FROM (
     VALUES
       ('plomeria', '{"plumbing_minor":28000,"plumbing_install":48000,"plumbing_project":90000}'),
@@ -237,11 +249,12 @@ BEGIN
       ('gasfiteria', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}'),
       ('cerrajeria', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}'),
       ('climatizacion', '{"service_basic":30000,"service_standard":50000,"service_premium":80000}')
-  ) AS v(categoria, tiers),
-  public.perfiles p
-  WHERE p.id = t.id_usuario
-    AND p.correo ILIKE '%@demo.myworksapp.cl'
-    AND t.categoria_servicio = v.categoria;
+  ) AS v(categoria, tiers)
+  JOIN public.trabajador_servicios ts ON ts.categoria_servicio = v.categoria
+  JOIN public.trabajadores t ON t.id_usuario = ts.id_trabajador
+  JOIN public.perfiles p ON p.id = t.id_usuario AND p.correo ILIKE '%@demo.myworksapp.cl'
+  CROSS JOIN LATERAL jsonb_each_text(v.tiers::jsonb) AS e
+  ON CONFLICT (id_usuario, codigo) DO UPDATE SET monto_clp = EXCLUDED.monto_clp;
 
   -- Perfiles de prueba ajenos a la demo (Ana Volt, Felipe Ensambla, …) dejan
   -- de salir como Pendiente. Luis Contreras sigue en_revision.
@@ -274,7 +287,10 @@ BEGIN
       SELECT 1
       FROM public.trabajadores t
       JOIN public.perfiles p ON p.id = t.id_usuario
-      WHERE t.categoria_servicio = c.categoria
+      WHERE EXISTS (
+          SELECT 1 FROM public.trabajador_servicios ts
+          WHERE ts.id_trabajador = t.id_usuario AND ts.categoria_servicio = c.categoria
+        )
         AND COALESCE(t.disponible, 0) = 1
         AND t.estado_verificacion = 'verificado'
         AND p.correo ILIKE '%@demo.myworksapp.cl'

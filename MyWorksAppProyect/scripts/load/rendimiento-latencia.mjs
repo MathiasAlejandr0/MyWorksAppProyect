@@ -170,12 +170,12 @@ const defs = [
     id: 'trabajadores_catalogo',
     label: 'REST trabajadores disponibles (columnas de listado)',
     method: 'GET',
-    path: '/rest/v1/trabajadores?select=id_usuario,profesion,calificacion,disponible,tarifa_visita,categoria_servicio&disponible=eq.1&limit=40',
+    path: '/rest/v1/trabajadores?select=id_usuario,profesion,calificacion,disponible,tarifa_visita,trabajador_servicios(categoria_servicio)&disponible=eq.1&limit=40',
     run: () =>
       once(
         'trabajadores',
         'GET',
-        '/rest/v1/trabajadores?select=id_usuario,profesion,calificacion,disponible,tarifa_visita,categoria_servicio&disponible=eq.1&limit=40',
+        '/rest/v1/trabajadores?select=id_usuario,profesion,calificacion,disponible,tarifa_visita,trabajador_servicios(categoria_servicio)&disponible=eq.1&limit=40',
       ),
   },
   {

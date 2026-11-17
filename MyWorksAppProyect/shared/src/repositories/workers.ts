@@ -14,7 +14,9 @@ type WorkerQueryRow = {
   calificacion?: number | null;
   disponible?: number | null;
   tarifa_visita?: number | null;
-  categoria_servicio: string;
+  /** Lo entrega la RPC del catálogo; en consultas directas viene de `trabajador_servicios`. */
+  categoria_servicio?: string;
+  trabajador_servicios?: { categoria_servicio: string }[] | null;
   precios_configurados?: number | null;
   zona_trabajo?: string | null;
   estado_verificacion?: string | null;
@@ -51,6 +53,13 @@ function listPhotoUrl(url: string | null | undefined, name: string, seed: string
   return url;
 }
 
+/** Categoría del profesional: la menor de sus filas en `trabajador_servicios` (igual que la RPC). */
+function workerCategory(row: WorkerQueryRow): string {
+  if (row.categoria_servicio) return row.categoria_servicio;
+  const codes = (row.trabajador_servicios ?? []).map((s) => s.categoria_servicio).sort();
+  return codes[0] ?? '';
+}
+
 function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
   const profile = row.perfiles;
   const profileRow = Array.isArray(profile) ? profile[0] : profile;
@@ -62,7 +71,7 @@ function mapWorkerRow(row: WorkerQueryRow): WorkerWithProfile {
     rating: Number(row.calificacion ?? 0),
     isAvailable: Number(row.disponible ?? 1),
     visitFee: Number(row.tarifa_visita ?? 0),
-    serviceCategory: row.categoria_servicio,
+    serviceCategory: workerCategory(row),
     pricingConfigured: Number(row.precios_configurados ?? 1),
     workZone: row.zona_trabajo,
     verificationStatus: row.estado_verificacion ?? null,
@@ -187,9 +196,9 @@ export async function fetchWorkersCatalog(
   let query = supabase
     .from('trabajadores')
     .select(
-      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, radio_servicio_km, origen_base, trabajos_completados, score_listado, radio_urbano_km, tarifa_fuera_radio_clp, es_elite',
+      'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, precios_configurados, zona_trabajo, radio_servicio_km, origen_base, trabajos_completados, score_listado, radio_urbano_km, tarifa_fuera_radio_clp, es_elite, trabajador_servicios!inner(categoria_servicio)',
     )
-    .eq('categoria_servicio', opts.category)
+    .eq('trabajador_servicios.categoria_servicio', opts.category)
     .eq('disponible', 1)
     .eq('precios_configurados', 1)
     .eq('estado_verificacion', 'verificado')
@@ -237,7 +246,7 @@ export async function fetchWorkersByCategory(
 }
 
 const ADMIN_WORKER_COLUMNS =
-  'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, categoria_servicio, precios_configurados, zona_trabajo, perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)';
+  'id_usuario, profesion, descripcion, calificacion, disponible, tarifa_visita, precios_configurados, zona_trabajo, trabajador_servicios(categoria_servicio), perfiles!trabajadores_id_usuario_fkey(nombre, ruta_foto_perfil)';
 
 export async function fetchWorkersForAdmin(
   supabase: AppSupabase,

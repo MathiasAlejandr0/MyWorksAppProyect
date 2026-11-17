@@ -170,7 +170,15 @@ export type Database = {
           rol?: string | null
           version_app?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "banderas_funcionalidad_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bloqueos_pin_inicio: {
         Row: {
@@ -226,7 +234,22 @@ export type Database = {
           id_bloqueado?: string
           id_bloqueador?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bloqueos_usuario_id_bloqueado_fkey"
+            columns: ["id_bloqueado"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloqueos_usuario_id_bloqueador_fkey"
+            columns: ["id_bloqueador"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calificaciones: {
         Row: {
@@ -235,7 +258,7 @@ export type Database = {
           direccion: string
           estado_revision: string
           id: string
-          id_calificado: string | null
+          id_calificado: string
           id_trabajo: string
           id_usuario: string | null
           motivo_revision: string | null
@@ -248,7 +271,7 @@ export type Database = {
           direccion?: string
           estado_revision?: string
           id: string
-          id_calificado?: string | null
+          id_calificado: string
           id_trabajo: string
           id_usuario?: string | null
           motivo_revision?: string | null
@@ -261,7 +284,7 @@ export type Database = {
           direccion?: string
           estado_revision?: string
           id?: string
-          id_calificado?: string | null
+          id_calificado?: string
           id_trabajo?: string
           id_usuario?: string | null
           motivo_revision?: string | null
@@ -269,6 +292,20 @@ export type Database = {
           puntaje?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "calificaciones_id_calificado_fkey"
+            columns: ["id_calificado"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificaciones_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ratings_jobId_fkey"
             columns: ["id_trabajo"]
@@ -306,7 +343,29 @@ export type Database = {
           id_trabajo?: string
           puntaje?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calificaciones_cliente_id_cliente_fkey"
+            columns: ["id_cliente"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificaciones_cliente_id_trabajador_fkey"
+            columns: ["id_trabajador"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificaciones_cliente_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: true
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cancelaciones_trabajo: {
         Row: {
@@ -332,6 +391,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "cancelaciones_trabajo_cancelado_por_fkey"
+            columns: ["cancelado_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "job_cancellations_jobId_fkey"
             columns: ["id_trabajo"]
             isOneToOne: true
@@ -339,6 +405,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      categorias_servicio: {
+        Row: {
+          activa: boolean
+          creado_en: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          activa?: boolean
+          creado_en?: string
+          id: string
+          nombre: string
+        }
+        Update: {
+          activa?: boolean
+          creado_en?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
       }
       codigos_restablecimiento: {
         Row: {
@@ -368,7 +455,15 @@ export type Database = {
           id_usuario?: string
           usado?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "codigos_restablecimiento_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comunas: {
         Row: {
@@ -638,10 +733,104 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "disputas_abierta_por_fkey"
+            columns: ["abierta_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputas_resuelta_por_fkey"
+            columns: ["resuelta_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "disputes_jobId_fkey"
             columns: ["id_trabajo"]
             isOneToOne: false
             referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      encuesta_testing_respuestas: {
+        Row: {
+          id_encuesta: string
+          item: number
+          valor: number
+        }
+        Insert: {
+          id_encuesta: string
+          item: number
+          valor: number
+        }
+        Update: {
+          id_encuesta?: string
+          item?: number
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "encuesta_testing_respuestas_id_encuesta_fkey"
+            columns: ["id_encuesta"]
+            isOneToOne: false
+            referencedRelation: "encuestas_testing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "encuesta_testing_respuestas_id_encuesta_fkey"
+            columns: ["id_encuesta"]
+            isOneToOne: false
+            referencedRelation: "encuestas_testing_con_puntaje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      encuestas_testing: {
+        Row: {
+          creado_en: string
+          id: string
+          id_usuario: string | null
+          plataforma: string
+          que_funciono: string | null
+          que_mejorar: string | null
+          rol: string
+          satisfaccion: number
+          tarea_completada: string
+          version_app: string | null
+        }
+        Insert: {
+          creado_en?: string
+          id?: string
+          id_usuario?: string | null
+          plataforma: string
+          que_funciono?: string | null
+          que_mejorar?: string | null
+          rol: string
+          satisfaccion: number
+          tarea_completada: string
+          version_app?: string | null
+        }
+        Update: {
+          creado_en?: string
+          id?: string
+          id_usuario?: string | null
+          plataforma?: string
+          que_funciono?: string | null
+          que_mejorar?: string | null
+          rol?: string
+          satisfaccion?: number
+          tarea_completada?: string
+          version_app?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "encuestas_testing_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
         ]
@@ -712,7 +901,15 @@ export type Database = {
           nombre_evento?: string
           rol?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "eventos_analitica_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       eventos_ranking: {
         Row: {
@@ -739,7 +936,22 @@ export type Database = {
           id_trabajo?: string | null
           tipo_evento?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "eventos_ranking_id_trabajador_fkey"
+            columns: ["id_trabajador"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_ranking_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: false
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fotos_trabajo: {
         Row: {
@@ -836,17 +1048,33 @@ export type Database = {
           intentos_restantes?: number
           resultado?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "intentos_pin_inicio_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: false
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intentos_pin_inicio_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       liquidaciones: {
         Row: {
           creado_en: string
           estado_transferencia: string
           id: string
-          id_operador: string
+          id_operador: string | null
           id_pago: string
           id_trabajador: string | null
           id_trabajo: string
+          liberada_por_sistema: boolean
           monto_clp: number
           notas: string | null
           proveedor: string
@@ -856,10 +1084,11 @@ export type Database = {
           creado_en?: string
           estado_transferencia?: string
           id?: string
-          id_operador: string
+          id_operador?: string | null
           id_pago: string
           id_trabajador?: string | null
           id_trabajo: string
+          liberada_por_sistema?: boolean
           monto_clp: number
           notas?: string | null
           proveedor?: string
@@ -869,10 +1098,11 @@ export type Database = {
           creado_en?: string
           estado_transferencia?: string
           id?: string
-          id_operador?: string
+          id_operador?: string | null
           id_pago?: string
           id_trabajador?: string | null
           id_trabajo?: string
+          liberada_por_sistema?: boolean
           monto_clp?: number
           notas?: string | null
           proveedor?: string
@@ -880,10 +1110,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "liquidaciones_id_operador_fkey"
+            columns: ["id_operador"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "liquidaciones_id_pago_fkey"
             columns: ["id_pago"]
             isOneToOne: false
             referencedRelation: "pagos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidaciones_id_trabajador_fkey"
+            columns: ["id_trabajador"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
           {
@@ -930,6 +1174,20 @@ export type Database = {
           tipo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "mensajes_id_destinatario_fkey"
+            columns: ["id_destinatario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_id_remitente_fkey"
+            columns: ["id_remitente"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_jobId_fkey"
             columns: ["id_trabajo"]
@@ -982,7 +1240,15 @@ export type Database = {
           url_inscripcion?: string | null
           username?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "metodos_pago_oneclick_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: true
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notificaciones: {
         Row: {
@@ -1073,6 +1339,20 @@ export type Database = {
             referencedRelation: "trabajos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ordenes_cambio_id_pago_fkey"
+            columns: ["id_pago"]
+            isOneToOne: false
+            referencedRelation: "pagos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordenes_cambio_id_trabajador_fkey"
+            columns: ["id_trabajador"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       pagos: {
@@ -1161,6 +1441,13 @@ export type Database = {
           url_tbk?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "pagos_id_orden_cambio_fkey"
+            columns: ["id_orden_cambio"]
+            isOneToOne: false
+            referencedRelation: "ordenes_cambio"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_jobId_fkey"
             columns: ["id_trabajo"]
@@ -1257,7 +1544,7 @@ export type Database = {
           id: string
           id_trabajador: string
           ruta_foto: string
-          tipo_medio: string | null
+          tipo_medio: string
         }
         Insert: {
           creado_en: string
@@ -1265,7 +1552,7 @@ export type Database = {
           id: string
           id_trabajador: string
           ruta_foto: string
-          tipo_medio?: string | null
+          tipo_medio?: string
         }
         Update: {
           creado_en?: string
@@ -1273,7 +1560,7 @@ export type Database = {
           id?: string
           id_trabajador?: string
           ruta_foto?: string
-          tipo_medio?: string | null
+          tipo_medio?: string
         }
         Relationships: [
           {
@@ -1285,12 +1572,41 @@ export type Database = {
           },
         ]
       }
+      propuesta_cotizacion_items: {
+        Row: {
+          concepto: string
+          id_propuesta: string
+          linea: number
+          monto: number
+        }
+        Insert: {
+          concepto: string
+          id_propuesta: string
+          linea: number
+          monto: number
+        }
+        Update: {
+          concepto?: string
+          id_propuesta?: string
+          linea?: number
+          monto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propuesta_cotizacion_items_id_propuesta_fkey"
+            columns: ["id_propuesta"]
+            isOneToOne: false
+            referencedRelation: "propuestas_cotizacion"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       propuestas_cotizacion: {
         Row: {
           creado_en: string
           descripcion: string
-          desglose: string | null
           estado: string
+          horas_estimadas: number | null
           id: string
           id_trabajador: string
           id_trabajo: string
@@ -1300,8 +1616,8 @@ export type Database = {
         Insert: {
           creado_en: string
           descripcion: string
-          desglose?: string | null
           estado: string
+          horas_estimadas?: number | null
           id: string
           id_trabajador: string
           id_trabajo: string
@@ -1311,8 +1627,8 @@ export type Database = {
         Update: {
           creado_en?: string
           descripcion?: string
-          desglose?: string | null
           estado?: string
+          horas_estimadas?: number | null
           id?: string
           id_trabajador?: string
           id_trabajo?: string
@@ -1524,7 +1840,22 @@ export type Database = {
           id_usuario_reportado?: string
           motivo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reportes_id_reportante_fkey"
+            columns: ["id_reportante"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reportes_id_usuario_reportado_fkey"
+            columns: ["id_usuario_reportado"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reprogramaciones_trabajo: {
         Row: {
@@ -1567,6 +1898,20 @@ export type Database = {
           rol_proponente?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reprogramaciones_propuesta_por_fkey"
+            columns: ["propuesta_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reprogramaciones_respondida_por_fkey"
+            columns: ["respondida_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reprogramaciones_trabajo_id_trabajo_fkey"
             columns: ["id_trabajo"]
@@ -1618,6 +1963,13 @@ export type Database = {
             referencedRelation: "calificaciones"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "senales_resena_resuelto_por_fkey"
+            columns: ["resuelto_por"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       servicios: {
@@ -1657,7 +2009,15 @@ export type Database = {
           nombre?: string
           requiere_certificacion?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "servicios_categoria_fkey"
+            columns: ["categoria"]
+            isOneToOne: false
+            referencedRelation: "categorias_servicio"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suscripciones: {
         Row: {
@@ -1731,45 +2091,79 @@ export type Database = {
           nombre_cliente?: string
           nombre_trabajador?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tickets_soporte_id_trabajo_fkey"
+            columns: ["id_trabajo"]
+            isOneToOne: false
+            referencedRelation: "trabajos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trabajador_horarios: {
         Row: {
-          activo: boolean | null
+          activo: boolean
           actualizado_en: string
           creado_en: string | null
-          dia_semana: number | null
-          hora_fin: string | null
-          hora_inicio: string | null
-          horarios: Json
+          dia_semana: number
+          hora_fin: string
+          hora_inicio: string
           id: string
           id_usuario: string
         }
         Insert: {
-          activo?: boolean | null
+          activo?: boolean
           actualizado_en?: string
           creado_en?: string | null
-          dia_semana?: number | null
-          hora_fin?: string | null
-          hora_inicio?: string | null
-          horarios?: Json
+          dia_semana: number
+          hora_fin: string
+          hora_inicio: string
           id?: string
           id_usuario: string
         }
         Update: {
-          activo?: boolean | null
+          activo?: boolean
           actualizado_en?: string
           creado_en?: string | null
-          dia_semana?: number | null
-          hora_fin?: string | null
-          hora_inicio?: string | null
-          horarios?: Json
+          dia_semana?: number
+          hora_fin?: string
+          hora_inicio?: string
           id?: string
           id_usuario?: string
         }
         Relationships: [
           {
             foreignKeyName: "trabajador_horarios_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "trabajadores"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
+      trabajador_horas_publicadas: {
+        Row: {
+          creado_en: string
+          dia_semana: number
+          hora: string
+          id_usuario: string
+        }
+        Insert: {
+          creado_en?: string
+          dia_semana: number
+          hora: string
+          id_usuario: string
+        }
+        Update: {
+          creado_en?: string
+          dia_semana?: number
+          hora?: string
+          id_usuario?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trabajador_horas_publicadas_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
             referencedRelation: "trabajadores"
@@ -1793,7 +2187,15 @@ export type Database = {
           id_usuario?: string
           monto_clp?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trabajador_precios_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "trabajadores"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
       }
       trabajador_servicios: {
         Row: {
@@ -1810,11 +2212,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "worker_services_workerId_fkey"
+            foreignKeyName: "trabajador_servicios_categoria_fkey"
+            columns: ["categoria_servicio"]
+            isOneToOne: false
+            referencedRelation: "categorias_servicio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trabajador_servicios_id_trabajador_fkey"
             columns: ["id_trabajador"]
             isOneToOne: false
-            referencedRelation: "perfiles"
-            referencedColumns: ["id"]
+            referencedRelation: "trabajadores"
+            referencedColumns: ["id_usuario"]
           },
         ]
       }
@@ -1843,23 +2252,28 @@ export type Database = {
           titulo?: string
           unidad?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trabajador_servicios_extra_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "trabajadores"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
       }
       trabajadores: {
         Row: {
           calificacion: number
-          categoria_servicio: string
           conteo_rechazos: number
           descripcion: string | null
           disponible: number
           es_elite: boolean | null
           estado_verificacion: string
           id_comuna: string | null
-          id_region: string | null
           id_usuario: string
           latitud_base: number | null
           longitud_base: number | null
-          niveles_precio: Json
           nota_verificacion: string | null
           origen_base: string | null
           pausa_por_trabajo: boolean
@@ -1871,7 +2285,6 @@ export type Database = {
           ranking_actualizado_en: string | null
           score_desglose: Json
           score_listado: number
-          servicios_personalizados: Json
           tarifa_fuera_radio_clp: number
           tarifa_visita: number
           trabajos_completados: number
@@ -1880,18 +2293,15 @@ export type Database = {
         }
         Insert: {
           calificacion?: number
-          categoria_servicio?: string
           conteo_rechazos?: number
           descripcion?: string | null
           disponible?: number
           es_elite?: boolean | null
           estado_verificacion?: string
           id_comuna?: string | null
-          id_region?: string | null
           id_usuario: string
           latitud_base?: number | null
           longitud_base?: number | null
-          niveles_precio?: Json
           nota_verificacion?: string | null
           origen_base?: string | null
           pausa_por_trabajo?: boolean
@@ -1903,7 +2313,6 @@ export type Database = {
           ranking_actualizado_en?: string | null
           score_desglose?: Json
           score_listado?: number
-          servicios_personalizados?: Json
           tarifa_fuera_radio_clp?: number
           tarifa_visita?: number
           trabajos_completados?: number
@@ -1912,18 +2321,15 @@ export type Database = {
         }
         Update: {
           calificacion?: number
-          categoria_servicio?: string
           conteo_rechazos?: number
           descripcion?: string | null
           disponible?: number
           es_elite?: boolean | null
           estado_verificacion?: string
           id_comuna?: string | null
-          id_region?: string | null
           id_usuario?: string
           latitud_base?: number | null
           longitud_base?: number | null
-          niveles_precio?: Json
           nota_verificacion?: string | null
           origen_base?: string | null
           pausa_por_trabajo?: boolean
@@ -1935,7 +2341,6 @@ export type Database = {
           ranking_actualizado_en?: string | null
           score_desglose?: Json
           score_listado?: number
-          servicios_personalizados?: Json
           tarifa_fuera_radio_clp?: number
           tarifa_visita?: number
           trabajos_completados?: number
@@ -1948,13 +2353,6 @@ export type Database = {
             columns: ["id_comuna"]
             isOneToOne: false
             referencedRelation: "comunas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trabajadores_id_region_fkey"
-            columns: ["id_region"]
-            isOneToOne: false
-            referencedRelation: "regiones"
             referencedColumns: ["id"]
           },
           {
@@ -2062,6 +2460,13 @@ export type Database = {
             referencedRelation: "comunas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "trabajos_id_cotizacion_seleccionada_fkey"
+            columns: ["id_cotizacion_seleccionada"]
+            isOneToOne: false
+            referencedRelation: "propuestas_cotizacion"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ubicacion_en_vivo: {
@@ -2133,6 +2538,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "verificacion_eventos_id_actor_fkey"
+            columns: ["id_actor"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "verificacion_eventos_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
@@ -2143,9 +2555,59 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      encuestas_testing_con_puntaje: {
+        Row: {
+          creado_en: string | null
+          id: string | null
+          id_usuario: string | null
+          plataforma: string | null
+          que_funciono: string | null
+          que_mejorar: string | null
+          rol: string | null
+          satisfaccion: number | null
+          sus_puntaje: number | null
+          tarea_completada: string | null
+          version_app: string | null
+        }
+        Insert: {
+          creado_en?: string | null
+          id?: string | null
+          id_usuario?: string | null
+          plataforma?: string | null
+          que_funciono?: string | null
+          que_mejorar?: string | null
+          rol?: string | null
+          satisfaccion?: number | null
+          sus_puntaje?: never
+          tarea_completada?: string | null
+          version_app?: string | null
+        }
+        Update: {
+          creado_en?: string | null
+          id?: string | null
+          id_usuario?: string | null
+          plataforma?: string | null
+          que_funciono?: string | null
+          que_mejorar?: string | null
+          rol?: string | null
+          satisfaccion?: number | null
+          sus_puntaje?: never
+          tarea_completada?: string | null
+          version_app?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "encuestas_testing_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      _asegurar_ventanas_horario: { Args: { p_id: string }; Returns: undefined }
       _hora_santiago: { Args: { p_ts: string }; Returns: string }
       _normalizar_pesos_ranking: {
         Args: {
@@ -2460,10 +2922,24 @@ export type Database = {
         }
       }
       disputa_esta_activa: { Args: { p_estado: string }; Returns: boolean }
+      enviar_encuesta_testing: {
+        Args: {
+          p_plataforma: string
+          p_que_funciono?: string
+          p_que_mejorar?: string
+          p_rol: string
+          p_satisfaccion: number
+          p_sus: number[]
+          p_tarea_completada: string
+          p_version_app?: string
+        }
+        Returns: string
+      }
       enviar_verificacion_profesional: {
         Args: { p_nota: string }
         Returns: undefined
       }
+      es_marca_tiempo_iso: { Args: { p_valor: string }; Returns: boolean }
       es_parte_trabajo: { Args: { p_trabajo_id: string }; Returns: boolean }
       es_rol_trabajador: { Args: { p_usuario_id: string }; Returns: boolean }
       evaluar_resena: { Args: { p_id: string }; Returns: number }
@@ -2601,26 +3077,6 @@ export type Database = {
           tarifa_visita: number
           trabajos_completados: number
           zona_trabajo: string
-        }[]
-      }
-      stats_profesional: {
-        Args: { p_id: string }
-        Returns: {
-          calificacion: number | null
-          es_elite: boolean
-          id_usuario: string
-          n_calificaciones: number
-          trabajos_completados: number
-        }[]
-      }
-      stats_profesionales: {
-        Args: { p_ids: string[] }
-        Returns: {
-          calificacion: number | null
-          es_elite: boolean
-          id_usuario: string
-          n_calificaciones: number
-          trabajos_completados: number
         }[]
       }
       listar_senales_resena: {
@@ -2815,6 +3271,11 @@ export type Database = {
         Args: { p_buy_order: string; p_id_pago: string; p_monto: number }
         Returns: string
       }
+      recomputar_agregados_profesional: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      recomputar_agregados_profesionales: { Args: never; Returns: number }
       reconcile_secret_valido: { Args: { p_secret: string }; Returns: boolean }
       reembolsar_escrow: {
         Args: { p_id_pago: string }
@@ -3037,6 +3498,27 @@ export type Database = {
         Args: { p_clave: string; p_default: number }
         Returns: number
       }
+      stats_profesional: {
+        Args: { p_id: string }
+        Returns: {
+          calificacion: number
+          es_elite: boolean
+          id_usuario: string
+          n_calificaciones: number
+          trabajos_completados: number
+        }[]
+      }
+      stats_profesionales: {
+        Args: { p_ids: string[] }
+        Returns: {
+          calificacion: number
+          es_elite: boolean
+          id_usuario: string
+          n_calificaciones: number
+          trabajos_completados: number
+        }[]
+      }
+      sus_puntaje: { Args: { p_id_encuesta: string }; Returns: number }
       texto_a_timestamptz: { Args: { p_valor: string }; Returns: string }
       texto_tiene_contacto: { Args: { p_texto: string }; Returns: boolean }
       trabajador_reservable: {

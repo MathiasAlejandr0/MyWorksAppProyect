@@ -83,7 +83,7 @@ BEGIN
   IF position('no está verificado' in v_def) = 0 THEN
     RAISE EXCEPTION 'monto_esperado no distingue un profesional sin verificar';
   END IF;
-  IF position('niveles_precio' in v_def) = 0 THEN
+  IF position('trabajador_precios' in v_def) = 0 THEN
     RAISE EXCEPTION 'monto_esperado no lee la tarifa publicada';
   END IF;
 

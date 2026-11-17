@@ -77,33 +77,11 @@ class WorkerScheduleRepository {
     await supabase
         .from('trabajadores')
         .update({'usa_horario': schedule.enabled}).eq('id_usuario', userId);
-    final existing = await supabase
-        .from('trabajador_horarios')
-        .select('horarios')
-        .eq('id_usuario', userId);
-    Object horarios = const <Object>[];
-    var best = -1;
-    for (final raw in existing) {
-      final value = (raw as Map)['horarios'];
-      final length = value is List ? value.length : 0;
-      if (length > best) {
-        best = length;
-        horarios = value ?? const <Object>[];
-      }
-    }
-    final rows = [
-      for (final row in scheduleDayRows(
-        userId: userId,
-        days: schedule.days,
-        updatedAt: DateTime.now(),
-      ))
-        {
-          ...row,
-          // Misma plantilla de horas publicadas en cada fila: el trigger
-          // de reserva lee el jsonb, no el rango hora_inicio/hora_fin.
-          'horarios': horarios,
-        },
-    ];
+    final rows = scheduleDayRows(
+      userId: userId,
+      days: schedule.days,
+      updatedAt: DateTime.now(),
+    );
     if (rows.isEmpty) return;
     await supabase.from('trabajador_horarios').upsert(
           rows,

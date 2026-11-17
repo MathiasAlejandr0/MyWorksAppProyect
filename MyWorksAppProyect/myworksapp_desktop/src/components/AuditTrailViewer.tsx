@@ -31,7 +31,7 @@ export function AuditTrailViewer() {
           rows.map((r) => ({
             id: r.id.slice(0, 8),
             timestamp: formatDbDateTime(r.createdAt),
-            operator: r.operatorId.slice(0, 8),
+            operator: r.operatorId ? r.operatorId.slice(0, 8) : 'sistema',
             action: 'RELEASE_PAYOUT',
             details: `${r.provider} · ${r.amountClp.toLocaleString('es-CL')} CLP · ref ${r.transferRef}${r.notes ? ` · ${r.notes}` : ''}`,
             ipAddress: '—',

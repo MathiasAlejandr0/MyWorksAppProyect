@@ -4,14 +4,21 @@ import '../supabase_db.dart';
 class QuoteProposalRepository {
   static const String _table = 'propuestas_cotizacion';
 
+  static const String _columns =
+      '*, propuesta_cotizacion_items(linea, concepto, monto)';
+
   Future<void> create(QuoteProposalModel proposal) async {
     await supabase.from(_table).insert(proposal.toMap());
+    final items = proposal.itemRows();
+    if (items.isNotEmpty) {
+      await supabase.from('propuesta_cotizacion_items').insert(items);
+    }
   }
 
   Future<List<QuoteProposalModel>> getByJobId(String jobId) async {
     final rows = await supabase
         .from(_table)
-        .select()
+        .select(_columns)
         .eq('id_trabajo', jobId)
         .order('creado_en', ascending: false);
     return rows
@@ -21,7 +28,7 @@ class QuoteProposalRepository {
 
   Future<QuoteProposalModel?> getById(String id) async {
     final row =
-        await supabase.from(_table).select().eq('id', id).maybeSingle();
+        await supabase.from(_table).select(_columns).eq('id', id).maybeSingle();
     if (row == null) return null;
     return QuoteProposalModel.fromMap(row);
   }
