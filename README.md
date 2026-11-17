@@ -1,7 +1,7 @@
 ﻿# My Works App — Proyecto de Título Profesional
 
 **Institución:** Duoc UC — Sede Puerto Montt  
-**Asignatura / programa:** Capstone PTY4614 (APT)  
+**Asignatura / programa:** Capstone PTY4614  
 **Tipo de proyecto:** Proyecto de título profesional (desarrollo de software)  
 **Equipo:** Mathias Alejandro Jara Alvarado · Nicolas Chiguay · Gabriel Valderas
 
@@ -30,7 +30,7 @@ Diseñar, implementar y validar un **MVP multiplataforma** de marketplace de ser
 
 ### Objetivos específicos
 
-1. Definir el problema, alcance y stack tecnológico del proyecto (Fase 1 — definición APT).
+1. Definir el problema, alcance y stack tecnológico del proyecto (Fase 1 — definición del proyecto, PTY4614).
 2. Modelar e implementar dominio, autenticación, trabajos y políticas de acceso (Supabase / PostgreSQL / RLS).
 3. Desarrollar interfaces cliente (Flutter + web) y hub operativo (desktop).
 4. Integrar pagos Webpay sin capturar datos de tarjeta en el cliente (Edge Functions).
@@ -105,18 +105,18 @@ Diccionario de datos (fácil de explicar): [`MyWorksAppProyect/docs/DICCIONARIO_
 
 ### En una frase
 
-> **Desarrollo ágil iterativo e incremental**, orientado a un **MVP**, organizado por las **fases del Capstone APT (Duoc UC)**. Cada ciclo entrega un flujo usable (por ejemplo auth, trabajos, Webpay, liquidación), se prueba y se documenta.
+> **Scrum adaptado a un equipo de tres estudiantes**, orientado a un **MVP** y organizado por las **fases del Capstone PTY4614 (Duoc UC)**. Mathias Jara Alvarado es Product Owner y Scrum Master; el tablero está en GitHub Projects, el Daily Scrum se hace por Discord y la Sprint Review y la Retrospectiva, todos los fines de semana. Detalle y sprints: [`docs/metodologia.md`](docs/metodologia.md).
 
 ### Cómo trabajamos
 
 | Práctica | En el proyecto |
 |----------|----------------|
-| Ágil / iterativo-incremental | Entregas por dominio: definición → backend/RLS → clientes → pagos → hardening |
+| Scrum adaptado | 11 sprints de 1 o 2 semanas reconstruidos desde el historial de GitHub; entregas por dominio: definición → backend/RLS → clientes → pagos → endurecimiento |
 | MVP primero | Primero lo demostrable; pendientes explícitos (MFA, payout automático, prod Transbank) |
-| Fases Capstone | Fase 1 definición APT; Fase 2 y siguientes con evidencias; software en `MyWorksAppProyect/` |
+| Fases Capstone | Fase 1 definición del proyecto; Fase 2 y siguientes con evidencias; software en `MyWorksAppProyect/` |
 | Calidad continua | CI, runbooks, diccionario BD, auditorías de seguridad |
 
-**No** es cascada pura ni Scrum ceremonial estricto: priorizamos entregas demostrables y evidencia académica sobre rituales formales.
+Roles: Product Owner y Scrum Master, Mathias Jara Alvarado; equipo de desarrollo, Mathias Jara Alvarado, Gabriel Valderas y Nicolas Chiguay.
 
 ### Ciclo de una iteración
 
@@ -143,7 +143,7 @@ Priorizar un flujo → acordar estados en BD → implementar (apps + Edge + SQL)
 
 | Ruta | Contenido |
 |------|-----------|
-| `Fase 1/` | Entregables y evidencias de definición APT |
+| `Fase 1/` | Entregables y evidencias de definición del proyecto |
 | `Fase 2/` | Entregables de la siguiente fase Capstone |
 | `Documentos Guia/` | Guías e instructivos del programa |
 | `Capstone_Project.mpp` | Planificación del proyecto |

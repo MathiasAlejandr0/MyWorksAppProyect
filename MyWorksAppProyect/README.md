@@ -88,14 +88,13 @@ Detalle: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md) y [`
 |--------------|---------------------------|
 | **Ágil / iterativo-incremental** | Se entrega por ciclos: auth → trabajos → RLS → Webpay → liquidación → hardening. |
 | **MVP primero** | Priorizamos lo demostrable y comercializable; lo demorado (MFA, payout automático) queda explícito como pendiente. |
-| **Fases Capstone (APT)** | Fase 1 definición; Fase 2 y siguientes con evidencias académicas; el código vive en el monorepo. |
+| **Fases Capstone (PTY4614)** | Fase 1 definición; Fase 2 y siguientes con evidencias académicas; el código vive en el monorepo. |
 | **Trabajo por dominio** | Cada incremento toca un flujo (reserva, pago, admin) de punta a punta, no “páginas sueltas”. |
 | **Calidad continua** | CI (analyze/test Flutter, lint/build web-desktop), runbooks, diccionario de BD, auditorías de seguridad. |
 
 | No pretendemos ser | Por qué |
 |--------------------|---------|
 | Waterfall / cascada pura | El alcance del MVP se ajusta con feedback, no con un único diseño cerrado al inicio. |
-| Scrum ceremonial estricto | No dependemos de ceremonias formales diarias documentadas; sí de sprints de entrega y priorización. |
 | Clean Architecture dogmática | Las capas existen donde aportan velocidad y claridad; no hay use-cases formales en cada feature. |
 
 ### Ciclo típico de una iteración

@@ -1,16 +1,15 @@
 # Metodología de trabajo — My Works App
 
-**Estado del documento:** 2026-11-17, sobre `main` en `8b18b3f`.
+**Estado del documento:** 2026-11-17 (hora de Chile), sobre `main` en `514781d`. Roles, tablero, canal del Daily y cadencia de Review y Retrospectiva confirmados por Mathias Jara Alvarado el 2026-11-17.
 **Convención:** `[completar]` marca un dato que el repositorio no permite afirmar. Cada dato inferido indica su fuente. Los nombres de usuario de Git y GitHub se tratan como identificadores, no como nombres reales, salvo cuando el propio repositorio los asocia a una persona. Las rutas son relativas a la raíz del repositorio.
 
 ## 1. Marco de trabajo
 
-El proyecto declara un **desarrollo ágil con sprints semanales** dentro de las tres fases del Capstone APT:
+El marco de trabajo es **Scrum adaptado a un equipo de tres estudiantes**, dentro de las tres fases del Capstone PTY4614. Mathias Jara Alvarado es Product Owner y Scrum Master; el tablero es GitHub Projects; el Daily Scrum se hace por Discord; la Sprint Review y la Retrospectiva se hacen todos los fines de semana (confirmado por el equipo el 2026-11-17). Antecedentes en los documentos del proyecto:
 
 - `Fase 1/Evidencias Grupales/Definicion Proyecto APT - Fase 1_ My Works App.docx`, sección 3.6: «Usamos sprints semanales (marco ágil) dentro de las tres fases APT, con repositorio GitHub público como evidencia».
 - `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`: «sí sprints de entrega, recorte de alcance y Definition of Done (funciona, revisado y subido al repositorio)».
-- `README.md`, sección «Metodología de trabajo»: ágil iterativo e incremental orientado a un MVP, y la frase «No es cascada pura ni Scrum ceremonial estricto».
-- `MyWorksAppProyect/README.md`: «No dependemos de ceremonias formales diarias documentadas; sí de sprints de entrega y priorización».
+- `README.md`, sección «Metodología de trabajo»: Scrum adaptado, orientado a un MVP.
 
 Ciclo de una iteración, según `README.md`: priorizar un flujo → acordar estados en la base de datos → implementar (apps, Edge Functions y SQL) → probar → documentar → commit y CI.
 
@@ -20,8 +19,8 @@ Ciclo de una iteración, según `README.md`: priorizar un flujo → acordar esta
 
 | Rol Scrum | Quién | Fuente |
 |-----------|-------|--------|
-| Product Owner | [completar] | El repositorio no asigna este rol. |
-| Scrum Master | [completar] | El repositorio no asigna este rol. La planificación del trabajo del Capstone figura como «Equipo (coord. Nicolas Chiguay)» en `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`. |
+| Product Owner | Mathias Jara Alvarado | Confirmado por el equipo (2026-11-17). |
+| Scrum Master | Mathias Jara Alvarado (también Product Owner) | Confirmado por el equipo (2026-11-17). En un equipo de tres estudiantes, un mismo integrante cumple ambos roles además de desarrollar. |
 | Equipo de desarrollo | Mathias Alejandro Jara Alvarado, Nicolas Chiguay y Gabriel Valderas | `README.md`, campo Equipo; `Fase 1/Evidencias Grupales/Definicion Proyecto APT - Fase 1_ My Works App.docx`. |
 
 Responsabilidades técnicas, según `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx` (facilitadores del plan de trabajo):
@@ -46,14 +45,34 @@ La correspondencia entre las cuentas de GitHub y los nombres del equipo se infie
 
 ## 3. Sprints: duración y cantidad
 
+**Criterio.** Los sprints se reconstruyeron desde el historial de GitHub (`nicoussj/Proyecto-Titulo-MyWorksApp`, rama `main`, 228 commits del 2026-08-10 al 2026-11-17 (corte en `514781d`), contados por fecha de autor en hora de Chile, y 30 merges de pull request):
+
+1. Cada sprint va de lunes a domingo y cierra en fin de semana, donde se ubican los picos de entrega del historial (16-ago, 20-sep, 4-oct, 8-nov y 15-nov fueron domingos con entregas).
+2. Un sprint empieza el lunes siguiente al cierre del anterior.
+3. Las semanas con poca actividad en el repositorio no abren un sprint nuevo; se suman al sprint en curso, porque ese trabajo (diseño, documentos y evaluaciones) no queda necesariamente como commits.
+
+Los commits acreditan entregas, no la realización de reuniones: el calendario es una reconstrucción documental. La cadencia de los eventos la confirmó el equipo (sección 5).
+
 | Dato | Valor | Fuente |
 |------|-------|--------|
-| Duración del sprint | 1 semana | `Fase 1/Evidencias Grupales/Definicion Proyecto APT - Fase 1_ My Works App.docx`, sección 3.6. La duración real efectiva: [completar]. |
-| Inicio del conteo de semanas | 3 de agosto de 2026 (semana 1) | `Fase 2/Jara_Mathias_2.1_APT122_DiarioReflexionFase2.docx`. |
+| Duración del sprint | 1 semana en la Fase 1 (S1–S3) y en el cierre técnico (S9–S10); 2 semanas en el desarrollo (S4–S8) y en la preparación de la defensa (S11) | Historial de GitHub con el criterio anterior. La Fase 1 declaraba sprints semanales (`Fase 1/Evidencias Grupales/Definicion Proyecto APT - Fase 1_ My Works App.docx`, sección 3.6). |
+| Número total de sprints | 11 (S1–S9 terminados, S10 en curso, S11 planificado) | Historial de GitHub y calendario de hitos. |
 | Primer commit del repositorio | 2026-08-10 | `git log` (commit `2b5f923`, «Initial commit», autor Nicolas Chiguay). |
 | Plan del Capstone | Semanas 1 a 18 | `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx` (cronograma por actividad). |
-| Número total de sprints | [completar] | El repositorio no los enumera. |
-| Fechas de inicio y cierre de cada sprint | [completar] | El repositorio no las registra. |
+
+| Sprint | Fechas | Semanas | Objetivo | Commits en `main` | Estado al 17-nov |
+|--------|--------|--------:|----------|------------------:|------------------|
+| S1 | 10 – 16 ago 2026 | 1 | Definir el producto | 9 | Terminado |
+| S2 | 17 – 23 ago 2026 | 1 | Evidencias de la Fase 1 | 13 | Terminado |
+| S3 | 24 – 30 ago 2026 | 1 | Cerrar la Fase 1 | 13 | Terminado |
+| S4 | 31 ago – 13 sep 2026 | 2 | Planificar la Fase 2 | 2 | Terminado |
+| S5 | 14 – 27 sep 2026 | 2 | Base de datos y monorepo | 18 | Terminado |
+| S6 | 28 sep – 11 oct 2026 | 2 | Pago con garantía y reputación | 26 | Terminado |
+| S7 | 12 – 25 oct 2026 | 2 | Ubicación y validaciones | 17 | Terminado |
+| S8 | 26 oct – 8 nov 2026 | 2 | Agenda y evidencia | 7 | Terminado |
+| S9 | 9 – 15 nov 2026 | 1 | Integración y pruebas | 97 | Terminado |
+| S10 | 16 – 22 nov 2026 | 1 | Cierre de la Fase 2 | 26 | En curso |
+| S11 | 23 nov – 6 dic 2026 | 2 | Defensa | — | Planificado |
 
 Plan por fases, según `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`:
 
@@ -69,7 +88,7 @@ Plan por fases, según `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`:
 | Informe de avance (Fase 2) | 9 a 10 | Nicolas Chiguay y equipo |
 | Informe final y demo | 16 a 18 | Nicolas Chiguay y equipo |
 
-Actividad real en el historial de Git (commits por semana ISO, `main`): 2026-W33: 9; W34: 13; W35: 13; W36: 1; W37: 1; W38: 16; W39: 2; W40: 9; W41: 17; W42: 1; W43: 16; W44: 2; W45: 5; W46: 95; W47: 21. Por mes: agosto 36, septiembre 21, octubre 41, noviembre 123.
+Actividad real en el historial de Git (commits por semana ISO, `main`, hora de Chile): 2026-W33: 9; W34: 13; W35: 13; W36: 1; W37: 1; W38: 16; W39: 2; W40: 9; W41: 17; W42: 1; W43: 16; W44: 2; W45: 5; W46: 97; W47 (al 17-nov): 26. Es la base del criterio de sprints anterior.
 
 Remediación en sprints numerados: `MyWorksAppProyect/docs/REMEDIACION_AUDITORIA.md` lista los sprints 1, 2, 3, 4, 5, 6, 6b y 7 de la remediación de la auditoría de septiembre de 2026, cada uno con sus tareas cumplidas. Esos sprints corresponden a esa remediación y no a todo el calendario del proyecto.
 
@@ -77,7 +96,7 @@ Remediación en sprints numerados: `MyWorksAppProyect/docs/REMEDIACION_AUDITORIA
 
 Las historias se infieren de las funciones que existen en el código. La columna CU remite a `MyWorksAppProyect/docs/casos_de_uso.md`, donde cada caso trae su flujo y su trazabilidad a archivos. Los criterios de aceptación salen de las reglas de negocio RN-xx de la sección 7 de ese documento.
 
-**Prioridad:** Alta, Media o Baja. Se infiere del alcance del MVP congelado en `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx` («flujo oficio–contrato–evidencia–pago»). La confirmación por el Product Owner queda en [completar].
+**Prioridad:** Alta, Media o Baja. Se infiere del alcance del MVP congelado en `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx` («flujo oficio–contrato–evidencia–pago»). El Product Owner (Mathias Jara Alvarado) ordena el backlog en GitHub Projects.
 
 | ID | Historia de usuario | Criterios de aceptación | Prioridad | CU |
 |----|---------------------|-------------------------|-----------|----|
@@ -111,35 +130,24 @@ Las historias se infieren de las funciones que existen en el código. La columna
 
 | Ceremonia | Qué consta en el repositorio | Fuente |
 |-----------|------------------------------|--------|
-| Sprint Planning | [completar]. El repositorio no documenta la reunión. Existe el plan de actividades por semana (sección 3) y la Carta Gantt. | `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`; `Capstone_Project.mpp`. |
-| Daily Scrum | No documentada. El README del monorepo declara que no se dependió de ceremonias formales diarias documentadas. Frecuencia y canal reales: [completar]. | `MyWorksAppProyect/README.md`. |
-| Sprint Review | Hubo revisiones periódicas con el docente: el informe de avance (semanas 9 a 10) fue el hito de control de la Fase 2, y los diarios de reflexión mencionan «semanas de revisión». Fecha y asistentes de cada revisión: [completar]. | `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`; `Fase 2/Valderas_Gabriel_2.1_APT122_DiarioReflexionFase2.docx`. |
-| Sprint Retrospective | Cada integrante escribió un diario de reflexión por fase. Se pregunta por el cumplimiento de la Carta Gantt, las dificultades y la redistribución de actividades. No hay un acta de retrospectiva de equipo: [completar]. | `Fase 1/Evidencias Individual/`; `Fase 2/Chiguay_Nicolas_2.1_APT122_DiarioReflexionFase2.docx`, `Jara_Mathias_2.1_APT122_DiarioReflexionFase2.docx`, `Valderas_Gabriel_2.1_APT122_DiarioReflexionFase2.docx`. |
-| Refinamiento del backlog | [completar] | — |
+| Sprint Planning | Al inicio de cada sprint (lunes), el Product Owner ordena el tablero de GitHub Projects y el equipo selecciona las historias del sprint. | Confirmado por el equipo (2026-11-17); tablero en GitHub Projects. |
+| Daily Scrum | Por Discord, en los días de trabajo: qué hice, qué haré y qué me bloquea. | Confirmado por el equipo (2026-11-17). |
+| Sprint Review | Todos los fines de semana: demostración del incremento al equipo y, en los hitos, al profesor patrocinante. | Confirmado por el equipo (2026-11-17). Coincide con los picos de entrega de los domingos en el historial (sección 3). |
+| Sprint Retrospective | Todos los fines de semana, después de la Review. Los diarios de reflexión de cada fase complementan la retrospectiva individual. | Confirmado por el equipo (2026-11-17); `Fase 1/Evidencias Individual/`; diarios de reflexión de la Fase 2 en `Fase 2/`. |
+| Refinamiento del backlog | En el tablero de GitHub Projects, a cargo del Product Owner, antes de cada Sprint Planning. | Confirmado por el equipo (2026-11-17). |
 
-Evidencia de revisión de código en el repositorio: GitHub registra 74 pull requests en `nicoussj/Proyecto-Titulo-MyWorksApp` (consulta a la API de GitHub el 2026-11-17). De ellos, 40 los abrió `dependabot[bot]`, 32 la cuenta `MathiasAlejandr0` y 2 la cuenta `nicoussj`. El repositorio no tiene issues. La rama principal recibió 28 merges de pull request (`git log --merges`).
+Evidencia de revisión de código en el repositorio: GitHub registra 74 pull requests en `nicoussj/Proyecto-Titulo-MyWorksApp` (consulta a la API de GitHub el 2026-11-17). De ellos, 40 los abrió `dependabot[bot]`, 32 la cuenta `MathiasAlejandr0` y 2 la cuenta `nicoussj`. El repositorio no tiene issues. La rama principal registra 30 merges de pull request (`git log --merges`, corte en `514781d`).
 
 ## 6. Herramienta de tablero
 
 | Dato | Valor | Fuente |
 |------|-------|--------|
-| Tablero Scrum o Kanban (Trello, Jira, GitHub Projects u otro) | [completar] | El repositorio no contiene referencias a un tablero. |
+| Tablero Scrum o Kanban | GitHub Projects | Confirmado por el equipo (2026-11-17). |
 | Carta Gantt | Archivo `Capstone_Project.mpp` (formato de Microsoft Project, por su extensión) | Commit `363a0f7`, 2026-09-13, autor Nicolas Chiguay, mensaje «Adjunto Carta Gantt». |
 | Seguimiento del trabajo | Ramas y pull requests en GitHub, con mensajes de commit validados por `commitlint` | `.github/workflows/commitlint.yml`; `MyWorksAppProyect/commitlint.config.mjs`. |
 | Backlog en el repositorio | `Fase 2/historias_de_usuario.txt` (dos historias narrativas) y `MyWorksAppProyect/docs/casos_de_uso.md` (34 casos de uso) | Archivos del repositorio. |
-| Canal de comunicación del equipo | [completar] | — |
+| Canal de comunicación del equipo | Discord (Daily Scrum y coordinación) | Confirmado por el equipo (2026-11-17). |
 
 ## 7. Lista de datos pendientes (`[completar]`)
 
-1. Product Owner.
-2. Scrum Master.
-3. Duración real efectiva de los sprints.
-4. Número total de sprints y fechas de inicio y cierre de cada uno.
-5. Confirmación de las prioridades del Product Backlog por el Product Owner.
-6. Sprint Planning: fecha, frecuencia y asistentes.
-7. Daily Scrum: frecuencia y canal reales.
-8. Sprint Review: fechas y asistentes.
-9. Sprint Retrospective: actas o fechas.
-10. Refinamiento del backlog.
-11. Herramienta de tablero.
-12. Canal de comunicación del equipo.
+Quedan sin respaldo en el repositorio las actas con fecha y asistentes de cada evento. Los demás datos de las versiones anteriores (Product Owner, Scrum Master, duración y número de sprints, tablero, canal del Daily, Review, Retrospectiva y refinamiento) quedaron completos el 2026-11-17.
