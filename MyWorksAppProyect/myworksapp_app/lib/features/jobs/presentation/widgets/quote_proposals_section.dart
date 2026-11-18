@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/database/models/quote_proposal_model.dart';
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/clp_format.dart';
 
 /// Lista de cotizaciones para modalidad open_quote.
 class QuoteProposalsSection extends StatelessWidget {
@@ -24,7 +24,7 @@ class QuoteProposalsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currency = NumberFormat.currency(locale: 'es_CL', symbol: '\$', decimalDigits: 0);
+    const currency = ClpFormat();
     final canSubmit = !isClient &&
         jobStatus == PricingConstants.jobAwaitingQuotes &&
         onSubmitQuote != null;
@@ -93,7 +93,7 @@ class _ProposalCard extends StatelessWidget {
   });
 
   final QuoteProposalModel proposal;
-  final NumberFormat currency;
+  final ClpFormat currency;
   final bool canSelect;
   final void Function(QuoteProposalModel proposal)? onSelect;
 

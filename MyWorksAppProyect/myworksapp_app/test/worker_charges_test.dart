@@ -112,10 +112,10 @@ void main() {
       theme: AppTheme.lightTheme,
       home: Scaffold(body: WorkerEarningsCard(data: snapshot)),
     ));
-    expect(find.textContaining('121.600'), findsOneWidget);
-    final breakdown = find.textContaining(
-      RegExp(r'128\.000.*cobrados − .*6\.400.*de comisión'),
+    expect(find.text(r'$121.600'), findsOneWidget);
+    expect(
+      find.text(r'$128.000 cobrados − $6.400 de comisión'),
+      findsOneWidget,
     );
-    expect(breakdown, findsOneWidget);
   });
 }

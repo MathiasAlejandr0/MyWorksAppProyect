@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../../services/ai_service_recommendation_engine.dart';
 import '../../services/app_feedback.dart';
 import '../../design_system/app_radius.dart';
@@ -8,6 +7,7 @@ import '../../design_system/app_spacing.dart';
 import '../../theme/app_colors.dart';
 import 'primary_button.dart';
 import 'worker_card.dart';
+import '../../utils/clp_format.dart';
 
 /// Widget Inteligente estilo Apple para la Plataforma Web que evalúa necesidades por palabras clave.
 class WebAiAssistantWidget extends StatefulWidget {
@@ -50,7 +50,7 @@ class _WebAiAssistantWidgetState extends State<WebAiAssistantWidget> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currencyFormatter = NumberFormat.currency(locale: 'es_CL', symbol: '\$', decimalDigits: 0);
+    const currencyFormatter = ClpFormat();
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),

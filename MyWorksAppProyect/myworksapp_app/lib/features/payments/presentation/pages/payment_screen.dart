@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -11,6 +10,7 @@ import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/saved_card_tile.dart';
 import '../../../../core/widgets/webpay_webview_page.dart';
 import 'card_enrollment_page.dart';
+import '../../../../core/utils/clp_format.dart';
 
 /// Resumen de la orden: pagar en Transbank o inscribir tarjeta.
 class PaymentScreen extends ConsumerStatefulWidget {
@@ -55,11 +55,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   bool _processing = false;
   String? _error;
 
-  String get _amountLabel => NumberFormat.currency(
-        locale: 'es_CL',
-        symbol: r'$',
-        decimalDigits: 0,
-      ).format(widget.amount.round());
+  String get _amountLabel => const ClpFormat().format(widget.amount.round());
 
   String _errorText(Object e) {
     if (e is AppError) return e.message;
