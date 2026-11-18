@@ -67,6 +67,28 @@ describe('signUpUser y updateAccountPassword', () => {
   });
 });
 
+describe('signUpUser con confirmación de correo', () => {
+  it('sin sesión no lee perfiles y pide confirmar el correo', async () => {
+    let profileReads = 0;
+    const supabase = {
+      auth: {
+        signUp: async () => ({
+          data: { user: { id: 'u1' }, session: null },
+          error: null,
+        }),
+      },
+      from: () => {
+        profileReads += 1;
+        throw new Error('permission denied for table perfiles');
+      },
+    };
+
+    const result = await signUpUser(supabase as never, ' ana@demo.myworksapp.cl ', sample('a', 6, '12'), 'Ana');
+    assert.deepEqual(result, { status: 'confirmation_required', email: 'ana@demo.myworksapp.cl' });
+    assert.equal(profileReads, 0);
+  });
+});
+
 describe('loadProfileAfterSignup', () => {
   it('reintenta y no inventa un perfil activo', async () => {
     let reads = 0;

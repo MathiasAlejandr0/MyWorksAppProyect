@@ -93,13 +93,21 @@ export async function signIn(
   return profile;
 }
 
+/**
+ * Resultado del alta. Con la confirmación de correo activa, Auth crea la
+ * cuenta pero no abre sesión: el perfil recién se puede leer al entrar.
+ */
+export type SignUpResult =
+  | { status: 'signed_in'; profile: Profile }
+  | { status: 'confirmation_required'; email: string };
+
 export async function signUpUser(
   supabase: AppSupabase,
   email: string,
   password: string,
   name: string,
   captchaToken?: string,
-): Promise<Profile> {
+): Promise<SignUpResult> {
   const policy = passwordPolicyMessage(password);
   if (policy) throw new AuthError(policy);
 
@@ -114,15 +122,22 @@ export async function signUpUser(
   if (error) throw new AuthError(translateAuthError(error.message));
   if (!data.user) throw new AuthError('No se pudo registrar la cuenta.');
 
+  // Sin sesión no hay permiso para leer `perfiles` (el rol anónimo no tiene
+  // acceso): pedirlo aquí fallaba con «permission denied» aunque la cuenta
+  // ya estaba creada y el correo enviado.
+  if (!data.session) {
+    return { status: 'confirmation_required', email: email.trim() };
+  }
+
   const profile = await loadProfileAfterSignup(
-    () => getProfile(supabase, data.user.id),
+    () => getProfile(supabase, data.user!.id),
   );
   if (!profile) {
     throw new AuthError(
       'Tu cuenta se creó, pero el perfil todavía no está listo. Confirma el correo e ingresa de nuevo.',
     );
   }
-  return profile;
+  return { status: 'signed_in', profile };
 }
 
 /** Reintenta el perfil que crea el trigger. No inventa una cuenta activa. */
