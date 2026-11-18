@@ -64,9 +64,13 @@ class _AppMapTilesState extends State<AppMapTiles> {
 class _AppMapStyle {
   _AppMapStyle._();
 
-  static const _timeout = Duration(seconds: 8);
+  /// En web el estilo, los glifos y el sprite bajan por XHR y el decodificado
+  /// corre en el hilo principal: se da más margen antes de usar el respaldo.
+  static const _timeout = Duration(seconds: kIsWeb ? 25 : 8);
   static const _userAgent = 'com.myworksapp.myworksapp';
+  static const _retryAfter = Duration(seconds: 30);
   static Future<vt.Style?>? _future;
+  static DateTime? _failedAt;
 
   /// En los tests de widgets no se pide el estilo (evita path_provider, aislados
   /// y una espera de red). El mapa cae a OpenStreetMap, como cuando falla.
@@ -80,6 +84,12 @@ class _AppMapStyle {
   static Future<vt.Style?> load() {
     if (debugForceOsmFallback || _inWidgetTest) {
       return Future<vt.Style?>.value(null);
+    }
+    final failedAt = _failedAt;
+    if (failedAt != null && DateTime.now().difference(failedAt) > _retryAfter) {
+      // El estilo falló hace un rato (red caída): el próximo mapa lo reintenta.
+      _future = null;
+      _failedAt = null;
     }
     return _future ??= _read();
   }
@@ -96,9 +106,11 @@ class _AppMapStyle {
           MapTileCache.markServed();
           return style;
         } catch (_) {
+          _failedAt = DateTime.now();
           return null;
         }
       }
+      _failedAt = DateTime.now();
       return null;
     }
   }
@@ -107,7 +119,8 @@ class _AppMapStyle {
     return vt.StyleReader(
       uri: AppMapTiles.styleUrl,
       language: 'es',
-      headers: const {'User-Agent': _userAgent},
+      // Un navegador no deja fijar User-Agent: lo ignora y avisa en consola.
+      headers: kIsWeb ? const {} : const {'User-Agent': _userAgent},
       cache: cache,
     ).read().timeout(_timeout);
   }
@@ -121,6 +134,7 @@ class _AppMapStyle {
   @visibleForTesting
   static void debugReset() {
     _future = null;
+    _failedAt = null;
     debugForceOsmFallback = false;
   }
 }
