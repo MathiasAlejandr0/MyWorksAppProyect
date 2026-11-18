@@ -53,11 +53,17 @@ class JobRepository {
     );
   }
 
+  /// Un pedido en `esperando_pago` todavía no tiene cobro retenido: es un
+  /// checkout sin terminar del cliente. El profesional lo ve recién cuando el
+  /// pago lo pasa a `pendiente`, así que ninguna lista ni contador suyo lo trae.
+  static const String _unpaidStatus = PricingConstants.jobAwaitingPayment;
+
   Future<List<JobModel>> getJobsByWorkerId(String workerId) async {
     final rows = await supabase
         .from(_table)
         .select()
         .eq('id_trabajador', workerId)
+        .neq('estado', _unpaidStatus)
         .order('creado_en', ascending: false);
     return _withAmounts(
       rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
@@ -72,10 +78,12 @@ class JobRepository {
     required int offset,
     int limit = 20,
   }) async {
-    final rows = await supabase
+    var query = supabase
         .from(_table)
         .select()
-        .eq(asWorker ? 'id_trabajador' : 'id_usuario', userId)
+        .eq(asWorker ? 'id_trabajador' : 'id_usuario', userId);
+    if (asWorker) query = query.neq('estado', _unpaidStatus);
+    final rows = await query
         .order('creado_en', ascending: false)
         .order('id', ascending: false)
         .range(offset, offset + limit - 1);
@@ -96,17 +104,14 @@ class JobRepository {
     );
   }
 
-  /// Pedidos asignados al profesional: pagados (`pendiente`) o con checkout
-  /// iniciado desde la web (`esperando_pago`).
+  /// Pedidos asignados al profesional y ya pagados (`pendiente`). Los que
+  /// siguen en `esperando_pago` no cuentan hasta que el cobro quede retenido.
   Future<List<JobModel>> getIncomingJobsForWorker(String workerId) async {
     final rows = await supabase
         .from(_table)
         .select()
         .eq('id_trabajador', workerId)
-        .inFilter('estado', [
-          AppConstants.jobStatusPending,
-          PricingConstants.jobAwaitingPayment,
-        ])
+        .eq('estado', AppConstants.jobStatusPending)
         .order('creado_en', ascending: false);
     return _withAmounts(
       rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
@@ -119,7 +124,7 @@ class JobRepository {
         .from(_table)
         .select()
         .eq('id_trabajador', workerId)
-        .inFilter('estado', WorkerJobStatus.activeStatuses)
+        .inFilter('estado', WorkerJobStatus.busyStatuses)
         .order('creado_en', ascending: false);
     return _withAmounts(
       rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
@@ -200,14 +205,17 @@ class JobRepository {
   }
 
   Future<({int total, int completed})> countJobsByWorkerId(String workerId) {
-    return _countJobs('id_trabajador', workerId);
+    return _countJobs('id_trabajador', workerId, excludeUnpaid: true);
   }
 
   Future<({int total, int completed})> _countJobs(
     String column,
-    String id,
-  ) async {
-    final rows = await supabase.from(_table).select('estado').eq(column, id);
+    String id, {
+    bool excludeUnpaid = false,
+  }) async {
+    var query = supabase.from(_table).select('estado').eq(column, id);
+    if (excludeUnpaid) query = query.neq('estado', _unpaidStatus);
+    final rows = await query;
     var completed = 0;
     for (final row in rows) {
       if (row['estado'] == AppConstants.jobStatusCompleted) completed++;
