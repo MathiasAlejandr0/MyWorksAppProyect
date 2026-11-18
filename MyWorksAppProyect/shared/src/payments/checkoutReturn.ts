@@ -21,7 +21,14 @@ export type CheckoutReturn =
 export function parseCheckoutReturn(search: string): CheckoutReturn {
   const raw = search.startsWith('?') ? search.slice(1) : search;
   const params = new URLSearchParams(raw);
-  if (params.get('tarjeta')) return { kind: 'card' };
+  const tarjeta = params.get('tarjeta');
+  if (tarjeta === 'fail') {
+    return {
+      kind: 'failed',
+      message: 'No se guardó la tarjeta. Puedes confirmar el pedido de nuevo.',
+    };
+  }
+  if (tarjeta) return { kind: 'card' };
 
   const pago = params.get('pago');
   const jobId = params.get('jobId');

@@ -3,8 +3,15 @@ import assert from 'node:assert/strict';
 import { parseCheckoutReturn } from './checkoutReturn.ts';
 
 describe('parseCheckoutReturn', () => {
-  it('ignora la vuelta de una inscripción de tarjeta', () => {
+  it('reconoce la vuelta de una inscripción de tarjeta guardada', () => {
     assert.deepEqual(parseCheckoutReturn('?tarjeta=ok'), { kind: 'card' });
+  });
+
+  it('avisa con un mensaje claro si la tarjeta no se guardó', () => {
+    assert.deepEqual(parseCheckoutReturn('?tarjeta=fail'), {
+      kind: 'failed',
+      message: 'No se guardó la tarjeta. Puedes confirmar el pedido de nuevo.',
+    });
   });
 
   it('confirma el pedido con seguimiento', () => {
