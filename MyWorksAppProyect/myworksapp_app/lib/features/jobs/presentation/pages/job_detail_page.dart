@@ -22,6 +22,8 @@ import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/job_state_machine.dart';
 import '../../../../core/services/job_transition_matrix.dart';
 import '../../../../core/utils/app_logger.dart';
+import '../../../../core/database/repositories/rating_repository.dart';
+import '../../../ratings/domain/rating_gate.dart';
 import '../../../../core/services/job_booking_service.dart';
 import '../../../../core/services/change_order_service.dart';
 import '../../../../core/services/dispute_service.dart';
@@ -84,6 +86,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   String? _clientStartPin;
   List<ChangeOrderModel> _changeOrders = [];
   DisputeModel? _dispute;
+  bool _alreadyRated = false;
   String? _pendingAgreementId;
   String? _pendingAgreementType;
   List<QuoteProposalModel> _quoteProposals = [];
@@ -136,6 +139,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         await Future.wait([
           _loadChangeOrders(job.id),
           _loadDispute(job.id),
+          _loadRatingStatus(job),
           if (job.pricingMode == PricingConstants.modeOpenQuote) ...[
             _loadQuoteProposals(job.id),
             _loadInvitedWorkerName(job),
@@ -198,6 +202,27 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   Future<void> _loadChangeOrders(String jobId) async {
     final orders = await _changeOrderRepository.getByJobId(jobId);
     if (mounted) setState(() => _changeOrders = orders);
+  }
+
+  /// La nota puede haberse puesto desde la web: se pregunta a la base y, si ya
+  /// existe, se oculta el botón de calificar.
+  Future<void> _loadRatingStatus(JobModel job) async {
+    final userId = ref.read(authProvider).user?.id;
+    if (userId == null || job.status != AppConstants.jobStatusCompleted) {
+      return;
+    }
+    final direction = userId == job.workerId
+        ? RatingDirection.workerToClient
+        : RatingDirection.clientToWorker;
+    try {
+      final existing = await RatingRepository().getRatingByJobId(
+        job.id,
+        direction: direction,
+      );
+      if (mounted) setState(() => _alreadyRated = existing != null);
+    } catch (e) {
+      AppLogger.e('No se pudo leer la calificación del trabajo', e);
+    }
   }
 
   Future<void> _loadDispute(String jobId) async {

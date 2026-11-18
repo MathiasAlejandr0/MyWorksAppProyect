@@ -6,9 +6,12 @@ import '../../../../core/theme/app_colors.dart';
 
 /// El especialista califica al cliente después de un trabajo completado.
 class RateClientButton extends StatelessWidget {
-  const RateClientButton({super.key, required this.jobId});
+  const RateClientButton({super.key, required this.jobId, this.onSaved});
 
   final String jobId;
+
+  /// Se llama después de guardar la nota, para que la pantalla oculte el botón.
+  final VoidCallback? onSaved;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +88,7 @@ class RateClientButton extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nota del cliente guardada')),
       );
+      onSaved?.call();
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
