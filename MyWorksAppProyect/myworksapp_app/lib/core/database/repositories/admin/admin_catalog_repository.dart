@@ -3,6 +3,7 @@ import '../../models/service_model.dart';
 import '../../models/worker_model.dart';
 import '../../worker_stats_client.dart';
 import '../../supabase_db.dart';
+import '../../../utils/search_text.dart';
 import '../feature_flag_repository.dart';
 import 'admin_models.dart';
 
@@ -65,14 +66,13 @@ class AdminCatalogRepository {
     ];
 
     if (search != null && search.isNotEmpty) {
-      final lower = search.toLowerCase();
       entries = entries
           .where(
             (e) =>
-                e.name.toLowerCase().contains(lower) ||
-                (e.email?.toLowerCase().contains(lower) ?? false) ||
-                e.worker.profession.toLowerCase().contains(lower) ||
-                (e.worker.workZone?.toLowerCase().contains(lower) ?? false),
+                matchesSearchText(e.name, search) ||
+                matchesSearchText(e.email ?? '', search) ||
+                matchesSearchText(e.worker.profession, search) ||
+                matchesSearchText(e.worker.workZone ?? '', search),
           )
           .toList();
     }

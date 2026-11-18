@@ -23,6 +23,7 @@ export * from './auth';
 export * from './emailDomain';
 export * from './avatar';
 export * from './plural';
+export * from './searchText';
 export type {
   Profile,
   ServiceRow,

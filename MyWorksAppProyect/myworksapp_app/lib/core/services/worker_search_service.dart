@@ -1,6 +1,7 @@
 import '../database/repositories/worker_repository.dart';
 import '../database/models/worker_model.dart';
 import '../utils/app_logger.dart';
+import '../utils/search_text.dart';
 
 // Importar funciones matemáticas
 import 'dart:math' as math;
@@ -109,10 +110,9 @@ class WorkerSearchService {
 
   /// Aplica búsqueda por texto
   List<WorkerModel> _applyTextSearch(List<WorkerModel> workers, String query) {
-    final queryLower = query.toLowerCase();
     return workers.where((worker) {
-      return worker.profession.toLowerCase().contains(queryLower) ||
-          (worker.description?.toLowerCase().contains(queryLower) ?? false);
+      return matchesSearchText(worker.profession, query) ||
+          matchesSearchText(worker.description ?? '', query);
     }).toList();
   }
 

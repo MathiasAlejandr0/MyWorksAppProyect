@@ -1,3 +1,5 @@
+import { foldSearchText } from '@myworksapp/shared';
+
 export type ResolvedServiceQuery = {
   category: string;
   categoryName: string;
@@ -8,7 +10,8 @@ export type ResolvedServiceQuery = {
 };
 
 export function resolveCategory(text: string): ResolvedServiceQuery | null {
-  const lower = text.toLowerCase();
+  // Sin tildes ni mayúsculas: «electrico» y «Eléctrico» dan la misma categoría.
+  const lower = foldSearchText(text);
 
   if (
     lower.includes('fuga') ||

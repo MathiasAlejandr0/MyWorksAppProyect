@@ -28,6 +28,7 @@ import '../widgets/testing_feedback_sheet.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../payments/presentation/pages/card_enrollment_page.dart';
 import '../../../../core/providers/service_providers.dart';
+import '../../../../core/utils/search_text.dart';
 
 class UserHomePage extends ConsumerStatefulWidget {
   const UserHomePage({super.key});
@@ -148,12 +149,12 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
 
   List<ServiceModel> get _filteredServices {
     if (_query.trim().isEmpty) return _allServices;
-    final q = _query.toLowerCase();
+    final categories = serviceCategoriesForQuery(_query);
     return _allServices.where((s) {
-      final label = ServiceCard.displayName(s).toLowerCase();
-      return label.contains(q) ||
-          s.name.toLowerCase().contains(q) ||
-          (s.description ?? '').toLowerCase().contains(q);
+      return categories.contains(s.category) ||
+          matchesSearchText(ServiceCard.displayName(s), _query) ||
+          matchesSearchText(s.name, _query) ||
+          matchesSearchText(s.description ?? '', _query);
     }).toList();
   }
 
