@@ -1,9 +1,19 @@
-/// Resumen de cobros del profesional (demo / escrow simulado).
+import 'pricing_constants.dart';
+import 'worker_charge.dart';
+
+/// Resumen de cobros del profesional. Los montos son netos (lo que recibe el
+/// profesional); lo liberado trae además su bruto y la comisión descontada.
 class WorkerEarningsSnapshot {
   final int escrowClp;
   final int releasedClp;
   final int pendingClp;
   final int paymentCount;
+
+  /// Lo que pagaron los clientes por los cobros liberados.
+  final int releasedGrossClp;
+
+  /// Comisión del servicio descontada de los cobros liberados.
+  final int releasedFeeClp;
 
   /// Variación entera de lo liberado este mes contra el mes anterior.
   /// Null cuando el mes anterior no tiene liberaciones: la tarjeta no inventa un %.
@@ -14,8 +24,56 @@ class WorkerEarningsSnapshot {
     required this.releasedClp,
     required this.pendingClp,
     required this.paymentCount,
+    int? releasedGrossClp,
+    this.releasedFeeClp = 0,
     this.growthPercent,
-  });
+  }) : releasedGrossClp = releasedGrossClp ?? releasedClp + releasedFeeClp;
+
+  /// Arma el resumen desde la vista `cobros_profesional`.
+  factory WorkerEarningsSnapshot.fromCharges(
+    Iterable<WorkerCharge> charges, {
+    required DateTime now,
+    DateTime Function(DateTime)? toLocal,
+  }) {
+    final local = toLocal ?? (DateTime d) => d;
+    var escrow = 0;
+    var released = 0;
+    var releasedGross = 0;
+    var releasedFee = 0;
+    var pending = 0;
+    var count = 0;
+    final releasedMonths = <({int amountClp, DateTime at})>[];
+    for (final charge in charges) {
+      count++;
+      switch (charge.paymentStatus) {
+        case PricingConstants.paymentPending:
+          pending += charge.netClp;
+        case PricingConstants.paymentAuthorized:
+        case PricingConstants.paymentHeld:
+          escrow += charge.netClp;
+        case PricingConstants.paymentReleased:
+          released += charge.netClp;
+          releasedGross += charge.grossClp;
+          releasedFee += charge.feeClp;
+          final at = charge.releasedAt ?? charge.createdAt;
+          if (charge.netClp > 0 && at != null) {
+            releasedMonths.add((amountClp: charge.netClp, at: local(at)));
+          }
+      }
+    }
+    return WorkerEarningsSnapshot(
+      escrowClp: escrow,
+      releasedClp: released,
+      pendingClp: pending,
+      paymentCount: count,
+      releasedGrossClp: releasedGross,
+      releasedFeeClp: releasedFee,
+      growthPercent: releasedMonthOverMonthPercent(
+        released: releasedMonths,
+        now: now,
+      ),
+    );
+  }
 
   static const zero = WorkerEarningsSnapshot(
     escrowClp: 0,
@@ -50,7 +108,8 @@ int? releasedMonthOverMonthPercent({
   return ((currentSum - previousSum) / previousSum * 100).round();
 }
 
-bool _sameMonth(DateTime a, DateTime b) => a.year == b.year && a.month == b.month;
+bool _sameMonth(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month;
 
 DateTime _shiftMonth(DateTime from, int delta) {
   final monthIndex = from.year * 12 + (from.month - 1) + delta;

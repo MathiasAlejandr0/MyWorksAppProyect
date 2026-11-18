@@ -132,7 +132,7 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
                 if (_error != null)
                   Text(_error!, style: const TextStyle(color: AppColors.error)),
                 Text(
-                  'Por pagar',
+                  'Por recibir (neto)',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Text(
@@ -142,9 +142,13 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
                         color: AppColors.brandOrange,
                       ),
                 ),
+                if ((summary?.pendingFeeClp ?? 0) > 0)
+                  Text(
+                    'Bruto ${money.format(summary!.pendingGrossClp)} − comisión ${money.format(summary.pendingFeeClp)}',
+                  ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Es el dinero de trabajos retenido o liberado que todavía no tiene una transferencia marcada.',
+                  'Es lo que recibirás por trabajos retenidos o liberados que todavía no tienen una transferencia marcada: lo que pagó el cliente menos la comisión del servicio (5 %, mínimo \$1.000).',
                 ),
                 const SizedBox(height: 20),
                 Text('Cuenta para la transferencia',
@@ -201,18 +205,31 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
                 Text('Liquidaciones',
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
+                if (summary != null && summary.transferredClp > 0) ...[
+                  Text(
+                    'Total transferido: ${money.format(summary.transferredClp)} neto',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  Text(
+                    'Bruto ${money.format(summary.transferredGrossClp)} − comisión ${money.format(summary.transferredFeeClp)}',
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 if (summary == null || summary.history.isEmpty)
                   const Text('Aún no hay transferencias registradas.')
                 else
                   for (final row in summary.history)
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(money.format(row.amountClp)),
+                      isThreeLine: true,
+                      title: Text('Neto ${money.format(row.amountClp)}'),
                       subtitle: Text(
-                        _statusLabel(row.transferStatus) +
-                            (row.transferReference == null
-                                ? ''
-                                : ' · ref. ${row.transferReference}'),
+                        'Bruto ${money.format(row.grossClp)} − comisión ${money.format(row.feeClp)}\n'
+                        '${_statusLabel(row.transferStatus)}'
+                        '${row.transferReference == null ? '' : ' · ref. ${row.transferReference}'}',
                       ),
                     ),
               ],

@@ -26,11 +26,27 @@ describe('métricas del período', () => {
       ],
     });
     assert.equal(summary.gmv, 30000);
-    assert.equal(summary.commission, 4500);
+    assert.equal(summary.commission, 1500);
     assert.equal(summary.completedJobs, 1);
     assert.equal(summary.avgTicket, 15000);
     assert.equal(summary.csat, 4);
     assert.equal(summary.dailyGmv.length, 2);
+  });
+
+  it('usa la comisión que entrega la base por pago', () => {
+    const summary = summarizeBusinessPeriod({
+      fromIso,
+      toIso,
+      payments: [
+        { amount: 32000, fee: 1600, status: 'liberado', createdAt: '2026-09-10T12:00:00.000Z' },
+        { amount: 12000, fee: 1000, status: 'retenido', createdAt: '2026-09-11T12:00:00.000Z' },
+        { amount: 50000, fee: 2500, status: 'reembolsado', createdAt: '2026-09-11T12:00:00.000Z' },
+      ],
+      jobs: [],
+      ratings: [],
+    });
+    assert.equal(summary.gmv, 44000);
+    assert.equal(summary.commission, 2600);
   });
 
   it('deja ceros y nulos cuando el período no tiene movimientos', () => {

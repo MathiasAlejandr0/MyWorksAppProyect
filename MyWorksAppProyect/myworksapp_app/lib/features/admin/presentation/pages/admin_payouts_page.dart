@@ -53,7 +53,11 @@ class _AdminPayoutsPageState extends ConsumerState<AdminPayoutsPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Pago ${row['id']} · \$${row['monto']}'),
+            Text(
+              'Pago ${row['id']}\n'
+              'Transferir \$${row['neto_clp'] ?? row['monto']} '
+              '(bruto \$${row['monto']} − comisión \$${row['comision_clp'] ?? 0})',
+            ),
             TextField(
               controller: reference,
               decoration: const InputDecoration(
@@ -113,7 +117,10 @@ class _AdminPayoutsPageState extends ConsumerState<AdminPayoutsPage> {
       appBar: AppGradientAppBar(
         title: const Text('Liquidaciones'),
         actions: [
-          IconButton(tooltip: 'Actualizar', onPressed: _load, icon: const Icon(Icons.refresh)),
+          IconButton(
+              tooltip: 'Actualizar',
+              onPressed: _load,
+              icon: const Icon(Icons.refresh)),
         ],
       ),
       body: _loading
@@ -124,16 +131,22 @@ class _AdminPayoutsPageState extends ConsumerState<AdminPayoutsPage> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _rows.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final row = _rows[index];
-                    final amount = (row['monto'] as num?)?.round() ?? 0;
+                    final gross = (row['monto'] as num?)?.round() ?? 0;
+                    final fee = (row['comision_clp'] as num?)?.round() ?? 0;
+                    final net =
+                        (row['neto_clp'] as num?)?.round() ?? gross - fee;
                     return Card(
                       child: ListTile(
-                        title: Text(money.format(amount)),
+                        title: Text('Transferir ${money.format(net)}'),
                         subtitle: Text(
+                          'Bruto ${money.format(gross)} − comisión ${money.format(fee)}\n'
                           '${row['estado']} · trabajo ${row['id_trabajo']}',
                         ),
+                        isThreeLine: true,
                         trailing: FilledButton(
                           onPressed: () => _mark(row),
                           style: FilledButton.styleFrom(

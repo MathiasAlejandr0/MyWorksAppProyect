@@ -1,5 +1,6 @@
 import '../supabase_db.dart';
 import '../../domain/payout_summary.dart';
+import '../../domain/worker_charge.dart';
 
 class BankAccount {
   const BankAccount({
@@ -61,59 +62,28 @@ class PayoutRepository {
     });
   }
 
+  /// Cobros del profesional con bruto, comisión y neto calculados en la base
+  /// (vista `cobros_profesional`).
   Future<PayoutSummary> summaryForWorker(String userId) async {
-    final jobs = await supabase
-        .from('trabajos')
-        .select('id')
-        .eq('id_trabajador', userId);
-    final jobIds = [
-      for (final row in jobs as List) (row as Map)['id'] as String,
-    ];
-    final payments = jobIds.isEmpty
-        ? const <dynamic>[]
-        : await supabase
-            .from('pagos')
-            .select('id, id_trabajo, monto, estado')
-            .inFilter('id_trabajo', jobIds);
-    final settlements = await supabase
-        .from('liquidaciones')
-        .select(
-          'id_pago, id_trabajo, monto_clp, estado_transferencia, referencia_transferencia, creado_en',
-        )
-        .eq('id_trabajador', userId);
-    final byPayment = <String, Map<String, dynamic>>{};
-    for (final row in settlements as List) {
-      final map = Map<String, dynamic>.from(row as Map);
-      final paymentId = map['id_pago'] as String?;
-      if (paymentId != null) byPayment[paymentId] = map;
-    }
-    final movements = <PayoutMovement>[];
-    for (final row in payments) {
-      final map = Map<String, dynamic>.from(row as Map);
-      final paymentId = map['id'] as String;
-      final settlement = byPayment[paymentId];
-      movements.add(
-        PayoutMovement(
-          paymentId: paymentId,
-          jobId: map['id_trabajo'] as String? ?? '',
-          amountClp: (map['monto'] as num?)?.round() ?? 0,
-          paymentStatus: map['estado'] as String? ?? '',
-          transferStatus: settlement?['estado_transferencia'] as String?,
-          transferReference: settlement?['referencia_transferencia'] as String?,
-          settledAt: settlement?['creado_en'] == null
-              ? null
-              : DateTime.tryParse(settlement!['creado_en'] as String),
+    final rows = await supabase
+        .from(WorkerCharge.view)
+        .select(WorkerCharge.columns)
+        .eq('id_trabajador', userId)
+        .order('creado_en', ascending: false);
+    return PayoutSummary(movements: [
+      for (final row in rows as List)
+        PayoutMovement.fromCharge(
+          WorkerCharge.fromRow(Map<String, dynamic>.from(row as Map)),
         ),
-      );
-    }
-    return PayoutSummary(movements: movements);
+    ]);
   }
 
   Future<List<Map<String, dynamic>>> pendingForAdmin() async {
     final payments = await supabase
-        .from('pagos')
-        .select('id, id_trabajo, monto, estado, creado_en')
-        .inFilter('estado', ['autorizado', 'retenido', 'liberado'])
+        .from(WorkerCharge.view)
+        .select(
+            'id:id_pago, id_trabajo, monto:bruto_clp, comision_clp, neto_clp, estado:estado_pago, creado_en')
+        .inFilter('estado_pago', ['autorizado', 'retenido', 'liberado'])
         .order('creado_en', ascending: false)
         .limit(100);
     final settlements = await supabase.from('liquidaciones').select(

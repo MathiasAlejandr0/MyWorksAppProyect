@@ -1,5 +1,10 @@
-/** Comisión de plataforma sobre el GMV cobrado o retenido. No es un secreto. */
-export const PLATFORM_COMMISSION_RATE = 0.15;
+/**
+ * Comisión del servicio: 5 % de cada pago, mínimo $1.000, descontada al
+ * profesional. La base la calcula por pago (vista `cobros_profesional`); esta
+ * tasa solo se usa cuando un pago no trae su comisión.
+ */
+export const PLATFORM_COMMISSION_RATE = 0.05;
+export const PLATFORM_COMMISSION_MIN_CLP = 1000;
 
 const GMV_STATUSES = new Set(['retenido', 'liberado', 'autorizado']);
 
@@ -7,6 +12,8 @@ export type PeriodPayment = {
   amount: number;
   status: string;
   createdAt: string;
+  /** Comisión del pago calculada por la base. */
+  fee?: number;
 };
 
 export type PeriodJob = {
@@ -119,7 +126,14 @@ export function summarizeBusinessPeriod(input: {
 
   return {
     gmv,
-    commission: Math.round(gmv * rate),
+    commission: gmvRows.reduce(
+      (sum, row) =>
+        sum +
+        (row.fee != null && Number.isFinite(Number(row.fee))
+          ? Number(row.fee)
+          : Math.round((Number(row.amount) || 0) * rate)),
+      0,
+    ),
     commissionRate: rate,
     completedJobs,
     paidOrders: gmvRows.length,

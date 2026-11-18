@@ -1,3 +1,5 @@
+import 'worker_charge.dart';
+
 const payoutOpenPaymentStatuses = {
   'autorizado',
   'retenido',
@@ -19,14 +21,36 @@ class PayoutMovement {
     required this.jobId,
     required this.amountClp,
     required this.paymentStatus,
+    int? grossClp,
+    this.feeClp = 0,
     this.transferStatus,
     this.transferReference,
     this.settledAt,
-  });
+  }) : grossClp = grossClp ?? amountClp + feeClp;
+
+  factory PayoutMovement.fromCharge(WorkerCharge charge) => PayoutMovement(
+        paymentId: charge.paymentId,
+        jobId: charge.jobId,
+        amountClp: charge.netClp,
+        grossClp: charge.grossClp,
+        feeClp: charge.feeClp,
+        paymentStatus: charge.paymentStatus,
+        transferStatus: charge.transferStatus,
+        transferReference: charge.transferReference,
+        settledAt: charge.settledAt,
+      );
 
   final String paymentId;
   final String jobId;
+
+  /// Neto para el profesional: bruto menos la comisión del servicio.
   final int amountClp;
+
+  /// Lo que pagó el cliente.
+  final int grossClp;
+
+  /// Comisión del servicio descontada al profesional.
+  final int feeClp;
   final String paymentStatus;
 
   /// `transferido` cuando el admin ya registró la transferencia.
@@ -49,9 +73,31 @@ class PayoutSummary {
 
   final List<PayoutMovement> movements;
 
+  /// Neto por transferir.
   int get pendingClp => movements
       .where((row) => row.countsAsPending)
       .fold(0, (sum, row) => sum + row.amountClp);
+
+  int get pendingGrossClp => movements
+      .where((row) => row.countsAsPending)
+      .fold(0, (sum, row) => sum + row.grossClp);
+
+  int get pendingFeeClp => movements
+      .where((row) => row.countsAsPending)
+      .fold(0, (sum, row) => sum + row.feeClp);
+
+  Iterable<PayoutMovement> get _transferred =>
+      movements.where((row) => row.isTransferred);
+
+  /// Neto ya transferido al profesional.
+  int get transferredClp =>
+      _transferred.fold(0, (sum, row) => sum + row.amountClp);
+
+  int get transferredGrossClp =>
+      _transferred.fold(0, (sum, row) => sum + row.grossClp);
+
+  int get transferredFeeClp =>
+      _transferred.fold(0, (sum, row) => sum + row.feeClp);
 
   List<PayoutMovement> get history => movements
       .where((row) => row.transferStatus != null)

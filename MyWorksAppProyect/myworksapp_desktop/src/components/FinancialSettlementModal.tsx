@@ -186,7 +186,7 @@ export function FinancialSettlementModal({ onClose }: FinancialSettlementModalPr
             >
               {held.map((h) => (
                 <option key={h.id} value={h.id}>
-                  {h.amountClp.toLocaleString('es-CL')} CLP · trabajo {h.jobId.slice(0, 8)}… ·{' '}
+                  {h.netClp.toLocaleString('es-CL')} CLP neto · trabajo {h.jobId.slice(0, 8)}… ·{' '}
                   {h.status}
                 </option>
               ))}
@@ -204,9 +204,17 @@ export function FinancialSettlementModal({ onClose }: FinancialSettlementModalPr
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#98989D' }}>Monto a liquidar</span>
+                  <span style={{ color: '#98989D' }}>Pagó el cliente</span>
+                  <span>${selected.amountClp.toLocaleString('es-CL')} CLP</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#98989D' }}>Comisión del servicio</span>
+                  <span>− ${selected.feeClp.toLocaleString('es-CL')} CLP</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#98989D' }}>Monto a transferir al profesional</span>
                   <strong style={{ color: '#34C759' }}>
-                    ${selected.amountClp.toLocaleString('es-CL')} CLP
+                    ${selected.netClp.toLocaleString('es-CL')} CLP
                   </strong>
                 </div>
               </div>

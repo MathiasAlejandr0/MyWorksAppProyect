@@ -1,6 +1,5 @@
-import '../database/repositories/job_repository.dart';
-import '../database/repositories/payment_repository.dart';
-import '../domain/pricing_constants.dart';
+import '../database/supabase_db.dart';
+import '../domain/worker_charge.dart';
 import '../domain/worker_earnings_snapshot.dart';
 import '../utils/santiago_time.dart';
 
@@ -9,49 +8,22 @@ class WorkerEarningsService {
 
   static final WorkerEarningsService instance = WorkerEarningsService._();
 
-  final JobRepository _jobs = JobRepository();
-  final PaymentRepository _payments = PaymentRepository();
-
+  /// Bruto, comisión y neto vienen calculados por la base
+  /// (vista `cobros_profesional`).
   Future<WorkerEarningsSnapshot> getSnapshot(String workerId) async {
-    final jobs = await _jobs.getJobsByWorkerId(workerId);
-    final jobIds = jobs.map((j) => j.id).toList();
-    if (jobIds.isEmpty) return WorkerEarningsSnapshot.zero;
-
-    final payments = await _payments.listByJobIds(jobIds);
-    var escrow = 0;
-    var released = 0;
-    var pending = 0;
-    final releasedMonths = <({int amountClp, DateTime at})>[];
-    final now = SantiagoTime.wall(DateTime.now());
-
-    for (final payment in payments) {
-      final amount = payment.amount.round();
-      switch (payment.status) {
-        case PricingConstants.paymentPending:
-          pending += amount;
-        case PricingConstants.paymentAuthorized:
-        case PricingConstants.paymentHeld:
-          escrow += amount;
-        case PricingConstants.paymentReleased:
-          released += amount;
-          if (amount > 0) {
-            releasedMonths.add((
-              amountClp: amount,
-              at: SantiagoTime.wall(payment.releasedAt ?? payment.createdAt),
-            ));
-          }
-      }
-    }
-
-    return WorkerEarningsSnapshot(
-      escrowClp: escrow,
-      releasedClp: released,
-      pendingClp: pending,
-      paymentCount: payments.length,
-      growthPercent: releasedMonthOverMonthPercent(
-        released: releasedMonths,
-        now: now,
-      ),
+    final rows = await supabase
+        .from(WorkerCharge.view)
+        .select(WorkerCharge.columns)
+        .eq('id_trabajador', workerId);
+    final charges = [
+      for (final row in rows as List)
+        WorkerCharge.fromRow(Map<String, dynamic>.from(row as Map)),
+    ];
+    if (charges.isEmpty) return WorkerEarningsSnapshot.zero;
+    return WorkerEarningsSnapshot.fromCharges(
+      charges,
+      now: SantiagoTime.wall(DateTime.now()),
+      toLocal: SantiagoTime.wall,
     );
   }
 }

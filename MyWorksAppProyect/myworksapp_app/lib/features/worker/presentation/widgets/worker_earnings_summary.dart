@@ -101,8 +101,9 @@ class WorkerEarningsCard extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final titleColor = AppColors.onCanvas(brightness);
     final muted = AppColors.onCanvasMuted(brightness);
-    // Ganancias = pagos liberados al profesional. Lo retenido en garantía
-    // todavía puede reembolsarse, así que se muestra aparte y no suma.
+    // Ganancias = neto de los pagos liberados al profesional (bruto menos la
+    // comisión del servicio). Lo retenido en garantía todavía puede
+    // reembolsarse, así que se muestra aparte y no suma.
     final total = data.releasedClp;
     final escrow = data.escrowClp;
     final growthPercent = data.growthPercent;
@@ -151,6 +152,19 @@ class WorkerEarningsCard extends StatelessWidget {
             ),
           ),
         ),
+        if (data.releasedFeeClp > 0) ...[
+          const SizedBox(height: 2),
+          Text(
+            '${_currency.format(data.releasedGrossClp)} cobrados − ${_currency.format(data.releasedFeeClp)} de comisión',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: muted,
+            ),
+          ),
+        ],
         if (escrow > 0) ...[
           const SizedBox(height: 2),
           Text(

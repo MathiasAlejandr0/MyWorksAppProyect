@@ -2555,6 +2555,24 @@ export type Database = {
       }
     }
     Views: {
+      cobros_profesional: {
+        Row: {
+          bruto_clp: number | null
+          comision_clp: number | null
+          creado_en: string | null
+          estado_pago: string | null
+          estado_transferencia: string | null
+          id_pago: string | null
+          id_trabajador: string | null
+          id_trabajo: string | null
+          liberado_en: string | null
+          liquidado_en: string | null
+          neto_clp: number | null
+          referencia_transferencia: string | null
+          tipo_pago: string | null
+        }
+        Relationships: []
+      }
       encuestas_testing_con_puntaje: {
         Row: {
           creado_en: string | null

@@ -15,8 +15,8 @@ export async function fetchBusinessPeriod(
 ): Promise<BusinessPeriodSummary> {
   const [payments, jobs, ratings] = await Promise.all([
     supabase
-      .from('pagos')
-      .select('monto, estado, creado_en')
+      .from('cobros_profesional')
+      .select('bruto_clp, comision_clp, estado_pago, creado_en')
       .gte('creado_en', fromIso)
       .lte('creado_en', toIso)
       .limit(2000),
@@ -42,10 +42,18 @@ export async function fetchBusinessPeriod(
     fromIso,
     toIso,
     commissionRate: PLATFORM_COMMISSION_RATE,
-    payments: ((payments.data ?? []) as { monto: number; estado: string; creado_en: string }[]).map(
+    payments: (
+      (payments.data ?? []) as {
+        bruto_clp: number;
+        comision_clp: number;
+        estado_pago: string;
+        creado_en: string;
+      }[]
+    ).map(
       (row): PeriodPayment => ({
-        amount: Number(row.monto) || 0,
-        status: row.estado,
+        amount: Number(row.bruto_clp) || 0,
+        fee: Number(row.comision_clp) || 0,
+        status: row.estado_pago,
         createdAt: row.creado_en,
       }),
     ),
