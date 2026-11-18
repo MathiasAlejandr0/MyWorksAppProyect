@@ -22,6 +22,11 @@ WorkerModel _worker() => WorkerModel.fromMap({
       'calificacion': 4.7,
       'tarifa_visita': 25000,
       'categoria_servicio': ServiceCategories.assembly,
+      'trabajador_precios': [
+        {'codigo': 'small_furniture', 'monto_clp': 25000},
+        {'codigo': 'medium_furniture', 'monto_clp': 45000},
+        {'codigo': 'large_furniture', 'monto_clp': 75000},
+      ],
     });
 
 void main() {

@@ -66,6 +66,8 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
     super.initState();
 
     _selectedId = widget.initialOptionId;
+    // Sin variantes publicadas, los servicios extra se muestran de inmediato.
+    _showCustomServices = _catalogOptions.isEmpty;
 
   }
 
@@ -311,6 +313,11 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
         const SizedBox(height: 12),
 
         ..._catalogOptions.map(_optionCard),
+        if (_catalogOptions.isEmpty && customOptions.isEmpty)
+          Text(
+            'Este profesional todavía no publica tarifas. Elige otro profesional.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
 
         if (customOptions.isNotEmpty) ...[
 
