@@ -162,53 +162,107 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xl - 4,
-                  0,
-                  AppSpacing.xl - 4,
-                  AppSpacing.xl - 4,
+              OnboardingNavBar(
+                isFirst: _currentPage == 0,
+                isLast: _currentPage == _pages.length - 1,
+                onPrevious: () => _pageController.previousPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
                 ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 88,
-                      child: _currentPage > 0
-                          ? TextButton(
-                              onPressed: () => _pageController.previousPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              ),
-                              child: const Text(
-                                'Anterior',
-                                style: TextStyle(
-                                  color: AppColors.grayMedium,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            )
-                          : null,
-                    ),
-                    Expanded(
-                      child: BrandPrimaryButton(
-                        label: _currentPage == _pages.length - 1
-                            ? 'Comenzar'
-                            : 'Siguiente',
-                        onPressed: _currentPage == _pages.length - 1
-                            ? _completeOnboarding
-                            : () => _pageController.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                ),
-                      ),
-                    ),
-                    const SizedBox(width: 88),
-                  ],
+                onNext: () => _pageController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
                 ),
+                onFinish: _completeOnboarding,
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Barra inferior del onboarding: «Anterior» · botón principal · espacio simétrico.
+///
+/// Las columnas laterales se adaptan al ancho disponible (entre 76 y 112 dp) y
+/// «Anterior» se reduce con [FittedBox] si el texto o la escala de fuente del
+/// sistema no caben, de modo que nunca se parte en dos líneas.
+class OnboardingNavBar extends StatelessWidget {
+  const OnboardingNavBar({
+    super.key,
+    required this.isFirst,
+    required this.isLast,
+    required this.onPrevious,
+    required this.onNext,
+    required this.onFinish,
+  });
+
+  final bool isFirst;
+  final bool isLast;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final VoidCallback onFinish;
+
+  static const double _minSide = 76;
+  static const double _maxSide = 112;
+
+  /// Ancho de cada columna lateral para un ancho útil dado.
+  @visibleForTesting
+  static double sideWidthFor(double availableWidth) =>
+      (availableWidth * 0.27).clamp(_minSide, _maxSide).toDouble();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl - 4,
+        0,
+        AppSpacing.xl - 4,
+        AppSpacing.xl - 4,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final side = sideWidthFor(constraints.maxWidth);
+          return Row(
+            children: [
+              SizedBox(
+                width: side,
+                child: isFirst
+                    ? null
+                    : TextButton(
+                        onPressed: onPrevious,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.md,
+                          ),
+                          minimumSize: const Size(0, 48),
+                        ),
+                        child: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Anterior',
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              color: AppColors.grayMedium,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
+              Expanded(
+                child: BrandPrimaryButton(
+                  label: isLast ? 'Comenzar' : 'Siguiente',
+                  onPressed: isLast ? onFinish : onNext,
+                ),
+              ),
+              SizedBox(width: side),
+            ],
+          );
+        },
       ),
     );
   }
