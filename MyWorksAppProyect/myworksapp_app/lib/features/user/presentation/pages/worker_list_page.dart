@@ -645,12 +645,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Disponible ahora'),
-          subtitle: const Text(
-            'Respeta el horario semanal si el profesional lo activó',
-          ),
+        WorkerListAvailableNowTile(
           value: _onlyNow,
           onChanged: (value) {
             setState(() => _onlyNow = value);

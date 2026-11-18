@@ -466,21 +466,25 @@ class _WorkerSearchMapState extends State<WorkerSearchMap> {
                     ),
                   ),
                 ),
-              Positioned(
-                top: 10,
-                left: 10,
-                right: compact ? 48 : 10,
-                child: _MapChip(text: _badgeText()),
-              ),
-              if (!compact)
-                const Positioned(
+              if (compact)
+                Positioned(
                   top: 10,
-                  right: 10,
-                  child: _MapLegend(),
+                  left: 10,
+                  right: 48,
+                  child: _MapChip(text: _badgeText()),
+                )
+              else
+                // Contador y leyenda apilados (no lado a lado) y con espacio
+                // reservado a la derecha para el zoom: así nunca se solapan.
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  right: 56,
+                  child: WorkerMapOverlayHeader(text: _badgeText()),
                 ),
               Positioned(
                 right: 10,
-                top: compact ? 48 : 52,
+                top: compact ? 48 : 10,
                 child: _ZoomControls(
                   onIn: () => _zoomBy(1),
                   onOut: () => _zoomBy(-1),
@@ -695,6 +699,7 @@ class _MapLocationBar extends StatelessWidget {
                   onPressed: locatingAddress ? null : onSearch,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.brandOrange,
+                    minimumSize: const Size(0, 36),
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
@@ -841,6 +846,26 @@ class _SelectedWorkerCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Cabecera del mapa: contador («3 en el mapa · …») y, debajo, la leyenda.
+class WorkerMapOverlayHeader extends StatelessWidget {
+  const WorkerMapOverlayHeader({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _MapChip(text: text),
+        const SizedBox(height: 6),
+        const _MapLegend(),
+      ],
     );
   }
 }

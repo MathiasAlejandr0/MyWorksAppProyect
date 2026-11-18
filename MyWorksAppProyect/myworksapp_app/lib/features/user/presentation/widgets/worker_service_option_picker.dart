@@ -100,6 +100,10 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
     );
 
     final selected = _selectedId == option.id;
+    final palette = OptionCardPalette.of(
+      Theme.of(context).brightness,
+      selected: selected,
+    );
 
 
 
@@ -109,7 +113,7 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
 
       child: Material(
 
-        color: selected ? AppColors.brandOrangeSoft : AppColors.grayLight,
+        color: palette.background,
 
         borderRadius: BorderRadius.circular(12),
 
@@ -151,7 +155,7 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
 
               children: [
 
-                Icon(option.icon, color: AppColors.brandNavy),
+                Icon(option.icon, color: palette.icon),
 
                 const SizedBox(width: 12),
 
@@ -173,7 +177,10 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
 
                             .titleSmall
 
-                            ?.copyWith(fontWeight: FontWeight.w600),
+                            ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: palette.title,
+                            ),
 
                       ),
 
@@ -187,7 +194,7 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
 
                             .bodySmall
 
-                            ?.copyWith(color: AppColors.grayMedium),
+                            ?.copyWith(color: palette.subtitle),
 
                       ),
 
@@ -361,4 +368,40 @@ class _WorkerServiceOptionPickerState extends State<WorkerServiceOptionPicker> {
 
 }
 
+/// Colores de cada tarjeta de variante, según el tema y si está elegida.
+///
+/// El título usa siempre un color con contraste ≥ 4.5:1 sobre el fondo de la
+/// tarjeta (en tema oscuro el texto del tema es blanco, pero el fondo claro
+/// `grayLight` lo volvía ilegible).
+class OptionCardPalette {
+  const OptionCardPalette({
+    required this.background,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
 
+  final Color background;
+  final Color title;
+  final Color subtitle;
+  final Color icon;
+
+  factory OptionCardPalette.of(Brightness brightness, {required bool selected}) {
+    final dark = brightness == Brightness.dark;
+    if (dark) {
+      return OptionCardPalette(
+        background:
+            selected ? AppColors.brandOrangeSoft : AppColors.surfaceDarkElevated,
+        title: AppColors.white,
+        subtitle: AppColors.onCanvasMuted(Brightness.dark),
+        icon: AppColors.white,
+      );
+    }
+    return OptionCardPalette(
+      background: selected ? AppColors.brandOrangeSoft : AppColors.grayLight,
+      title: AppColors.textPrimary,
+      subtitle: const Color(0xFF55555B),
+      icon: AppColors.brandNavy,
+    );
+  }
+}
