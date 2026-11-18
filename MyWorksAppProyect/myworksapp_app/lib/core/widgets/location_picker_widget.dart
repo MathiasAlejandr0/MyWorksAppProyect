@@ -301,30 +301,18 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
   @override
   Widget build(BuildContext context) {
     final hasCoords = _latitude != null && _longitude != null;
+    final status = _hasError
+        ? LocationStatus.error
+        : _isLoading
+            ? LocationStatus.loading
+            : LocationStatus.ready;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _hasError
-            ? Colors.red.shade50
-            : _isLoading
-                ? AppColors.brandBlueSoft
-                : AppColors.brandOrangeSoft,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _hasError
-              ? Colors.red.shade300
-              : _isLoading
-                  ? AppColors.brandTeal.withValues(alpha: 0.35)
-                  : AppColors.brandOrange.withValues(alpha: 0.45),
-          width: 1.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (hasCoords && !_hasError) ...[
-            JobLocationMap(
+    return LocationStatusCard(
+      status: status,
+      address: _currentAddress,
+      hasCoords: hasCoords,
+      preview: hasCoords && !_hasError
+          ? JobLocationMap(
               latitude: _latitude!,
               longitude: _longitude!,
               // Vista estática: un mapa interactivo dentro del scroll congela
@@ -332,23 +320,113 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
               mode: JobMapDisplayMode.preview,
               height: 120,
               onTap: _pickOnMap,
-            ),
+            )
+          : null,
+      onPickOnMap: _pickOnMap,
+      onEditAddress: _editAddress,
+      onRefresh: _getCurrentLocation,
+    );
+  }
+}
+
+enum LocationStatus { loading, ready, error }
+
+/// Colores de la tarjeta de ubicación según estado y tema.
+///
+/// Todos los textos tienen contraste ≥ 4.5:1 sobre el fondo de la tarjeta
+/// (compuesto sobre el fondo de pantalla), en tema claro y oscuro.
+class LocationCardPalette {
+  const LocationCardPalette({
+    required this.background,
+    required this.border,
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.hint,
+  });
+
+  final Color background;
+  final Color border;
+  final Color icon;
+  final Color title;
+  final Color body;
+  final Color hint;
+
+  factory LocationCardPalette.of(Brightness brightness, LocationStatus status) {
+    final dark = brightness == Brightness.dark;
+    if (status == LocationStatus.error) {
+      return LocationCardPalette(
+        background: dark ? const Color(0x2EFF5A52) : Colors.red.shade50,
+        border: dark ? const Color(0x80FF8A80) : Colors.red.shade300,
+        icon: dark ? const Color(0xFFFF8A80) : Colors.red.shade700,
+        title: dark ? const Color(0xFFFFB4AB) : Colors.red.shade900,
+        body: dark ? AppColors.white : AppColors.textPrimary,
+        hint: dark ? AppColors.onCanvasMuted(Brightness.dark) : const Color(0xFF55555B),
+      );
+    }
+    final loading = status == LocationStatus.loading;
+    return LocationCardPalette(
+      background: AppColors.brandOrangeSoft,
+      border: AppColors.brandOrange.withValues(alpha: loading ? 0.35 : 0.45),
+      icon: dark ? AppColors.brandOrange : const Color(0xFFC2410C),
+      title: dark ? AppColors.white : AppColors.textPrimary,
+      body: dark ? AppColors.white : AppColors.textPrimary,
+      hint: dark ? AppColors.onCanvasMuted(Brightness.dark) : const Color(0xFF55555B),
+    );
+  }
+}
+
+/// Tarjeta de estado de la ubicación del cliente (detectando, lista o error).
+class LocationStatusCard extends StatelessWidget {
+  const LocationStatusCard({
+    super.key,
+    required this.status,
+    required this.address,
+    required this.hasCoords,
+    this.preview,
+    this.onPickOnMap,
+    this.onEditAddress,
+    this.onRefresh,
+  });
+
+  final LocationStatus status;
+  final String address;
+  final bool hasCoords;
+  final Widget? preview;
+  final VoidCallback? onPickOnMap;
+  final VoidCallback? onEditAddress;
+  final VoidCallback? onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasError = status == LocationStatus.error;
+    final isLoading = status == LocationStatus.loading;
+    final palette = LocationCardPalette.of(Theme.of(context).brightness, status);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: palette.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: palette.border, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (preview != null) ...[
+            preview!,
             const SizedBox(height: 12),
           ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                _hasError
+                hasError
                     ? Icons.error_outline
-                    : _isLoading
+                    : isLoading
                         ? Icons.my_location
                         : Icons.check_circle,
-                color: _hasError
-                    ? Colors.red
-                    : _isLoading
-                        ? AppColors.brandTeal
-                        : AppColors.brandOrange,
+                color: palette.icon,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -357,75 +435,81 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _hasError
+                      hasError
                           ? 'Error de ubicación'
-                          : _isLoading
+                          : isLoading
                               ? 'Detectando ubicación'
                               : 'Ubicación detectada',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: _hasError
-                                ? Colors.red.shade700
-                                : _isLoading
-                                    ? AppColors.brandNavy
-                                    : AppColors.brandOrange,
+                            color: palette.title,
                           ),
                     ),
                     const SizedBox(height: 4),
-                    _isLoading
-                        ? const Row(
+                    isLoading
+                        ? Row(
                             children: [
                               SizedBox(
                                 width: 16,
                                 height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: palette.icon,
+                                ),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               Expanded(
-                                child: Text('Obteniendo tu ubicación GPS...'),
+                                child: Text(
+                                  'Obteniendo tu ubicación GPS...',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(color: palette.body),
+                                ),
                               ),
                             ],
                           )
                         : Text(
-                            _currentAddress,
+                            address,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.w500,
+                                  color: palette.body,
                                 ),
                           ),
                   ],
                 ),
               ),
-              if (!_isLoading)
+              if (!isLoading)
                 IconButton(
                   icon: const Icon(Icons.map_outlined),
-                  onPressed: _pickOnMap,
+                  onPressed: onPickOnMap,
                   tooltip: 'Marcar en el mapa',
                   color: AppColors.brandOrange,
                 ),
-              if (!_isLoading)
+              if (!isLoading)
                 IconButton(
                   icon: const Icon(Icons.edit_location_alt_outlined),
-                  onPressed: _editAddress,
+                  onPressed: onEditAddress,
                   tooltip: 'Editar dirección',
                   color: AppColors.brandOrange,
                 ),
-              if (_hasError || (!_isLoading && !_hasError))
+              if (!isLoading)
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: _getCurrentLocation,
+                  onPressed: onRefresh,
                   tooltip: 'Actualizar ubicación',
                   color: AppColors.brandOrange,
                 ),
             ],
           ),
-          if (!_isLoading && !_hasError) ...[
+          if (!isLoading && !hasError) ...[
             const SizedBox(height: 8),
             Text(
               hasCoords
                   ? 'Toca el mapa o arrastra el pin azul. También puedes usar GPS o una dirección escrita.'
                   : 'Esperando coordenadas GPS...',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.grayMedium,
+                    color: palette.hint,
                     fontStyle: FontStyle.italic,
                   ),
             ),
