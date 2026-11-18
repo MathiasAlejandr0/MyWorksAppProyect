@@ -109,7 +109,7 @@ El matching usa la base del profesional: fuera del radio no entra, y la distanci
 | Pantalla | Antes | Después | Por qué |
 |---|---|---|---|
 | Login y MFA | terminada | terminada | Solo entra `administrador`. |
-| Panel ejecutivo | falta pulir | terminada | GMV, comisión 15%, completados, ticket y CSAT por 24 h / 7 / 30 / 90 días. En cero dice «sin cobros» o «sin calificaciones». |
+| Panel ejecutivo | falta pulir | terminada | GMV, comisión (5 % por pago, mínimo $1.000), completados, ticket y CSAT por 24 h / 7 / 30 / 90 días. En cero dice «sin cobros» o «sin calificaciones». |
 | Trabajadores del panel | incompleta | terminada | La columna «precio» mostraba «verificado» si tenía tarifas. Ahora muestra la visita en pesos y la verificación, con aprobar o rechazar. |
 | Soporte y disputas | terminada | terminada | Lista disputas reales y permite cerrarlas. |
 | DevSecOps | placeholder | falta pulir | El runner decía 28/28 y un usuario `researcher@myworks.edu`. Ahora mide la latencia real y deja claro que las suites corren en CI. No ejecuta las pruebas. |
@@ -137,7 +137,7 @@ El matching usa la base del profesional: fuera del radio no entra, y la distanci
 | Disputas | Puede abrirlas | Las ve | Las cierra en soporte | Hecho |
 | Calificaciones e historial | App | App | — | Hecho |
 | Perfil | App y web | App | Escritorio | Hecho |
-| Métricas | — | Estadísticas propias | GMV, comisión, ticket, CSAT y completados por período | Hecho. La comisión es 15% sobre el GMV cobrado o retenido. |
+| Métricas | — | Estadísticas propias | GMV, comisión, ticket, CSAT y completados por período | Hecho. La comisión es la de cada pago cobrado o retenido (5 %, mínimo $1.000), tomada de la vista `cobros_profesional`. |
 
 Quién usa qué: el **cliente** usa la web para buscar y pagar, y la app para el ciclo completo. El **especialista** usa la app. El **admin** opera en el escritorio; el admin del teléfono es un complemento, no el back-office.
 

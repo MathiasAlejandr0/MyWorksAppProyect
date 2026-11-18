@@ -92,7 +92,7 @@ Las capturas están en `/workspace/mwa_video/screens/` (ver índice al final).
 
 ### 2.4 Pago Webpay (retenido = garantía)
 
-Patrón (README §Dinero): **la app nunca pide ni guarda el número de tarjeta**; se paga en Transbank. El commit deja el pago **`retenido`**; se **libera** al profesional solo con la conformidad del cliente (o por plazo/disputa). Comisión de plataforma **15 %** (`shared/src/metrics/period.ts`).
+Patrón (README §Dinero): **la app nunca pide ni guarda el número de tarjeta**; se paga en Transbank. El commit deja el pago **`retenido`**; se **libera** al profesional solo con la conformidad del cliente (o por plazo/disputa). Comisión del servicio: **5 % por pago, mínimo $1.000**, descontada al profesional; la base la calcula en la vista `cobros_profesional` (bruto, comisión y neto).
 
 **Web con sesión** (`components/PaymentCheckoutModal.tsx`, `web_e2e_09_confirmar_pedido_con_sesion.png`): diálogo **«Confirmar pedido»**, total **«32.000 CLP»**, aviso «El pago queda retenido — El monto queda retenido hasta que recibas el trabajo.», botón **«Continuar a Webpay · CLP 32.000»** («Creando pedido y abriendo Webpay…»). El trabajo se crea recién al pagar.
 **Web sin sesión** (`components/GuestCheckoutForm.tsx`, `web16x9_07_checkout_invitado.png`): «Pedido sin sesión — **Datos para la visita**»: nombre completo, correo, teléfono (+56 9…), dirección del trabajo; verificación anti‑robots Cloudflare Turnstile; botón **«Continuar a Webpay · CLP 32.000»**. Al volver pagado: **«Crea tu contraseña»** para quedar con cuenta.

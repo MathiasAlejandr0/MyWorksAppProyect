@@ -10,6 +10,7 @@ import {
   fetchBusinessPeriod,
   paymentStatusLabel,
   periodRange,
+  PLATFORM_COMMISSION_MIN_CLP,
   PLATFORM_COMMISSION_RATE,
   type BusinessPeriodSummary,
   pluralize,
@@ -72,7 +73,7 @@ export function ExecutivePeriodPanel({ activeJobs }: { activeJobs: number }) {
     {
       label: 'Comisión',
       value: summary ? clp(summary.commission) : '—',
-      trend: `${Math.round(PLATFORM_COMMISSION_RATE * 100)}% del GMV`,
+      trend: `${Math.round(PLATFORM_COMMISSION_RATE * 100)}% por pago (mín. $${PLATFORM_COMMISSION_MIN_CLP.toLocaleString('es-CL')})`,
       icon: TrendingUp,
     },
     {

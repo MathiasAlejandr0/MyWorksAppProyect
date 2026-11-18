@@ -231,7 +231,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
           targetKey: _earningsKey,
           title: 'Mis cobros',
           description:
-              'Vista demo de pagos en garantía y liberados. En producción se conectará a la pasarela real.',
+              'Lo que recibes neto por los pagos liberados: lo que pagó el cliente menos la comisión del servicio. Lo retenido en garantía se muestra aparte.',
           align: TourTooltipAlign.below,
         ),
         GuidedTourStep(

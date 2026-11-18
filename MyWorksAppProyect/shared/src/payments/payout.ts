@@ -5,7 +5,12 @@ export type PayoutProviderId = 'manual' | 'khipu' | 'fintoc';
 export interface HeldPaymentRow {
   id: string;
   jobId: string;
+  /** Lo que pagó el cliente. */
   amountClp: number;
+  /** Comisión del servicio que se descuenta al profesional. */
+  feeClp: number;
+  /** Lo que se transfiere al profesional. */
+  netClp: number;
   status: string;
   createdAt?: string;
   workerId?: string | null;
@@ -27,43 +32,38 @@ export interface ManualReleaseResult {
   status: string;
 }
 
-/** Pagos retenidos listos para liquidar (admin). */
+/**
+ * Pagos retenidos listos para liquidar (admin), con bruto, comisión y neto
+ * calculados por la base (vista `cobros_profesional`).
+ */
 export async function listHeldPayments(
   supabase: AppSupabase,
 ): Promise<HeldPaymentRow[]> {
   const { data, error } = await supabase
-    .from('pagos')
-    .select('id, id_trabajo, monto, estado, creado_en')
-    .in('estado', ['retenido', 'autorizado'])
+    .from('cobros_profesional')
+    .select('id_pago, id_trabajo, id_trabajador, bruto_clp, comision_clp, neto_clp, estado_pago, creado_en')
+    .in('estado_pago', ['retenido', 'autorizado'])
     .order('creado_en', { ascending: false })
     .limit(100);
 
   if (error) throw new Error(error.message);
 
-  const rows = (data ?? []) as Record<string, unknown>[];
-  const jobIds = [...new Set(rows.map((r) => String(r.id_trabajo)))];
+  return ((data ?? []) as Record<string, unknown>[]).map(toHeldPaymentRow);
+}
 
-  let workerByJob = new Map<string, string | null>();
-  if (jobIds.length > 0) {
-    const { data: jobs } = await supabase
-      .from('trabajos')
-      .select('id, id_trabajador')
-      .in('id', jobIds);
-    workerByJob = new Map(
-      ((jobs ?? []) as { id: string; id_trabajador: string | null }[]).map(
-        (j) => [j.id, j.id_trabajador],
-      ),
-    );
-  }
-
-  return rows.map((r) => ({
-    id: String(r.id),
+export function toHeldPaymentRow(r: Record<string, unknown>): HeldPaymentRow {
+  const gross = Number(r.bruto_clp) || 0;
+  const fee = Number(r.comision_clp) || 0;
+  return {
+    id: String(r.id_pago),
     jobId: String(r.id_trabajo),
-    amountClp: Number(r.monto),
-    status: String(r.estado),
+    amountClp: gross,
+    feeClp: fee,
+    netClp: r.neto_clp == null ? gross - fee : Number(r.neto_clp),
+    status: String(r.estado_pago),
     createdAt: r.creado_en ? String(r.creado_en) : undefined,
-    workerId: workerByJob.get(String(r.id_trabajo)) ?? null,
-  }));
+    workerId: r.id_trabajador ? String(r.id_trabajador) : null,
+  };
 }
 
 export async function listLiquidaciones(
