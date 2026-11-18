@@ -29,6 +29,12 @@ class JobDetailActionsSection extends StatelessWidget {
   /// La página ya cargó la disputa; no se vuelve a pedir en cada build.
   final bool ratingBlockedByDispute;
 
+  /// Ya hay una calificación de quien mira esta pantalla (puesta aquí o en la web).
+  final bool alreadyRated;
+
+  /// Se llama cuando la persona volvió de calificar, para releer el estado.
+  final VoidCallback? onRatingChanged;
+
   const JobDetailActionsSection({
     super.key,
     required this.jobId,
@@ -45,6 +51,8 @@ class JobDetailActionsSection extends StatelessWidget {
     required this.onRequestOvertimeHours,
     required this.onCompleteJob,
     this.ratingBlockedByDispute = false,
+    this.alreadyRated = false,
+    this.onRatingChanged,
   });
 
   @override
@@ -162,7 +170,10 @@ class JobDetailActionsSection extends StatelessWidget {
             ClientReputationCard(clientId: job.userId),
             if (job.status == AppConstants.jobStatusCompleted) ...[
               const SizedBox(height: 8),
-              RateClientButton(jobId: jobId),
+              if (alreadyRated)
+                const _RatedNotice(text: 'Ya calificaste al cliente.')
+              else
+                RateClientButton(jobId: jobId, onSaved: onRatingChanged),
             ],
             const SizedBox(height: 8),
           ],
@@ -172,10 +183,13 @@ class JobDetailActionsSection extends StatelessWidget {
                 'Calificación bloqueada por disputa abierta.',
                 style: TextStyle(color: AppColors.warning),
               )
+            else if (alreadyRated)
+              const _RatedNotice(text: 'Ya calificaste este trabajo.')
             else
               ElevatedButton(
-                onPressed: () {
-                  context.push('${AppConstants.routeRating}/$jobId');
+                onPressed: () async {
+                  await context.push('${AppConstants.routeRating}/$jobId');
+                  onRatingChanged?.call();
                 },
                 child: const Text('Calificar Trabajo'),
               ),
@@ -199,6 +213,29 @@ class JobDetailActionsSection extends StatelessWidget {
           label: Text(isWorker ? 'Volver al panel' : 'Volver al inicio'),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(48),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RatedNotice extends StatelessWidget {
+  const _RatedNotice({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.check_circle, color: AppColors.success, size: 18),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ),
       ],

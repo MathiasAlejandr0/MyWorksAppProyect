@@ -302,7 +302,7 @@ Reglas transversales que impone el servidor:
 
 **Flujo principal**
 1. El sistema muestra los oficios que tienen al menos un profesional disponible y con precio (RPC `categorias_con_disponibles`). Los oficios sin profesionales se ocultan.
-2. El usuario elige un oficio o escribe el problema («plomería»).
+2. El usuario elige un oficio o escribe el problema («plomería»). La búsqueda no distingue mayúsculas ni tildes, en la web y en la app: «electrico» y «Eléctrico» llevan al oficio Electricidad.
 3. El sistema pide la primera página del catálogo (RPC `listar_profesionales_catalogo`, máximo 20 por página, ordenada por `score_listado`, solo profesionales verificados, disponibles y con precios configurados).
 4. El sistema muestra tarjetas con foto, nombre, oficio, nota, número de trabajos, «Desde $X / visita», «Disponible ahora» u «Ocupado» e insignia «Élite».
 5. El sistema dibuja el mapa (OpenFreeMap Positron) con un pin por profesional en su ubicación aproximada.
@@ -381,7 +381,7 @@ Reglas transversales que impone el servidor:
 | **Actor(es)** | Cliente registrado (principal); Transbank Webpay (externo) |
 | **Descripción** | El cliente paga en Transbank. El dinero queda **retenido** y se libera solo con su conformidad (CU-17), por plazo o por una disputa. |
 | **Precondiciones** | Hay un trabajo en `esperando_pago` (CU-07). |
-| **Postcondiciones** | Éxito: el pago queda en `retenido` y el trabajo en `pendiente`, visible para el profesional. Rechazo o cancelación: el pago queda en `anulado` y el trabajo en `cancelado`. |
+| **Postcondiciones** | Éxito: el pago queda en `retenido` y el trabajo en `pendiente`, visible para el profesional. Mientras el trabajo sigue en `esperando_pago`, el profesional no lo ve en sus listas ni en sus contadores. Rechazo o cancelación: el pago queda en `anulado` y el trabajo en `cancelado`. |
 
 **Flujo principal**
 1. El sistema invoca la Edge Function `webpay-create`, que valida el monto contra la tarifa, crea el pago `pendiente` y devuelve una URL firmada de traspaso. El `token_ws` no se entrega al cliente.
@@ -392,7 +392,7 @@ Reglas transversales que impone el servidor:
 6. Se notifica al profesional (CU-24).
 
 **Flujos alternativos / excepciones**
-- 2a. App, Oneclick: el cliente inscribe su tarjeta («Inscribir tarjeta en Transbank») y después confirma con la tarjeta guardada (`oneclick-charge`). La app no guarda el número de tarjeta.
+- 2a. App, Oneclick: el cliente inscribe su tarjeta («Inscribir tarjeta en Transbank») y después confirma con la tarjeta guardada (`oneclick-charge`). La app no guarda el número de tarjeta. Al terminar el paso del banco, `oneclick-return` lleva al cliente a una dirección https del sitio (`?pago=ok` con el seguimiento, o `?pago=fail` / `?tarjeta=fail` con un aviso claro).
 - 2b. El cliente cancela en Webpay: «Pago cancelado. No se realizó ningún cargo.» El pago queda `anulado` y el trabajo `cancelado`.
 - 3a. El retorno se pierde (el cliente cierra el navegador): la reconciliación automática cada 5 min (CU-32) consulta a Transbank y fija el estado.
 - 3b. Nadie paga en 30 min: el pedido `esperando_pago` se cierra solo (CU-32).
@@ -658,6 +658,7 @@ Reglas transversales que impone el servidor:
 
 **Flujos alternativos / excepciones**
 - 1a. Hay una disputa abierta: la calificación queda bloqueada.
+- 1b. La nota ya existe (por ejemplo, se puso desde la web): la app consulta `calificaciones` y en vez del botón muestra «Ya calificaste este trabajo».
 - 4a. Una reseña sospechosa (por ejemplo, un 1 o un 5 con señales de abuso) queda `en_revision` con menor peso de confianza.
 - 4b. El trabajo ya tiene una calificación del cliente: el índice único `calificaciones_trabajo_direccion_uidx` la rechaza y la web muestra la nota ya enviada.
 - 4c. El trabajo no está completado (por ejemplo, cancelado): la política RLS de `calificaciones` rechaza la fila.

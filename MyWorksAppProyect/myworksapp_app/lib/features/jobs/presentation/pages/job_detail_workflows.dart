@@ -708,6 +708,11 @@ extension JobDetailWorkflows on _JobDetailPageState {
               onCompleteJob: () => JobDetailStatusActions(this)._completeJob(),
               ratingBlockedByDispute:
                   DisputeService.isOpenStatus(_dispute?.status),
+              alreadyRated: _alreadyRated,
+              onRatingChanged: () {
+                final job = _job;
+                if (job != null) _loadRatingStatus(job);
+              },
             ),
           ],
         ),
