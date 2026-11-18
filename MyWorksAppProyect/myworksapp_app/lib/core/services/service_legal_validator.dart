@@ -1,8 +1,8 @@
-import 'package:intl/intl.dart';
 
 import '../database/models/service_model.dart';
 import '../database/repositories/service_repository.dart';
 import '../utils/app_logger.dart';
+import '../utils/clp_format.dart';
 /// Validador legal de servicios para Chile
 /// 
 /// Asegura que los servicios cumplan con:
@@ -231,11 +231,7 @@ class ServiceLegalValidator {
   }
 
   static String formatClp(int amount) {
-    return NumberFormat.currency(
-      locale: 'es_CL',
-      symbol: r'$',
-      decimalDigits: 0,
-    ).format(amount);
+    return const ClpFormat().format(amount);
   }
 
   static String paymentNotice({int? chargeAmountClp}) {

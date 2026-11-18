@@ -4,6 +4,7 @@ import '../database/models/job_model.dart';
 import '../domain/price_quote.dart';
 import '../services/job_price.dart';
 import 'santiago_time.dart';
+import 'clp_format.dart';
 
 /// Textos legibles para listas y tarjetas de trabajos.
 class JobDisplayUtils {
@@ -87,11 +88,7 @@ class JobDisplayUtils {
   }
 
   static String _formatClp(int amount) {
-    final formatted = NumberFormat.currency(
-      locale: 'es_CL',
-      symbol: r'$',
-      decimalDigits: 0,
-    ).format(amount);
+    final formatted = const ClpFormat().format(amount);
     return 'Tarifa referencial: $formatted';
   }
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/database/repositories/payout_repository.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
+import '../../../../core/utils/clp_format.dart';
 
 class AdminPayoutsPage extends ConsumerStatefulWidget {
   const AdminPayoutsPage({super.key});
@@ -111,8 +111,8 @@ class _AdminPayoutsPageState extends ConsumerState<AdminPayoutsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final money =
-        NumberFormat.currency(locale: 'es_CL', symbol: r'$', decimalDigits: 0);
+    const money =
+        ClpFormat();
     return Scaffold(
       appBar: AppGradientAppBar(
         title: const Text('Liquidaciones'),

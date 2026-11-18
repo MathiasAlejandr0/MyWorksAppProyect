@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../domain/price_quote.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_decorations.dart';
+import '../utils/clp_format.dart';
 
 /// Desglose de precio calculado (modalidades de cobro).
 class PricingQuoteCard extends StatelessWidget {
@@ -22,7 +22,7 @@ class PricingQuoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currency = NumberFormat.currency(locale: 'es_CL', symbol: '\$', decimalDigits: 0);
+    const currency = ClpFormat();
 
     return Container(
       padding: const EdgeInsets.all(16),

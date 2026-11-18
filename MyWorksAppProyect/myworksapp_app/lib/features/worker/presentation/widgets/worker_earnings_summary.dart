@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/domain/worker_earnings_snapshot.dart';
 import '../../../../core/services/worker_earnings_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
+import '../../../../core/utils/clp_format.dart';
 
 /// Tarjeta de ganancias totales — layout mockup worker-home.
 class WorkerEarningsSummary extends StatefulWidget {
@@ -90,11 +90,7 @@ class WorkerEarningsCard extends StatelessWidget {
   /// bloque de texto para quedar en línea con el botón.
   static const double _minTextWidth = 170;
 
-  static final NumberFormat _currency = NumberFormat.currency(
-    locale: 'es_CL',
-    symbol: r'$',
-    decimalDigits: 0,
-  );
+  static const ClpFormat _currency = ClpFormat();
 
   @override
   Widget build(BuildContext context) {

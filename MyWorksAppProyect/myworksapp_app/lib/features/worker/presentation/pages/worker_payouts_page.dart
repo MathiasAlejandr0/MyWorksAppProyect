@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/database/repositories/payout_repository.dart';
 import '../../../../core/domain/payout_summary.dart';
@@ -8,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../core/utils/clp_format.dart';
 
 class WorkerPayoutsPage extends ConsumerStatefulWidget {
   const WorkerPayoutsPage({super.key});
@@ -119,8 +119,8 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final money =
-        NumberFormat.currency(locale: 'es_CL', symbol: r'$', decimalDigits: 0);
+    const money =
+        ClpFormat();
     final summary = _summary;
     return Scaffold(
       appBar: const AppGradientAppBar(title: Text('Pagos')),
