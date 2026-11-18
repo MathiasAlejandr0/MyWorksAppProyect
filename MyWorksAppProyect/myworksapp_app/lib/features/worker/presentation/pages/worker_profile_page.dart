@@ -28,6 +28,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/domain/worker_custom_service.dart';
 import '../../../../core/domain/worker_service_options_catalog.dart';
 import '../widgets/worker_verification_card.dart';
+import '../../../user/presentation/widgets/testing_feedback_sheet.dart';
 import '../widgets/worker_base_location_card.dart';
 import '../widgets/worker_urban_coverage_card.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
@@ -733,6 +734,13 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
           onTap: () {
             context.push(AppConstants.routeSettings);
           },
+        ),
+        ListTile(
+          leading: const Icon(Icons.rate_review_outlined),
+          title: const Text('Encuesta de la prueba'),
+          subtitle: const Text('Cuéntanos cómo te fue usando MyWorksApp'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => TestingFeedbackSheet.show(context, role: 'profesional'),
         ),
         const Divider(),
         // Cerrar sesión

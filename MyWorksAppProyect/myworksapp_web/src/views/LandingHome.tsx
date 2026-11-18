@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { ArrowRight, Lock, LogOut, Play, Search as SearchIcon, ShieldCheck, UserPlus } from 'lucide-react';
 import { CategoryCard } from '../components/CategoryCard';
 import { BrandLogo } from '../components/BrandLogo';
+import { openTestingSurvey } from '../components/testingSurveyEvents';
 import { categoriesWithPros, jobStatusLabel } from '@myworksapp/shared';
 import {
   ALL_SERVICE_CATEGORIES,
@@ -105,6 +106,10 @@ export function LandingHome({
               Cómo funciona
 
             </a>
+
+            <button type="button" className="nav-link nav-link-btn" onClick={openTestingSurvey}>
+              Encuesta
+            </button>
 
             {!profile && (
 
@@ -577,7 +582,17 @@ export function LandingHome({
 
       </section>
 
-
+      <section className="survey-cta" aria-label="Encuesta de testing">
+        <div className="container survey-cta-inner">
+          <p>
+            <strong>¿Probaste MyWorksApp?</strong> Cuéntanos cómo te fue en 3 minutos. Tu opinión
+            entra al informe de pruebas con usuarios.
+          </p>
+          <button type="button" className="btn-outline-orange" onClick={openTestingSurvey}>
+            Responder la encuesta de testing
+          </button>
+        </div>
+      </section>
 
       </main>
 
