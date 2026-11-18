@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'bootstrap/app_initializer.dart';
 import 'core/providers/theme_mode_provider.dart';
@@ -95,6 +96,9 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
     if (!_isInitialized) {
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
+        locale: AppLocale.primary,
+        supportedLocales: AppLocale.supported,
+        localizationsDelegates: AppLocale.delegates,
         home: Scaffold(
           backgroundColor: AppColors.backgroundDark,
           body: Center(
@@ -117,6 +121,9 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
+      locale: AppLocale.primary,
+      supportedLocales: AppLocale.supported,
+      localizationsDelegates: AppLocale.delegates,
       // Agregar error builder para capturar errores de renderizado
       builder: (context, child) {
         final mediaQuery = AppTextScaling.apply(MediaQuery.of(context));
@@ -131,6 +138,20 @@ class _MyWorksAppState extends ConsumerState<MyWorksApp> {
       },
     );
   }
+}
+
+/// Idioma de la app: español de Chile. Sin estos delegados, el selector de fecha
+/// y de hora sale en inglés (sobre todo en el build web de Flutter).
+class AppLocale {
+  AppLocale._();
+
+  static const Locale primary = Locale('es', 'CL');
+  static const List<Locale> supported = [Locale('es', 'CL'), Locale('es')];
+  static const List<LocalizationsDelegate<dynamic>> delegates = [
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ];
 }
 
 /// Permite bajar listas con rueda, trackpad o arrastre del mouse (Flutter web).

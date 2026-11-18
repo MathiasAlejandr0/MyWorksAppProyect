@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Textos de Material (calendario, reloj, botones) en español.
+  flutter_localizations:
+    sdk: flutter
 
   # UI
   cupertino_icons: ^1.0.6

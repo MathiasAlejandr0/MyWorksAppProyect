@@ -611,6 +611,9 @@ class _MapChip extends StatelessWidget {
 class _ZoomControls extends StatelessWidget {
   const _ZoomControls({required this.onIn, required this.onOut});
 
+  /// El fondo es blanco: sin color propio, el tema oscuro pinta los íconos claros.
+  static const _zoomIconColor = Color(0xFF0F172A);
+
   final VoidCallback onIn;
   final VoidCallback onOut;
 
@@ -626,13 +629,13 @@ class _ZoomControls extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             tooltip: 'Acercar',
             onPressed: onIn,
-            icon: const Icon(Icons.add, size: 18),
+            icon: const Icon(Icons.add, size: 18, color: _zoomIconColor),
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
             tooltip: 'Alejar',
             onPressed: onOut,
-            icon: const Icon(Icons.remove, size: 18),
+            icon: const Icon(Icons.remove, size: 18, color: _zoomIconColor),
           ),
         ],
       ),
