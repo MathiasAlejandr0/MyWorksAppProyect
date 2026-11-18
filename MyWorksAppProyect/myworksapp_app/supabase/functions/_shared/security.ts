@@ -1,4 +1,5 @@
 import { webReturnOrigins } from "./cors_origin.ts";
+import { APP_WEBVIEW_RETURN_ORIGIN } from "./webpay_return.ts";
 
 /** Tickets HMAC de un solo uso para handoff Webpay (sin exponer paymentId crudo). */
 
@@ -137,12 +138,12 @@ export function resolveCallerReturnOrigin(req: Request): string | null {
   return null;
 }
 
-/** Si el pago no guardó origen, integración vuelve a localhost. Producción exige secreto o fila. */
+/** Si el pago no guardó origen, integración vuelve al sitio publicado. Producción exige secreto o fila. */
 export function fallbackWebReturnOrigin(): string {
   const explicit = Deno.env.get("WEBPAY_WEB_RETURN_URL")?.trim();
   if (explicit) return explicit;
   const env = (Deno.env.get("TBK_ENV") || "integration").toLowerCase();
-  if (env === "integration") return "http://localhost:5173/";
+  if (env === "integration") return APP_WEBVIEW_RETURN_ORIGIN;
   throw new Error(
     "origen de retorno ausente. Guarda el Origin del checkout o define WEBPAY_WEB_RETURN_URL.",
   );

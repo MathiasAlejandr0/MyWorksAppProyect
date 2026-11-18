@@ -130,7 +130,7 @@ En la web, el mismo sitio va en `VITE_TURNSTILE_SITE_KEY` al construir. `CORS_AL
 
 Si `TBK_COMMERCE_CODE` y `TBK_API_KEY` no están definidos y `TBK_ENV=integration` (o la variable no está definida), la función usa el comercio público de integración de Transbank (`597055555532`). Oneclick Mall usa `597055555541` y la tienda `597055555542` (la tienda 2 oficial es `597055555543`). En `production`, si falta un secreto, la función falla. No pongas esas claves en la web, el escritorio ni Flutter.
 
-`WEBPAY_WEB_RETURN_URL` no hace falta para la demo. `webpay-create` y `guest-checkout` guardan el Origin del navegador (`http://localhost:5173` o `http://127.0.0.1:5173` en integración, o lo que esté en `WEBPAY_ALLOWED_RETURN_ORIGINS` / `CORS_ALLOWED_ORIGINS`) y `webpay-commit` vuelve ahí.
+`WEBPAY_WEB_RETURN_URL` no hace falta para la demo. `webpay-create` y `guest-checkout` guardan el Origin del navegador (`http://localhost:5173` o `http://127.0.0.1:5173` en integración, o lo que esté en `WEBPAY_ALLOWED_RETURN_ORIGINS` / `CORS_ALLOWED_ORIGINS`) y `webpay-commit` vuelve ahí. `oneclick-return` vuelve al Origin permitido que inició la inscripción; si no hay uno, vuelve a `WEBPAY_WEB_RETURN_URL` (si es https) o a `https://myworksapp-cl.vercel.app/`. Nunca vuelve a `localhost` si el navegador no venía de ahí.
 
 Hay que volver a desplegar las funciones que comparten CORS o el ticket de invitado, y `oneclick-charge` porque el monto sale de la cotización elegida o de la tarifa:
 

@@ -9,24 +9,21 @@ import { serviceClient } from "../_shared/supabase.ts";
 import { tbkOneclickFinish } from "../_shared/tbk.ts";
 
 import { allowedWebReturnOrigins } from "../_shared/security.ts";
-import { APP_WEBVIEW_RETURN_ORIGIN } from "../_shared/webpay_return.ts";
-
-/**
- * La web vuelve al sitio desde donde inició la inscripción (Origin permitido que
- * oneclick-charge deja en la URL de retorno). Sin él, WEBPAY_WEB_RETURN_URL o localhost.
- */
-function returnBase(fromApp: boolean, webOrigin: string): string {
-  if (fromApp) return APP_WEBVIEW_RETURN_ORIGIN;
-  if (webOrigin && allowedWebReturnOrigins().includes(webOrigin)) {
-    return `${webOrigin}/`;
-  }
-  return Deno.env.get("WEBPAY_WEB_RETURN_URL") || "http://localhost:5173/";
-}
+import { oneclickReturnBase } from "../_shared/oneclick_return_base.ts";
 
 type Dest = { fromApp: boolean; webOrigin: string };
 
+function baseFor(dest: Dest): string {
+  return oneclickReturnBase({
+    fromApp: dest.fromApp,
+    webOrigin: dest.webOrigin,
+    allowedOrigins: allowedWebReturnOrigins(),
+    configured: Deno.env.get("WEBPAY_WEB_RETURN_URL"),
+  });
+}
+
 function cardSavedUrl(ok: boolean, dest: Dest): string {
-  const url = new URL(returnBase(dest.fromApp, dest.webOrigin));
+  const url = new URL(baseFor(dest));
   url.searchParams.set("tarjeta", ok ? "ok" : "fail");
   return url.toString();
 }
@@ -36,7 +33,7 @@ function webHome(
   extra: Record<string, string>,
   dest: Dest,
 ): string {
-  const url = new URL(returnBase(dest.fromApp, dest.webOrigin));
+  const url = new URL(baseFor(dest));
   url.searchParams.set("pago", ok ? "ok" : "fail");
   if (ok) url.searchParams.set("tracking", "1");
   for (const [key, value] of Object.entries(extra)) {
