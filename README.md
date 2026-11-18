@@ -17,25 +17,36 @@ La solución propuesta es un **ecosistema comercial** (app móvil, web y panel d
 
 - solicitud y agendamiento de visitas o urgencias;
 - perfiles y roles (cliente, profesional, administración);
-- **pago protegido (escrow de negocio)** mediante Transbank Webpay Plus;
+- **pago protegido (escrow de negocio)** mediante Transbank Webpay Plus y Oneclick;
 - seguimiento del trabajo y herramientas operativas para el equipo interno.
 
 El repositorio concentra los **entregables académicos Capstone** en la raíz y el **monorepo de software** dentro de [`MyWorksAppProyect/`](MyWorksAppProyect/).
 
 ---
 
-## 2. Objetivo general
+## 2. Objetivos
 
-Diseñar, implementar y validar un **MVP multiplataforma** de marketplace de servicios del hogar, con base de datos y autenticación en la nube, pagos en ambiente de integración Transbank y flujos diferenciados para cliente, profesional y administración, en el marco de un proyecto de título profesional en Duoc UC.
+Fuente oficial: informe final [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](Fase%202/Myworksapp_Informe_Final_PTY4614.docx). Indicadores, metas y cumplimiento: [`docs/objetivos.md`](docs/objetivos.md).
+
+**Objetivo general.** Desarrollar y validar, entre agosto y diciembre de 2026, una plataforma multiplataforma (aplicación móvil, sitio web y consola de escritorio) que permita a clientes de Puerto Montt elegir trabajadores de oficio según precio y calificación y contratarlos con pago protegido, de modo que en las pruebas con usuarios al menos el 80 % complete la contratación en menos de 10 minutos y el 100 % de los pagos de prueba quede retenido hasta la conformidad del cliente.
 
 ### Objetivos específicos
 
-1. Definir el problema, alcance y stack tecnológico del proyecto (Fase 1 — definición del proyecto, PTY4614).
-2. Modelar e implementar dominio, autenticación, trabajos y políticas de acceso (Supabase / PostgreSQL / RLS).
-3. Desarrollar interfaces cliente (Flutter + web) y hub operativo (desktop).
-4. Integrar pagos Webpay sin capturar datos de tarjeta en el cliente (Edge Functions).
-5. Documentar operación, riesgos y criterios de paso a producción (runbooks).
-6. Evidenciar el trabajo académico Capstone (fases, guías, presentaciones).
+1. **OE1.** Modelo de datos relacional en Supabase/PostgreSQL, en tercera forma normal y con seguridad a nivel de fila (RLS).
+2. **OE2.** Búsqueda y comparación de profesionales por oficio, comuna, precio y calificación en la app y la web, con el mismo orden: cercanía (bandas de 1 km), calificación y precio.
+3. **OE3.** Pago con Transbank Webpay Plus y Oneclick (ambiente de integración), con el dinero retenido hasta la conformidad del cliente.
+4. **OE4.** Ciclo de vida del trabajo (PIN de inicio, evidencia fotográfica, conformidad y reagendamiento) con una máquina de estados en la base.
+5. **OE5.** Consola de escritorio para verificar profesionales y mediar disputas.
+6. **OE6.** Validación con pruebas automatizadas, de carga y con usuarios (satisfacción y escala SUS).
+
+### Enlaces
+
+| Qué | Dónde |
+|-----|-------|
+| Web publicada | https://myworksapp-cl.vercel.app |
+| Encuesta de prueba con usuarios (SUS) | https://myworksapp-cl.vercel.app/encuesta (en la app: inicio del cliente, «Encuesta de la prueba») |
+| Guía de usuario | [`Fase 2/Guia_de_Usuario_MyWorksApp.pdf`](Fase%202/Guia_de_Usuario_MyWorksApp.pdf) |
+| Demo paso a paso | [`MyWorksAppProyect/DEMO.md`](MyWorksAppProyect/DEMO.md) |
 
 ---
 
@@ -43,7 +54,7 @@ Diseñar, implementar y validar un **MVP multiplataforma** de marketplace de ser
 
 | Actor | Capacidad principal |
 |-------|---------------------|
-| **Cliente** | Buscar oficio, solicitar visita/urgencia, pagar con Webpay, seguir el servicio |
+| **Cliente** | Buscar oficio, solicitar visita/urgencia, pagar con Webpay Plus u Oneclick, seguir el servicio y dar conformidad |
 | **Profesional** | Gestionar trabajos y perfil desde la app móvil |
 | **Administración / soporte** | Operar desde el hub desktop: métricas, disputas, liquidación manual del escrow |
 
@@ -178,9 +189,9 @@ Configurar variables Supabase según `.env.example` de web/desktop y `--dart-def
 |-----------|----------------|
 | Definición / evidencia Fase 1 | Presente en carpetas académicas |
 | MVP técnico multiplataforma | Implementado (`MyWorksAppProyect/`) |
-| Pagos Webpay (integración) | Implementado (Edge + clientes) |
+| Pagos Webpay Plus y Oneclick (integración) | Implementado (Edge + clientes) |
 | Liquidación al profesional | Manual por admin (automatización futura) |
-| Lanzamiento comercial fin de año | Condicionado a empresa, secrets de producción y cierre de pendientes (MFA, E2E vivo, etc.) |
+| Lanzamiento comercial | Condicionado a empresa, credenciales de producción de Transbank y al piloto con usuarios |
 
 ---
 

@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent
 DBML = ROOT / "modelo_entidad_relacion.dbml"
 GEN = ROOT.parent / "MyWorksAppProyect" / "docs" / "_gen_diccionario_docx.py"
 OUT_DIR = ROOT / "figuras"
-INFORME = ROOT / "Myworksapp_Informe_Final - APT.docx"
+INFORME = ROOT / "Myworksapp_Informe_Final_PTY4614.docx"
 PARSER = ROOT / "_gen_anexo_diccionario.py"
 
 GRUPOS = [

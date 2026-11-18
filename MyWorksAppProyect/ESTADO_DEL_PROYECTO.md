@@ -671,7 +671,7 @@ ANEXOS
 | [DEMO.md](DEMO.md) | Anexo: guion de demostración |
 | [INSTALL.md](INSTALL.md) | Anexo: instalación |
 | [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADES_COBRO.md) | Cap. 3: modalidades de cobro |
-| [myworksapp/pubspec.yaml](myworksapp/pubspec.yaml) | Cap. 4: dependencias |
+| [myworksapp_app/pubspec.yaml](myworksapp_app/pubspec.yaml) | Cap. 4: dependencias |
 | **Este archivo** | Cap. 3–4: arquitectura + plantilla del informe |
 
 ---
