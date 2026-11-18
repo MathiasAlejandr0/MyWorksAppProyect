@@ -16,9 +16,11 @@ interface AuthModalProps {
   onClose: () => void;
   /** Correo del invitado, solo cuando el diálogo se abre desde «Ver mi pedido». */
   initialEmail?: string;
+  /** Pestaña con la que abre: «Registrarse» entra directo a crear cuenta. */
+  initialMode?: 'login' | 'register';
 }
 
-export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) {
+export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'login' }: AuthModalProps) {
   const { login, loginWithOAuth, register, sendPasswordReset } = useAuth();
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [resetSent, setResetSent] = useState(false);
@@ -28,6 +30,7 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [resendNote, setResendNote] = useState<string | null>(null);
+  const [confirmationSentTo, setConfirmationSentTo] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState('');
   const wasOpen = useRef(false);
 
@@ -37,11 +40,12 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
       setPassword('');
       setLocalError(null);
       setResendNote(null);
+      setConfirmationSentTo(null);
       setResetSent(false);
-      setMode('login');
+      setMode(initialMode);
     }
     wasOpen.current = open;
-  }, [open, initialEmail]);
+  }, [open, initialEmail, initialMode]);
 
   if (!open) return null;
 
@@ -79,7 +83,12 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
           setLocalError('Confirma que no eres un robot');
           return;
         }
-        await register(name, email, password, captchaToken || undefined);
+        const status = await register(name, email, password, captchaToken || undefined);
+        if (status === 'confirmation_required') {
+          setConfirmationSentTo(email.trim());
+          setPassword('');
+          return;
+        }
       }
       onClose();
     } catch (e) {
@@ -104,6 +113,52 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
           Esta web es solo para <strong>clientes</strong> que buscan un oficio. Los trabajadores usan la app móvil; el equipo interno, el panel de escritorio.
         </p>
 
+        {confirmationSentTo ? (
+          <div className="auth-modal-form" role="status">
+            <p className="auth-modal-success">
+              Creamos tu cuenta. Te enviamos un correo a <strong>{confirmationSentTo}</strong> para confirmarla.
+              Ábrelo y toca el enlace; después inicia sesión. Si no llega, revisa spam.
+            </p>
+            {resendNote ? <p role="status">{resendNote}</p> : null}
+            {localError ? (
+              <div className="auth-modal-error" role="alert">
+                {localError}
+              </div>
+            ) : null}
+            <button
+              type="button"
+              className="auth-modal-switch"
+              disabled={submitting}
+              onClick={() => {
+                setSubmitting(true);
+                setResendNote(null);
+                setLocalError(null);
+                void resendSignupConfirmation(supabase, confirmationSentTo)
+                  .then(() => setResendNote('Te enviamos el correo de nuevo.'))
+                  .catch((e: unknown) => {
+                    setLocalError(e instanceof AuthError ? e.message : 'No se pudo reenviar el correo.');
+                  })
+                  .finally(() => setSubmitting(false));
+              }}
+            >
+              Reenviar correo de confirmación
+            </button>
+            <button
+              type="button"
+              className="btn-primary auth-modal-submit"
+              onClick={() => {
+                setEmail(confirmationSentTo);
+                setConfirmationSentTo(null);
+                setResendNote(null);
+                setLocalError(null);
+                setMode('login');
+              }}
+            >
+              <LogIn size={16} /> Ir a iniciar sesión
+            </button>
+          </div>
+        ) : (
+          <>
         <form onSubmit={handleSubmit} className="auth-modal-form">
           {mode === 'register' && (
             <input
@@ -238,6 +293,8 @@ export function AuthModal({ open, onClose, initialEmail = '' }: AuthModalProps) 
         >
           {mode === 'login' ? '¿No tienes cuenta? Regístrate' : mode === 'forgot' ? 'Volver a iniciar sesión' : '¿Ya tienes cuenta? Inicia sesión'}
         </button>
+          </>
+        )}
       </div>
     </div>
   );

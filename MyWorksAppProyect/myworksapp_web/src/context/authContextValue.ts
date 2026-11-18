@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { OAuthProviderId, Profile } from '@myworksapp/shared';
+import type { OAuthProviderId, Profile, SignUpResult } from '@myworksapp/shared';
 
 export interface AuthContextValue {
   profile: Profile | null;
@@ -7,7 +7,7 @@ export interface AuthContextValue {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   loginWithOAuth: (provider: OAuthProviderId) => Promise<void>;
-  register: (name: string, email: string, password: string, captchaToken?: string) => Promise<void>;
+  register: (name: string, email: string, password: string, captchaToken?: string) => Promise<SignUpResult['status']>;
   logout: () => Promise<void>;
   clearError: () => void;
   /** La sesión viene de un enlace «restablecer contraseña»: hay que pedir la nueva. */

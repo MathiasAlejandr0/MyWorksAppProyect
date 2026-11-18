@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { ArrowRight, Lock, LogOut, Play, Search as SearchIcon, ShieldCheck, UserPlus } from 'lucide-react';
 import { CategoryCard } from '../components/CategoryCard';
 import { BrandLogo } from '../components/BrandLogo';
@@ -57,6 +57,7 @@ export function LandingHome({
   onOpenOrder,
   onCloseOrders,
 }: LandingHomeProps) {
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const featuredCategories = categoriesWithPros(
     FEATURED_CATEGORIES,
     availableCategoryIds,
@@ -113,7 +114,14 @@ export function LandingHome({
 
             {!profile && (
 
-              <button type="button" className="nav-link nav-link-btn" onClick={() => setShowAuth(true)}>
+              <button
+                type="button"
+                className="nav-link nav-link-btn"
+                onClick={() => {
+                  setAuthMode('login');
+                  setShowAuth(true);
+                }}
+              >
 
                 Ingresar
 
@@ -150,10 +158,24 @@ export function LandingHome({
             ) : (
 
               <>
-                <button type="button" className="btn-ghost nav-login-mobile" onClick={() => setShowAuth(true)}>
+                <button
+                  type="button"
+                  className="btn-ghost nav-login-mobile"
+                  onClick={() => {
+                    setAuthMode('login');
+                    setShowAuth(true);
+                  }}
+                >
                   Ingresar
                 </button>
-                <button type="button" className="btn-outline-orange" onClick={() => setShowAuth(true)}>
+                <button
+                  type="button"
+                  className="btn-outline-orange"
+                  onClick={() => {
+                    setAuthMode('register');
+                    setShowAuth(true);
+                  }}
+                >
                   Registrarse
                 </button>
               </>
@@ -600,6 +622,7 @@ export function LandingHome({
         <AuthModal
           open={showAuth}
           initialEmail={authInitialEmail}
+          initialMode={authMode}
           onClose={() => setShowAuth(false)}
         />
       </Suspense>

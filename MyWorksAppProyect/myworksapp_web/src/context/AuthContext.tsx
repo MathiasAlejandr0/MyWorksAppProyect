@@ -120,9 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     captchaToken?: string,
   ) => {
     setError(null);
-    const nextProfile = await signUpUser(supabase, email, password, name, captchaToken);
-    const allowed = await enforceWebClientRole(nextProfile);
+    const result = await signUpUser(supabase, email, password, name, captchaToken);
+    if (result.status === 'confirmation_required') return result.status;
+    const allowed = await enforceWebClientRole(result.profile);
     setProfile(allowed);
+    return result.status;
   }, []);
 
   const sendPasswordReset = useCallback(async (email: string) => {
