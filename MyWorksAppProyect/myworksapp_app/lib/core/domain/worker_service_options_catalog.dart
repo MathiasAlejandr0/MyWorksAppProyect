@@ -354,13 +354,49 @@ class WorkerServiceOptionsCatalog {
     }
   }
 
+  /// Código de la opción «Visita del profesional»: se cobra la tarifa de
+  /// visita (`trabajadores.tarifa_visita`), la misma que cobra la web.
+  static const visitOptionId = 'visita';
+
+  static WorkerServiceOptionDef visitOption() => const WorkerServiceOptionDef(
+        id: visitOptionId,
+        title: 'Visita del profesional',
+        subtitle: 'Diagnóstico y arreglo en terreno con su tarifa de visita',
+        icon: Icons.home_repair_service_outlined,
+        defaultPriceClp: 0,
+      );
+
+  /// El profesional publicó un precio para [option]: una fila en
+  /// `trabajador_precios` (o su tarifa por m² para «Proyecto grande»), un
+  /// servicio extra propio o, para la visita, su tarifa de visita.
+  static bool isPublishedFor(WorkerModel worker, WorkerServiceOptionDef option) {
+    if (option.id == visitOptionId) return worker.visitFee > 0;
+    if (option.isCustom) {
+      return worker.customServices.any((c) => c.id == option.id && c.priceClp > 0);
+    }
+    if (_largeProjectClientOptionIds.contains(option.id)) {
+      final tierId = perSqmTierIdForCategory(worker.serviceCategory);
+      return tierId != null && (worker.pricingTiers[tierId] ?? 0) > 0;
+    }
+    return (worker.pricingTiers[option.id] ?? 0) > 0;
+  }
+
+  /// Opciones que ve el cliente: solo las que el profesional publicó en
+  /// `trabajador_precios`. Si no publicó ninguna variante ni servicio extra,
+  /// se ofrece la visita con su tarifa de visita.
   static List<WorkerServiceOptionDef> clientOptionsFor(WorkerModel worker) {
     final items = <WorkerServiceOptionDef>[
       ...catalogOptionsFor(worker.serviceCategory),
     ];
     final large = largeProjectClientOption(worker.serviceCategory);
     if (large != null) items.add(large);
-    return items;
+    final published =
+        items.where((o) => isPublishedFor(worker, o)).toList(growable: true);
+    final hasCustom = worker.customServices.any((c) => c.priceClp > 0);
+    if (published.isEmpty && !hasCustom && worker.visitFee > 0) {
+      published.add(visitOption());
+    }
+    return published;
   }
 
   static List<WorkerServiceOptionDef> customOptionsFor(WorkerModel worker) =>
@@ -370,6 +406,7 @@ class WorkerServiceOptionsCatalog {
     required WorkerModel worker,
     required WorkerServiceOptionDef option,
   }) {
+    if (option.id == visitOptionId) return worker.visitFee.round();
     if (option.isCustom) {
       for (final custom in worker.customServices) {
         if (custom.id == option.id) return custom.priceClp;
@@ -431,6 +468,7 @@ class WorkerServiceOptionsCatalog {
     WorkerModel worker,
     String optionId,
   ) {
+    if (optionId == visitOptionId) return visitOption();
     if (_largeProjectClientOptionIds.contains(optionId)) {
       return largeProjectClientOption(worker.serviceCategory);
     }

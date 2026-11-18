@@ -3,7 +3,7 @@
 La base viva es `wxqrfcqifkfgawrnqmnj`. Cada versión de
 `supabase_migrations.schema_migrations` tiene su archivo en
 `supabase/migrations/` con el mismo número, y cada archivo tiene su fila en la
-base. Hoy hay 113 versiones en los dos lados (verificado el 17-nov-2026).
+base. Hoy hay 114 versiones en los dos lados (verificado el 18-nov-2026).
 
 Los archivos se ordenan por número. Para un entorno nuevo basta `supabase db push`.
 Para una base que ya tiene el historial no hay nada que reparar.
@@ -62,6 +62,7 @@ archivos llevan ese mismo número.
 | 20261117214528 | `normalizar_liquidaciones_uuid.sql` | `liquidaciones.id_trabajador` e `id_operador` pasan a uuid con FK a `perfiles`; `liberada_por_sistema` marca las liberaciones automáticas. |
 | 20261117214622 | `normalizar_encuesta_respuestas.sql` | `encuesta_testing_respuestas`, función `sus_puntaje`, vista `encuestas_testing_con_puntaje` y RPC `enviar_encuesta_testing`. |
 | 20261117223850 | `quitar_indice_duplicado_servicios.sql` | Quita `servicios_categoria_idx`, que repetía `idx_servicios_categoria`. |
+| 20261118050658 | `invitacion_tarifa_visita.sql` | `monto_esperado_trabajo`: la opción `visita` de una invitación por tarifa cobra `trabajadores.tarifa_visita`; las demás variantes salen de `trabajador_precios` o `trabajador_servicios_extra`. |
 
 ## Dump del esquema
 
