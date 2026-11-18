@@ -7,6 +7,7 @@ import App from './App.tsx'
 import { AuthProvider } from './context/AuthContext.tsx'
 import { queryClient } from './queryClient'
 import { PasswordRecoveryModal } from './components/PasswordRecoveryModal'
+import { TestingSurveyModal } from './components/TestingSurveyModal'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <App />
         <PasswordRecoveryModal />
+        <TestingSurveyModal />
       </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,

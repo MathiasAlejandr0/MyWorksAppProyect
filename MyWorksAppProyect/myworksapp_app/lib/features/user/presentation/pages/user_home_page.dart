@@ -280,7 +280,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                                   onPressed: () =>
                                       TestingFeedbackSheet.show(context),
                                   icon: const Icon(Icons.rate_review_outlined),
-                                  label: const Text('Feedback de la prueba'),
+                                  label: const Text('Encuesta de la prueba'),
                                 ),
                               ),
                               const SizedBox(height: 16),
