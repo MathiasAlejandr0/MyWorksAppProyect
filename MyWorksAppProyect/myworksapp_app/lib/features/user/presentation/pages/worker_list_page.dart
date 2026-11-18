@@ -34,6 +34,7 @@ import '../widgets/worker_search_map.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/search_text.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -104,16 +105,6 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     });
   }
 
-  String _foldSearch(String value) {
-    const from = 'áàäéèëíìïóòöúùünñ';
-    const to = 'aaaeeeiiiooouuunn';
-    var out = value.toLowerCase();
-    for (var i = 0; i < from.length; i++) {
-      out = out.replaceAll(from[i], to[i]);
-    }
-    return out;
-  }
-
   bool _matchesWorkerSearch({
     required String query,
     required String name,
@@ -121,8 +112,8 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   }) {
     final raw = query.trim();
     if (raw.isEmpty) return true;
-    final needle = _foldSearch(raw);
-    final haystack = _foldSearch('$name $profession');
+    final needle = foldSearchText(raw);
+    final haystack = foldSearchText('$name $profession');
     if (haystack.contains(needle)) return true;
     final parts = needle
         .split(RegExp(r'\s+'))
