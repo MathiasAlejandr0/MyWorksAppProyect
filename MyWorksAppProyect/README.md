@@ -7,6 +7,7 @@
 Marketplace de servicios del hogar (cliente + profesional) para Chile, con hub web y escritorio admin.  
 **Estado:** listo para lanzar comercial con Webpay en integración; flip a producción al crear la empresa (ver runbook Transbank).
 
+Web publicada: https://myworksapp-cl.vercel.app · Encuesta de prueba con usuarios (SUS): https://myworksapp-cl.vercel.app/encuesta · Guion de demo: [`DEMO.md`](DEMO.md).  
 Documento técnico de referencia: [`ESTADO_DEL_PROYECTO.md`](ESTADO_DEL_PROYECTO.md).  
 Diccionario de datos: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md).  
 Pruebas de capacidad (k6): [`docs/RUNBOOK_CAPACIDAD_CARGA.md`](docs/RUNBOOK_CAPACIDAD_CARGA.md).  
@@ -68,8 +69,8 @@ Web y desktop reutilizan contratos TypeScript en `shared/` y hablan al mismo bac
 
 ### Dinero (patrón de pagos)
 
-1. El cliente paga en **Transbank Webpay**. My Works App **no** pide ni guarda el número de la tarjeta (en jerga bancaria: **PAN** = *Primary Account Number*, el número largo de la tarjeta).  
-2. El commit deja el pago **`retenido`** (escrow de negocio: la plata queda “congelada” hasta liquidar al profesional).  
+1. El cliente paga en **Transbank Webpay Plus** o con su tarjeta inscrita en **Oneclick**. My Works App **no** pide ni guarda el número de la tarjeta (en jerga bancaria: **PAN** = *Primary Account Number*, el número largo de la tarjeta).  
+2. El commit deja el pago **`retenido`** (escrow de negocio: la plata queda “congelada”). **Recibo conforme** del cliente lo deja **`liberado`**.  
 3. Un administrador registra la liquidación al profesional (`liquidaciones`, hoy transferencia manual).
 
 Detalle: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md) y [`docs/RUNBOOK_TRANSBANK_PRODUCCION.md`](docs/RUNBOOK_TRANSBANK_PRODUCCION.md).

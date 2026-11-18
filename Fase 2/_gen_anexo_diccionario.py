@@ -167,7 +167,7 @@ def entradas(ordered, groups, fks, notas_dbml):
     return items
 
 
-INFORME = ROOT / "Myworksapp_Informe_Final - APT.docx"
+INFORME = ROOT / "Myworksapp_Informe_Final_PTY4614.docx"
 W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 WIDTHS = ("2500", "2100", "4805")
 

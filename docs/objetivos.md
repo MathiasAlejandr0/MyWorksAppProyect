@@ -1,50 +1,55 @@
-# Objetivos del proyecto — My Works App
+# Objetivos del proyecto — MyWorksApp
 
 **Institución:** Duoc UC, sede Puerto Montt · **Asignatura:** Capstone PTY4614
-**Equipo:** Mathias Alejandro Jara Alvarado, Nicolas Chiguay y Gabriel Valderas (según `README.md`, sección Equipo).
-**Estado del documento:** 2026-11-17. Versión del código revisada: `main` en `8b18b3f` (repositorio canónico `nicoussj/Proyecto-Titulo-MyWorksApp`).
+**Equipo:** Mathias Jara Alvarado (Product Owner y Scrum Master), Nicolás Chiguay y Gabriel Valderas.
+**Fuente oficial:** `Fase 2/Myworksapp_Informe_Final_PTY4614.docx`, sección 1.6 «Objetivos» (tabla 2) y capítulo de Resultados (tabla 29). Este documento repite esos objetivos y dice dónde se verifica cada uno en el repositorio.
 
 ## Objetivo general
 
-Desarrollar una plataforma multiplataforma (app móvil Flutter, web React/Vite y consola de escritorio Tauri sobre Supabase) para que una persona pueda elegir a un profesional de oficios según su precio y la calidad de su trabajo, reservar su visita y pagarla de forma segura con Transbank, con tiempos y pagos confiables para el cliente y para el profesional.
+Desarrollar y validar, entre agosto y diciembre de 2026, una plataforma multiplataforma (aplicación móvil, sitio web y consola de escritorio) que permita a clientes de Puerto Montt elegir trabajadores de oficio según precio y calificación y contratarlos con pago protegido, de modo que en las pruebas con usuarios al menos el 80 % complete la contratación en menos de 10 minutos y el 100 % de los pagos de prueba quede retenido hasta la conformidad del cliente.
 
 ## Objetivos específicos
 
-Las rutas que no indican otra cosa son relativas a `MyWorksAppProyect/` (el monorepo de software). `README.md` sin ruta es el de la raíz del repositorio.
+- **OE1.** Diseñar e implementar un modelo de datos relacional en Supabase/PostgreSQL, en tercera forma normal y protegido con seguridad a nivel de fila (RLS), medido por la proporción de tablas con RLS activo y por el resultado de las pruebas de acceso por rol.
+- **OE2.** Implementar en la aplicación móvil y en la web la búsqueda y comparación de profesionales por oficio, comuna, precio y calificación, con orden común en la web y la app por cercanía (en bandas de 1 km), luego calificación y luego precio, medida por el tiempo que tarda un cliente en encontrar y reservar un profesional.
+- **OE3.** Integrar el pago con Transbank Webpay Plus y Oneclick, en ambiente de integración, con retención del dinero en garantía hasta la conformidad del cliente, medido por la proporción de pagos de prueba que siguen correctamente el ciclo retenido → liberado o reembolsado.
+- **OE4.** Implementar el control del ciclo de vida del trabajo (PIN de inicio, evidencia fotográfica, conformidad y reagendamiento) mediante una máquina de estados en la base de datos, medido por la proporción de trabajos cerrados con evidencia y conformidad y por el rechazo de transiciones inválidas.
+- **OE5.** Implementar una consola de escritorio para verificar profesionales y mediar disputas, medida por el número de profesionales verificados en Puerto Montt durante el piloto y por el tiempo de resolución de las disputas.
+- **OE6.** Validar la calidad técnica y la aceptación de la plataforma mediante pruebas automatizadas, de carga y con usuarios, medida por la tasa de pruebas aprobadas, la latencia bajo carga y la satisfacción de los participantes.
 
-Cada objetivo declara qué se mide, la meta y cómo se verifica. Los valores de «Estado actual medido» se obtuvieron el 2026-11-17, salvo que se indique otra fecha, y cada uno dice de dónde sale.
+## Indicadores, metas y verificación
 
-| N° | Objetivo específico | Indicador medible | Meta numérica | Cómo se verifica |
-|----|---------------------|-------------------|---------------|------------------|
-| 1 | Desarrollar un catálogo de búsqueda de profesionales por oficio, zona, precio y calificación, disponible en la app y en la web, para que el cliente compare y elija con información. | Latencia p95 de `listar_profesionales_catalogo` y de `horarios_libres_profesional` con 200 usuarios virtuales simultáneos, y peticiones fallidas. | p95 ≤ 800 ms y 0 peticiones fallidas con 200 usuarios simultáneos. | Prueba de carga k6 `docs/pruebas/k6/mwa_carga.js` (umbral `rpc_catalogo` y `rpc_horarios_libres` p95 < 800 ms), resultados en `docs/pruebas/resultados/`. Pruebas automáticas `shared/src/catalog.test.ts`, `shared/src/geo/distance.test.ts` y `myworksapp_app/test/zone_match_test.dart`. |
-| 2 | Implementar la calificación bidireccional con peso de confianza y un ranking por reputación, para que la calidad real del trabajo ordene el listado después de la cercanía. | Porcentaje de trabajos completados que tienen la calificación del cliente al profesional. | ≥ 90 % de los trabajos completados calificados. | Consulta SQL de solo lectura: trabajos con `estado = 'completado'` que tienen una fila en `calificaciones` con `direccion = 'cliente_a_trabajador'`. Pruebas `myworksapp_app/test/rating_gate_test.dart`, `client_rating_label_test.dart`, `worker_public_stats_test.dart` y `shared/src/repositories/workers.stats.test.ts`. |
-| 3 | Integrar el pago con Transbank Webpay Plus y Oneclick mediante Edge Functions, con el dinero retenido hasta la conformidad del cliente y sin capturar datos de tarjeta, para que el pago sea seguro y cómodo. | Porcentaje de pagos de ambiente `integration` que Transbank autoriza (`autorizado_en` con valor) sobre los iniciados. | ≥ 80 % de los pagos iniciados autorizados por Transbank. | Consulta SQL de solo lectura sobre la tabla `pagos`. Pruebas `shared/src/payments/webpay.test.ts`, `webpay.contract.test.ts`, `oneclick.test.ts`, `checkoutReturn.test.ts`, `myworksapp_app/test/payment_guard_test.dart` y `webpay_return_route_test.dart`. Revisión de columnas de `pagos`: no existe columna para el número de tarjeta. |
-| 4 | Simplificar la reserva con horas libres del profesional y control de agenda, para que el cliente complete su pedido y su pago en pocos minutos y sin horas duplicadas. | Tiempo mediano entre la creación de la intención de pago y su autorización por Transbank; reservas activas del mismo profesional en el mismo minuto. | Mediana ≤ 120 s; 0 reservas activas duplicadas por profesional y minuto. | Consulta SQL de solo lectura (`pagos.creado_en` frente a `pagos.autorizado_en`). El índice único `trabajos_trabajador_minuto_activo_uidx` impide el duplicado. Pruebas `shared/src/jobs/bookingSlot.test.ts`, `shared/src/jobs/reschedule.test.ts`, `shared/src/scheduling/weeklyHours.test.ts`, `myworksapp_app/test/booking_schedule_test.dart` y `reschedule_rules_test.dart`. |
-| 5 | Controlar el ciclo del trabajo con estados válidos, PIN de inicio, ubicación en vivo, cierre conforme y liquidación, para que los tiempos y la liberación del pago sean confiables. | Porcentaje de pagos liberados de ambiente `integration` con su fila de liquidación; transiciones de estado no permitidas aceptadas. | 100 % de los pagos liberados con liquidación; 0 transiciones inválidas en las pruebas. | Consulta SQL de solo lectura que cruza `pagos` y `liquidaciones`. Pruebas `myworksapp_app/test/job_transition_matrix_test.dart`, `job_actor_permission_test.dart`, `service_pin_dialog_logic_test.dart`, `shared/src/jobs/startPin.test.ts` y `shared/src/payments/payout.test.ts`. |
-| 6 | Proteger los datos con roles (cliente, profesional, administrador y soporte) y políticas RLS en toda la base, para que ningún usuario lea ni modifique datos ajenos. | Porcentaje de tablas de `public` con RLS activo y porcentaje de casos de seguridad aplicables que pasan. | 100 % de las tablas con RLS y 100 % de los casos aplicables aprobados (0 fallas). | Consulta a `pg_tables.rowsecurity`. Batería `docs/pruebas/seguridad/pruebas_seguridad.py` (185 casos contra la API real) y `docs/pruebas/seguridad_base_datos.md`. Pruebas `shared/src/security/clientRpcGuard.test.ts` y `myworksapp_desktop/src/authAccess.test.ts`. |
+Las rutas que no indican otra cosa son relativas a `MyWorksAppProyect/`.
 
-## Estado actual medido
+| OE | Indicador | Meta | Cómo se mide | Dónde se verifica en el repositorio |
+|----|-----------|------|--------------|-------------------------------------|
+| OE1 | Tablas con RLS activo; accesos indebidos en las pruebas de acceso por rol. | 100 % de las tablas con RLS; 0 accesos indebidos. | Consulta al catálogo de PostgreSQL (`pg_class`, `pg_policies`), suite de pruebas de RLS y auditoría de la base. | `docs/normalizacion.md`, `docs/DICCIONARIO_BASE_DATOS.md`, `docs/pruebas/seguridad/pruebas_seguridad.py`, `docs/pruebas/seguridad_base_datos.md`, `Fase 2/Auditoria_BD_MyWorksApp.docx`. |
+| OE2 | Tiempo mediano desde abrir la plataforma hasta confirmar la reserva; profesionales del catálogo con tarifa y nota visibles. | Mediana ≤ 5 minutos; 100 % de los profesionales publicados con tarifa y nota visibles. | Prueba con usuarios cronometrada con tareas guiadas, contrastada con las marcas de tiempo de trabajos y pagos; revisión del catálogo público. | RPC `listar_profesionales_catalogo`; `shared/src/catalog.test.ts`, `myworksapp_app/test/catalog_order_test.dart`, `myworksapp_web/e2e/catalog-order.spec.ts`. |
+| OE3 | Pagos de prueba con ciclo correcto; datos de tarjeta almacenados; pedidos pagados con una tarjeta inscrita sin reingresarla. | 100 % con ciclo correcto; 0 datos de tarjeta almacenados; al menos 3 pedidos consecutivos con la misma tarjeta inscrita. | Recorridos de extremo a extremo en vivo; estados y marcas de tiempo de la tabla `pagos` (`autorizado_en`, `liberado_en`, `reembolsado_en`); revisión del esquema. | `shared/src/payments/webpay.test.ts`, `webpay.contract.test.ts`, `oneclick.test.ts`, `checkoutReturn.test.ts`; `docs/RUNBOOK_TRANSBANK_PRODUCCION.md`. |
+| OE4 | Trabajos completados con evidencia y conformidad registradas; transiciones inválidas rechazadas. | 100 % y 100 %. | Pruebas automatizadas de la función `transicionar_trabajo` y consulta a las tablas `trabajos` y `fotos_trabajo`. | `myworksapp_app/test/job_transition_matrix_test.dart`, `shared/src/jobs/startPin.test.ts`, `shared/src/jobs/reschedule.test.ts`, `shared/src/evidence/save.test.ts`. |
+| OE5 | Profesionales verificados y oficios cubiertos en Puerto Montt; tiempo de resolución de disputas. | Al menos 10 profesionales verificados en 5 o más oficios; disputas resueltas en ≤ 48 h. | Estados de verificación (`trabajadores.estado_verificacion` y `verificacion_eventos`) y diferencia entre `creado_en` y `resuelta_en` en la tabla `disputas`. | `myworksapp_desktop/` (consola) y `myworksapp_desktop/src/authAccess.test.ts`. |
+| OE6 | Pruebas automatizadas fallidas; latencia p95 con 200 usuarios virtuales; puntaje Lighthouse; satisfacción (1 a 5) y escala SUS. | 0 fallidas; p95 < 800 ms; Lighthouse ≥ 90; satisfacción ≥ 4,0/5 y SUS ≥ 68, con al menos 5 clientes y 3 profesionales. | Integración continua (GitHub Actions), k6, Lighthouse y la encuesta de prueba con usuarios registrada en la base (`encuestas_testing`, `encuesta_testing_respuestas` y la vista `encuestas_testing_con_puntaje`). | `.github/workflows/`, `docs/pruebas/k6/mwa_carga.js`, `docs/pruebas/prueba_carga_rendimiento.md`; encuesta en la web (`/encuesta`) y en la app (inicio del cliente, «Encuesta de la prueba»). |
 
-| N° | Valor medido | Fecha | Fuente |
-|----|--------------|-------|--------|
-| 1 | Con 200 usuarios simultáneos (perfil pico), p95 de `rpc_catalogo`: 135 ms y de `rpc_horarios_libres`: 135 ms; con 100 usuarios, 140 y 139 ms. En total 55.537 peticiones, 0 fallidas. En la base hay 45 profesionales con `estado_verificacion = 'verificado'`. | Carga: 2026-11-15, versión `b3d944e`. Profesionales: 2026-11-17. | `docs/pruebas/prueba_carga_rendimiento.md` §4.2 (medición ya documentada en el repositorio). Conteo: consulta de solo lectura a Supabase `wxqrfcqifkfgawrnqmnj`. |
-| 2 | 196 de 201 trabajos completados con calificación del cliente: **97,5 %**. La base tiene 196 calificaciones (194 vigentes y 2 en revisión), con puntaje de 2 a 5 y promedio de 4,56. El conteo incluye todos los trabajos de la base, sin separar los de prueba. | 2026-11-17 | Consulta de solo lectura a Supabase `wxqrfcqifkfgawrnqmnj` (`trabajos`, `calificaciones`). |
-| 3 | De 25 pagos de ambiente `integration`, 20 tienen `autorizado_en`: **80,0 %**. Los otros 5 están pendientes (3) o anulados (2). La tabla `pagos` no tiene ninguna columna para el número de tarjeta. | 2026-11-17 | Consulta de solo lectura a `pagos`. Columnas revisadas con `information_schema.columns`. |
-| 4 | Mediana de 43,6 s entre intención y autorización, p90 de 238,4 s y máximo de 610,5 s, sobre 20 pagos autorizados (creados entre 2026-10-19 y 2026-11-17, incluidas pruebas manuales y automáticas). Duplicados por profesional y minuto: no pueden existir por el índice único. | 2026-11-17 | Consulta de solo lectura a `pagos`. Definición del índice en `docs/DICCIONARIO_BASE_DATOS.md`, tabla `trabajos`. |
-| 5 | 5 de 5 pagos liberados de ambiente `integration` tienen liquidación: **100 %**. Las 92 liquidaciones registradas figuran como `transferido`. Pruebas automáticas del módulo compartido: **159 de 159 aprobadas**. | 2026-11-17 | Consulta de solo lectura a `pagos` y `liquidaciones`. Conteo de pruebas: `npm test` en `MyWorksAppProyect/shared`. |
-| 6 | 57 tablas en `public`, 0 sin RLS y 129 políticas. Batería de seguridad: 181 de 181 casos aplicables aprobados (0 fallas, 4 no aplican). | Base: 2026-11-17. Batería: 2026-11-16. | Consulta de solo lectura a `pg_tables` y `pg_policies`. Batería: `docs/pruebas/seguridad_base_datos.md`. |
+## Cumplimiento
 
-### Otras mediciones de la suite de pruebas (2026-11-17)
+Resultados de la tabla 29 del informe final (mediciones al 17-nov-2026).
 
-| Suite | Resultado | Cómo se midió |
-|-------|-----------|---------------|
-| Módulo compartido `MyWorksAppProyect/shared` (incluye las pruebas de Edge Functions de `supabase/functions/_shared`) | 159 aprobadas, 0 fallas | `npm test` ejecutado el 2026-11-17 |
-| Consola de escritorio `MyWorksAppProyect/myworksapp_desktop` | 5 aprobadas, 0 fallas | `npm test` ejecutado el 2026-11-17 |
-| App Flutter `MyWorksAppProyect/myworksapp_app` | CI «Flutter CI» (`flutter analyze` y `flutter test --concurrency=1`) en verde sobre `8b18b3f`. El código tiene 67 archivos `*_test.dart` con 225 declaraciones `test(` o `testWidgets(`. | Estado del workflow en GitHub Actions y conteo de declaraciones en el código. Este conteo no es un resultado de ejecución. |
-| Web `MyWorksAppProyect/myworksapp_web` | 6 archivos de prueba Playwright en `e2e/` | Conteo de archivos. |
+| OE | Resultado medido | Estado |
+|----|------------------|--------|
+| OE1 | 57 de 57 tablas con RLS; 6.077 de 6.077 lecturas anónimas de trabajos negadas bajo carga; auditoría de seguridad de la base del 16-nov-2026 con 181 casos aplicables aprobados y 0 fallas. | Cumplido |
+| OE2 | Búsqueda por oficio y comuna con tarifa y nota visibles en la app y la web publicada. El tiempo de contratación se mide en la prueba con usuarios del piloto. | Implementado; medición en el piloto |
+| OE3 | Retención, liberación, reembolso y disputa con estados correctos en web, app y base en los recorridos en vivo; la plataforma no almacena datos de tarjeta. La tarjeta inscrita en Oneclick sirve para pedidos consecutivos sin reingresarla y se puede reemplazar con «Cambiar tarjeta»; 2 cobros Oneclick autorizados en integración (16-nov-2026). El conteo de 3 pedidos seguidos se registra en el piloto. | Cumplido en integración; conteo en el piloto |
+| OE4 | PIN, evidencia, conformidad y liberación recorridos en vivo; las transiciones se aplican solo mediante la función `transicionar_trabajo` y están cubiertas por pruebas automatizadas. | Cumplido |
+| OE5 | Consola con segundo factor, verificación de profesionales, mediación, liquidación y roles soporte y QA. El número de profesionales verificados del piloto se informa al cierre del piloto. | Implementado; meta del piloto |
+| OE6 | 303 pruebas automatizadas aprobadas y 0 fallidas; p95 de 283 ms con 200 usuarios virtuales (0 de 55.537 peticiones fallidas); Lighthouse 94 (móvil) y 99 (escritorio). La encuesta de satisfacción y SUS está disponible en la plataforma para el piloto. | Técnico cumplido; aceptación en el piloto |
 
-## Notas de medición
+## Estado de la base al 18-nov-2026
 
-- Los pagos sin ambiente registrado (146 de 171 filas de `pagos`) no pasaron por Transbank, porque ninguno tiene `autorizado_en`. Por eso los indicadores 3, 4 y 5 usan solo los 25 pagos de ambiente `integration`.
-- Webpay opera en el ambiente de integración de Transbank, sin cobro comercial real, según `README.md` y `MyWorksAppProyect/docs/RUNBOOK_TRANSBANK_PRODUCCION.md`.
-- Las consultas a Supabase fueron agregados de solo lectura. No se leyeron ni se copiaron datos personales.
+Consulta agregada de solo lectura a Supabase (`wxqrfcqifkfgawrnqmnj`), sin datos personales.
+
+| Dato | Valor |
+|------|-------|
+| Tablas de `public` con RLS | 57 de 57; 129 políticas |
+| Profesionales con `estado_verificacion = 'verificado'` | 45, en 12 oficios (incluye las cuentas de demostración) |
+| Disputas | 2 registradas, 1 resuelta |
+| Respuestas de la encuesta de prueba (SUS) | 0; se responde en https://myworksapp-cl.vercel.app/encuesta |
