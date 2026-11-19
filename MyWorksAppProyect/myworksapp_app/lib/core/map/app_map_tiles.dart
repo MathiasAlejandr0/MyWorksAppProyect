@@ -246,6 +246,15 @@ class MapTileCache {
   }
 }
 
+/// PNG de 1×1 transparente. Una baldosa que falla (400, timeout, sin red)
+/// se pinta vacía en vez de lanzar un error suelto.
+final Uint8List blankMapTilePng = Uint8List.fromList(const <int>[
+  137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1,
+  0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84,
+  120, 218, 99, 252, 207, 192, 80, 15, 0, 4, 133, 1, 128, 132, 169, 140, 33,
+  0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+]);
+
 class _OsmFallbackTiles extends StatelessWidget {
   const _OsmFallbackTiles();
 
@@ -254,7 +263,11 @@ class _OsmFallbackTiles extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TileLayer(
-      urlTemplate: _CachedMapTileProvider.urlTemplate,
+      // En tests no se llama a OpenStreetMap: evita el aviso de política
+      // y el 400 que flutter_map deja sin capturar.
+      urlTemplate: _AppMapStyle._inWidgetTest
+          ? 'https://tiles.myworksapp.test/{z}/{x}/{y}.png'
+          : _CachedMapTileProvider.urlTemplate,
       userAgentPackageName: 'com.myworksapp.myworksapp',
       tileProvider: _provider,
       retinaMode: false,
@@ -280,6 +293,9 @@ class _CachedMapTileProvider extends TileProvider {
   @override
   ImageProvider getImage(TileCoordinates coordinates, TileLayer options) {
     final url = getTileUrl(coordinates, options);
+    if (_AppMapStyle._inWidgetTest) {
+      return _CachedTileImage.memory(url, blankMapTilePng);
+    }
     final cached = MapTileCache.get(url);
     if (cached != null) {
       return _CachedTileImage.memory(url, cached);
@@ -346,9 +362,20 @@ class _CachedTileImage extends ImageProvider<_CachedTileImage> {
   }
 
   Future<Codec> _decode(ImageDecoderCallback decode) async {
-    final bytes = memory ?? await _download();
-    MapTileCache.put(url, bytes);
+    final downloaded = memory == null;
+    final bytes = memory ?? await _downloadOrBlank();
+    if (downloaded && !identical(bytes, blankMapTilePng)) {
+      MapTileCache.put(url, bytes);
+    }
     return decode(await ImmutableBuffer.fromUint8List(bytes));
+  }
+
+  Future<Uint8List> _downloadOrBlank() async {
+    try {
+      return await _download();
+    } catch (_) {
+      return blankMapTilePng;
+    }
   }
 
   Future<Uint8List> _download() async {
