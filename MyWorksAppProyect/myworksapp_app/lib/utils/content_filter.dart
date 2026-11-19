@@ -28,7 +28,7 @@ class ContentFilter {
 
   /// Palabras usadas para sacar la conversación de la app.
   static final RegExp evasionKeywordsPattern = RegExp(
-    r'(?:whats\s*app|w[aá]ts?a+p+|\bwsp\b|guasap|wasap|ll[aá]mame|h[aá]blame\s+al|telegram|\binsta\b|instagram|wa\.me|t\.me|(?:plus|m[aá]s)\s*56)',
+    r'(?:whats\s*app|w[aá]ts?a+p+|\bwsp\b|guasap|wasap|ll[aá]mame|h[aá]blame\s+al|telegram|\binsta\b|instagram|facebook|tiktok|snapchat|\btwitter\b|wa\.me|t\.me|(?:plus|m[aá]s)\s*56)',
     caseSensitive: false,
   );
 

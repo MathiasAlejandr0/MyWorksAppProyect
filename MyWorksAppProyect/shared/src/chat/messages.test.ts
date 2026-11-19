@@ -40,6 +40,8 @@ describe('containsContactData', () => {
       true,
     );
     assert.equal(containsContactData('te paso el wasap'), true);
+    assert.equal(containsContactData('buscame en facebook'), true);
+    assert.equal(containsContactData('subo el avance a tiktok'), true);
   });
 
   it('deja pasar el texto del trabajo', () => {

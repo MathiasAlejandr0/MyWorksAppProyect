@@ -5,7 +5,7 @@ const phonePattern = /(?:^|[^\d])(?:\+?56[\s.\-]*)?[29](?:[\s.\-]?\d){8}(?!\d)/;
 const spelledPhonePattern =
   /(?:cero|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)(?:[\s,\-]+(?:cero|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)){6,}/i;
 const evasionPattern =
-  /whats\s*app|w[aá]ts?a+p+|\bwsp\b|guasap|wasap|ll[aá]mame|h[aá]blame\s+al|telegram|\binsta\b|instagram|wa\.me|t\.me|(?:plus|m[aá]s)\s*56/i;
+  /whats\s*app|w[aá]ts?a+p+|\bwsp\b|guasap|wasap|ll[aá]mame|h[aá]blame\s+al|telegram|\binsta\b|instagram|facebook|tiktok|snapchat|\btwitter\b|wa\.me|t\.me|(?:plus|m[aá]s)\s*56/i;
 const linkPattern = /https?:\/\/|www\.|\b[\w\-]+\.(?:cl|com|net|org)\b/i;
 
 export function containsContactData(text: string): boolean {

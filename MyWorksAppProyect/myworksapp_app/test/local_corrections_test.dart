@@ -39,6 +39,8 @@ void main() {
       expect(ContentFilter.hasSensitiveData('mi sitio es ejemplo.cl'), isTrue);
       expect(ContentFilter.hasSensitiveData('es ana arroba correo.cl'), isTrue);
       expect(ContentFilter.hasSensitiveData('hablame por telegram'), isTrue);
+      expect(ContentFilter.hasSensitiveData('te escribo por facebook'), isTrue);
+      expect(ContentFilter.hasSensitiveData('mi tiktok es oficios'), isTrue);
     });
 
     test('permite texto de trabajo sin datos de contacto', () {
