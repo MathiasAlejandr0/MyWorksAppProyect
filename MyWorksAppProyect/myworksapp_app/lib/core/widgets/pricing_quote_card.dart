@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../domain/price_quote.dart';
+import '../services/pricing_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_decorations.dart';
 import '../utils/clp_format.dart';
@@ -48,13 +49,7 @@ class PricingQuoteCard extends StatelessWidget {
           ],
           const Divider(height: 20),
           if (quote.feeDeductedFromWorker) ...[
-            _row(context, 'Total a pagar ahora', currency.format(quote.totalClp),
-                bold: true, accent: true),
-            const SizedBox(height: 8),
-            _row(context, 'Comisión del servicio',
-                '- ${currency.format(quote.platformFeeClp)}'),
-            _row(context, 'El profesional recibe',
-                currency.format(quote.workerPayoutClp!)),
+            ..._workerChargeRows(context, currency, quote),
           ] else ...[
             _row(context, 'Subtotal', currency.format(quote.subtotalClp)),
             if (quote.platformFeeClp > 0)
@@ -98,6 +93,43 @@ class PricingQuoteCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  List<Widget> _workerChargeRows(
+    BuildContext context,
+    ClpFormat currency,
+    PriceQuote quote,
+  ) {
+    final lines = PricingService.instance.workerChargeLines(quote);
+    return [
+      if (lines.serviceClp != null)
+        _row(
+          context,
+          'Tarifa del servicio',
+          currency.format(lines.serviceClp!),
+        ),
+      if (lines.transportClp > 0)
+        _row(context, 'Traslado', currency.format(lines.transportClp)),
+      if (lines.serviceClp != null) const SizedBox(height: 8),
+      _row(
+        context,
+        'Total a pagar ahora',
+        currency.format(lines.totalClp),
+        bold: true,
+        accent: true,
+      ),
+      const SizedBox(height: 8),
+      _row(
+        context,
+        'Comisión del servicio',
+        '- ${currency.format(lines.feeClp)}',
+      ),
+      _row(
+        context,
+        'El profesional recibe',
+        currency.format(lines.payoutClp),
+      ),
+    ];
   }
 
   Widget _row(

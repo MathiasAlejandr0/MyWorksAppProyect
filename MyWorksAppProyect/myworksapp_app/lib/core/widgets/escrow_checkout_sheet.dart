@@ -342,12 +342,13 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                         : 'Pagar con tarjeta · ${const ClpFormat().format(_quote.totalClp)}',
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: _processing
                   ? null
                   : (kIsWeb ? _enrollCard : _payWithoutSavingCard),
               style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               icon: const Icon(kIsWeb ? Icons.add_card : Icons.account_balance),

@@ -11,13 +11,18 @@ class ClientStartPinCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? AppColors.white : AppColors.textPrimary;
+    final bodyColor = isDark ? const Color(0xFFE6E8EC) : AppColors.textSecondary;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.brandOrange.withValues(alpha: 0.1),
+        color: isDark
+            ? const Color(0xFF243044)
+            : AppColors.brandOrange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.brandOrange.withValues(alpha: 0.45)),
+        border: Border.all(color: AppColors.brandOrange.withValues(alpha: 0.85)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,14 +31,14 @@ class ClientStartPinCard extends StatelessWidget {
             'PIN para iniciar',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.brandNavy,
+                  color: titleColor,
                 ),
           ),
           const SizedBox(height: 6),
           Text(
             'Díselo al profesional cuando llegue. Sin este PIN no puede dejar el trabajo en curso.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.grayMedium,
+                  color: bodyColor,
                   height: 1.35,
                 ),
           ),
@@ -46,7 +51,7 @@ class ClientStartPinCard extends StatelessWidget {
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 8,
-                  color: AppColors.brandNavy,
+                  color: AppColors.brandOrange,
                 ),
               ),
               const Spacer(),

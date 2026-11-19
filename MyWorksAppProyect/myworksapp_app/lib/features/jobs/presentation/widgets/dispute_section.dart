@@ -62,6 +62,7 @@ class DisputeSection extends StatelessWidget {
     }
 
     return Card(
+      margin: const EdgeInsets.only(bottom: 16),
       color: AppColors.brandOrangeSoft,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -104,30 +105,17 @@ class DisputeSection extends StatelessWidget {
                 ),
             ],
             if (onProposeAgreement != null) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  TextButton(
-                    onPressed: () => onProposeAgreement!('aceptar'),
-                    child: const Text('Aceptar entrega'),
-                  ),
-                  TextButton(
-                    onPressed: () => onProposeAgreement!('rehacer'),
-                    child: const Text('Rehacer'),
-                  ),
-                  TextButton(
-                    onPressed: () => onProposeAgreement!('anular'),
-                    child: const Text('Anular'),
-                  ),
-                ],
-              ),
+              const SizedBox(height: 16),
+              _AgreementActions(onPropose: onProposeAgreement!),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () => _openDisputeFlow(context),
               icon: const Icon(Icons.report_problem_outlined),
               label: const Text('Abrir disputa'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
             ),
           ],
         ),
@@ -232,6 +220,7 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
         dispute.status == AppConstants.disputeStatusRefundPending;
 
     return Card(
+      margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -264,24 +253,10 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
                 'Acuerdo pendiente: '
                 '${JobDetailHelpers.agreementTypeLabel(widget.pendingAgreementType)}',
               ),
-            if (isOpen && widget.onProposeAgreement != null)
-              Wrap(
-                spacing: 8,
-                children: [
-                  TextButton(
-                    onPressed: () => widget.onProposeAgreement!('aceptar'),
-                    child: const Text('Aceptar entrega'),
-                  ),
-                  TextButton(
-                    onPressed: () => widget.onProposeAgreement!('rehacer'),
-                    child: const Text('Rehacer'),
-                  ),
-                  TextButton(
-                    onPressed: () => widget.onProposeAgreement!('anular'),
-                    child: const Text('Anular'),
-                  ),
-                ],
-              ),
+            if (isOpen && widget.onProposeAgreement != null) ...[
+              const SizedBox(height: 16),
+              _AgreementActions(onPropose: widget.onProposeAgreement!),
+            ],
             if (isOpen &&
                 widget.onRespondAgreement != null &&
                 widget.pendingAgreementId != null)
@@ -370,6 +345,37 @@ class _DisputeReasonDialog extends StatelessWidget {
             ),
           )
           .toList(),
+    );
+  }
+}
+
+class _AgreementActions extends StatelessWidget {
+  const _AgreementActions({required this.onPropose});
+
+  final ProposeAgreementCallback onPropose;
+
+  @override
+  Widget build(BuildContext context) {
+    const actions = <(String, String)>[
+      ('aceptar', 'Aceptar entrega'),
+      ('rehacer', 'Rehacer'),
+      ('anular', 'Anular'),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < actions.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: () => onPropose(actions[i].$1),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(44),
+              foregroundColor: AppColors.brandOrange,
+            ),
+            child: Text(actions[i].$2),
+          ),
+        ],
+      ],
     );
   }
 }

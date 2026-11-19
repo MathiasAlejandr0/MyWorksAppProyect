@@ -70,6 +70,8 @@ class _NotificationListenerScopeState
       }
     });
 
+    final palette = inAppNoticePalette(Theme.of(context).brightness);
+
     return Stack(
       children: [
         widget.child,
@@ -79,43 +81,58 @@ class _NotificationListenerScopeState
             right: 16,
             top: MediaQuery.paddingOf(context).top + 8,
             child: Material(
-              elevation: 6,
+              elevation: 8,
+              shadowColor: Colors.black54,
               borderRadius: BorderRadius.circular(12),
-              color: AppColors.white,
+              color: palette.background,
               child: InkWell(
                 onTap: () => _openNotification(_latest!),
                 borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: palette.border, width: 1.5),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(14, 10, 4, 10),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.notifications_active,
-                        color: AppColors.brandOrange,
+                        color: palette.icon,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               _latest!.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: palette.title,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _latest!.body,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            if (_latest!.body.trim().isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                _latest!.body,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: palette.body,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
                       IconButton(
                         tooltip: 'Cerrar',
-                        icon: const Icon(Icons.close, size: 20),
+                        icon: Icon(Icons.close, size: 20, color: palette.title),
                         onPressed: () => setState(() => _latest = null),
                       ),
                     ],
@@ -127,4 +144,41 @@ class _NotificationListenerScopeState
       ],
     );
   }
+}
+
+/// Cartel invertido respecto al tema: en oscuro es claro y en claro es oscuro,
+/// para que se separe del fondo y el texto se lea en los dos.
+class InAppNoticePalette {
+  const InAppNoticePalette({
+    required this.background,
+    required this.title,
+    required this.body,
+    required this.icon,
+    required this.border,
+  });
+
+  final Color background;
+  final Color title;
+  final Color body;
+  final Color icon;
+  final Color border;
+}
+
+InAppNoticePalette inAppNoticePalette(Brightness brightness) {
+  if (brightness == Brightness.dark) {
+    return const InAppNoticePalette(
+      background: Color(0xFFF7F5F2),
+      title: Color(0xFF12141A),
+      body: Color(0xFF3A4150),
+      icon: AppColors.brandOrangeDark,
+      border: Color(0xFF00205B),
+    );
+  }
+  return const InAppNoticePalette(
+    background: Color(0xFF00205B),
+    title: Color(0xFFF7F8FA),
+    body: Color(0xFFE4E7EE),
+    icon: AppColors.brandOrange,
+    border: Color(0xFFFF5E03),
+  );
 }
