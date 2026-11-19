@@ -46,11 +46,11 @@ class WorkerScheduleRepository {
       final map = Map<String, dynamic>.from(row as Map);
       final userId = map['id_usuario'] as String?;
       if (userId == null) continue;
+      final dayRows = byUser[userId] ?? const <Map<String, dynamic>>[];
+      final slots = published[userId] ?? const <Map<String, dynamic>>[];
       result[userId] = WeeklySchedule(
         enabled: map['usa_horario'] == true,
-        days: daysFromScheduleRows(
-          _withPublished(byUser[userId] ?? const [], published[userId] ?? const []),
-        ),
+        days: daysFromScheduleRows(_withPublished(dayRows, slots)),
       );
     }
     return result;

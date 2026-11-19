@@ -1,6 +1,6 @@
--- La reserva solo ofrece horas publicadas y rechaza un día apagado
--- aunque el JSON legado todavía traiga esa hora. El solape con otra cita
--- sigue bloqueado por el mismo trigger.
+-- La reserva lee trabajador_horas_publicadas. Un día con activo = false
+-- no se ofrece ni se puede reservar, aunque quede alguna hora publicada.
+-- Dos citas en el mismo minuto siguen chocando.
 
 BEGIN;
 
@@ -15,25 +15,13 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 DECLARE
-  v_slots jsonb;
   v_day date;
   v_end date;
-  v_item jsonb;
+  v_hora text;
   v_ts timestamptz;
   v_dias integer;
 BEGIN
   v_dias := least(greatest(coalesce(p_dias, 14), 1), 21);
-
-  SELECT h.horarios
-  INTO v_slots
-  FROM public.trabajador_horarios h
-  WHERE h.id_usuario = p_id_trabajador
-  ORDER BY jsonb_array_length(coalesce(h.horarios, '[]'::jsonb)) DESC
-  LIMIT 1;
-
-  IF v_slots IS NULL OR jsonb_typeof(v_slots) <> 'array' THEN
-    RETURN;
-  END IF;
 
   v_day := (timezone('America/Santiago', now()))::date;
   v_end := v_day + v_dias;
@@ -41,21 +29,23 @@ BEGIN
   WHILE v_day < v_end LOOP
     IF EXISTS (
       SELECT 1
-      FROM public.trabajador_horarios h
-      WHERE h.id_usuario = p_id_trabajador
-        AND h.dia_semana = extract(isodow FROM v_day)::int
-        AND h.activo IS FALSE
+      FROM public.trabajador_horarios w
+      WHERE w.id_usuario = p_id_trabajador
+        AND w.dia_semana = extract(isodow FROM v_day)::int
+        AND w.activo IS FALSE
     ) THEN
       v_day := v_day + 1;
       CONTINUE;
     END IF;
 
-    FOR v_item IN
-      SELECT elem
-      FROM jsonb_array_elements(v_slots) AS elem
-      WHERE (elem->>'dia')::int = extract(isodow FROM v_day)::int
+    FOR v_hora IN
+      SELECT to_char(h.hora, 'HH24:MI')
+      FROM public.trabajador_horas_publicadas h
+      WHERE h.id_usuario = p_id_trabajador
+        AND h.dia_semana = extract(isodow FROM v_day)::int
+      ORDER BY h.hora
     LOOP
-      v_ts := ((v_day::text || ' ' || (v_item->>'hora'))::timestamp
+      v_ts := ((v_day::text || ' ' || v_hora)::timestamp
                AT TIME ZONE 'America/Santiago');
       IF v_ts > now() AND NOT EXISTS (
         SELECT 1
@@ -88,7 +78,6 @@ DECLARE
   v_local timestamp;
   v_dia integer;
   v_hora text;
-  v_slots jsonb;
   v_publicado boolean := false;
   v_cambia_hora boolean;
   v_pendientes integer;
@@ -140,23 +129,16 @@ BEGIN
       RAISE EXCEPTION 'esa hora ya no esta disponible';
     END IF;
 
-    SELECT h.horarios
-    INTO v_slots
-    FROM public.trabajador_horarios h
-    WHERE h.id_usuario = NEW.id_trabajador
-    ORDER BY jsonb_array_length(coalesce(h.horarios, '[]'::jsonb)) DESC
-    LIMIT 1;
-
     v_local := v_prog AT TIME ZONE 'America/Santiago';
     v_dia := extract(isodow FROM v_local)::int;
     v_hora := to_char(v_local, 'HH24:MI');
 
     SELECT EXISTS (
       SELECT 1
-      FROM jsonb_array_elements(coalesce(v_slots, '[]'::jsonb)) AS elem
-      WHERE jsonb_typeof(elem) = 'object'
-        AND (elem->>'dia')::int = v_dia
-        AND elem->>'hora' = v_hora
+      FROM public.trabajador_horas_publicadas h
+      WHERE h.id_usuario = NEW.id_trabajador
+        AND h.dia_semana = v_dia
+        AND h.hora = v_hora::time
     )
     INTO v_publicado;
 
@@ -166,10 +148,10 @@ BEGIN
 
     IF EXISTS (
       SELECT 1
-      FROM public.trabajador_horarios h
-      WHERE h.id_usuario = NEW.id_trabajador
-        AND h.dia_semana = v_dia
-        AND h.activo IS FALSE
+      FROM public.trabajador_horarios w
+      WHERE w.id_usuario = NEW.id_trabajador
+        AND w.dia_semana = v_dia
+        AND w.activo IS FALSE
     ) THEN
       RAISE EXCEPTION 'esa hora no esta publicada por el profesional';
     END IF;
