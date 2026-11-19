@@ -33,6 +33,26 @@ void main() {
       expect(ErrorHandler.userMessageFor(locked), locked.message);
     });
 
+    test('un segundo cobro y la falta de evidencia se explican en español', () {
+      const duplicate = PostgrestException(
+        message: 'ya hay un cobro en curso para este trabajo',
+        code: 'P0001',
+      );
+      const evidence = PostgrestException(
+        message:
+            'sube al menos una evidencia antes de declarar el trabajo terminado',
+        code: 'P0001',
+      );
+      expect(
+        ErrorHandler.userMessageFor(duplicate),
+        contains('cobro en curso'),
+      );
+      expect(
+        ErrorHandler.userMessageFor(evidence),
+        contains('evidencia'),
+      );
+    });
+
     test('muestra los mensajes de negocio de RAISE EXCEPTION', () {
       const e = PostgrestException(
         message: 'El trabajo queda a más de 30 km del profesional',
@@ -60,7 +80,8 @@ void main() {
       expect(ErrorHandler.userMessageFor(e, fallback: 'X'), 'X');
     });
 
-    test('un hint que dice connection no se muestra como falla de internet', () {
+    test('un hint que dice connection no se muestra como falla de internet',
+        () {
       const e = PostgrestException(
         message: 'permission denied for table trabajadores',
         code: '42501',

@@ -3,6 +3,7 @@ import '../database/repositories/job_repository.dart';
 import '../domain/pricing_constants.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
+import '../utils/error_handler.dart';
 import '../utils/constants.dart';
 import 'job_transition_matrix.dart';
 import 'payment_guard.dart';
@@ -107,7 +108,8 @@ class JobStateMachine {
           actorId: userId,
         );
         if (!hasPermission) {
-          throw AppError.permission('No tienes permiso para realizar esta acción');
+          throw AppError.permission(
+              'No tienes permiso para realizar esta acción');
         }
       }
 
@@ -140,7 +142,8 @@ class JobStateMachine {
           'Trabajo $jobId completado. La liberación del pago ocurre al recibir conforme o al cerrar una disputa.',
         );
       } else if (newStatus == AppConstants.jobStatusCancelled) {
-        AppLogger.i('Trabajo $jobId cancelado; reembolso pedido antes del cambio de estado');
+        AppLogger.i(
+            'Trabajo $jobId cancelado; reembolso pedido antes del cambio de estado');
       }
 
       AppLogger.i(
@@ -151,7 +154,7 @@ class JobStateMachine {
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error en transición de estado', e);
-      throw AppError.database('Error al cambiar estado: ${e.toString()}');
+      throw AppError.validation(ErrorHandler.userMessageFor(e));
     }
   }
 
