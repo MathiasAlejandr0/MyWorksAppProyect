@@ -39,7 +39,7 @@ class RatingModel {
       userId: map['id_usuario'] as String?,
       ratedUserId: map['id_calificado'] as String?,
       direction: (map['direccion'] as String?) ?? 'cliente_a_trabajador',
-      score: map['puntaje'] as int,
+      score: (map['puntaje'] as num?)?.round() ?? 0,
       comment: map['comentario'] as String?,
       createdAt: _parseDate(map['creado_en'] as String),
     );

@@ -25,8 +25,11 @@ class ErrorHandler {
       return AppError(message: error);
     }
 
-    // Mensajes amigables para errores comunes
-    final errorString = error.toString().toLowerCase();
+    // En Postgres el hint a veces dice "connection" aunque el fallo sea de
+    // permisos. Solo el mensaje (o el texto de una excepción de red) decide.
+    final errorString = error is PostgrestException
+        ? error.message.toLowerCase()
+        : error.toString().toLowerCase();
 
     if (errorString.contains('mensaje bloqueado') ||
         errorString.contains('no se permite compartir') ||
@@ -55,8 +58,20 @@ class ErrorHandler {
       );
     }
 
-    if (errorString.contains('network') || errorString.contains('connection')) {
-      return AppError.network('Error de conexión. Verifica tu internet e intenta nuevamente', error);
+    if (errorString.contains('socket') ||
+        errorString.contains('clientexception') ||
+        errorString.contains('failed host lookup') ||
+        errorString.contains('connection closed') ||
+        errorString.contains('connection reset') ||
+        errorString.contains('connection refused') ||
+        errorString.contains('connection abort') ||
+        errorString.contains('connection timed out') ||
+        errorString.contains('network is unreachable') ||
+        errorString.contains('network')) {
+      return AppError.network(
+        'Error de conexión. Verifica tu internet e intenta nuevamente',
+        error,
+      );
     }
 
     if (errorString.contains('timeout')) {

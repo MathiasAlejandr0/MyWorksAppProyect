@@ -60,6 +60,15 @@ void main() {
       expect(ErrorHandler.userMessageFor(e, fallback: 'X'), 'X');
     });
 
+    test('un hint que dice connection no se muestra como falla de internet', () {
+      const e = PostgrestException(
+        message: 'permission denied for table trabajadores',
+        code: '42501',
+        hint: 'Grant the table to the connection role',
+      );
+      expect(ErrorHandler.userMessageFor(e, fallback: 'X'), 'X');
+    });
+
     test('AppError y errores comunes conservan su texto', () {
       expect(
         ErrorHandler.userMessageFor(AppError.validation('Falta la fecha')),

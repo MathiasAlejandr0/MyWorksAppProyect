@@ -94,7 +94,10 @@ class WorkerModel {
     if (raw is! List) return const [];
     return [
       for (final row in raw)
-        if (row is Map && row['id'] is String && row['titulo'] is String)
+        if (row is Map &&
+            row['id'] is String &&
+            row['titulo'] is String &&
+            row['monto_clp'] is num)
           WorkerCustomService(
             id: row['id'] as String,
             title: row['titulo'] as String,
@@ -123,25 +126,38 @@ class WorkerModel {
     return map['categoria_servicio'] as String? ?? 'general';
   }
 
+  /// `disponible` y `precios_configurados` llegan como entero, pero un
+  /// booleano o un numeric no debe tirar abajo toda la ficha.
+  static int _flag(dynamic value) {
+    if (value is bool) return value ? 1 : 0;
+    if (value is num) return value.toInt();
+    return int.tryParse('$value') ?? 0;
+  }
+
   factory WorkerModel.fromMap(Map<String, dynamic> map) {
+    final profession = map['profesion'];
     return WorkerModel(
       userId: map['id_usuario'] as String,
-      profession: map['profesion'] as String,
-      description: map['descripcion'] as String?,
+      profession: profession is String && profession.trim().isNotEmpty
+          ? profession
+          : 'Profesional',
+      description: map['descripcion'] is String ? map['descripcion'] as String : null,
       rating: (map['calificacion'] as num?)?.toDouble() ??
           (map['rating'] as num?)?.toDouble() ??
           0.0,
-      isAvailable: (map['disponible'] as int? ?? 0) == 1,
+      isAvailable: _flag(map['disponible']) == 1,
       visitFee: (map['tarifa_visita'] as num?)?.toDouble() ?? 15000,
       serviceCategory: _parseCategory(map),
       pricingTiers: _parsePricingTiers(map['trabajador_precios']),
       customServices: _parseCustomServices(map['trabajador_servicios_extra']),
-      pricingConfigured: (map['precios_configurados'] as int? ?? 0) == 1,
-      workZone: map['zona_trabajo'] as String?,
+      pricingConfigured: _flag(map['precios_configurados']) == 1,
+      workZone:
+          map['zona_trabajo'] is String ? map['zona_trabajo'] as String : null,
       baseLatitude: (map['latitud_base'] as num?)?.toDouble(),
       baseLongitude: (map['longitud_base'] as num?)?.toDouble(),
       serviceRadiusKm: (map['radio_servicio_km'] as num?)?.toDouble() ?? 7,
-      baseOrigin: map['origen_base'] as String?,
+      baseOrigin:
+          map['origen_base'] is String ? map['origen_base'] as String : null,
       rejectionCount: (map['conteo_rechazos'] as num?)?.toInt() ?? 0,
       listingScore: (map['score_listado'] as num?)?.toDouble(),
       manualPriority: (map['prioridad_manual'] as num?)?.toInt() ?? 0,

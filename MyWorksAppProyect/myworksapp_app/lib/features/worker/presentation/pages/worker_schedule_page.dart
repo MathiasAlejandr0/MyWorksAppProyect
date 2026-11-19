@@ -140,15 +140,25 @@ class _WorkerSchedulePageState extends ConsumerState<WorkerSchedulePage> {
                     day: _schedule.days[i],
                     onChanged: (day) => _replaceDay(i, day),
                   ),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: _saving ? null : _save,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.brandOrange,
-                  ),
-                  child: Text(_saving ? 'Guardando…' : 'Guardar horario'),
-                ),
               ],
+            ),
+      bottomNavigationBar: _loading
+          ? null
+          : Material(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: FilledButton(
+                    onPressed: _saving ? null : _save,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.brandOrange,
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    child: Text(_saving ? 'Guardando…' : 'Guardar horario'),
+                  ),
+                ),
+              ),
             ),
     );
   }

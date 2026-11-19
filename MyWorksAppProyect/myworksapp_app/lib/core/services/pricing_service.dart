@@ -225,6 +225,30 @@ class PricingService {
     return fee < minServiceFeeClp ? minServiceFeeClp : fee;
   }
 
+  /// El mapa muestra la base redondeada (~1 km). El cobro usa la coordenada
+  /// real, así que el total de la pantalla a veces no es el que acepta el
+  /// servidor. Esta copia deja el desglose alineado con ese monto.
+  PriceQuote alignToChargedTotal(PriceQuote quote, int totalClp) {
+    final fee = serviceFeeFor(totalClp);
+    final deducts = quote.feeDeductedFromWorker;
+    return PriceQuote(
+      pricingMode: quote.pricingMode,
+      subtotalClp: totalClp,
+      platformFeeClp: fee,
+      totalClp: totalClp,
+      workerPayoutClp: deducts ? totalClp - fee : quote.workerPayoutClp,
+      currency: quote.currency,
+      breakdown: {
+        ...quote.breakdown,
+        'adjusted_from_clp': quote.totalClp,
+        'service_fee_clp': fee,
+        if (deducts) 'worker_payout_clp': totalClp - fee,
+      },
+      message:
+          'El traslado usa la ubicación real del profesional. La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.',
+    );
+  }
+
   /// Modalidad 3: validar monto de propuesta aceptada.
   ///
   /// El cliente paga el total de la cotización aprobada. La comisión del

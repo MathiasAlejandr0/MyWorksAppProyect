@@ -74,24 +74,61 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
 
     try {
       final worker = await _workerRepository.getWorkerByUserId(widget.workerId);
-      final acceptingJobs = await _workerRepository.isWorkerAcceptingJobs(
-        widget.workerId,
-      );
-      final user = await _userRepository.getPublicProfile(widget.workerId);
-      final portfolio = await _portfolioRepository.getPortfolioByWorkerId(
-        widget.workerId,
-      );
-      final reviews = await _ratingRepository.getWorkerReviewsForProfile(
-        widget.workerId,
-      );
-      final clientLocation = await UserLocationService.instance.resolve();
+      if (worker == null) {
+        if (!mounted) return;
+        setState(() {
+          _error = 'Trabajador no encontrado';
+          _isLoading = false;
+        });
+        return;
+      }
 
-      String? serviceId = widget.serviceId;
-      if (serviceId == null && worker != null) {
-        final services = await _serviceRepository.getServicesByCategory(
-          worker.serviceCategory,
+      // Nombre, reseñas y agenda son extra. Si una consulta de la base falla,
+      // la ficha igual se abre con lo que sí llegó.
+      UserModel? user;
+      try {
+        user = await _userRepository.getPublicProfile(widget.workerId);
+      } catch (_) {}
+      user ??= UserModel.publicCard({
+        'id': worker.userId,
+        'nombre': worker.profession,
+        'rol': 'trabajador',
+      });
+
+      var portfolio = <PortfolioModel>[];
+      try {
+        portfolio = await _portfolioRepository.getPortfolioByWorkerId(
+          widget.workerId,
         );
-        if (services.isNotEmpty) serviceId = services.first.id;
+      } catch (_) {}
+
+      var reviews = <WorkerReviewModel>[];
+      try {
+        reviews = await _ratingRepository.getWorkerReviewsForProfile(
+          widget.workerId,
+        );
+      } catch (_) {}
+
+      UserLocationContext? clientLocation;
+      try {
+        clientLocation = await UserLocationService.instance.resolve();
+      } catch (_) {}
+
+      var acceptingJobs = worker.isAvailable;
+      try {
+        acceptingJobs = await _workerRepository.isWorkerAcceptingJobs(
+          widget.workerId,
+        );
+      } catch (_) {}
+
+      var serviceId = widget.serviceId;
+      if (serviceId == null) {
+        try {
+          final services = await _serviceRepository.getServicesByCategory(
+            worker.serviceCategory,
+          );
+          if (services.isNotEmpty) serviceId = services.first.id;
+        } catch (_) {}
       }
 
       if (!mounted) return;
@@ -108,7 +145,10 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = ErrorHandler.getErrorMessage(e);
+        _error = ErrorHandler.userMessage(
+          e,
+          fallback: 'No se pudo abrir este perfil. Inténtalo de nuevo.',
+        );
         _isLoading = false;
       });
     }

@@ -47,16 +47,41 @@ class UserModel {
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
+    final id = map['id'];
+    if (id is! String || id.isEmpty) {
+      throw const FormatException('Perfil sin id');
+    }
     return UserModel(
-      id: map['id'] as String,
-      name: map['nombre'] as String,
-      email: map['correo'] as String,
-      password: map['password'] as String?,
-      role: map['rol'] as String,
-      accountStatus: (map['estado_cuenta'] as String?) ?? 'activo',
-      profilePhotoPath: map['ruta_foto_perfil'] as String?,
-      createdAt: DateTime.parse(map['creado_en'] as String),
+      id: id,
+      name: _text(map['nombre'], fallback: 'Usuario'),
+      email: _text(map['correo']),
+      password: map['password'] is String ? map['password'] as String : null,
+      role: _text(map['rol'], fallback: 'usuario'),
+      accountStatus: _text(map['estado_cuenta'], fallback: 'activo'),
+      profilePhotoPath: map['ruta_foto_perfil'] is String
+          ? map['ruta_foto_perfil'] as String
+          : null,
+      createdAt: _createdAt(map['creado_en']),
     );
+  }
+
+  /// Correo y fecha pueden venir nulos o con otro tipo. Eso no debe impedir
+  /// entrar: el rol y el nombre alcanzan para abrir la sesión.
+  static String _text(dynamic value, {String fallback = ''}) {
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? fallback : trimmed;
+    }
+    return fallback;
+  }
+
+  static DateTime _createdAt(dynamic value) {
+    if (value is DateTime) return value.toUtc();
+    if (value is String && value.trim().isNotEmpty) {
+      final parsed = DateTime.tryParse(value.trim().replaceFirst(' ', 'T'));
+      if (parsed != null) return parsed.toUtc();
+    }
+    return DateTime.now().toUtc();
   }
 
   UserModel copyWith({

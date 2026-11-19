@@ -91,7 +91,7 @@ class AuthNotifier extends Notifier<AuthState> {
         return false;
       }
 
-      await NotificationRealtimeService.instance.subscribe(user.id);
+      await _subscribeQuietly(user.id);
       unawaited(PushService.instance.register(user.id));
       state = state.copyWith(user: user, isLoading: false);
       return true;
@@ -114,7 +114,7 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final user = await _authService.login(email: email, password: password);
-      await NotificationRealtimeService.instance.subscribe(user.id);
+      await _subscribeQuietly(user.id);
       unawaited(PushService.instance.register(user.id));
       state = state.copyWith(user: user, isLoading: false);
       return true;
@@ -157,7 +157,7 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final user = await _authService.completeOAuthSession();
-      await NotificationRealtimeService.instance.subscribe(user.id);
+      await _subscribeQuietly(user.id);
       unawaited(PushService.instance.register(user.id));
       state = state.copyWith(user: user, isLoading: false);
       return true;
@@ -193,7 +193,7 @@ class AuthNotifier extends Notifier<AuthState> {
         state = state.copyWith(isLoading: false, clearUser: true);
         return false;
       }
-      await NotificationRealtimeService.instance.subscribe(user.id);
+      await _subscribeQuietly(user.id);
       unawaited(PushService.instance.register(user.id));
       state = state.copyWith(user: user, isLoading: false);
       return true;
@@ -262,7 +262,17 @@ class AuthNotifier extends Notifier<AuthState> {
     if (state.user?.id == userId) return;
 
     await loadCurrentUser(userId, silent: true);
-    await NotificationRealtimeService.instance.subscribe(userId);
+    await _subscribeQuietly(userId);
+  }
+
+  /// Los avisos en vivo no pueden bloquear el ingreso. Si el canal falla,
+  /// la cuenta igual queda abierta.
+  Future<void> _subscribeQuietly(String userId) async {
+    try {
+      await NotificationRealtimeService.instance.subscribe(userId);
+    } catch (e, st) {
+      AppLogger.e('Avisos en vivo no disponibles', e, st);
+    }
   }
 
 }

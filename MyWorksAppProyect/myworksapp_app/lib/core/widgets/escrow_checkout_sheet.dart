@@ -2,11 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../domain/charge_mismatch.dart';
 import '../domain/price_quote.dart';
 import '../providers/auth_provider.dart';
 import '../providers/service_providers.dart';
+import '../services/pricing_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/app_error.dart';
+import '../utils/clp_format.dart';
+import '../utils/error_handler.dart';
 import '../utils/transbank_checkout.dart';
 import '../../features/payments/presentation/pages/card_enrollment_page.dart';
 import 'pricing_quote_card.dart';
@@ -65,10 +69,37 @@ class EscrowCheckoutSheet extends ConsumerStatefulWidget {
 
 class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
   bool _processing = false;
+  late PriceQuote _quote;
+  String? _banner;
+
+  @override
+  void initState() {
+    super.initState();
+    _quote = widget.quote;
+  }
 
   String _errorText(Object e) {
     if (e is AppError) return e.message;
-    return 'No se pudo iniciar el pago';
+    return ErrorHandler.userMessage(
+      e,
+      fallback: 'No se pudo iniciar el pago',
+    );
+  }
+
+  /// El aviso va dentro de la hoja. Un SnackBar del scaffold de atrás
+  /// queda tapado hasta que el cliente cierra el cobro.
+  void _fail(Object e) {
+    final text = _errorText(e);
+    final expected = expectedChargeFromMismatch(text);
+    if (expected != null && expected != _quote.totalClp) {
+      setState(() {
+        _quote = PricingService.instance.alignToChargedTotal(_quote, expected);
+        _banner =
+            'El total quedó en ${const ClpFormat().format(expected)} según la tarifa real. Confirma otra vez para pagar.';
+      });
+      return;
+    }
+    setState(() => _banner = text);
   }
 
   Future<void> _openWebpay(
@@ -98,7 +129,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       final session =
           await ref.read(paymentServiceProvider).initiateWebpayPayment(
                 jobId: widget.jobId,
-                amount: widget.quote.totalClp.toDouble(),
+                amount: _quote.totalClp.toDouble(),
                 changeOrderId: widget.changeOrderId,
               );
       final url = session.redirectUrl ?? session.url;
@@ -106,9 +137,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       await _openWebpay(url, paymentId: session.paymentId);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorText(e))),
-      );
+      _fail(e);
     } finally {
       if (mounted) setState(() => _processing = false);
     }
@@ -123,9 +152,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       await _payWithSavedCard(skipWebFallback: true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorText(e))),
-      );
+      _fail(e);
     } finally {
       if (mounted) setState(() => _processing = false);
     }
@@ -142,18 +169,16 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       final user = ref.read(authProvider).user;
       if (user == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Debes iniciar sesión para confirmar el pedido'),
-          ),
-        );
+        setState(() {
+          _banner = 'Debes iniciar sesión para confirmar el pedido';
+        });
         return;
       }
 
       final payments = ref.read(paymentServiceProvider);
       var charge = await payments.chargeSavedCard(
         jobId: widget.jobId,
-        amount: widget.quote.totalClp.toDouble(),
+        amount: _quote.totalClp.toDouble(),
       );
       if (!mounted) return;
       if (charge.needsCard) {
@@ -165,18 +190,15 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
         if (!mounted || !enrolled) return;
         charge = await payments.chargeSavedCard(
           jobId: widget.jobId,
-          amount: widget.quote.totalClp.toDouble(),
+          amount: _quote.totalClp.toDouble(),
         );
       }
       if (!mounted) return;
       if (!charge.charged) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'La tarjeta no quedó lista. Puedes pagar este pedido en Transbank sin guardarla.',
-            ),
-          ),
-        );
+        setState(() {
+          _banner =
+              'La tarjeta no quedó lista. Puedes pagar este pedido en Transbank sin guardarla.';
+        });
         return;
       }
       Navigator.of(context).pop(true);
@@ -186,9 +208,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
         return;
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorText(e))),
-      );
+      _fail(e);
     } finally {
       if (mounted) setState(() => _processing = false);
     }
@@ -215,12 +235,30 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Confirmar pedido',
+              'Cobro con tarjeta',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
+            Text(
+              const ClpFormat().format(_quote.totalClp),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.brandOrange,
+                  ),
+            ),
+            if (widget.serviceName != null || widget.workerName != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                [
+                  if (widget.serviceName != null) widget.serviceName!,
+                  if (widget.workerName != null) widget.workerName!,
+                ].join(' · '),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            const SizedBox(height: 12),
             Material(
               color: AppColors.brandOrange.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
@@ -251,7 +289,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
             ),
             const SizedBox(height: 16),
             PricingQuoteCard(
-              quote: widget.quote,
+              quote: _quote,
               workerName: widget.workerName,
               serviceName: widget.serviceName,
             ),
@@ -261,14 +299,30 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                 enabled: !_processing,
                 onCardRemoved: _enrollCard,
               ),
-            const SizedBox(height: 4),
+            if (_banner != null) ...[
+              Material(
+                color: Theme.of(context).colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Text(
+                    _banner!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             FilledButton.icon(
               onPressed: _processing
                   ? null
                   : (kIsWeb ? _payWithoutSavingCard : _payWithSavedCard),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.brandOrange,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                minimumSize: const Size.fromHeight(52),
               ),
               icon: _processing
                   ? const SizedBox(
@@ -279,13 +333,13 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.lock_outline),
+                  : const Icon(Icons.credit_card),
               label: Text(
                 _processing
                     ? 'Conectando con Transbank…'
                     : kIsWeb
-                        ? 'Pagar ahora en Transbank · \$${widget.quote.totalClp}'
-                        : 'Pagar con tarjeta · \$${widget.quote.totalClp}',
+                        ? 'Pagar ahora · ${const ClpFormat().format(_quote.totalClp)}'
+                        : 'Pagar con tarjeta · ${const ClpFormat().format(_quote.totalClp)}',
               ),
             ),
             const SizedBox(height: 8),
