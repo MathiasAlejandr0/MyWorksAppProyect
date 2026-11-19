@@ -13,6 +13,7 @@ import '../worker_stats_client.dart';
 import '../supabase_db.dart';
 import 'job_repository.dart';
 import 'rating_repository.dart';
+import 'worker_schedule_repository.dart';
 
 class WorkerRepository {
   static const String _table = 'trabajadores';
@@ -37,6 +38,7 @@ class WorkerRepository {
   Future<void> createWorker(WorkerModel worker) async {
     await supabase.from(_table).upsert(worker.toMap());
     await _saveOffer(worker, includeCategory: true);
+    await WorkerScheduleRepository().ensureDefault(userId: worker.userId);
   }
 
   /// Guarda precios, servicios propios y categoría en sus tablas. Lo que ya
