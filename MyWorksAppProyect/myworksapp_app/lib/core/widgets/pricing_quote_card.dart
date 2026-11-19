@@ -1,10 +1,68 @@
 import 'package:flutter/material.dart';
 
 import '../domain/price_quote.dart';
+import '../services/payment_service.dart';
 import '../services/pricing_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_decorations.dart';
 import '../utils/clp_format.dart';
+
+/// Resumen del detalle del trabajo. Espera el traslado real y muestra
+/// ese monto; no pinta primero la base redondeada del mapa.
+class ServerAlignedQuoteCard extends StatefulWidget {
+  const ServerAlignedQuoteCard({
+    super.key,
+    required this.jobId,
+    required this.quote,
+    this.workerName,
+    this.serviceName,
+  });
+
+  final String jobId;
+  final PriceQuote quote;
+  final String? workerName;
+  final String? serviceName;
+
+  @override
+  State<ServerAlignedQuoteCard> createState() => _ServerAlignedQuoteCardState();
+}
+
+class _ServerAlignedQuoteCardState extends State<ServerAlignedQuoteCard> {
+  PriceQuote? _quote;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final preview =
+        await PaymentService.instance.previewJobCharge(widget.jobId);
+    if (!mounted) return;
+    setState(() {
+      _quote = preview == null
+          ? widget.quote
+          : PricingService.instance.applyServerCharge(widget.quote, preview);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final quote = _quote;
+    if (quote == null) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return PricingQuoteCard(
+      quote: quote,
+      workerName: widget.workerName,
+      serviceName: widget.serviceName,
+    );
+  }
+}
 
 /// Desglose de precio calculado (modalidades de cobro).
 class PricingQuoteCard extends StatelessWidget {
@@ -45,7 +103,8 @@ class PricingQuoteCard extends StatelessWidget {
             Text(serviceName!, style: Theme.of(context).textTheme.bodySmall),
           ],
           if (workerName != null) ...[
-            Text('Trabajador: $workerName', style: Theme.of(context).textTheme.bodySmall),
+            Text('Trabajador: $workerName',
+                style: Theme.of(context).textTheme.bodySmall),
           ],
           const Divider(height: 20),
           if (quote.feeDeductedFromWorker) ...[
@@ -67,7 +126,8 @@ class PricingQuoteCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.lock_outline, size: 16, color: AppColors.brandTeal),
+              const Icon(Icons.lock_outline,
+                  size: 16, color: AppColors.brandTeal),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(

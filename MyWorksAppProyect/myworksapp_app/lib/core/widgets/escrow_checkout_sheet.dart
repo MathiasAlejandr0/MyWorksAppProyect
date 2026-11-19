@@ -6,6 +6,7 @@ import '../domain/charge_mismatch.dart';
 import '../domain/price_quote.dart';
 import '../providers/auth_provider.dart';
 import '../providers/service_providers.dart';
+import '../domain/job_charge_preview.dart';
 import '../services/pricing_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/app_error.dart';
@@ -69,13 +70,40 @@ class EscrowCheckoutSheet extends ConsumerStatefulWidget {
 
 class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
   bool _processing = false;
+  bool _chargeReady = false;
   late PriceQuote _quote;
   String? _banner;
+
+  bool get _isChangeOrder =>
+      widget.changeOrderId != null && widget.changeOrderId!.isNotEmpty;
 
   @override
   void initState() {
     super.initState();
     _quote = widget.quote;
+    if (_isChangeOrder) {
+      _chargeReady = true;
+    } else {
+      _alignCharge();
+    }
+  }
+
+  /// Una sola lectura del traslado real, antes de mostrar el total.
+  Future<void> _alignCharge() async {
+    JobChargePreview? preview;
+    try {
+      preview =
+          await ref.read(paymentServiceProvider).previewJobCharge(widget.jobId);
+    } catch (_) {
+      preview = null;
+    }
+    if (!mounted) return;
+    setState(() {
+      if (preview != null) {
+        _quote = PricingService.instance.applyServerCharge(_quote, preview);
+      }
+      _chargeReady = true;
+    });
   }
 
   String _errorText(Object e) {
@@ -241,13 +269,25 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                   ),
             ),
             const SizedBox(height: 4),
-            Text(
-              const ClpFormat().format(_quote.totalClp),
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.brandOrange,
-                  ),
-            ),
+            if (!_chargeReady)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 28),
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text('Calculando tarifa y traslado…'),
+                  ],
+                ),
+              )
+            else
+              Text(
+                const ClpFormat().format(_quote.totalClp),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.brandOrange,
+                    ),
+              ),
             if (widget.serviceName != null || widget.workerName != null) ...[
               const SizedBox(height: 4),
               Text(
@@ -287,13 +327,15 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            PricingQuoteCard(
-              quote: _quote,
-              workerName: widget.workerName,
-              serviceName: widget.serviceName,
-            ),
-            const SizedBox(height: 16),
+            if (_chargeReady) ...[
+              const SizedBox(height: 16),
+              PricingQuoteCard(
+                quote: _quote,
+                workerName: widget.workerName,
+                serviceName: widget.serviceName,
+              ),
+              const SizedBox(height: 16),
+            ],
             if (widget.changeOrderId == null || widget.changeOrderId!.isEmpty)
               SavedCardTile(
                 enabled: !_processing,
@@ -304,7 +346,8 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                 color: Theme.of(context).colorScheme.errorContainer,
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   child: Text(
                     _banner!,
                     style: TextStyle(
@@ -317,7 +360,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
               const SizedBox(height: 12),
             ],
             FilledButton.icon(
-              onPressed: _processing
+              onPressed: _processing || !_chargeReady
                   ? null
                   : (kIsWeb ? _payWithoutSavingCard : _payWithSavedCard),
               style: FilledButton.styleFrom(
@@ -335,16 +378,18 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                     )
                   : const Icon(Icons.credit_card),
               label: Text(
-                _processing
-                    ? 'Conectando con Transbank…'
-                    : kIsWeb
-                        ? 'Pagar ahora · ${const ClpFormat().format(_quote.totalClp)}'
-                        : 'Pagar con tarjeta · ${const ClpFormat().format(_quote.totalClp)}',
+                !_chargeReady
+                    ? 'Calculando el total…'
+                    : _processing
+                        ? 'Conectando con Transbank…'
+                        : kIsWeb
+                            ? 'Pagar ahora · ${const ClpFormat().format(_quote.totalClp)}'
+                            : 'Pagar con tarjeta · ${const ClpFormat().format(_quote.totalClp)}',
               ),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: _processing
+              onPressed: _processing || !_chargeReady
                   ? null
                   : (kIsWeb ? _enrollCard : _payWithoutSavingCard),
               style: OutlinedButton.styleFrom(

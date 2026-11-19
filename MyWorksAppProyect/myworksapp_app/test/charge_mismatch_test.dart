@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:myworksapp/core/domain/charge_mismatch.dart';
+import 'package:myworksapp/core/domain/job_charge_preview.dart';
 import 'package:myworksapp/core/domain/price_quote.dart';
 import 'package:myworksapp/core/services/pricing_service.dart';
 
@@ -60,6 +61,40 @@ void main() {
     expect(lines.feeClp, 1991);
     expect(lines.payoutClp, 37838);
     expect(lines.feeClp + lines.payoutClp, lines.totalClp);
+  });
+
+  test('el resumen usa el traslado real y no pide una segunda confirmación',
+      () {
+    const shown = PriceQuote(
+      pricingMode: 'precio_fijo',
+      subtotalClp: 75219,
+      platformFeeClp: 3761,
+      totalClp: 75219,
+      workerPayoutClp: 71458,
+      breakdown: {
+        'base_clp': 65000,
+        'transport_extra_clp': 10219,
+      },
+    );
+    const preview = JobChargePreview(
+      totalClp: 74829,
+      serviceClp: 65000,
+      transportClp: 9829,
+      feeClp: 3741,
+      payoutClp: 71088,
+    );
+
+    final ready = PricingService.instance.applyServerCharge(shown, preview);
+    final lines = PricingService.instance.workerChargeLines(ready);
+
+    expect(lines.serviceClp, 65000);
+    expect(lines.transportClp, 9829);
+    expect(lines.serviceClp! + lines.transportClp, 74829);
+    expect(lines.totalClp, 74829);
+    expect(lines.feeClp, 3741);
+    expect(lines.payoutClp, 71088);
+    expect(lines.feeClp + lines.payoutClp, lines.totalClp);
+    expect(ready.totalClp, preview.totalClp);
   });
 
   test('la comisión no supera el bruto y coincide con el 5 % redondeado', () {
