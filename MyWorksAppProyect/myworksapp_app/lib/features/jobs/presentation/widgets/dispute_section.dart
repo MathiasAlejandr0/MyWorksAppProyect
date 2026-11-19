@@ -73,9 +73,11 @@ class DisputeSection extends StatelessWidget {
               children: [
                 const Icon(Icons.gavel, color: AppColors.brandOrange),
                 const SizedBox(width: 8),
-                Text(
-                  '¿Problema con el trabajo?',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Expanded(
+                  child: Text(
+                    '¿Problema con el trabajo?',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
               ],
             ),
@@ -130,35 +132,14 @@ class DisputeSection extends StatelessWidget {
     );
     if (reason == null || !context.mounted) return;
 
-    final descriptionCtrl = TextEditingController();
-    final confirm = await showDialog<bool>(
+    final description = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Detalle de la disputa'),
-        content: TextField(
-          controller: descriptionCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Describe el problema (opcional)',
-          ),
-          maxLines: 4,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Enviar disputa'),
-          ),
-        ],
-      ),
+      builder: (ctx) => const _DisputeDetailDialog(),
     );
 
-    final description = descriptionCtrl.text.trim();
-    descriptionCtrl.dispose();
-
-    if (confirm != true || !context.mounted || onOpenDispute == null) return;
+    if (description == null || !context.mounted || onOpenDispute == null) {
+      return;
+    }
     await onOpenDispute!(
       reason,
       description.isEmpty ? null : description,
@@ -233,15 +214,18 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
                   color: isOpen ? AppColors.brandOrange : AppColors.success,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  dispute.status == AppConstants.disputeStatusNeedsHuman
-                      ? 'Una persona va a revisar este caso'
-                      : dispute.status == AppConstants.disputeStatusRefundPending
-                          ? 'La devolución a la tarjeta está en curso'
-                          : isOpen
-                              ? 'Disputa abierta'
-                              : 'Disputa resuelta',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Expanded(
+                  child: Text(
+                    dispute.status == AppConstants.disputeStatusNeedsHuman
+                        ? 'Una persona va a revisar este caso'
+                        : dispute.status ==
+                                AppConstants.disputeStatusRefundPending
+                            ? 'La devolución a la tarjeta está en curso'
+                            : isOpen
+                                ? 'Disputa abierta'
+                                : 'Disputa resuelta',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
               ],
             ),
@@ -323,28 +307,156 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
   }
 }
 
-class _DisputeReasonDialog extends StatelessWidget {
-  const _DisputeReasonDialog();
+class _DisputeDetailDialog extends StatefulWidget {
+  const _DisputeDetailDialog();
 
-  static const _reasons = [
-    (AppConstants.disputeReasonQuality, 'Calidad del trabajo'),
-    (AppConstants.disputeReasonPayment, 'Problema de pago'),
-    (AppConstants.disputeReasonBehavior, 'Conducta'),
-    (AppConstants.disputeReasonOther, 'Otro'),
-  ];
+  @override
+  State<_DisputeDetailDialog> createState() => _DisputeDetailDialogState();
+}
+
+class _DisputeDetailDialogState extends State<_DisputeDetailDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SimpleDialog(
-      title: const Text('Motivo de la disputa'),
-      children: _reasons
-          .map(
-            (r) => SimpleDialogOption(
-              onPressed: () => Navigator.pop(context, r.$1),
-              child: Text(r.$2),
-            ),
-          )
-          .toList(),
+    return AlertDialog(
+      title: const Text('Detalle de la disputa'),
+      content: TextField(
+        controller: _controller,
+        decoration: const InputDecoration(
+          labelText: 'Describe el problema (opcional)',
+          alignLabelWithHint: true,
+        ),
+        maxLines: 4,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.brandOrange,
+          ),
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          child: const Text('Enviar disputa'),
+        ),
+      ],
+    );
+  }
+}
+
+class _Choice {
+  const _Choice(this.value, this.title, this.detail, this.icon);
+
+  final String value;
+  final String title;
+  final String detail;
+  final IconData icon;
+}
+
+class _DisputeReasonDialog extends StatefulWidget {
+  const _DisputeReasonDialog();
+
+  @override
+  State<_DisputeReasonDialog> createState() => _DisputeReasonDialogState();
+}
+
+class _DisputeReasonDialogState extends State<_DisputeReasonDialog> {
+  static const _reasons = [
+    _Choice(
+      AppConstants.disputeReasonQuality,
+      'Calidad del trabajo',
+      'El resultado no quedó como se acordó.',
+      Icons.handyman_outlined,
+    ),
+    _Choice(
+      AppConstants.disputeReasonPayment,
+      'Problema de pago',
+      'El cobro o la garantía no cuadran.',
+      Icons.payments_outlined,
+    ),
+    _Choice(
+      AppConstants.disputeReasonBehavior,
+      'Conducta',
+      'Hubo un trato inadecuado durante el trabajo.',
+      Icons.person_outline,
+    ),
+    _Choice(
+      AppConstants.disputeReasonOther,
+      'Otro',
+      'El caso no entra en las opciones de arriba.',
+      Icons.more_horiz,
+    ),
+  ];
+
+  String? _selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = AppColors.onCanvasMuted(Theme.of(context).brightness);
+    return Dialog(
+      backgroundColor: AppColors.surfaceOf(context),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Motivo de la disputa',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Elige una opción. El pago sigue retenido hasta cerrar el caso.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: muted,
+                      height: 1.35,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              for (final reason in _reasons) ...[
+                _SelectableOptionCard(
+                  title: reason.title,
+                  detail: reason.detail,
+                  icon: reason.icon,
+                  selected: _selected == reason.value,
+                  onTap: () => setState(() => _selected = reason.value),
+                ),
+                const SizedBox(height: 10),
+              ],
+              const SizedBox(height: 6),
+              FilledButton(
+                onPressed: _selected == null
+                    ? null
+                    : () => Navigator.pop(context, _selected),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.brandOrange,
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                child: const Text('Continuar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -354,28 +466,134 @@ class _AgreementActions extends StatelessWidget {
 
   final ProposeAgreementCallback onPropose;
 
+  static const _actions = [
+    _Choice(
+      'aceptar',
+      'Aceptar entrega',
+      'El trabajo queda conforme y se puede liberar el pago.',
+      Icons.check_circle_outline,
+    ),
+    _Choice(
+      'rehacer',
+      'Rehacer',
+      'El profesional vuelve a hacer la parte que no quedó bien.',
+      Icons.replay,
+    ),
+    _Choice(
+      'anular',
+      'Anular',
+      'Se deja sin efecto el trabajo y se revisa la devolución.',
+      Icons.cancel_outlined,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    const actions = <(String, String)>[
-      ('aceptar', 'Aceptar entrega'),
-      ('rehacer', 'Rehacer'),
-      ('anular', 'Anular'),
-    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (var i = 0; i < actions.length; i++) ...[
+        Text(
+          'Proponer un acuerdo',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 10),
+        for (var i = 0; i < _actions.length; i++) ...[
           if (i > 0) const SizedBox(height: 10),
-          OutlinedButton(
-            onPressed: () => onPropose(actions[i].$1),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(44),
-              foregroundColor: AppColors.brandOrange,
-            ),
-            child: Text(actions[i].$2),
+          _SelectableOptionCard(
+            title: _actions[i].title,
+            detail: _actions[i].detail,
+            icon: _actions[i].icon,
+            showRadio: false,
+            onTap: () => onPropose(_actions[i].value),
           ),
         ],
       ],
+    );
+  }
+}
+
+class _SelectableOptionCard extends StatelessWidget {
+  const _SelectableOptionCard({
+    required this.title,
+    required this.detail,
+    required this.icon,
+    required this.onTap,
+    this.selected = false,
+    this.showRadio = true,
+  });
+
+  final String title;
+  final String detail;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool selected;
+  final bool showRadio;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final border =
+        selected ? AppColors.brandOrange : AppColors.hairlineOf(context);
+    final fill = selected
+        ? AppColors.brandOrange.withValues(alpha: dark ? 0.18 : 0.10)
+        : AppColors.fieldFillOf(context);
+    return Material(
+      color: fill,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 72),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: border, width: selected ? 1.6 : 1),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.brandOrange),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      detail,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.onCanvasMuted(
+                              Theme.of(context).brightness,
+                            ),
+                            height: 1.3,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                showRadio
+                    ? (selected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked)
+                    : Icons.chevron_right,
+                color: selected || !showRadio
+                    ? AppColors.brandOrange
+                    : AppColors.grayMedium,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
