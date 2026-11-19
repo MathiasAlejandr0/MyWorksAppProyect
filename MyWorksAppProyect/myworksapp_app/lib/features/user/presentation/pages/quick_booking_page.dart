@@ -14,7 +14,9 @@ import '../../../../core/services/pricing_service.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/comuna_utils.dart';
 import '../../../../core/design_system/layout_utils.dart';
+import '../../../../core/database/repositories/worker_schedule_repository.dart';
 import '../../../../core/domain/booking_schedule.dart';
+import '../../../../core/domain/weekly_schedule.dart';
 import '../../../../core/domain/worker_hours.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/mock_reserved_slots.dart';
@@ -56,6 +58,7 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
       SantiagoTime.day(DateTime.now()).add(const Duration(days: 1));
   TimeOfDay? _selectedTime;
   List<DateTime> _freeSlots = [];
+  WeeklySchedule? _schedule;
   bool _loading = true;
   bool _submitting = false;
 
@@ -70,17 +73,25 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
     final user = await _userRepository.getPublicProfile(widget.workerId);
     final service = await _serviceRepository.getServiceById(widget.serviceId);
     List<DateTime> slots = const [];
+    WeeklySchedule? schedule;
+    try {
+      schedule = await WorkerScheduleRepository().load(widget.workerId);
+    } catch (_) {
+      schedule = null;
+    }
     try {
       slots = await _workerRepository.fetchFreeSlots(widget.workerId);
     } catch (_) {
       slots = const [];
     }
+    slots = slotsInsideSchedule(slots, schedule);
     if (mounted) {
       setState(() {
         _worker = worker;
         _workerUser = user;
         _serviceName = service?.name;
         _freeSlots = slots;
+        _schedule = schedule;
         _loading = false;
       });
     }
@@ -138,10 +149,17 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
       hour: _selectedTime!.hour,
       minute: _selectedTime!.minute,
     );
-    if (scheduledDate == null) {
+    final block = bookingSlotBlock(
+      schedule: _schedule,
+      date: _selectedDate,
+      hour: _selectedTime!.hour,
+      minute: _selectedTime!.minute,
+      isPublished: scheduledDate != null,
+    );
+    if (block != null || scheduledDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(WorkerHourSlot.slotTakenMessage),
+        SnackBar(
+          content: Text(block ?? WorkerHourSlot.slotTakenMessage),
         ),
       );
       return;

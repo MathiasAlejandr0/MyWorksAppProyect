@@ -360,6 +360,26 @@ DayWindow _dayFromColumnsAndSlots({
   );
 }
 
+/// Null si la hora se puede reservar. Rechaza huecos entre ventanas y una
+/// hora que ya no está publicada (ocupada o repetida).
+String? bookingSlotBlock({
+  required WeeklySchedule? schedule,
+  required DateTime date,
+  required int hour,
+  required int minute,
+  required bool isPublished,
+}) {
+  if (schedule != null && schedule.restricts) {
+    final weekday = DateTime(date.year, date.month, date.day).weekday;
+    final window = schedule.windowFor(weekday);
+    if (window == null || !window.containsMinute(hour * 60 + minute)) {
+      return 'Esa hora queda fuera de las ventanas de atención del profesional.';
+    }
+  }
+  if (!isPublished) return WorkerHourSlot.slotTakenMessage;
+  return null;
+}
+
 /// Deja una sola ocurrencia de cada instante y descarta horas fuera de las
 /// ventanas cuando el horario semanal está activo.
 List<DateTime> slotsInsideSchedule(

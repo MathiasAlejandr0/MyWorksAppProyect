@@ -124,6 +124,53 @@ void main() {
     expect(sunday.windows.single.endMinute, 13 * 60);
   });
 
+  test('la reserva del cliente omite el hueco y la hora repetida', () {
+    final morning = _santiagoHour(10);
+    final gap = _santiagoHour(14);
+    final afternoon = _santiagoHour(16);
+    final weekday = SantiagoTime.wall(morning).weekday;
+    final schedule = WeeklySchedule(
+      enabled: true,
+      days: [
+        DayWindow(
+          weekday: weekday,
+          startMinute: 9 * 60,
+          endMinute: 18 * 60,
+          ranges: const [
+            TimeRange(startMinute: 9 * 60, endMinute: 13 * 60),
+            TimeRange(startMinute: 15 * 60, endMinute: 18 * 60),
+          ],
+        ),
+      ],
+    );
+
+    final visible = slotsInsideSchedule(
+      [morning, gap, afternoon, morning],
+      schedule,
+    );
+    expect(visible, [morning, afternoon]);
+    expect(
+      bookingSlotBlock(
+        schedule: schedule,
+        date: SantiagoTime.wall(gap),
+        hour: 14,
+        minute: 0,
+        isPublished: true,
+      ),
+      contains('fuera de las ventanas'),
+    );
+    expect(
+      bookingSlotBlock(
+        schedule: schedule,
+        date: SantiagoTime.wall(afternoon),
+        hour: 16,
+        minute: 0,
+        isPublished: false,
+      ),
+      contains('reservado'),
+    );
+  });
+
   test('un horario nuevo de lunes a viernes publica 09:00 a 17:00', () {
     final slots = publishedHourSlots(WeeklySchedule.weekdaysNineToSix().days);
     expect(slots.where((slot) => slot['dia'] == 1).length, 9);
@@ -131,4 +178,19 @@ void main() {
     expect(slots.first['hora'], '09:00');
     expect(slots.where((slot) => slot['dia'] == 1).last['hora'], '17:00');
   });
+}
+
+DateTime _santiagoHour(int hour) {
+  for (var utcHour = 0; utcHour < 36; utcHour++) {
+    final instant = DateTime.utc(2026, 11, 16).add(Duration(hours: utcHour));
+    final wall = SantiagoTime.wall(instant);
+    if (wall.year == 2026 &&
+        wall.month == 11 &&
+        wall.day == 16 &&
+        wall.hour == hour &&
+        wall.minute == 0) {
+      return instant;
+    }
+  }
+  throw StateError('No hay un instante de Santiago a las $hour:00');
 }

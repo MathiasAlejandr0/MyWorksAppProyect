@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/database/repositories/worker_schedule_repository.dart';
 import '../../../../core/domain/booking_schedule.dart';
+import '../../../../core/domain/weekly_schedule.dart';
 import '../../../../core/domain/worker_hours.dart';
 import '../../../../core/utils/mock_reserved_slots.dart';
 import '../../../../utils/content_filter.dart';
@@ -84,6 +86,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   List<DateTime> _freeSlots = [];
+  WeeklySchedule? _workerSchedule;
   String _pricingMode = '';
   int _blockHours = 4;
   PricingModeRecommendation? _pricingRecommendation;
@@ -139,16 +142,24 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     final worker = await _workerRepository.getWorkerByUserId(workerId);
     final user = await _userRepository.getPublicProfile(workerId);
     List<DateTime> slots = const [];
+    WeeklySchedule? schedule;
+    try {
+      schedule = await WorkerScheduleRepository().load(workerId);
+    } catch (_) {
+      schedule = null;
+    }
     try {
       slots = await _workerRepository.fetchFreeSlots(workerId);
     } catch (_) {
       slots = const [];
     }
+    slots = slotsInsideSchedule(slots, schedule);
     if (mounted) {
       setState(() {
         _selectedWorker = worker;
         _selectedWorkerUser = user;
         _freeSlots = slots;
+        _workerSchedule = schedule;
         _selectedTime = null;
       });
     }
@@ -340,18 +351,27 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
     }
     if (_selectedWorkerId != null &&
         _selectedDate != null &&
-        _selectedTime != null &&
-        matchingFreeSlot(
-              freeSlots: _freeSlots,
-              date: _selectedDate!,
-              hour: _selectedTime!.hour,
-              minute: _selectedTime!.minute,
-            ) ==
-            null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(WorkerHourSlot.slotTakenMessage)),
+        _selectedTime != null) {
+      final published = matchingFreeSlot(
+            freeSlots: _freeSlots,
+            date: _selectedDate!,
+            hour: _selectedTime!.hour,
+            minute: _selectedTime!.minute,
+          ) !=
+          null;
+      final block = bookingSlotBlock(
+        schedule: _workerSchedule,
+        date: _selectedDate!,
+        hour: _selectedTime!.hour,
+        minute: _selectedTime!.minute,
+        isPublished: published,
       );
-      return;
+      if (block != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(block)),
+        );
+        return;
+      }
     }
 
     setState(() => _isLoading = true);

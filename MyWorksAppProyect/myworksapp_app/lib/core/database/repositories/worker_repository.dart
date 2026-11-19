@@ -1,4 +1,5 @@
 import '../../config/demo_credentials.dart';
+import '../../domain/weekly_schedule.dart';
 import '../../domain/worker_hours.dart';
 import '../../domain/worker_public_stats.dart';
 import '../../domain/distance_match.dart';
@@ -305,7 +306,12 @@ class WorkerRepository {
       slots.add(utc);
     }
     slots.sort();
-    return slots;
+    try {
+      final schedule = await WorkerScheduleRepository().load(workerId);
+      return slotsInsideSchedule(slots, schedule);
+    } catch (_) {
+      return slots;
+    }
   }
 
   Future<({String status, String? note})?> fetchVerification(
