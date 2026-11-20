@@ -10,7 +10,6 @@ interface QuickBookingBarProps {
   workerName: string;
   profession: string;
   pricePerHour: number;
-  transportExtraClp?: number;
   radarHint?: string;
   slots: BookingSlotOption[];
   loadingSlots?: boolean;
@@ -22,7 +21,6 @@ export function QuickBookingBar({
   workerName,
   profession,
   pricePerHour,
-  transportExtraClp = 0,
   radarHint,
   slots,
   loadingSlots = false,
@@ -84,9 +82,6 @@ export function QuickBookingBar({
           <span>{profession}</span>
           <span className="quick-booking-price">
             ${pricePerHour.toLocaleString('es-CL')} / visita
-            {transportExtraClp > 0
-              ? ` + $${transportExtraClp.toLocaleString('es-CL')} traslado`
-              : ''}
           </span>
           {radarHint ? <span className="quick-booking-radar">{radarHint}</span> : null}
         </div>

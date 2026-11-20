@@ -29,6 +29,29 @@ const pedro = {
 async function mockCatalog(page: import('@playwright/test').Page) {
   await page.route('**/*', async (route) => {
     const url = route.request().url();
+    if (url.includes('/functions/v1/guest-checkout')) {
+      const cors = {
+        'access-control-allow-origin': '*',
+        'access-control-allow-headers': '*',
+        'access-control-allow-methods': 'POST,OPTIONS',
+      };
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({ status: 204, headers: cors });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: cors,
+        body: JSON.stringify({
+          preview: true,
+          totalClp: pedro.tarifa_visita,
+          tarifaClp: pedro.tarifa_visita,
+          trasladoClp: 0,
+        }),
+      });
+      return;
+    }
     const supabase = url.includes('/rest/v1/') || url.includes('/auth/v1/');
     if (!supabase) {
       await route.continue();
@@ -307,12 +330,25 @@ test('el chat del seguimiento no queda bajo el mapa a 390', async ({ page }) => 
 
 test('a 390 el formulario de invitado no corta el monto', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.context().grantPermissions(['geolocation']);
+  await page.context().setGeolocation({
+    latitude: pedro.latitud_base,
+    longitude: pedro.longitud_base,
+  });
   await mockCatalog(page);
   await page.goto('/');
   await page.getByRole('button', { name: /buscar servicio/i }).click();
   await page.getByRole('button', { name: /plomería/i }).click();
+  await page.getByRole('button', { name: 'Usar GPS' }).click();
+  await expect(page.getByRole('button', { name: 'Ubicación lista' })).toBeVisible();
   await page.locator('.pro-card', { hasText: 'Pedro Rojas' }).click();
+  const preview = page.waitForRequest(
+    (request) =>
+      request.method() === 'POST' && request.url().includes('/functions/v1/guest-checkout'),
+  );
   await page.getByRole('button', { name: /continuar con la reserva/i }).dispatchEvent('click');
+  const previewBody = (await preview).postDataJSON() as { previewOnly?: boolean };
+  expect(previewBody.previewOnly).toBe(true);
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('Pedido sin sesión')).toBeVisible();

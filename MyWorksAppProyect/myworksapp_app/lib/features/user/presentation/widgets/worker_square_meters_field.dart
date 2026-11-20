@@ -95,7 +95,7 @@ class WorkerSquareMetersField extends StatelessWidget {
           if (squareMeters != null && totalClp != null) ...[
             const SizedBox(height: 10),
             Text(
-              'Total estimado: ${WorkerServiceOptionDef(id: '_', title: '', subtitle: '', icon: Icons.attach_money, defaultPriceClp: totalClp!).priceLabel(totalClp!)}',
+              'Precio del trabajo: ${WorkerServiceOptionDef(id: '_', title: '', subtitle: '', icon: Icons.attach_money, defaultPriceClp: totalClp!).priceLabel(totalClp!)}',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: AppColors.brandOrange,
                     fontWeight: FontWeight.w800,

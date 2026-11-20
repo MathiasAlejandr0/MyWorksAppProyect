@@ -30,6 +30,42 @@ export interface GuestCheckoutResult {
   nonce?: string;
 }
 
+export interface GuestChargeQuote {
+  totalClp: number;
+  tarifaClp: number;
+  trasladoClp: number;
+}
+
+/** Total real (base del profesional sin redondear) antes de mostrar el botón. */
+export async function previewGuestCharge(
+  supabase: AppSupabase,
+  input: { workerId: string; latitude: number; longitude: number },
+): Promise<GuestChargeQuote> {
+  const { data, error } = await supabase.functions.invoke('guest-checkout', {
+    body: {
+      previewOnly: true,
+      workerId: input.workerId,
+      latitude: input.latitude,
+      longitude: input.longitude,
+    },
+  });
+  if (error) {
+    throw new Error(await edgeFunctionErrorMessage(error, 'No pudimos calcular el total'));
+  }
+  const payload = data as Record<string, unknown> | null;
+  const totalClp = Number(payload?.totalClp);
+  const tarifaClp = Number(payload?.tarifaClp);
+  const trasladoClp = Number(payload?.trasladoClp);
+  if (!payload || payload.error || !Number.isFinite(totalClp) || totalClp <= 0) {
+    throw new Error(String(payload?.error || 'No pudimos calcular el total'));
+  }
+  return {
+    totalClp: Math.round(totalClp),
+    tarifaClp: Number.isFinite(tarifaClp) ? Math.round(tarifaClp) : 0,
+    trasladoClp: Number.isFinite(trasladoClp) ? Math.round(trasladoClp) : 0,
+  };
+}
+
 /**
  * Checkout web sin sesión: crea cuenta + trabajo + intención Webpay.
  * El cliente DEBE redirigir (window.location) — no embeber.

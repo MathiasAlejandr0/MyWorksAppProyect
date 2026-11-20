@@ -19,7 +19,7 @@ class TrasladoRadarBanner extends StatelessWidget {
     } else if (quote.insideRadar == false) {
       final km = quote.distanceKm?.toStringAsFixed(1) ?? '?';
       text =
-          'Queda a $km km, fuera del área cercana. Traslado extra: \$${quote.extraClp}.';
+          'Queda a $km km, fuera del área cercana. El traslado se confirma al pagar.';
       color = AppColors.brandOrange;
     } else {
       text =

@@ -76,7 +76,8 @@ void main() {
     expect(inside.inside, isTrue);
     expect(inside.text, contains('sin extra'));
     expect(outside.inside, isFalse);
-    expect(outside.text, contains('traslado'));
+    expect(outside.text, contains('se confirma al pagar'));
+    expect(outside.text, isNot(contains('+')));
   });
 
   test('el listado usa el orden único: cercanía, luego nota', () {
