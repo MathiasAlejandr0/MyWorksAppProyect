@@ -247,7 +247,8 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
           workZone: _workZone,
           pricingTiers: _pricingTiers,
           customServices: _customServices,
-          pricingConfigured: true,
+          pricingConfigured:
+              _editingSection == 'tarifas' ? true : null,
         );
         await _workerRepository.updateWorker(updatedWorker);
       }

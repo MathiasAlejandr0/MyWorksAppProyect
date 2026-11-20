@@ -46,7 +46,9 @@ Deno.serve(async (req) => {
     if (!isAdmin && !party) {
       return jsonResponse(req, { error: "No puedes devolver este pago" }, 403);
     }
-    if (job.estado === "esperando_aprobacion_cliente") {
+    if (job.estado === "esperando_aprobacion_cliente" &&
+      job.id_usuario !== user.id &&
+      !isAdmin) {
       return jsonResponse(
         req,
         { error: "Si no estás conforme, abre una disputa. El pago sigue retenido." },

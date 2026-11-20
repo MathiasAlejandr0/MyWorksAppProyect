@@ -57,7 +57,10 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
       if (!mounted) return;
       if (account != null) {
         _bank.text = account.bank;
-        _type = account.accountType;
+        _type = const {'vista', 'corriente', 'rut', 'ahorro'}
+                .contains(account.accountType)
+            ? account.accountType
+            : 'vista';
         _number.text = account.accountNumber;
         _rut.text = account.holderRut;
         _name.text = account.holderName;

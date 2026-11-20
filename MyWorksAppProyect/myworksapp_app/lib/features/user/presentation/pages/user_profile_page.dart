@@ -377,6 +377,7 @@ class _PaymentMethodsShortcut extends ConsumerStatefulWidget {
 class _PaymentMethodsShortcutState extends ConsumerState<_PaymentMethodsShortcut> {
   String? _label;
   bool _loading = true;
+  bool _failed = false;
 
   @override
   void initState() {
@@ -390,11 +391,15 @@ class _PaymentMethodsShortcutState extends ConsumerState<_PaymentMethodsShortcut
       if (!mounted) return;
       setState(() {
         _label = card.enrolled ? savedCardLabel(card.cardType, card.last4) : null;
+        _failed = false;
         _loading = false;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _loading = false);
+      setState(() {
+        _failed = true;
+        _loading = false;
+      });
     }
   }
 
@@ -421,7 +426,9 @@ class _PaymentMethodsShortcutState extends ConsumerState<_PaymentMethodsShortcut
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      _label ?? 'Sin tarjeta guardada',
+                      _failed
+                          ? 'No se pudo leer tu tarjeta'
+                          : (_label ?? 'Sin tarjeta guardada'),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: _label == null ? muted : null,

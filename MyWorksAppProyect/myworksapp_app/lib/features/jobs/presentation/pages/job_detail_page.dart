@@ -310,6 +310,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         reason: reason,
         description: description,
       );
+      var agreementFailed = false;
       if (outcome != null && outcome.isNotEmpty) {
         try {
           await DisputeService.instance.proposeAgreement(
@@ -317,6 +318,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
             type: outcome,
           );
         } catch (e) {
+          agreementFailed = true;
           AppLogger.w('La disputa quedó abierta, pero el acuerdo no se envió: $e');
         }
       }
@@ -335,9 +337,12 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       await _loadJobDetails();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
+          backgroundColor: agreementFailed ? AppColors.error : null,
           content: Text(
-            'Disputa abierta. El trabajo queda en pausa y el pago sigue retenido.',
+            agreementFailed
+                ? 'La disputa quedó abierta, pero no se registró la opción elegida. Avísale a la otra parte por el chat.'
+                : 'Disputa abierta. El trabajo queda en pausa y el pago sigue retenido.',
           ),
         ),
       );
