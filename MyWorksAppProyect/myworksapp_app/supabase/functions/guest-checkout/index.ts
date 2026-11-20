@@ -1,11 +1,9 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { isReservedEmailDomain, sha256Hex } from "../_shared/guest_ticket.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
-import {
-  allowRate,
-  clientIp,
-  rateLimitExceededMessage,
-} from "../_shared/rate_limit.ts";
+import { chileE164, postalAddress } from "../_shared/chile_input.ts";
+import { clientIp, rateLimitExceededMessage } from "../_shared/rate_limit.ts";
+import { allowRateDb } from "../_shared/rate_limit_db.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import {
   resolveCallerReturnOrigin,
@@ -67,6 +65,13 @@ async function previewGuestTotal(req: Request, body: GuestBody): Promise<Respons
     );
   }
   const admin = serviceClient();
+  const { data: blocked, error: blockedErr } = await admin.rpc(
+    "profesional_bloqueado_por_demo",
+    { p_id: workerId },
+  );
+  if (blockedErr || blocked === true) {
+    return jsonResponse(req, { error: "Este profesional no está disponible para reservar" }, 400);
+  }
   const { data: worker, error: workerErr } = await admin
     .from("trabajadores")
     .select(
@@ -114,6 +119,18 @@ async function previewGuestTotal(req: Request, body: GuestBody): Promise<Respons
   });
 }
 
+function guestCheckoutUnavailable(req: Request): Response {
+  return jsonResponse(req, {
+    mode: "guest_redirect",
+    redirectUrl: "",
+    jobId: "",
+    paymentId: "",
+    buyOrder: "",
+    message:
+      "No se abrió el pago. Si ya tienes una cuenta, entra con ella. Si no, inténtalo de nuevo en un minuto.",
+  });
+}
+
 const GUEST_WINDOW_MS = 60_000;
 const GUEST_MAX_IP = 5;
 const GUEST_MAX_EMAIL = 3;
@@ -133,6 +150,7 @@ Deno.serve(async (req) => {
     }
 
     const ip = clientIp(req);
+    const admin = serviceClient();
     const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY")?.trim() ?? "";
     const turnstile = turnstileDecision(
       turnstileSecret.length > 0,
@@ -144,12 +162,12 @@ Deno.serve(async (req) => {
 
     const body = (await req.json()) as GuestBody;
     if (body.previewOnly === true) {
-      if (!allowRate(`guest-preview:ip:${ip}`, 30, GUEST_WINDOW_MS)) {
+      if (!(await allowRateDb(admin, `guest-preview:ip:${ip}`, 30, GUEST_WINDOW_MS))) {
         return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
       }
       return await previewGuestTotal(req, body);
     }
-    if (!allowRate(`guest:ip:${ip}`, GUEST_MAX_IP, GUEST_WINDOW_MS)) {
+    if (!(await allowRateDb(admin, `guest:ip:${ip}`, GUEST_MAX_IP, GUEST_WINDOW_MS))) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
     if (turnstile === "verify") {
@@ -174,8 +192,8 @@ Deno.serve(async (req) => {
 
     const name = clean(body.name, 120);
     const email = clean(body.email, 160).toLowerCase();
-    const phone = clean(body.phone, 40);
-    const address = clean(body.address, 300);
+    const phone = chileE164(clean(body.phone, 40));
+    const address = postalAddress(clean(body.address, 300));
     const workerId = clean(body.workerId, 80);
     const serviceId = clean(body.serviceId, 80);
     const description = clean(body.description, 500) || "Urgencia / visita web (invitado)";
@@ -184,7 +202,7 @@ Deno.serve(async (req) => {
     if (!name || !isEmail(email) || !phone || !address) {
       return jsonResponse(
         req,
-        { error: "Nombre, correo, teléfono y dirección son obligatorios" },
+        { error: "Nombre, correo, un teléfono de Chile (+56 y 9 dígitos) y una dirección con calle son obligatorios" },
         400,
       );
     }
@@ -195,7 +213,7 @@ Deno.serve(async (req) => {
         400,
       );
     }
-    if (!allowRate(`guest:email:${email}`, GUEST_MAX_EMAIL, GUEST_WINDOW_MS)) {
+    if (!(await allowRateDb(admin, `guest:email:${email}`, GUEST_MAX_EMAIL, GUEST_WINDOW_MS))) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
     if (!workerId || !serviceId || !Number.isFinite(amountClp) || amountClp <= 0) {
@@ -210,7 +228,6 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "Elige un horario publicado por el profesional." }, 400);
     }
 
-    const admin = serviceClient();
     await admin.rpc("limpiar_invitados_sin_pago");
 
     const { data: existingProfile } = await admin
@@ -220,14 +237,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingProfile) {
-      return jsonResponse(req, {
-        mode: "guest_redirect",
-        needsLogin: true,
-        redirectUrl: "",
-        jobId: "",
-        paymentId: "",
-        buyOrder: "",
-      });
+      return guestCheckoutUnavailable(req);
     }
 
     const { data: worker, error: workerErr } = await admin
@@ -238,6 +248,13 @@ Deno.serve(async (req) => {
 
     if (workerErr || !worker) {
       return jsonResponse(req, { error: "Profesional no encontrado" }, 404);
+    }
+    const { data: blocked, error: blockedErr } = await admin.rpc(
+      "profesional_bloqueado_por_demo",
+      { p_id: workerId },
+    );
+    if (blockedErr || blocked === true) {
+      return jsonResponse(req, { error: "Este profesional no está disponible para reservar" }, 400);
     }
     if (worker.estado_verificacion !== "verificado") {
       return jsonResponse(
@@ -309,14 +326,7 @@ Deno.serve(async (req) => {
       const raw = createErr?.message ?? "";
       const taken = /already|registered|exists/i.test(raw);
       if (taken) {
-        return jsonResponse(req, {
-          mode: "guest_redirect",
-          needsLogin: true,
-          redirectUrl: "",
-          jobId: "",
-          paymentId: "",
-          buyOrder: "",
-        });
+        return guestCheckoutUnavailable(req);
       }
       return jsonResponse(
         req,

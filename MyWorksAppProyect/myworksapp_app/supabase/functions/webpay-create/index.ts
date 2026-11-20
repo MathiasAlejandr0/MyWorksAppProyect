@@ -1,10 +1,7 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
-import {
-  allowRate,
-  clientIp,
-  rateLimitExceededMessage,
-} from "../_shared/rate_limit.ts";
+import { clientIp, rateLimitExceededMessage } from "../_shared/rate_limit.ts";
+import { allowRateDb } from "../_shared/rate_limit_db.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import {
   resolveCallerReturnOrigin,
@@ -28,7 +25,8 @@ Deno.serve(async (req) => {
     }
 
     const ip = clientIp(req);
-    if (!allowRate(`webpay:ip:${ip}`, 20, 60_000)) {
+    const admin = serviceClient();
+    if (!(await allowRateDb(admin, `webpay:ip:${ip}`, 20, 60_000))) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
@@ -41,7 +39,7 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "No autenticado" }, 401);
     }
 
-    if (!allowRate(`webpay:user:${user.id}`, 10, 60_000)) {
+    if (!(await allowRateDb(admin, `webpay:user:${user.id}`, 10, 60_000))) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
@@ -88,7 +86,6 @@ Deno.serve(async (req) => {
       returnUrl,
     });
 
-    const admin = serviceClient();
     const appReturnOrigin =
       typeof body.clientReturnOrigin === "string" &&
         body.clientReturnOrigin.trim().toLowerCase().startsWith("myworksapp://pago")
