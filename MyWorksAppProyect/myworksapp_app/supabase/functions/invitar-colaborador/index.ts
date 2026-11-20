@@ -1,9 +1,22 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
-import { invitationHtml, pickInviteRedirect } from "../_shared/invite_html.ts";
+import { renderEmail } from "../_shared/email_layout.ts";
+import { sendEmail } from "../_shared/email_send.ts";
+import { pickInviteRedirect } from "../_shared/invite_html.ts";
 import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 const ROLES = ["Admin", "Soporte", "QA"] as const;
+const INVITE_ALREADY_ACTIVE =
+  "Esa persona ya tiene una cuenta activa; cámbiale el rol en vez de invitarla";
+
+function inviteAlreadyRegistered(error: { status?: number; code?: string; message?: string }): boolean {
+  const code = String(error.code || "").toLowerCase();
+  if (code === "email_exists") return true;
+  if (Number(error.status) !== 422) return false;
+  return /email_exists|already been registered|already registered|user already/i.test(
+    `${code} ${error.message || ""}`,
+  );
+}
 
 function parseInvite(body: unknown):
   | { ok: true; email: string; name: string; role: string; message: string }
@@ -34,31 +47,30 @@ async function sendResend(opts: {
   message: string;
   actionLink?: string;
 }): Promise<string | null> {
-  const key = Deno.env.get("RESEND_API_KEY")?.trim();
-  const from = Deno.env.get("RESEND_FROM")?.trim();
-  if (!key || !from) {
-    console.error("invitar-colaborador: faltan RESEND_API_KEY o RESEND_FROM");
-    return "correo_no_configurado";
+  const paragraphs = [
+    `Hola ${opts.name},`,
+    `Te invitaron al panel como ${opts.role}.`,
+  ];
+  if (opts.message.trim()) paragraphs.push(opts.message.trim());
+  if (!opts.actionLink) {
+    paragraphs.push("Revisa el correo de Supabase para definir tu contraseña.");
   }
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [opts.to],
-      subject: "Invitación a MyWorksApp",
-      html: invitationHtml(opts),
-    }),
+  const content = renderEmail({
+    preheader: `Te invitaron al panel de MyWorksApp como ${opts.role}.`,
+    title: "Invitación a MyWorksApp",
+    paragraphs,
+    button: opts.actionLink
+      ? { label: "Aceptar invitación", url: opts.actionLink }
+      : undefined,
   });
-  if (!res.ok) {
-    const text = await res.text();
-    console.error(`invitar-colaborador: resend ${res.status} ${text.slice(0, 180)}`);
-    return "correo_rechazado";
-  }
-  return null;
+  const result = await sendEmail({
+    to: opts.to,
+    subject: "Invitación a MyWorksApp",
+    content,
+  });
+  if (result.ok) return null;
+  if (result.reason === "correo_no_configurado") return "correo_no_configurado";
+  return "correo_rechazado";
 }
 
 Deno.serve(async (req) => {
@@ -186,6 +198,9 @@ Deno.serve(async (req) => {
       redirectTo,
     });
     if (invited.error) {
+      if (inviteAlreadyRegistered(invited.error)) {
+        return jsonResponse(req, { error: INVITE_ALREADY_ACTIVE }, 409);
+      }
       console.error("invitar-colaborador: inviteUserByEmail rechazado");
       return jsonResponse(req, { error: "No se pudo crear la invitación" }, 400);
     }

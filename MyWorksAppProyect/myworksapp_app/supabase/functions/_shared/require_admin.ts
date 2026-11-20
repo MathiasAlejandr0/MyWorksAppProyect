@@ -12,7 +12,7 @@ export const ADMIN_DENIED = "No autorizado";
 export interface AdminRpc {
   rpc(
     fn: "is_admin",
-  ): Promise<{ data: unknown; error: { message?: string } | null }>;
+  ): PromiseLike<{ data: unknown; error: { message?: string } | null }>;
 }
 
 export function adminSessionAllowed(data: unknown, error: unknown): boolean {
@@ -63,7 +63,7 @@ type AuditClient = {
   rpc: (
     fn: "registrar_auditoria",
     args: Record<string, unknown>,
-  ) => Promise<{ error: { message?: string } | null }>;
+  ) => PromiseLike<{ error: { message?: string } | null }>;
 };
 
 /** Registra la acción. Si falla, no relanza: el dinero ya se movió y un reintento lo duplicaría. */
