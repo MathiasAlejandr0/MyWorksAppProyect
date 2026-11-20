@@ -2,7 +2,7 @@ import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
-import { requireAdmin } from "../_shared/require_admin.ts";
+import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 /**
@@ -31,8 +31,12 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const paymentId = String(body.paymentId || "");
+    const motivo = motivoValido(body.motivo);
     if (!paymentId) {
       return jsonResponse(req, { error: "paymentId requerido" }, 400);
+    }
+    if (!motivo) {
+      return jsonResponse(req, { error: "El motivo debe tener entre 10 y 2000 caracteres" }, 400);
     }
 
     const admin = serviceClient();
@@ -62,7 +66,20 @@ Deno.serve(async (req) => {
     }
 
     const result = await refundHeldPaymentOnce(admin, paymentId);
-    return jsonResponse(req, { payment: result.payment, status: result.status });
+    const meta = requestClientMeta(req);
+    const audited = await registrarAuditoria(admin, {
+      p_accion: "devolver_pago",
+      p_entidad: "pagos",
+      p_id_entidad: paymentId,
+      p_antes: { estado: payment.estado },
+      p_despues: { estado: "reembolsado" },
+      p_motivo: motivo,
+      p_ip: meta.ip,
+      p_user_agent: meta.userAgent,
+      p_id_actor: user.id,
+      p_rol_actor: "administrador",
+    });
+    return jsonResponse(req, { payment: result.payment, status: result.status, auditoria: audited });
   } catch (e) {
     return jsonResponse(req, { error: publicErrorMessage(e) }, 500);
   }

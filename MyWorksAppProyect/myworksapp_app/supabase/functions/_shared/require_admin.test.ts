@@ -6,6 +6,7 @@ import {
   ADMIN_DENIED,
   adminSessionAllowed,
   guardAdminMutation,
+  motivoValido,
   requireAdmin,
   type AdminRpc,
 } from "./require_admin.ts";
@@ -65,6 +66,11 @@ describe("is_admin en el servidor", () => {
     assert.equal(adminSessionAllowed("true", null), false);
     assert.equal(adminSessionAllowed(false, null), false);
     assert.equal(adminSessionAllowed(true, { message: "x" }), false);
+  });
+
+  it("el motivo de una acción de dinero exige al menos 10 caracteres", () => {
+    assert.equal(motivoValido("corto"), null);
+    assert.equal(motivoValido("  liberar por acuerdo de las partes  "), "liberar por acuerdo de las partes");
   });
 
   it("requireAdmin no filtra el detalle al cliente", async () => {

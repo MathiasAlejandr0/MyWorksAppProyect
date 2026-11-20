@@ -3,7 +3,7 @@ import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
-import { requireAdmin } from "../_shared/require_admin.ts";
+import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 /**
@@ -36,15 +36,15 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const disputeId = String(body.disputeId || "").trim();
     const decision = String(body.decision || "").trim();
-    const resolution = String(body.resolution || "").trim().slice(0, 500);
+    const resolution = motivoValido(body.resolution || body.motivo) ?? "";
     if (!disputeId) {
       return jsonResponse(req, { error: "disputeId requerido" }, 400);
     }
     if (decision !== "liberar" && decision !== "reembolsar") {
       return jsonResponse(req, { error: "decision debe ser liberar o reembolsar" }, 400);
     }
-    if (resolution.length < 4) {
-      return jsonResponse(req, { error: "Escribe la resolución (mín. 4 caracteres)" }, 400);
+    if (!resolution) {
+      return jsonResponse(req, { error: "El motivo debe tener entre 10 y 2000 caracteres" }, 400);
     }
 
     const admin = serviceClient();
@@ -100,7 +100,20 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: publicErrorMessage(rpcErr, "No se pudo cerrar la disputa") }, 409);
     }
 
-    return jsonResponse(req, { result: rpcResult, decision });
+    const meta = requestClientMeta(req);
+    const audited = await registrarAuditoria(admin, {
+      p_accion: decision === "reembolsar" ? "devolver_pago" : "liberar_pago",
+      p_entidad: "disputas",
+      p_id_entidad: disputeId,
+      p_antes: { estado: dispute.estado },
+      p_despues: { decision },
+      p_motivo: resolution,
+      p_ip: meta.ip,
+      p_user_agent: meta.userAgent,
+      p_id_actor: user.id,
+      p_rol_actor: "administrador",
+    });
+    return jsonResponse(req, { result: rpcResult, decision, auditoria: audited });
   } catch (e) {
     return jsonResponse(req, { error: publicErrorMessage(e) }, 500);
   }

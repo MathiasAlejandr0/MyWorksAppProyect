@@ -1,5 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
-import { requireAdmin } from "../_shared/require_admin.ts";
+import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 const ROLES = ["Admin", "Soporte", "QA"] as const;
@@ -80,8 +80,15 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: adminGate.error }, adminGate.status);
     }
 
-    const parsed = parseInvite(await req.json().catch(() => null));
+    const rawBody = await req.json().catch(() => null);
+    const parsed = parseInvite(rawBody);
     if (!parsed.ok) return jsonResponse(req, { error: parsed.error }, 400);
+    const motivo = motivoValido(
+      rawBody && typeof rawBody === "object" ? (rawBody as { motivo?: unknown }).motivo : null,
+    ) ?? (parsed.message.length >= 10 ? parsed.message : null);
+    if (!motivo) {
+      return jsonResponse(req, { error: "El motivo debe tener entre 10 y 2000 caracteres" }, 400);
+    }
 
     const provider = (Deno.env.get("INVITE_PROVIDER") || "supabase").toLowerCase();
     const redirectTo = Deno.env.get("INVITE_REDIRECT_URL")?.trim() || undefined;
@@ -120,6 +127,20 @@ Deno.serve(async (req) => {
       return null;
     };
 
+    const meta = requestClientMeta(req);
+    const auditInvite = (userId: string | undefined) => registrarAuditoria(admin, {
+      p_accion: "invitar_colaborador",
+      p_entidad: "perfiles",
+      p_id_entidad: userId ?? parsed.email,
+      p_antes: null,
+      p_despues: { rol: panelRole },
+      p_motivo: motivo,
+      p_ip: meta.ip,
+      p_user_agent: meta.userAgent,
+      p_id_actor: authData.user.id,
+      p_rol_actor: "administrador",
+    });
+
     if (provider === "resend") {
       const link = await admin.auth.admin.generateLink({
         type: "invite",
@@ -141,9 +162,11 @@ Deno.serve(async (req) => {
         actionLink,
       });
       if (mailError) return jsonResponse(req, { error: mailError }, 502);
+      const auditedResend = await auditInvite(link.data?.user?.id);
       return jsonResponse(req, {
         ok: true,
         provider: "resend",
+        auditoria: auditedResend,
         message: `Invitación enviada a ${parsed.email} con Resend.`,
       });
     }
@@ -156,10 +179,12 @@ Deno.serve(async (req) => {
 
     const roleError = await promote(invited.data.user?.id);
     if (roleError) return roleError;
+    const audited = await auditInvite(invited.data.user?.id);
 
     return jsonResponse(req, {
       ok: true,
       provider: "supabase",
+      auditoria: audited,
       message: `Invitación enviada a ${parsed.email}. Supabase Auth manda el correo si el SMTP del proyecto está activo.`,
     });
   } catch (e) {

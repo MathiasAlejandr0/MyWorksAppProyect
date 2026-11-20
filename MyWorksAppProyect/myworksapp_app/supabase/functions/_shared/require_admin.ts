@@ -43,6 +43,47 @@ export async function requireAdmin(
   return { ok: true };
 }
 
+export function requestClientMeta(req: Request): { ip: string | null; userAgent: string | null } {
+  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+  const ip = forwarded || req.headers.get("cf-connecting-ip")?.trim() || "";
+  const userAgent = req.headers.get("user-agent")?.slice(0, 300) ?? "";
+  return {
+    ip: ip ? ip.slice(0, 80) : null,
+    userAgent: userAgent || null,
+  };
+}
+
+export function motivoValido(value: unknown): string | null {
+  const text = String(value ?? "").trim();
+  if (text.length < 10 || text.length > 2000) return null;
+  return text;
+}
+
+type AuditClient = {
+  rpc: (
+    fn: "registrar_auditoria",
+    args: Record<string, unknown>,
+  ) => Promise<{ error: { message?: string } | null }>;
+};
+
+/** Registra la acción. Si falla, no relanza: el dinero ya se movió y un reintento lo duplicaría. */
+export async function registrarAuditoria(
+  admin: AuditClient,
+  args: Record<string, unknown>,
+): Promise<boolean> {
+  try {
+    const { error } = await admin.rpc("registrar_auditoria", args);
+    if (error) {
+      console.error("registrar_auditoria rechazó la fila");
+      return false;
+    }
+    return true;
+  } catch {
+    console.error("registrar_auditoria no respondió");
+    return false;
+  }
+}
+
 /** Ejecuta `mutate` solo si `is_admin()` es true. Si no, no la llama. */
 export async function guardAdminMutation<T>(
   userSb: AdminRpc,

@@ -1,6 +1,6 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
-import { requireAdmin } from "../_shared/require_admin.ts";
+import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 /**
@@ -30,7 +30,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const paymentId = String(body.paymentId || "");
     const transferRef = String(body.transferRef || body.referencia || "").trim();
-    const notes = String(body.notes || "").trim().slice(0, 500);
+    const motivo = motivoValido(body.motivo || body.notes);
+    const notes = (motivo ?? "").slice(0, 500);
     const confirmExternal = body.confirmExternal === true;
     const providerRaw = String(body.provider || "manual").toLowerCase();
     const provider =
@@ -38,6 +39,9 @@ Deno.serve(async (req) => {
 
     if (!paymentId) {
       return jsonResponse(req, { error: "paymentId requerido" }, 400);
+    }
+    if (!motivo) {
+      return jsonResponse(req, { error: "El motivo debe tener entre 10 y 2000 caracteres" }, 400);
     }
     if (!confirmExternal) {
       return jsonResponse(
@@ -118,10 +122,25 @@ Deno.serve(async (req) => {
       .eq("id_pago", paymentId)
       .maybeSingle();
 
+    const meta = requestClientMeta(req);
+    const audited = await registrarAuditoria(admin, {
+      p_accion: "liquidar",
+      p_entidad: "pagos",
+      p_id_entidad: paymentId,
+      p_antes: { estado: "retenido" },
+      p_despues: { estado: "liberado", referencia: transferRef },
+      p_motivo: motivo,
+      p_ip: meta.ip,
+      p_user_agent: meta.userAgent,
+      p_id_actor: user.id,
+      p_rol_actor: "administrador",
+    });
+
     return jsonResponse(req, {
       payment,
       liquidacion,
       result: rpcResult,
+      auditoria: audited,
       note:
         "Escrow liberado y liquidación registrada en una sola transacción.",
     });
