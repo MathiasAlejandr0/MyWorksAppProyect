@@ -1,4 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { invitationHtml, pickInviteRedirect } from "../_shared/invite_html.ts";
 import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
@@ -35,11 +36,10 @@ async function sendResend(opts: {
 }): Promise<string | null> {
   const key = Deno.env.get("RESEND_API_KEY")?.trim();
   const from = Deno.env.get("RESEND_FROM")?.trim();
-  if (!key || !from) return "Faltan RESEND_API_KEY y RESEND_FROM";
-  const link = opts.actionLink
-    ? `<p><a href="${opts.actionLink}">Aceptar invitación</a></p>`
-    : "<p>Revisa el correo de Supabase para definir tu contraseña.</p>";
-  const note = opts.message ? `<p>${opts.message.replace(/</g, "")}</p>` : "";
+  if (!key || !from) {
+    console.error("invitar-colaborador: faltan RESEND_API_KEY o RESEND_FROM");
+    return "correo_no_configurado";
+  }
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -50,12 +50,13 @@ async function sendResend(opts: {
       from,
       to: [opts.to],
       subject: "Invitación a MyWorksApp",
-      html: `<p>Hola ${opts.name},</p><p>Te invitaron al panel como ${opts.role}.</p>${note}${link}`,
+      html: invitationHtml(opts),
     }),
   });
   if (!res.ok) {
     const text = await res.text();
-    return `Resend respondió ${res.status}: ${text.slice(0, 180)}`;
+    console.error(`invitar-colaborador: resend ${res.status} ${text.slice(0, 180)}`);
+    return "correo_rechazado";
   }
   return null;
 }
@@ -91,7 +92,10 @@ Deno.serve(async (req) => {
     }
 
     const provider = (Deno.env.get("INVITE_PROVIDER") || "supabase").toLowerCase();
-    const redirectTo = Deno.env.get("INVITE_REDIRECT_URL")?.trim() || undefined;
+    const redirectTo = pickInviteRedirect(
+      rawBody && typeof rawBody === "object" ? (rawBody as { redirectTo?: unknown }).redirectTo : undefined,
+      Deno.env.get("INVITE_REDIRECT_URL"),
+    );
     const admin = serviceClient();
 
     const panelRole = parsed.role === "Admin"
@@ -115,7 +119,8 @@ Deno.serve(async (req) => {
         .eq("id", userId)
         .select("id");
       if (updated.error) {
-        return jsonResponse(req, { error: updated.error.message }, 400);
+        console.error("invitar-colaborador: no se asignó el rol");
+        return jsonResponse(req, { error: "No se pudo asignar el rol" }, 400);
       }
       if (!updated.data?.length) {
         return jsonResponse(
@@ -150,7 +155,10 @@ Deno.serve(async (req) => {
           redirectTo,
         },
       });
-      if (link.error) return jsonResponse(req, { error: link.error.message }, 400);
+      if (link.error) {
+        console.error("invitar-colaborador: generateLink rechazado");
+        return jsonResponse(req, { error: "No se pudo crear la invitación" }, 400);
+      }
       const roleError = await promote(link.data?.user?.id);
       if (roleError) return roleError;
       const actionLink = link.data?.properties?.action_link;
@@ -161,7 +169,9 @@ Deno.serve(async (req) => {
         message: parsed.message,
         actionLink,
       });
-      if (mailError) return jsonResponse(req, { error: mailError }, 502);
+      if (mailError) {
+        return jsonResponse(req, { error: "No se pudo enviar el correo de invitación" }, 502);
+      }
       const auditedResend = await auditInvite(link.data?.user?.id);
       return jsonResponse(req, {
         ok: true,
@@ -175,7 +185,10 @@ Deno.serve(async (req) => {
       data: { nombre: parsed.name, rol_panel: parsed.role, mensaje: parsed.message },
       redirectTo,
     });
-    if (invited.error) return jsonResponse(req, { error: invited.error.message }, 400);
+    if (invited.error) {
+      console.error("invitar-colaborador: inviteUserByEmail rechazado");
+      return jsonResponse(req, { error: "No se pudo crear la invitación" }, 400);
+    }
 
     const roleError = await promote(invited.data.user?.id);
     if (roleError) return roleError;
@@ -188,10 +201,7 @@ Deno.serve(async (req) => {
       message: `Invitación enviada a ${parsed.email}. Supabase Auth manda el correo si el SMTP del proyecto está activo.`,
     });
   } catch (e) {
-    return jsonResponse(
-      req,
-      { error: e instanceof Error ? e.message : "No se pudo enviar la invitación" },
-      500,
-    );
+    console.error("invitar-colaborador", e instanceof Error ? e.message : "error");
+    return jsonResponse(req, { error: "No se pudo enviar la invitación" }, 500);
   }
 });

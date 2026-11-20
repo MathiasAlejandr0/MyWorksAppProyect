@@ -100,12 +100,12 @@ Deno.serve(async (req) => {
     );
 
     if (rpcErr) {
-      const msg = rpcErr.message || "Error al liberar";
-      const status = /no encontrado|no liberable|ya liquidado|requeridos|inválido/i
-        .test(msg)
+      const msg = rpcErr.message || "";
+      console.error("liberar_escrow_manual", msg.slice(0, 200));
+      const status = /no encontrado|no liberable|ya liquidado|requeridos|inválido/i.test(msg)
         ? 409
         : 500;
-      return jsonResponse(req, { error: msg }, status);
+      return jsonResponse(req, { error: "No se pudo liberar el pago" }, status);
     }
 
     const { data: payment } = await admin
@@ -145,10 +145,7 @@ Deno.serve(async (req) => {
         "Escrow liberado y liquidación registrada en una sola transacción.",
     });
   } catch (e) {
-    return jsonResponse(
-      req,
-      { error: e instanceof Error ? e.message : String(e) },
-      500,
-    );
+    console.error("webpay-release", e instanceof Error ? e.message : "error");
+    return jsonResponse(req, { error: "No se pudo liberar el pago" }, 500);
   }
 });
