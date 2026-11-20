@@ -13,8 +13,10 @@ import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/services/profile_photo_service.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/providers/service_providers.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../payments/presentation/pages/payment_methods_page.dart';
 
 class UserProfilePage extends ConsumerStatefulWidget {
   const UserProfilePage({super.key});
@@ -32,6 +34,7 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
   bool _isLoading = false;
   bool _photoLoading = false;
   bool _isEditing = false;
+  int _cardsRevision = 0;
   late final Future<List<JobModel>> _jobsFuture;
 
   @override
@@ -322,6 +325,18 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
                 ),
               ),
               const SizedBox(height: 24),
+              _PaymentMethodsShortcut(
+                key: ValueKey(_cardsRevision),
+                onEdit: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const PaymentMethodsPage(),
+                    ),
+                  );
+                  if (mounted) setState(() => _cardsRevision++);
+                },
+              ),
+              const SizedBox(height: 8),
               // Configuración
               ListTile(
                 leading: const Icon(Icons.settings),
@@ -343,6 +358,91 @@ class _UserProfilePageState extends ConsumerState<UserProfilePage> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentMethodsShortcut extends ConsumerStatefulWidget {
+  const _PaymentMethodsShortcut({super.key, required this.onEdit});
+
+  final VoidCallback onEdit;
+
+  @override
+  ConsumerState<_PaymentMethodsShortcut> createState() =>
+      _PaymentMethodsShortcutState();
+}
+
+class _PaymentMethodsShortcutState extends ConsumerState<_PaymentMethodsShortcut> {
+  String? _label;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final card = await ref.read(paymentServiceProvider).savedCard();
+      if (!mounted) return;
+      setState(() {
+        _label = card.enrolled ? savedCardLabel(card.cardType, card.last4) : null;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = AppColors.onCanvasMuted(Theme.of(context).brightness);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Medios de pago',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            if (_loading)
+              const LinearProgressIndicator(minHeight: 2)
+            else
+              Row(
+                children: [
+                  const Icon(Icons.credit_card, color: AppColors.brandOrange),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _label ?? 'Sin tarjeta guardada',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: _label == null ? muted : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: widget.onEdit,
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              label: const Text('Editar tarjetas'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.brandOrange,
+                side: const BorderSide(color: AppColors.brandOrange, width: 1.5),
+                minimumSize: const Size.fromHeight(48),
+                shape: const StadiumBorder(),
+              ),
+            ),
+          ],
         ),
       ),
     );

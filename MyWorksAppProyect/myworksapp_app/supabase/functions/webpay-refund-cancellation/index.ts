@@ -1,5 +1,4 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
-import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import { scheduleRefundEmail } from "../_shared/payment_mail.ts";
@@ -57,13 +56,9 @@ Deno.serve(async (req) => {
     if (["completado", "cancelado", "expirado", "no_asistio"].includes(job.estado)) {
       return jsonResponse(req, { error: "El trabajo ya está cerrado" }, 409);
     }
-    if (await jobHasOpenDispute(admin, jobId)) {
-      return jsonResponse(
-        req,
-        { error: "Hay una disputa abierta. Resuélvela para liberar o devolver el pago." },
-        409,
-      );
-    }
+    // Una disputa pausa el trabajo, pero la parte puede cancelar la solicitud
+    // si la abrió por error. La devolución de la garantía sigue siendo el
+    // paso previo a marcar el trabajo como cancelado.
 
     const { data: payment, error: payErr } = await admin
       .from("pagos")

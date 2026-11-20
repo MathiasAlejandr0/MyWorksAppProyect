@@ -10,6 +10,7 @@ import 'dart:io';
 
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/domain/worker_public_stats.dart';
 import '../../../../core/utils/validators.dart';
@@ -34,6 +35,7 @@ import '../widgets/worker_urban_coverage_card.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
 import '../widgets/sii_tax_info_widget.dart';
 import '../widgets/worker_custom_services_editor.dart';
+import '../widgets/worker_profile_section_card.dart';
 import '../widgets/worker_work_zone_field.dart';
 import '../widgets/worker_pricing_tiers_editor.dart';
 
@@ -59,7 +61,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
   bool _isLoading = false;
   String? _loadError;
   bool _photoLoading = false;
-  bool _isEditing = false;
+  String? _editingSection;
   WorkerModel? _worker;
   Map<String, int> _pricingTiers = {};
   List<WorkerCustomService> _customServices = [];
@@ -257,7 +259,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
 
       if (!mounted) return;
       setState(() {
-        _isEditing = false;
+        _editingSection = null;
         _isLoading = false;
       });
 
@@ -270,6 +272,129 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(ErrorHandler.userMessage(e))));
     }
+  }
+
+  void _restoreDraft() {
+    final user = ref.read(authProvider).user;
+    if (user != null) {
+      _nameController.text = user.name;
+      _emailController.text = user.email;
+    }
+    final worker = _worker;
+    if (worker != null) {
+      _professionController.text = worker.profession;
+      _descriptionController.text = worker.description ?? '';
+      _workZone = worker.workZone;
+      _pricingTiers = worker.pricingTiers.isNotEmpty
+          ? Map<String, int>.from(worker.pricingTiers)
+          : WorkerServiceOptionsCatalog.defaultTiersFor(worker.serviceCategory);
+      _customServices = List<WorkerCustomService>.from(worker.customServices);
+    }
+  }
+
+  void _beginEdit(String section) {
+    if (_editingSection == section) return;
+    _restoreDraft();
+    setState(() => _editingSection = section);
+  }
+
+  void _cancelEdit() {
+    _restoreDraft();
+    setState(() => _editingSection = null);
+  }
+
+  String _shortText(String value, String empty) {
+    final text = value.trim();
+    if (text.isEmpty) return empty;
+    if (text.length <= 90) return text;
+    return '${text.substring(0, 90)}…';
+  }
+
+  List<String> _pricingSummary() {
+    final worker = _worker;
+    if (worker == null) return const ['Sin tarifas'];
+    final options =
+        WorkerServiceOptionsCatalog.pricingOptionsFor(worker.serviceCategory);
+    if (options.isEmpty) return const ['Sin tarifas para este oficio'];
+    return options.take(3).map((option) {
+      final price = WorkerServiceOptionsCatalog.priceFor(
+        workerTiers: _pricingTiers,
+        option: option,
+      );
+      return '${option.title} · ${option.priceLabel(price)}';
+    }).toList();
+  }
+
+  Widget _portfolioBody() {
+    final editing = _editingSection == 'portafolio';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _addPortfolioPhoto,
+            icon: const Icon(Icons.add_photo_alternate_outlined),
+            label: const Text('Agregar foto'),
+          ),
+        ),
+        if (_portfolio.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text('Todavía no hay fotos. Agrega trabajos que quieras mostrar.'),
+          )
+        else
+          SizedBox(
+            height: 84,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _portfolio.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final item = _portfolio[index];
+                return SizedBox(
+                  width: 84,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      PortfolioMediaTile(
+                        photoPath: item.photoPath,
+                        mediaType: item.mediaType,
+                        description: item.description,
+                        showDescription: false,
+                        compact: true,
+                      ),
+                      if (editing)
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: Material(
+                            color: Colors.white,
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              tooltip: 'Eliminar',
+                              icon: const Icon(
+                                Icons.delete,
+                                color: AppColors.error,
+                                size: 18,
+                              ),
+                              onPressed: () => _deletePortfolioPhoto(item.id),
+                              padding: const EdgeInsets.all(2),
+                              constraints: const BoxConstraints(
+                                minWidth: 28,
+                                minHeight: 28,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
   }
 
   Future<void> _addPortfolioPhoto() async {
@@ -383,30 +508,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
     }
 
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Mi Perfil'),
-        actions: [
-          if (_isEditing)
-            IconButton(
-              tooltip: 'Cerrar',
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                setState(() {
-                  _isEditing = false;
-                  _loadData();
-                });
-              },
-            )
-          else
-            IconButton(
-              tooltip: 'Editar',
-              icon: const Icon(Icons.edit),
-              onPressed: () {
-                setState(() => _isEditing = true);
-              },
-            ),
-        ],
-      ),
+      appBar: const AppGradientAppBar(title: Text('Mi Perfil')),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -435,38 +537,24 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: Column(
-            children: [
-              ProfileAvatarPicker(
-                displayName: user.name,
-                photoPath: user.profilePhotoPath,
-                isLoading: _photoLoading,
-                onPickFromSource: _updateProfilePhoto,
-                onRemove: _removeProfilePhoto,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Toca la foto para cambiarla o usar la cámara',
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.star, color: AppColors.warning, size: 24),
-                  const SizedBox(width: 8),
-                  Text(
-                    WorkerPublicStats.ratingLabel(_averageRating),
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ],
-              ),
-            ],
-          ),
+        _ProfileIdentityCard(
+          name: user.name,
+          photoPath: user.profilePhotoPath,
+          photoLoading: _photoLoading,
+          ratingLabel: WorkerPublicStats.ratingLabel(_averageRating),
+          jobsCount: _jobsCount,
+          completedCount: _completedJobsCount,
+          onPickFromSource: _updateProfilePhoto,
+          onRemovePhoto: _removeProfilePhoto,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        Text(
+          'Cada bloque se edita por separado.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.onCanvasMuted(Theme.of(context).brightness),
+              ),
+        ),
+        const SizedBox(height: 14),
         if (_loadError != null)
           ErrorStateWidget(
             title: 'Perfil no disponible',
@@ -499,7 +587,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
             longitude: _worker!.baseLongitude,
             radiusKm: _worker!.serviceRadiusKm,
             origin: _worker!.baseOrigin,
-            enabled: _isEditing,
+            enabled: true,
             onSave: (latitude, longitude, radiusKm) async {
               await _workerRepository.updateBaseLocation(
                 userId: user.id,
@@ -518,7 +606,7 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
           WorkerUrbanCoverageCard(
             urbanRadiusKm: _worker!.urbanRadiusKm,
             outsideFeeClp: _worker!.outsideMobilizationFeeClp,
-            enabled: _isEditing,
+            enabled: true,
             onSave: (urbanRadiusKm, outsideFeeClp) async {
               await _workerRepository.updateUrbanCoverage(
                 userId: user.id,
@@ -532,259 +620,304 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
               );
             },
           ),
-        const SizedBox(height: 24),
-        // Información personal
-        TextFormField(
-          controller: _nameController,
-          enabled: _isEditing,
-          decoration: const InputDecoration(
-            labelText: 'Nombre completo',
-            prefixIcon: Icon(Icons.person),
-          ),
-          validator: Validators.validateName,
-        ),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _emailController,
-          enabled: _isEditing,
-          keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-            labelText: 'Email',
-            prefixIcon: Icon(Icons.email),
-          ),
-          validator: Validators.validateEmail,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _professionController,
-          enabled: _isEditing,
-          decoration: const InputDecoration(
-            labelText: 'Profesión',
-            prefixIcon: Icon(Icons.work),
-          ),
-          validator: (value) => Validators.validateRequired(value, 'Profesión'),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _descriptionController,
-          enabled: _isEditing,
-          decoration: const InputDecoration(
-            labelText: 'Descripción profesional',
-            prefixIcon: Icon(Icons.description),
-          ),
-          maxLines: 4,
-          maxLength: 500,
-          validator: (value) {
-            if ((value ?? '').trim().length > 500) {
-              return 'La descripción no puede superar 500 caracteres';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-        if (_isEditing)
-          WorkerWorkZoneField(
-            value: _workZone,
-            onChanged: (v) => setState(() => _workZone = v),
-          )
-        else if (_workZone != null)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.location_on_outlined),
-            title: const Text('Zona de trabajo'),
-            subtitle: Text(_workZone!),
-          ),
-        if (_worker != null) ...[
-          const SizedBox(height: 24),
-          WorkerPricingTiersEditor(
-            category: _worker!.serviceCategory,
-            initialTiers: _pricingTiers,
-            enabled: _isEditing,
-            onChanged: (tiers) => setState(() => _pricingTiers = tiers),
-          ),
-          const SizedBox(height: 24),
-          WorkerCustomServicesEditor(
-            services: _customServices,
-            enabled: _isEditing,
-            onChanged: (services) => setState(() => _customServices = services),
-          ),
-        ],
-        const SizedBox(height: 24),
-        if (_isEditing)
-          ElevatedButton(
-            onPressed: _isLoading ? null : _saveChanges,
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Guardar cambios'),
-          ),
-        const SizedBox(height: 32),
-        // Portafolio
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Portafolio', style: Theme.of(context).textTheme.titleMedium),
-            IconButton(
-              icon: const Icon(Icons.add_photo_alternate),
-              onPressed: _addPortfolioPhoto,
-              tooltip: 'Agregar foto',
-            ),
+        WorkerProfileSectionCard(
+          icon: Icons.person_outline,
+          title: 'Datos personales',
+          summary: [
+            _shortText(_nameController.text, 'Sin nombre'),
+            _shortText(_emailController.text, 'Sin correo'),
           ],
-        ),
-        const SizedBox(height: 8),
-        _portfolio.isEmpty
-            ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: Text('No hay fotos en el portafolio'),
+          editing: _editingSection == 'personal',
+          saving: _isLoading && _editingSection == 'personal',
+          onEdit: () => _beginEdit('personal'),
+          onCancel: _cancelEdit,
+          onSave: _saveChanges,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre completo',
+                  prefixIcon: Icon(Icons.person),
                 ),
-              )
-            : SizedBox(
-                height: 84,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _portfolio.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final item = _portfolio[index];
-                    return SizedBox(
-                      width: 84,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          PortfolioMediaTile(
-                            photoPath: item.photoPath,
-                            mediaType: item.mediaType,
-                            description: item.description,
-                            showDescription: false,
-                            compact: true,
-                          ),
-                          if (_isEditing)
-                            Positioned(
-                              top: 2,
-                              right: 2,
-                              child: Material(
-                                color: Colors.white,
-                                shape: const CircleBorder(),
-                                child: IconButton(
-                                  tooltip: 'Eliminar',
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: AppColors.error,
-                                    size: 18,
-                                  ),
-                                  onPressed: () =>
-                                      _deletePortfolioPhoto(item.id),
-                                  padding: const EdgeInsets.all(2),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 28,
-                                    minHeight: 28,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
+                validator: Validators.validateName,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email),
+                ),
+                validator: Validators.validateEmail,
+              ),
+            ],
+          ),
+        ),
+        WorkerProfileSectionCard(
+          icon: Icons.work_outline,
+          title: 'Oficio',
+          summary: [
+            _shortText(_professionController.text, 'Sin profesión'),
+            _shortText(_descriptionController.text, 'Sin descripción'),
+            _workZone ?? 'Sin zona de trabajo',
+          ],
+          editing: _editingSection == 'oficio',
+          saving: _isLoading && _editingSection == 'oficio',
+          onEdit: () => _beginEdit('oficio'),
+          onCancel: _cancelEdit,
+          onSave: _saveChanges,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _professionController,
+                decoration: const InputDecoration(
+                  labelText: 'Profesión',
+                  prefixIcon: Icon(Icons.work),
+                ),
+                validator: (value) =>
+                    Validators.validateRequired(value, 'Profesión'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción profesional',
+                  prefixIcon: Icon(Icons.description),
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 4,
+                maxLength: 500,
+                validator: (value) {
+                  if ((value ?? '').trim().length > 500) {
+                    return 'La descripción no puede superar 500 caracteres';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              WorkerWorkZoneField(
+                value: _workZone,
+                onChanged: (value) => setState(() => _workZone = value),
+              ),
+            ],
+          ),
+        ),
+        if (_worker != null)
+          WorkerProfileSectionCard(
+            icon: Icons.payments_outlined,
+            title: 'Tarifas',
+            summary: _pricingSummary(),
+            editing: _editingSection == 'tarifas',
+            saving: _isLoading && _editingSection == 'tarifas',
+            onEdit: () => _beginEdit('tarifas'),
+            onCancel: _cancelEdit,
+            onSave: _saveChanges,
+            child: WorkerPricingTiersEditor(
+              category: _worker!.serviceCategory,
+              initialTiers: _pricingTiers,
+              onChanged: (tiers) => setState(() => _pricingTiers = tiers),
+            ),
+          ),
+        if (_worker != null)
+          WorkerProfileSectionCard(
+            icon: Icons.handyman_outlined,
+            title: 'Servicios adicionales',
+            summary: _customServices.isEmpty
+                ? const ['Sin servicios adicionales']
+                : _customServices.take(3).map((service) => service.title).toList(),
+            editing: _editingSection == 'servicios',
+            saving: _isLoading && _editingSection == 'servicios',
+            onEdit: () => _beginEdit('servicios'),
+            onCancel: _cancelEdit,
+            onSave: _saveChanges,
+            child: WorkerCustomServicesEditor(
+              services: _customServices,
+              onChanged: (services) =>
+                  setState(() => _customServices = services),
+            ),
+          ),
+        WorkerProfileSectionCard(
+          icon: Icons.photo_library_outlined,
+          title: 'Portafolio',
+          summary: [
+            _portfolio.isEmpty
+                ? 'Sin fotos todavía'
+                : '${_portfolio.length} ${_portfolio.length == 1 ? 'foto' : 'fotos'}',
+          ],
+          editing: _editingSection == 'portafolio',
+          alwaysShowBody: true,
+          saveLabel: 'Listo',
+          onEdit: () => _beginEdit('portafolio'),
+          onCancel: () => setState(() => _editingSection = null),
+          onSave: () => setState(() => _editingSection = null),
+          child: _portfolioBody(),
+        ),
+        const SiiTaxInfoWidget(),
+        const SizedBox(height: 8),
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: AppDecorations.surfaceCardOf(
+            context,
+            accent: AppColors.brandOrange,
+          ),
+          child: Column(
+            children: [
+              const ColoredBox(
+                color: _profileHeader,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Text(
+                      'Cuenta',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
-        const SizedBox(height: 20),
-        // Estadísticas
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Estadísticas',
-                  style: Theme.of(context).textTheme.titleLarge,
+              ListTile(
+                leading: const Icon(Icons.settings, color: AppColors.brandOrange),
+                title: const Text('Configuración'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  context.push(AppConstants.routeSettings);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.rate_review_outlined, color: AppColors.brandOrange),
+                title: const Text('Encuesta de la prueba'),
+                subtitle: const Text('Cuéntanos cómo te fue usando MyWorksApp'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => TestingFeedbackSheet.show(context, role: 'profesional'),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                child: OutlinedButton.icon(
+                  onPressed: _logout,
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Cerrar sesión'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    minimumSize: const Size.fromHeight(44),
+                  ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _StatItem(
-                      icon: Icons.work,
-                      label: 'Trabajos',
-                      value: _jobsCount.toString(),
-                    ),
-                    _StatItem(
-                      icon: Icons.check_circle,
-                      label: 'Completados',
-                      value: _completedJobsCount.toString(),
-                    ),
-                    _StatItem(
-                      icon: Icons.star,
-                      label: 'Calificación',
-                      value: WorkerPublicStats.ratingLabel(_averageRating),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 24),
-        const SiiTaxInfoWidget(),
-        const SizedBox(height: 24),
-        // Configuración
-        ListTile(
-          leading: const Icon(Icons.settings),
-          title: const Text('Configuración'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            context.push(AppConstants.routeSettings);
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.rate_review_outlined),
-          title: const Text('Encuesta de la prueba'),
-          subtitle: const Text('Cuéntanos cómo te fue usando MyWorksApp'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => TestingFeedbackSheet.show(context, role: 'profesional'),
-        ),
-        const Divider(),
-        // Cerrar sesión
-        OutlinedButton.icon(
-          onPressed: _logout,
-          icon: const Icon(Icons.logout),
-          label: const Text('Cerrar sesión'),
-          style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
         ),
       ],
     );
   }
 }
 
-class _StatItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
+const _profileHeader = Color(0xFF2B3038);
 
-  const _StatItem({
-    required this.icon,
-    required this.label,
-    required this.value,
+class _ProfileIdentityCard extends StatelessWidget {
+  const _ProfileIdentityCard({
+    required this.name,
+    required this.photoPath,
+    required this.photoLoading,
+    required this.ratingLabel,
+    required this.jobsCount,
+    required this.completedCount,
+    required this.onPickFromSource,
+    required this.onRemovePhoto,
   });
+
+  final String name;
+  final String? photoPath;
+  final bool photoLoading;
+  final String ratingLabel;
+  final int jobsCount;
+  final int completedCount;
+  final Future<void> Function(ImageSource source) onPickFromSource;
+  final Future<void> Function() onRemovePhoto;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 32, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleLarge
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ],
+    final muted = AppColors.onCanvasMuted(Theme.of(context).brightness);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: AppDecorations.surfaceCardOf(
+        context,
+        accent: AppColors.brandOrange,
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 18),
+          ProfileAvatarPicker(
+            displayName: name,
+            photoPath: photoPath,
+            isLoading: photoLoading,
+            onPickFromSource: onPickFromSource,
+            onRemove: onRemovePhoto,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Toca la foto para cambiarla',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted),
+          ),
+          const SizedBox(height: 14),
+          ColoredBox(
+            color: _profileHeader,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  _IdentityStat(value: '$jobsCount', label: 'Trabajos'),
+                  _IdentityStat(value: '$completedCount', label: 'Completados'),
+                  _IdentityStat(value: ratingLabel, label: 'Calificación'),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IdentityStat extends StatelessWidget {
+  const _IdentityStat({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.brandOrange, fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -53,6 +53,49 @@ class JobRepository {
     );
   }
 
+  /// Trabajos del cliente que ya están en ejecución (`en_curso`).
+  /// El nombre del servicio sale del embed; si esa relación no responde,
+  /// la lista igual vuelve y la carta usa la descripción.
+  Future<List<({JobModel job, String? serviceName})>> getInProgressJobsByUserId(
+    String userId,
+  ) async {
+    final rows = await _inProgressRows(userId);
+    return [
+      for (final row in rows)
+        (
+          job: JobModel.fromMap(row),
+          serviceName: _serviceNameEmbed(row['servicios']),
+        ),
+    ];
+  }
+
+  Future<List<Map<String, dynamic>>> _inProgressRows(String userId) async {
+    Object? rows;
+    try {
+      rows = await supabase
+          .from(_table)
+          .select('*, servicios(nombre)')
+          .eq('id_usuario', userId)
+          .eq('estado', AppConstants.jobStatusInProgress)
+          .order('actualizado_en', ascending: false);
+    } catch (_) {
+      rows = await supabase
+          .from(_table)
+          .select()
+          .eq('id_usuario', userId)
+          .eq('estado', AppConstants.jobStatusInProgress)
+          .order('actualizado_en', ascending: false);
+    }
+    if (rows is! List) return const [];
+    return [
+      for (final row in rows)
+        if (row is Map<String, dynamic>)
+          row
+        else if (row is Map)
+          Map<String, dynamic>.from(row),
+    ];
+  }
+
   /// Un pedido en `esperando_pago` todavía no tiene cobro retenido: es un
   /// checkout sin terminar del cliente. El profesional lo ve recién cuando el
   /// pago lo pasa a `pendiente`, así que ninguna lista ni contador suyo lo trae.
@@ -442,6 +485,20 @@ class JobRepository {
   /// Obtiene todos los trabajos de un trabajador (alias para getJobsByWorkerId)
   Future<List<JobModel>> getWorkerJobs(String workerId) async {
     return await getJobsByWorkerId(workerId);
+  }
+
+  String? _serviceNameEmbed(Object? embed) {
+    if (embed is Map) {
+      final name = embed['nombre']?.toString().trim() ?? '';
+      return name.isEmpty ? null : name;
+    }
+    if (embed is List) {
+      for (final item in embed) {
+        final name = _serviceNameEmbed(item);
+        if (name != null) return name;
+      }
+    }
+    return null;
   }
 }
 

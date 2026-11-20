@@ -20,6 +20,7 @@ class JobDetailPaymentEscrowSection extends StatelessWidget {
   final VoidCallback onPayEscrow;
   final VoidCallback onApproveCompletion;
   final VoidCallback onRejectCompletion;
+  final bool blockedByDispute;
 
   const JobDetailPaymentEscrowSection({
     super.key,
@@ -33,6 +34,7 @@ class JobDetailPaymentEscrowSection extends StatelessWidget {
     required this.onPayEscrow,
     required this.onApproveCompletion,
     required this.onRejectCompletion,
+    this.blockedByDispute = false,
   });
 
   @override
@@ -88,7 +90,8 @@ class JobDetailPaymentEscrowSection extends StatelessWidget {
         ],
         if (job.status == PricingConstants.jobAwaitingClientApproval &&
             !isWorker &&
-            isClientOwner) ...[
+            isClientOwner &&
+            !blockedByDispute) ...[
           const SizedBox(height: 16),
           JobDetailClientApprovalCard(
             jobId: jobId,

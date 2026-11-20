@@ -16,6 +16,27 @@ const jobTimelineSteps = <String>[
 
 int jobTimelineIndex(String status) => jobTimelineSteps.indexOf(status);
 
+/// Paso actual, contando desde 1. Cero si el estado no está en la línea.
+int jobProgressStep(String status) {
+  final index = jobTimelineIndex(status);
+  return index < 0 ? 0 : index + 1;
+}
+
+/// Avance de 0 a 1. El paso actual cuenta como alcanzado.
+double jobProgressFraction(String status) {
+  if (jobTimelineSteps.isEmpty) return 0;
+  final step = jobProgressStep(status);
+  if (step == 0) return 0;
+  return step / jobTimelineSteps.length;
+}
+
+/// Estado que sigue en la línea, si todavía queda uno.
+String? jobProgressNextStatus(String status) {
+  final index = jobTimelineIndex(status);
+  if (index < 0 || index + 1 >= jobTimelineSteps.length) return null;
+  return jobTimelineSteps[index + 1];
+}
+
 class JobStatusTimeline extends StatelessWidget {
   const JobStatusTimeline({super.key, required this.status});
 

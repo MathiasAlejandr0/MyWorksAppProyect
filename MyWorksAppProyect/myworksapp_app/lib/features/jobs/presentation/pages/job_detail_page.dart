@@ -253,24 +253,6 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     }
   }
 
-  Future<void> _proposeAgreement(String type) async {
-    final job = _job;
-    if (job == null) return;
-    try {
-      await DisputeService.instance.proposeAgreement(jobId: job.id, type: type);
-      await _loadDispute(job.id);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Acuerdo enviado. Falta que la otra parte lo confirme.')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorHandler.userMessage(e)), backgroundColor: AppColors.error),
-      );
-    }
-  }
-
   Future<void> _respondAgreement(bool accept) async {
     final id = _pendingAgreementId;
     final job = _job;
@@ -312,7 +294,11 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     }
   }
 
-  Future<void> _openDispute(String reason, String? description) async {
+  Future<void> _openDispute(
+    String reason,
+    String? description, [
+    String? outcome,
+  ]) async {
     final user = ref.read(authProvider).user;
     final job = _job;
     if (user == null || job == null) return;
@@ -324,6 +310,16 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         reason: reason,
         description: description,
       );
+      if (outcome != null && outcome.isNotEmpty) {
+        try {
+          await DisputeService.instance.proposeAgreement(
+            jobId: job.id,
+            type: outcome,
+          );
+        } catch (e) {
+          AppLogger.w('La disputa quedó abierta, pero el acuerdo no se envió: $e');
+        }
+      }
 
       final notifyUserId = user.id == job.userId ? job.workerId : job.userId;
       if (notifyUserId != null) {
@@ -341,7 +337,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Disputa abierta. El pago sigue retenido. Si el caso es simple, se cierra solo al vencer el plazo.',
+            'Disputa abierta. El trabajo queda en pausa y el pago sigue retenido.',
           ),
         ),
       );
