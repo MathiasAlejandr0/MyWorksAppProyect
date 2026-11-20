@@ -1,18 +1,18 @@
 # Sprint backlog — preparación de la evaluación
 
-Sprint de cierre antes de la defensa. El objetivo es que el guion de [`MyWorksAppProyect/DEMO.md`](../MyWorksAppProyect/DEMO.md) se recorra sin un segundo paso de confirmación ni un cierre sin evidencia.
+Sprint de cierre antes de la defensa. El guion de [`MyWorksAppProyect/DEMO.md`](../MyWorksAppProyect/DEMO.md) se recorre con un solo paso de cobro y con evidencia antes de cerrar.
 
 ## En este sprint
 
 | Ítem | Hecho de aceptación |
 |------|---------------------|
 | Cobro con tarjeta | El total que se muestra es el que acepta el servidor. Un solo toque abre Transbank. |
-| Datos de contacto | El chat y la creación del pago rechazan teléfono, correo, enlace y redes. |
+| Datos de contacto | El chat y la creación del pago rechazan teléfono, correo, enlace y un usuario de red social. Un RUT, una medida o un monto siguen siendo texto del oficio. |
 | Cierre del trabajo | Sin al menos una evidencia no se pasa a conformidad ni a completado. |
 | Segundo cobro | Un pago principal activo por trabajo. El aviso al usuario está en español. |
 | Documentación | Visión, backlog, este sprint, retrospectiva y requisitos no funcionales quedan en `docs/`. |
 
-## Guion que debe quedar verde
+## Guion de la demostración
 
 1. El cliente busca plomería en Puerto Montt y elige un profesional.
 2. Agenda una hora publicada.

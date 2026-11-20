@@ -1,4 +1,5 @@
 import type { AppSupabase } from '../client';
+import { contactBlockedMessage, containsContactData } from '../chat/contactFilter';
 import { bookingSlotError, workerSlotUnpublishedMessage } from '../jobs/bookingSlot';
 import { decodeBytea, isWebpBytes, webpBytesToDataUrl } from '../media/bytea';
 import type { JobRow } from '../types';
@@ -21,6 +22,9 @@ export async function createPendingJob(
   supabase: AppSupabase,
   input: CreateJobInput,
 ): Promise<JobRow> {
+  if (containsContactData(input.description) || containsContactData(input.address ?? '')) {
+    throw new Error(contactBlockedMessage);
+  }
   if (!input.scheduledAt) {
     throw new Error(workerSlotUnpublishedMessage);
   }
