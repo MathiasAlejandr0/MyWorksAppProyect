@@ -41,4 +41,4 @@ La clave privada del actualizador no está en el repositorio. Hay que generarla 
 
 ## Bitácora
 
-La migración `20261120120000_auditoria_consola.sql` crea `auditoria_consola`. No está aplicada en la base remota. Las funciones `webpay-release`, `webpay-resolve-dispute`, `webpay-refund` e `invitar-colaborador` tampoco están redesplegadas.
+La migración `20261120130000_auditoria_consola.sql` crea `auditoria_consola`. No está aplicada en la base remota. Las funciones `webpay-release`, `webpay-resolve-dispute`, `webpay-refund` e `invitar-colaborador` tampoco están redesplegadas.

@@ -1,5 +1,5 @@
 -- Pruebas de la bitácora y de los RPC de consola.
--- Correr en una base LOCAL después de aplicar 20261120120000_auditoria_consola.sql.
+-- Correr en una base LOCAL después de aplicar 20261120130000_auditoria_consola.sql.
 -- No ejecutar contra la base remota. No crea datos de negocio: solo intenta
 -- privilegios y espera que fallen.
 --

@@ -14,6 +14,8 @@ BEGIN
     'liquidar',
     'resolver_disputa',
     'invitar_colaborador',
+    'reenviar_invitacion',
+    'revocar_invitacion',
     'cambiar_rol',
     'suspender_cuenta',
     'reactivar_cuenta',
@@ -953,5 +955,167 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.consola_registrar_vista_sensible(text, text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.consola_registrar_vista_sensible(text, text, text) TO authenticated;
+
+-- Disputas ya cerradas. La política de la tabla solo deja leer al admin;
+-- soporte y QA entran por aquí, igual que en la cola abierta.
+CREATE OR REPLACE FUNCTION public.consola_disputas_resueltas()
+RETURNS TABLE (
+  id text,
+  id_trabajo text,
+  motivo text,
+  descripcion text,
+  estado text,
+  resolucion text,
+  resuelta_en text,
+  creado_en text,
+  nombre_cliente text,
+  nombre_profesional text,
+  monto_retenido numeric
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF public.rol_consola() IS NULL THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  RETURN QUERY
+  SELECT
+    d.id::text,
+    d.id_trabajo::text,
+    d.motivo,
+    d.descripcion,
+    d.estado,
+    d.resolucion,
+    d.resuelta_en,
+    d.creado_en::text,
+    COALESCE(pc.nombre, 'Cliente'),
+    COALESCE(pp.nombre, 'Profesional'),
+    COALESCE((
+      SELECT max(pg.monto)
+      FROM public.pagos pg
+      WHERE pg.id_trabajo = d.id_trabajo
+        AND pg.estado IN ('liberado', 'reembolsado', 'retenido', 'autorizado')
+    ), 0)
+  FROM public.disputas d
+  JOIN public.trabajos t ON t.id::text = d.id_trabajo::text
+  LEFT JOIN public.perfiles pc ON pc.id = t.id_usuario
+  LEFT JOIN public.perfiles pp ON pp.id = t.id_trabajador
+  WHERE d.estado = 'resuelta'
+  ORDER BY d.resuelta_en DESC NULLS LAST
+  LIMIT 200;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.consola_disputas_resueltas() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.consola_disputas_resueltas() TO authenticated;
+
+-- Revocar una invitación que todavía no aceptó. No existe otro RPC para esto.
+CREATE OR REPLACE FUNCTION public.consola_revocar_invitacion(p_id uuid, p_motivo text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'auth'
+AS $$
+DECLARE
+  v_rol text;
+  v_estado text;
+  v_invited timestamptz;
+  v_confirmed timestamptz;
+  v_admins integer;
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  IF char_length(btrim(COALESCE(p_motivo, ''))) < 10 THEN
+    RAISE EXCEPTION 'motivo demasiado corto';
+  END IF;
+  IF p_id = auth.uid() THEN
+    RAISE EXCEPTION 'No puedes revocar tu propia cuenta desde aquí';
+  END IF;
+  SELECT p.rol, p.estado_cuenta INTO v_rol, v_estado
+  FROM public.perfiles p WHERE p.id = p_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Persona no encontrada';
+  END IF;
+  IF v_rol NOT IN ('administrador', 'soporte', 'qa') THEN
+    RAISE EXCEPTION 'No es una cuenta de la consola';
+  END IF;
+  SELECT u.invited_at, u.email_confirmed_at INTO v_invited, v_confirmed
+  FROM auth.users u WHERE u.id = p_id;
+  IF v_invited IS NULL OR v_confirmed IS NOT NULL THEN
+    RAISE EXCEPTION 'La invitación ya fue aceptada';
+  END IF;
+  IF v_rol = 'administrador' AND v_estado IN ('activo', 'active') THEN
+    SELECT count(*) INTO v_admins
+    FROM public.perfiles
+    WHERE rol = 'administrador'
+      AND estado_cuenta IN ('activo', 'active')
+      AND id <> p_id;
+    IF v_admins < 1 THEN
+      RAISE EXCEPTION 'No se puede quitar el último administrador activo';
+    END IF;
+  END IF;
+  PERFORM public.registrar_auditoria(
+    'revocar_invitacion', 'perfiles', p_id::text,
+    jsonb_build_object('rol', v_rol, 'invitacion_pendiente', true),
+    jsonb_build_object('revocada', true),
+    btrim(p_motivo), NULL, NULL, NULL, NULL
+  );
+  IF to_regclass('auth.sessions') IS NOT NULL THEN
+    DELETE FROM auth.sessions WHERE user_id = p_id;
+  END IF;
+  IF to_regclass('auth.refresh_tokens') IS NOT NULL THEN
+    EXECUTE 'DELETE FROM auth.refresh_tokens WHERE user_id::text = $1' USING p_id::text;
+  END IF;
+  DELETE FROM auth.users WHERE id = p_id;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.consola_revocar_invitacion(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.consola_revocar_invitacion(uuid, text) TO authenticated;
+
+-- Cierra las sesiones de Auth de otra persona. No borra la cuenta.
+CREATE OR REPLACE FUNCTION public.consola_cerrar_sesiones(p_id uuid, p_motivo text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'auth'
+AS $$
+DECLARE
+  v_rol text;
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'forbidden';
+  END IF;
+  IF char_length(btrim(COALESCE(p_motivo, ''))) < 10 THEN
+    RAISE EXCEPTION 'motivo demasiado corto';
+  END IF;
+  IF p_id = auth.uid() THEN
+    RAISE EXCEPTION 'Cierra tu sesión desde Mi cuenta';
+  END IF;
+  SELECT p.rol INTO v_rol FROM public.perfiles p WHERE p.id = p_id;
+  IF v_rol IS NULL OR v_rol NOT IN ('administrador', 'soporte', 'qa') THEN
+    RAISE EXCEPTION 'No es una cuenta de la consola';
+  END IF;
+  IF to_regclass('auth.sessions') IS NULL AND to_regclass('auth.refresh_tokens') IS NULL THEN
+    RAISE EXCEPTION 'No se puede cerrar la sesión desde la base';
+  END IF;
+  IF to_regclass('auth.sessions') IS NOT NULL THEN
+    DELETE FROM auth.sessions WHERE user_id = p_id;
+  END IF;
+  IF to_regclass('auth.refresh_tokens') IS NOT NULL THEN
+    EXECUTE 'DELETE FROM auth.refresh_tokens WHERE user_id::text = $1' USING p_id::text;
+  END IF;
+  PERFORM public.registrar_auditoria(
+    'cerrar_sesion', 'perfiles', p_id::text,
+    NULL,
+    jsonb_build_object('sesiones', 'cerradas'),
+    btrim(p_motivo), NULL, NULL, NULL, NULL
+  );
+END;
+$$;
+REVOKE ALL ON FUNCTION public.consola_cerrar_sesiones(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.consola_cerrar_sesiones(uuid, text) TO authenticated;
 
 COMMIT;

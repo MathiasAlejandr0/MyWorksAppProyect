@@ -186,21 +186,33 @@ export function DisputasPage() {
   const client = useQueryClient();
   const [decision, setDecision] = useState<{ id: string; decision: 'liberar' | 'reembolsar'; monto: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<'abiertas' | 'resueltas'>('abiertas');
   const query = useQuery({
-    queryKey: ['disputas'],
+    queryKey: ['disputas', tab],
     queryFn: async () => {
+      if (tab === 'resueltas') {
+        const { data, error } = await supabase.rpc('consola_disputas_resueltas');
+        if (error) throw error;
+        return (data ?? []).map((row) => ({ ...row, decision_sugerida: null as string | null, motivo_regla: null as string | null, vence_en: null as string | null }));
+      }
       const { data, error } = await supabase.rpc('consola_disputas_abiertas');
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map((row) => ({ ...row, resolucion: null as string | null, resuelta_en: null as string | null }));
     },
-    refetchInterval: 30_000,
+    refetchInterval: tab === 'abiertas' ? 30_000 : false,
   });
   return (
     <Gate allow={permissions.supportQueue}>
       <h1>Disputas</h1>
+      <div className="tabs">
+        <button type="button" className={tab === 'abiertas' ? 'is-active' : undefined} onClick={() => setTab('abiertas')}>Abiertas</button>
+        <button type="button" className={tab === 'resueltas' ? 'is-active' : undefined} onClick={() => setTab('resueltas')}>Resueltas</button>
+      </div>
       {query.isLoading ? <SkeletonRows /> : null}
       {query.isError ? <ErrorState message="No se pudo cargar la cola." onRetry={() => void query.refetch()} /> : null}
-      {!query.isLoading && query.data?.length === 0 ? <EmptyState title="No hay disputas que requieran una persona." /> : null}
+      {!query.isLoading && query.data?.length === 0 ? (
+        <EmptyState title={tab === 'abiertas' ? 'No hay disputas que requieran una persona.' : 'Aún no hay disputas resueltas.'} />
+      ) : null}
       <div className="stack">
         {(query.data ?? []).map((row) => (
           <article key={row.id} className="panel stack">
@@ -209,9 +221,13 @@ export function DisputasPage() {
               <Badge value={row.estado} />
             </div>
             <p>{row.nombre_cliente} · {row.nombre_profesional} · {formatClp(row.monto_retenido)}</p>
-            <p className="muted">Sugerencia: {statusLabel(row.decision_sugerida)} · {row.motivo_regla || 'Sin regla'} · vence {formatDateTime(row.vence_en)}</p>
+            {tab === 'resueltas' ? (
+              <p className="muted">Resolución: {row.resolucion || 'Sin texto de resolución.'} · {formatDateTime(row.resuelta_en)}</p>
+            ) : (
+              <p className="muted">Sugerencia: {statusLabel(row.decision_sugerida)} · {row.motivo_regla || 'Sin regla'} · vence {formatDateTime(row.vence_en)}</p>
+            )}
             {permissions.disputeEvidence ? <Evidencia id={row.id} /> : <p className="muted">Tu rol no ve la evidencia.</p>}
-            {permissions.resolveDisputes ? (
+            {tab === 'abiertas' && permissions.resolveDisputes ? (
               <div className="row">
                 <Button onClick={() => setDecision({ id: row.id, decision: 'liberar', monto: formatClp(row.monto_retenido) })}>Liberar al profesional</Button>
                 <Button variant="danger" onClick={() => setDecision({ id: row.id, decision: 'reembolsar', monto: formatClp(row.monto_retenido) })}>Devolver a la tarjeta</Button>
@@ -774,10 +790,26 @@ export function NotificacionesPage() {
   );
 }
 
+function inviteRoleLabel(rol: string): 'Admin' | 'Soporte' | 'QA' | null {
+  if (rol === 'administrador') return 'Admin';
+  if (rol === 'soporte') return 'Soporte';
+  if (rol === 'qa') return 'QA';
+  return null;
+}
+
 export function EquipoPage() {
+  const { profile } = useAuth();
   const toast = useToast();
   const client = useQueryClient();
   const [form, setForm] = useState({ email: '', name: '', role: 'Soporte', message: '' });
+  const [roles, setRoles] = useState<Record<string, string>>({});
+  const [action, setAction] = useState<null | {
+    kind: 'rol' | 'reenviar' | 'revocar' | 'cerrar';
+    id: string;
+    nombre: string;
+    correo: string | null;
+    rol: string;
+  }>(null);
   const query = useQuery({
     queryKey: ['equipo'],
     queryFn: async () => {
@@ -799,27 +831,124 @@ export function EquipoPage() {
     },
     onError: (error: Error) => toast(error.message),
   });
+  const runAction = async (motivo: string) => {
+    if (!action) return;
+    if (action.kind === 'rol') {
+      const { error } = await supabase.rpc('consola_cambiar_rol', { p_id: action.id, p_rol: action.rol, p_motivo: motivo });
+      if (error) throw new Error(friendlyError(error));
+      return;
+    }
+    if (action.kind === 'revocar') {
+      const { error } = await supabase.rpc('consola_revocar_invitacion', { p_id: action.id, p_motivo: motivo });
+      if (error) throw new Error(friendlyError(error));
+      return;
+    }
+    if (action.kind === 'cerrar') {
+      const { error } = await supabase.rpc('consola_cerrar_sesiones', { p_id: action.id, p_motivo: motivo });
+      if (error) throw new Error(friendlyError(error));
+      return;
+    }
+    const label = inviteRoleLabel(action.rol);
+    if (!action.correo || !label) throw new Error('Esa cuenta no tiene correo para reenviar.');
+    const { error } = await supabase.functions.invoke('invitar-colaborador', {
+      body: {
+        email: action.correo,
+        name: action.nombre,
+        role: label,
+        message: motivo,
+        motivo,
+        redirectTo: 'myworksapp-admin://auth/callback',
+      },
+    });
+    if (error) throw new Error(await edgeFunctionErrorMessage(error, 'No se pudo reenviar la invitación.'));
+  };
   return (
-    <Gate allow={consolePermissions(useAuth().profile?.role ?? '').people}>
+    <Gate allow={consolePermissions(profile?.role ?? '').people}>
       <h1>Equipo</h1>
       {query.isLoading ? <SkeletonRows /> : null}
       {query.isError ? <ErrorState message="No se pudo cargar el equipo." onRetry={() => void query.refetch()} /> : null}
       {query.data?.length === 0 ? <EmptyState title="No hay colaboradores con rol de consola." /> : null}
       <div className="table-wrap panel">
         <table className="data">
-          <thead><tr><th>Nombre</th><th>Rol</th><th>Cuenta</th><th>Invitación</th></tr></thead>
+          <thead><tr><th>Nombre</th><th>Rol</th><th>Cuenta</th><th>Invitación</th><th>Acciones</th></tr></thead>
           <tbody>
-            {(query.data ?? []).map((person) => (
-              <tr key={person.id}>
-                <td>{person.nombre}</td>
-                <td>{statusLabel(person.rol)}</td>
-                <td><Badge value={person.estado_cuenta} /></td>
-                <td>{person.invitacion_pendiente ? 'Pendiente' : 'Aceptada'}</td>
-              </tr>
-            ))}
+            {(query.data ?? []).map((person) => {
+              const nextRole = roles[person.id] ?? person.rol;
+              const pending = Boolean(person.invitacion_pendiente);
+              return (
+                <tr key={person.id}>
+                  <td>{person.nombre}</td>
+                  <td>
+                    <select
+                      aria-label={`Rol de ${person.nombre}`}
+                      value={nextRole}
+                      onChange={(event) => setRoles({ ...roles, [person.id]: event.target.value })}
+                    >
+                      <option value="administrador">Administración</option>
+                      <option value="soporte">Soporte</option>
+                      <option value="qa">QA</option>
+                    </select>
+                  </td>
+                  <td><Badge value={person.estado_cuenta} /></td>
+                  <td>{pending ? 'Pendiente' : 'Aceptada'}</td>
+                  <td>
+                    <div className="row">
+                      <Button
+                        variant="secondary"
+                        disabled={nextRole === person.rol}
+                        onClick={() => setAction({ kind: 'rol', id: person.id, nombre: person.nombre, correo: person.correo, rol: nextRole })}
+                      >Cambiar rol</Button>
+                      <Button
+                        variant="secondary"
+                        disabled={!pending || !person.correo}
+                        onClick={() => setAction({ kind: 'reenviar', id: person.id, nombre: person.nombre, correo: person.correo, rol: person.rol })}
+                      >Reenviar</Button>
+                      <Button
+                        variant="danger"
+                        disabled={!pending}
+                        onClick={() => setAction({ kind: 'revocar', id: person.id, nombre: person.nombre, correo: person.correo, rol: person.rol })}
+                      >Revocar</Button>
+                      <Button
+                        variant="secondary"
+                        disabled={person.id === profile?.id}
+                        onClick={() => setAction({ kind: 'cerrar', id: person.id, nombre: person.nombre, correo: person.correo, rol: person.rol })}
+                      >Cerrar sesiones</Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+      {action ? (
+        <ConfirmDialog
+          title={
+            action.kind === 'rol' ? 'Cambiar rol'
+              : action.kind === 'reenviar' ? 'Reenviar invitación'
+                : action.kind === 'revocar' ? 'Revocar invitación'
+                  : 'Cerrar sesiones'
+          }
+          summary={
+            action.kind === 'rol' ? `${action.nombre} pasará a ${statusLabel(action.rol)}.`
+              : action.kind === 'reenviar' ? `Se vuelve a enviar la invitación a ${action.correo}.`
+                : action.kind === 'revocar' ? `${action.nombre} todavía no aceptó. Se elimina la invitación.`
+                  : `Se cierran las sesiones de ${action.nombre}. La cuenta sigue existiendo.`
+          }
+          irreversible={action.kind === 'revocar'}
+          onCancel={() => setAction(null)}
+          onConfirm={(motivo) => {
+            void runAction(motivo).then(async () => {
+              toast('Listo.');
+              setAction(null);
+              await client.invalidateQueries({ queryKey: ['equipo'] });
+            }).catch((error: unknown) => {
+              const message = error instanceof Error ? error.message : friendlyError(error as { message?: string });
+              toast(message || 'No se pudo completar la acción.');
+            });
+          }}
+        />
+      ) : null}
       <form className="panel stack" onSubmit={(event) => { event.preventDefault(); invite.mutate(); }}>
         <h2>Invitar</h2>
         <p className="muted">El rol inicial es Soporte.</p>

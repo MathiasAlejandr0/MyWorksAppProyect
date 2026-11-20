@@ -2867,7 +2867,27 @@ export type Database = {
         Args: { p_id: string; p_motivo: string; p_rol: string }
         Returns: undefined
       }
+      consola_cerrar_sesiones: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
       consola_cron_salud: { Args: never; Returns: Json }
+      consola_disputas_resueltas: {
+        Args: never
+        Returns: {
+          creado_en: string
+          descripcion: string
+          estado: string
+          id: string
+          id_trabajo: string
+          monto_retenido: number
+          motivo: string
+          nombre_cliente: string
+          nombre_profesional: string
+          resolucion: string
+          resuelta_en: string
+        }[]
+      }
       consola_editar_bandera: {
         Args: { p_habilitada: number; p_id: string; p_motivo: string }
         Returns: undefined
@@ -2906,6 +2926,10 @@ export type Database = {
       }
       consola_registrar_vista_sensible: {
         Args: { p_entidad: string; p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      consola_revocar_invitacion: {
+        Args: { p_id: string; p_motivo: string }
         Returns: undefined
       }
       consola_resolver_reporte: {
