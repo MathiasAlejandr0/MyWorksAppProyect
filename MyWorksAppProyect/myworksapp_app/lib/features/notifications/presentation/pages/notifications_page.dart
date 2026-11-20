@@ -4,6 +4,8 @@ import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/database/repositories/notification_repository.dart';
+import '../../../../core/database/supabase_db.dart';
+import '../../domain/notification_groups.dart';
 import '../../../../core/database/models/notification_model.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/loading_skeleton.dart';
@@ -25,6 +27,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   final NotificationRepository _notificationRepository =
       NotificationRepository();
   List<NotificationModel> _notifications = [];
+  Map<String, String> _jobTitles = {};
   bool _isLoading = true;
   String? _error;
 
@@ -54,9 +57,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       }
       final notifications =
           await _notificationRepository.getNotificationsByUserId(user.id);
+      final titles = await _loadJobTitles(notifications);
       if (!mounted) return;
       setState(() {
         _notifications = notifications;
+        _jobTitles = titles;
         _isLoading = false;
       });
     } catch (e) {
@@ -65,6 +70,38 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         _isLoading = false;
         _error = ErrorHandler.getErrorMessage(e);
       });
+    }
+  }
+
+  Future<Map<String, String>> _loadJobTitles(
+    List<NotificationModel> notifications,
+  ) async {
+    final ids = notifications
+        .map((item) => item.relatedId?.trim())
+        .whereType<String>()
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
+    if (ids.isEmpty) return {};
+    try {
+      final rows = await supabase
+          .from('trabajos')
+          .select('id, descripcion, direccion')
+          .inFilter('id', ids);
+      final titles = <String, String>{};
+      for (final row in rows) {
+        final id = row['id']?.toString() ?? '';
+        if (id.isEmpty) continue;
+        final description = (row['descripcion'] as String?)?.trim() ?? '';
+        final address = (row['direccion'] as String?)?.trim() ?? '';
+        final title = description.isNotEmpty
+            ? description
+            : (address.isNotEmpty ? address : 'Pedido');
+        titles[id] = title;
+      }
+      return titles;
+    } catch (_) {
+      return {};
     }
   }
 
@@ -138,18 +175,56 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
                     )
                   : RefreshIndicator(
                       onRefresh: _loadNotifications,
-                      child: ListView.builder(
-                        padding: LayoutUtils.scrollPadding(context, top: 0),
-                        itemCount: _notifications.length,
-                        itemBuilder: (context, index) {
-                          final notification = _notifications[index];
-                          return _NotificationItem(
-                            notification: notification,
-                            onTap: () => _handleNotificationTap(notification),
-                          );
-                        },
+                      child: ListView(
+                        padding: LayoutUtils.scrollPadding(context, top: 8),
+                        children: [
+                          for (final folder in groupNotificationsByJob(
+                            _notifications,
+                            jobTitles: _jobTitles,
+                          ))
+                            _NoticeFolder(
+                              folder: folder,
+                              onTap: _handleNotificationTap,
+                            ),
+                        ],
                       ),
                     ),
+    );
+  }
+}
+
+class _NoticeFolder extends StatelessWidget {
+  const _NoticeFolder({required this.folder, required this.onTap});
+
+  final NotificationFolder folder;
+  final void Function(NotificationModel notification) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = folder.unreadCount;
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: ExpansionTile(
+        initiallyExpanded: unread > 0,
+        title: Text(
+          folder.title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(
+          unread == 0
+              ? '${folder.items.length} avisos'
+              : '$unread sin leer · ${folder.items.length} avisos',
+        ),
+        children: [
+          for (final notification in folder.items)
+            _NotificationItem(
+              notification: notification,
+              onTap: () => onTap(notification),
+            ),
+        ],
+      ),
     );
   }
 }
