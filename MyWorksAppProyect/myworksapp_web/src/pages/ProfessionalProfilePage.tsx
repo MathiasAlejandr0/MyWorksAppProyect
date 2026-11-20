@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { profilePhotoOrInitials } from '@myworksapp/shared';
 import { SiteFooter } from '../components/SiteFooter';
 import { StarScore } from '../components/StarScore';
@@ -47,7 +47,8 @@ export function ProfessionalProfilePage({
 }: {
   onReserve: (worker: SearchWorker) => void;
 }) {
-  const { id = '' } = useParams();
+  const { pathname } = useLocation();
+  const id = decodeURIComponent(pathname.match(/^\/profesional\/([^/?#]+)/)?.[1] ?? '');
   const [row, setRow] = useState<ProfileRow | null>(null);
   const [hours, setHours] = useState<Slot[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);

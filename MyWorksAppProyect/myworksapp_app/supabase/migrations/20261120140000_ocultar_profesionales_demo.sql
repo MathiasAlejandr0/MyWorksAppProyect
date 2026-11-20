@@ -48,6 +48,12 @@ $$;
 REVOKE ALL ON FUNCTION public.catalogo_muestra_profesional(boolean) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.catalogo_muestra_profesional(boolean) TO anon, authenticated, service_role;
 
+ALTER TABLE public.trabajadores
+  ADD COLUMN IF NOT EXISTS es_demo boolean NOT NULL DEFAULT false;
+
+COMMENT ON COLUMN public.trabajadores.es_demo IS
+  'true si el correo del perfil es de un dominio demo. El titular no puede cambiarla.';
+
 CREATE OR REPLACE FUNCTION public.profesional_bloqueado_por_demo(p_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -66,12 +72,6 @@ $$;
 
 REVOKE ALL ON FUNCTION public.profesional_bloqueado_por_demo(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.profesional_bloqueado_por_demo(uuid) TO anon, authenticated, service_role;
-
-ALTER TABLE public.trabajadores
-  ADD COLUMN IF NOT EXISTS es_demo boolean NOT NULL DEFAULT false;
-
-COMMENT ON COLUMN public.trabajadores.es_demo IS
-  'true si el correo del perfil es de un dominio demo. El titular no puede cambiarla.';
 
 UPDATE public.trabajadores t
 SET es_demo = public.correo_es_demo(p.correo)
