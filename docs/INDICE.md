@@ -84,9 +84,11 @@ Este índice ordena toda la documentación del repositorio por tema. Estado al 2
 
 | Documento | Para qué sirve |
 |---|---|
+| [`MyWorksAppProyect/docs/PRUEBAS.md`](../MyWorksAppProyect/docs/PRUEBAS.md) | **Empieza aquí.** Pruebas unitarias, de rendimiento y estrés del 19 y 20-11 (P-17): 641 de 641, punto de quiebre, cuello de botella, hallazgo H1 y recomendaciones |
+| [`anexos/2026-11-20-pruebas-unitarias-rendimiento/`](../MyWorksAppProyect/docs/anexos/2026-11-20-pruebas-unitarias-rendimiento/INFORME_PRUEBAS.md) | Informe completo de esas pruebas y las figuras del informe final |
 | [`MyWorksAppProyect/docs/anexos/2026-11-15-pruebas/REGISTRO.md`](../MyWorksAppProyect/docs/anexos/2026-11-15-pruebas/REGISTRO.md) | Registro de pruebas del 15-11 (histórico) |
 | [`MyWorksAppProyect/docs/pruebas/`](../MyWorksAppProyect/docs/pruebas/) | Pruebas de seguridad, rendimiento, estrés, carga y auditoría de la base (históricas) |
-| Informe final, capítulo de pruebas | Fichas P-01 a P-16; la P-16 es la revisión del 20-11 |
+| Informe final, capítulo de pruebas | Fichas P-01 a P-17; la P-16 es la revisión del 20-11 y la P-17, las pruebas unitarias, de rendimiento y estrés |
 
 ## 8. Gestión del proyecto (Scrum)
 

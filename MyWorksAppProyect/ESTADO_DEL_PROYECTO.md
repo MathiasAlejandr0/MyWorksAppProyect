@@ -52,7 +52,7 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 | **Dominio y borde** | `myworksapp.cl` en Cloudflare (DNS y Turnstile). `soporte@myworksapp.cl` reenvía con Cloudflare Email Routing; falta la prueba de punta a punta |
 | **Correo** | Supabase Auth usa el SMTP de Resend (dominio verificado, DKIM y SPF en `send.myworksapp.cl`, región sa-east-1, plan gratis de 100 correos al día). Remitente `no-responder@myworksapp.cl`, 13 plantillas en español. Desde el 20-nov (PR #82) las Edge Functions envían también los correos de pago recibido, alta de invitado, reembolso y pago liberado. La invitación por Resend espera el secreto `INVITE_PROVIDER=resend` |
 | **Pagos** | Transbank Webpay Plus y Oneclick Mall en **ambiente de integración**: solo tarjetas de prueba, ningún cobro real |
-| **Listo para producción / tiendas** | Parcial: falta Transbank en producción, push remoto desplegado y publicación en tiendas |
+| **Listo para producción / tiendas** | Parcial: falta corregir el alta de profesionales en producción (H1, ver [docs/PRUEBAS.md](docs/PRUEBAS.md)), Transbank en producción, push remoto desplegado y publicación en tiendas |
 | **Documentación técnica en repo** | [README.md](README.md), [DEMO.md](DEMO.md), [INSTALL.md](INSTALL.md), [docs/casos_de_uso.md](docs/casos_de_uso.md), [docs/deploy_web.md](docs/deploy_web.md), [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADES_COBRO.md) |
 
 **Mensaje clave:** MyWorksApp demuestra un **marketplace de servicios del hogar** con roles duales (cliente y profesional), ciclo de vida de trabajos controlado en la base, pago retenido en garantía con Transbank en integración y una consola interna con segundo factor y bitácora inmutable.
@@ -272,6 +272,7 @@ Las cuentas `@demo.myworksapp.cl` y `@demo.com` se marcan con `es_demo` (migraci
 
 | Área | Estado | Prioridad |
 |------|--------|-----------|
+| **Alta de profesionales (H1)** | **Falla en producción.** La migración `20261118230000` (aplicada en vivo, verificado el 20-nov con la lista de migraciones y consultas de solo lectura) crea un trigger que usa `generate_series` con valores `time`, que no existe en Postgres 17: todo `INSERT` en `trabajadores` falla. La corrección (`20261120180000_agenda_alta_sin_generate_series_time.sql`) y su prueba están en el parche de pruebas, sin aplicar. Ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md#hallazgos) | **Crítica** |
 | Pasarela de pago | Webpay exige `TBK_ENV`. Sin la variable el checkout falla. En vivo se usa `integration`. Producción sigue en `docs/RUNBOOK_TRANSBANK_PRODUCCION.md` | Alta |
 | Liquidación al profesional | El administrador confirma la transferencia bancaria (`provider=manual`). Khipu y Fintoc responden 501 hasta tener contrato y claves | Alta |
 | Notificaciones push remotas (FCM / APNs) | `send-push` y `firebase_messaging` están en el repo, pero `send-push` no está desplegada en vivo (reporte del 20-nov) | Media |
@@ -283,7 +284,8 @@ Las cuentas `@demo.myworksapp.cl` y `@demo.com` se marcan con `es_demo` (migraci
 | Textos legales | `/terminos` y `/privacidad` existen, pero dicen que el texto oficial aún no está publicado | Media |
 | Chat en tiempo real | ✅ Supabase Realtime (`postgres_changes` sobre `mensajes`): app `chat_page.dart`, web `LiveChatWidget.tsx`. El cobro en garantía también se frena si la descripción, la dirección o los mensajes del cliente traen datos de contacto (`20261120120000`) | — |
 | Evidencia del trabajo | Fotos en WebP (`fotos_trabajo_exigir_webp`, bucket privado `evidencias`) y videos de hasta 20 MB | — |
-| Tests automatizados | CI en verde sobre `d9d2c7c` (Flutter, web, consola, Tauri en Windows y Gitleaks; corrida del 20-nov a las 02:31, hora de Chile). En el box, el 20-nov: `shared/` 231 de 231 y consola 12 de 12 | ✅ |
+| Tests automatizados | CI en verde sobre `d9d2c7c` (Flutter, web, consola, Tauri en Windows y Gitleaks; corrida del 20-nov a las 02:31, hora de Chile). En el box, el 20-nov: `shared/` 231 de 231 y consola 12 de 12. Prueba P-17 (19 y 20-nov, réplica local): **641 de 641** pruebas automatizadas; ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md) | ✅ |
+| Capacidad | Con todos los tipos de uso, en una réplica local con 1.000 profesionales sintéticos, se degrada con unos 100 usuarios virtuales y cae con unos 280. La causa es el catálogo, que llama a `stats_profesional()` por cada profesional, más el pool de 10 conexiones de PostgREST. En producción, con solo lecturas (otra prueba, del Programador), aguanta 200 a 250. Ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md) | Alta |
 | CI/CD (GitHub Actions) | Un solo `.github` en la raíz del repo, con actions fijadas por SHA | ✅ |
 | Consola de escritorio | En uso con datos reales. La prueba del 20-nov (`08154df`) encontró 24 errores; el más grave es que el módulo «Profesionales» responde 403 y no se puede verificar a nadie desde la consola. El arreglo está en la rama `cursor/consola-bugs` (sin merge) | Alta |
 | Instalador de la consola | El par de claves del actualizador es nuevo; la privada no está en el repo y va como secrets `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Quien tenga la versión anterior debe reinstalar una vez | Media |
@@ -297,6 +299,8 @@ Estas ramas existen en `nicoussj/Proyecto-Titulo-MyWorksApp` pero **no tienen me
 |---|---|
 | `cursor/aviso-academico-duoc-v2` | Banner de proyecto académico Duoc UC y páginas `/aviso-legal`, `/terminos` y `/privacidad` con texto basado en la Ley 19.628 |
 | `cursor/consola-bugs` | Arreglo de los 24 errores de la consola encontrados en la prueba del 20-nov. Trae la migración `20261120210000_consola_lectura_config_y_disputas.sql`, que no está aplicada |
+
+Además hay un **parche local de pruebas** (no es una rama en GitHub): 12 pruebas de `shared`, 2 pruebas SQL y la corrección de H1, en 3 commits sobre `d9d2c7c`. Se entrega aparte al Programador.
 
 ### Historial de migraciones (diagnóstico 9-nov-2026)
 
