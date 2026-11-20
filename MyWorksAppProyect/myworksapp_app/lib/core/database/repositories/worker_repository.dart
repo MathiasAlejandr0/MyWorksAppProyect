@@ -491,10 +491,11 @@ class WorkerRepository {
         },
       );
       if (rows is List) {
-        return await _overlayStats([
+        // La RPC ya trae la nota, los trabajos y la élite canónicos.
+        return [
           for (final row in rows.whereType<Map>())
             WorkerModel.fromCatalogMap(Map<String, dynamic>.from(row)),
-        ]);
+        ];
       }
     } catch (_) {
       // Si la RPC no está, un autenticado todavía puede leer el marketplace.

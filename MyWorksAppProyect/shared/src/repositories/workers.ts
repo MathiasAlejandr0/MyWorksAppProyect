@@ -192,9 +192,10 @@ export async function fetchWorkersCatalog(
   });
 
   if (!rpc.error && Array.isArray(rpc.data)) {
+    // La RPC ya trae nota, trabajos y élite desde la misma fuente que
+    // stats_profesionales. No se vuelve a pedir: serían las mismas cifras.
     const page = pageFromRows(rpc.data as WorkerQueryRow[], limit, offset);
-    const workers = await overlayPublicStats(supabase, page.workers);
-    return { ...page, workers: sortWorkersForCatalog(workers, opts.origin) };
+    return { ...page, workers: sortWorkersForCatalog(page.workers, opts.origin) };
   }
 
   const query = supabase
