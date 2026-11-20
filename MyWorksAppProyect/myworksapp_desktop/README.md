@@ -2,6 +2,21 @@
 
 Back office de la empresa: clientes, profesionales, pedidos, pagos en garantía, disputas, equipo y salud del sistema. Es una app Tauri 2 con interfaz React. La autorización de verdad está en Postgres (`is_admin()`, `rol_consola()`) y en las Edge Functions, no en la pantalla.
 
+Es parte del monorepo [`MyWorksAppProyect/`](../README.md); el índice de toda la documentación está en [`docs/INDICE.md`](../../docs/INDICE.md).
+
+## Contenido
+
+- [Cómo correrla](#cómo-correrla)
+- [Variables](#variables)
+- [Deep link](#deep-link)
+- [Roles](#roles)
+- [Publicación](#publicación)
+- [Módulos](#módulos)
+- [Seguridad de las acciones](#seguridad-de-las-acciones)
+- [Comisión](#comisión)
+- [Bitácora](#bitácora)
+- [Estado conocido](#estado-conocido)
+
 ## Cómo correrla
 
 Desde `MyWorksAppProyect/myworksapp_desktop`, con las dependencias de `shared/` instaladas:
@@ -25,7 +40,7 @@ Transbank está en integración. Khipu y Fintoc no están conectados.
 
 ## Deep link
 
-Esquema `myworksapp-admin`, ruta `auth/callback`. Sirve para definir la contraseña después de una invitación o de recuperar la clave, sin depender de que el servidor de desarrollo esté encendido.
+Esquema `myworksapp-admin`, ruta `auth/callback`. Sirve para definir la contraseña después de una invitación o de recuperar la clave, sin depender de que el servidor de desarrollo esté encendido. Desde el PR #82 la consola lee el retorno con `code`, `token_hash` o el fragmento (`src/lib/authCallback.ts`) y, si es una invitación o una recuperación, abre «Define tu contraseña». Las consolas ya instaladas lo reciben con la próxima versión publicada.
 
 ## Roles
 
@@ -59,4 +74,6 @@ Las pruebas de permisos `docs/PRUEBAS_RLS_CONSOLA_20261120.sql` están escritas,
 
 ## Estado conocido
 
-La prueba de la consola del 20-nov sobre `08154df` encontró 24 errores (1 crítico, 2 altos, 8 medios y 13 bajos). El crítico: el módulo Profesionales responde 403 al leer `trabajadores`, así que hoy no se puede verificar ni rechazar a nadie desde la consola. Ajustes aparece en blanco (403 en `app_config`). El arreglo está en la rama `cursor/consola-bugs`, **sin merge**.
+La prueba de la consola del 20-nov sobre `08154df` encontró 24 errores (1 crítico, 2 altos, 8 medios y 13 bajos). El crítico: el módulo Profesionales responde 403 al leer `trabajadores`, así que hoy no se puede verificar ni rechazar a nadie desde la consola. Ajustes aparece en blanco (403 en `app_config`). El arreglo está en la rama `cursor/consola-bugs`, **sin merge**, junto con la migración `20261120210000_consola_lectura_config_y_disputas.sql`, que no está aplicada.
+
+La invitación por Resend no está activa: falta el secreto `INVITE_PROVIDER=resend` en `invitar-colaborador`. Mientras tanto la invitación sale por Supabase Auth con el SMTP de Resend.

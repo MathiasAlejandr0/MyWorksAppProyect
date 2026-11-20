@@ -2,9 +2,43 @@
 
 Documento de referencia para **memoria de título**, **presentaciones universitarias**, **financiamiento** y **planificación técnica**.
 
-**Última actualización:** 20 de noviembre de 2026, sobre `main` `08154dfc` de `nicoussj/Proyecto-Titulo-MyWorksApp` (merge del PR #81).  
+**Última actualización:** 20 de noviembre de 2026, sobre `main` `d9d2c7c` de `nicoussj/Proyecto-Titulo-MyWorksApp` (merge del PR #82).  
 **Versiones:** app Flutter 1.0.11+12 (`pubspec.yaml`); web 1.0.0 y consola 0.1.0 (`package.json`, `tauri.conf.json`).  
 **Repositorio:** https://github.com/nicoussj/Proyecto-Titulo-MyWorksApp (el espejo `MathiasAlejandr0/MyWorksAppProyect` tiene un historial distinto y no se usa como fuente).
+
+---
+
+## En resumen: qué es cada parte y dónde está
+
+| Parte | Qué es | Dónde está |
+|---|---|---|
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`myworksapp_app/`](myworksapp_app/) |
+| Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`myworksapp_web/`](myworksapp_web/), publicado en https://myworksapp.cl |
+| Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`myworksapp_desktop/`](myworksapp_desktop/) |
+| Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`shared/`](shared/) |
+| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`myworksapp_app/supabase/`](myworksapp_app/supabase/) |
+| Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`docs/`](docs/) |
+| Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](../docs/INDICE.md) (en la raíz del repositorio) |
+
+## Cómo leer este documento
+
+- **Parte I** cuenta qué hay hoy: arquitectura, tecnologías, lo que funciona, lo que falta y lo que está en ramas sin integrar.
+- **Parte II** es una guía para redactar el documento de título a partir de la Parte I.
+- Si solo necesitas el estado en una página, lee el resumen ejecutivo y las secciones 6 y 7.
+
+## Contenido
+
+- [Resumen ejecutivo](#resumen-ejecutivo)
+- [Parte I — Arquitectura de software](#parte-i--arquitectura-de-software)
+  - [1. Tipo de arquitectura utilizada](#1-tipo-de-arquitectura-utilizada)
+  - [2. Por qué se eligió esta arquitectura](#2-por-qué-se-eligió-esta-arquitectura)
+  - [3. Stack tecnológico](#3-stack-tecnológico)
+  - [4. Flujos de negocio principales (implementados)](#4-flujos-de-negocio-principales-implementados)
+  - [5. Lo implementado (inventario técnico)](#5-lo-implementado-inventario-técnico)
+  - [6. Lo pendiente (brecha hacia producción)](#6-lo-pendiente-brecha-hacia-producción)
+  - [7. En desarrollo (pendiente, no está en producción)](#7-en-desarrollo-pendiente-no-está-en-producción)
+- [Parte II — Guía para redactar el documento profesional](#parte-ii--guía-para-redactar-el-documento-profesional)
+  - Parte II: guía de redacción por capítulo (portada, resumen, capítulos 1 a 7, referencias, anexos y checklist)
 
 ---
 
@@ -15,15 +49,15 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 | **Tipo de producto** | Monorepo: app móvil Flutter + web de clientes (React/Vite) + consola operativa de escritorio (Tauri 2 + React) + módulo `shared/` en TypeScript |
 | **Backend** | Supabase (Auth + PostgreSQL + PostgREST + RLS + Realtime + Edge Functions + pg_cron) |
 | **Web en producción** | https://myworksapp.cl y `www.myworksapp.cl` en Vercel (proyecto `myworksapp`); también responde https://myworksapp-cl.vercel.app |
-| **Dominio y borde** | `myworksapp.cl` en Cloudflare (DNS y Turnstile). Cloudflare Email Routing para `soporte@myworksapp.cl`: **en configuración** |
-| **Correo** | Supabase Auth usa el SMTP de Resend (dominio verificado, DKIM y SPF en `send.myworksapp.cl`, región sa-east-1, plan gratis de 100 correos al día). Remitente `no-responder@myworksapp.cl`, 13 plantillas en español |
+| **Dominio y borde** | `myworksapp.cl` en Cloudflare (DNS y Turnstile). `soporte@myworksapp.cl` reenvía con Cloudflare Email Routing; falta la prueba de punta a punta |
+| **Correo** | Supabase Auth usa el SMTP de Resend (dominio verificado, DKIM y SPF en `send.myworksapp.cl`, región sa-east-1, plan gratis de 100 correos al día). Remitente `no-responder@myworksapp.cl`, 13 plantillas en español. Desde el 20-nov (PR #82) las Edge Functions envían también los correos de pago recibido, alta de invitado, reembolso y pago liberado. La invitación por Resend espera el secreto `INVITE_PROVIDER=resend` |
 | **Pagos** | Transbank Webpay Plus y Oneclick Mall en **ambiente de integración**: solo tarjetas de prueba, ningún cobro real |
 | **Listo para producción / tiendas** | Parcial: falta Transbank en producción, push remoto desplegado y publicación en tiendas |
 | **Documentación técnica en repo** | [README.md](README.md), [DEMO.md](DEMO.md), [INSTALL.md](INSTALL.md), [docs/casos_de_uso.md](docs/casos_de_uso.md), [docs/deploy_web.md](docs/deploy_web.md), [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADES_COBRO.md) |
 
 **Mensaje clave:** MyWorksApp demuestra un **marketplace de servicios del hogar** con roles duales (cliente y profesional), ciclo de vida de trabajos controlado en la base, pago retenido en garantía con Transbank en integración y una consola interna con segundo factor y bitácora inmutable.
 
-### Inventario contado desde el código (`main` `08154dfc`)
+### Inventario contado desde el código (`main` `d9d2c7c`)
 
 | Elemento | Cantidad | Fuente |
 |---|---|---|
@@ -39,7 +73,7 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 
 Edge Functions en el repositorio: `definir-clave-invitado`, `guest-checkout`, `invitar-colaborador`, `oneclick-charge`, `oneclick-handoff`, `oneclick-return`, `send-push`, `soporte-automatico`, `webpay-commit`, `webpay-create`, `webpay-handoff`, `webpay-reconcile`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-release`, `webpay-resolve-dispute` y `webpay-status`.
 
-Según el reporte de despliegue del 20-nov, `send-push` y `soporte-automatico` **no están desplegadas** en el proyecto en vivo. No se pudo verificar desde el repositorio el estado de `oneclick-handoff` ni de `webpay-handoff`.
+Según el reporte de despliegue del 20-nov (después del PR #82), `soporte-automatico` ya está desplegada junto con `invitar-colaborador`, `webpay-commit`, `oneclick-charge`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-resolve-dispute` y `webpay-release`. `send-push` sigue **sin desplegar**. Ninguna migración programa una llamada a `soporte-automatico` (la única Edge Function a la que llama `pg_cron` es `webpay-reconcile`). No se pudo verificar desde el repositorio el estado de `oneclick-handoff` ni de `webpay-handoff`.
 
 ---
 
@@ -241,14 +275,15 @@ Las cuentas `@demo.myworksapp.cl` y `@demo.com` se marcan con `es_demo` (migraci
 | Pasarela de pago | Webpay exige `TBK_ENV`. Sin la variable el checkout falla. En vivo se usa `integration`. Producción sigue en `docs/RUNBOOK_TRANSBANK_PRODUCCION.md` | Alta |
 | Liquidación al profesional | El administrador confirma la transferencia bancaria (`provider=manual`). Khipu y Fintoc responden 501 hasta tener contrato y claves | Alta |
 | Notificaciones push remotas (FCM / APNs) | `send-push` y `firebase_messaging` están en el repo, pero `send-push` no está desplegada en vivo (reporte del 20-nov) | Media |
-| Soporte automático con devolución | La tarea `mwa_resolver_soporte_automatico` corre en SQL, pero la Edge Function `soporte-automatico` no está desplegada en vivo (reporte del 20-nov) | Media |
+| Soporte automático con devolución | La tarea `mwa_resolver_soporte_automatico` corre en SQL y la Edge Function `soporte-automatico` está desplegada desde el 20-nov, pero en el repositorio ninguna tarea la llama: hay que programar su invocación para que las devoluciones salgan solas | Media |
 | Captcha de Supabase Auth | **No activado**: activarlo rompería hoy el login de la app, la consola y la recuperación de clave. La web envía el token de Turnstile al registrarse, pero mientras el captcha de Auth esté apagado el servidor no lo valida en el registro. `guest-checkout` sí lo valida | Media |
-| Correos transaccionales | Hoy solo salen los correos de Supabase Auth. Los de pago, reembolso y liberación están en la rama `cursor/correos-resend` (sin merge) | Media |
-| Buzón de soporte | Cloudflare Email Routing para `soporte@myworksapp.cl`: en configuración | Baja |
+| Correos transaccionales | ✅ En producción desde el 20-nov (PR #82): pago recibido (al cliente y al profesional), alta de invitado («define tu contraseña»), reembolso y pago liberado, con un diseño común (`_shared/email_layout.ts`, `email_send.ts` y `payment_mail.ts`). No se envían a cuentas demo; si faltan `RESEND_API_KEY` o `RESEND_FROM`, no se envían y el pago sigue | — |
+| Invitación por Resend | **Pendiente**: falta el secreto `INVITE_PROVIDER=resend` (espera la aprobación del dueño). Mientras tanto la invitación sale por Supabase Auth con el SMTP de Resend | Media |
+| Buzón de soporte | `soporte@myworksapp.cl` reenvía con Cloudflare Email Routing; falta la prueba de punta a punta | Baja |
 | Textos legales | `/terminos` y `/privacidad` existen, pero dicen que el texto oficial aún no está publicado | Media |
 | Chat en tiempo real | ✅ Supabase Realtime (`postgres_changes` sobre `mensajes`): app `chat_page.dart`, web `LiveChatWidget.tsx`. El cobro en garantía también se frena si la descripción, la dirección o los mensajes del cliente traen datos de contacto (`20261120120000`) | — |
 | Evidencia del trabajo | Fotos en WebP (`fotos_trabajo_exigir_webp`, bucket privado `evidencias`) y videos de hasta 20 MB | — |
-| Tests automatizados | CI en verde sobre `08154dfc` (Flutter, web, consola, Tauri en Windows y Gitleaks). En el box, el 20-nov: `shared/` 231 de 231 y consola 12 de 12 | ✅ |
+| Tests automatizados | CI en verde sobre `d9d2c7c` (Flutter, web, consola, Tauri en Windows y Gitleaks; corrida del 20-nov a las 02:31, hora de Chile). En el box, el 20-nov: `shared/` 231 de 231 y consola 12 de 12 | ✅ |
 | CI/CD (GitHub Actions) | Un solo `.github` en la raíz del repo, con actions fijadas por SHA | ✅ |
 | Consola de escritorio | En uso con datos reales. La prueba del 20-nov (`08154df`) encontró 24 errores; el más grave es que el módulo «Profesionales» responde 403 y no se puede verificar a nadie desde la consola. El arreglo está en la rama `cursor/consola-bugs` (sin merge) | Alta |
 | Instalador de la consola | El par de claves del actualizador es nuevo; la privada no está en el repo y va como secrets `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Quien tenga la versión anterior debe reinstalar una vez | Media |
@@ -261,8 +296,7 @@ Estas ramas existen en `nicoussj/Proyecto-Titulo-MyWorksApp` pero **no tienen me
 | Rama | Qué agrega |
 |---|---|
 | `cursor/aviso-academico-duoc-v2` | Banner de proyecto académico Duoc UC y páginas `/aviso-legal`, `/terminos` y `/privacidad` con texto basado en la Ley 19.628 |
-| `cursor/correos-resend` | Correos transaccionales desde Edge Functions (`_shared/email_layout.ts` y `email_send.ts`): pago recibido, alta de invitado, reembolso, pago liberado e invitación; flujo para definir la contraseña en la consola y la app |
-| `cursor/consola-bugs` | Arreglo de los 24 errores de la consola encontrados en la prueba del 20-nov |
+| `cursor/consola-bugs` | Arreglo de los 24 errores de la consola encontrados en la prueba del 20-nov. Trae la migración `20261120210000_consola_lectura_config_y_disputas.sql`, que no está aplicada |
 
 ### Historial de migraciones (diagnóstico 9-nov-2026)
 

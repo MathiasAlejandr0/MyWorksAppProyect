@@ -7,6 +7,33 @@
 
 ---
 
+## En resumen: qué es cada parte y dónde está
+
+| Parte | Qué es | Dónde está |
+|---|---|---|
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`MyWorksAppProyect/myworksapp_app/`](MyWorksAppProyect/myworksapp_app/) |
+| Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`MyWorksAppProyect/myworksapp_web/`](MyWorksAppProyect/myworksapp_web/), publicado en https://myworksapp.cl |
+| Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`MyWorksAppProyect/myworksapp_desktop/`](MyWorksAppProyect/myworksapp_desktop/) |
+| Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`MyWorksAppProyect/shared/`](MyWorksAppProyect/shared/) |
+| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`MyWorksAppProyect/myworksapp_app/supabase/`](MyWorksAppProyect/myworksapp_app/supabase/) |
+| Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`MyWorksAppProyect/docs/`](MyWorksAppProyect/docs/) |
+| Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](docs/INDICE.md) |
+
+## Contenido
+
+- [1. Resumen del proyecto](#1-resumen-del-proyecto)
+- [2. Objetivos](#2-objetivos)
+- [3. Alcance del producto (qué entrega el título)](#3-alcance-del-producto-qué-entrega-el-título)
+- [4. Arquitectura de software](#4-arquitectura-de-software)
+- [5. Metodología de trabajo](#5-metodología-de-trabajo)
+- [6. Criterios de diseño profesional aplicados](#6-criterios-de-diseño-profesional-aplicados)
+- [7. Estructura del repositorio](#7-estructura-del-repositorio)
+- [8. Cómo ejecutar (resumen)](#8-cómo-ejecutar-resumen)
+- [9. Estado respecto al título y al producto](#9-estado-respecto-al-título-y-al-producto)
+- [10. Autores](#10-autores)
+
+---
+
 ## 1. Resumen del proyecto
 
 **My Works App** es una plataforma digital multiplataforma que conecta **hogares y clientes** con **profesionales de oficios** (electricidad, gasfitería, armado, plomería, etc.) en Chile.
@@ -192,7 +219,7 @@ Configurar variables Supabase según `.env.example` de web/desktop y `--dart-def
 
 ## 9. Estado respecto al título y al producto
 
-Estado a `main` `08154dfc` (20 de noviembre de 2026).
+Estado a `main` `d9d2c7c` (20 de noviembre de 2026).
 
 | Dimensión | Estado actual |
 |-----------|----------------|
@@ -200,11 +227,11 @@ Estado a `main` `08154dfc` (20 de noviembre de 2026).
 | MVP técnico multiplataforma | Implementado (`MyWorksAppProyect/`) |
 | Web en producción | Publicada en Vercel con dominio propio `myworksapp.cl` |
 | Pagos Webpay Plus y Oneclick | Implementados en **ambiente de integración** (solo tarjetas de prueba) |
-| Correo | Supabase Auth envía por SMTP de Resend desde `no-responder@myworksapp.cl` (13 plantillas en español) |
+| Correo | Supabase Auth envía por SMTP de Resend desde `no-responder@myworksapp.cl` (13 plantillas en español); desde el 20-nov las Edge Functions envían los correos de pago recibido, alta de invitado, reembolso y pago liberado (PR #82) |
 | Liquidación al profesional | Manual por administrador (automatización futura) |
 | Lanzamiento comercial | Condicionado a empresa, credenciales de producción de Transbank y al piloto con usuarios |
 
-**En desarrollo (ramas sin merge, no están en producción):** `cursor/aviso-academico-duoc-v2` (banner y páginas legales), `cursor/correos-resend` (correos transaccionales desde Edge Functions y flujo de definir contraseña) y `cursor/consola-bugs` (24 errores de la consola). Detalle en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
+**En desarrollo (ramas sin merge, no están en producción):** `cursor/aviso-academico-duoc-v2` (banner y páginas legales) y `cursor/consola-bugs` (24 errores de la consola). También pendientes: la invitación por Resend (falta `INVITE_PROVIDER=resend`) y la prueba de punta a punta de `soporte@myworksapp.cl`. Detalle en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
 
 ---
 

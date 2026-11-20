@@ -5,7 +5,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Supabase%20PostgreSQL-orange.svg)]()
 
 Marketplace de servicios del hogar (cliente + profesional) para Chile, con web de clientes y consola de escritorio para el equipo interno.  
-**Estado (main `08154dfc`, 20-nov-2026):** web en producción en el dominio propio; pagos con Transbank en **ambiente de integración** (solo tarjetas de prueba). El paso a producción sigue el runbook de Transbank.
+**Estado (main `d9d2c7c`, 20-nov-2026):** web en producción en el dominio propio; pagos con Transbank en **ambiente de integración** (solo tarjetas de prueba). El paso a producción sigue el runbook de Transbank.
 
 Web publicada: https://myworksapp.cl (también `www.myworksapp.cl` y https://myworksapp-cl.vercel.app) · Encuesta de prueba con usuarios (SUS): https://myworksapp.cl/encuesta · Guion de demo: [`DEMO.md`](DEMO.md).  
 Casos de uso: [`docs/casos_de_uso.md`](docs/casos_de_uso.md) · Despliegue de la web: [`docs/deploy_web.md`](docs/deploy_web.md).  
@@ -15,6 +15,30 @@ Pruebas de capacidad (k6): [`docs/RUNBOOK_CAPACIDAD_CARGA.md`](docs/RUNBOOK_CAPA
 Escala ≥20.000 usuarios: [`docs/RUNBOOK_ESCALA_20K_USUARIOS.md`](docs/RUNBOOK_ESCALA_20K_USUARIOS.md).  
 Registro de pruebas vigente: [`docs/anexos/2026-11-15-pruebas/REGISTRO.md`](docs/anexos/2026-11-15-pruebas/REGISTRO.md).
 
+---
+
+## En resumen: qué es cada parte y dónde está
+
+| Parte | Qué es | Dónde está |
+|---|---|---|
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`myworksapp_app/`](myworksapp_app/) |
+| Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`myworksapp_web/`](myworksapp_web/), publicado en https://myworksapp.cl |
+| Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`myworksapp_desktop/`](myworksapp_desktop/) |
+| Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`shared/`](shared/) |
+| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`myworksapp_app/supabase/`](myworksapp_app/supabase/) |
+| Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`docs/`](docs/) |
+| Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](../docs/INDICE.md) (en la raíz del repositorio) |
+
+## Contenido
+
+- [Arquitectura de software](#arquitectura-de-software)
+- [Metodología de trabajo](#metodología-de-trabajo)
+- [Estructura del monorepo](#estructura-del-monorepo)
+- [Qué es real vs demo](#qué-es-real-vs-demo)
+- [Arranque rápido para el equipo (app móvil)](#arranque-rápido-para-el-equipo-app-móvil)
+- [Ejecución local](#ejecución-local)
+- [Calidad y CI](#calidad-y-ci)
+- [Licencia](#licencia)
 ---
 
 ## Arquitectura de software

@@ -2,7 +2,22 @@
 
 App móvil online-first (Supabase) para conectar usuarios con trabajadores de oficios.
 
-Versión en `pubspec.yaml`: **1.0.11+12** (`main` `08154dfc`, 20-11-2026). Es la app de clientes y profesionales; la operación interna se hace en la consola de escritorio (`../myworksapp_desktop/`).
+Versión en `pubspec.yaml`: **1.0.11+12** (`main` `d9d2c7c`, 20-11-2026). Es la app de clientes y profesionales; la operación interna se hace en la consola de escritorio (`../myworksapp_desktop/`).
+
+Es parte del monorepo [`MyWorksAppProyect/`](../README.md); el índice de toda la documentación está en [`docs/INDICE.md`](../../docs/INDICE.md). Desde el PR #82, recuperar la contraseña vuelve a la app (`cl.myworksapp.auth`) y abre «Nueva contraseña»; las instalaciones existentes lo reciben con la próxima compilación.
+
+## Contenido
+
+- [Documentación del repositorio](#documentación-del-repositorio)
+- [Inicio rápido](#inicio-rápido)
+- [Módulos principales](#módulos-principales)
+- [Datos demo](#datos-demo)
+- [Diseño y sistema compartido](#diseño-y-sistema-compartido)
+- [Credenciales demo](#credenciales-demo)
+- [Tests y CI](#tests-y-ci)
+- [Migraciones Supabase](#migraciones-supabase)
+- [Claves Google Maps (local)](#claves-google-maps-local)
+- [Scripts](#scripts)
 
 ## Documentación del repositorio
 

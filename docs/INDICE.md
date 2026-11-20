@@ -1,0 +1,111 @@
+# Índice de la documentación de MyWorksApp
+
+Este índice ordena toda la documentación del repositorio por tema. Estado al 20-11-2026, `main` `d9d2c7c`.
+
+**Si es tu primera vez, lee en este orden:**
+
+1. [`README.md`](../README.md): qué es el proyecto y cómo está organizado el repositorio.
+2. [`MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`](../MyWorksAppProyect/ESTADO_DEL_PROYECTO.md): qué funciona hoy, qué falta y qué está en ramas sin integrar.
+3. [`Fase 2/Myworksapp_Informe_Final_PTY4614.pdf`](../Fase%202/Myworksapp_Informe_Final_PTY4614.pdf): el informe final del proyecto de título.
+
+## Contenido
+
+- [1. Producto y estado](#1-producto-y-estado)
+- [2. Instalar, demostrar y desplegar](#2-instalar-demostrar-y-desplegar)
+- [3. Componentes del software](#3-componentes-del-software)
+- [4. Requisitos y casos de uso](#4-requisitos-y-casos-de-uso)
+- [5. Base de datos](#5-base-de-datos)
+- [6. Pagos, correo y operación](#6-pagos-correo-y-operación)
+- [7. Pruebas](#7-pruebas)
+- [8. Gestión del proyecto (Scrum)](#8-gestión-del-proyecto-scrum)
+- [9. Entregables académicos](#9-entregables-académicos)
+- [10. Documentos históricos](#10-documentos-históricos)
+
+## 1. Producto y estado
+
+| Documento | Para qué sirve |
+|---|---|
+| [`README.md`](../README.md) | Resumen del proyecto, objetivos, arquitectura y estructura del repositorio |
+| [`MyWorksAppProyect/README.md`](../MyWorksAppProyect/README.md) | El monorepo de software: partes, arquitectura y cómo ejecutarlo |
+| [`MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`](../MyWorksAppProyect/ESTADO_DEL_PROYECTO.md) | Estado vigente, inventario contado desde el código, pendientes y ramas sin integrar |
+| [`docs/product_vision.md`](product_vision.md) | Visión del producto |
+
+## 2. Instalar, demostrar y desplegar
+
+| Documento | Para qué sirve |
+|---|---|
+| [`MyWorksAppProyect/INSTALL.md`](../MyWorksAppProyect/INSTALL.md) | Instalar la app, la web y la consola; secretos de las Edge Functions |
+| [`MyWorksAppProyect/DEMO.md`](../MyWorksAppProyect/DEMO.md) | Guion de la demostración y cuentas demo |
+| [`MyWorksAppProyect/docs/deploy_web.md`](../MyWorksAppProyect/docs/deploy_web.md) | Despliegue de la web en Vercel, dominio, Turnstile y correo |
+| [`MyWorksAppProyect/docs/FIRMA_RELEASE_ANDROID.md`](../MyWorksAppProyect/docs/FIRMA_RELEASE_ANDROID.md) | Firma del APK de Android |
+
+## 3. Componentes del software
+
+| Componente | Documento |
+|---|---|
+| App móvil Flutter | [`MyWorksAppProyect/myworksapp_app/README.md`](../MyWorksAppProyect/myworksapp_app/README.md) |
+| Web de clientes | [`MyWorksAppProyect/myworksapp_web/README.md`](../MyWorksAppProyect/myworksapp_web/README.md) |
+| Consola de escritorio | [`MyWorksAppProyect/myworksapp_desktop/README.md`](../MyWorksAppProyect/myworksapp_desktop/README.md) |
+| Arquitectura de cobro | [`MyWorksAppProyect/docs/ARQUITECTURA_MODALIDADES_COBRO.md`](../MyWorksAppProyect/docs/ARQUITECTURA_MODALIDADES_COBRO.md) |
+| Notificaciones push (no desplegadas) | [`MyWorksAppProyect/docs/PUSH_NOTIFICACIONES.md`](../MyWorksAppProyect/docs/PUSH_NOTIFICACIONES.md) |
+| Perfiles, ranking y reseñas | [`AUTOMATIZACION_PERFILES_TRABAJADOR.md`](../MyWorksAppProyect/docs/AUTOMATIZACION_PERFILES_TRABAJADOR.md) y [`AUTOMATIZACION_RANKING_Y_RESENAS.md`](../MyWorksAppProyect/docs/AUTOMATIZACION_RANKING_Y_RESENAS.md) |
+| Maquetas y video | [`docs/mockups/`](../MyWorksAppProyect/docs/mockups/README.md) y [`docs/video/flujo_app.md`](../MyWorksAppProyect/docs/video/flujo_app.md) |
+
+## 4. Requisitos y casos de uso
+
+| Documento | Para qué sirve |
+|---|---|
+| [`docs/objetivos.md`](objetivos.md) | Objetivo general y objetivos específicos |
+| [`docs/requisitos_no_funcionales.md`](requisitos_no_funcionales.md) | Requisitos no funcionales |
+| [`MyWorksAppProyect/docs/casos_de_uso.md`](../MyWorksAppProyect/docs/casos_de_uso.md) | Los 34 casos de uso, las reglas RN-01 a RN-23 y la trazabilidad al código |
+| [`MyWorksAppProyect/docs/uml/`](../MyWorksAppProyect/docs/uml/README.md) | Modelos UML; los diagramas por paquete están en `uml/paquetes/` |
+| [`docs/solucion.md`](solucion.md) | Cómo resuelve cada módulo los casos de uso |
+
+## 5. Base de datos
+
+| Documento | Para qué sirve |
+|---|---|
+| [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](../MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md) | Diccionario de las 60 tablas; la sección 0 resume los cambios del 20-11 |
+| [`MyWorksAppProyect/docs/MODELO_ENTIDAD_RELACION.md`](../MyWorksAppProyect/docs/MODELO_ENTIDAD_RELACION.md) | Modelo entidad-relación; las figuras de 60 tablas están en `docs/modelo_er60/` |
+| [`MyWorksAppProyect/docs/modelo-datos.md`](../MyWorksAppProyect/docs/modelo-datos.md) y [`normalizacion.md`](../MyWorksAppProyect/docs/normalizacion.md) | Modelo de datos y formas normales |
+| [`myworksapp_app/supabase/MIGRATIONS_INVENTORY.md`](../MyWorksAppProyect/myworksapp_app/supabase/MIGRATIONS_INVENTORY.md) | Las 125 migraciones y su estado en la base |
+| [`Fase 2/Anexo_A_Diccionario_de_tablas.md`](../Fase%202/Anexo_A_Diccionario_de_tablas.md) | Anexo A del informe: una tabla por cada tabla de la base |
+
+## 6. Pagos, correo y operación
+
+| Documento | Para qué sirve |
+|---|---|
+| [`MyWorksAppProyect/docs/RUNBOOK_TRANSBANK_PRODUCCION.md`](../MyWorksAppProyect/docs/RUNBOOK_TRANSBANK_PRODUCCION.md) | Paso de Transbank a producción |
+| [`MyWorksAppProyect/docs/RUNBOOK_PAYOUT.md`](../MyWorksAppProyect/docs/RUNBOOK_PAYOUT.md) | Liquidación al profesional |
+| [`MyWorksAppProyect/docs/deploy_web.md`](../MyWorksAppProyect/docs/deploy_web.md) | Correo con Resend, soporte@ e invitaciones |
+| [`MyWorksAppProyect/docs/RUNBOOK_CAPACIDAD_CARGA.md`](../MyWorksAppProyect/docs/RUNBOOK_CAPACIDAD_CARGA.md) y [`RUNBOOK_ESCALA_20K_USUARIOS.md`](../MyWorksAppProyect/docs/RUNBOOK_ESCALA_20K_USUARIOS.md) | Capacidad y escala |
+
+## 7. Pruebas
+
+| Documento | Para qué sirve |
+|---|---|
+| [`MyWorksAppProyect/docs/anexos/2026-11-15-pruebas/REGISTRO.md`](../MyWorksAppProyect/docs/anexos/2026-11-15-pruebas/REGISTRO.md) | Registro de pruebas del 15-11 (histórico) |
+| [`MyWorksAppProyect/docs/pruebas/`](../MyWorksAppProyect/docs/pruebas/) | Pruebas de seguridad, rendimiento, estrés, carga y auditoría de la base (históricas) |
+| Informe final, capítulo de pruebas | Fichas P-01 a P-16; la P-16 es la revisión del 20-11 |
+
+## 8. Gestión del proyecto (Scrum)
+
+| Documento | Para qué sirve |
+|---|---|
+| [`docs/metodologia.md`](metodologia.md) | Metodología y sprints |
+| [`docs/product_backlog.md`](product_backlog.md) | Product backlog |
+| [`docs/sprint_backlog.md`](sprint_backlog.md) | Sprint 10 y lo pendiente para cerrarlo |
+| [`docs/retrospectiva.md`](retrospectiva.md) | Retrospectiva y lo que queda abierto |
+
+## 9. Entregables académicos
+
+| Carpeta o documento | Contenido |
+|---|---|
+| [`Fase 1/`](../Fase%201/) | Definición del proyecto y evidencias |
+| [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](../Fase%202/Myworksapp_Informe_Final_PTY4614.docx) y `.pdf` | Informe final actualizado al 20-11 |
+| [`Fase 2/`](../Fase%202/) | Casos de uso, guía de usuario, auditoría de la base, prueba de carga, presentación y diarios de reflexión |
+| [`Documentos Guia/`](../Documentos%20Guia/) | Guías del programa |
+
+## 10. Documentos históricos
+
+Los documentos que empiezan con «**Documento histórico.**» registran el estado a una fecha y no se actualizan. Sirven como evidencia, no como referencia del estado actual. Son, entre otros: `AUDITORIA_*`, `APLICAR_*`, `CHECKLIST_REPARACIONES`, `REMEDIACION_AUDITORIA`, `VERIFICACION_BD_REMOTA`, `schema_inferido_backup`, `mapa_esquema_en_es`, `PLAN_MIGRACIONES`, los archivos de `docs/pruebas/` y los anexos de pruebas del 08-11 y del 15-11.
