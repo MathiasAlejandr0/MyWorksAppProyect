@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { TURNSTILE_SITE_KEY } from './turnstileSite';
+import { TURNSTILE_SITE_KEY, turnstileCanRender } from './turnstileSite';
 
 const SITE_KEY = TURNSTILE_SITE_KEY;
+const RENDER = turnstileCanRender();
 
 type TurnstileApi = {
   render: (
@@ -15,14 +16,14 @@ function turnstileApi(): TurnstileApi | null {
   return (window as unknown as { turnstile?: TurnstileApi }).turnstile ?? null;
 }
 
-/** Oculto si no hay VITE_TURNSTILE_SITE_KEY. El demo de integración sigue sin clave. */
+/** Oculto sin clave real. En producción una clave de prueba de Cloudflare no se monta. */
 export function TurnstileWidget({ onToken }: { onToken: (token: string) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const onTokenRef = useRef(onToken);
   onTokenRef.current = onToken;
 
   useEffect(() => {
-    if (!SITE_KEY || !host.current) return;
+    if (!RENDER || !SITE_KEY || !host.current) return;
     let widgetId = '';
     let cancelled = false;
 
@@ -52,6 +53,6 @@ export function TurnstileWidget({ onToken }: { onToken: (token: string) => void 
     };
   }, []);
 
-  if (!SITE_KEY) return null;
+  if (!RENDER) return null;
   return <div ref={host} className="turnstile-slot" />;
 }

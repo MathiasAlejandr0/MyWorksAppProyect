@@ -134,7 +134,10 @@ Deno.serve(async (req) => {
 
     const ip = clientIp(req);
     const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY")?.trim() ?? "";
-    const turnstile = turnstileDecision(Deno.env.get("TBK_ENV"), turnstileSecret.length > 0);
+    const turnstile = turnstileDecision(
+      turnstileSecret.length > 0,
+      Deno.env.get("MWA_ALLOW_NO_CAPTCHA") === "1",
+    );
     if (turnstile === "fail_closed") {
       return jsonResponse(req, { error: "Falta TURNSTILE_SECRET_KEY" }, 503);
     }

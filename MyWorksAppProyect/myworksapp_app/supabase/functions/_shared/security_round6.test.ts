@@ -125,18 +125,18 @@ describe("ticket de contraseña del invitado", () => {
 });
 
 describe("Turnstile", () => {
-  it("en integración sin secreto deja pasar la demo", () => {
-    assert.equal(turnstileDecision("integration", false), "skip");
-    assert.equal(turnstileDecision(undefined, false), "skip");
+  it("sin secreto falla cerrado, también en integración", () => {
+    assert.equal(turnstileDecision(false), "fail_closed");
+    assert.equal(turnstileDecision(false, false), "fail_closed");
   });
 
-  it("en producción sin secreto falla cerrado", () => {
-    assert.equal(turnstileDecision("production", false), "fail_closed");
+  it("el flag explícito es el único atajo sin secreto", () => {
+    assert.equal(turnstileDecision(false, true), "skip");
   });
 
   it("con secreto siempre verifica", () => {
-    assert.equal(turnstileDecision("integration", true), "verify");
-    assert.equal(turnstileDecision("production", true), "verify");
+    assert.equal(turnstileDecision(true, false), "verify");
+    assert.equal(turnstileDecision(true, true), "verify");
   });
 });
 
