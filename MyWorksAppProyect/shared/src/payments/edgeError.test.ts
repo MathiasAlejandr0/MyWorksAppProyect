@@ -22,6 +22,19 @@ test('sin cuerpo JSON no muestra el texto en inglés de supabase-js', async () =
   assert.equal(msg, 'No se pudo iniciar Webpay');
 });
 
+test('muestra el 409 de una invitación que ya tiene cuenta', async () => {
+  const msg = await edgeFunctionErrorMessage(
+    {
+      message: 'Edge Function returned a non-2xx status code',
+      context: {
+        error: 'Esa persona ya tiene una cuenta activa; cámbiale el rol en vez de invitarla',
+      },
+    },
+    'No se pudo invitar.',
+  );
+  assert.equal(msg, 'Esa persona ya tiene una cuenta activa; cámbiale el rol en vez de invitarla');
+});
+
 test('conserva otros mensajes de red', async () => {
   const msg = await edgeFunctionErrorMessage({ message: 'Failed to fetch' }, 'fallback');
   assert.equal(msg, 'Failed to fetch');
