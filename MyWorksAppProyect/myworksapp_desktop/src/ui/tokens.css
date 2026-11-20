@@ -1,0 +1,69 @@
+:root {
+  --brand-orange: #ff5e03;
+  --brand-orange-vibrant: #ff7a18;
+  --brand-navy: #00205b;
+  --bg-canvas: #070b12;
+  --bg-surface: #121a2a;
+  --bg-elevated: #172033;
+  --text-main: #f7f8fa;
+  --text-muted: #a8b2c0;
+  --emerald: #2f9e64;
+  --crimson: #e23d35;
+  --line: #243044;
+  --focus: #ff5e03;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --font: "DM Sans", system-ui, sans-serif;
+  --shadow: 0 12px 32px rgb(0 0 0 / 28%);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg-canvas: #f7f5f2;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --text-main: #12141a;
+  --text-muted: #5c6370;
+  --line: #e4dfd8;
+  --brand-navy: #00205b;
+  --shadow: 0 10px 24px rgb(18 20 26 / 8%);
+  color-scheme: light;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans-latin-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans-latin-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans-latin-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

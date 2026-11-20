@@ -3,6 +3,7 @@ import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
+import { requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 /**
@@ -32,12 +33,8 @@ Deno.serve(async (req) => {
     if (!jobId) return jsonResponse(req, { error: "jobId requerido" }, 400);
 
     const admin = serviceClient();
-    const { data: profile } = await userSb
-      .from("perfiles")
-      .select("rol")
-      .eq("id", user.id)
-      .maybeSingle();
-    const isAdmin = profile?.rol === "administrador";
+    const adminGate = await requireAdmin(userSb);
+    const isAdmin = adminGate.ok;
 
     const { data: job, error: jobErr } = await admin
       .from("trabajos")

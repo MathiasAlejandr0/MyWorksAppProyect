@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/auth-store';
 import { supabase } from '../supabaseClient';
+import { Button } from '../ui/kit';
 
 /** Segundo factor TOTP obligatorio para entrar a la consola. */
 export function AdminMfaGate() {
@@ -26,11 +26,7 @@ export function AdminMfaGate() {
         setFactorId(verified.id);
         return;
       }
-      // Un QR abandonado deja un factor sin verificar con el mismo nombre y el
-      // siguiente enroll falla. Se borra antes de pedir un QR nuevo.
-      const pending = listed.data.all.filter(
-        (factor) => factor.factor_type === 'totp' && factor.status !== 'verified',
-      );
+      const pending = listed.data.all.filter((factor) => factor.factor_type === 'totp' && factor.status !== 'verified');
       for (const factor of pending) {
         const removed = await supabase.auth.mfa.unenroll({ factorId: factor.id });
         if (cancelled) return;
@@ -39,10 +35,7 @@ export function AdminMfaGate() {
           return;
         }
       }
-      const enrolled = await supabase.auth.mfa.enroll({
-        factorType: 'totp',
-        friendlyName: 'Consola MyWorksApp',
-      });
+      const enrolled = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Consola MyWorksApp' });
       if (cancelled) return;
       if (enrolled.error || !enrolled.data) {
         setError('No se pudo preparar la aplicación de autenticación.');
@@ -57,65 +50,49 @@ export function AdminMfaGate() {
     };
   }, []);
 
-  const confirm = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!factorId || code.trim().length < 6) return;
-    setBusy(true);
-    setError(null);
-    const challenge = await supabase.auth.mfa.challenge({ factorId });
-    if (challenge.error || !challenge.data) {
-      setBusy(false);
-      setError('No se pudo iniciar la verificación.');
-      return;
-    }
-    const verified = await supabase.auth.mfa.verify({
-      factorId,
-      challengeId: challenge.data.id,
-      code: code.trim(),
-    });
-    setBusy(false);
-    if (verified.error) {
-      setError('El código no es válido.');
-      return;
-    }
-    await completeMfa();
-  };
-
   return (
     <div className="login-screen">
-      <form className="login-card" onSubmit={(event) => void confirm(event)}>
-        <p className="login-security-title">
-          <ShieldCheck size={16} /> Segundo factor
-        </p>
-        <h1>Confirma tu identidad</h1>
-        <p>
-          {qr
-            ? 'Escanea el código con tu aplicación de autenticación y escribe el código de 6 dígitos.'
-            : 'Escribe el código de 6 dígitos de tu aplicación de autenticación.'}
-        </p>
-        {qr ? (
-          <img src={qr} alt="Código QR para activar el segundo factor" width={180} height={180} />
-        ) : null}
-        <label className="login-field-label" htmlFor="mfa-code">
-          CÓDIGO
-        </label>
-        <input
-          id="mfa-code"
-          className="login-input"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          value={code}
-          onChange={(event) => setCode(event.target.value)}
-          required
-        />
-        {error ? <p className="login-error">{error}</p> : null}
-        <button type="submit" className="login-submit" disabled={busy || !factorId}>
-          {busy ? 'Verificando…' : 'Entrar'}
-        </button>
-        <button type="button" className="btn-ghost" onClick={() => void logout()}>
-          Cerrar sesión
-        </button>
-      </form>
+      <section className="login-panel">
+        <form
+          className="login-card stack"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!factorId || code.trim().length < 6) return;
+            setBusy(true);
+            setError(null);
+            void (async () => {
+              const challenge = await supabase.auth.mfa.challenge({ factorId });
+              if (challenge.error || !challenge.data) {
+                setBusy(false);
+                setError('No se pudo iniciar la verificación.');
+                return;
+              }
+              const verified = await supabase.auth.mfa.verify({
+                factorId,
+                challengeId: challenge.data.id,
+                code: code.trim(),
+              });
+              setBusy(false);
+              if (verified.error) {
+                setError('El código no es válido.');
+                return;
+              }
+              await completeMfa();
+            })();
+          }}
+        >
+          <h1>Segundo factor</h1>
+          <p className="muted">La consola pide un código de tu aplicación de autenticación.</p>
+          {qr ? <img src={qr} alt="Código QR para configurar el segundo factor" width={180} height={180} /> : null}
+          <label className="field">
+            <span>Código de 6 dígitos</span>
+            <input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value)} />
+          </label>
+          {error ? <p role="alert">{error}</p> : null}
+          <Button type="submit" busy={busy} disabled={!factorId}>Entrar</Button>
+          <Button variant="secondary" onClick={() => void logout()}>Cerrar sesión</Button>
+        </form>
+      </section>
     </div>
   );
 }

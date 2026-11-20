@@ -4,6 +4,7 @@ import { abandonedCheckoutUpdate } from "./abandon_payment.ts";
 import { assessWebpayCommit } from "./commit_guard.ts";
 import {
   corsAllowlist,
+  DESKTOP_APP_ORIGINS,
   PUBLIC_WEB_ORIGINS,
   resolveCorsAllowOrigin,
   webReturnOrigins,
@@ -408,7 +409,19 @@ describe("web pública en Vercel", () => {
 
   it("CORS mantiene CORS_ALLOWED_ORIGINS y localhost como antes", () => {
     const list = corsAllowlist(" https://app.example.cl , ,");
-    assert.deepEqual(list, [vercel, "https://app.example.cl"]);
+    assert.deepEqual(list, [vercel, ...DESKTOP_APP_ORIGINS, "https://app.example.cl"]);
+    assert.equal(
+      resolveCorsAllowOrigin({ origin: "tauri://localhost", allowlist: list, tbkEnv: "production" }),
+      "tauri://localhost",
+    );
+    assert.equal(
+      resolveCorsAllowOrigin({ origin: "http://tauri.localhost", allowlist: list, tbkEnv: "production" }),
+      "http://tauri.localhost",
+    );
+    assert.equal(
+      resolveCorsAllowOrigin({ origin: "https://tauri.localhost.evil.com", allowlist: list, tbkEnv: "production" }),
+      vercel,
+    );
     assert.equal(
       resolveCorsAllowOrigin({ origin: "http://localhost:5173", allowlist: list, tbkEnv: "integration" }),
       "http://localhost:5173",

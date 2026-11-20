@@ -1,0 +1,93 @@
+import { useEffect, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { EmptyState, ErrorState, SkeletonRows } from '../ui/kit';
+import { toCsv, downloadCsv } from '../lib/csv';
+
+export interface PageResult<T> {
+  rows: T[];
+  total: number;
+}
+
+export function PagedTable<T extends { id: string }>({
+  queryKey,
+  load,
+  columns,
+  empty,
+  onRow,
+  toolbar,
+}: {
+  queryKey: readonly unknown[];
+  load: (page: number, search: string) => Promise<PageResult<T>>;
+  columns: { key: string; header: string; cell: (row: T) => ReactNode; csv?: (row: T) => unknown }[];
+  empty: string;
+  onRow?: (row: T) => void;
+  toolbar?: ReactNode;
+}) {
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
+  const [debounced, setDebounced] = useState('');
+  const pageSize = 25;
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(search.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+  const query = useQuery({
+    queryKey: [...queryKey, page, debounced],
+    queryFn: () => load(page, debounced),
+  });
+  const rows = query.data?.rows ?? [];
+  const total = query.data?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  return (
+    <section className="stack">
+      <div className="spread">
+        <label className="field">
+          <span>Buscar</span>
+          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} />
+        </label>
+        <div className="row">
+          {toolbar}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              const csv = toCsv(
+                columns.map((column) => column.header),
+                rows.map((row) => columns.map((column) => column.csv ? column.csv(row) : '')),
+              );
+              downloadCsv('myworksapp.csv', csv);
+            }}
+          >
+            Exportar CSV
+          </button>
+        </div>
+      </div>
+      {query.isLoading ? <SkeletonRows /> : null}
+      {query.isError ? (
+        <ErrorState message="No se pudo cargar esta lista." onRetry={() => void query.refetch()} />
+      ) : null}
+      {!query.isLoading && !query.isError && rows.length === 0 ? <EmptyState title={empty} /> : null}
+      {rows.length > 0 ? (
+        <div className="table-wrap panel">
+          <table className="data">
+            <thead>
+              <tr>{columns.map((column) => <th key={column.key}>{column.header}</th>)}</tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id} className={onRow ? 'clickable' : undefined} onClick={() => onRow?.(row)}>
+                  {columns.map((column) => <td key={column.key}>{column.cell(row)}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+      <div className="row">
+        <button type="button" className="btn btn-secondary" disabled={page === 0} onClick={() => setPage((value) => value - 1)}>Anterior</button>
+        <span className="nums muted">{page + 1} / {pages} · {total} registros</span>
+        <button type="button" className="btn btn-secondary" disabled={page + 1 >= pages} onClick={() => setPage((value) => value + 1)}>Siguiente</button>
+      </div>
+    </section>
+  );
+}
