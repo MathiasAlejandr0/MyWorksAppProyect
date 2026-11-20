@@ -649,6 +649,7 @@ CREATE TABLE `trabajadores` (
   `score_desglose` JSON NOT NULL,
   `ranking_actualizado_en` DATETIME(6),
   `radio_urbano_km` DECIMAL(5,2) NOT NULL,
+  -- Columna conservada. El cobro no la suma: lo calcula recargo_traslado_clp.
   `tarifa_fuera_radio_clp` INT NOT NULL,
   `trabajos_completados` INT NOT NULL,
   `es_elite` TINYINT(1),

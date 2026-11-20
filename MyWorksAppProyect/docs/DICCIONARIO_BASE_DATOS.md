@@ -898,7 +898,7 @@ Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios adicionales
 | `score_desglose` | `jsonb` | not null, default: '{}' |  |
 | `ranking_actualizado_en` | `timestamptz` |  |  |
 | `radio_urbano_km` | `numeric(5,2)` | not null, default: 5 | Kilómetros alrededor de la base donde la movilización es $0. |
-| `tarifa_fuera_radio_clp` | `integer` | not null, default: 0 | Movilización fija si el cliente está fuera del radio urbano. 0 = tampoco cobra fuera. |
+| `tarifa_fuera_radio_clp` | `integer` | not null, default: 0 | Columna conservada. El cobro no la suma: el traslado lo calcula `recargo_traslado_clp` ($1.200 por km fuera del radio, mínimo $3.000, máximo $18.000). |
 | `trabajos_completados` | `integer` | not null, default: 0 |  |
 | `es_elite` | `boolean` | generated always | Destacado del mes: nota >= 4.7 y al menos 5 trabajos completados. GENERATED ALWAYS AS ((COALESCE(calificacion, (0)::numeric) >= 4.7) AND (trabajos_completados >= 5)) |
 | `id_comuna` | `text` | fk → comunas.id | Comuna de cobertura. zona_trabajo sigue como texto de UI. |
@@ -2272,6 +2272,8 @@ El esquema `public` no define tipos ENUM ni vistas materializadas; su única vis
 
 Hay 150 funciones (o procedimientos) en `public`. 120 son SECURITY DEFINER. A continuación se documentan las que forman la API de cliente (GRANT a `anon` o `authenticated`) y, en un segundo listado, las de backend / disparadores (solo `service_role` o uso interno).
 
+El 20 de noviembre de 2026 la migración `20261120193000_montos_redondeo_unico` no agrega tablas ni columnas. Deja un solo entero de cobro: el kilómetro del traslado se fija a 3 decimales antes del salto de $0 a $3.000 y del tope de 30 km; la tarifa se redondea antes de sumar el traslado; el 8 % de una orden de cambio sale de `(monto * 8 + 50) / 100`. Suma tres funciones: `comision_orden_cambio_clp`, `monto_esperado_trabajo_id` y `cotizar_visita_publica`.
+
 ### 6.1 API de cliente (`anon` / `authenticated`)
 
 | Función | Argumentos | Retorno | Seguridad | Quién ejecuta | Propósito |
@@ -2304,12 +2306,14 @@ Hay 150 funciones (o procedimientos) en `public`. 120 son SECURITY DEFINER. A co
 | `categorias_con_disponibles` | — | SETOF text | SECURITY DEFINER | Categorías del catálogo que hoy tienen profesionales disponibles. También para anon. |
 | `cerrar_trabajo_conforme` | p_trabajo_id text | trabajos | SECURITY DEFINER | El cliente cierra el trabajo conforme y habilita la liberación del pago retenido. |
 | `clasificar_disputa` | p_trabajo_id text, p_motivo text | TABLE(decision text, regla text, estado text, vence timestamp with time zone) | SECURITY DEFINER | Clasificación automática de una disputa (soporte automático, interno). |
+| `comision_orden_cambio_clp` | p_monto integer | integer | IMMUTABLE | 8 % entero de una orden de cambio: `(monto * 8 + 50) / 100`. La pueden ejecutar `authenticated` y `service_role`. |
 | `comentar_disputa` | p_id text, p_comentario text | void | SECURITY DEFINER | Una de las partes agrega un comentario al hilo de la disputa. |
 | `confirmar_trabajo_tras_captura` | p_id_pago text | text | SECURITY DEFINER | Tras capturar el pago (Webpay/Oneclick), confirma el trabajo. Lo llama el backend. |
 | `consola_disputas_abiertas` | — | TABLE(id text, id_trabajo text, motivo text, descripcion text, estado text, decision_sugerida text, motivo_regla text, vence_en timestamp with time zone, creado_en text, nombre_cliente text, nombre_profesional text, monto_retenido numeric) | SECURITY DEFINER | Cola de disputas para la consola de escritorio (administrador, soporte o qa). qa no ve la evidencia del domicilio. |
 | `copiar_estado_pago_trabajo` | — | trigger | SECURITY DEFINER | Trigger: copia el estado del pago principal a trabajos.estado_pago. |
+| `cotizar_visita_publica` | p_trabajador uuid, p_lat double precision, p_lng double precision | TABLE(tarifa_clp integer, traslado_clp integer, total_clp integer, distancia_km numeric, fuera_de_alcance boolean) | SECURITY DEFINER | Cotiza una visita con la base real del profesional, sin devolver la coordenada. Solo `service_role`. Si el km cuantizado pasa de 30, marca fuera de alcance y no cobra traslado. |
 | `crear_intencion_pago` | p_id_trabajo text, p_monto numeric, p_buy_order text | pagos | SECURITY DEFINER | Crea la intención de pago (Webpay) del trabajo, con el monto que fija el servidor. |
-| `crear_intencion_pago_orden_cambio` | p_id_trabajo text, p_id_orden_cambio text, p_monto numeric, p_buy_order text | pagos | SECURITY DEFINER | Crea la intención de pago de una orden de cambio. |
+| `crear_intencion_pago_orden_cambio` | p_id_trabajo text, p_id_orden_cambio text, p_monto numeric, p_buy_order text | pagos | SECURITY DEFINER | Crea la intención de pago de una orden de cambio. El monto tiene que ser exactamente la base redondeada más `comision_orden_cambio_clp`. |
 | `crear_intencion_pago_servicio` | p_id_usuario text, p_id_trabajo text, p_monto numeric | pagos | SECURITY DEFINER | Variante de servicio (Edge Function / service_role) para crear la intención de pago. |
 | `disputa_esta_activa` | p_estado text | boolean | SECURITY INVOKER | Indica si el estado de una disputa se considera activo. |
 | `enviar_encuesta_testing` | p_plataforma text, p_rol text, p_tarea_completada text, p_satisfaccion smallint, p_sus smallint[], p_que_funciono text, p_que_mejorar text, p_version_app text | uuid | SECURITY DEFINER | Guarda una encuesta de testing con sus 10 respuestas SUS (también anon). |
@@ -2353,7 +2357,8 @@ Hay 150 funciones (o procedimientos) en `public`. 120 son SECURITY DEFINER. A co
 | `metadatos_sin_pin` | p_raw text | text | SECURITY INVOKER | Quita el PIN de un JSON de metadatos antes de guardarlo o devolverlo. |
 | `mi_ficha_propia` | — | TABLE(latitud_base double precision, longitud_base double precision, radio_servicio_km numeric, origen_base text, estado_verificacion text, nota_verificacion text) | SECURITY DEFINER | Devuelve la ficha del profesional autenticado, incluyendo campos no públicos. |
 | `minuto_utc` | p_valor text | timestamp with time zone | SECURITY INVOKER | Normaliza una fecha-hora en texto al minuto UTC; se usa en el índice único de agenda. |
-| `monto_esperado_trabajo` | p_job trabajos | numeric | SECURITY DEFINER | Calcula el monto que el servidor espera para el trabajo (no lo fija el cliente). |
+| `monto_esperado_trabajo` | p_job trabajos | numeric | SECURITY DEFINER | Calcula el entero que el servidor espera: tarifa redondeada (o metros cuadrados redondeados, o bloque de horas) más el traslado. No lo fija el cliente. |
+| `monto_esperado_trabajo_id` | p_id text | integer | SECURITY DEFINER | El mismo entero de `monto_esperado_trabajo` para un id de trabajo. Solo `service_role`. Devuelve 0 si el trabajo no existe. |
 | `normalizar_bloques_horario` | p_horarios jsonb | jsonb | SECURITY INVOKER | Normaliza el JSON de bloques horarios antes de guardarlo. |
 | `obtener_config_ranking` | — | jsonb | SECURITY DEFINER | Lee la configuración actual del ranking. |
 | `obtener_pin_inicio` | p_trabajo_id text | text | SECURITY DEFINER | El cliente (o un administrador) obtiene el PIN para mostrárselo al profesional. |
@@ -2373,7 +2378,7 @@ Hay 150 funciones (o procedimientos) en `public`. 120 son SECURITY DEFINER. A co
 | `proteger_verificacion_profesional` | — | trigger | SECURITY DEFINER | Trigger: el estado de verificación solo lo cambia un administrador o la RPC. |
 | `publicar_ubicacion_trabajo` | p_trabajo_id text, p_lat double precision, p_lng double precision, p_precision double precision | void | SECURITY DEFINER | El profesional publica su GPS durante un trabajo activo. |
 | `quitar_dispositivo_push` | p_token text | void | SECURITY DEFINER | El usuario elimina un token de notificaciones push. |
-| `recargo_traslado_clp` | p_lat_trabajador double precision, p_lng_trabajador double precision, p_lat_trabajo double precision, p_lng_trabajo double precision, p_radio_km numeric | integer | SECURITY INVOKER | Calcula el recargo de traslado según el radio urbano y la tarifa fuera de radio. |
+| `recargo_traslado_clp` | p_lat_trabajador double precision, p_lng_trabajador double precision, p_lat_trabajo double precision, p_lng_trabajo double precision, p_radio_km numeric | integer | SECURITY INVOKER | Traslado en pesos enteros. Fija el km a 3 decimales, cobra $1.200 por km fuera del radio, mínimo $3.000 y máximo $18.000, y rechaza más de 30 km. No usa `tarifa_fuera_radio_clp`. |
 | `rechazar_trabajo_pendiente` | p_trabajo_id text, p_metadatos text | trabajos | SECURITY DEFINER | Cancela un pendiente. Solo admin o el trabajador ya asignado. Sin id_trabajador el control no se salta. |
 | `reclamar_cobro_oneclick` | p_id_pago text, p_buy_order text, p_monto numeric | text | SECURITY DEFINER | Inicia o registra una autorización Oneclick (backend). |
 | `recomputar_agregados_profesional` | p_id uuid | void | SECURITY DEFINER | Función interna, disparador o tarea de servicio. |

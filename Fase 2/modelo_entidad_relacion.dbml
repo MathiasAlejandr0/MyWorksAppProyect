@@ -238,7 +238,7 @@ Table trabajadores {
   score_desglose jsonb [not null, default: "'{}'"]
   ranking_actualizado_en timestamptz
   radio_urbano_km numeric(5,2) [not null, default: 5, note: 'Kilómetros alrededor de la base donde la movilización es $0.']
-  tarifa_fuera_radio_clp integer [not null, default: 0, note: 'Movilización fija si el cliente está fuera del radio urbano. 0 = tampoco cobra fuera.']
+  tarifa_fuera_radio_clp integer [not null, default: 0, note: 'Columna conservada. El cobro no la suma: lo calcula recargo_traslado_clp ($1.200 por km fuera del radio, mínimo $3.000, máximo $18.000).']
   trabajos_completados integer [not null, default: 0]
   es_elite boolean [note: 'GENERATED ALWAYS AS ((COALESCE(calificacion, (0)::numeric) >= 4.7) AND (trabajos_completados >= 5))']
   id_comuna text [note: 'Comuna de cobertura. zona_trabajo sigue como texto de UI.']

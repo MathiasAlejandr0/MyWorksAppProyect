@@ -404,7 +404,7 @@ Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios adicionales
 | `score_desglose` | jsonb | Obligatorio, Default '{}' |
 | `ranking_actualizado_en` | timestamptz | Opcional |
 | `radio_urbano_km` | numeric(5,2) | Obligatorio, Default 5. Kilómetros alrededor de la base donde la movilización es $0. |
-| `tarifa_fuera_radio_clp` | integer | Obligatorio, Default 0. Movilización fija si el cliente está fuera del radio urbano. 0 = tampoco cobra fuera. |
+| `tarifa_fuera_radio_clp` | integer | Obligatorio, Default 0. Columna conservada. El cobro no la suma: el traslado lo calcula `recargo_traslado_clp` ($1.200 por km fuera del radio, mínimo $3.000, máximo $18.000). |
 | `trabajos_completados` | integer | Obligatorio, Default 0 |
 | `es_elite` | boolean | Opcional, GENERATED ALWAYS. Destacado del mes: nota >= 4.7 y al menos 5 trabajos completados. GENERATED ALWAYS AS ((COALESCE(calificacion, (0)::numeric) >= 4.7) AND (trabajos_completados >= 5)) |
 | `id_comuna` | text | FK → comunas.id, Opcional. Comuna de cobertura. zona_trabajo sigue como texto de UI. |

@@ -78,6 +78,8 @@ archivos llevan ese mismo número.
 | 20261120150000 | `rate_limit_global.sql` | Tabla `rate_limit_ventana` y `rate_limit_consumir` (solo `service_role`). Aplicada en vivo (reporte del 20-nov). |
 | 20261120160000 | `perfil_publico_profesional.sql` | `perfil_publico_profesional`, `horario_publico_profesional` y `resenas_publicas_profesional`. Aplicada en vivo (reporte del 20-nov). |
 | 20261120170000 | `derechos_y_cobro_extra.sql` | `exportar_mis_datos`, `solicitar_eliminacion_cuenta`, tabla `direcciones_cliente`, `monto_a_cobrar_orden_cambio` y `rechazar_orden_cambio`. Aplicada en vivo (reporte del 20-nov). |
+| 20261120180000 | `agenda_alta_sin_generate_series_time.sql` | Corrige el alta: deja de usar `generate_series` con `time`. Aplicada en producción. |
+| 20261120193000 | `montos_redondeo_unico.sql` | Un solo entero de cobro. El km del traslado se cuantiza a 3 decimales; la tarifa se redondea antes de sumar el traslado; el 8 % de la orden de cambio es entero. No agrega tablas. Aplicada en producción el 20 de noviembre de 2026. |
 
 ## Dump del esquema
 

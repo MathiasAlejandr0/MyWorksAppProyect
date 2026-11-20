@@ -647,6 +647,7 @@ CREATE TABLE trabajadores (
   score_desglose jsonb NOT NULL,
   ranking_actualizado_en timestamp with time zone,
   radio_urbano_km numeric(5,2) NOT NULL,
+  -- Columna conservada. El cobro no la suma: lo calcula recargo_traslado_clp.
   tarifa_fuera_radio_clp integer NOT NULL,
   trabajos_completados integer NOT NULL,
   es_elite boolean,
