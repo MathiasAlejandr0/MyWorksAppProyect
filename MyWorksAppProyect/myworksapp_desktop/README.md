@@ -33,7 +33,7 @@ Entran `administrador`, `soporte` y `qa`, con cuenta activa y segundo factor. Si
 
 ## Publicación
 
-La clave privada del actualizador no está en el repositorio. Hay que generarla con `npx tauri signer generate` y guardarla como secreto de CI. La clave pública va en `src-tauri/tauri.conf.json` (`plugins.updater.pubkey`). Este cambio no publica el instalador.
+La clave pública del actualizador está en `src-tauri/tauri.conf.json` (`plugins.updater.pubkey`). La clave privada nueva y su contraseña no están en el repositorio: hay que cargarlas como secrets `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Las instalaciones hechas con la clave anterior no pueden actualizarse solas; hay que reinstalar una vez. Este cambio no publica el instalador.
 
 ## Comisión
 
