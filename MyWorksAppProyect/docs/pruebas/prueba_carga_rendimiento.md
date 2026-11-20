@@ -1,5 +1,7 @@
 # Prueba de carga y rendimiento — MyWorksApp
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (15-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `08154dfc`) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
+
 | Campo | Valor |
 |---|---|
 | Fecha de ejecución | 15 de noviembre de 2026, 19:29–19:47 (hora de Chile, UTC-3) |

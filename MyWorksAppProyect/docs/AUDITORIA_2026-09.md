@@ -1,5 +1,7 @@
 # Auditoría MyWorksApp — 30 de septiembre de 2026
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (18-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `08154dfc`) está en [`ESTADO_DEL_PROYECTO.md`](../ESTADO_DEL_PROYECTO.md).
+
 Auditoría del monorepo completo (app Flutter, sitio web, escritorio Tauri y paquete `shared`) y de lo que se cerró en la rama `cursor/finish-ecosystem-fa99`.
 
 El producto es un marketplace de oficios del hogar para Chile (cliente y especialista), con un panel de administración en escritorio. El backend es **Supabase** (Auth, PostgreSQL, PostgREST, RLS, Storage y Edge Functions). No hay un API propio ni Firebase.

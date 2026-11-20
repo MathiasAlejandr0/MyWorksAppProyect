@@ -1,5 +1,7 @@
 # Qué hay que reparar
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (05-10-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `08154dfc`) está en [`ESTADO_DEL_PROYECTO.md`](../ESTADO_DEL_PROYECTO.md).
+
 Auditoría del 27 sep 2026. No incluye lo ya cerrado: token de Transbank oculto al cliente, handoff sin clave de respaldo, cabeceras en `vercel.json` y tope del guest-checkout.
 
 ## Pago y los dos repos

@@ -1,5 +1,7 @@
 # Prueba de estrés de la base de datos
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (16-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `08154dfc`) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
+
 **Proyecto:** My Works App · **Base:** Supabase `wxqrfcqifkfgawrnqmnj` (plan gratuito, us-west-2) a través de su API real (PostgREST y RPC)
 **Fecha:** 16 de noviembre de 2026, de 01:37:31 a 01:45:33 (hora de Chile, UTC−3). Duración: 8 minutos.
 **Herramienta:** k6 1.4.2 desde el computador de pruebas (Linux, fuera de Chile)

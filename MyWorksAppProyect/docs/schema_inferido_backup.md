@@ -1,5 +1,7 @@
 # Backup inventario esquema (inferido)
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (20-09-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `08154dfc`) está en [`ESTADO_DEL_PROYECTO.md`](../ESTADO_DEL_PROYECTO.md).
+
 Proyecto: MyWorksApp / wxqrfcqifkfgawrnqmnj  
 Fecha: 2026-09-13  
 Método: inferencia desde modelos Dart + repos (OpenAPI REST requiere service_role).

@@ -1,5 +1,7 @@
 # My Works App: prompt de video cinematográfico v2. Un *speech* que presenta la app
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (16-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `08154dfc`) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
+
 > **Slogan oficial (Presentación final Capstone, 2026-11-15):** «Multiplataforma que conecta hogares con profesionales de oficios, con trazabilidad del trabajo y pago protegido.» — fuente `/workspace/mwa_video/Presentacion-final-MyWorksApp.pptx` slide 1 / Drive `1h3cdLBsipJknBam4FXpeHM8qLcpNOH6R`. Reemplaza el lema de la web en el end card.
 **Para:** el diseñador gráfico / motion designer
 **Versión:** v2.1 · 15-nov-2026, 22:00 (hora de Chile). **Es el brief vigente** y reemplaza a `prompt_video_cinematografico.md`, `prompt_video_v2.md` y `prompt_video.md`. Índice de archivos: `LEEME.md`.

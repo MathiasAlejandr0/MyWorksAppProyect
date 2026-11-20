@@ -1,5 +1,7 @@
 # Registro de pruebas — 15 de noviembre de 2026
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (15-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `08154dfc`) está en [`ESTADO_DEL_PROYECTO.md`](../../../ESTADO_DEL_PROYECTO.md).
+
 Corrida en esta máquina, hora de Chile. El proyecto medido es `wxqrfcqifkfgawrnqmnj`. Los JSON de k6 están en `k6/` y los de latencia y de la web en `rendimiento/`. No se usó la clave `service_role`. No se llamó a Webpay ni a `guest-checkout` en la carga.
 
 Commit de referencia del código medido: `8fa913e`, más el ajuste del test de GPS para soltar el temporizador del mapa. Después de esa corrida, `main` avanzó hasta `2f3925c`. Esos commits no se volvieron a medir aquí.
