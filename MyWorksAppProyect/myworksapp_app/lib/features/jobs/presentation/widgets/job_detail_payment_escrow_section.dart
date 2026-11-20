@@ -64,7 +64,10 @@ class JobDetailPaymentEscrowSection extends StatelessWidget {
             isClientOwner) ...[
           const SizedBox(height: 16),
           if (JobDetailHelpers.quoteFromJob(job) != null)
-            PricingQuoteCard(quote: JobDetailHelpers.quoteFromJob(job)!),
+            ServerAlignedQuoteCard(
+              jobId: jobId,
+              quote: JobDetailHelpers.quoteFromJob(job)!,
+            ),
           const SizedBox(height: 12),
           ElevatedButton.icon(
             onPressed: onPayEscrow,

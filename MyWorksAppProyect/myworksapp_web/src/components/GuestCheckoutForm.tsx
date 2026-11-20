@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Lock, MapPin, Phone, User, Mail, X, ExternalLink } from 'lucide-react';
-import { reservedEmailMessage, transportCheckoutCopy } from '@myworksapp/shared';
+import { reservedEmailMessage } from '@myworksapp/shared';
 import { TurnstileWidget } from './TurnstileWidget';
-import { turnstileSiteKey } from './turnstileSite';
+import { turnstileCanRender } from './turnstileSite';
+import { useDialogA11y } from '../hooks/useDialogA11y';
+import { chileE164 } from '../chilePhone';
 
 export type GuestCheckoutPayload = {
   name: string;
@@ -15,9 +17,9 @@ export type GuestCheckoutPayload = {
 interface GuestCheckoutFormProps {
   workerName: string;
   profession: string;
-  basePrice: number;
-  transportExtraClp?: number;
-  insideRadar?: boolean | null;
+  /** Total del servidor. Null: aún no se puede pagar ni se muestra otro monto. */
+  payableTotalClp?: number | null;
+  quoteError?: string | null;
   serviceDescription?: string;
   onClose: () => void;
   onSubmit: (data: GuestCheckoutPayload) => Promise<void>;
@@ -29,9 +31,8 @@ interface GuestCheckoutFormProps {
 export function GuestCheckoutForm({
   workerName,
   profession,
-  basePrice,
-  transportExtraClp = 0,
-  insideRadar = null,
+  payableTotalClp = null,
+  quoteError = null,
   serviceDescription = 'Visita / urgencia a domicilio',
   onClose,
   onSubmit,
@@ -46,9 +47,13 @@ export function GuestCheckoutForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState('');
-  const totalAmount = basePrice + Math.max(0, transportExtraClp);
+  const totalAmount = payableTotalClp != null && payableTotalClp > 0
+    ? payableTotalClp
+    : null;
   const previewRef = useRef(onPreviewAddress);
+  const dialogRef = useRef<HTMLDivElement>(null);
   previewRef.current = onPreviewAddress;
+  useDialogA11y(true, onClose, dialogRef);
 
   useEffect(() => {
     const text = address.trim();
@@ -66,16 +71,17 @@ export function GuestCheckoutForm({
       setError('Completa tus datos personales y la dirección del trabajo.');
       return;
     }
+    const phoneE164 = chileE164(phone);
+    if (!phoneE164) {
+      setError('Usa un teléfono de Chile: +56 y 9 dígitos.');
+      return;
+    }
     const reserved = reservedEmailMessage(email);
     if (reserved) {
       setError(reserved);
       return;
     }
-    if (import.meta.env.PROD && !turnstileSiteKey()) {
-      setError('El checkout no está configurado: falta la verificación anti-robots.');
-      return;
-    }
-    if (turnstileSiteKey() && !captchaToken) {
+    if (turnstileCanRender() && !captchaToken) {
       setError('Confirma que no eres un robot');
       return;
     }
@@ -84,7 +90,7 @@ export function GuestCheckoutForm({
       await onSubmit({
         name: name.trim(),
         email: email.trim(),
-        phone: phone.trim(),
+        phone: phoneE164,
         address: address.trim(),
         turnstileToken: captchaToken || undefined,
       });
@@ -103,7 +109,7 @@ export function GuestCheckoutForm({
       aria-modal="true"
       aria-labelledby="guest-checkout-title"
     >
-      <div className="checkout-card-v2 guest-checkout-card modal-rise">
+      <div className="checkout-card-v2 guest-checkout-card modal-rise" ref={dialogRef}>
         <button
           type="button"
           className="modal-close"
@@ -130,13 +136,17 @@ export function GuestCheckoutForm({
             {profession} · {workerName}
           </span>
           <strong>
-            {totalAmount.toLocaleString('es-CL')} CLP
+            {totalAmount == null
+              ? 'Calculando tarifa y traslado…'
+              : `${totalAmount.toLocaleString('es-CL')} CLP`}
             {locatingAddress ? ' · buscando dirección…' : ''}
           </strong>
         </div>
         <p className="guest-checkout-service">
           {serviceDescription}
-          {` · ${transportCheckoutCopy({ extraClp: transportExtraClp, insideRadar })}`}
+          {payableTotalClp == null
+            ? ''
+            : ' · Traslado incluido en el total'}
         </p>
 
         <form className="guest-checkout-form" onSubmit={(e) => void handleSubmit(e)}>
@@ -195,17 +205,26 @@ export function GuestCheckoutForm({
 
           <TurnstileWidget onToken={setCaptchaToken} />
 
+          {quoteError ? (
+            <p className="toast-error" role="alert">{quoteError}</p>
+          ) : null}
           {error ? (
             <p className="toast-error" role="alert">
               {error}
             </p>
           ) : null}
 
-          <button type="submit" className="btn-primary checkout-v2-pay" disabled={busy}>
+          <button
+            type="submit"
+            className="btn-primary checkout-v2-pay"
+            disabled={busy || totalAmount == null}
+          >
             <ExternalLink size={16} />
             {busy
               ? 'Creando pedido y abriendo Webpay…'
-              : `Continuar a Webpay · CLP ${totalAmount.toLocaleString('es-CL')}`}
+              : totalAmount == null
+                ? 'Calculando el total…'
+                : `Continuar a Webpay · CLP ${totalAmount.toLocaleString('es-CL')}`}
           </button>
         </form>
 

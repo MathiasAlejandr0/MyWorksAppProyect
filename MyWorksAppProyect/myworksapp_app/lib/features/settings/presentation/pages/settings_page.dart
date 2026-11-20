@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/design_system/app_spacing.dart';
@@ -21,11 +22,21 @@ class SettingsPage extends ConsumerStatefulWidget {
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   bool _notificationsEnabled = true;
+  String? _appVersion;
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() => _appVersion = info.version);
+    } catch (_) {}
   }
 
   Future<void> _loadSettings() async {
@@ -152,14 +163,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ListTile(
             leading: const Icon(Icons.info),
             title: const Text('Acerca de'),
-            subtitle: const Text('${AppConstants.appBrandDisplayName} v1.0.0'),
-            onTap: () {
+            subtitle: Text(
+              _appVersion == null
+                  ? AppConstants.appBrandDisplayName
+                  : '${AppConstants.appBrandDisplayName} v$_appVersion',
+            ),
+            onTap: () async {
+              final info = await PackageInfo.fromPlatform();
+              if (!context.mounted) return;
               showAboutDialog(
                 context: context,
                 applicationName: AppConstants.appBrandDisplayName,
-                applicationVersion: '1.0.0',
+                applicationVersion: info.version,
                 applicationLegalese:
-                    '© 2025 ${AppConstants.appBrandDisplayName}',
+                    '© ${DateTime.now().year} ${AppConstants.appBrandDisplayName}',
               );
             },
           ),

@@ -18,6 +18,7 @@ class PaymentGuard {
 
     if (mode == PricingConstants.modeLegacy) {
       await _validateTierCompletionPayment(job, targetStatus, p);
+      await _validateEvidenceBeforeFinish(job, targetStatus, p);
       await _validateChangeOrdersOnComplete(job, targetStatus, p);
       return;
     }
@@ -42,7 +43,8 @@ class PaymentGuard {
       }
       final pending = await p.countPendingChangeOrders(job.id);
       if (pending > 0) {
-        throw AppError.validation('Hay órdenes de cambio pendientes de aprobación');
+        throw AppError.validation(
+            'Hay órdenes de cambio pendientes de aprobación');
       }
     }
 
@@ -61,11 +63,31 @@ class PaymentGuard {
         job.status == PricingConstants.jobPausedChangeOrder) {
       final unpaid = await p.countApprovedUnpaidChangeOrders(job.id);
       if (unpaid > 0) {
-        throw AppError.validation('Aprueba y paga las órdenes de cambio pendientes');
+        throw AppError.validation(
+            'Aprueba y paga las órdenes de cambio pendientes');
       }
     }
 
+    await _validateEvidenceBeforeFinish(job, targetStatus, p);
     await _validateChangeOrdersOnComplete(job, targetStatus, p);
+  }
+
+  /// El profesional no declara el trabajo terminado, ni el cliente lo
+  /// recibe conforme, si no hay al menos una evidencia guardada.
+  static Future<void> _validateEvidenceBeforeFinish(
+    JobModel job,
+    String targetStatus,
+    PaymentGuardPorts ports,
+  ) async {
+    final finishing =
+        targetStatus == PricingConstants.jobAwaitingClientApproval ||
+            targetStatus == AppConstants.jobStatusCompleted;
+    if (!finishing) return;
+    final photos = await ports.countEvidence(job.id);
+    if (photos > 0) return;
+    throw AppError.validation(
+      'Sube al menos una foto del trabajo antes de finalizarlo. El pago sigue retenido.',
+    );
   }
 
   /// Indica si la modalidad exige pago autorizado antes de pasar a [accepted].

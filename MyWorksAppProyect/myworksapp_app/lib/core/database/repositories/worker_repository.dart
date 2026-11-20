@@ -1,4 +1,5 @@
 import '../../config/demo_credentials.dart';
+import '../../domain/weekly_schedule.dart';
 import '../../domain/worker_hours.dart';
 import '../../domain/worker_public_stats.dart';
 import '../../domain/distance_match.dart';
@@ -7,12 +8,14 @@ import '../../domain/user_location_context.dart';
 import '../../domain/worker_service_options_catalog.dart';
 import '../../domain/worker_login_item.dart';
 import '../../services/worker_reputation_service.dart';
+import '../../utils/app_logger.dart';
 import '../../utils/worker_zone_matcher.dart';
 import '../models/worker_model.dart';
 import '../worker_stats_client.dart';
 import '../supabase_db.dart';
 import 'job_repository.dart';
 import 'rating_repository.dart';
+import 'worker_schedule_repository.dart';
 
 class WorkerRepository {
   static const String _table = 'trabajadores';
@@ -37,6 +40,7 @@ class WorkerRepository {
   Future<void> createWorker(WorkerModel worker) async {
     await supabase.from(_table).upsert(worker.toMap());
     await _saveOffer(worker, includeCategory: true);
+    await WorkerScheduleRepository().ensureDefault(userId: worker.userId);
   }
 
   /// Guarda precios, servicios propios y categoría en sus tablas. Lo que ya
@@ -106,14 +110,41 @@ class WorkerRepository {
     }
   }
 
+  Future<Map<String, dynamic>?> _loadWorkerRow(String userId) async {
+    try {
+      return await supabase
+          .from(_table)
+          .select(_selectColumns())
+          .eq('id_usuario', userId)
+          .maybeSingle();
+    } catch (embedError, embedStack) {
+      AppLogger.e(
+        'La ficha con precios no cargó; se reintenta sin ellos',
+        embedError,
+        embedStack,
+      );
+      // Si el embed de precios o servicios falla (permiso o relación), la
+      // ficha igual se abre con las columnas de trabajadores.
+      return await supabase
+          .from(_table)
+          .select(_baseColumns)
+          .eq('id_usuario', userId)
+          .maybeSingle();
+    }
+  }
+
   Future<WorkerModel?> getWorkerByUserId(String userId) async {
-    final row = await supabase
-        .from(_table)
-        .select(_selectColumns())
-        .eq('id_usuario', userId)
-        .maybeSingle();
+    final row = await _loadWorkerRow(userId);
     if (row == null) return null;
-    var worker = WorkerModel.fromMap(row);
+    late WorkerModel worker;
+    try {
+      worker = WorkerModel.fromMap(row);
+    } catch (e, st) {
+      AppLogger.e('Ficha con un dato inesperado', e, st);
+      final id = row['id_usuario'];
+      if (id is! String || id.isEmpty) rethrow;
+      worker = WorkerModel(userId: id, profession: 'Profesional');
+    }
     if (supabase.auth.currentUser?.id == userId) {
       Map<String, dynamic>? ficha;
       try {
@@ -121,11 +152,16 @@ class WorkerRepository {
       } catch (_) {
         ficha = null;
       }
-      final hours = await supabase.rpc('horarios_disponibles_propios');
+      List<WorkerHourSlot> hours = worker.availableHours;
+      try {
+        hours = parseWorkerHours(
+          await supabase.rpc('horarios_disponibles_propios'),
+        );
+      } catch (_) {}
       worker = worker.copyWith(
         baseLatitude: (ficha?['latitud_base'] as num?)?.toDouble(),
         baseLongitude: (ficha?['longitud_base'] as num?)?.toDouble(),
-        availableHours: parseWorkerHours(hours),
+        availableHours: hours,
       );
     } else {
       try {
@@ -303,7 +339,12 @@ class WorkerRepository {
       slots.add(utc);
     }
     slots.sort();
-    return slots;
+    try {
+      final schedule = await WorkerScheduleRepository().load(workerId);
+      return slotsInsideSchedule(slots, schedule);
+    } catch (_) {
+      return slots;
+    }
   }
 
   Future<({String status, String? note})?> fetchVerification(

@@ -13,22 +13,13 @@ class WorkerScheduleRepository {
         .from('trabajador_horarios')
         .select('dia_semana, hora_inicio, hora_fin, activo')
         .eq('id_usuario', userId);
-    final days = <DayWindow>[];
-    for (final row in rows as List) {
-      final map = Map<String, dynamic>.from(row as Map);
-      final weekday = (map['dia_semana'] as num?)?.toInt();
-      if (weekday == null || weekday < 1 || weekday > 7) continue;
-      days.add(
-        DayWindow(
-          weekday: weekday,
-          startMinute: _minutes(map['hora_inicio']),
-          endMinute: _minutes(map['hora_fin']),
-          enabled: map['activo'] != false,
-        ),
-      );
-    }
-    days.sort((a, b) => a.weekday.compareTo(b.weekday));
-    return WeeklySchedule(enabled: enabled, days: days);
+    final published = await _publishedSlots([userId]);
+    return WeeklySchedule(
+      enabled: enabled,
+      days: daysFromScheduleRows(
+        _withPublished(rows as List, published[userId] ?? const []),
+      ),
+    );
   }
 
   Future<Map<String, WeeklySchedule>> loadMany(List<String> userIds) async {
@@ -42,38 +33,55 @@ class WorkerScheduleRepository {
         .from('trabajador_horarios')
         .select('id_usuario, dia_semana, hora_inicio, hora_fin, activo')
         .inFilter('id_usuario', ids);
-    final byUser = <String, List<DayWindow>>{};
+    final published = await _publishedSlots(ids);
+    final byUser = <String, List<Map<String, dynamic>>>{};
     for (final row in rows as List) {
       final map = Map<String, dynamic>.from(row as Map);
       final userId = map['id_usuario'] as String?;
-      final weekday = (map['dia_semana'] as num?)?.toInt();
-      if (userId == null || weekday == null) continue;
-      byUser.putIfAbsent(userId, () => []).add(
-            DayWindow(
-              weekday: weekday,
-              startMinute: _minutes(map['hora_inicio']),
-              endMinute: _minutes(map['hora_fin']),
-              enabled: map['activo'] != false,
-            ),
-          );
+      if (userId == null) continue;
+      byUser.putIfAbsent(userId, () => []).add(map);
     }
     final result = <String, WeeklySchedule>{};
     for (final row in flags as List) {
       final map = Map<String, dynamic>.from(row as Map);
       final userId = map['id_usuario'] as String?;
       if (userId == null) continue;
+      final dayRows = byUser[userId] ?? const <Map<String, dynamic>>[];
+      final slots = published[userId] ?? const <Map<String, dynamic>>[];
       result[userId] = WeeklySchedule(
         enabled: map['usa_horario'] == true,
-        days: byUser[userId] ?? const [],
+        days: daysFromScheduleRows(_withPublished(dayRows, slots)),
       );
     }
     return result;
+  }
+
+  /// Si el alta dejó las ventanas pero ninguna hora publicada, publica
+  /// lunes a viernes 09:00–18:00 para que el cliente pueda agendar.
+  Future<void> ensureDefault({required String userId}) async {
+    final existing = await supabase
+        .from('trabajador_horas_publicadas')
+        .select('hora')
+        .eq('id_usuario', userId)
+        .limit(1);
+    if ((existing as List).isNotEmpty) return;
+    final current = await load(userId);
+    await save(
+      userId: userId,
+      schedule: current.days.isEmpty
+          ? WeeklySchedule.weekdaysNineToSix()
+          : WeeklySchedule(enabled: true, days: current.days),
+    );
   }
 
   Future<void> save({
     required String userId,
     required WeeklySchedule schedule,
   }) async {
+    final overlap = overlappingWindowsMessage(schedule.days);
+    if (overlap != null) {
+      throw StateError(overlap);
+    }
     await supabase
         .from('trabajadores')
         .update({'usa_horario': schedule.enabled}).eq('id_usuario', userId);
@@ -82,18 +90,70 @@ class WorkerScheduleRepository {
       days: schedule.days,
       updatedAt: DateTime.now(),
     );
-    if (rows.isEmpty) return;
-    await supabase.from('trabajador_horarios').upsert(
-          rows,
-          onConflict: scheduleUpsertConflict,
-        );
+    if (rows.isNotEmpty) {
+      await supabase.from('trabajador_horarios').upsert(
+            rows,
+            onConflict: scheduleUpsertConflict,
+          );
+    }
+    final slots = publishedHourSlots(schedule.days);
+    await supabase
+        .from('trabajador_horas_publicadas')
+        .delete()
+        .eq('id_usuario', userId);
+    if (slots.isEmpty) return;
+    await supabase.from('trabajador_horas_publicadas').insert([
+      for (final slot in slots)
+        {
+          'id_usuario': userId,
+          'dia_semana': slot['dia'],
+          'hora': slot['hora'],
+        },
+    ]);
   }
 
-  static int _minutes(Object? raw) {
-    final text = raw?.toString() ?? '00:00';
-    final parts = text.split(':');
-    final hour = int.tryParse(parts.first) ?? 0;
-    final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
-    return hour * 60 + minute;
+  Future<Map<String, List<Map<String, dynamic>>>> _publishedSlots(
+    List<String> userIds,
+  ) async {
+    if (userIds.isEmpty) return {};
+    final rows = await supabase
+        .from('trabajador_horas_publicadas')
+        .select('id_usuario, dia_semana, hora')
+        .inFilter('id_usuario', userIds);
+    final byUser = <String, List<Map<String, dynamic>>>{};
+    for (final raw in rows as List) {
+      final map = Map<String, dynamic>.from(raw as Map);
+      final userId = map['id_usuario'] as String?;
+      final weekday = (map['dia_semana'] as num?)?.toInt();
+      if (userId == null || weekday == null) continue;
+      byUser.putIfAbsent(userId, () => []).add({
+        'dia': weekday,
+        'hora': formatMinute(parseClockMinute(map['hora'])),
+      });
+    }
+    return byUser;
+  }
+
+  List<Map<String, dynamic>> _withPublished(
+    List<dynamic> rows,
+    List<Map<String, dynamic>> slots,
+  ) {
+    final maps = <Map<String, dynamic>>[
+      for (final raw in rows)
+        if (raw is Map) Map<String, dynamic>.from(raw),
+    ];
+    if (maps.isEmpty) {
+      if (slots.isEmpty) return const [];
+      return [
+        {'horarios': slots},
+      ];
+    }
+    return [
+      for (var i = 0; i < maps.length; i++)
+        {
+          ...maps[i],
+          if (i == 0) 'horarios': slots,
+        },
+    ];
   }
 }

@@ -31,6 +31,11 @@ describe('consolePermissions (mínimo privilegio)', () => {
     }
     const admin = consolePermissions('administrador');
     assert.equal(admin.resolveDisputes && admin.executive && admin.people, true);
+    assert.equal(consolePermissions('soporte').viewMoney, false);
+    assert.equal(consolePermissions('qa').viewErrors, true);
+    assert.equal(consolePermissions('qa').disputeEvidence, false);
+    assert.equal(consolePermissions('soporte').proposeReviews, true);
+    assert.equal(consolePermissions('soporte').moderateReviews, false);
   });
 
   it('soporte ve evidencia y deja notas; QA solo lee la cola y seguridad', () => {
@@ -48,6 +53,6 @@ describe('consolePermissions (mínimo privilegio)', () => {
 
   it('etiqueta legible por rol', () => {
     assert.equal(consoleRoleLabel('soporte'), 'Soporte');
-    assert.equal(consoleRoleLabel('qa'), 'QA (solo lectura)');
+    assert.equal(consoleRoleLabel('qa'), 'QA');
   });
 });

@@ -3,7 +3,12 @@ import { describe, it } from "node:test";
 import { oneclickReturnBase } from "./oneclick_return_base.ts";
 
 const SITE = "https://myworksapp-cl.vercel.app/";
-const allowed = ["https://myworksapp-cl.vercel.app", "http://localhost:5173"];
+const allowed = [
+  "https://myworksapp-cl.vercel.app",
+  "https://myworksapp.cl",
+  "https://www.myworksapp.cl",
+  "http://localhost:5173",
+];
 
 describe("vuelta de Oneclick después del banco", () => {
   it("la app vuelve al sitio https que el WebView sabe seguir", () => {
@@ -21,6 +26,22 @@ describe("vuelta de Oneclick después del banco", () => {
         allowedOrigins: allowed,
       }),
       "http://localhost:5173/",
+    );
+    assert.equal(
+      oneclickReturnBase({
+        fromApp: false,
+        webOrigin: "https://myworksapp.cl",
+        allowedOrigins: allowed,
+      }),
+      "https://myworksapp.cl/",
+    );
+    assert.equal(
+      oneclickReturnBase({
+        fromApp: false,
+        webOrigin: "https://www.myworksapp.cl",
+        allowedOrigins: allowed,
+      }),
+      "https://www.myworksapp.cl/",
     );
   });
 

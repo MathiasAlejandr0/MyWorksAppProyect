@@ -95,25 +95,28 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
     });
 
     try {
-      final workerFuture = _workerRepository.getWorkerByUserId(user.id);
-      final portfolioFuture = _portfolioRepository.getPortfolioByWorkerId(
-        user.id,
-      );
-      final statsFuture = _workerRepository.getPublicStats(user.id);
-      final countsFuture = _jobRepository.countJobsByWorkerId(user.id);
-
-      final worker = await workerFuture;
-      final portfolio = await portfolioFuture;
-      final stats = await statsFuture;
-      final jobCounts = await countsFuture;
+      final worker = await _workerRepository.getWorkerByUserId(user.id);
+      var portfolio = <PortfolioModel>[];
+      try {
+        portfolio = await _portfolioRepository.getPortfolioByWorkerId(user.id);
+      } catch (_) {}
+      WorkerPublicStats? stats;
+      try {
+        stats = await _workerRepository.getPublicStats(user.id);
+      } catch (_) {}
+      var jobsTotal = 0;
+      try {
+        jobsTotal =
+            (await _jobRepository.countJobsByWorkerId(user.id)).total;
+      } catch (_) {}
 
       if (!mounted) return;
       setState(() {
         _worker = worker;
         _portfolio = portfolio;
-        _averageRating = stats.averageRating ?? 0;
-        _jobsCount = jobCounts.total;
-        _completedJobsCount = stats.completedJobs;
+        _averageRating = stats?.averageRating ?? 0;
+        _jobsCount = jobsTotal;
+        _completedJobsCount = stats?.completedJobs ?? 0;
         _nameController.text = user.name;
         _emailController.text = user.email;
         if (worker != null) {
@@ -135,7 +138,10 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _loadError = 'No se pudo cargar el perfil. Revisa la conexión e inténtalo de nuevo.';
+        _loadError = ErrorHandler.userMessage(
+          e,
+          fallback: 'No se pudo cargar el perfil. Inténtalo de nuevo.',
+        );
       });
     }
   }

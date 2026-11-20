@@ -97,9 +97,12 @@ class JobDetailActionsSection extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: onAcceptJob,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
               child: const Text('Aceptar Trabajo'),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             OutlinedButton(
               onPressed: onRejectJob,
               style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
@@ -107,25 +110,38 @@ class JobDetailActionsSection extends StatelessWidget {
             ),
           ],
           if (JobDetailHelpers.canOpenChat(job.status)) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () {
                 context.push('${AppConstants.routeChat}/$jobId');
               },
               icon: const Icon(Icons.chat),
               label: const Text('Abrir Chat'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
             ),
           ],
-          if (isWorker && job.status == AppConstants.jobStatusAccepted)
+          if (isWorker && job.status == AppConstants.jobStatusAccepted) ...[
+            const SizedBox(height: 12),
             ElevatedButton(
               onPressed: onMarkEnRoute,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
               child: const Text('Voy en camino'),
             ),
-          if (isWorker && job.status == AppConstants.jobStatusEnRoute)
+          ],
+          if (isWorker && job.status == AppConstants.jobStatusEnRoute) ...[
+            const SizedBox(height: 12),
             ElevatedButton(
               onPressed: onStartJob,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
               child: const Text('Iniciar trabajo'),
             ),
+          ],
           if (isWorker && job.status == AppConstants.jobStatusInProgress) ...[
             if (job.pricingMode == PricingConstants.modeHourlyBlock) ...[
               const SizedBox(height: 8),

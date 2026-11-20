@@ -7,11 +7,24 @@ export const INTEGRATION_BROWSER_ORIGINS = [
 ];
 
 /**
- * Web pública desplegada en Vercel. Vale con cualquier TBK_ENV, para CORS y
- * para volver de Transbank. Orígenes exactos: sin comodines ni *.vercel.app.
+ * Web pública. El dominio propio es el apex; www redirige ahí y
+ * myworksapp-cl.vercel.app sigue vivo. Vale con cualquier TBK_ENV, para CORS y
+ * para volver de Transbank. Orígenes exactos: sin comodines.
  */
 export const PUBLIC_WEB_ORIGINS: readonly string[] = [
   "https://myworksapp-cl.vercel.app",
+  "https://myworksapp.cl",
+  "https://www.myworksapp.cl",
+];
+
+/**
+ * Orígenes exactos de la consola Tauri empaquetada.
+ * Linux usa http://tauri.localhost, Windows https://tauri.localhost y macOS tauri://localhost.
+ */
+export const DESKTOP_APP_ORIGINS: readonly string[] = [
+  "tauri://localhost",
+  "http://tauri.localhost",
+  "https://tauri.localhost",
 ];
 
 /** Orígenes de retorno web que se aceptan solo en integración. */
@@ -29,7 +42,7 @@ function listedOrigins(raw: string | undefined | null): string[] {
 
 /** Allowlist de CORS: la web pública más CORS_ALLOWED_ORIGINS. */
 export function corsAllowlist(raw: string | undefined | null): string[] {
-  return [...new Set([...PUBLIC_WEB_ORIGINS, ...listedOrigins(raw)])];
+  return [...new Set([...PUBLIC_WEB_ORIGINS, ...DESKTOP_APP_ORIGINS, ...listedOrigins(raw)])];
 }
 
 /**

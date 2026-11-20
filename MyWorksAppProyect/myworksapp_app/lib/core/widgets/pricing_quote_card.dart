@@ -1,9 +1,76 @@
 import 'package:flutter/material.dart';
 
 import '../domain/price_quote.dart';
+import '../services/payment_service.dart';
+import '../services/pricing_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_decorations.dart';
 import '../utils/clp_format.dart';
+
+/// Resumen del detalle del trabajo. Espera el traslado real y muestra
+/// ese monto; no pinta primero la base redondeada del mapa.
+class ServerAlignedQuoteCard extends StatefulWidget {
+  const ServerAlignedQuoteCard({
+    super.key,
+    required this.jobId,
+    required this.quote,
+    this.workerName,
+    this.serviceName,
+  });
+
+  final String jobId;
+  final PriceQuote quote;
+  final String? workerName;
+  final String? serviceName;
+
+  @override
+  State<ServerAlignedQuoteCard> createState() => _ServerAlignedQuoteCardState();
+}
+
+class _ServerAlignedQuoteCardState extends State<ServerAlignedQuoteCard> {
+  PriceQuote? _quote;
+  var _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final preview =
+        await PaymentService.instance.previewJobCharge(widget.jobId);
+    if (!mounted) return;
+    setState(() {
+      _loaded = true;
+      _quote = preview == null
+          ? null
+          : PricingService.instance.applyServerCharge(widget.quote, preview);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final quote = _quote;
+    if (!_loaded) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: Text('Calculando tarifa y traslado…')),
+      );
+    }
+    if (quote == null) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Text('No pudimos calcular el total. Ábrelo de nuevo para reintentar.'),
+      );
+    }
+    return PricingQuoteCard(
+      quote: quote,
+      workerName: widget.workerName,
+      serviceName: widget.serviceName,
+    );
+  }
+}
 
 /// Desglose de precio calculado (modalidades de cobro).
 class PricingQuoteCard extends StatelessWidget {
@@ -44,17 +111,12 @@ class PricingQuoteCard extends StatelessWidget {
             Text(serviceName!, style: Theme.of(context).textTheme.bodySmall),
           ],
           if (workerName != null) ...[
-            Text('Trabajador: $workerName', style: Theme.of(context).textTheme.bodySmall),
+            Text('Trabajador: $workerName',
+                style: Theme.of(context).textTheme.bodySmall),
           ],
           const Divider(height: 20),
           if (quote.feeDeductedFromWorker) ...[
-            _row(context, 'Total a pagar ahora', currency.format(quote.totalClp),
-                bold: true, accent: true),
-            const SizedBox(height: 8),
-            _row(context, 'Comisión del servicio',
-                '- ${currency.format(quote.platformFeeClp)}'),
-            _row(context, 'El profesional recibe',
-                currency.format(quote.workerPayoutClp!)),
+            ..._workerChargeRows(context, currency, quote),
           ] else ...[
             _row(context, 'Subtotal', currency.format(quote.subtotalClp)),
             if (quote.platformFeeClp > 0)
@@ -72,7 +134,8 @@ class PricingQuoteCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.lock_outline, size: 16, color: AppColors.brandTeal),
+              const Icon(Icons.lock_outline,
+                  size: 16, color: AppColors.brandTeal),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -98,6 +161,43 @@ class PricingQuoteCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  List<Widget> _workerChargeRows(
+    BuildContext context,
+    ClpFormat currency,
+    PriceQuote quote,
+  ) {
+    final lines = PricingService.instance.workerChargeLines(quote);
+    return [
+      if (lines.serviceClp != null)
+        _row(
+          context,
+          'Tarifa del servicio',
+          currency.format(lines.serviceClp!),
+        ),
+      if (lines.transportClp > 0)
+        _row(context, 'Traslado', currency.format(lines.transportClp)),
+      if (lines.serviceClp != null) const SizedBox(height: 8),
+      _row(
+        context,
+        'Total a pagar ahora',
+        currency.format(lines.totalClp),
+        bold: true,
+        accent: true,
+      ),
+      const SizedBox(height: 8),
+      _row(
+        context,
+        'Comisión del servicio',
+        '- ${currency.format(lines.feeClp)}',
+      ),
+      _row(
+        context,
+        'El profesional recibe',
+        currency.format(lines.payoutClp),
+      ),
+    ];
   }
 
   Widget _row(

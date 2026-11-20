@@ -1,11 +1,8 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { chargeInscribedCard } from "../_shared/oneclick_charge.ts";
-import {
-  allowRate,
-  clientIp,
-  rateLimitExceededMessage,
-} from "../_shared/rate_limit.ts";
+import { clientIp, rateLimitExceededMessage } from "../_shared/rate_limit.ts";
+import { allowRateDb } from "../_shared/rate_limit_db.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import { resolveCallerReturnOrigin } from "../_shared/security.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
@@ -176,7 +173,8 @@ Deno.serve(async (req) => {
     const polling = action === "status";
 
     const ip = clientIp(req);
-    if (!allowRate(`oneclick${polling ? ":status" : ""}:ip:${ip}`, polling ? 240 : 20, 60_000)) {
+    const admin = serviceClient();
+    if (!(await allowRateDb(admin, `oneclick${polling ? ":status" : ""}:ip:${ip}`, polling ? 240 : 20, 60_000))) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
@@ -188,7 +186,7 @@ Deno.serve(async (req) => {
     if (authErr || !user) {
       return jsonResponse(req, { error: "No autenticado" }, 401);
     }
-    if (!allowRate(`oneclick${polling ? ":status" : ""}:user:${user.id}`, polling ? 120 : 8, 60_000)) {
+    if (!(await allowRateDb(admin, `oneclick${polling ? ":status" : ""}:user:${user.id}`, polling ? 120 : 8, 60_000))) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
@@ -212,7 +210,6 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "jobId y amountClp requeridos" }, 400);
     }
 
-    const admin = serviceClient();
     const { data: job } = await admin
       .from("trabajos")
       .select("id_usuario, estado")
@@ -220,6 +217,58 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!job || String(job.id_usuario) !== user.id) {
       return jsonResponse(req, { error: "No puedes pagar este trabajo." }, 403);
+    }
+
+    const changeOrderId = String(body.changeOrderId || "").trim();
+    if (changeOrderId) {
+      if (String(job.estado || "") !== "pausado_orden_cambio") {
+        return jsonResponse(req, { error: "Este pedido no tiene un cobro adicional pendiente." }, 409);
+      }
+      const { data: storedCard, error: cardErr } = await admin
+        .from("metodos_pago_oneclick")
+        .select(CARD_COLUMNS)
+        .eq("id_usuario", user.id)
+        .maybeSingle();
+      if (cardErr) {
+        return jsonResponse(req, { error: "No se pudo leer la tarjeta guardada." }, 500);
+      }
+      const card = await activatePendingInscription(admin, user.id, storedCard);
+      if (!isEnrolled(card) || !card) {
+        return jsonResponse(req, { charged: false, needsCard: true });
+      }
+      const { data: payment, error: payErr } = await userSb.rpc(
+        "crear_intencion_pago_orden_cambio",
+        {
+          p_id_trabajo: jobId,
+          p_id_orden_cambio: changeOrderId,
+          p_monto: amountClp,
+          p_buy_order: null,
+        },
+      );
+      const paymentRow = Array.isArray(payment) ? payment[0] : payment;
+      if (payErr || !paymentRow?.id) {
+        return jsonResponse(
+          req,
+          { error: publicErrorMessage(payErr, "No se pudo crear la intención de pago") },
+          400,
+        );
+      }
+      const charged = await chargeInscribedCard(admin, {
+        userId: user.id,
+        username: String(card.username || user.id),
+        tbkUser: String(card.tbk_user),
+        jobId,
+        amountClp: Number(paymentRow.monto || amountClp),
+        payment: paymentRow,
+      });
+      return jsonResponse(req, {
+        charged: true,
+        paymentId: charged.paymentId,
+        jobId,
+        amount: charged.amount,
+        last4: card.ultimos4 || "",
+        cardType: card.tipo_tarjeta || "",
+      });
     }
 
     const { data: held } = await admin

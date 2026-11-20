@@ -76,6 +76,26 @@ void main() {
     }
   });
 
+  test('fromMap no se cae si el flag viene en booleano o un extra no tiene precio',
+      () {
+    final worker = WorkerModel.fromMap({
+      ...baseRow(),
+      'disponible': true,
+      'precios_configurados': false,
+      'trabajador_servicios_extra': [
+        {'id': 'sin_precio', 'titulo': 'Visita'},
+        {
+          'id': 'con_precio',
+          'titulo': 'Cambio de llave',
+          'monto_clp': 12000,
+        },
+      ],
+    });
+    expect(worker.isAvailable, isTrue);
+    expect(worker.pricingConfigured, isFalse);
+    expect(worker.customServices.single.title, 'Cambio de llave');
+  });
+
   test('fromCatalogMap asume disponible y precio configurado', () {
     final worker = WorkerModel.fromCatalogMap({
       ...baseRow(),

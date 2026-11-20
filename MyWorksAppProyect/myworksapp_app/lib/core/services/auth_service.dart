@@ -8,6 +8,7 @@ import '../database/repositories/user_repository.dart';
 import '../database/supabase_db.dart';
 import '../domain/user_role.dart';
 import '../exceptions/auth_exceptions.dart';
+import '../utils/app_logger.dart';
 import '../utils/validators.dart';
 import 'session_manager.dart';
 
@@ -148,9 +149,9 @@ class SupabaseAuthService implements AuthService {
     required String password,
   }) async {
     try {
-      final res = await _client.auth.signInWithPassword(
-        email: email.toLowerCase().trim(),
-        password: password,
+      final res = await _signInWithRetry(
+        email.toLowerCase().trim(),
+        password,
       );
       final authUser = res.user;
       if (authUser == null) {
@@ -159,6 +160,21 @@ class SupabaseAuthService implements AuthService {
       return await _finalizeAuthenticatedUser(authUser.id);
     } catch (e) {
       throw _mapError(e);
+    }
+  }
+
+  /// Un corte breve de red no debe dejar la cuenta afuera. La contraseña
+  /// incorrecta no se reintenta.
+  Future<AuthResponse> _signInWithRetry(String email, String password) async {
+    try {
+      return await _client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e) {
+      if (!_isTransportFailure(e)) rethrow;
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      return _client.auth.signInWithPassword(email: email, password: password);
     }
   }
 
@@ -229,7 +245,18 @@ class SupabaseAuthService implements AuthService {
   }
 
   Future<UserModel> _finalizeAuthenticatedUser(String authUserId) async {
-    final user = await _userRepository.getUserById(authUserId);
+    UserModel? user;
+    var profileReadable = true;
+    try {
+      user = await _userRepository.getUserById(authUserId);
+    } catch (e, st) {
+      profileReadable = false;
+      AppLogger.e(
+        'La sesión es válida, pero el perfil no se pudo leer',
+        e,
+        st,
+      );
+    }
     if (user != null && !user.isActive) {
       await _sessionManager.clearSession();
       throw user.isBlocked
@@ -238,9 +265,45 @@ class SupabaseAuthService implements AuthService {
     }
 
     final resolved = user ??
-        await _ensureProfileFromAuthUser(authUserId);
+        await _profileWhenRowMissing(
+          authUserId,
+          allowCreate: profileReadable,
+        );
     await _sessionManager.saveSession(authUserId, resolved.userRole.dbValue);
     return resolved;
+  }
+
+  /// Si la lectura falló no se crea nada: un upsert pisaría la fila real.
+  Future<UserModel> _profileWhenRowMissing(
+    String authUserId, {
+    required bool allowCreate,
+  }) async {
+    if (!allowCreate) return _userFromAuth(authUserId);
+    try {
+      return await _ensureProfileFromAuthUser(authUserId);
+    } catch (e, st) {
+      AppLogger.e('No se pudo completar el perfil; se entra igual', e, st);
+      return _userFromAuth(authUserId);
+    }
+  }
+
+  /// Identidad mínima con lo que Auth ya confirmó (correo y rol del alta).
+  UserModel _userFromAuth(String authUserId) {
+    final authUser = _client.auth.currentUser;
+    final meta = authUser?.userMetadata ?? const <String, dynamic>{};
+    final rawRole = meta['role'] ?? meta['rol'];
+    final role = UserRole.fromDb(rawRole is String ? rawRole : null);
+    final email = authUser?.email ?? '';
+    final name = meta['name'] ?? meta['nombre'];
+    return UserModel(
+      id: authUserId,
+      name: name is String && name.trim().isNotEmpty
+          ? name.trim()
+          : (email.contains('@') ? email.split('@').first : 'Usuario'),
+      email: email,
+      role: role.dbValue,
+      createdAt: DateTime.now().toUtc(),
+    );
   }
 
   Future<UserModel> _requireProfile(
@@ -302,6 +365,9 @@ class SupabaseAuthService implements AuthService {
       if (message.contains('email not confirmed')) {
         return EmailConfirmationRequiredException(error);
       }
+      if (_messageIsTransport(message)) {
+        return AuthNetworkException(error);
+      }
       if (message.contains('rate limit') ||
           message.contains('too many requests') ||
           message.contains('only request this after')) {
@@ -327,26 +393,25 @@ class SupabaseAuthService implements AuthService {
           message.contains('user already')) {
         return EmailAlreadyRegisteredException(error);
       }
-      if (message.contains('network') ||
-          message.contains('failed host lookup') ||
-          message.contains('socket')) {
-        return AuthNetworkException(error);
+      final status = int.tryParse(error.statusCode ?? '');
+      if (status != null && status >= 500) {
+        return const AuthUnexpectedException(
+          'El servidor no respondió. Intenta de nuevo en un momento.',
+        );
       }
       return const AuthUnexpectedException(
         'No se pudo iniciar sesión. Intenta de nuevo.',
       );
     }
 
-    if (error is TimeoutException) {
-      return AuthNetworkException(error);
+    if (error is PostgrestException) {
+      if (_messageIsTransport(error.message)) return AuthNetworkException(error);
+      return const AuthUnexpectedException(
+        'No se pudo leer tu cuenta. Intenta de nuevo.',
+      );
     }
 
-    final text = error.toString().toLowerCase();
-    if (text.contains('socket') ||
-        text.contains('network') ||
-        text.contains('connection') ||
-        text.contains('failed host lookup') ||
-        text.contains('clientexception')) {
+    if (error is TimeoutException || _isTransportFailure(error)) {
       return AuthNetworkException(error);
     }
 
@@ -356,4 +421,26 @@ class SupabaseAuthService implements AuthService {
     );
   }
 
+}
+
+bool _messageIsTransport(String message) {
+  final text = message.toLowerCase();
+  return text.contains('socket') ||
+      text.contains('clientexception') ||
+      text.contains('failed host lookup') ||
+      text.contains('connection closed') ||
+      text.contains('connection reset') ||
+      text.contains('connection refused') ||
+      text.contains('connection abort') ||
+      text.contains('connection timed out') ||
+      text.contains('network is unreachable') ||
+      text.contains('network') ||
+      text.contains('timed out');
+}
+
+bool _isTransportFailure(Object error) {
+  if (error is TimeoutException) return true;
+  if (error is AuthException) return _messageIsTransport(error.message);
+  if (error is PostgrestException) return _messageIsTransport(error.message);
+  return _messageIsTransport(error.toString());
 }

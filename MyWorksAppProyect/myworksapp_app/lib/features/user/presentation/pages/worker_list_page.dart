@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/constants.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/debouncer.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
@@ -267,12 +270,24 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
       } else {
         await _loadManualWorkers().timeout(_loadTimeout);
       }
-    } catch (e) {
+    } on TimeoutException {
       if (!mounted || generation != _loadGeneration) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'La búsqueda tardó demasiado. Revisa tu conexión y desliza para reintentar.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted || generation != _loadGeneration) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ErrorHandler.userMessage(
+              e,
+              fallback: 'No se pudo cargar el listado. Desliza para reintentar.',
+            ),
           ),
         ),
       );

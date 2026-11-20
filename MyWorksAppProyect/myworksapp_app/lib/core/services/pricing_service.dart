@@ -1,10 +1,11 @@
+import '../domain/job_charge_preview.dart';
 import '../domain/price_quote.dart';
 import '../domain/pricing_constants.dart';
 import '../domain/worker_service_options_catalog.dart';
 import '../utils/app_error.dart';
 
 /// Servicio para cálculo de precios
-/// 
+///
 /// Cotizaciones en CLP (visita, bloque por hora, tarifas del profesional y
 /// propuestas abiertas). El monto que se cobra lo valida el servidor
 /// (`monto_esperado_trabajo`).
@@ -116,7 +117,8 @@ class PricingService {
         'service_fee_clp': fee,
         'worker_payout_clp': subtotal - fee,
       },
-      message: 'Precio fijo de referencia del ítem. La comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
+      message:
+          'Precio fijo de referencia del ítem. La comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
     );
   }
 
@@ -146,7 +148,8 @@ class PricingService {
         'service_fee_clp': fee,
         'worker_payout_clp': subtotal - fee,
       },
-      message: 'Pago adelantado por bloque de $blockHours horas. La comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
+      message:
+          'Pago adelantado por bloque de $blockHours horas. La comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
     );
   }
 
@@ -207,7 +210,8 @@ class PricingService {
         'service_fee_clp': fee,
         'worker_payout_clp': subtotal - fee,
       },
-      message: 'Cobro por $extraHours hora(s) adicional(es). La comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
+      message:
+          'Cobro por $extraHours hora(s) adicional(es). La comisión del servicio (5%, mínimo \$1.000) se descuenta del profesional.',
     );
   }
 
@@ -217,12 +221,117 @@ class PricingService {
 
   /// Comisión del servicio: 5% del monto de la cotización aprobada,
   /// con un mínimo de [PricingService.minServiceFeeClp] CLP.
+  ///
+  /// Misma regla que `comision_servicio_clp`: redondeo half-away,
+  /// mínimo $1.000 y nunca mayor que el bruto.
   static const double serviceFeeRate = 0.05;
   static const int minServiceFeeClp = 1000;
 
   int serviceFeeFor(int amountClp) {
-    final fee = (amountClp * serviceFeeRate).round();
-    return fee < minServiceFeeClp ? minServiceFeeClp : fee;
+    if (amountClp <= 0) return 0;
+    final percent = _roundHalfAway(amountClp * 5, 100);
+    final withMinimum = percent < minServiceFeeClp ? minServiceFeeClp : percent;
+    return withMinimum > amountClp ? amountClp : withMinimum;
+  }
+
+  /// `round(numerador / denominador)` para montos positivos, igual que
+  /// `round(numeric)` de Postgres: el .5 sube.
+  static int _roundHalfAway(int numerator, int denominator) {
+    final quotient = numerator ~/ denominator;
+    final remainder = numerator % denominator;
+    if (remainder * 2 >= denominator) return quotient + 1;
+    return quotient;
+  }
+
+  /// Líneas que se muestran juntas en el cobro.
+  /// Tarifa + traslado = total, y comisión + neto = total.
+  ({int? serviceClp, int transportClp, int totalClp, int feeClp, int payoutClp})
+      workerChargeLines(PriceQuote quote) {
+    final total = quote.totalClp < 0 ? 0 : quote.totalClp;
+    final fee = serviceFeeFor(total);
+    final payout = total - fee;
+    final published = _breakdownClp(quote.breakdown, 'base_clp') ??
+        _breakdownClp(quote.breakdown, 'visit_fee_clp');
+    if (published == null) {
+      return (
+        serviceClp: null,
+        transportClp: 0,
+        totalClp: total,
+        feeClp: fee,
+        payoutClp: payout,
+      );
+    }
+    final serviceClp = published.clamp(0, total);
+    return (
+      serviceClp: serviceClp,
+      transportClp: total - serviceClp,
+      totalClp: total,
+      feeClp: fee,
+      payoutClp: payout,
+    );
+  }
+
+  /// El resumen se arma con este desglose antes de confirmar. Tarifa y
+  /// traslado salen de la ubicación real (la misma que cobra el servidor),
+  /// en pesos enteros, y la comisión se recalcula sobre ese total.
+  PriceQuote applyServerCharge(PriceQuote quote, JobChargePreview preview) {
+    final total = preview.totalClp < 0 ? 0 : preview.totalClp;
+    final service = preview.serviceClp.clamp(0, total);
+    final transport = total - service;
+    final fee = preview.feeClp.clamp(0, total);
+    final payout = total - fee;
+    final breakdown = Map<String, dynamic>.from(quote.breakdown);
+    breakdown['base_clp'] = service;
+    breakdown['visit_fee_clp'] = service;
+    breakdown['transport_extra_clp'] = transport;
+    breakdown['service_fee_clp'] = fee;
+    breakdown['worker_payout_clp'] = payout;
+    return PriceQuote(
+      pricingMode: quote.pricingMode,
+      subtotalClp: total,
+      platformFeeClp: fee,
+      totalClp: total,
+      workerPayoutClp: payout,
+      currency: quote.currency,
+      breakdown: breakdown,
+      message:
+          'Tarifa y traslado calculados con la ubicación real del profesional. La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.',
+    );
+  }
+
+  /// El mapa muestra la base redondeada (~1 km). El cobro usa la coordenada
+  /// real, así que el total de la pantalla a veces no es el que acepta el
+  /// servidor. Esta copia deja el desglose alineado con ese monto: la
+  /// diferencia queda en el traslado para que tarifa + traslado = total.
+  PriceQuote alignToChargedTotal(PriceQuote quote, int totalClp) {
+    final total = totalClp < 0 ? 0 : totalClp;
+    final fee = serviceFeeFor(total);
+    final deducts = quote.feeDeductedFromWorker;
+    final breakdown = Map<String, dynamic>.from(quote.breakdown);
+    final published = _breakdownClp(breakdown, 'base_clp') ??
+        _breakdownClp(breakdown, 'visit_fee_clp');
+    if (published != null && breakdown.containsKey('transport_extra_clp')) {
+      final serviceClp = published.clamp(0, total);
+      breakdown['transport_extra_clp'] = total - serviceClp;
+      if (breakdown.containsKey('base_clp')) breakdown['base_clp'] = serviceClp;
+      if (breakdown.containsKey('visit_fee_clp')) {
+        breakdown['visit_fee_clp'] = serviceClp;
+      }
+    }
+    breakdown['adjusted_from_clp'] = quote.totalClp;
+    breakdown['service_fee_clp'] = fee;
+    if (deducts) breakdown['worker_payout_clp'] = total - fee;
+    return PriceQuote(
+      pricingMode: quote.pricingMode,
+      subtotalClp: total,
+      platformFeeClp: fee,
+      totalClp: total,
+      workerPayoutClp: deducts ? total - fee : quote.workerPayoutClp,
+      currency: quote.currency,
+      breakdown: breakdown,
+      message:
+          'El traslado usa la ubicación real del profesional. La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.',
+    );
   }
 
   /// Modalidad 3: validar monto de propuesta aceptada.
@@ -233,7 +342,8 @@ class PricingService {
     required int proposalAmountClp,
     int platformFeeClp = 0,
   }) {
-    final fee = platformFeeClp > 0 ? platformFeeClp : serviceFeeFor(proposalAmountClp);
+    final fee =
+        platformFeeClp > 0 ? platformFeeClp : serviceFeeFor(proposalAmountClp);
     final workerPayout = proposalAmountClp - fee;
     return PriceQuote(
       pricingMode: PricingConstants.modeOpenQuote,
@@ -247,8 +357,14 @@ class PricingService {
         'service_fee_clp': fee,
         'worker_payout_clp': workerPayout,
       },
-      message: 'La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.',
+      message:
+          'La comisión del servicio (5%, mínimo \$1.000) se descuenta del pago al profesional.',
     );
   }
 }
 
+int? _breakdownClp(Map<String, dynamic> breakdown, String key) {
+  final value = breakdown[key];
+  if (value is num) return value.round();
+  return null;
+}

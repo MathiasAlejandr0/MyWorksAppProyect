@@ -89,7 +89,7 @@ function workerPopup(
   } else if (quote.insideRadar === false) {
     radar.classList.add('is-extra');
     const km = quote.distanceKm?.toFixed(1) ?? '?';
-    radar.textContent = `Fuera del área (${km} km): +$${clp(quote.extraClp)} de traslado`;
+    radar.textContent = `Fuera del área (${km} km). El traslado se confirma al pagar`;
   } else {
     radar.textContent = `Hasta ${radiusKm} km cubre sin extra de traslado`;
   }
@@ -318,7 +318,7 @@ export function PremiumSearchMap({
       clientText = 'Estás dentro del área: sin extra de traslado';
     } else if (quote?.insideRadar === false) {
       const km = quote.distanceKm?.toFixed(1) ?? '?';
-      clientText = `Fuera del área (${km} km): +$${clp(quote.extraClp)} de traslado`;
+      clientText = `Fuera del área (${km} km). El traslado se confirma al pagar`;
     }
     const marker = L.marker([clientLocation.latitude, clientLocation.longitude], {
       icon: clientIcon,

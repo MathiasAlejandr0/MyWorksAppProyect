@@ -1,11 +1,11 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ShieldCheck, CheckCircle2, Lock, X, CreditCard, MapPin } from 'lucide-react';
 import {
   orderConfirmedMessage,
-  transportCheckoutCopy,
   type OneclickChargeResult,
   type SavedCardStatus,
 } from '@myworksapp/shared';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 export type CheckoutPayResult =
   | OneclickChargeResult
@@ -14,9 +14,11 @@ export type CheckoutPayResult =
 interface PaymentCheckoutModalProps {
   workerName: string;
   profession: string;
-  basePrice: number;
-  transportExtraClp?: number;
-  insideRadar?: boolean | null;
+  /** Total que cobra el servidor. Null mientras se calcula: no se muestra otro monto. */
+  payableTotalClp?: number | null;
+  chargeLocking?: boolean;
+  chargeError?: string | null;
+  onRetryCharge?: () => void;
   serviceDescription?: string;
   jobId?: string | null;
   onUseAddress?: (query: string) => Promise<unknown>;
@@ -38,9 +40,10 @@ interface PaymentCheckoutModalProps {
 export function PaymentCheckoutModal({
   workerName,
   profession: _profession,
-  basePrice,
-  transportExtraClp = 0,
-  insideRadar = null,
+  payableTotalClp = null,
+  chargeLocking = false,
+  chargeError = null,
+  onRetryCharge,
   serviceDescription = 'Servicio a domicilio',
   jobId,
   onUseAddress,
@@ -59,6 +62,8 @@ export function PaymentCheckoutModal({
   const [savedCard, setSavedCard] = useState<SavedCardStatus | null>(null);
   const [saveCard, setSaveCard] = useState(true);
   const [changingCard, setChangingCard] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(true, onClose, dialogRef);
 
   // Se consulta una sola vez al abrir el pedido, aunque el padre se vuelva a pintar.
   const [loadOnce] = useState(() => loadSavedCard);
@@ -92,7 +97,10 @@ export function PaymentCheckoutModal({
       setChangingCard(false);
     }
   };
-  const totalAmount = basePrice + Math.max(0, transportExtraClp);
+  const lockedTotal = payableTotalClp != null && payableTotalClp > 0
+    ? payableTotalClp
+    : null;
+  const canPay = lockedTotal != null && !chargeLocking;
   const needsManualSite = !hasJobSite && Boolean(onUseAddress);
 
   const submitAddress = async (event: FormEvent) => {
@@ -108,6 +116,7 @@ export function PaymentCheckoutModal({
   };
 
   const handlePay = async () => {
+    if (!canPay) return;
     if (needsManualSite) {
       setError('Indica la dirección del trabajo o marca el punto en el mapa.');
       return;
@@ -121,7 +130,7 @@ export function PaymentCheckoutModal({
         setIsDone(true);
         onSuccess({
           notice: orderConfirmedMessage({
-            amountClp: result.amount || totalAmount,
+            amountClp: result.amount || lockedTotal || 0,
             last4: result.last4,
             workerName,
           }),
@@ -146,7 +155,7 @@ export function PaymentCheckoutModal({
       aria-modal="true"
       aria-labelledby="checkout-title"
     >
-      <div className="checkout-card-v2 modal-rise">
+      <div className="checkout-card-v2 modal-rise" ref={dialogRef}>
         <button
           type="button"
           className="modal-close"
@@ -167,8 +176,23 @@ export function PaymentCheckoutModal({
 
             <div className="checkout-v2-total-row">
               <span>Total</span>
-              <strong>{totalAmount.toLocaleString('es-CL')} CLP</strong>
+              <strong>
+                {chargeLocking || lockedTotal == null
+                  ? 'Calculando tarifa y traslado…'
+                  : `${lockedTotal.toLocaleString('es-CL')} CLP`}
+              </strong>
             </div>
+            {chargeError ? (
+              <p className="toast-error" role="alert">
+                {chargeError}
+                {onRetryCharge ? (
+                  <>
+                    {' '}
+                    <button type="button" onClick={onRetryCharge}>Reintentar</button>
+                  </>
+                ) : null}
+              </p>
+            ) : null}
 
             <div className="checkout-v2-escrow-banner">
               <div className="checkout-v2-escrow-copy">
@@ -231,10 +255,9 @@ export function PaymentCheckoutModal({
                 <div>
                   <dt>Traslado</dt>
                   <dd>
-                    {transportCheckoutCopy({
-                      extraClp: transportExtraClp,
-                      insideRadar,
-                    })}
+                    {lockedTotal == null
+                      ? 'Se confirma antes de habilitar el pago'
+                      : 'Incluido en el total'}
                   </dd>
                 </div>
                 {jobId ? (
@@ -277,15 +300,17 @@ export function PaymentCheckoutModal({
             <button
               type="button"
               onClick={() => void handlePay()}
-              disabled={isProcessing || needsManualSite || locatingAddress}
+              disabled={isProcessing || needsManualSite || locatingAddress || !canPay}
               className="btn-primary checkout-v2-pay"
             >
               <CreditCard size={16} />
               {isProcessing
                 ? 'Confirmando pedido…'
-                : needsManualSite
-                  ? 'Indica la ubicación del trabajo'
-                  : `Confirmar pedido · CLP ${totalAmount.toLocaleString('es-CL')}`}
+                : !canPay
+                  ? 'Calculando el total…'
+                  : needsManualSite
+                    ? 'Indica la ubicación del trabajo'
+                    : `Confirmar pedido · CLP ${(lockedTotal ?? 0).toLocaleString('es-CL')}`}
             </button>
 
             <div className="checkout-v2-footer">
@@ -300,7 +325,7 @@ export function PaymentCheckoutModal({
             <CheckCircle2 color="var(--emerald-success)" size={56} />
             <h3>Pedido confirmado</h3>
             <p>
-              Se descontará ${totalAmount.toLocaleString('es-CL')} CLP de tu
+              Se descontará ${(lockedTotal ?? 0).toLocaleString('es-CL')} CLP de tu
               tarjeta. {workerName} va en camino.
             </p>
           </div>

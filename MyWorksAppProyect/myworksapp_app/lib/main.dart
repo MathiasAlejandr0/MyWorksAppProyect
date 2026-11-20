@@ -5,6 +5,7 @@ import 'core/utils/platform_support.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
+import 'core/config/supabase_http_client.dart';
 import 'core/utils/app_logger.dart';
 import 'app.dart';
 
@@ -39,6 +40,7 @@ void main() async {
     await Supabase.initialize(
       url: SupabaseConfig.url,
       publishableKey: SupabaseConfig.publishableKey,
+      httpClient: createSupabaseHttpClient(),
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
       ),

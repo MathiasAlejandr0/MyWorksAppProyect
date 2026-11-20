@@ -2,11 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../domain/charge_mismatch.dart';
 import '../domain/price_quote.dart';
 import '../providers/auth_provider.dart';
 import '../providers/service_providers.dart';
+import '../domain/job_charge_preview.dart';
+import '../services/pricing_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/app_error.dart';
+import '../utils/clp_format.dart';
+import '../utils/error_handler.dart';
 import '../utils/transbank_checkout.dart';
 import '../../features/payments/presentation/pages/card_enrollment_page.dart';
 import 'pricing_quote_card.dart';
@@ -65,10 +70,107 @@ class EscrowCheckoutSheet extends ConsumerStatefulWidget {
 
 class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
   bool _processing = false;
+  bool _chargeReady = false;
+  late PriceQuote _quote;
+  String? _banner;
+
+  bool get _isChangeOrder =>
+      widget.changeOrderId != null && widget.changeOrderId!.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _quote = widget.quote;
+    if (_isChangeOrder) {
+      _chargeReady = true;
+    } else {
+      _alignCharge();
+    }
+  }
+
+  /// El total visible es el del servidor. Sin esa lectura no hay botón de pagar.
+  Future<void> _alignCharge() async {
+    if (_isChangeOrder) {
+      if (!mounted) return;
+      setState(() {
+        _chargeReady = true;
+        _banner = null;
+      });
+      return;
+    }
+    JobChargePreview? preview;
+    try {
+      preview =
+          await ref.read(paymentServiceProvider).previewJobCharge(widget.jobId);
+    } catch (_) {
+      preview = null;
+    }
+    if (!mounted) return;
+    final total = payableTotalClp(preview?.totalClp);
+    setState(() {
+      if (preview != null && total != null) {
+        _quote = PricingService.instance.applyServerCharge(_quote, preview);
+        _chargeReady = true;
+        _banner = null;
+      } else {
+        _chargeReady = false;
+        _banner = chargeNotReadyMessage;
+      }
+    });
+  }
 
   String _errorText(Object e) {
     if (e is AppError) return e.message;
-    return 'No se pudo iniciar el pago';
+    return ErrorHandler.userMessage(
+      e,
+      fallback: 'No se pudo iniciar el pago',
+    );
+  }
+
+  /// Devuelve el entero que se va a cobrar. Si el servidor cambió el total,
+  /// actualiza el botón y no cobra: el cliente paga el monto que está viendo.
+  Future<int?> _payableOrRefresh() async {
+    if (_isChangeOrder) return _quote.totalClp;
+    JobChargePreview? preview;
+    try {
+      preview =
+          await ref.read(paymentServiceProvider).previewJobCharge(widget.jobId);
+    } catch (_) {
+      preview = null;
+    }
+    if (!mounted) return null;
+    final total = payableTotalClp(preview?.totalClp);
+    if (preview == null || total == null) {
+      setState(() {
+        _chargeReady = false;
+        _banner = chargeNotReadyMessage;
+      });
+      return null;
+    }
+    if (total != _quote.totalClp) {
+      setState(() {
+        _quote = PricingService.instance.applyServerCharge(_quote, preview!);
+        _chargeReady = true;
+        _banner = 'El total se actualizó. El botón muestra el monto que se cobra.';
+      });
+      return null;
+    }
+    return total;
+  }
+
+  /// El aviso va dentro de la hoja. Un SnackBar del scaffold de atrás
+  /// queda tapado hasta que el cliente cierra el cobro.
+  void _fail(Object e) {
+    final text = _errorText(e);
+    if (!_isChangeOrder && paymentMismatchNeedsReload(text)) {
+      setState(() {
+        _chargeReady = false;
+        _banner = null;
+      });
+      _alignCharge();
+      return;
+    }
+    setState(() => _banner = text);
   }
 
   Future<void> _openWebpay(
@@ -95,10 +197,12 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
   Future<void> _payWithoutSavingCard() async {
     setState(() => _processing = true);
     try {
+      final amount = await _payableOrRefresh();
+      if (amount == null || !mounted) return;
       final session =
           await ref.read(paymentServiceProvider).initiateWebpayPayment(
                 jobId: widget.jobId,
-                amount: widget.quote.totalClp.toDouble(),
+                amount: amount.toDouble(),
                 changeOrderId: widget.changeOrderId,
               );
       final url = session.redirectUrl ?? session.url;
@@ -106,9 +210,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       await _openWebpay(url, paymentId: session.paymentId);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorText(e))),
-      );
+      _fail(e);
     } finally {
       if (mounted) setState(() => _processing = false);
     }
@@ -123,9 +225,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       await _payWithSavedCard(skipWebFallback: true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorText(e))),
-      );
+      _fail(e);
     } finally {
       if (mounted) setState(() => _processing = false);
     }
@@ -142,18 +242,18 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       final user = ref.read(authProvider).user;
       if (user == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Debes iniciar sesión para confirmar el pedido'),
-          ),
-        );
+        setState(() {
+          _banner = 'Debes iniciar sesión para confirmar el pedido';
+        });
         return;
       }
 
       final payments = ref.read(paymentServiceProvider);
+      final amount = await _payableOrRefresh();
+      if (amount == null || !mounted) return;
       var charge = await payments.chargeSavedCard(
         jobId: widget.jobId,
-        amount: widget.quote.totalClp.toDouble(),
+        amount: amount.toDouble(),
       );
       if (!mounted) return;
       if (charge.needsCard) {
@@ -165,18 +265,15 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
         if (!mounted || !enrolled) return;
         charge = await payments.chargeSavedCard(
           jobId: widget.jobId,
-          amount: widget.quote.totalClp.toDouble(),
+          amount: amount.toDouble(),
         );
       }
       if (!mounted) return;
       if (!charge.charged) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'La tarjeta no quedó lista. Puedes pagar este pedido en Transbank sin guardarla.',
-            ),
-          ),
-        );
+        setState(() {
+          _banner =
+              'La tarjeta no quedó lista. Puedes pagar este pedido en Transbank sin guardarla.';
+        });
         return;
       }
       Navigator.of(context).pop(true);
@@ -186,9 +283,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
         return;
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_errorText(e))),
-      );
+      _fail(e);
     } finally {
       if (mounted) setState(() => _processing = false);
     }
@@ -215,12 +310,42 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Confirmar pedido',
+              'Cobro con tarjeta',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
+            if (!_chargeReady && _banner == null)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 28),
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text('Calculando tarifa y traslado…'),
+                  ],
+                ),
+              )
+            else if (_chargeReady)
+              Text(
+                const ClpFormat().format(_quote.totalClp),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.brandOrange,
+                    ),
+              ),
+            if (widget.serviceName != null || widget.workerName != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                [
+                  if (widget.serviceName != null) widget.serviceName!,
+                  if (widget.workerName != null) widget.workerName!,
+                ].join(' · '),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            const SizedBox(height: 12),
             Material(
               color: AppColors.brandOrange.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
@@ -237,8 +362,8 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                     Expanded(
                       child: Text(
                         kIsWeb
-                            ? 'Primera confirmación: el monto queda retenido en Transbank. Se libera solo cuando recibas conforme el trabajo.'
-                            : 'Primera confirmación: el monto queda retenido. Se libera solo cuando recibas conforme el trabajo.',
+                            ? 'El monto queda retenido en Transbank. Se libera solo cuando recibas conforme el trabajo.'
+                            : 'El monto queda retenido. Se libera solo cuando recibas conforme el trabajo.',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.brandOrange,
@@ -249,26 +374,50 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            PricingQuoteCard(
-              quote: widget.quote,
-              workerName: widget.workerName,
-              serviceName: widget.serviceName,
-            ),
-            const SizedBox(height: 16),
+            if (_chargeReady) ...[
+              const SizedBox(height: 16),
+              PricingQuoteCard(
+                quote: _quote,
+                workerName: widget.workerName,
+                serviceName: widget.serviceName,
+              ),
+              const SizedBox(height: 16),
+            ],
             if (widget.changeOrderId == null || widget.changeOrderId!.isEmpty)
               SavedCardTile(
                 enabled: !_processing,
                 onCardRemoved: _enrollCard,
               ),
-            const SizedBox(height: 4),
+            if (_banner != null) ...[
+              Material(
+                color: Theme.of(context).colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Text(
+                    _banner!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (!_isChangeOrder && !_chargeReady && !_processing)
+              TextButton(
+                onPressed: _alignCharge,
+                child: const Text('Reintentar el cálculo'),
+              ),
             FilledButton.icon(
-              onPressed: _processing
+              onPressed: _processing || !_chargeReady
                   ? null
                   : (kIsWeb ? _payWithoutSavingCard : _payWithSavedCard),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.brandOrange,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                minimumSize: const Size.fromHeight(52),
               ),
               icon: _processing
                   ? const SizedBox(
@@ -279,21 +428,24 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.lock_outline),
+                  : const Icon(Icons.credit_card),
               label: Text(
-                _processing
-                    ? 'Conectando con Transbank…'
-                    : kIsWeb
-                        ? 'Pagar ahora en Transbank · \$${widget.quote.totalClp}'
-                        : 'Pagar con tarjeta · \$${widget.quote.totalClp}',
+                !_chargeReady
+                    ? 'Calculando el total…'
+                    : _processing
+                        ? 'Conectando con Transbank…'
+                        : kIsWeb
+                            ? 'Pagar ahora · ${const ClpFormat().format(_quote.totalClp)}'
+                            : 'Pagar con tarjeta · ${const ClpFormat().format(_quote.totalClp)}',
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: _processing
+              onPressed: _processing || !_chargeReady
                   ? null
                   : (kIsWeb ? _enrollCard : _payWithoutSavingCard),
               style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               icon: const Icon(kIsWeb ? Icons.add_card : Icons.account_balance),

@@ -12,6 +12,11 @@ import '../supabase_db.dart';
 class UserRepository {
   static const String _table = 'perfiles';
 
+  /// Solo las columnas que la sesión usa. `select()` traía toda la fila y un
+  /// campo extra o nulo tiraba abajo el inicio de sesión.
+  static const String _sessionColumns =
+      'id, nombre, correo, rol, estado_cuenta, ruta_foto_perfil, creado_en';
+
   /// Al abrir la app, auth, home y perfil piden el mismo perfil casi a la
   /// vez (antes salían 3 requests). Vence en 20 s y se borra al escribir.
   static final MemoCache<UserModel?> _byId =
@@ -32,7 +37,11 @@ class UserRepository {
       _byId.get(id, () => _fetchUserById(id));
 
   Future<UserModel?> _fetchUserById(String id) async {
-    final row = await supabase.from(_table).select().eq('id', id).maybeSingle();
+    final row = await supabase
+        .from(_table)
+        .select(_sessionColumns)
+        .eq('id', id)
+        .maybeSingle();
     if (row == null) return null;
     return UserModel.fromMap(row);
   }
@@ -63,7 +72,7 @@ class UserRepository {
   Future<UserModel?> getUserByEmail(String email) async {
     final row = await supabase
         .from(_table)
-        .select()
+        .select(_sessionColumns)
         .eq('correo', email.toLowerCase().trim())
         .maybeSingle();
     if (row == null) return null;

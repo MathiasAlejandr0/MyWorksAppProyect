@@ -1,5 +1,6 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
+import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 /**
@@ -21,19 +22,16 @@ Deno.serve(async (req) => {
     } = await userSb.auth.getUser();
     if (!user) return jsonResponse(req, { error: "No autenticado" }, 401);
 
-    const { data: profile } = await userSb
-      .from("perfiles")
-      .select("rol")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (profile?.rol !== "administrador") {
-      return jsonResponse(req, { error: "Solo administrador" }, 403);
+    const adminGate = await requireAdmin(userSb);
+    if (!adminGate.ok) {
+      return jsonResponse(req, { error: adminGate.error }, adminGate.status);
     }
 
     const body = await req.json();
     const paymentId = String(body.paymentId || "");
     const transferRef = String(body.transferRef || body.referencia || "").trim();
-    const notes = String(body.notes || "").trim().slice(0, 500);
+    const motivo = motivoValido(body.motivo || body.notes);
+    const notes = (motivo ?? "").slice(0, 500);
     const confirmExternal = body.confirmExternal === true;
     const providerRaw = String(body.provider || "manual").toLowerCase();
     const provider =
@@ -41,6 +39,9 @@ Deno.serve(async (req) => {
 
     if (!paymentId) {
       return jsonResponse(req, { error: "paymentId requerido" }, 400);
+    }
+    if (!motivo) {
+      return jsonResponse(req, { error: "El motivo debe tener entre 10 y 2000 caracteres" }, 400);
     }
     if (!confirmExternal) {
       return jsonResponse(
@@ -99,12 +100,12 @@ Deno.serve(async (req) => {
     );
 
     if (rpcErr) {
-      const msg = rpcErr.message || "Error al liberar";
-      const status = /no encontrado|no liberable|ya liquidado|requeridos|inválido/i
-        .test(msg)
+      const msg = rpcErr.message || "";
+      console.error("liberar_escrow_manual", msg.slice(0, 200));
+      const status = /no encontrado|no liberable|ya liquidado|requeridos|inválido/i.test(msg)
         ? 409
         : 500;
-      return jsonResponse(req, { error: msg }, status);
+      return jsonResponse(req, { error: "No se pudo liberar el pago" }, status);
     }
 
     const { data: payment } = await admin
@@ -121,18 +122,30 @@ Deno.serve(async (req) => {
       .eq("id_pago", paymentId)
       .maybeSingle();
 
+    const meta = requestClientMeta(req);
+    const audited = await registrarAuditoria(admin, {
+      p_accion: "liquidar",
+      p_entidad: "pagos",
+      p_id_entidad: paymentId,
+      p_antes: { estado: "retenido" },
+      p_despues: { estado: "liberado", referencia: transferRef },
+      p_motivo: motivo,
+      p_ip: meta.ip,
+      p_user_agent: meta.userAgent,
+      p_id_actor: user.id,
+      p_rol_actor: "administrador",
+    });
+
     return jsonResponse(req, {
       payment,
       liquidacion,
       result: rpcResult,
+      auditoria: audited,
       note:
         "Escrow liberado y liquidación registrada en una sola transacción.",
     });
   } catch (e) {
-    return jsonResponse(
-      req,
-      { error: e instanceof Error ? e.message : String(e) },
-      500,
-    );
+    console.error("webpay-release", e instanceof Error ? e.message : "error");
+    return jsonResponse(req, { error: "No se pudo liberar el pago" }, 500);
   }
 });

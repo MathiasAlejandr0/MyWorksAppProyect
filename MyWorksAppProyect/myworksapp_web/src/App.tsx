@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { LandingHome } from './views/LandingHome';
+import { NotificationInbox } from './components/NotificationInbox';
 import type { SearchWorker } from './components/SearchResultsView';
 import { useAuth } from './context/useAuth';
 import { supabase } from './supabaseClient';
@@ -12,7 +14,15 @@ import {
   ALL_SERVICE_CATEGORIES,
   type ServiceCategory,
 } from './data/serviceCategories';
-import { finiteMapSite, resolveCategory, type MapSite } from './data/resolveServiceQuery';
+import { resolveCategory, type MapSite } from './data/resolveServiceQuery';
+import { categoryFromPath, pathForView, recordIdFromPath, viewFromPath, type AppView } from './routing/paths';
+import { AccountPage } from './pages/AccountPage';
+import { LegalPage } from './pages/LegalPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { ProfessionalProfilePage } from './pages/ProfessionalProfilePage';
+import { WorkWithUsPage } from './pages/WorkWithUsPage';
+import { ChangeOrderPanel } from './components/ChangeOrderPanel';
+import { SiteFooter } from './components/SiteFooter';
 import {
   CATALOG_STALE_MS,
   chargeSavedCard,
@@ -22,7 +32,11 @@ import {
   startCardEnrollment,
   createPendingJob,
   createWebpaySession,
+  fetchJobChargePreview,
+  previewGuestCharge,
+  type AppNotification,
   fetchActiveServices,
+  agreementErrorMessage,
   orderConfirmedMessage,
   openJobForWorker,
   closeJobOnClientApproval,
@@ -134,12 +148,15 @@ async function withScheduleAvailability(workers: WorkerWithProfile[]): Promise<S
   } catch {
     schedules = new Map();
   }
-  return workers.map((worker) => ({
-    ...toWebWorkerCard(worker),
-    availableNow:
-      worker.isAvailable === 1 &&
-      isOpenAt(schedules.get(worker.userId) ?? null, now),
-  }));
+  return workers.map((worker) => {
+    const schedule = schedules.get(worker.userId);
+    return {
+      ...toWebWorkerCard(worker),
+      availableNow: Boolean(
+        schedule && worker.isAvailable === 1 && isOpenAt(schedule, now),
+      ),
+    };
+  });
 }
 
 const PaymentCheckoutModal = lazy(() =>
@@ -204,8 +221,6 @@ function ViewFallback() {
 }
 
 
-type AppView = 'landing' | 'categories' | 'search' | 'tracking' | 'paid';
-
 const CategoriesCatalogView = lazy(() =>
   import('./components/CategoriesCatalogView').then((m) => ({
     default: m.CategoriesCatalogView,
@@ -241,8 +256,6 @@ export function App() {
   const { profile, loading: authLoading, logout, error: authError, clearError } = useAuth();
   const queryClient = useQueryClient();
 
-  const [view, setView] = useState<AppView>('landing');
-
   const [query, setQuery] = useState('');
 
   const [serviceMatch, setServiceMatch] = useState<ServiceMatch | null>(null);
@@ -268,6 +281,20 @@ export function App() {
   const [showGuestCheckout, setShowGuestCheckout] = useState(false);
 
   const [checkoutJobId, setCheckoutJobId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [view, setViewState] = useState<AppView>(() => viewFromPath(location.pathname));
+  useEffect(() => {
+    setViewState(viewFromPath(location.pathname));
+  }, [location.pathname]);
+  const setView = (next: AppView) => {
+    setViewState(next);
+    const target = pathForView(next, {
+      category: serviceMatch?.category ?? categoryFromPath(location.pathname),
+      jobId: checkoutJobId,
+    });
+    if (location.pathname !== target) navigate(target);
+  };
   const [pendingAgreement, setPendingAgreement] = useState<{ id: string; tipo: string } | null>(null);
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
   const [bookingSlots, setBookingSlots] = useState<string[]>([]);
@@ -292,7 +319,13 @@ export function App() {
   jobEvidenceRef.current = jobEvidence;
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationLines, setNotificationLines] = useState<string[]>([]);
+  const [notices, setNotices] = useState<AppNotification[]>([]);
+  const [noticeJobTitles, setNoticeJobTitles] = useState<Record<string, string>>({});
+  const [payableTotalClp, setPayableTotalClp] = useState<number | null>(null);
+  const [chargeLocking, setChargeLocking] = useState(false);
+  const [chargeLockError, setChargeLockError] = useState<string | null>(null);
+  const [guestPayableClp, setGuestPayableClp] = useState<number | null>(null);
+  const [guestQuoteError, setGuestQuoteError] = useState<string | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [myOrders, setMyOrders] = useState<Awaited<ReturnType<typeof fetchUserJobs>> | null>(null);
@@ -395,7 +428,8 @@ export function App() {
         if (!cancelled) setPendingAgreement(null);
       });
     loadSnapshot();
-    const timer = window.setInterval(() => {
+    const tick = () => {
+      if (document.visibilityState === 'hidden') return;
       loadSnapshot();
       void syncJobEvidencePhotos(supabase, checkoutJobId, jobEvidenceRef.current)
         .then((photos) => {
@@ -404,10 +438,16 @@ export function App() {
         .catch(() => {
           // Se conserva la última evidencia visible si el refresco falla.
         });
-    }, 8000);
+    };
+    const timer = window.setInterval(tick, 8000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [view, checkoutJobId]);
 
@@ -535,10 +575,22 @@ export function App() {
       });
       setMyOrders(null);
       setBookingError(null);
-      setView('tracking');
+      navigate(`/pedido/${snapshot.id}`);
     } catch {
       setBookingError('No se pudo abrir el seguimiento. Entra de nuevo e inténtalo.');
     }
+  };
+
+  const openNotice = (notice: AppNotification) => {
+    setShowNotifications(false);
+    if (!notice.read) {
+      setNotices((rows) =>
+        rows.map((row) => (row.id === notice.id ? { ...row, read: true } : row)),
+      );
+      setUnreadCount((count) => Math.max(0, count - 1));
+      void supabase.from('notificaciones').update({ leido: 1 }).eq('id', notice.id);
+    }
+    if (notice.relatedId) void openJobTracking(notice.relatedId);
   };
 
   const showMyOrders = async () => {
@@ -576,13 +628,63 @@ export function App() {
     void fetchMyNotifications(supabase, profile.id)
       .then((rows) => {
         setUnreadCount(rows.filter((row) => !row.read).length);
-        setNotificationLines(rows.map((row) => `${row.title}: ${row.body}`));
+        setNotices(rows);
       })
       .catch(() => {
         setUnreadCount(0);
-        setNotificationLines([]);
+        setNotices([]);
       });
-  }, [profile, view]);
+    const channel = supabase
+      .channel(`notificaciones-${profile.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notificaciones', filter: `id_usuario=eq.${profile.id}` },
+        () => {
+          void fetchMyNotifications(supabase, profile.id)
+            .then((rows) => {
+              setUnreadCount(rows.filter((row) => !row.read).length);
+              setNotices(rows);
+            })
+            .catch(() => undefined);
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [profile]);
+
+  useEffect(() => {
+    const ids = [...new Set(
+      notices
+        .map((notice) => notice.relatedId?.trim() ?? '')
+        .filter((id) => id.length > 0),
+    )];
+    if (ids.length === 0) {
+      setNoticeJobTitles({});
+      return;
+    }
+    let cancelled = false;
+    void supabase
+      .from('trabajos')
+      .select('id, descripcion, direccion')
+      .in('id', ids)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const titles: Record<string, string> = {};
+        for (const row of data ?? []) {
+          const id = String(row.id ?? '');
+          if (!id) continue;
+          const description = String(row.descripcion ?? '').trim();
+          const address = String(row.direccion ?? '').trim();
+          titles[id] = description || address || 'Pedido';
+        }
+        setNoticeJobTitles(titles);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [notices]);
 
   useEffect(() => {
     void queryClient.prefetchQuery({
@@ -747,8 +849,6 @@ export function App() {
 
     setQuery(text);
 
-    setView('search');
-
     setSelectedWorker(null);
 
 
@@ -763,7 +863,11 @@ export function App() {
     if (!meta) {
       setCatalogError('No reconocimos el oficio. Elige una categoría del catálogo.');
       setIsSearching(false);
+      navigate('/servicios');
       return;
+    }
+    if (location.pathname !== `/servicios/${encodeURIComponent(meta.category)}`) {
+      navigate(`/servicios/${encodeURIComponent(meta.category)}`);
     }
 
 
@@ -811,7 +915,25 @@ export function App() {
 
   };
 
+  useEffect(() => {
+    const slug = categoryFromPath(location.pathname);
+    if (!slug) return;
+    if (serviceMatch?.category === slug) return;
+    const row = ALL_SERVICE_CATEGORIES.find((item) => item.id === slug);
+    if (!row) {
+      setCatalogError('Esa categoría no está en el catálogo.');
+      setIsSearching(false);
+      return;
+    }
+    void searchService(row.searchQuery);
+  }, [location.pathname]);
 
+  useEffect(() => {
+    const jobId = recordIdFromPath(location.pathname, 'pedido');
+    if (!jobId || !profile) return;
+    if (checkoutJobId === jobId && jobSnapshot) return;
+    void openJobTracking(jobId);
+  }, [location.pathname, profile, checkoutJobId, jobSnapshot]);
 
   const loadMoreWorkers = async () => {
     const match = serviceMatch;
@@ -862,7 +984,117 @@ export function App() {
         })
       : null;
   const liveQuote = quoteFor(selectedWorker, liveSite);
-  const chargeQuote = quoteFor(selectedWorker, chargeSite);
+  const [chargeAttempt, setChargeAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!showCheckout || !profile || !selectedWorker || !selectedServiceId || !scheduledAt) {
+      return;
+    }
+    const site = chargeSite;
+    if (!site) {
+      setPayableTotalClp(null);
+      setChargeLocking(false);
+      setChargeLockError('Indica dónde es el trabajo: GPS, una dirección o el punto en el mapa.');
+      return;
+    }
+    let cancelled = false;
+    setChargeLocking(true);
+    setPayableTotalClp(null);
+    setChargeLockError(null);
+    void (async () => {
+      try {
+        let jobId = checkoutJobId;
+        if (jobId) {
+          const snap = await fetchJobTrackingSnapshot(supabase, jobId);
+          const same = snap != null
+            && snap.latitude != null
+            && snap.longitude != null
+            && Math.abs(snap.latitude - site.latitude) < 1e-5
+            && Math.abs(snap.longitude - site.longitude) < 1e-5;
+          if (!same) jobId = null;
+        }
+        if (!jobId) {
+          const job = await createPendingJob(supabase, {
+            userId: profile.id,
+            workerId: selectedWorker.id,
+            serviceId: selectedServiceId,
+            description: serviceMatch?.problem ?? query,
+            pricingMode: 'precio_fijo',
+            scheduledAt,
+            latitude: site.latitude,
+            longitude: site.longitude,
+          });
+          jobId = job.id;
+          if (!cancelled) {
+            setCheckoutJobId(job.id);
+            setJobSiteBound(site);
+            sessionStorage.setItem('mwa-active-job', job.id);
+          }
+        }
+        const preview = await fetchJobChargePreview(supabase, jobId);
+        if (cancelled) return;
+        if (!preview) {
+          setPayableTotalClp(null);
+          setChargeLockError('No pudimos calcular el total. Reintenta antes de pagar.');
+        } else {
+          setPayableTotalClp(preview.totalClp);
+          setChargeLockError(null);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setPayableTotalClp(null);
+        setChargeLockError(
+          err instanceof Error
+            ? err.message
+            : 'No pudimos calcular el total. Reintenta antes de pagar.',
+        );
+      } finally {
+        if (!cancelled) setChargeLocking(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    showCheckout,
+    profile,
+    selectedWorker,
+    selectedServiceId,
+    scheduledAt,
+    chargeSite,
+    checkoutJobId,
+    chargeAttempt,
+    query,
+    serviceMatch,
+  ]);
+
+  useEffect(() => {
+    if (!showGuestCheckout || !selectedWorker || !clientLocation) {
+      return;
+    }
+    let cancelled = false;
+    setGuestPayableClp(null);
+    setGuestQuoteError(null);
+    void previewGuestCharge(supabase, {
+      workerId: selectedWorker.id,
+      latitude: clientLocation.latitude,
+      longitude: clientLocation.longitude,
+    })
+      .then((quote) => {
+        if (!cancelled) setGuestPayableClp(quote.totalClp);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setGuestPayableClp(null);
+          setGuestQuoteError(
+            err instanceof Error ? err.message : 'No pudimos calcular el total. Reintenta antes de pagar.',
+          );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [showGuestCheckout, selectedWorker, clientLocation]);
   const listedWorkers = (serviceMatch?.workers ?? []).filter((worker) => {
     if (!clientLocation) return true;
     const quote = quoteFor(worker, clientLocation);
@@ -874,11 +1106,7 @@ export function App() {
     ? undefined
     : liveTooFar
       ? tooFarToBookCopy()
-      : liveQuote?.insideRadar === true
-        ? 'El trabajo queda cerca: sin extra de traslado'
-        : liveQuote?.insideRadar === false
-          ? `Fuera del área: +$${Math.round(liveQuote.extraClp).toLocaleString('es-CL')} de traslado`
-          : `Hasta ${Math.round(liveQuote?.radiusKm ?? 7)} km cubre sin extra. Usa GPS, una dirección o el mapa.`;
+      : 'El total, con traslado, se muestra al pagar.';
 
   const pickClientLocation = (site: MapSite) => {
     setClientLocation(site);
@@ -967,8 +1195,9 @@ export function App() {
       return;
     }
 
-    // Sin sesión: datos + Webpay. Con sesión: el trabajo se crea al cobrar
-    // con el GPS de ese momento, para que el monto coincida con el servidor.
+    // Sin sesión: la vista previa del servidor fija el total antes del botón.
+    // Con sesión: el pedido pendiente se crea al abrir el cobro, con el punto
+    // de ese momento, y el botón usa ese total.
     if (!profile) {
       setJobSiteBound(undefined);
       setShowGuestCheckout(true);
@@ -992,59 +1221,23 @@ export function App() {
       throw new Error('Falta el trabajo para confirmar el pedido.');
     }
 
-    let jobId = checkoutJobId;
-    let site: MapSite | null =
-      jobSiteBound !== undefined ? jobSiteBound : (clientLocation ?? null);
-
-    if (jobId) {
-      const snap = await fetchJobTrackingSnapshot(supabase, jobId);
-      if (!snap || snap.workerId !== selectedWorker.id) {
-        jobId = null;
-        site = clientLocation ?? null;
-      } else {
-        site = finiteMapSite(snap.latitude, snap.longitude);
-        if (!site) {
-          jobId = null;
-          site = clientLocation ?? null;
-        }
-      }
+    const jobId = checkoutJobId;
+    if (!jobId || payableTotalClp == null) {
+      throw new Error('Espera a que calculemos el total antes de pagar.');
     }
-
-    if (!site) {
+    const preview = await fetchJobChargePreview(supabase, jobId);
+    if (!preview || preview.totalClp !== payableTotalClp) {
+      setPayableTotalClp(preview?.totalClp ?? null);
+      setChargeLockError(
+        preview
+          ? null
+          : 'No pudimos calcular el total. Reintenta antes de pagar.',
+      );
       throw new Error(
-        'Indica dónde es el trabajo: GPS, una dirección o el punto en el mapa.',
+        'El total se actualizó. El botón muestra el monto que se cobra.',
       );
     }
-    const payQuote = transportSurcharge({
-      workerLat: selectedWorker.latitude,
-      workerLng: selectedWorker.longitude,
-      jobLat: site.latitude,
-      jobLng: site.longitude,
-      radiusKm: selectedWorker.serviceRadiusKm,
-    });
-    if (!withinTravelRange(payQuote.distanceKm)) {
-      throw new Error(tooFarToBookCopy());
-    }
-
-    setJobSiteBound(site);
-
-    if (!jobId) {
-      const job = await createPendingJob(supabase, {
-        userId: profile.id,
-        workerId: selectedWorker.id,
-        serviceId: selectedServiceId,
-        description: serviceMatch?.problem ?? query,
-        pricingMode: 'precio_fijo',
-        scheduledAt: scheduledAt ?? undefined,
-        latitude: site.latitude,
-        longitude: site.longitude,
-      });
-      jobId = job.id;
-      setCheckoutJobId(job.id);
-      sessionStorage.setItem('mwa-active-job', job.id);
-    }
-
-    const amountClp = (selectedWorker.pricePerVisit ?? 0) + payQuote.extraClp;
+    const amountClp = preview.totalClp;
 
     sessionStorage.setItem(
       'mwa-pending-checkout',
@@ -1102,18 +1295,21 @@ export function App() {
         'No encontramos esa dirección. Escríbela con calle y ciudad, o marca el punto en el mapa.',
       );
     }
-    const guestQuote = transportSurcharge({
-      workerLat: selectedWorker.latitude,
-      workerLng: selectedWorker.longitude,
-      jobLat: guestSite.latitude,
-      jobLng: guestSite.longitude,
-      radiusKm: selectedWorker.serviceRadiusKm,
-    });
-    if (!withinTravelRange(guestQuote.distanceKm)) {
-      throw new Error(tooFarToBookCopy());
+    if (guestPayableClp == null) {
+      throw new Error('Espera a que calculemos el total antes de pagar.');
     }
-    const guestAmount =
-      (selectedWorker.pricePerVisit ?? 0) + guestQuote.extraClp;
+    const fresh = await previewGuestCharge(supabase, {
+      workerId: selectedWorker.id,
+      latitude: guestSite.latitude,
+      longitude: guestSite.longitude,
+    });
+    if (fresh.totalClp !== guestPayableClp) {
+      setGuestPayableClp(fresh.totalClp);
+      throw new Error(
+        'El total se actualizó. El botón muestra el monto que se cobra.',
+      );
+    }
+    const guestAmount = fresh.totalClp;
     const session = await createGuestWebpayCheckout(supabase, {
       ...data,
       workerId: selectedWorker.id,
@@ -1153,6 +1349,12 @@ export function App() {
   const openCategory = (cat: ServiceCategory) => {
     void searchService(cat.searchQuery);
   };
+
+  if (view === 'notfound') return <NotFoundPage />;
+  if (view === 'account') return <AccountPage />;
+  if (view === 'trabaja') return <WorkWithUsPage />;
+  if (view === 'terminos') return <LegalPage kind="terminos" />;
+  if (view === 'privacidad') return <LegalPage kind="privacidad" />;
 
   if (view === 'paid') {
     return (
@@ -1254,6 +1456,8 @@ export function App() {
           onOpenChat={() => setShowChat(true)}
 
           clientActions={checkoutJobId && profile && jobSnapshot && jobSnapshot.userId === profile.id ? (
+            <>
+            <ChangeOrderPanel jobId={checkoutJobId} />
             <JobClientActions
               jobId={checkoutJobId}
               status={jobSnapshot.status}
@@ -1271,6 +1475,7 @@ export function App() {
                   });
               }}
             />
+            </>
           ) : null}
 
           evidence={checkoutJobId && profile ? (
@@ -1316,7 +1521,7 @@ export function App() {
               p_id_trabajo: checkoutJobId,
               p_tipo: tipo,
             });
-            if (error) throw new Error(error.message);
+            if (error) throw new Error(agreementErrorMessage(error.message, 'proponer'));
             const { data } = await supabase.rpc('acuerdo_pendiente', { p_id_trabajo: checkoutJobId });
             const row = data?.[0];
             setPendingAgreement(row ? { id: row.id, tipo: row.tipo } : null);
@@ -1326,7 +1531,7 @@ export function App() {
               p_id: pendingAgreement.id,
               p_acepta: acepta,
             });
-            if (error) throw new Error(error.message);
+            if (error) throw new Error(agreementErrorMessage(error.message, 'responder'));
             if (!checkoutJobId) return;
             const { data } = await supabase.rpc('acuerdo_pendiente', { p_id_trabajo: checkoutJobId });
             const row = data?.[0];
@@ -1354,12 +1559,12 @@ export function App() {
         />
 
         {showNotifications && (
-          <div className="toast-error" role="status">
-            {notificationLines.length === 0
-              ? 'No tienes notificaciones.'
-              : notificationLines.slice(0, 5).join(' · ')}
-            <button type="button" onClick={() => setShowNotifications(false)}>Cerrar</button>
-          </div>
+          <NotificationInbox
+            notices={notices}
+            jobTitles={noticeJobTitles}
+            onClose={() => setShowNotifications(false)}
+            onOpen={openNotice}
+          />
         )}
 
         {showChat && (
@@ -1412,12 +1617,24 @@ export function App() {
     );
   }
 
-  if (view === 'search') {
+  if (view === 'search' || view === 'profile') {
 
     return (
       <Suspense fallback={<ViewFallback />}>
       <div className="min-h-screen app-shell app-shell--search">
 
+        {view === 'profile' ? (
+          <ProfessionalProfilePage
+            onReserve={(worker) => {
+              setSelectedWorker(worker);
+              if (!worker.category) return;
+              void fetchServiceByCategory(supabase, worker.category).then((service) => {
+                if (service) setSelectedServiceId(service.id);
+              });
+            }}
+          />
+        ) : null}
+        {view === 'search' ? (
         <SearchResultsView
 
           query={query}
@@ -1459,15 +1676,16 @@ export function App() {
           locatingAddress={locatingAddress}
 
         />
+        ) : null}
 
-        {showNotifications && (
-          <div className="toast-error" role="status">
-            {notificationLines.length === 0
-              ? 'No tienes notificaciones.'
-              : notificationLines.slice(0, 5).join(' · ')}
-            <button type="button" onClick={() => setShowNotifications(false)}>Cerrar</button>
-          </div>
-        )}
+        {showNotifications && profile ? (
+          <NotificationInbox
+            notices={notices}
+            jobTitles={noticeJobTitles}
+            onClose={() => setShowNotifications(false)}
+            onOpen={openNotice}
+          />
+        ) : null}
 
         {selectedWorker && (
 
@@ -1478,7 +1696,6 @@ export function App() {
             profession={selectedWorker.profession}
 
             pricePerHour={selectedWorker.pricePerVisit}
-            transportExtraClp={liveQuote?.extraClp ?? 0}
             radarHint={radarHint}
             loadingSlots={bookingSlotsLoading}
             slots={bookingSlots.map((iso) => ({
@@ -1504,9 +1721,10 @@ export function App() {
 
             profession={selectedWorker.profession}
 
-            basePrice={selectedWorker.pricePerVisit}
-            transportExtraClp={chargeQuote?.extraClp ?? 0}
-            insideRadar={chargeQuote?.insideRadar ?? null}
+            payableTotalClp={payableTotalClp}
+            chargeLocking={chargeLocking}
+            chargeError={chargeLockError}
+            onRetryCharge={() => setChargeAttempt((n) => n + 1)}
             hasJobSite={Boolean(chargeSite)}
             onUseAddress={searchJobAddress}
             locatingAddress={locatingAddress}
@@ -1538,9 +1756,8 @@ export function App() {
           <GuestCheckoutForm
             workerName={selectedWorker.name}
             profession={selectedWorker.profession}
-            basePrice={selectedWorker.pricePerVisit}
-            transportExtraClp={liveQuote?.extraClp ?? 0}
-            insideRadar={liveQuote?.insideRadar ?? null}
+            payableTotalClp={guestPayableClp}
+            quoteError={guestQuoteError}
             serviceDescription={serviceMatch?.problem}
             onClose={() => {
               setShowGuestCheckout(false);
@@ -1588,6 +1805,7 @@ export function App() {
 
 
   return (
+    <>
     <LandingHome
       activeNav={activeNav}
       setActiveNav={setActiveNav}
@@ -1617,6 +1835,8 @@ export function App() {
       onOpenOrder={(jobId) => void openJobTracking(jobId)}
       onCloseOrders={() => setMyOrders(null)}
     />
+    <SiteFooter />
+    </>
   );
 
 }

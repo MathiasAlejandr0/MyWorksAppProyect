@@ -20,19 +20,27 @@ class ErrorHandler {
       return error;
     }
 
-    // Si es String, crear AppError genérico
-    if (error is String) {
-      return AppError(message: error);
-    }
-
-    // Mensajes amigables para errores comunes
-    final errorString = error.toString().toLowerCase();
+    // En Postgres el hint a veces dice "connection" aunque el fallo sea de
+    // permisos. Solo el mensaje (o el texto de una excepción de red) decide.
+    final errorString = error is PostgrestException
+        ? error.message.toLowerCase()
+        : error is String
+            ? error.toLowerCase()
+            : error.toString().toLowerCase();
 
     if (errorString.contains('mensaje bloqueado') ||
         errorString.contains('no se permite compartir') ||
         errorString.contains('este tipo de mensaje no está permitido') ||
         errorString.contains('este tipo de contenido no esta permitido')) {
       return AppError.validation(ContentFilter.blockedMessage);
+    }
+    if (errorString.contains('ya hay un cobro en curso') ||
+        errorString.contains('ya tiene un pago en garantia') ||
+        errorString.contains('ya tiene un pago en garantía') ||
+        errorString.contains('pagos_un_principal_activo')) {
+      return AppError.validation(
+        'Este trabajo ya tiene un cobro en curso. Espera un momento antes de pagar otra vez.',
+      );
     }
     if (errorString.contains('ya esta reservado') ||
         errorString.contains('ya está reservado') ||
@@ -54,17 +62,37 @@ class ErrorHandler {
         'Tienes pedidos sin pagar en curso. Completa o espera a que venza uno para reservar otra hora.',
       );
     }
+    if (errorString.contains('sube al menos una evidencia') ||
+        errorString.contains('falta la evidencia')) {
+      return AppError.validation(
+        'Sube al menos una foto del trabajo antes de finalizarlo. El pago sigue retenido.',
+      );
+    }
 
-    if (errorString.contains('network') || errorString.contains('connection')) {
-      return AppError.network('Error de conexión. Verifica tu internet e intenta nuevamente', error);
+    if (errorString.contains('socket') ||
+        errorString.contains('clientexception') ||
+        errorString.contains('failed host lookup') ||
+        errorString.contains('connection closed') ||
+        errorString.contains('connection reset') ||
+        errorString.contains('connection refused') ||
+        errorString.contains('connection abort') ||
+        errorString.contains('connection timed out') ||
+        errorString.contains('network is unreachable') ||
+        errorString.contains('network')) {
+      return AppError.network(
+        'Error de conexión. Verifica tu internet e intenta nuevamente',
+        error,
+      );
     }
 
     if (errorString.contains('timeout')) {
-      return AppError.network('La operación tardó demasiado. Intenta nuevamente', error);
+      return AppError.network(
+          'La operación tardó demasiado. Intenta nuevamente', error);
     }
 
     if (errorString.contains('permission') || errorString.contains('denied')) {
-      return AppError.permission('Permiso denegado. Verifica los permisos de la app');
+      return AppError.permission(
+          'Permiso denegado. Verifica los permisos de la app');
     }
 
     if (errorString.contains('not found')) {
@@ -72,21 +100,30 @@ class ErrorHandler {
     }
 
     if (errorString.contains('unauthorized') || errorString.contains('401')) {
-      return AppError.authentication('Sesión expirada. Por favor inicia sesión nuevamente');
+      return AppError.authentication(
+          'Sesión expirada. Por favor inicia sesión nuevamente');
     }
 
     if (errorString.contains('forbidden') || errorString.contains('403')) {
-      return AppError.permission('No tienes permisos para realizar esta acción');
+      return AppError.permission(
+          'No tienes permisos para realizar esta acción');
     }
 
     if (errorString.contains('database') ||
         errorString.contains('postgres') ||
         errorString.contains('supabase')) {
-      return AppError.database('Error al guardar datos. Intenta nuevamente', error);
+      return AppError.database(
+          'Error al guardar datos. Intenta nuevamente', error);
+    }
+
+    if (error is String && _looksLikeUserText(error)) {
+      return AppError.validation(error.trim());
     }
 
     // Error genérico
-    return AppError(message: 'Ocurrió un error inesperado. Por favor intenta nuevamente', originalError: error);
+    return AppError(
+        message: 'Ocurrió un error inesperado. Por favor intenta nuevamente',
+        originalError: error);
   }
 
   /// Texto para mostrar al usuario. Nunca devuelve el detalle técnico
@@ -169,14 +206,14 @@ class ErrorHandler {
   static void showError(BuildContext context, dynamic error) {
     final appError = handle(error);
     final backgroundColor = _getErrorColor(appError.type);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(appError.message),
         backgroundColor: backgroundColor,
         behavior: SnackBarBehavior.floating,
-        duration: appError.type == ErrorType.critical 
-            ? const Duration(seconds: 5) 
+        duration: appError.type == ErrorType.critical
+            ? const Duration(seconds: 5)
             : const Duration(seconds: 3),
         action: SnackBarAction(
           label: 'Cerrar',
@@ -196,7 +233,7 @@ class ErrorHandler {
     dynamic error,
   ) async {
     final appError = handle(error);
-    
+
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -225,7 +262,7 @@ class ErrorHandler {
     String? actionLabel,
   }) async {
     final appError = handle(error);
-    
+
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -275,4 +312,3 @@ class ErrorHandler {
     }
   }
 }
-

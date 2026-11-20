@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../widgets/worker_day_windows_editor.dart';
 
 class WorkerSchedulePage extends ConsumerStatefulWidget {
   const WorkerSchedulePage({super.key});
@@ -21,16 +22,6 @@ class _WorkerSchedulePageState extends ConsumerState<WorkerSchedulePage> {
   bool _loading = true;
   bool _saving = false;
 
-  static const _names = [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-    'Domingo',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -43,10 +34,11 @@ class _WorkerSchedulePageState extends ConsumerState<WorkerSchedulePage> {
     try {
       final loaded = await _repo.load(user.id);
       if (!mounted) return;
+      final days = loaded.days.isEmpty
+          ? WeeklySchedule.weekdaysNineToSix().days
+          : _fullWeek(loaded.days);
       setState(() {
-        _schedule = loaded.days.isEmpty
-            ? WeeklySchedule.weekdaysNineToSix().copyEnabled(loaded.enabled)
-            : loaded;
+        _schedule = WeeklySchedule(enabled: loaded.enabled, days: days);
         _loading = false;
       });
     } catch (e) {
@@ -58,25 +50,42 @@ class _WorkerSchedulePageState extends ConsumerState<WorkerSchedulePage> {
     }
   }
 
+  List<DayWindow> _fullWeek(List<DayWindow> days) {
+    final byDay = {for (final day in days) day.weekday: day};
+    return [
+      for (var weekday = 1; weekday <= 7; weekday++)
+        byDay[weekday] ??
+            DayWindow(
+              weekday: weekday,
+              startMinute: 9 * 60,
+              endMinute: weekday <= 5 ? 18 * 60 : 13 * 60,
+              enabled: false,
+            ),
+    ];
+  }
+
   Future<void> _save() async {
     final user = ref.read(authProvider).user;
     if (user == null) return;
-    for (final day in _schedule.days) {
-      if (day.enabled && day.endMinute <= day.startMinute) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_names[day.weekday - 1]}: la hora de fin debe ser posterior',
-            ),
-          ),
-        );
-        return;
-      }
+    final overlap = overlappingWindowsMessage(_schedule.days);
+    if (overlap != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(overlap)),
+      );
+      return;
     }
     setState(() => _saving = true);
     try {
       await _repo.save(userId: user.id, schedule: _schedule);
       if (!mounted) return;
+      final fresh = await _repo.load(user.id);
+      if (!mounted) return;
+      setState(() {
+        _schedule = WeeklySchedule(
+          enabled: fresh.enabled,
+          days: _fullWeek(fresh.days),
+        );
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Horario guardado')),
       );
@@ -90,22 +99,10 @@ class _WorkerSchedulePageState extends ConsumerState<WorkerSchedulePage> {
     }
   }
 
-  Future<void> _pick(int index, {required bool start}) async {
-    final day = _schedule.days[index];
-    final current = TimeOfDay(
-      hour: (start ? day.startMinute : day.endMinute) ~/ 60,
-      minute: (start ? day.startMinute : day.endMinute) % 60,
-    );
-    final picked = await showTimePicker(context: context, initialTime: current);
-    if (picked == null) return;
-    final minute = picked.hour * 60 + picked.minute;
-    final next = day.copyWith(
-      startMinute: start ? minute : null,
-      endMinute: start ? null : minute,
-    );
+  void _replaceDay(int index, DayWindow day) {
+    final days = [..._schedule.days];
+    days[index] = day;
     setState(() {
-      final days = [..._schedule.days];
-      days[index] = next;
       _schedule = WeeklySchedule(enabled: _schedule.enabled, days: days);
     });
   }
@@ -124,87 +121,45 @@ class _WorkerSchedulePageState extends ConsumerState<WorkerSchedulePage> {
                   title: const Text('Usar este horario'),
                   subtitle: const Text(
                     'Si está apagado, «Disponible ahora» sigue el interruptor del inicio. '
-                    'Si está encendido, también hay que estar dentro del rango del día.',
+                    'Si está encendido, también hay que estar dentro de una ventana del día.',
                   ),
                   value: _schedule.enabled,
                   onChanged: (value) {
                     setState(() {
-                      _schedule =
-                          WeeklySchedule(enabled: value, days: _schedule.days);
+                      _schedule = WeeklySchedule(
+                        enabled: value,
+                        days: _schedule.days,
+                      );
                     });
                   },
                 ),
                 const SizedBox(height: 8),
                 for (var i = 0; i < _schedule.days.length; i++)
-                  _DayRow(
-                    name: _names[_schedule.days[i].weekday - 1],
+                  WorkerDayWindowsEditor(
+                    name: weekdayNamesEs[_schedule.days[i].weekday - 1],
                     day: _schedule.days[i],
-                    onToggle: (value) {
-                      setState(() {
-                        final days = [..._schedule.days];
-                        days[i] = days[i].copyWith(enabled: value);
-                        _schedule = WeeklySchedule(
-                            enabled: _schedule.enabled, days: days);
-                      });
-                    },
-                    onStart: () => _pick(i, start: true),
-                    onEnd: () => _pick(i, start: false),
+                    onChanged: (day) => _replaceDay(i, day),
                   ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: _saving ? null : _save,
-                  style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.brandOrange),
-                  child: Text(_saving ? 'Guardando…' : 'Guardar horario'),
-                ),
               ],
             ),
+      bottomNavigationBar: _loading
+          ? null
+          : Material(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: FilledButton(
+                    onPressed: _saving ? null : _save,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.brandOrange,
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    child: Text(_saving ? 'Guardando…' : 'Guardar horario'),
+                  ),
+                ),
+              ),
+            ),
     );
-  }
-}
-
-class _DayRow extends StatelessWidget {
-  const _DayRow({
-    required this.name,
-    required this.day,
-    required this.onToggle,
-    required this.onStart,
-    required this.onEnd,
-  });
-
-  final String name;
-  final DayWindow day;
-  final ValueChanged<bool> onToggle;
-  final VoidCallback onStart;
-  final VoidCallback onEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
-          ),
-          TextButton(
-            onPressed: day.enabled ? onStart : null,
-            child: Text(formatMinute(day.startMinute)),
-          ),
-          const Text('–'),
-          TextButton(
-            onPressed: day.enabled ? onEnd : null,
-            child: Text(formatMinute(day.endMinute)),
-          ),
-          Switch(value: day.enabled, onChanged: onToggle),
-        ],
-      ),
-    );
-  }
-}
-
-extension on WeeklySchedule {
-  WeeklySchedule copyEnabled(bool enabled) {
-    return WeeklySchedule(enabled: enabled, days: days);
   }
 }

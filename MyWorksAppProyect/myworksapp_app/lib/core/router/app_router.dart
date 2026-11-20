@@ -139,11 +139,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (authUser.userRole.isCliente) {
             return homeRouteForRole(authUser.userRole);
           }
-          final workerRepo = WorkerRepository();
-          final worker = await workerRepo.getWorkerByUserId(authUser.id);
-          if (worker == null) return AppConstants.routeWorkerRegister;
-          if (!worker.pricingConfigured) {
-            return AppConstants.routeWorkerPricingSetup;
+          try {
+            final worker =
+                await WorkerRepository().getWorkerByUserId(authUser.id);
+            if (worker == null) return AppConstants.routeWorkerRegister;
+            if (!worker.pricingConfigured) {
+              return AppConstants.routeWorkerPricingSetup;
+            }
+          } catch (e, st) {
+            AppLogger.e('No se pudo leer la ficha al redirigir', e, st);
           }
           return homeRouteForRole(authUser.userRole);
         }
@@ -152,10 +156,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isLoggedIn &&
             authUser.userRole.isEspecialista &&
             state.matchedLocation == AppConstants.routeWorkerHome) {
-          final worker =
-              await WorkerRepository().getWorkerByUserId(authUser.id);
-          if (worker != null && !worker.pricingConfigured) {
-            return AppConstants.routeWorkerPricingSetup;
+          try {
+            final worker =
+                await WorkerRepository().getWorkerByUserId(authUser.id);
+            if (worker != null && !worker.pricingConfigured) {
+              return AppConstants.routeWorkerPricingSetup;
+            }
+          } catch (e, st) {
+            AppLogger.e('No se pudo revisar los precios del profesional', e, st);
           }
         }
 

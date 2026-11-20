@@ -116,7 +116,7 @@ Diccionario de datos (fácil de explicar): [`MyWorksAppProyect/docs/DICCIONARIO_
 
 ### En una frase
 
-> **Scrum adaptado a un equipo de tres estudiantes**, orientado a un **MVP** y organizado por las **fases del Capstone PTY4614 (Duoc UC)**. Mathias Jara Alvarado es Product Owner y Scrum Master; el tablero está en GitHub Projects, el Daily Scrum se hace por Discord y la Sprint Review y la Retrospectiva, todos los fines de semana. Detalle y sprints: [`docs/metodologia.md`](docs/metodologia.md).
+> **Scrum adaptado a un equipo de tres estudiantes**, orientado a un **MVP** y organizado por las **fases del Capstone PTY4614 (Duoc UC)**. Mathias Jara Alvarado es Product Owner y Scrum Master; el tablero está en GitHub Projects, el Daily Scrum se hace por Discord y la Sprint Review y la Retrospectiva, todos los fines de semana. Detalle y sprints: [`docs/metodologia.md`](docs/metodologia.md). Artefactos de la evaluación: [`docs/product_vision.md`](docs/product_vision.md), [`docs/product_backlog.md`](docs/product_backlog.md), [`docs/sprint_backlog.md`](docs/sprint_backlog.md), [`docs/retrospectiva.md`](docs/retrospectiva.md) y [`docs/requisitos_no_funcionales.md`](docs/requisitos_no_funcionales.md).
 
 ### Cómo trabajamos
 

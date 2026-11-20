@@ -43,16 +43,36 @@ PaymentGuardPorts _ports({
   bool hasAuthorized = false,
   int pendingChangeOrders = 0,
   int approvedUnpaid = 0,
+  int countEvidence = 1,
 }) {
   return PaymentGuardPorts(
     getPrimaryPayment: (_) async => primaryPayment,
     hasAuthorizedPrimaryPayment: (_) async => hasAuthorized,
     countPendingChangeOrders: (_) async => pendingChangeOrders,
     countApprovedUnpaidChangeOrders: (_) async => approvedUnpaid,
+    countEvidence: (_) async => countEvidence,
   );
 }
 
 void main() {
+  test('sin evidencia no se puede declarar el trabajo terminado', () async {
+    final job = _job(status: AppConstants.jobStatusInProgress);
+    await expectLater(
+      PaymentGuard.validate(
+        job: job,
+        targetStatus: PricingConstants.jobAwaitingClientApproval,
+        ports: _ports(countEvidence: 0),
+      ),
+      throwsA(
+        isA<AppError>().having(
+          (e) => e.message,
+          'message',
+          contains('foto'),
+        ),
+      ),
+    );
+  });
+
   group('PaymentGuard.validate', () {
     test('in_progress exige pago autorizado en modalidad con escrow', () async {
       final job = _job(

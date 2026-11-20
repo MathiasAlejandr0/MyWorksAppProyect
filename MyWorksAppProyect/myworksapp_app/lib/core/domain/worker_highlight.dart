@@ -33,17 +33,7 @@ class CoverageNotice {
   final String text;
 }
 
-String _clp(int amount) {
-  final raw = amount.abs().toString();
-  final buffer = StringBuffer();
-  for (var i = 0; i < raw.length; i++) {
-    if (i > 0 && (raw.length - i) % 3 == 0) buffer.write('.');
-    buffer.write(raw[i]);
-  }
-  return '\$$buffer';
-}
-
-/// Misma regla que el cobro: radio de servicio, extra por km fuera.
+/// Radio de servicio. El monto del traslado se confirma en el cobro.
 CoverageNotice coverageNotice({
   required WorkerModel worker,
   double? clientLatitude,
@@ -73,6 +63,6 @@ CoverageNotice coverageNotice({
   final km = quote.distanceKm?.toStringAsFixed(1) ?? '?';
   return CoverageNotice(
     inside: false,
-    text: 'Fuera del área ($km km): +${_clp(quote.extraClp)} de traslado.',
+    text: 'Fuera del área ($km km). El traslado se confirma al pagar.',
   );
 }

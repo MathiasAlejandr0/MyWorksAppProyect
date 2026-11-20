@@ -1,15 +1,15 @@
 export type TurnstileDecision = "skip" | "verify" | "fail_closed";
 
 /**
- * Sin secreto y con TBK_ENV de integración, el checkout de la demo sigue.
- * En production, sin secreto, se rechaza.
+ * Sin secreto el checkout se rechaza, sea cual sea TBK_ENV.
+ * Solo MWA_ALLOW_NO_CAPTCHA=1 (allowNoCaptcha) deja pasar sin verificar.
+ * Ese flag es para una base local; no se usa en el sitio publicado.
  */
 export function turnstileDecision(
-  tbkEnv: string | undefined | null,
   secretPresent: boolean,
+  allowNoCaptcha = false,
 ): TurnstileDecision {
   if (secretPresent) return "verify";
-  const env = (tbkEnv || "integration").toLowerCase();
-  if (env !== "production") return "skip";
+  if (allowNoCaptcha) return "skip";
   return "fail_closed";
 }

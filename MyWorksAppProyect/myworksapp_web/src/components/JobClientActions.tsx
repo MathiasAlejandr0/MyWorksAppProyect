@@ -53,6 +53,8 @@ export function JobClientActions({
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [rating, setRating] = useState<{ score: number; comment: string | null } | null>(null);
   const [ratingLoaded, setRatingLoaded] = useState(false);
+  const [ratingError, setRatingError] = useState(false);
+  const [ratingTry, setRatingTry] = useState(0);
   const [score, setScore] = useState(0);
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
@@ -104,13 +106,20 @@ export function JobClientActions({
     let cancelled = false;
     void fetchClientRatingForJob(supabase, jobId, userId).then((row) => {
       if (cancelled) return;
+      setRatingError(false);
+      if (cancelled) return;
       setRating(row);
       setRatingLoaded(true);
+    }).catch(() => {
+      if (cancelled) return;
+      setRating(null);
+      setRatingLoaded(true);
+      setRatingError(true);
     });
     return () => {
       cancelled = true;
     };
-  }, [jobId, userId, status]);
+  }, [jobId, userId, status, ratingTry]);
 
   const run = async (task: () => Promise<string>) => {
     setBusy(true);
@@ -313,6 +322,12 @@ export function JobClientActions({
           <Star size={22} className="tracking-escrow-icon" aria-hidden />
           <div>
             <strong id="calificar-titulo">Califica a {workerName}</strong>
+            {ratingError ? (
+              <p role="alert">
+                No se pudo cargar la valoración.
+                <button type="button" onClick={() => setRatingTry((n) => n + 1)}>Reintentar</button>
+              </p>
+            ) : null}
             {rating ? (
               <p>
                 Calificaste este trabajo con {rating.score} {rating.score === 1 ? 'estrella' : 'estrellas'}.

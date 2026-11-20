@@ -3,6 +3,6 @@
   "identifier": "cl.myworksapp.desktop",
   "permissions": [
     "core:default",
-    "shell:allow-open"
+    "deep-link:default"
   ]
 }

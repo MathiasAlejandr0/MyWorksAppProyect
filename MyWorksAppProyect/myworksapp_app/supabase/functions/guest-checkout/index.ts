@@ -1,11 +1,9 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { isReservedEmailDomain, sha256Hex } from "../_shared/guest_ticket.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
-import {
-  allowRate,
-  clientIp,
-  rateLimitExceededMessage,
-} from "../_shared/rate_limit.ts";
+import { chileE164, postalAddress } from "../_shared/chile_input.ts";
+import { clientIp, rateLimitExceededMessage } from "../_shared/rate_limit.ts";
+import { allowRateDb } from "../_shared/rate_limit_db.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import {
   resolveCallerReturnOrigin,
@@ -35,6 +33,8 @@ type GuestBody = {
   scheduledAt?: string;
   returnUrl?: string;
   turnstileToken?: string;
+  /** Solo devuelve el total real. No crea cuenta ni pago. */
+  previewOnly?: boolean;
 };
 
 function clean(s: unknown, max = 200): string {
@@ -51,6 +51,84 @@ function scheduledOrNull(value: unknown): string | null {
   const parsed = Date.parse(raw);
   if (!Number.isFinite(parsed)) return null;
   return new Date(parsed).toISOString();
+}
+
+async function previewGuestTotal(req: Request, body: GuestBody): Promise<Response> {
+  const workerId = clean(body.workerId, 80);
+  const jobLat = asCoord(body.latitude);
+  const jobLng = asCoord(body.longitude);
+  if (!workerId || jobLat == null || jobLng == null) {
+    return jsonResponse(
+      req,
+      { error: "Indica el profesional y el punto del trabajo para calcular el total" },
+      400,
+    );
+  }
+  const admin = serviceClient();
+  const { data: blocked, error: blockedErr } = await admin.rpc(
+    "profesional_bloqueado_por_demo",
+    { p_id: workerId },
+  );
+  if (blockedErr || blocked === true) {
+    return jsonResponse(req, { error: "Este profesional no está disponible para reservar" }, 400);
+  }
+  const { data: worker, error: workerErr } = await admin
+    .from("trabajadores")
+    .select(
+      "id_usuario, tarifa_visita, disponible, precios_configurados, estado_verificacion, latitud_base, longitud_base, radio_servicio_km",
+    )
+    .eq("id_usuario", workerId)
+    .maybeSingle();
+  if (workerErr || !worker) {
+    return jsonResponse(req, { error: "Profesional no encontrado" }, 404);
+  }
+  if (worker.estado_verificacion !== "verificado") {
+    return jsonResponse(
+      req,
+      { error: "Este profesional todavía no está verificado para cobrar" },
+      400,
+    );
+  }
+  if (Number(worker.disponible) !== 1 || Number(worker.precios_configurados) !== 1) {
+    return jsonResponse(req, { error: "El profesional no está disponible" }, 400);
+  }
+  const visitFee = Number(worker.tarifa_visita);
+  if (!Number.isFinite(visitFee) || visitFee <= 0) {
+    return jsonResponse(req, { error: "El profesional no tiene tarifa de visita" }, 400);
+  }
+  const quote = transportQuote({
+    workerLat: asCoord(worker.latitud_base),
+    workerLng: asCoord(worker.longitud_base),
+    jobLat,
+    jobLng,
+    radiusKm: asCoord(worker.radio_servicio_km),
+  });
+  if (!withinTravelRange(quote.distanceKm)) {
+    return jsonResponse(
+      req,
+      { error: "Este profesional queda a más de 30 km del trabajo" },
+      400,
+    );
+  }
+  const totalClp = visitFee + quote.extraClp;
+  return jsonResponse(req, {
+    preview: true,
+    totalClp,
+    tarifaClp: visitFee,
+    trasladoClp: quote.extraClp,
+  });
+}
+
+function guestCheckoutUnavailable(req: Request): Response {
+  return jsonResponse(req, {
+    mode: "guest_redirect",
+    redirectUrl: "",
+    jobId: "",
+    paymentId: "",
+    buyOrder: "",
+    message:
+      "No se abrió el pago. Si ya tienes una cuenta, entra con ella. Si no, inténtalo de nuevo en un minuto.",
+  });
 }
 
 const GUEST_WINDOW_MS = 60_000;
@@ -72,17 +150,26 @@ Deno.serve(async (req) => {
     }
 
     const ip = clientIp(req);
-    if (!allowRate(`guest:ip:${ip}`, GUEST_MAX_IP, GUEST_WINDOW_MS)) {
-      return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
-    }
-
+    const admin = serviceClient();
     const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY")?.trim() ?? "";
-    const turnstile = turnstileDecision(Deno.env.get("TBK_ENV"), turnstileSecret.length > 0);
+    const turnstile = turnstileDecision(
+      turnstileSecret.length > 0,
+      Deno.env.get("MWA_ALLOW_NO_CAPTCHA") === "1",
+    );
     if (turnstile === "fail_closed") {
       return jsonResponse(req, { error: "Falta TURNSTILE_SECRET_KEY" }, 503);
     }
 
     const body = (await req.json()) as GuestBody;
+    if (body.previewOnly === true) {
+      if (!(await allowRateDb(admin, `guest-preview:ip:${ip}`, 30, GUEST_WINDOW_MS))) {
+        return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
+      }
+      return await previewGuestTotal(req, body);
+    }
+    if (!(await allowRateDb(admin, `guest:ip:${ip}`, GUEST_MAX_IP, GUEST_WINDOW_MS))) {
+      return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
+    }
     if (turnstile === "verify") {
       const token = clean(body.turnstileToken, 2048);
       if (!token) {
@@ -105,8 +192,8 @@ Deno.serve(async (req) => {
 
     const name = clean(body.name, 120);
     const email = clean(body.email, 160).toLowerCase();
-    const phone = clean(body.phone, 40);
-    const address = clean(body.address, 300);
+    const phone = chileE164(clean(body.phone, 40));
+    const address = postalAddress(clean(body.address, 300));
     const workerId = clean(body.workerId, 80);
     const serviceId = clean(body.serviceId, 80);
     const description = clean(body.description, 500) || "Urgencia / visita web (invitado)";
@@ -115,7 +202,7 @@ Deno.serve(async (req) => {
     if (!name || !isEmail(email) || !phone || !address) {
       return jsonResponse(
         req,
-        { error: "Nombre, correo, teléfono y dirección son obligatorios" },
+        { error: "Nombre, correo, un teléfono de Chile (+56 y 9 dígitos) y una dirección con calle son obligatorios" },
         400,
       );
     }
@@ -126,7 +213,7 @@ Deno.serve(async (req) => {
         400,
       );
     }
-    if (!allowRate(`guest:email:${email}`, GUEST_MAX_EMAIL, GUEST_WINDOW_MS)) {
+    if (!(await allowRateDb(admin, `guest:email:${email}`, GUEST_MAX_EMAIL, GUEST_WINDOW_MS))) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
     if (!workerId || !serviceId || !Number.isFinite(amountClp) || amountClp <= 0) {
@@ -141,7 +228,6 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "Elige un horario publicado por el profesional." }, 400);
     }
 
-    const admin = serviceClient();
     await admin.rpc("limpiar_invitados_sin_pago");
 
     const { data: existingProfile } = await admin
@@ -151,14 +237,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingProfile) {
-      return jsonResponse(req, {
-        mode: "guest_redirect",
-        needsLogin: true,
-        redirectUrl: "",
-        jobId: "",
-        paymentId: "",
-        buyOrder: "",
-      });
+      return guestCheckoutUnavailable(req);
     }
 
     const { data: worker, error: workerErr } = await admin
@@ -169,6 +248,13 @@ Deno.serve(async (req) => {
 
     if (workerErr || !worker) {
       return jsonResponse(req, { error: "Profesional no encontrado" }, 404);
+    }
+    const { data: blocked, error: blockedErr } = await admin.rpc(
+      "profesional_bloqueado_por_demo",
+      { p_id: workerId },
+    );
+    if (blockedErr || blocked === true) {
+      return jsonResponse(req, { error: "Este profesional no está disponible para reservar" }, 400);
     }
     if (worker.estado_verificacion !== "verificado") {
       return jsonResponse(
@@ -240,14 +326,7 @@ Deno.serve(async (req) => {
       const raw = createErr?.message ?? "";
       const taken = /already|registered|exists/i.test(raw);
       if (taken) {
-        return jsonResponse(req, {
-          mode: "guest_redirect",
-          needsLogin: true,
-          redirectUrl: "",
-          jobId: "",
-          paymentId: "",
-          buyOrder: "",
-        });
+        return guestCheckoutUnavailable(req);
       }
       return jsonResponse(
         req,
