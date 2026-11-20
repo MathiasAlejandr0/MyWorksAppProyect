@@ -1,5 +1,7 @@
 # Auditoría de IDs y normalización geográfica
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (05-10-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `d9d2c7c`) está en [`ESTADO_DEL_PROYECTO.md`](../ESTADO_DEL_PROYECTO.md).
+
 **Proyecto:** MyWorksApp  
 **Fecha:** 2026-10-05  
 **Esquema:** PostgreSQL `public`  

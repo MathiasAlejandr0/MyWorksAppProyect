@@ -1,5 +1,7 @@
 # Migraciones Supabase (MyWorks App)
 
+> Estado al 20-nov-2026 (`main` `d9d2c7c`): 125 archivos `.sql`, del `20250607000001` al `20261120170000`. El inventario actualizado está en [`../MIGRATIONS_INVENTORY.md`](../MIGRATIONS_INVENTORY.md). Lo que sigue describe el baseline histórico; el esquema vigente está en `docs/DICCIONARIO_BASE_DATOS.md` y `docs/modelo-datos.md`.
+
 Este directorio documenta el schema y el hardening del proyecto Supabase.
 
 ## Qué hay aquí
@@ -21,7 +23,7 @@ El **schema productivo** sigue viviendo en el proyecto Supabase remoto; el basel
 
 ## Schema remoto (fuente de verdad)
 
-Dump oficial versionado: [`../schema_remote_dump.sql`](../schema_remote_dump.sql)  
+Dump versionado (copia del esquema del 28-sep-2026; no incluye los cambios posteriores): [`../schema_remote_dump.sql`](../schema_remote_dump.sql)  
 Inventario de migraciones: [`../MIGRATIONS_INVENTORY.md`](../MIGRATIONS_INVENTORY.md)
 
 Para regenerar (requiere Docker Desktop + login CLI):

@@ -7,6 +7,33 @@
 
 ---
 
+## En resumen: qué es cada parte y dónde está
+
+| Parte | Qué es | Dónde está |
+|---|---|---|
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`MyWorksAppProyect/myworksapp_app/`](MyWorksAppProyect/myworksapp_app/) |
+| Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`MyWorksAppProyect/myworksapp_web/`](MyWorksAppProyect/myworksapp_web/), publicado en https://myworksapp.cl |
+| Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`MyWorksAppProyect/myworksapp_desktop/`](MyWorksAppProyect/myworksapp_desktop/) |
+| Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`MyWorksAppProyect/shared/`](MyWorksAppProyect/shared/) |
+| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`MyWorksAppProyect/myworksapp_app/supabase/`](MyWorksAppProyect/myworksapp_app/supabase/) |
+| Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`MyWorksAppProyect/docs/`](MyWorksAppProyect/docs/) |
+| Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](docs/INDICE.md) |
+
+## Contenido
+
+- [1. Resumen del proyecto](#1-resumen-del-proyecto)
+- [2. Objetivos](#2-objetivos)
+- [3. Alcance del producto (qué entrega el título)](#3-alcance-del-producto-qué-entrega-el-título)
+- [4. Arquitectura de software](#4-arquitectura-de-software)
+- [5. Metodología de trabajo](#5-metodología-de-trabajo)
+- [6. Criterios de diseño profesional aplicados](#6-criterios-de-diseño-profesional-aplicados)
+- [7. Estructura del repositorio](#7-estructura-del-repositorio)
+- [8. Cómo ejecutar (resumen)](#8-cómo-ejecutar-resumen)
+- [9. Estado respecto al título y al producto](#9-estado-respecto-al-título-y-al-producto)
+- [10. Autores](#10-autores)
+
+---
+
 ## 1. Resumen del proyecto
 
 **My Works App** es una plataforma digital multiplataforma que conecta **hogares y clientes** con **profesionales de oficios** (electricidad, gasfitería, armado, plomería, etc.) en Chile.
@@ -43,10 +70,11 @@ Fuente oficial: informe final [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](F
 
 | Qué | Dónde |
 |-----|-------|
-| Web publicada | https://myworksapp-cl.vercel.app |
-| Encuesta de prueba con usuarios (SUS) | https://myworksapp-cl.vercel.app/encuesta (en la app: inicio del cliente, «Encuesta de la prueba») |
+| Web publicada (producción) | https://myworksapp.cl (también `www.myworksapp.cl` y https://myworksapp-cl.vercel.app) |
+| Encuesta de prueba con usuarios (SUS) | https://myworksapp.cl/encuesta (en la app: inicio del cliente, «Encuesta de la prueba») |
 | Guía de usuario | [`Fase 2/Guia_de_Usuario_MyWorksApp.pdf`](Fase%202/Guia_de_Usuario_MyWorksApp.pdf) |
 | Demo paso a paso | [`MyWorksAppProyect/DEMO.md`](MyWorksAppProyect/DEMO.md) |
+| Casos de uso (CU-01 a CU-34) | [`MyWorksAppProyect/docs/casos_de_uso.md`](MyWorksAppProyect/docs/casos_de_uso.md) |
 
 ---
 
@@ -54,11 +82,11 @@ Fuente oficial: informe final [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](F
 
 | Actor | Capacidad principal |
 |-------|---------------------|
-| **Cliente** | Buscar oficio, solicitar visita/urgencia, pagar con Webpay Plus u Oneclick, seguir el servicio y dar conformidad |
-| **Profesional** | Gestionar trabajos y perfil desde la app móvil |
-| **Administración / soporte** | Operar desde el hub desktop: métricas, disputas, liquidación manual del escrow |
+| **Cliente** | Buscar por oficio, ver el perfil público con reseñas, reservar una hora, pagar con Webpay Plus u Oneclick (o como invitado en la web), seguir el servicio, aprobar o rechazar cobros adicionales, dar conformidad y ejercer sus derechos sobre sus datos |
+| **Profesional** | Gestionar trabajos, agenda, tarifas, evidencia y cobros desde la app móvil |
+| **Administración / soporte / QA** | Operar desde la consola de escritorio (Tauri) con segundo factor TOTP: pedidos, disputas, pagos en garantía, liquidaciones, verificación, equipo y bitácora de auditoría |
 
-**Fuera de alcance inmediato del MVP académico-comercial (documentado como pendiente):** MFA obligatorio, payout bancario automatizado (Khipu/Fintoc), firma electrónica legal Ley 19.799, métricas de negocio reales en producción.
+**Fuera del alcance del MVP académico (documentado como pendiente):** Transbank en producción, liquidación bancaria automática (Khipu/Fintoc), firma electrónica de la Ley 19.799, publicación en tiendas y métricas de negocio reales.
 
 ---
 
@@ -66,49 +94,52 @@ Fuente oficial: informe final [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](F
 
 ### En una frase
 
-> **Monorepo multiplataforma** con arquitectura **cliente–servidor** sobre **Supabase (BaaS)**. Tres clientes (Flutter, web React/Vite, desktop Tauri) usan el mismo backend (Auth, PostgreSQL, RLS, Edge Functions). En móvil: organización **modular por features** con capas prácticas (UI → servicios → repositorios), inspirada en Clean Architecture de forma pragmática.
+> **Monorepo multiplataforma** con arquitectura **cliente–servidor** sobre **Supabase (BaaS)**. Tres clientes (Flutter, web React/Vite y consola Tauri) usan el mismo backend (Auth, PostgreSQL con RLS, Realtime y Edge Functions). La web se publica en Vercel bajo el dominio propio `myworksapp.cl` (DNS en Cloudflare) y los correos de Supabase Auth salen por Resend. En móvil: organización **modular por features** con capas prácticas (UI → servicios → repositorios), inspirada en Clean Architecture de forma pragmática.
 
 ### Tipo de arquitectura
 
 | Concepto | Qué es en este proyecto |
 |----------|-------------------------|
 | Cliente–servidor | Datos centralizados en la nube; las apps consultan Supabase |
-| BaaS | Backend como servicio (Auth + Postgres + políticas RLS) |
-| Monorepo | Código de app, web, desktop y `shared/` en un solo árbol (`MyWorksAppProyect/`) |
+| BaaS | Backend como servicio (Auth + Postgres + políticas RLS + Realtime) |
+| Monorepo | Código de app, web, consola y `shared/` en un solo árbol (`MyWorksAppProyect/`) |
 | Feature-First | En Flutter, pantallas por funcionalidad + `core/` compartido |
 | Capas pragmáticas | Presentación → aplicación → dominio → infraestructura (repositorios) |
-| Edge / serverless | Webpay y guest-checkout en Edge Functions (no en el dispositivo) |
+| Edge / serverless | Webpay, Oneclick, compra como invitado, reembolsos, liberación e invitaciones en 18 Edge Functions (Deno) |
 
 ### Diagrama
 
 ```text
-┌─────────────────┐   ┌─────────────────┐   ┌──────────────────────┐
-│  App Flutter    │   │  Web (Vite)     │   │  Desktop (Tauri)     │
-│  Cliente /      │   │  Landing +      │   │  Admin / soporte /   │
-│  profesional    │   │  checkout web   │   │  ejecutivo            │
-└────────┬────────┘   └────────┬────────┘   └──────────┬───────────┘
-         │                     │                         │
-         └──────────┬──────────┴──────────┬──────────────┘
-                    ▼                     ▼
-            shared/ (TypeScript)    Supabase (Auth + DB + RLS)
-                    │                     │
-                    └──────────┬──────────┘
-                               ▼
-                    Edge Functions Webpay / guest-checkout
-                               ▼
-                         Transbank (integración)
+┌─────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
+│  App Flutter    │   │  Web (React/Vite)    │   │  Consola (Tauri 2)   │
+│  Cliente /      │   │  Clientes, invitado  │   │  Admin / soporte /   │
+│  profesional    │   │  myworksapp.cl       │   │  QA, TOTP, bitácora  │
+└────────┬────────┘   └──────────┬───────────┘   └──────────┬───────────┘
+         │                       │ shared/ (TypeScript)     │
+         └───────────────┬───────┴──────────────────────────┘
+                         ▼
+        Supabase: Auth (SMTP Resend) · PostgreSQL + RLS · Realtime
+                         │
+                         ▼
+        Edge Functions (Webpay, Oneclick, invitado, admin)
+                         │
+                         ▼
+        Transbank (ambiente de integración)
+
+Servicios de borde: Vercel (hosting web) · Cloudflare (DNS de myworksapp.cl,
+Turnstile) · Resend (correo, dominio send.myworksapp.cl) · OpenFreeMap (mapas)
 ```
 
 | Componente | Rol |
 |------------|-----|
-| `MyWorksAppProyect/myworksapp_app/` | App móvil Flutter |
-| `MyWorksAppProyect/myworksapp_web/` | Canal web (sesión o invitado) |
-| `MyWorksAppProyect/myworksapp_desktop/` | Hub operativo |
-| `MyWorksAppProyect/shared/` | Contratos TS compartidos |
-| `MyWorksAppProyect/myworksapp_app/supabase/` | Migraciones y Edge Functions |
+| `MyWorksAppProyect/myworksapp_app/` | App móvil Flutter (versión 1.0.11+12) |
+| `MyWorksAppProyect/myworksapp_web/` | Web de clientes (sesión o invitado) |
+| `MyWorksAppProyect/myworksapp_desktop/` | Consola operativa de escritorio (Tauri 2) |
+| `MyWorksAppProyect/shared/` | Contratos TypeScript compartidos por la web y la consola |
+| `MyWorksAppProyect/myworksapp_app/supabase/` | 125 migraciones SQL y 18 Edge Functions |
 | `Fase 1/`, `Fase 2/`, `Documentos Guia/` | Expediente académico Capstone |
 
-Diccionario de datos (fácil de explicar): [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md).
+Diccionario de datos: [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md). Estado técnico completo: [`MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`](MyWorksAppProyect/ESTADO_DEL_PROYECTO.md).
 
 ---
 
@@ -123,7 +154,7 @@ Diccionario de datos (fácil de explicar): [`MyWorksAppProyect/docs/DICCIONARIO_
 | Práctica | En el proyecto |
 |----------|----------------|
 | Scrum adaptado | 11 sprints de 1 o 2 semanas reconstruidos desde el historial de GitHub; entregas por dominio: definición → backend/RLS → clientes → pagos → endurecimiento |
-| MVP primero | Primero lo demostrable; pendientes explícitos (MFA, payout automático, prod Transbank) |
+| MVP primero | Primero lo demostrable; pendientes explícitos (payout automático, Transbank en producción, tiendas) |
 | Fases Capstone | Fase 1 definición del proyecto; Fase 2 y siguientes con evidencias; software en `MyWorksAppProyect/` |
 | Calidad continua | CI, runbooks, diccionario BD, auditorías de seguridad |
 
@@ -144,8 +175,10 @@ Priorizar un flujo → acordar estados en BD → implementar (apps + Edge + SQL)
 - **Datos de la tarjeta de crédito/débito (PCI):** el usuario **no escribe el número de su tarjeta en My Works App**. Paga en la página oficial de **Transbank**.  
   En seguridad de pagos, al número de la tarjeta se le llama **PAN** (*Primary Account Number* = el número largo impreso en la tarjeta).  
   **En simple:** nosotros nunca pedimos ni guardamos ese número; Transbank lo maneja. Así reducimos el riesgo de fraude y cumplimos con buenas prácticas bancarias.
-- **Escrow de negocio (plata “retenida”):** cuando Transbank confirma el cobro, el pago queda marcado como **retenido** en nuestra base. El profesional **no** recibe el dinero de inmediato: primero se completa el trabajo y un administrador registra la transferencia. Eso da confianza al cliente.
-- **Invitado en la web:** si alguien pide una urgencia **sin** iniciar sesión, completa nombre/correo/teléfono/dirección y luego va a Transbank. Si ya tiene sesión, paga en una ventana controlada **sin** abandonar My Works App.
+- **Escrow de negocio (plata “retenida”):** cuando Transbank confirma el cobro, el pago queda marcado como **retenido** en nuestra base. El profesional **no** recibe el dinero de inmediato: primero se completa el trabajo, el pago se libera y un administrador registra la transferencia. Eso da confianza al cliente.
+- **Comisión:** el código cobra un 5 % del pago principal, con un mínimo de $1.000 y nunca más que el pago (`comision_servicio_clp`); se descuenta del monto del profesional. En una orden de cambio el cliente paga el monto más un 8 %.
+- **Consola con mínimo privilegio:** las acciones con dinero y las invitaciones pasan por Edge Functions que llaman `is_admin()` con el JWT del usuario; cada acción queda en la bitácora inmutable `auditoria_consola`.
+- **Invitado en la web:** si alguien reserva **sin** iniciar sesión, completa nombre, correo, teléfono y dirección, resuelve el desafío de Cloudflare Turnstile (validado en el servidor por `guest-checkout`) y luego va a Transbank. Si ya tiene sesión, paga en una ventana controlada **sin** abandonar My Works App.
 - **Trazabilidad:** cada vez que se paga al profesional, queda un registro en la tabla `liquidaciones` (quién liquidó, cuánto, referencia de la transferencia). Sirve para auditoría académica y operativa.
 
 ---
@@ -159,7 +192,8 @@ Priorizar un flujo → acordar estados en BD → implementar (apps + Edge + SQL)
 | `Documentos Guia/` | Guías e instructivos del programa |
 | `Capstone_Project.mpp` | Planificación del proyecto |
 | **`MyWorksAppProyect/`** | **Monorepo del producto** (app, web, desktop, shared, docs técnicos, CI) |
-| `MyWorksAppProyect/docs/` | Runbooks (Transbank, liquidación) y diccionario BD |
+| `MyWorksAppProyect/docs/` | Casos de uso, diccionario BD, runbooks (Transbank, liquidación, despliegue web) y anexos de pruebas |
+| `docs/` | Artefactos Scrum: visión, backlog, sprints, retrospectiva, RNF, objetivos y solución |
 | `MyWorksAppProyect/INSTALL.md` | Instalación y demo técnica |
 
 ---
@@ -185,13 +219,19 @@ Configurar variables Supabase según `.env.example` de web/desktop y `--dart-def
 
 ## 9. Estado respecto al título y al producto
 
+Estado a `main` `d9d2c7c` (20 de noviembre de 2026).
+
 | Dimensión | Estado actual |
 |-----------|----------------|
 | Definición / evidencia Fase 1 | Presente en carpetas académicas |
 | MVP técnico multiplataforma | Implementado (`MyWorksAppProyect/`) |
-| Pagos Webpay Plus y Oneclick (integración) | Implementado (Edge + clientes) |
-| Liquidación al profesional | Manual por admin (automatización futura) |
+| Web en producción | Publicada en Vercel con dominio propio `myworksapp.cl` |
+| Pagos Webpay Plus y Oneclick | Implementados en **ambiente de integración** (solo tarjetas de prueba) |
+| Correo | Supabase Auth envía por SMTP de Resend desde `no-responder@myworksapp.cl` (13 plantillas en español); desde el 20-nov las Edge Functions envían los correos de pago recibido, alta de invitado, reembolso y pago liberado (PR #82) |
+| Liquidación al profesional | Manual por administrador (automatización futura) |
 | Lanzamiento comercial | Condicionado a empresa, credenciales de producción de Transbank y al piloto con usuarios |
+
+**En desarrollo (ramas sin merge, no están en producción):** `cursor/aviso-academico-duoc-v2` (banner y páginas legales) y `cursor/consola-bugs` (24 errores de la consola). También pendientes: la invitación por Resend (falta `INVITE_PROVIDER=resend`) y la prueba de punta a punta de `soporte@myworksapp.cl`. Detalle en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
 
 ---
 

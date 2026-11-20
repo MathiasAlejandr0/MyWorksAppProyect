@@ -1,5 +1,7 @@
 # MyWorksApp — Flujo real de la app (fuente para el video)
 
+> Documento fuente del video. La sección 4 y la URL se actualizaron al 20-nov-2026 (`main` `d9d2c7c`); el resto describe el código del commit `310f00b` y las capturas del 15-nov.
+
 Extraído del código en `main` (commit `310f00b`, repo `nicoussj/Proyecto-Titulo-MyWorksApp`, carpeta `MyWorksAppProyect/`) y de la base en vivo (`wxqrfcqifkfgawrnqmnj`, solo lectura). Rutas relativas a `MyWorksAppProyect/`.
 Las capturas están en `/workspace/mwa_video/screens/` (ver índice al final).
 
@@ -155,16 +157,18 @@ Línea de tiempo (`features/jobs/presentation/widgets/job_status_timeline.dart`;
 
 ## 4. Rol ADMINISTRADOR (consola de escritorio)
 
-`myworksapp_desktop` (React + Tauri; ventana nativa Windows/macOS/Linux; también en `http://127.0.0.1:3001`).
-1. **Login** «Consola operativa — Supervisa. Gestiona. Resuelve.» con «Seguridad empresarial · Visibilidad en tiempo real · Control de acceso basado en roles», «Conexión cifrada TLS 1.3 · Acceso solo con rol administrador · Sesión protegida» (`components/DesktopLoginScreen.tsx`; `desk_01_login_consola.png`).
-2. **Segundo factor obligatorio** (TOTP con app autenticadora, QR la primera vez): «Confirma que eres el administrador» (`AdminMfaGate.tsx`). En vivo `admin_requiere_aal2 = 1`.
-3. **Panel ejecutivo**: **GMV**, **Comisión (15 %)**, Ticket promedio, **CSAT**, Trabajos completados/activos, Disputas abiertas; períodos 24 horas / 7 días / 30 días / 90 días; «Pagos en custodia», «Cobros que requieren atención» (`ExecutiveWorkspace.tsx`, `ExecutivePeriodPanel.tsx`).
-4. **Trabajadores**: lista real; los «En revisión» traen **«Aprobar» / «Rechazar»** (verificación).
-5. **Soporte y disputas**: «Centro de Mediación», tickets con expediente y evidencia; «Resolución del pago retenido» — liberar al profesional o devolver a la tarjeta (`SupportWorkspace.tsx`). «Liquidación manual» al profesional (`FinancialSettlementModal.tsx`).
-6. **Seguridad (DevSecOps)**: salud del sistema, latencia de Supabase, controles de calidad que corren en GitHub Actions (`DevSecOpsWorkspace.tsx`).
-7. **RRHH**: «Directorio de empleados», «Invitar colaborador» (roles soporte / QA) (`HumanResourcesWorkspace.tsx`).
-- La app Flutter también trae pantallas admin (`features/admin/...`: usuarios, trabajadores, trabajos, disputas, pagos, ranking, feature flags), pero la consola oficial es la de escritorio.
-- ⚠️ `DigitalContractModal.tsx` dice explícitamente «DEMO — no es firma electrónica legal (Ley 19.799)»: no presentarlo como contrato legal.
+> Sección actualizada al 20-nov-2026 (`main` `d9d2c7c`). La consola se rehízo después de la captura `desk_01_login_consola.png`: esa captura ya no corresponde a la pantalla actual.
+
+`myworksapp_desktop` (Tauri 2 + React 19; ventana nativa; en desarrollo también en `http://127.0.0.1:3001`).
+1. **Login** «Consola MyWorksApp — Operación del marketplace para administración, soporte y QA.» (`components/DesktopLoginScreen.tsx`).
+2. **Segundo factor obligatorio** «Segundo factor — La consola pide un código de tu aplicación de autenticación.» (`AdminMfaGate.tsx`). Para mover dinero vuelve a pedir el código si el último tiene más de 5 minutos (`lib/totp.ts`). Cierra la sesión tras 15 minutos sin uso (`lib/idle.ts`).
+3. **Menú** (`shell/nav.ts`): Inicio · Operación (Pedidos, Disputas, Tickets de soporte, Reportes y abuso) · Personas (Clientes, Profesionales) · Dinero (Pagos y escrow, Liquidaciones, Reembolsos, Conciliación Transbank, Finanzas) · Contenido (Reseñas, Catálogo, Notificaciones) · Empresa (Equipo y roles, Auditoría, Ajustes) · Sistema (Salud y monitoreo, Errores de la app). Las pantallas están en `features/screens.tsx`.
+4. **Finanzas**: la comisión es la del código, **5 % por pago con mínimo $1.000** (`shared/src/metrics/period.ts`).
+5. **Profesionales**: aprobar, rechazar (con nota obligatoria de al menos 10 caracteres) o pedir corrección. Los documentos se abren con un enlace firmado de 60 segundos. En la prueba del 20-nov este módulo devolvió 403 (error B1, arreglo en la rama `cursor/consola-bugs`, sin merge).
+6. **Disputas y pagos**: liberar, devolver o resolver una disputa exige un motivo de 10 a 2000 caracteres; las Edge Functions verifican `is_admin()` y cada acción queda en la bitácora `auditoria_consola`.
+7. **Equipo y roles**: invitar colaborador (`invitar-colaborador`), cambiar rol, revocar invitación y cerrar sesiones.
+- La app Flutter también trae pantallas admin (`features/admin/...`), pero la consola oficial es la de escritorio.
+- El contrato digital de demostración (`DigitalContractModal.tsx`) ya no existe en el código.
 
 ---
 
@@ -182,7 +186,7 @@ Línea de tiempo (`features/jobs/presentation/widgets/job_status_timeline.dart`;
 1. **Mapa base de la web**: CARTO hoy responde «API KEY REQUIRED» en todas las baldosas (`VITE_CARTO_BASEMAPS_KEY` vacío en `.env.local`). Las capturas `web16x9_*` y `mob_*` se tomaron **sustituyendo** las baldosas por OpenStreetMap estándar (las mismas que usa la app Flutter, `core/map/app_map_tiles.dart`). Las capturas `web_e2e_13/14` muestran la marca de agua: en el video, reemplazar el fondo del mapa. **Recomendación: poner una clave CARTO (o cambiar a OSM) antes de la presentación.**
 2. Leyenda del mapa web se superpone al texto «3 en el mapa · plomería» (detalle visual menor; en la animación, recrear la leyenda limpia).
 3. No hay capturas reales de las pantallas **con sesión** de la app Flutter (panel del profesional, diálogo PIN, detalle del trabajo) ni de la consola **después** del MFA: requieren contraseña de las cuentas demo (el archivo local ya no existe) y TOTP del admin. Se describen desde el código; para el video recrearlas como mockups fieles (textos exactos de este documento) o grabarlas en el emulador.
-4. `demo_modo = 0` en vivo, pero el login de la app sigue listando «Cuentas demo» al elegir Especialista (`app_03b_login_especialista.png`, lista local de `demo_credentials.dart`). No mostrar esa lista en el video.
+4. Al 20-nov `demo_modo = 1` en vivo (reporte de la prueba de la consola), así que las cuentas demo se ven en el catálogo y la web muestra el aviso «Datos de demostración». Además, el login de la app sigue listando «Cuentas demo» al elegir Especialista (`app_03b_login_especialista.png`, lista local de `demo_credentials.dart`). No mostrar esa lista en el video.
 5. La app y la web hablan de «Especialista» (rol en la app) y «Trabajador/Profesional» (textos). En el video usar **«profesional»** en la voz y respetar la etiqueta exacta en pantalla.
 6. Precios y nombres de las capturas son datos de prueba (Puerto Montt, p. ej. Mateo Oyarzo $32.000). Usarlos tal cual o rotular «datos de demostración».
 
@@ -212,7 +216,7 @@ Marca: `/workspace/mwa_video/brand/` (`mark.svg`, `mark_2048.png`, `logo-mark.pn
 
 ## 8. Actualizaciones (15-nov-2026, 22:00 hora de Chile)
 
-- **URL pública (CTA del video):** `https://myworksapp-cl.vercel.app` (responde 200).
+- **URL pública (CTA del video):** `https://myworksapp-cl.vercel.app` (responde 200). Desde el 20-nov la web también está en el dominio propio `https://myworksapp.cl`.
 - **Botón de pago web:** con sesión «Confirmar pedido · CLP 32.000» (`PaymentCheckoutModal`, captura `web_e2e_09` / `E2E/A_01`); invitado «Continuar a Webpay · CLP 32.000» (`GuestCheckoutForm`, `web16x9_07`). Corrige la línea de §2.4 que atribuía «Continuar a Webpay» al flujo con sesión.
 - **Cifras de Mateo** (detalle en `fix_cifras_mateo.md`):
   - «★ 4.9 (0 trabajos)» en el seguimiento web: **corregido en producción** (commit `0fd5f44`; lee los trabajos completados reales y muestra «Nuevo» si la nota es 0). Hay que recapturar `E2E/C_08`, `C_16` y `C_17`.

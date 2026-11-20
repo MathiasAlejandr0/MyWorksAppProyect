@@ -1,10 +1,10 @@
 # Anexo A. Diccionario de datos
 
-A continuación se describe cada una de las 57 tablas del esquema public, alineadas a la base viva de Supabase (`wxqrfcqifkfgawrnqmnj`) al 2026-11-17 (America/Santiago), migración `20261117223850` (quitar_indice_duplicado_servicios). Los atributos se listan con su tipo de dato y su restricción. PK indica la clave primaria y FK la clave foránea. perfiles.id coincide con el identificador de autenticación de Supabase (auth.users.id). No hay tipos ENUM en public (los conjuntos cerrados se restringen con CHECK); hay una vista, encuestas_testing_con_puntaje.
+A continuación se describe cada una de las 60 tablas del esquema public. Las tablas A-1 a A-57 están alineadas a la base viva de Supabase (`wxqrfcqifkfgawrnqmnj`) al 2026-11-17 (America/Santiago), migración `20261117223850` (quitar_indice_duplicado_servicios); las tablas A-58 a A-60 salen de las migraciones del 20-11-2026 leídas del repositorio (`main` `d9d2c7c`), sin medirlas otra vez en la base viva. Los atributos se listan con su tipo de dato y su restricción. PK indica la clave primaria y FK la clave foránea. perfiles.id coincide con el identificador de autenticación de Supabase (auth.users.id). Hasta el 17-11 no había tipos ENUM en public (los conjuntos cerrados se restringen con CHECK); la migración `20261120130000` agrega el único ENUM, `accion_auditoria_consola`. Hay dos vistas: encuestas_testing_con_puntaje y cobros_profesional (migración `20261118053913`).
 
 Fuente: elaboración propia a partir del esquema real (modelo entidad-relación v2.5).
 
-Modelo entidad-relación: las figuras (mapa de dominios, diagrama general con las 57 tablas y un diagrama por dominio con columnas, tipos, PK/FK y cardinalidad) están en `Fase 2/modelo_entidad_relacion/figuras/`, con fuentes editables y un LEEME en la misma carpeta. La explicación de cada dominio, el flujo de pago y las decisiones de diseño están en la sección 2b de `MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`.
+Modelo entidad-relación: las figuras (mapa de dominios, diagrama general con las 57 tablas y un diagrama por dominio con columnas, tipos, PK/FK y cardinalidad) están en `Fase 2/modelo_entidad_relacion/figuras/`, con fuentes editables y un LEEME en la misma carpeta. Las figuras con las 60 tablas que usa el informe final están en `MyWorksAppProyect/docs/modelo_er60/`. La explicación de cada dominio, el flujo de pago y las decisiones de diseño están en la sección 2b de `MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`.
 
 Respecto del anexo v2.3 (43 tablas, 2026-11-08) se agregan nueve tablas: acuerdos_trabajo, disputa_mensajes, reprogramaciones_trabajo (CU-33), pines_inicio_trabajo, bloqueos_pin_inicio, intentos_pin_inicio, cuentas_bancarias, dispositivos_push y verificacion_eventos. También se documentan los roles de consola soporte y qa, el alta de invitado (columnas de pagos) y los cambios de calificación bidireccional, horarios semanales y soporte automático de disputas.
 
@@ -1309,6 +1309,74 @@ RLS activo. Solo un administrador lee las respuestas. Se escriben por la RPC env
 
 Relaciones: id_encuesta apunta a encuestas_testing (si se borra la fila de encuestas_testing, también se borran las filas que la usan).
 
+## Consola de administración (20-11-2026)
+
+### Tabla A-58. auditoria_consola
+
+Bitácora inmutable de las acciones de la consola. Solo se inserta con registrar_auditoria(); el trigger auditoria_consola_solo_rpc rechaza cualquier INSERT, UPDATE o DELETE directo. Migración `20261120130000`.
+
+| Atributo | Tipo de dato | Restricción |
+|----------|--------------|-------------|
+| `id` | uuid | PK, Obligatorio, Default gen_random_uuid() |
+| `creado_en` | timestamptz | Obligatorio, Default now() |
+| `id_actor` | uuid | Opcional (sin FK, para que el registro sobreviva a la cuenta) |
+| `rol_actor` | text | Opcional |
+| `accion` | accion_auditoria_consola (ENUM, 27 valores) | Obligatorio |
+| `entidad` | text | Obligatorio |
+| `id_entidad` | text | Opcional |
+| `antes` | jsonb | Opcional |
+| `despues` | jsonb | Opcional |
+| `motivo` | text | Opcional |
+| `ip` | text | Opcional |
+| `user_agent` | text | Opcional |
+
+Índices: auditoria_consola_creado_idx (creado_en DESC), auditoria_consola_actor_idx (id_actor, creado_en DESC) y auditoria_consola_entidad_idx (entidad, id_entidad).
+
+RLS activo. Solo un administrador lee (SELECT «auditoria_consola_select_admin», is_admin()). Nadie escribe directo.
+
+Valores de accion_auditoria_consola: liberar_pago, devolver_pago, liquidar, resolver_disputa, invitar_colaborador, reenviar_invitacion, revocar_invitacion, cambiar_rol, suspender_cuenta, reactivar_cuenta, aprobar_verificacion, rechazar_verificacion, pedir_correccion, ocultar_resena, restaurar_resena, proponer_resena, cerrar_sesion, editar_ajuste, editar_bandera, aviso_masivo, consultar_rut, exportar_datos, eliminar_datos, sancionar_reporte, descartar_reporte, marcar_error_revisado y nota_interna.
+
+Relaciones: ninguna clave foránea.
+
+### Tabla A-59. rate_limit_ventana
+
+Contador del límite de tasa por clave (IP o correo), compartido por todas las instancias de las Edge Functions. Lo escribe rate_limit_consumir(p_clave, p_max, p_ventana_segundos). Migración `20261120150000`.
+
+| Atributo | Tipo de dato | Restricción |
+|----------|--------------|-------------|
+| `clave` | text | PK, Obligatorio (hasta 200 caracteres) |
+| `conteo` | integer | Obligatorio |
+| `vence_en` | timestamptz | Obligatorio |
+
+RLS activo y sin políticas: anon y authenticated no tienen acceso; solo service_role lee y escribe.
+
+Relaciones: ninguna clave foránea.
+
+## Cuenta del cliente (20-11-2026)
+
+### Tabla A-60. direcciones_cliente
+
+Direcciones que el cliente guarda en la web (/cuenta). Migración `20261120170000`.
+
+| Atributo | Tipo de dato | Restricción |
+|----------|--------------|-------------|
+| `id` | text | PK, Obligatorio |
+| `id_usuario` | uuid | FK → perfiles.id, Obligatorio |
+| `etiqueta` | text | Obligatorio, Default '' |
+| `direccion` | text | Obligatorio |
+| `creado_en` | text | Obligatorio |
+
+RLS activo. Cada usuario ve y edita solo sus direcciones (ALL «direcciones_cliente_propias», id_usuario = auth.uid()); anon no tiene acceso.
+
+Relaciones: id_usuario apunta a perfiles (si se borra la fila de perfiles, también se borran sus direcciones).
+
+### Columnas agregadas el 20-11-2026 a tablas ya descritas
+
+- disputa_mensajes.interna (boolean, Obligatorio, Default false): nota interna de la consola; las partes no la leen (migración `20261120130000`).
+- trabajadores.es_demo (boolean, Obligatorio, Default false): marca las cuentas demo, que se ocultan del catálogo cuando demo_modo no es 1 (migración `20261120140000`).
+- perfiles.telefono (text, Opcional; migración `20261120170000`).
+
 ## Funciones relevantes
+
 
 La API de la aplicación no escribe en varias de estas tablas de forma directa: el reagendamiento (CU-33), el PIN de inicio, el escrow Webpay, el alta de invitado y la consola de soporte/qa se exponen como funciones SECURITY DEFINER. El detalle (nombre, argumentos y propósito) está en el diccionario `MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`, sección 6.

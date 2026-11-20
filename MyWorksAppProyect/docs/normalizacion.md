@@ -2,6 +2,8 @@
 
 Este documento explica qué son las formas normales y muestra, con tablas reales de MyWorksApp, dónde se aplica la **cuarta forma normal (4FN)**. Se revisó el esquema `public` de la base viva (proyecto Supabase `wxqrfcqifkfgawrnqmnj`, 17-11-2026, 57 tablas, última migración `20261117223850`). La lista completa de tablas y sus diagramas está en [`modelo-datos.md`](modelo-datos.md).
 
+Las 3 tablas agregadas el 20-11-2026 (`auditoria_consola`, `rate_limit_ventana` y `direcciones_cliente`) no se analizan aquí. Cada una tiene una clave propia y columnas que dependen solo de ella.
+
 ## 1. Qué es normalizar
 
 Normalizar es ordenar los datos en tablas para que cada hecho se guarde **una sola vez**. Así se evitan datos repetidos, contradicciones al actualizar y filas que no se pueden borrar sin perder otra información. Cada forma normal agrega una regla a la anterior.

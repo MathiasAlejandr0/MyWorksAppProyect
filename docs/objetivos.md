@@ -52,4 +52,6 @@ Consulta agregada de solo lectura a Supabase (`wxqrfcqifkfgawrnqmnj`), sin datos
 | Tablas de `public` con RLS | 57 de 57; 129 políticas |
 | Profesionales con `estado_verificacion = 'verificado'` | 45, en 12 oficios (incluye las cuentas de demostración) |
 | Disputas | 2 registradas, 1 resuelta |
-| Respuestas de la encuesta de prueba (SUS) | 0; se responde en https://myworksapp-cl.vercel.app/encuesta |
+| Respuestas de la encuesta de prueba (SUS) | 0; se responde en https://myworksapp.cl/encuesta |
+
+Después de esa consulta, las migraciones del 20-nov agregaron 3 tablas (`auditoria_consola`, `rate_limit_ventana` y `direcciones_cliente`), todas con `ENABLE ROW LEVEL SECURITY` en su migración. El esquema queda en 60 tablas; el conteo de políticas en vivo no se volvió a medir. `app_config.demo_modo` está en 1 (reporte del 20-nov), así que el conteo de verificados incluye las cuentas demo visibles.

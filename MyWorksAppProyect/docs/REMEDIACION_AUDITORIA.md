@@ -1,5 +1,7 @@
 # Remediación auditoría
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (20-09-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `d9d2c7c`) está en [`ESTADO_DEL_PROYECTO.md`](../ESTADO_DEL_PROYECTO.md).
+
 ## Sprint 1 — Honestidad + UX
 - [x] README MVP; demos; secrets; tokens; hero; strict TS
 

@@ -27,7 +27,7 @@ Responsabilidades técnicas, según `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksAp
 
 | Integrante | Responsabilidad declarada |
 |------------|---------------------------|
-| Mathias Jara | Interfaces: app móvil Flutter, web PWA y hub de escritorio (junto con Nicolas Chiguay). Cobro con retención junto con Gabriel Valderas. |
+| Mathias Jara | Interfaces: app móvil Flutter, web PWA y consola de escritorio (junto con Nicolas Chiguay). Cobro con retención junto con Gabriel Valderas. |
 | Gabriel Valderas | Datos, RLS y pagos. |
 | Nicolas Chiguay | UX, flujos y documentación; informe de avance e informe final «y equipo». |
 
@@ -74,6 +74,8 @@ Los commits acreditan entregas, no la realización de reuniones: el calendario e
 | S10 | 16 – 22 nov 2026 | 1 | Cierre de la Fase 2 | 26 | En curso |
 | S11 | 23 nov – 6 dic 2026 | 2 | Defensa | — | Planificado |
 
+Nota del 20-nov-2026: después del corte en `514781d` entraron 60 commits más a `main` hasta `d9d2c7c` (S10), entre ellos la consola nueva, la web en `myworksapp.cl`, el límite de tasa global y los correos transaccionales (PR #75 a #82). La tabla mantiene los conteos del corte del 17-nov.
+
 Plan por fases, según `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`:
 
 | Actividad | Semanas | Responsable declarado |
@@ -82,7 +84,7 @@ Plan por fases, según `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`:
 | Diseño e implementación de BD y RLS | 5 a 8 | Gabriel Valderas |
 | App móvil Flutter | 5 a 14 | Mathias Jara |
 | Página web PWA | 7 a 14 | Mathias Jara |
-| Hub de escritorio | 8 a 14 | Mathias Jara y Nicolas Chiguay |
+| Consola de escritorio | 8 a 14 | Mathias Jara y Nicolas Chiguay |
 | Cobro con retención (escrow) | 8 a 14 | Gabriel Valderas y Mathias Jara |
 | Pruebas del flujo crítico | 12 a 16 | Equipo |
 | Informe de avance (Fase 2) | 9 a 10 | Nicolas Chiguay y equipo |
