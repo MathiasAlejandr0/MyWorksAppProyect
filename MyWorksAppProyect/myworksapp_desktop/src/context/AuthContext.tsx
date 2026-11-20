@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -9,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Profile } from '@myworksapp/shared';
+import { AuthContext } from './auth-store';
 import {
   AuthError,
   PASSWORD_SETUP_STORAGE_KEY,
@@ -20,18 +19,8 @@ import {
   updateAccountPassword,
 } from '@myworksapp/shared';
 import { CONSOLE_ACCESS_DENIED, CONSOLE_ROLES, canAccessDesktopHub } from '../authAccess';
+import { markTotpVerified } from '../lib/totp';
 import { supabase } from '../supabaseClient';
-
-interface AuthContextValue {
-  profile: Profile | null;
-  loading: boolean;
-  needsMfa: boolean;
-  mustSetPassword: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  completeMfa: () => Promise<void>;
-  finishPasswordSetup: (password: string) => Promise<void>;
-}
 
 function locationRequiresPassword(): boolean {
   if (typeof window === 'undefined') return false;
@@ -53,15 +42,15 @@ function clearPasswordSetupFlag(): void {
   sessionStorage.removeItem(PASSWORD_SETUP_STORAGE_KEY);
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [needsMfa, setNeedsMfa] = useState(false);
   const [mustSetPassword, setMustSetPassword] = useState(readMustSetPassword);
   const [loading, setLoading] = useState(true);
   const mustSetPasswordRef = useRef(mustSetPassword);
-  mustSetPasswordRef.current = mustSetPassword;
+  useEffect(() => {
+    mustSetPasswordRef.current = mustSetPassword;
+  }, [mustSetPassword]);
 
   const sessionNeedsMfa = useCallback(async () => {
     const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -93,6 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       requireRole(current, [...CONSOLE_ROLES]);
       if (!canAccessDesktopHub(current.role)) {
         throw new AuthError(CONSOLE_ACCESS_DENIED);
+      }
+      if (current.accountStatus !== 'activo') {
+        throw new AuthError('Cuenta suspendida o bloqueada.');
       }
       if (await sessionNeedsMfa()) {
         setProfile(null);
@@ -185,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshProfile]);
 
   const completeMfa = useCallback(async () => {
+    markTotpVerified();
     await refreshProfile();
   }, [refreshProfile]);
 
@@ -204,11 +197,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider');
-  return ctx;
-}
-
-export { AuthError };

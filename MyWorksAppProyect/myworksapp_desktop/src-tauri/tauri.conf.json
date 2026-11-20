@@ -15,11 +15,24 @@
         "title": "MyWorksApp Admin",
         "width": 1360,
         "height": 860,
+        "minWidth": 1180,
+        "minHeight": 720,
         "resizable": true
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.supabase.in wss://*.supabase.in; font-src 'self' data:"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://wxqrfcqifkfgawrnqmnj.supabase.co; connect-src 'self' http://127.0.0.1:3001 http://127.0.0.1:54321 https://wxqrfcqifkfgawrnqmnj.supabase.co wss://wxqrfcqifkfgawrnqmnj.supabase.co; font-src 'self'"
+    }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["myworksapp-admin"]
+      }
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZBRkE5MkExODQzNTc4RkMKUldUOGVEV0VvWkw2K2x0M043eExaOWs5em9Kcko0NmJzQk9BUGxQaDlYZzV2TlJHTTIxdW9FaWMK",
+      "endpoints": ["https://myworksapp-cl.vercel.app/desktop/update.json"]
     }
   },
   "bundle": {

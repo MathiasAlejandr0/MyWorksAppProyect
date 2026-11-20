@@ -1,0 +1,67 @@
+.shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 248px 1fr;
+}
+
+.side {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--line);
+  padding: 16px 12px 24px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: auto;
+}
+
+.brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 8px 16px;
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+.brand img { width: 28px; height: 28px; }
+
+.workspace {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-canvas);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.topbar .search {
+  flex: 1;
+  text-align: left;
+  color: var(--text-muted);
+}
+
+.content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-slot { position: relative; }
+
+.warn-banner {
+  background: color-mix(in srgb, var(--brand-orange) 16%, var(--bg-surface));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}

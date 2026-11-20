@@ -121,6 +121,51 @@ export type Database = {
           },
         ]
       }
+      auditoria_consola: {
+        Row: {
+          accion: string
+          antes: Json | null
+          creado_en: string
+          despues: Json | null
+          entidad: string
+          id: string
+          id_actor: string | null
+          id_entidad: string | null
+          ip: string | null
+          motivo: string | null
+          rol_actor: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          accion: string
+          antes?: Json | null
+          creado_en?: string
+          despues?: Json | null
+          entidad: string
+          id?: string
+          id_actor?: string | null
+          id_entidad?: string | null
+          ip?: string | null
+          motivo?: string | null
+          rol_actor?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          accion?: string
+          antes?: Json | null
+          creado_en?: string
+          despues?: Json | null
+          entidad?: string
+          id?: string
+          id_actor?: string | null
+          id_entidad?: string | null
+          ip?: string | null
+          motivo?: string | null
+          rol_actor?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       app_config: {
         Row: {
           actualizado_en: string
@@ -647,9 +692,11 @@ export type Database = {
           id: string
           id_autor: string | null
           id_disputa: string
+          interna: boolean
         }
         Insert: {
           creado_en?: string
+          interna?: boolean
           cuerpo: string
           id: string
           id_autor?: string | null
@@ -2805,6 +2852,69 @@ export type Database = {
       confirmar_trabajo_tras_captura: {
         Args: { p_id_pago: string }
         Returns: string
+      }
+      consola_buscar: {
+        Args: { p_q: string }
+        Returns: {
+          detalle: string
+          id: string
+          ruta: string
+          tipo: string
+          titulo: string
+        }[]
+      }
+      consola_cambiar_rol: {
+        Args: { p_id: string; p_motivo: string; p_rol: string }
+        Returns: undefined
+      }
+      consola_cron_salud: { Args: never; Returns: Json }
+      consola_editar_bandera: {
+        Args: { p_habilitada: number; p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      consola_editar_config: {
+        Args: { p_clave: string; p_motivo: string; p_valor: string }
+        Returns: undefined
+      }
+      consola_fijar_estado_cuenta: {
+        Args: { p_estado: string; p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      consola_listar_equipo: {
+        Args: never
+        Returns: {
+          correo: string
+          creado_en: string
+          estado_cuenta: string
+          id: string
+          invitacion_pendiente: boolean
+          nombre: string
+          rol: string
+        }[]
+      }
+      consola_marcar_error: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      consola_moderar_resena: {
+        Args: { p_estado: string; p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      consola_nota_interna: {
+        Args: { p_id: string; p_nota: string }
+        Returns: undefined
+      }
+      consola_registrar_vista_sensible: {
+        Args: { p_entidad: string; p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      consola_resolver_reporte: {
+        Args: { p_estado: string; p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      consola_resumen_periodo: {
+        Args: { p_desde: string; p_hasta: string }
+        Returns: Json
       }
       consola_disputas_abiertas: {
         Args: never

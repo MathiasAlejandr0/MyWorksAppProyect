@@ -1,268 +1,109 @@
-import { useState, lazy, Suspense } from 'react';
-import {
-  LayoutGrid,
-  Headset,
-  Shield,
-  Users,
-  Bell,
-  LogOut,
-  UserCheck,
-  SlidersHorizontal,
-  Database,
-  ChevronDown,
-} from 'lucide-react';
-import { ExecutiveWorkspace } from './components/ExecutiveWorkspace';
+import { useEffect } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { DesktopLoginScreen } from './components/DesktopLoginScreen';
 import { InvitePasswordScreen } from './components/InvitePasswordScreen';
 import { AdminMfaGate } from './components/AdminMfaGate';
-import { SessionLoadingShell } from './components/LoadingState';
-import { AdminInboxPanel } from './components/AdminInboxPanel';
-import { useAuth } from './context/AuthContext';
-import { consolePermissions, consoleRoleLabel, type ConsolePermissions } from './authAccess';
-import { supabaseConfigStatus } from './supabaseClient';
+import { useAuth } from './context/auth-store';
+import {
+  AjustesPage,
+  AuditoriaPage,
+  CatalogoPage,
+  ConciliacionPage,
+  CuentaPage,
+  DisputasPage,
+  EquipoPage,
+  ErroresPage,
+  FinanzasPage,
+  LiquidacionesPage,
+  NotificacionesPage,
+  PagosPage,
+  PedidosPage,
+  ProfesionalesPage,
+  ReembolsosPage,
+  ReportesPage,
+  ResenasPage,
+  ResumenPage,
+  SaludPage,
+  TicketsPage,
+  UsuariosPage,
+} from './features/screens';
+import { isTauriRuntime } from './lib/redirect';
+import { supabase, supabaseConfigStatus } from './supabaseClient';
+import { Shell } from './shell/Shell';
+import { RouteErrorBoundary } from './ui/boundary';
+import { EmptyState } from './ui/kit';
 
-const SupportWorkspace = lazy(() =>
-  import('./components/SupportWorkspace').then((m) => ({
-    default: m.SupportWorkspace,
-  })),
-);
-const DevSecOpsWorkspace = lazy(() =>
-  import('./components/DevSecOpsWorkspace').then((m) => ({
-    default: m.DevSecOpsWorkspace,
-  })),
-);
-const HumanResourcesWorkspace = lazy(() =>
-  import('./components/HumanResourcesWorkspace').then((m) => ({
-    default: m.HumanResourcesWorkspace,
-  })),
-);
-
-const NAV_ITEMS: ReadonlyArray<{
-  id: number;
-  label: string;
-  icon: typeof LayoutGrid;
-  allowed: (p: ConsolePermissions) => boolean;
-}> = [
-  { id: 0, label: 'Panel ejecutivo', icon: LayoutGrid, allowed: (p) => p.executive },
-  { id: 1, label: 'Soporte y disputas', icon: Headset, allowed: (p) => p.supportQueue },
-  { id: 2, label: 'Seguridad', icon: Shield, allowed: (p) => p.security },
-  { id: 3, label: 'RRHH', icon: Users, allowed: (p) => p.people },
-];
-
-export function App() {
-  const { profile, loading, logout, needsMfa, mustSetPassword, finishPasswordSetup } = useAuth();
-  const [chosenWorkspace, setActiveRoleWorkspace] = useState<number | null>(null);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showInbox, setShowInbox] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-
-  if (loading) {
-    return <SessionLoadingShell />;
+function Gate() {
+  const { profile, loading, needsMfa, mustSetPassword, finishPasswordSetup, logout } = useAuth();
+  if (!supabaseConfigStatus.urlConfigured || !supabaseConfigStatus.anonKeyConfigured) {
+    return <EmptyState title="Faltan las variables de Supabase" detail="Define VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY antes de abrir la consola." />;
   }
-
-  if (mustSetPassword) {
-    return (
-      <InvitePasswordScreen
-        onSubmit={finishPasswordSetup}
-        onCancel={logout}
-      />
-    );
-  }
-
-  if (needsMfa) {
-    return <AdminMfaGate />;
-  }
-
-  if (!profile) {
-    return <DesktopLoginScreen />;
-  }
-
-  const permissions = consolePermissions(profile.role);
-  const navItems = NAV_ITEMS.filter((item) => item.allowed(permissions));
-  // Cada rol abre en la primera sección que tiene permitida.
-  const activeRoleWorkspace =
-    chosenWorkspace !== null && navItems.some((item) => item.id === chosenWorkspace)
-      ? chosenWorkspace
-      : navItems[0]?.id ?? -1;
-
-  const initials = profile.name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part: string) => part[0]?.toUpperCase() ?? '')
-    .join('') || 'AD';
-
+  if (loading) return <p className="muted">Cargando sesión…</p>;
+  if (mustSetPassword) return <InvitePasswordScreen onSubmit={finishPasswordSetup} onCancel={logout} />;
+  if (needsMfa) return <AdminMfaGate />;
+  if (!profile) return <DesktopLoginScreen />;
   return (
-    <div className="desktop-layout">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="sidebar-brand-icon" aria-hidden>
-            <img src="/brand/mark.svg" alt="" width={28} height={28} />
-          </div>
-          <div>
-            <h2 className="sidebar-brand-name">My Works App</h2>
-            <span className="sidebar-brand-subtitle">Operación</span>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav" aria-label="Operaciones">
-          {navItems.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              className={`sidebar-nav-item${activeRoleWorkspace === id ? ' active' : ''}`}
-              onClick={() => setActiveRoleWorkspace(id)}
-              aria-current={activeRoleWorkspace === id ? 'page' : undefined}
-            >
-              <Icon size={18} strokeWidth={2} />
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="sidebar-profile">
-            <div className="sidebar-profile-avatar">{initials}</div>
-            <div className="sidebar-profile-info">
-              <div className="sidebar-profile-name">{profile.name}</div>
-              <div className="sidebar-profile-role">{consoleRoleLabel(profile.role)}</div>
-            </div>
-            <ChevronDown size={16} className="sidebar-profile-chevron" aria-hidden />
-          </div>
-          <button type="button" className="sidebar-profile-btn" onClick={() => setShowProfile(true)}>
-            <UserCheck size={14} /> Ver perfil completo
-          </button>
-          <button
-            type="button"
-            className="sidebar-logout-btn"
-            onClick={() => void logout()}
-            title="Cerrar sesión"
-          >
-            <LogOut size={14} /> Cerrar sesión
-          </button>
-        </div>
-      </aside>
-
-      <main className="main-content">
-        <div className={`workspace-pad page-enter${activeRoleWorkspace === 1 ? ' workspace-pad--flush' : ''}`}>
-          <Suspense fallback={<SessionLoadingShell />}>
-          {activeRoleWorkspace === 0 && permissions.executive && (
-            <ExecutiveWorkspace
-              headerActions={(
-                <div className="shell-actions">
-                  <div className="live-pill">
-                    <Database size={14} />
-                    <span className="live-pill-dot" aria-hidden />
-                    Supabase LIVE
-                    <svg className="live-pill-wave" viewBox="0 0 24 12" aria-hidden>
-                      <polyline points="0,8 4,4 8,8 12,2 16,6 20,3 24,6" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
-                  </div>
-                  <span className="shell-divider" aria-hidden />
-                  <button type="button" className="icon-btn" aria-label="Notificaciones" onClick={() => setShowInbox(true)}>
-                    <Bell size={20} />
-                  </button>
-                  <button type="button" className="icon-btn" aria-label="Ajustes" onClick={() => setShowSettings(true)}>
-                    <SlidersHorizontal size={20} />
-                  </button>
-                </div>
-              )}
-            />
-          )}
-          {activeRoleWorkspace === 1 && permissions.supportQueue && (
-            <SupportWorkspace adminId={profile.id} permissions={permissions} />
-          )}
-          {activeRoleWorkspace === 2 && permissions.security && (
-            <DevSecOpsWorkspace operatorEmail={profile.email} />
-          )}
-          {activeRoleWorkspace === 3 && permissions.people && (
-            <HumanResourcesWorkspace onOpenNotifications={() => setShowInbox(true)} />
-          )}
-          </Suspense>
-        </div>
-      </main>
-      {showInbox && (
-        <AdminInboxPanel userId={profile.id} onClose={() => setShowInbox(false)} />
-      )}
-      {showSettings && (
-        <div
-          role="presentation"
-          onClick={() => setShowSettings(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(8, 16, 32, 0.55)',
-            display: 'grid',
-            placeItems: 'center',
-            zIndex: 40,
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="admin-settings-title"
-            onClick={(event) => event.stopPropagation()}
-            style={{
-              background: '#0B1F3A',
-              color: '#fff',
-              padding: 24,
-              borderRadius: 16,
-              minWidth: 320,
-              maxWidth: 460,
-            }}
-          >
-            <h2 id="admin-settings-title" style={{ margin: '0 0 8px' }}>Ajustes de la sesión</h2>
-            <p style={{ margin: '0 0 4px' }}>{profile.email}</p>
-            <p style={{ margin: '0 0 8px' }}>Rol: {consoleRoleLabel(profile.role)}</p>
-            <p style={{ margin: '0 0 16px' }}>
-              Supabase: {supabaseConfigStatus.urlConfigured ? 'URL configurada' : 'falta VITE_SUPABASE_URL'}.
-              {' '}
-              Clave publicable: {supabaseConfigStatus.anonKeyConfigured ? 'configurada' : 'falta VITE_SUPABASE_ANON_KEY'}.
-            </p>
-            <button type="button" className="sidebar-logout-btn" onClick={() => setShowSettings(false)}>
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
-      {showProfile && (
-        <div
-          role="presentation"
-          onClick={() => setShowProfile(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(8, 16, 32, 0.55)',
-            display: 'grid',
-            placeItems: 'center',
-            zIndex: 40,
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="admin-profile-title"
-            onClick={(event) => event.stopPropagation()}
-            style={{
-              background: '#0B1F3A',
-              color: '#fff',
-              padding: 24,
-              borderRadius: 16,
-              minWidth: 320,
-              maxWidth: 420,
-            }}
-          >
-            <h2 id="admin-profile-title" style={{ margin: '0 0 8px' }}>{profile.name}</h2>
-            <p style={{ margin: '0 0 4px' }}>{profile.email}</p>
-            <p style={{ margin: '0 0 16px', opacity: 0.8 }}>Rol: {consoleRoleLabel(profile.role)}</p>
-            <button type="button" className="sidebar-logout-btn" onClick={() => setShowProfile(false)}>
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    <Shell>
+      <RouteErrorBoundary>
+        <Routes>
+          <Route path="/" element={<Navigate to="/resumen" replace />} />
+          <Route path="/resumen" element={<ResumenPage />} />
+          <Route path="/pedidos" element={<PedidosPage />} />
+          <Route path="/pedidos/:id" element={<PedidosPage />} />
+          <Route path="/disputas" element={<DisputasPage />} />
+          <Route path="/tickets" element={<TicketsPage />} />
+          <Route path="/reportes" element={<ReportesPage />} />
+          <Route path="/usuarios" element={<UsuariosPage />} />
+          <Route path="/usuarios/:id" element={<UsuariosPage />} />
+          <Route path="/profesionales" element={<ProfesionalesPage />} />
+          <Route path="/profesionales/:id" element={<ProfesionalesPage />} />
+          <Route path="/pagos" element={<PagosPage />} />
+          <Route path="/pagos/:id" element={<PagosPage />} />
+          <Route path="/liquidaciones" element={<LiquidacionesPage />} />
+          <Route path="/reembolsos" element={<ReembolsosPage />} />
+          <Route path="/conciliacion" element={<ConciliacionPage />} />
+          <Route path="/finanzas" element={<FinanzasPage />} />
+          <Route path="/resenas" element={<ResenasPage />} />
+          <Route path="/catalogo" element={<CatalogoPage />} />
+          <Route path="/notificaciones" element={<NotificacionesPage />} />
+          <Route path="/equipo" element={<EquipoPage />} />
+          <Route path="/auditoria" element={<AuditoriaPage />} />
+          <Route path="/ajustes" element={<AjustesPage />} />
+          <Route path="/salud" element={<SaludPage />} />
+          <Route path="/errores" element={<ErroresPage />} />
+          <Route path="/cuenta" element={<CuentaPage />} />
+          <Route path="*" element={<EmptyState title="Esta ruta no existe." />} />
+        </Routes>
+      </RouteErrorBoundary>
+    </Shell>
   );
 }
 
-export default App;
+export default function App() {
+  useEffect(() => {
+    if (!isTauriRuntime()) return;
+    void import('@tauri-apps/plugin-deep-link').then(async ({ onOpenUrl, getCurrent }) => {
+      const handle = async (urls: string[]) => {
+        const target = urls[0];
+        if (!target) return;
+        const url = new URL(target);
+        const code = url.searchParams.get('code');
+        if (code) await supabaseAuthExchange(code);
+      };
+      const current = await getCurrent();
+      if (current?.length) await handle(current);
+      await onOpenUrl((urls) => { void handle(urls); });
+    }).catch(() => {
+      // La versión web no tiene el plugin.
+    });
+  }, []);
+  return (
+    <BrowserRouter>
+      <Gate />
+    </BrowserRouter>
+  );
+}
+
+async function supabaseAuthExchange(code: string): Promise<void> {
+  await supabase.auth.exchangeCodeForSession(code);
+}
