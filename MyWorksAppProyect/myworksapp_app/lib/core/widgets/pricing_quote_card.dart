@@ -29,6 +29,7 @@ class ServerAlignedQuoteCard extends StatefulWidget {
 
 class _ServerAlignedQuoteCardState extends State<ServerAlignedQuoteCard> {
   PriceQuote? _quote;
+  var _loaded = false;
 
   @override
   void initState() {
@@ -41,8 +42,9 @@ class _ServerAlignedQuoteCardState extends State<ServerAlignedQuoteCard> {
         await PaymentService.instance.previewJobCharge(widget.jobId);
     if (!mounted) return;
     setState(() {
+      _loaded = true;
       _quote = preview == null
-          ? widget.quote
+          ? null
           : PricingService.instance.applyServerCharge(widget.quote, preview);
     });
   }
@@ -50,10 +52,16 @@ class _ServerAlignedQuoteCardState extends State<ServerAlignedQuoteCard> {
   @override
   Widget build(BuildContext context) {
     final quote = _quote;
+    if (!_loaded) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: Text('Calculando tarifa y traslado…')),
+      );
+    }
     if (quote == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(child: CircularProgressIndicator()),
+        child: Text('No pudimos calcular el total. Ábrelo de nuevo para reintentar.'),
       );
     }
     return PricingQuoteCard(

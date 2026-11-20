@@ -210,14 +210,12 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       option: _selectedWorkerOption!,
       squareMeters: _parsedSquareMeters,
     );
-    return base + _traslado.extraClp;
+    return base;
   }
 
   int? _chargeAmountClpForDisclaimer() {
-    if (_usesWorkerTierPricing && _selectedWorkerOption != null) {
-      if (_needsSquareMeters && _parsedSquareMeters == null) return null;
-      return _workerTierTotalClp();
-    }
+    // El traslado sale de la ubicación real. El monto cobrado se muestra
+    // en la hoja de pago, no en este aviso.
     return null;
   }
 

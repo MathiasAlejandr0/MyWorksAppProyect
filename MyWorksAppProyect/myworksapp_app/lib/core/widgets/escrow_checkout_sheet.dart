@@ -88,8 +88,16 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
     }
   }
 
-  /// Una sola lectura del traslado real, antes de mostrar el total.
+  /// El total visible es el del servidor. Sin esa lectura no hay botón de pagar.
   Future<void> _alignCharge() async {
+    if (_isChangeOrder) {
+      if (!mounted) return;
+      setState(() {
+        _chargeReady = true;
+        _banner = null;
+      });
+      return;
+    }
     JobChargePreview? preview;
     try {
       preview =
@@ -98,11 +106,16 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       preview = null;
     }
     if (!mounted) return;
+    final total = payableTotalClp(preview?.totalClp);
     setState(() {
-      if (preview != null) {
+      if (preview != null && total != null) {
         _quote = PricingService.instance.applyServerCharge(_quote, preview);
+        _chargeReady = true;
+        _banner = null;
+      } else {
+        _chargeReady = false;
+        _banner = chargeNotReadyMessage;
       }
-      _chargeReady = true;
     });
   }
 
@@ -114,17 +127,47 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
     );
   }
 
+  /// Devuelve el entero que se va a cobrar. Si el servidor cambió el total,
+  /// actualiza el botón y no cobra: el cliente paga el monto que está viendo.
+  Future<int?> _payableOrRefresh() async {
+    if (_isChangeOrder) return _quote.totalClp;
+    JobChargePreview? preview;
+    try {
+      preview =
+          await ref.read(paymentServiceProvider).previewJobCharge(widget.jobId);
+    } catch (_) {
+      preview = null;
+    }
+    if (!mounted) return null;
+    final total = payableTotalClp(preview?.totalClp);
+    if (preview == null || total == null) {
+      setState(() {
+        _chargeReady = false;
+        _banner = chargeNotReadyMessage;
+      });
+      return null;
+    }
+    if (total != _quote.totalClp) {
+      setState(() {
+        _quote = PricingService.instance.applyServerCharge(_quote, preview!);
+        _chargeReady = true;
+        _banner = 'El total se actualizó. El botón muestra el monto que se cobra.';
+      });
+      return null;
+    }
+    return total;
+  }
+
   /// El aviso va dentro de la hoja. Un SnackBar del scaffold de atrás
   /// queda tapado hasta que el cliente cierra el cobro.
   void _fail(Object e) {
     final text = _errorText(e);
-    final expected = expectedChargeFromMismatch(text);
-    if (expected != null && expected != _quote.totalClp) {
+    if (!_isChangeOrder && paymentMismatchNeedsReload(text)) {
       setState(() {
-        _quote = PricingService.instance.alignToChargedTotal(_quote, expected);
-        _banner =
-            'El total quedó en ${const ClpFormat().format(expected)} según la tarifa real. Confirma otra vez para pagar.';
+        _chargeReady = false;
+        _banner = null;
       });
+      _alignCharge();
       return;
     }
     setState(() => _banner = text);
@@ -154,10 +197,12 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
   Future<void> _payWithoutSavingCard() async {
     setState(() => _processing = true);
     try {
+      final amount = await _payableOrRefresh();
+      if (amount == null || !mounted) return;
       final session =
           await ref.read(paymentServiceProvider).initiateWebpayPayment(
                 jobId: widget.jobId,
-                amount: _quote.totalClp.toDouble(),
+                amount: amount.toDouble(),
                 changeOrderId: widget.changeOrderId,
               );
       final url = session.redirectUrl ?? session.url;
@@ -204,9 +249,11 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       }
 
       final payments = ref.read(paymentServiceProvider);
+      final amount = await _payableOrRefresh();
+      if (amount == null || !mounted) return;
       var charge = await payments.chargeSavedCard(
         jobId: widget.jobId,
-        amount: _quote.totalClp.toDouble(),
+        amount: amount.toDouble(),
       );
       if (!mounted) return;
       if (charge.needsCard) {
@@ -218,7 +265,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
         if (!mounted || !enrolled) return;
         charge = await payments.chargeSavedCard(
           jobId: widget.jobId,
-          amount: _quote.totalClp.toDouble(),
+          amount: amount.toDouble(),
         );
       }
       if (!mounted) return;
@@ -269,7 +316,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                   ),
             ),
             const SizedBox(height: 4),
-            if (!_chargeReady)
+            if (!_chargeReady && _banner == null)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 28),
                 child: Column(
@@ -280,7 +327,7 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                   ],
                 ),
               )
-            else
+            else if (_chargeReady)
               Text(
                 const ClpFormat().format(_quote.totalClp),
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -315,8 +362,8 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
                     Expanded(
                       child: Text(
                         kIsWeb
-                            ? 'Primera confirmación: el monto queda retenido en Transbank. Se libera solo cuando recibas conforme el trabajo.'
-                            : 'Primera confirmación: el monto queda retenido. Se libera solo cuando recibas conforme el trabajo.',
+                            ? 'El monto queda retenido en Transbank. Se libera solo cuando recibas conforme el trabajo.'
+                            : 'El monto queda retenido. Se libera solo cuando recibas conforme el trabajo.',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.brandOrange,
@@ -359,6 +406,11 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
               ),
               const SizedBox(height: 12),
             ],
+            if (!_isChangeOrder && !_chargeReady && !_processing)
+              TextButton(
+                onPressed: _alignCharge,
+                child: const Text('Reintentar el cálculo'),
+              ),
             FilledButton.icon(
               onPressed: _processing || !_chargeReady
                   ? null

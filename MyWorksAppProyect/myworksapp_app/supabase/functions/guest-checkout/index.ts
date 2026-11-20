@@ -35,6 +35,8 @@ type GuestBody = {
   scheduledAt?: string;
   returnUrl?: string;
   turnstileToken?: string;
+  /** Solo devuelve el total real. No crea cuenta ni pago. */
+  previewOnly?: boolean;
 };
 
 function clean(s: unknown, max = 200): string {
@@ -51,6 +53,65 @@ function scheduledOrNull(value: unknown): string | null {
   const parsed = Date.parse(raw);
   if (!Number.isFinite(parsed)) return null;
   return new Date(parsed).toISOString();
+}
+
+async function previewGuestTotal(req: Request, body: GuestBody): Promise<Response> {
+  const workerId = clean(body.workerId, 80);
+  const jobLat = asCoord(body.latitude);
+  const jobLng = asCoord(body.longitude);
+  if (!workerId || jobLat == null || jobLng == null) {
+    return jsonResponse(
+      req,
+      { error: "Indica el profesional y el punto del trabajo para calcular el total" },
+      400,
+    );
+  }
+  const admin = serviceClient();
+  const { data: worker, error: workerErr } = await admin
+    .from("trabajadores")
+    .select(
+      "id_usuario, tarifa_visita, disponible, precios_configurados, estado_verificacion, latitud_base, longitud_base, radio_servicio_km",
+    )
+    .eq("id_usuario", workerId)
+    .maybeSingle();
+  if (workerErr || !worker) {
+    return jsonResponse(req, { error: "Profesional no encontrado" }, 404);
+  }
+  if (worker.estado_verificacion !== "verificado") {
+    return jsonResponse(
+      req,
+      { error: "Este profesional todavía no está verificado para cobrar" },
+      400,
+    );
+  }
+  if (Number(worker.disponible) !== 1 || Number(worker.precios_configurados) !== 1) {
+    return jsonResponse(req, { error: "El profesional no está disponible" }, 400);
+  }
+  const visitFee = Number(worker.tarifa_visita);
+  if (!Number.isFinite(visitFee) || visitFee <= 0) {
+    return jsonResponse(req, { error: "El profesional no tiene tarifa de visita" }, 400);
+  }
+  const quote = transportQuote({
+    workerLat: asCoord(worker.latitud_base),
+    workerLng: asCoord(worker.longitud_base),
+    jobLat,
+    jobLng,
+    radiusKm: asCoord(worker.radio_servicio_km),
+  });
+  if (!withinTravelRange(quote.distanceKm)) {
+    return jsonResponse(
+      req,
+      { error: "Este profesional queda a más de 30 km del trabajo" },
+      400,
+    );
+  }
+  const totalClp = visitFee + quote.extraClp;
+  return jsonResponse(req, {
+    preview: true,
+    totalClp,
+    tarifaClp: visitFee,
+    trasladoClp: quote.extraClp,
+  });
 }
 
 const GUEST_WINDOW_MS = 60_000;
@@ -72,10 +133,6 @@ Deno.serve(async (req) => {
     }
 
     const ip = clientIp(req);
-    if (!allowRate(`guest:ip:${ip}`, GUEST_MAX_IP, GUEST_WINDOW_MS)) {
-      return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
-    }
-
     const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY")?.trim() ?? "";
     const turnstile = turnstileDecision(Deno.env.get("TBK_ENV"), turnstileSecret.length > 0);
     if (turnstile === "fail_closed") {
@@ -83,6 +140,15 @@ Deno.serve(async (req) => {
     }
 
     const body = (await req.json()) as GuestBody;
+    if (body.previewOnly === true) {
+      if (!allowRate(`guest-preview:ip:${ip}`, 30, GUEST_WINDOW_MS)) {
+        return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
+      }
+      return await previewGuestTotal(req, body);
+    }
+    if (!allowRate(`guest:ip:${ip}`, GUEST_MAX_IP, GUEST_WINDOW_MS)) {
+      return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
+    }
     if (turnstile === "verify") {
       const token = clean(body.turnstileToken, 2048);
       if (!token) {

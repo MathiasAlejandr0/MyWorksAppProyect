@@ -19,6 +19,16 @@ void main() {
       90,
     );
     expect(expectedChargeFromMismatch('La tarjeta no quedó lista'), isNull);
+    expect(
+      paymentMismatchNeedsReload(
+        'Monto 40220 no coincide con tarifa/cotización 39830',
+      ),
+      isTrue,
+    );
+    expect(paymentMismatchNeedsReload('La tarjeta no quedó lista'), isFalse);
+    expect(payableTotalClp(74829), 74829);
+    expect(payableTotalClp(0), isNull);
+    expect(chargeNotReadyMessage.contains('Confirma otra vez'), isFalse);
   });
 
   test('alinea comisión y pago del profesional al total real', () {
