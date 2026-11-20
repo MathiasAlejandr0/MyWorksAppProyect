@@ -7,11 +7,14 @@ export const INTEGRATION_BROWSER_ORIGINS = [
 ];
 
 /**
- * Web pública desplegada en Vercel. Vale con cualquier TBK_ENV, para CORS y
- * para volver de Transbank. Orígenes exactos: sin comodines ni *.vercel.app.
+ * Web pública. El dominio propio es el apex; www redirige ahí y
+ * myworksapp-cl.vercel.app sigue vivo. Vale con cualquier TBK_ENV, para CORS y
+ * para volver de Transbank. Orígenes exactos: sin comodines.
  */
 export const PUBLIC_WEB_ORIGINS: readonly string[] = [
   "https://myworksapp-cl.vercel.app",
+  "https://myworksapp.cl",
+  "https://www.myworksapp.cl",
 ];
 
 /**

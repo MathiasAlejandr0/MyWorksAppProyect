@@ -1,6 +1,6 @@
 # Web de clientes: lo que el código exige y lo que falta configurar
 
-El sitio publicado hoy es https://myworksapp-cl.vercel.app. El dominio `myworksapp.cl` no se usa en el código: no resuelve. Esta guía describe el comportamiento actual del código. No configura Vercel, Supabase, SMTP, Apple ni Turnstile.
+El dominio propio es https://myworksapp.cl (www redirige al apex). https://myworksapp-cl.vercel.app sigue aceptado. El canónico del HTML apunta al apex. Esta guía describe el comportamiento actual del código. No configura Vercel, Supabase, SMTP, Apple ni Turnstile.
 
 ## Turnstile
 
@@ -43,7 +43,7 @@ No usar `20261120120000` ni `20261120130000`. Las pruebas `supabase/tests/oculta
 
 ## HSTS
 
-El sitio sigue en `myworksapp-cl.vercel.app`. No se agrega `preload` ni se sube el max-age a un año: eso queda para cuando el dominio definitivo responda.
+No se agrega `preload` ni se sube el max-age a un año en este cambio.
 
 ## Lo que hay que desplegar después de aplicar las migraciones
 
