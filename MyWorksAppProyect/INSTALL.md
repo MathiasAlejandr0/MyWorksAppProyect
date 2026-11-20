@@ -56,7 +56,7 @@ cd myworksapp_app
 ### Distribuir con QR (Android)
 
 1. Sube el APK a un enlace público:
-   - [GitHub Releases](https://github.com/MathiasAlejandr0/MyWorksAppProyect/releases) (recomendado)
+   - [GitHub Releases](https://github.com/nicoussj/Proyecto-Titulo-MyWorksApp/releases) (recomendado)
    - Google Drive (enlace directo de descarga)
 2. Genera un QR con la URL (ej. [qr-code-generator.com](https://www.qr-code-generator.com/)).
 3. Quien escanea descarga e instala el APK.
@@ -74,7 +74,7 @@ iOS **no** permite instalar con un QR + APK como Android. Opciones:
 **Requisitos:** Mac, Xcode, Apple ID, cable USB.
 
 ```bash
-git clone https://github.com/MathiasAlejandr0/MyWorksAppProyect.git
+git clone https://github.com/nicoussj/Proyecto-Titulo-MyWorksApp.git
 cd MyWorksAppProyect/myworksapp_app
 flutter pub get
 chmod +x scripts/install_ios_device.sh
@@ -147,7 +147,7 @@ Cuentas de la demo (la contraseña la entrega el equipo; no se publica en el rep
 
 ## Escritorio — `myworksapp_desktop`
 
-Hub de **administración** (rol `admin` en Supabase). Soporte, métricas y DevSecOps leen datos reales.
+Consola operativa de **administración** (roles `administrador`, `soporte` y `qa`, con segundo factor TOTP). Todos los módulos leen datos reales; las acciones quedan en la bitácora `auditoria_consola`.
 
 ### Modo navegador (desarrollo)
 
@@ -202,21 +202,16 @@ Proyecto: `https://supabase.com/dashboard/project/wxqrfcqifkfgawrnqmnj`
 2. **Authentication → URL Configuration** — añadir redirect URLs:
    - `http://127.0.0.1:5173` (web en desarrollo con Vite)
    - `http://localhost:5173`
-   - Tu dominio de producción web (ej. `https://tudominio.cl`)
+   - El dominio de producción web: `https://myworksapp.cl`
    - `cl.myworksapp.auth://login-callback` (app móvil Android + iOS)
 
-3. Aplicar migración de perfiles OAuth (si aún no está en remoto):
+3. Las migraciones de perfiles OAuth ya están en la base en uso; en una base propia se aplican con `supabase db push` desde `myworksapp_app`.
 
-```bash
-cd myworksapp_app
-supabase db push
-```
-
-`20261005000001_verificacion_profesional.sql` y `20261005000002_security_lockdown_rpc.sql` (el cierre de EXECUTE ya corrido en la base) están en el proyecto `wxqrfcqifkfgawrnqmnj`. Falta aplicar, en este orden, `20261006000001_gps_y_base_profesional.sql` (ubicación base, `en_camino`, GPS; la matriz de estados conserva el flujo de pago y solo agrega en camino), `20261006000002_ocultar_pin_listados.sql` y `20261007000001_rls_indices_asesores.sql` (initplan, políticas duplicadas e índices). El guion y las cuentas de la demo están en `DEMO.md`. El SQL de datos de prueba es `scripts/demo/seed_demo.sql` y no forma parte de las migraciones. El cliente usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (web y escritorio) o `--dart-define=SUPABASE_URL` y `SUPABASE_ANON_KEY` (Flutter). Pagos de integración: `TBK_ENV=integration`; `TBK_COMMERCE_CODE` y `TBK_API_KEY` solo en secretos de Edge Functions. `WEBPAY_HANDOFF_SECRET` es obligatorio.
+Las migraciones están en `myworksapp_app/supabase/migrations/` (125 archivos, la última `20261120170000_derechos_y_cobro_extra.sql`); el inventario frente a la base está en `myworksapp_app/supabase/MIGRATIONS_INVENTORY.md`. No ejecutes `supabase db push` contra el proyecto en uso sin autorización del dueño. El guion y las cuentas de la demo están en `DEMO.md`. El SQL de datos de prueba es `scripts/demo/seed_demo.sql` y no forma parte de las migraciones. El cliente usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (web y escritorio) o `--dart-define=SUPABASE_URL` y `SUPABASE_ANON_KEY` (Flutter). Pagos de integración: `TBK_ENV=integration`; `TBK_COMMERCE_CODE` y `TBK_API_KEY` solo en secretos de Edge Functions. `WEBPAY_HANDOFF_SECRET` es obligatorio.
 
 Invitaciones de RRHH (función `invitar-colaborador`, solo un administrador):
 
-- `INVITE_PROVIDER=supabase` (por defecto) usa `inviteUserByEmail`. Hace falta el SMTP del proyecto Auth.
+- `INVITE_PROVIDER=supabase` (por defecto, y el valor en vivo) usa `inviteUserByEmail`, que sale por el SMTP de Resend configurado en Supabase Auth.
 - `INVITE_PROVIDER=resend` exige `RESEND_API_KEY` y `RESEND_FROM`.
 - `INVITE_REDIRECT_URL` es opcional (a dónde vuelve quien acepta).
 

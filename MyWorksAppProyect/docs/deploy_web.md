@@ -1,54 +1,55 @@
-# Web de clientes: lo que el código exige y lo que falta configurar
+# Web de clientes: despliegue y configuración vigente
 
-El dominio propio es https://myworksapp.cl (www redirige al apex). https://myworksapp-cl.vercel.app sigue aceptado. El canónico del HTML apunta al apex. Esta guía describe el comportamiento actual del código. No configura Vercel, Supabase, SMTP, Apple ni Turnstile.
+Estado al 20 de noviembre de 2026, `main` `08154dfc`. Esta guía describe lo que el código exige y lo que está configurado fuera del repositorio según el reporte de despliegue del 20-nov. No contiene secretos.
 
-## Turnstile
+## Dónde está publicada
 
-`guest-checkout` llama a `turnstileDecision`. Si no existe `TURNSTILE_SECRET_KEY`, responde 503 y no crea la cuenta ni el pago. Da igual el valor de `TBK_ENV`. La única excepción es el flag explícito `MWA_ALLOW_NO_CAPTCHA=1`, pensado para una base local.
+| Qué | Valor |
+|---|---|
+| Hosting | Vercel, proyecto `myworksapp` |
+| Producción | https://myworksapp.cl y https://www.myworksapp.cl. También responde https://myworksapp-cl.vercel.app |
+| Canónico del HTML | El apex `https://myworksapp.cl` |
+| DNS | Cloudflare (zona `myworksapp.cl`) |
+| Orígenes aceptados por las Edge Functions | `https://myworksapp.cl`, `https://www.myworksapp.cl` y `https://myworksapp-cl.vercel.app`, más `CORS_ALLOWED_ORIGINS` (`_shared/cors_origin.ts`) |
+| Cabeceras | HSTS de 180 días con `includeSubDomains` (sin `preload`), CSP, `X-Frame-Options: DENY`, `nosniff` y `Permissions-Policy` (`myworksapp_web/vercel.json`) |
 
-En el build de producción (`import.meta.env.PROD`), si `VITE_TURNSTILE_SITE_KEY` es una clave de prueba de Cloudflare (`1x00000000000000000000AA` y las otras de la lista en `turnstileSitePolicy.ts`), el widget no se monta y la consola deja un error. Sin clave, el widget tampoco se monta.
+## Turnstile (Cloudflare)
 
-Falta que ponga Mathias, fuera de este repositorio:
-
-1. Site key real en Vercel: `VITE_TURNSTILE_SITE_KEY`.
-2. Secret real en los secretos de las Edge Functions: `TURNSTILE_SECRET_KEY`.
-3. Captcha protection de Supabase Auth, con el mismo secret, para el registro y la recuperación.
-4. No definir `MWA_ALLOW_NO_CAPTCHA` en el proyecto publicado.
+- El widget aparece en el registro (`AuthModal.tsx`) y en la compra como invitado (`GuestCheckoutForm.tsx`).
+- `guest-checkout` valida el token en el servidor con `turnstileDecision`. Si falta `TURNSTILE_SECRET_KEY` responde 503 y no crea la cuenta ni el pago, con cualquier `TBK_ENV`. La única excepción es el flag `MWA_ALLOW_NO_CAPTCHA=1`, pensado para una base local; no debe existir en el proyecto publicado.
+- En el build de producción, si `VITE_TURNSTILE_SITE_KEY` es una clave de prueba de Cloudflare (lista en `turnstileSitePolicy.ts`) o no existe, el widget no se monta.
+- `VITE_TURNSTILE_SITE_KEY` (Vercel) y `TURNSTILE_SECRET_KEY` (secretos de Edge Functions) están configurados para `myworksapp.cl`.
+- **El captcha de Supabase Auth no está activado.** Activarlo rompería hoy el login de la app y de la consola y la recuperación de clave, que no envían token. Mientras siga apagado, el token que la web manda en el registro no se valida en el servidor.
 
 ## Correo
 
-El código no configura SMTP. El formulario de registro tiene «Reenviar» con una espera de 60 segundos. La entrega del mensaje depende del SMTP de Supabase Auth, que hoy no está documentado como propio en este repositorio.
+- Supabase Auth envía por el SMTP de Resend. Dominio verificado con DKIM y SPF en `send.myworksapp.cl`, región sa-east-1, plan gratis de 100 correos al día.
+- Remitente `no-responder@myworksapp.cl`. 13 plantillas en español: confirmación, enlace mágico, recuperación, invitación, cambio de correo, reautenticación y los avisos de contraseña cambiada, correo cambiado, teléfono cambiado, factor MFA agregado o quitado e identidad vinculada o desvinculada.
+- `site_url` de Auth: `https://myworksapp.cl`.
+- El formulario de registro tiene «Reenviar» con una espera de 60 segundos.
+- `soporte@myworksapp.cl` con Cloudflare Email Routing: **en configuración**.
+- Los correos transaccionales desde Edge Functions (pago recibido, reembolso, pago liberado) **no existen en `main`**: están en la rama `cursor/correos-resend`, sin merge.
 
-Cuando Mathias lo configure:
+## Apple y Google
 
-1. Host, puerto, usuario y contraseña en Authentication → SMTP Settings.
-2. SPF, DKIM y DMARC del dominio del remitente.
-3. Redirect URLs solo de `https://myworksapp-cl.vercel.app` y de los preview que autorice.
-4. Probar a mano el registro, la recuperación de contraseña y la clave después de pagar como invitado.
+El botón de Apple se muestra solo si `auth/v1/settings` trae `external.apple = true` y Vercel tiene `VITE_AUTH_APPLE_ENABLED=1`. Si la consulta falla, no se muestra. Google se muestra solo si `external.google` es true. Ninguna de esas claves está en el repositorio.
 
-## Apple
+## Migraciones de la web (aplicadas en vivo según el reporte del 20-nov)
 
-El botón se muestra solo si `auth/v1/settings` trae `external.apple = true` y Vercel tiene `VITE_AUTH_APPLE_ENABLED=1`. Si la consulta falla, no se muestra. Google se muestra solo si `external.google` es true. Ninguna de esas claves está en el repositorio.
+1. `20261120140000_ocultar_profesionales_demo.sql`: marca `es_demo` en las cuentas `@demo.myworksapp.cl` y `@demo.com`. Con `app_config.demo_modo = 1`, el valor en vivo, siguen visibles en el catálogo; con otro valor se ocultan y no se pueden reservar ni cobrar.
+2. `20261120150000_rate_limit_global.sql`: tabla `rate_limit_ventana` y `rate_limit_consumir`, solo para `service_role`.
+3. `20261120160000_perfil_publico_profesional.sql`: perfil, horario y reseñas públicas (CU-06), sin abrir `calificaciones` a `anon`.
+4. `20261120170000_derechos_y_cobro_extra.sql`: `exportar_mis_datos`, `solicitar_eliminacion_cuenta`, tabla `direcciones_cliente` y `rechazar_orden_cambio` (CU-04 y CU-15).
 
-## Migraciones de esta rama (no aplicadas)
+Las pruebas `supabase/tests/ocultar_profesionales_demo.sql` y `supabase/tests/rate_limit_global.sql` corren en una base local y terminan en `ROLLBACK`.
 
-Aplicar en este orden, antes de desplegar las Edge Functions que las usan:
+## Edge Functions que usa la web
 
-1. `20261120140000_ocultar_profesionales_demo.sql`
-2. `20261120150000_rate_limit_global.sql`
-3. `20261120160000_perfil_publico_profesional.sql`
-4. `20261120170000_derechos_y_cobro_extra.sql`
+Llamadas desde `myworksapp_web/src` o `shared/src`: `guest-checkout`, `definir-clave-invitado`, `webpay-create`, `webpay-handoff`, `webpay-commit`, `webpay-status`, `oneclick-charge` y `webpay-refund-cancellation`. `guest-checkout`, `definir-clave-invitado`, `webpay-create` y `oneclick-charge` usan el límite de tasa global.
 
-No usar `20261120120000` ni `20261120130000`. Las pruebas `supabase/tests/ocultar_profesionales_demo.sql` y `supabase/tests/rate_limit_global.sql` corren en una base local y terminan en `ROLLBACK`.
+## Pendiente
 
-## HSTS
-
-No se agrega `preload` ni se sube el max-age a un año en este cambio.
-
-## Lo que hay que desplegar después de aplicar las migraciones
-
-`guest-checkout`, `definir-clave-invitado`, `webpay-create` y `oneclick-charge`. No se despliegan desde esta rama. No se tocan `webpay-release`, `webpay-resolve-dispute` ni `invitar-colaborador`.
-
-## Lo que este cambio no hace
-
-No despliega la web ni las Edge Functions, no aplica SQL, no cambia la comisión y no escribe secretos.
+- Textos de términos y privacidad: las páginas existen, pero dicen que el texto oficial no está publicado. Los textos y `/aviso-legal` están en la rama `cursor/aviso-academico-duoc-v2`, sin merge.
+- HSTS `preload`: no se agrega.
+- Medir Lighthouse sobre el dominio propio.
+- Probar a mano el registro: con Turnstile no se puede automatizar.
