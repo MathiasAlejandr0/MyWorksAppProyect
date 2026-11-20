@@ -67,7 +67,7 @@ dependencies:
   # Info de app
   package_info_plus: ^10.2.2
   supabase_flutter: ^2.18.3
-  app_links: ^6.3.2
+  app_links: ^7.2.2
   flutter_map: ^8.3.2
   flutter_map_vector_tiles: ^2.11.0
   latlong2: ^0.10.1
