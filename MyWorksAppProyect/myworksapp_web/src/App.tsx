@@ -283,8 +283,12 @@ export function App() {
   const [checkoutJobId, setCheckoutJobId] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const view = viewFromPath(location.pathname);
+  const [view, setViewState] = useState<AppView>(() => viewFromPath(location.pathname));
+  useEffect(() => {
+    setViewState(viewFromPath(location.pathname));
+  }, [location.pathname]);
   const setView = (next: AppView) => {
+    setViewState(next);
     const target = pathForView(next, {
       category: serviceMatch?.category ?? categoryFromPath(location.pathname),
       jobId: checkoutJobId,

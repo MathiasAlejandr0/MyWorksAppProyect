@@ -10,7 +10,7 @@ import { supabase, SUPABASE_ANON_KEY, SUPABASE_URL } from '../supabaseClient';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { useAuth } from '../context/useAuth';
 import { TurnstileWidget } from './TurnstileWidget';
-import { turnstileSiteKey } from './turnstileSite';
+import { turnstileCanRender } from './turnstileSite';
 
 interface AuthModalProps {
   open: boolean;
@@ -113,7 +113,7 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
           setLocalError(policy);
           return;
         }
-        if (turnstileSiteKey() && !captchaToken) {
+        if (turnstileCanRender() && !captchaToken) {
           setLocalError('Confirma que no eres un robot');
           return;
         }
@@ -275,7 +275,7 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
                 setResendNote(null);
                 void resendSignupConfirmation(supabase, email.trim())
                   .then(() => {
-                    setResendNote('Te enviamos un correo para confirmar. Puedes reenviar en 60 segundos.');
+                    setResendNote('Te enviamos un correo para confirmar.');
                     setResendWait(60);
                   })
                   .catch((e: unknown) => {

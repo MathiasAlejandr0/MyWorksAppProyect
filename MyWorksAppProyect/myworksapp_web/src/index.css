@@ -827,7 +827,8 @@ button.search-nav-profile {
 }
 .pro-card {
   display: flex;
-  gap: 14px;
+  flex-direction: column;
+  gap: 8px;
   padding: 14px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-dark);
@@ -837,6 +838,24 @@ button.search-nav-profile {
   color: inherit;
   font-family: inherit;
   transition: var(--transition);
+}
+.pro-card-hit {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pro-card-profile {
+  align-self: flex-start;
+  color: var(--orange-accent);
+  font-size: 13px;
+  font-weight: 700;
 }
 .pro-card:hover, .pro-card.is-selected {
   border-color: var(--orange-accent);

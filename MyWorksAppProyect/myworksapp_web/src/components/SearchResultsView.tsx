@@ -126,8 +126,10 @@ export function SearchResultsView({
   const [demoMode, setDemoMode] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    const rpc = supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>;
-    void Promise.resolve(rpc('demo_modo_activo')).then(({ data, error }) => {
+    const db = supabase as unknown as {
+      rpc: (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>;
+    };
+    void Promise.resolve(db.rpc('demo_modo_activo')).then(({ data, error }) => {
       if (!cancelled && !error && data === true) setDemoMode(true);
     }).catch(() => undefined);
     return () => {
@@ -310,11 +312,11 @@ export function SearchResultsView({
             {demoMode ? <p className="demo-banner" role="status">Datos de demostración</p> : null}
             <div className="search-results-grid">
               {visibleWorkers.map((w) => (
-                <Link
+                <article
                   key={w.id}
-                  to={`/profesional/${w.id}`}
                   className={`pro-card${selectedWorkerId === w.id ? ' is-selected' : ''}`}
                 >
+                  <button type="button" className="pro-card-hit" onClick={() => onSelectWorker(w)}>
                   <img
                     src={w.photoUrl}
                     alt=""
@@ -357,7 +359,9 @@ export function SearchResultsView({
                       )}
                     </div>
                   </div>
-                </Link>
+                  </button>
+                  <Link className="pro-card-profile" to={`/profesional/${w.id}`}>Ver ficha</Link>
+                </article>
               ))}
             </div>
             </>

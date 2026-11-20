@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Lock, MapPin, Phone, User, Mail, X, ExternalLink } from 'lucide-react';
 import { reservedEmailMessage } from '@myworksapp/shared';
 import { TurnstileWidget } from './TurnstileWidget';
-import { turnstileSiteKey } from './turnstileSite';
+import { turnstileCanRender } from './turnstileSite';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { chileE164 } from '../chilePhone';
 
@@ -81,11 +81,7 @@ export function GuestCheckoutForm({
       setError(reserved);
       return;
     }
-    if (import.meta.env.PROD && !turnstileSiteKey()) {
-      setError('El checkout no está configurado: falta la verificación anti-robots.');
-      return;
-    }
-    if (turnstileSiteKey() && !captchaToken) {
+    if (turnstileCanRender() && !captchaToken) {
       setError('Confirma que no eres un robot');
       return;
     }
