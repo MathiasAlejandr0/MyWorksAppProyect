@@ -11,6 +11,7 @@ import '../domain/pricing_constants.dart';
 import '../domain/price_quote.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
+import '../utils/error_handler.dart';
 
 /// Servicio de pagos — escrow vía Webpay (Edge) + RPCs admin.
 ///
@@ -101,7 +102,7 @@ class PaymentService {
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error reteniendo pago', e);
-      throw AppError.database('Error al retener pago: ${e.toString()}');
+      throw AppError.validation(ErrorHandler.userMessageFor(e));
     }
   }
 
@@ -516,7 +517,9 @@ class PaymentService {
       );
       final data = _asMap(response.data);
       if (data['error'] != null) {
-        throw AppError.validation(data['error'].toString());
+        throw AppError.validation(
+          ErrorHandler.userMessageFor(data['error'].toString()),
+        );
       }
       return WebpayTransactionResponse.fromMap(data);
     } catch (e) {
@@ -596,7 +599,7 @@ class PaymentService {
     if (error is FunctionException) {
       final details = error.details;
       if (details is Map && details['error'] != null) {
-        return details['error'].toString();
+        return ErrorHandler.userMessageFor(details['error'].toString());
       }
       if (details is String && details.isNotEmpty) return details;
       return error.reasonPhrase ?? 'No se pudo contactar a Webpay';

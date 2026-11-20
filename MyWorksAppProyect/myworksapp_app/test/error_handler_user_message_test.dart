@@ -33,6 +33,21 @@ void main() {
       expect(ErrorHandler.userMessageFor(locked), locked.message);
     });
 
+    test('el índice de un solo cobro no se confunde con un horario ocupado',
+        () {
+      const constraint = PostgrestException(
+        message:
+            'duplicate key value violates unique constraint "pagos_un_principal_activo_uidx"',
+        code: '23505',
+      );
+      final text = ErrorHandler.userMessageFor(constraint);
+      expect(text, contains('cobro en curso'));
+      expect(text, isNot(contains('horario')));
+      final asCheckoutText = ErrorHandler.userMessageFor(constraint.message);
+      expect(asCheckoutText, contains('cobro en curso'));
+      expect(asCheckoutText, isNot(contains('horario')));
+    });
+
     test('un segundo cobro y la falta de evidencia se explican en español', () {
       const duplicate = PostgrestException(
         message: 'ya hay un cobro en curso para este trabajo',

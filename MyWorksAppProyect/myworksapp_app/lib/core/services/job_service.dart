@@ -7,6 +7,7 @@ import '../database/models/job_model.dart';
 import '../database/models/notification_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
+import '../utils/error_handler.dart';
 import '../utils/constants.dart';
 import 'job_transition_matrix.dart';
 import 'notification_service.dart';
@@ -15,7 +16,7 @@ import 'abuse_protection_service.dart';
 import 'analytics_service.dart';
 
 /// Servicio de trabajos (jobs)
-/// 
+///
 /// Maneja toda la lógica de negocio relacionada con trabajos:
 /// - Crear solicitud de trabajo
 /// - Aceptar/rechazar trabajos
@@ -29,13 +30,15 @@ class JobService {
   final JobRepository _jobRepository = JobRepository();
   final UserRepository _userRepository = UserRepository();
   final WorkerRepository _workerRepository = WorkerRepository();
-  final NotificationRepository _notificationRepository = NotificationRepository();
+  final NotificationRepository _notificationRepository =
+      NotificationRepository();
   final ServiceLegalValidator _legalValidator = ServiceLegalValidator.instance;
-  final AbuseProtectionService _abuseProtection = AbuseProtectionService.instance;
+  final AbuseProtectionService _abuseProtection =
+      AbuseProtectionService.instance;
   final AnalyticsService _analytics = AnalyticsService.instance;
 
   /// Crea una nueva solicitud de trabajo
-  /// 
+  ///
   /// Retorna el trabajo creado o null si falla.
   /// Lanza AppError si hay problemas de validación.
   Future<JobModel?> createJob({
@@ -67,19 +70,22 @@ class JobService {
       }
 
       if (description.trim().length < 10) {
-        throw AppError.validation('La descripción debe tener al menos 10 caracteres');
+        throw AppError.validation(
+            'La descripción debe tener al menos 10 caracteres');
       }
 
       // Validar protección anti-abuso
       final abuseCheck = await _abuseProtection.canCreateJob(userId);
       if (!abuseCheck.allowed) {
-        throw AppError.validation(abuseCheck.reason ?? 'No puedes crear más trabajos en este momento');
+        throw AppError.validation(abuseCheck.reason ??
+            'No puedes crear más trabajos en este momento');
       }
 
       // Validar servicio legalmente
       final legalValidation = await _legalValidator.validateService(serviceId);
       if (!legalValidation.valid) {
-        throw AppError.validation(legalValidation.reason ?? 'Servicio no disponible legalmente');
+        throw AppError.validation(
+            legalValidation.reason ?? 'Servicio no disponible legalmente');
       }
 
       // Crear trabajo
@@ -125,7 +131,7 @@ class JobService {
   }
 
   /// Acepta un trabajo (solo para trabajadores)
-  /// 
+  ///
   /// Retorna true si se aceptó exitosamente.
   Future<bool> acceptJob({
     required String jobId,
@@ -169,7 +175,7 @@ class JobService {
   }
 
   /// Rechaza un trabajo (solo para trabajadores)
-  /// 
+  ///
   /// Retorna true si se rechazó exitosamente.
   Future<bool> rejectJob({
     required String jobId,
@@ -199,7 +205,7 @@ class JobService {
   }
 
   /// Actualiza el estado de un trabajo
-  /// 
+  ///
   /// Retorna el trabajo actualizado o null si falla.
   Future<JobModel?> updateJobStatus({
     required String jobId,
@@ -219,7 +225,8 @@ class JobService {
       // Validar permisos (solo el usuario o trabajador asignado pueden cambiar el estado)
       if (userId != null) {
         if (job.userId != userId && job.workerId != userId) {
-          throw AppError.permission('No tienes permisos para modificar este trabajo');
+          throw AppError.permission(
+              'No tienes permisos para modificar este trabajo');
         }
       }
 
@@ -264,7 +271,7 @@ class JobService {
         rethrow;
       }
       AppLogger.e('Error al actualizar estado del trabajo', e);
-      throw AppError.database('Error al actualizar estado: ${e.toString()}');
+      throw AppError.validation(ErrorHandler.userMessageFor(e));
     }
   }
 
@@ -291,7 +298,8 @@ class JobService {
   /// Obtiene trabajos disponibles (pendientes, sin trabajador asignado)
   Future<List<JobModel>> getAvailableJobs() async {
     try {
-      return await _jobRepository.getJobsByStatus(AppConstants.jobStatusPending);
+      return await _jobRepository
+          .getJobsByStatus(AppConstants.jobStatusPending);
     } catch (e) {
       AppLogger.e('Error al obtener trabajos disponibles', e);
       return [];
@@ -322,7 +330,8 @@ class JobService {
   }
 
   /// Crea notificación cuando un trabajador acepta un trabajo
-  Future<void> _createJobAcceptedNotification(JobModel job, String workerId) async {
+  Future<void> _createJobAcceptedNotification(
+      JobModel job, String workerId) async {
     try {
       final notification = NotificationModel(
         id: const Uuid().v4(),
@@ -417,4 +426,3 @@ class JobService {
     }
   }
 }
-

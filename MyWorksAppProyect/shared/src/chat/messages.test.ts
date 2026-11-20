@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { contactBlockedMessage, containsContactData } from './contactFilter.ts';
+import contactCases from './contactCases.json' with { type: 'json' };
 import {
   buildJobMessageInsert,
   jobChatSendError,
@@ -28,25 +30,28 @@ describe('buildJobMessageInsert', () => {
 });
 
 describe('containsContactData', () => {
-  it('bloquea correo, teléfono, enlace y evasión', () => {
-    assert.equal(containsContactData('escribeme a ana@correo.cl'), true);
-    assert.equal(containsContactData('mi correo es ana arroba correo.cl'), true);
-    assert.equal(containsContactData('9 8765 4321'), true);
-    assert.equal(containsContactData('mira https://wa.me/56911111111'), true);
-    assert.equal(containsContactData('te paso mi wsp'), true);
-    assert.equal(containsContactData('el fijo es 2 2345 6789'), true);
-    assert.equal(
-      containsContactData('nueve uno dos tres cuatro cinco seis siete ocho'),
-      true,
-    );
-    assert.equal(containsContactData('te paso el wasap'), true);
-    assert.equal(containsContactData('buscame en facebook'), true);
-    assert.equal(containsContactData('subo el avance a tiktok'), true);
-  });
+  const sqlCases = readFileSync(
+    new URL(
+      '../../../myworksapp_app/supabase/tests/texto_tiene_contacto_casos.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  );
 
-  it('deja pasar el texto del trabajo', () => {
-    assert.equal(containsContactData('El enchufe de la cocina no funciona'), false);
+  it('coincide con los casos compartidos y con el script SQL', () => {
     assert.equal(containsContactData(''), false);
+    for (const row of contactCases) {
+      assert.equal(
+        containsContactData(row.text),
+        row.contact,
+        row.text,
+      );
+      assert.equal(
+        sqlCases.includes(row.text),
+        true,
+        `falta en el script SQL: ${row.text}`,
+      );
+    }
   });
 });
 
