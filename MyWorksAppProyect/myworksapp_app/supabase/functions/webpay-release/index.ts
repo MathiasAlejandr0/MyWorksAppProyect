@@ -1,4 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { scheduleReleasedEmail } from "../_shared/payment_mail.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
@@ -107,6 +108,7 @@ Deno.serve(async (req) => {
         : 500;
       return jsonResponse(req, { error: "No se pudo liberar el pago" }, status);
     }
+    scheduleReleasedEmail(admin, paymentId);
 
     const { data: payment } = await admin
       .from("pagos")

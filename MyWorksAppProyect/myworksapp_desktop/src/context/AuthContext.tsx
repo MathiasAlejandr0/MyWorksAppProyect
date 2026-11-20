@@ -18,6 +18,7 @@ import {
   signOut,
   updateAccountPassword,
 } from '@myworksapp/shared';
+import { authDeepLinkPending, passwordSetupMarked } from '../lib/authCallback';
 import { CONSOLE_ACCESS_DENIED, CONSOLE_ROLES, canAccessDesktopHub } from '../authAccess';
 import { markTotpVerified } from '../lib/totp';
 import { supabase } from '../supabaseClient';
@@ -60,16 +61,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = useCallback(async (options?: { skipPasswordGate?: boolean }) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
+      if (!options?.skipPasswordGate && passwordSetupMarked()) {
+        mustSetPasswordRef.current = true;
+      }
       const gating = !options?.skipPasswordGate && mustSetPasswordRef.current;
-      if (gating) {
+      const pendingLink = authDeepLinkPending();
+      if (gating || pendingLink) {
         const urlStillRequires = locationRequiresPassword();
-        if (!sessionData.session && !urlStillRequires) {
+        if (!sessionData.session && !urlStillRequires && !pendingLink) {
           clearPasswordSetupFlag();
           mustSetPasswordRef.current = false;
           setMustSetPassword(false);
-        } else {
+        } else if (gating || urlStillRequires) {
           setProfile(null);
           setNeedsMfa(false);
+          setMustSetPassword(true);
           return;
         }
       }
@@ -85,6 +91,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (current.accountStatus !== 'activo') {
         throw new AuthError('Cuenta suspendida o bloqueada.');
+      }
+      if (!options?.skipPasswordGate && (passwordSetupMarked() || mustSetPasswordRef.current)) {
+        sessionStorage.setItem(PASSWORD_SETUP_STORAGE_KEY, '1');
+        mustSetPasswordRef.current = true;
+        setMustSetPassword(true);
+        setNeedsMfa(false);
+        setProfile(null);
+        return;
       }
       if (await sessionNeedsMfa()) {
         setProfile(null);
@@ -114,7 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void run();
     const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+      // La invitación llega como SIGNED_IN. Se trata igual que la recuperación.
+      const invite = event === 'SIGNED_IN' && passwordSetupMarked();
+      if (event === 'PASSWORD_RECOVERY' || invite) {
         sessionStorage.setItem(PASSWORD_SETUP_STORAGE_KEY, '1');
         mustSetPasswordRef.current = true;
         setMustSetPassword(true);

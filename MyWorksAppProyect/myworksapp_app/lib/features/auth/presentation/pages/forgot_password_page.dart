@@ -1,14 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/oauth_config.dart';
 import '../../../../core/database/supabase_db.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_auth_scaffold.dart';
 
+typedef PasswordResetSender = Future<void> Function(
+  String email, {
+  required String redirectTo,
+});
+
+/// Pide el correo de recuperación y vuelve a la app (`cl.myworksapp.auth://login-callback`).
+Future<void> sendPasswordResetEmail(
+  String email, {
+  PasswordResetSender? sender,
+}) {
+  final redirectTo = OAuthConfig.redirectUrl;
+  final send = sender ?? _supabasePasswordReset;
+  return send(email.trim().toLowerCase(), redirectTo: redirectTo);
+}
+
+Future<void> _supabasePasswordReset(
+  String email, {
+  required String redirectTo,
+}) {
+  return supabase.auth.resetPasswordForEmail(email, redirectTo: redirectTo);
+}
+
 class ForgotPasswordPage extends ConsumerStatefulWidget {
-  const ForgotPasswordPage({super.key});
+  const ForgotPasswordPage({super.key, this.sendReset});
+
+  final Future<void> Function(String email)? sendReset;
 
   @override
   ConsumerState<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
@@ -32,9 +57,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     setState(() => _isLoading = true);
 
     try {
-      await supabase.auth.resetPasswordForEmail(
-        _emailController.text.trim().toLowerCase(),
-      );
+      final send = widget.sendReset ?? sendPasswordResetEmail;
+      await send(_emailController.text);
 
       if (!mounted) return;
       setState(() {

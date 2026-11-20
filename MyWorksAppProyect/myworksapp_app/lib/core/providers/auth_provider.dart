@@ -16,11 +16,13 @@ class AuthState {
   final UserModel? user;
   final bool isLoading;
   final String? error;
+  final bool recoveringPassword;
 
   const AuthState({
     this.user,
     this.isLoading = false,
     this.error,
+    this.recoveringPassword = false,
   });
 
   bool get isAuthenticated => user != null;
@@ -32,11 +34,13 @@ class AuthState {
     bool? isLoading,
     String? error,
     bool clearUser = false,
+    bool? recoveringPassword,
   }) {
     return AuthState(
       user: clearUser ? null : (user ?? this.user),
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      recoveringPassword: recoveringPassword ?? this.recoveringPassword,
     );
   }
 }
@@ -234,6 +238,7 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> changePassword({required String newPassword}) async {
     try {
       await _authService.changePassword(newPassword);
+      state = state.copyWith(recoveringPassword: false);
       return true;
     } on AppAuthException catch (e) {
       state = state.copyWith(error: e.userMessage);
@@ -248,6 +253,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _onSessionEvent(AuthSessionEvent event) async {
     if (_handlingRemoteSignOut) return;
+
+    if (event.passwordRecovery) {
+      state = state.copyWith(recoveringPassword: true);
+    }
 
     if (!event.isSignedIn) {
       if (state.user != null) {

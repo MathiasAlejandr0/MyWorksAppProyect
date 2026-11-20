@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../database/models/user_model.dart';
 import '../../features/role_selector/presentation/pages/welcome_page.dart';
 import '../../features/role_selector/presentation/pages/role_selector_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -54,6 +53,7 @@ import '../../features/admin/presentation/pages/admin_services_page.dart';
 import '../../features/admin/presentation/pages/admin_feature_flags_page.dart';
 import '../../features/admin/presentation/pages/admin_ranking_page.dart';
 import '../../features/admin/presentation/pages/admin_desktop_management_page.dart';
+import 'auth_recovery_redirect.dart';
 import '../../core/utils/constants.dart';
 import '../../core/utils/app_logger.dart';
 import '../../core/utils/role_utils.dart';
@@ -69,16 +69,13 @@ import '../../core/database/repositories/worker_repository.dart';
 /// se reiniciaría, sacando al usuario de la pantalla en la que estaba.
 class _AuthRouterRefresh extends ChangeNotifier {
   _AuthRouterRefresh(Ref ref) {
-    ref.listen<UserModel?>(
-      authProvider.select((s) => s.user),
-      (previous, next) {
-        final wasLoggedIn = previous != null;
-        final isLoggedIn = next != null;
-        if (wasLoggedIn != isLoggedIn || previous?.role != next?.role) {
-          notifyListeners();
-        }
-      },
-    );
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      final sessionChanged = (previous?.user != null) != (next.user != null) ||
+          previous?.user?.role != next.user?.role;
+      final recoveryChanged =
+          previous?.recoveringPassword != next.recoveringPassword;
+      if (sessionChanged || recoveryChanged) notifyListeners();
+    });
   }
 }
 
@@ -94,7 +91,14 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) async {
       try {
-        final authUser = ref.read(authProvider).user;
+        final authState = ref.read(authProvider);
+        if (authState.recoveringPassword) {
+          return authRecoveryRedirect(
+            recovering: true,
+            location: state.matchedLocation,
+          );
+        }
+        final authUser = authState.user;
         final isLoggedIn = authUser != null;
 
         // Primera vez: el onboarding va antes que welcome o login

@@ -2,6 +2,7 @@ import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
+import { scheduleRefundEmail } from "../_shared/payment_mail.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
 import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
@@ -63,6 +64,7 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "La disputa no está abierta" }, 409);
     }
 
+    let refundedPaymentId = "";
     if (decision === "reembolsar") {
       const { data: payment, error: payErr } = await admin
         .from("pagos")
@@ -85,6 +87,7 @@ Deno.serve(async (req) => {
       if (payment.estado !== "reembolsado") {
         await refundHeldPaymentOnce(admin, payment.id);
       }
+      refundedPaymentId = String(payment.id);
     }
 
     const { data: rpcResult, error: rpcErr } = await admin.rpc(
@@ -98,6 +101,9 @@ Deno.serve(async (req) => {
     );
     if (rpcErr) {
       return jsonResponse(req, { error: publicErrorMessage(rpcErr, "No se pudo cerrar la disputa") }, 409);
+    }
+    if (decision === "reembolsar" && refundedPaymentId) {
+      scheduleRefundEmail(admin, refundedPaymentId);
     }
 
     const meta = requestClientMeta(req);

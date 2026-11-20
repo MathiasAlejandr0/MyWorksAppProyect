@@ -6,7 +6,10 @@ export async function edgeFunctionErrorMessage(
   error: { message?: string; context?: unknown } | null | undefined,
   fallback: string,
 ): Promise<string> {
-  const ctx = error?.context as { json?: () => Promise<unknown>; clone?: () => { json: () => Promise<unknown> } } | undefined;
+  const ctx = error?.context as { json?: () => Promise<unknown>; clone?: () => { json: () => Promise<unknown> }; error?: unknown } | undefined;
+  if (ctx && typeof ctx === 'object' && typeof ctx.json !== 'function' && typeof ctx.error === 'string' && ctx.error.trim()) {
+    return ctx.error.trim();
+  }
   try {
     const reader = typeof ctx?.clone === 'function' ? ctx.clone() : ctx;
     const body = typeof reader?.json === 'function' ? await reader.json() : null;

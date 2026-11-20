@@ -1,4 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { scheduleRefundEmail } from "../_shared/payment_mail.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
@@ -46,7 +47,10 @@ Deno.serve(async (req) => {
       const paymentId = String(item.pago_id || "");
       if (!disputeId || !paymentId) continue;
       try {
-        await refundHeldPaymentOnce(admin, paymentId);
+        const refund = await refundHeldPaymentOnce(admin, paymentId);
+        if (refund.status === "refunded" || refund.status === "already") {
+          scheduleRefundEmail(admin, paymentId);
+        }
         const { error: closeError } = await admin.rpc("aplicar_cierre_disputa", {
           p_disputa_id: disputeId,
           p_operador: "sistema",

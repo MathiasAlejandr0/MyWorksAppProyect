@@ -1,6 +1,7 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
+import { scheduleRefundEmail } from "../_shared/payment_mail.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
 import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
@@ -66,6 +67,7 @@ Deno.serve(async (req) => {
     }
 
     const result = await refundHeldPaymentOnce(admin, paymentId);
+    if (result.status === "refunded") scheduleRefundEmail(admin, paymentId);
     const meta = requestClientMeta(req);
     const audited = await registrarAuditoria(admin, {
       p_accion: "devolver_pago",
