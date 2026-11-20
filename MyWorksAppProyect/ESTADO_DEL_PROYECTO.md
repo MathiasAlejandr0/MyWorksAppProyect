@@ -2,27 +2,78 @@
 
 Documento de referencia para **memoria de título**, **presentaciones universitarias**, **financiamiento** y **planificación técnica**.
 
-**Última actualización:** 15 de noviembre de 2026 (versiones, mapas y pagos alineados con el árbol local)  
-**Versión de producto:** 1.0.0 (MVP con backend Supabase)  
-**Repositorio:** https://github.com/MathiasAlejandr0/MyWorksAppProyect
+**Última actualización:** 20 de noviembre de 2026, sobre `main` `d9d2c7c` de `nicoussj/Proyecto-Titulo-MyWorksApp` (merge del PR #82).  
+**Versiones:** app Flutter 1.0.11+12 (`pubspec.yaml`); web 1.0.0 y consola 0.1.0 (`package.json`, `tauri.conf.json`).  
+**Repositorio:** https://github.com/nicoussj/Proyecto-Titulo-MyWorksApp (el espejo `MathiasAlejandr0/MyWorksAppProyect` tiene un historial distinto y no se usa como fuente).
 
-> **Auditoría 2026-10-05:** ver [`docs/AUDITORIA_2026-10-05.md`](docs/AUDITORIA_2026-10-05.md) (backlog P0/P1/P2 y correcciones).
->
-> **Nota de remediación (sep 2026):** Sprints 1–6: honestidad; SoT/codegen; tokens+colores generados; DI Riverpod; Playwright; stubs FCM/Webpay. Completa el código de `npx supabase login` en tu terminal para el db pull. Ver [`docs/REMEDIACION_AUDITORIA.md`](docs/REMEDIACION_AUDITORIA.md).
+---
+
+## En resumen: qué es cada parte y dónde está
+
+| Parte | Qué es | Dónde está |
+|---|---|---|
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`myworksapp_app/`](myworksapp_app/) |
+| Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`myworksapp_web/`](myworksapp_web/), publicado en https://myworksapp.cl |
+| Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`myworksapp_desktop/`](myworksapp_desktop/) |
+| Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`shared/`](shared/) |
+| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`myworksapp_app/supabase/`](myworksapp_app/supabase/) |
+| Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`docs/`](docs/) |
+| Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](../docs/INDICE.md) (en la raíz del repositorio) |
+
+## Cómo leer este documento
+
+- **Parte I** cuenta qué hay hoy: arquitectura, tecnologías, lo que funciona, lo que falta y lo que está en ramas sin integrar.
+- **Parte II** es una guía para redactar el documento de título a partir de la Parte I.
+- Si solo necesitas el estado en una página, lee el resumen ejecutivo y las secciones 6 y 7.
+
+## Contenido
+
+- [Resumen ejecutivo](#resumen-ejecutivo)
+- [Parte I — Arquitectura de software](#parte-i--arquitectura-de-software)
+  - [1. Tipo de arquitectura utilizada](#1-tipo-de-arquitectura-utilizada)
+  - [2. Por qué se eligió esta arquitectura](#2-por-qué-se-eligió-esta-arquitectura)
+  - [3. Stack tecnológico](#3-stack-tecnológico)
+  - [4. Flujos de negocio principales (implementados)](#4-flujos-de-negocio-principales-implementados)
+  - [5. Lo implementado (inventario técnico)](#5-lo-implementado-inventario-técnico)
+  - [6. Lo pendiente (brecha hacia producción)](#6-lo-pendiente-brecha-hacia-producción)
+  - [7. En desarrollo (pendiente, no está en producción)](#7-en-desarrollo-pendiente-no-está-en-producción)
+- [Parte II — Guía para redactar el documento profesional](#parte-ii--guía-para-redactar-el-documento-profesional)
+  - Parte II: guía de redacción por capítulo (portada, resumen, capítulos 1 a 7, referencias, anexos y checklist)
+
 ---
 
 ## Resumen ejecutivo
 
 | Aspecto | Estado actual |
 |---------|---------------|
-| **Tipo de producto** | Monorepo: app móvil Flutter + web PWA + hub admin (React/Vite) + escritorio nativo (Tauri) |
-| **Backend** | Supabase (Auth + PostgreSQL + PostgREST + RLS) |
-| **Modo de operación** | Cliente-servidor: datos centralizados en la nube |
-| **Listo para demo en vivo** | Sí (usuario y trabajador en dispositivos distintos o mismo dispositivo) |
-| **Listo para producción / App Store** | Parcial — falta Transbank en producción, push remoto y publicación en tiendas |
-| **Documentación técnica en repo** | Sí ([README.md](README.md), [DEMO.md](DEMO.md), [INSTALL.md](INSTALL.md), [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADES_COBRO.md)) |
+| **Tipo de producto** | Monorepo: app móvil Flutter + web de clientes (React/Vite) + consola operativa de escritorio (Tauri 2 + React) + módulo `shared/` en TypeScript |
+| **Backend** | Supabase (Auth + PostgreSQL + PostgREST + RLS + Realtime + Edge Functions + pg_cron) |
+| **Web en producción** | https://myworksapp.cl y `www.myworksapp.cl` en Vercel (proyecto `myworksapp`); también responde https://myworksapp-cl.vercel.app |
+| **Dominio y borde** | `myworksapp.cl` en Cloudflare (DNS y Turnstile). `soporte@myworksapp.cl` reenvía con Cloudflare Email Routing; falta la prueba de punta a punta |
+| **Correo** | Supabase Auth usa el SMTP de Resend (dominio verificado, DKIM y SPF en `send.myworksapp.cl`, región sa-east-1, plan gratis de 100 correos al día). Remitente `no-responder@myworksapp.cl`, 13 plantillas en español. Desde el 20-nov (PR #82) las Edge Functions envían también los correos de pago recibido, alta de invitado, reembolso y pago liberado. La invitación por Resend espera el secreto `INVITE_PROVIDER=resend` |
+| **Pagos** | Transbank Webpay Plus y Oneclick Mall en **ambiente de integración**: solo tarjetas de prueba, ningún cobro real |
+| **Listo para producción / tiendas** | Parcial: falta corregir el alta de profesionales en producción (H1, ver [docs/PRUEBAS.md](docs/PRUEBAS.md)), Transbank en producción, push remoto desplegado y publicación en tiendas |
+| **Documentación técnica en repo** | [README.md](README.md), [DEMO.md](DEMO.md), [INSTALL.md](INSTALL.md), [docs/casos_de_uso.md](docs/casos_de_uso.md), [docs/deploy_web.md](docs/deploy_web.md), [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADES_COBRO.md) |
 
-**Mensaje clave:** MyWorksApp demuestra un **marketplace de servicios del hogar** con roles duales (cliente y profesional), ciclo de vida de trabajos, modalidades de cobro, escrow con Transbank Webpay en ambiente de integración y arquitectura preparada para escalar a producción.
+**Mensaje clave:** MyWorksApp demuestra un **marketplace de servicios del hogar** con roles duales (cliente y profesional), ciclo de vida de trabajos controlado en la base, pago retenido en garantía con Transbank en integración y una consola interna con segundo factor y bitácora inmutable.
+
+### Inventario contado desde el código (`main` `d9d2c7c`)
+
+| Elemento | Cantidad | Fuente |
+|---|---|---|
+| Migraciones SQL | 125 (primera `20250607000001`, última `20261120170000`) | `myworksapp_app/supabase/migrations/*.sql` |
+| Edge Functions | 18 (más el código común `_shared/`) | `myworksapp_app/supabase/functions/` |
+| Tablas del esquema `public` | 60: las 57 del snapshot del 17-nov (`docs/_schema_public.json`) más `auditoria_consola`, `rate_limit_ventana` y `direcciones_cliente`, creadas por migraciones del 20-nov | migraciones `20261120130000`, `20261120150000`, `20261120170000` |
+| Vistas | 2: `encuestas_testing_con_puntaje` y `cobros_profesional` (`20261118053913`) | migraciones |
+| Tipos ENUM | 1: `accion_auditoria_consola` (27 acciones) | `20261120130000_auditoria_consola.sql` |
+| RPC de la consola `consola_*` | 17 | migraciones |
+| Tareas pg_cron | 3: `mwa_webpay_reconcile` (cada 5 min), `mwa_expirar_pagos_abandonados` (cada 10 min) y `mwa_resolver_soporte_automatico` (cada 10 min) | migraciones `20261115060002`, `20261008000006`, `20261112000001` |
+| Workflows de GitHub Actions | 6 | `.github/workflows/` |
+| Casos de uso | 34 (CU-01 a CU-34) | `docs/casos_de_uso.md` |
+
+Edge Functions en el repositorio: `definir-clave-invitado`, `guest-checkout`, `invitar-colaborador`, `oneclick-charge`, `oneclick-handoff`, `oneclick-return`, `send-push`, `soporte-automatico`, `webpay-commit`, `webpay-create`, `webpay-handoff`, `webpay-reconcile`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-release`, `webpay-resolve-dispute` y `webpay-status`.
+
+Según el reporte de despliegue del 20-nov (después del PR #82), `soporte-automatico` ya está desplegada junto con `invitar-colaborador`, `webpay-commit`, `oneclick-charge`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-resolve-dispute` y `webpay-release`. `send-push` sigue **sin desplegar**. Ninguna migración programa una llamada a `soporte-automatico` (la única Edge Function a la que llama `pg_cron` es `webpay-reconcile`). No se pudo verificar desde el repositorio el estado de `oneclick-handoff` ni de `webpay-handoff`.
 
 ---
 
@@ -153,11 +204,11 @@ Cada feature sigue: `features/<módulo>/presentation/{pages, widgets, providers}
 
 ### Invitación a trabajador con tarifa publicada (flujo actual destacado)
 
-1. Usuario elige profesional y tipo de trabajo (ej. muebles pequeños/medianos/grandes con precio del trabajador).
-2. Solicitud con ubicación (mapa), fecha/hora y descripción opcional → job `pending` en Supabase.
-3. Trabajador acepta o rechaza → al aceptar ve mapa cuadrado, dirección y agenda.
-4. Trabajador inicia trabajo → sube evidencia (foto y/o video) → estado `awaiting_client_approval`.
-5. Usuario revisa evidencia → aprueba y paga (escrow con **Webpay en integración**, vía Edge Functions `webpay-create` / `webpay-commit`) → trabajo `completed` y pago liberado al trabajador.
+1. El cliente elige profesional, servicio y una hora publicada y libre (`horarios_libres_profesional`).
+2. Paga con Webpay Plus u Oneclick (Edge Functions `webpay-create` / `webpay-commit` u `oneclick-charge`): el pago queda **retenido** y el trabajo queda `pendiente`.
+3. El profesional acepta o rechaza; al aceptar avisa «voy en camino» y comparte su ubicación.
+4. Para iniciar ingresa el PIN de 4 dígitos que ve solo el cliente; luego sube evidencia (fotos WebP o video) → `esperando_aprobacion_cliente`.
+5. El cliente da conformidad (`cerrar_trabajo_conforme`) → trabajo `completado` y pago `liberado`. Sin respuesta y con evidencia, el pago se libera a las 48 h. El administrador registra después la transferencia al profesional.
 
 ### Otras modalidades de cobro
 
@@ -176,15 +227,14 @@ Detalle en [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADE
 
 ### Plataforma
 
-- Flutter multiplataforma (Android, iOS, Windows, macOS, Web parcial).
-- **Web PWA** (`myworksapp_web`): React + Vite, Supabase Auth, catálogo de trabajadores y creación de jobs reales.
-- **Hub admin web** (`myworksapp_desktop`): panel de soporte, métricas ejecutivas y DevSecOps conectado a Supabase.
-- **Escritorio nativo** (Tauri): empaqueta el hub admin como app Windows/macOS/Linux.
-- Módulo compartido TypeScript (`shared/`): auth, repositorios y tipos alineados con Flutter.
-- Supabase: autenticación, perfiles, trabajos, pagos, chat, notificaciones, ratings.
-- RLS (Row Level Security) en tablas expuestas.
+- Flutter multiplataforma (Android como objetivo principal; el proyecto también compila para iOS, Windows, macOS y web).
+- **Web de clientes** (`myworksapp_web`, React 19 + Vite 8): rutas `/`, `/servicios`, `/servicios/:categoria`, `/profesional/:id`, `/pedido/:id`, `/pago/retorno`, `/cuenta`, `/trabaja`, `/terminos`, `/privacidad` y `/encuesta`; cualquier otra muestra el 404. Turnstile en el registro y en la compra como invitado.
+- **Consola operativa** (`myworksapp_desktop`, Tauri 2 + React 19): 20 módulos de menú más «Mi cuenta»; deep link `myworksapp-admin://auth/callback`; segundo factor TOTP; código TOTP otra vez para mover dinero si el último tiene más de 5 minutos; cierre de sesión tras 15 minutos sin uso (aviso a los 13); actualizador con un par de claves nuevo.
+- Módulo compartido TypeScript (`shared/`): auth, repositorios, chat y filtro de contacto, pagos, métricas, agenda, evidencia y tipos alineados con Flutter (la CI compara el dominio TS con el Dart).
+- Supabase: autenticación, perfiles, trabajos, pagos, chat, notificaciones, calificaciones, disputas y bitácora de la consola.
+- RLS activo en las 60 tablas de `public` (`rate_limit_ventana` no tiene políticas: solo la usa `service_role`).
+- Límite de tasa global en Postgres (`rate_limit_consumir`) usado por `guest-checkout`, `definir-clave-invitado`, `webpay-create` y `oneclick-charge`.
 - Bootstrap centralizado y health check del backend.
-- Design system y tour guiado no invasivo.
 
 ### Roles y módulos
 
@@ -198,6 +248,7 @@ Detalle en [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADE
 | `ratings` | Calificación post-servicio |
 | `notifications` | Centro de notificaciones |
 | `gdpr` | Privacidad, términos, derechos del usuario |
+| `payments`, `inbox`, `onboarding`, `role_selector`, `settings`, `admin` | Pagos y tarjeta inscrita, bandeja, primera vez, elección de rol, ajustes y vistas administrativas de la app |
 
 ### Servicios clave
 
@@ -211,7 +262,9 @@ Detalle en [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADE
 | Trabajadores | `*@demo.myworksapp.cl` (ej. `carmen.lagos@…`) | (la entrega el equipo; no se publica) |
 | Administración | `admin.ops@demo.myworksapp.cl` | (la entrega el equipo; no se publica) |
 
-Las cuentas `@demo.com` / `demo123` son legado: el administrador `admin@demo.com` está suspendido (auditoría 2026-10-05).
+Las cuentas `@demo.com` son legado: el administrador `admin@demo.com` está suspendido (auditoría 2026-10-05).
+
+Las cuentas `@demo.myworksapp.cl` y `@demo.com` se marcan con `es_demo` (migración `20261120140000`). Con `app_config.demo_modo = 1`, que es el valor en vivo informado el 20-nov, siguen visibles en el catálogo con el aviso «Datos de demostración»; con otro valor se ocultan y no se pueden reservar ni cobrar.
 
 ---
 
@@ -219,15 +272,35 @@ Las cuentas `@demo.com` / `demo123` son legado: el administrador `admin@demo.com
 
 | Área | Estado | Prioridad |
 |------|--------|-----------|
-| Pasarela de pago | Webpay exige `TBK_ENV`. Sin la variable el checkout falla. La demo usa `integration`. Producción sigue en `docs/RUNBOOK_TRANSBANK_PRODUCCION.md` | Alta |
-| Liquidación al profesional | El admin confirma la transferencia bancaria (`provider=manual`). Khipu y Fintoc responden 501 hasta tener contrato y claves | Alta |
-| Notificaciones push remotas (FCM / APNs) | `send-push` y `firebase_messaging` están en el repo. El equipo las recibe cuando el build trae las claves | Media |
-| Chat en tiempo real | ✅ Supabase Realtime (`postgres_changes` sobre `mensajes`): app `chat_page.dart`, web `LiveChatWidget.tsx` | — |
-| Evidencia del trabajo | Fotos en WebP dentro de la base (`fotos_trabajo.imagen_webp`, migración `20261108000001`); el video solo guarda el nombre del archivo | Media (video) |
-| Tests automatizados Flutter | Corrida del 15-nov-2026 sobre `8fa913e`: 174 pruebas en verde. Registro en `docs/anexos/2026-11-15-pruebas/REGISTRO.md`. `main` siguió después y esa cifra no incluye esos commits | ✅ |
+| **Alta de profesionales (H1)** | **Falla en producción.** La migración `20261118230000` (aplicada en vivo, verificado el 20-nov con la lista de migraciones y consultas de solo lectura) crea un trigger que usa `generate_series` con valores `time`, que no existe en Postgres 17: todo `INSERT` en `trabajadores` falla. La corrección (`20261120180000_agenda_alta_sin_generate_series_time.sql`) y su prueba están en el parche de pruebas, sin aplicar. Ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md#hallazgos) | **Crítica** |
+| Pasarela de pago | Webpay exige `TBK_ENV`. Sin la variable el checkout falla. En vivo se usa `integration`. Producción sigue en `docs/RUNBOOK_TRANSBANK_PRODUCCION.md` | Alta |
+| Liquidación al profesional | El administrador confirma la transferencia bancaria (`provider=manual`). Khipu y Fintoc responden 501 hasta tener contrato y claves | Alta |
+| Notificaciones push remotas (FCM / APNs) | `send-push` y `firebase_messaging` están en el repo, pero `send-push` no está desplegada en vivo (reporte del 20-nov) | Media |
+| Soporte automático con devolución | La tarea `mwa_resolver_soporte_automatico` corre en SQL y la Edge Function `soporte-automatico` está desplegada desde el 20-nov, pero en el repositorio ninguna tarea la llama: hay que programar su invocación para que las devoluciones salgan solas | Media |
+| Captcha de Supabase Auth | **No activado**: activarlo rompería hoy el login de la app, la consola y la recuperación de clave. La web envía el token de Turnstile al registrarse, pero mientras el captcha de Auth esté apagado el servidor no lo valida en el registro. `guest-checkout` sí lo valida | Media |
+| Correos transaccionales | ✅ En producción desde el 20-nov (PR #82): pago recibido (al cliente y al profesional), alta de invitado («define tu contraseña»), reembolso y pago liberado, con un diseño común (`_shared/email_layout.ts`, `email_send.ts` y `payment_mail.ts`). No se envían a cuentas demo; si faltan `RESEND_API_KEY` o `RESEND_FROM`, no se envían y el pago sigue | — |
+| Invitación por Resend | **Pendiente**: falta el secreto `INVITE_PROVIDER=resend` (espera la aprobación del dueño). Mientras tanto la invitación sale por Supabase Auth con el SMTP de Resend | Media |
+| Buzón de soporte | `soporte@myworksapp.cl` reenvía con Cloudflare Email Routing; falta la prueba de punta a punta | Baja |
+| Textos legales | `/terminos` y `/privacidad` existen, pero dicen que el texto oficial aún no está publicado | Media |
+| Chat en tiempo real | ✅ Supabase Realtime (`postgres_changes` sobre `mensajes`): app `chat_page.dart`, web `LiveChatWidget.tsx`. El cobro en garantía también se frena si la descripción, la dirección o los mensajes del cliente traen datos de contacto (`20261120120000`) | — |
+| Evidencia del trabajo | Fotos en WebP (`fotos_trabajo_exigir_webp`, bucket privado `evidencias`) y videos de hasta 20 MB | — |
+| Tests automatizados | CI en verde sobre `d9d2c7c` (Flutter, web, consola, Tauri en Windows y Gitleaks; corrida del 20-nov a las 02:31, hora de Chile). En el box, el 20-nov: `shared/` 231 de 231 y consola 12 de 12. Prueba P-17 (19 y 20-nov, réplica local): **641 de 641** pruebas automatizadas; ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md) | ✅ |
+| Capacidad | Con todos los tipos de uso, en una réplica local con 1.000 profesionales sintéticos, se degrada con unos 100 usuarios virtuales y cae con unos 280. La causa es el catálogo, que llama a `stats_profesional()` por cada profesional, más el pool de 10 conexiones de PostgREST. En producción, con solo lecturas (otra prueba, del Programador), aguanta 200 a 250. Ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md) | Alta |
 | CI/CD (GitHub Actions) | Un solo `.github` en la raíz del repo, con actions fijadas por SHA | ✅ |
-| Panel de administración web | `myworksapp_desktop` con Supabase Auth (rol admin) | ✅ MVP |
+| Consola de escritorio | En uso con datos reales. La prueba del 20-nov (`08154df`) encontró 24 errores; el más grave es que el módulo «Profesionales» responde 403 y no se puede verificar a nadie desde la consola. El arreglo está en la rama `cursor/consola-bugs` (sin merge) | Alta |
+| Instalador de la consola | El par de claves del actualizador es nuevo; la privada no está en el repo y va como secrets `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Quien tenga la versión anterior debe reinstalar una vez | Media |
 | Publicación en tiendas | No publicada | Alta (al lanzar) |
+
+## 7. En desarrollo (pendiente, no está en producción)
+
+Estas ramas existen en `nicoussj/Proyecto-Titulo-MyWorksApp` pero **no tienen merge en `main`**. Nada de lo que contienen está desplegado:
+
+| Rama | Qué agrega |
+|---|---|
+| `cursor/aviso-academico-duoc-v2` | Banner de proyecto académico Duoc UC y páginas `/aviso-legal`, `/terminos` y `/privacidad` con texto basado en la Ley 19.628 |
+| `cursor/consola-bugs` | Arreglo de los 24 errores de la consola encontrados en la prueba del 20-nov. Trae la migración `20261120210000_consola_lectura_config_y_disputas.sql`, que no está aplicada |
+
+Además hay un **parche local de pruebas** (no es una rama en GitHub): 12 pruebas de `shared`, 2 pruebas SQL y la corrección de H1, en 3 commits sobre `d9d2c7c`. Se entrega aparte al Programador.
 
 ### Historial de migraciones (diagnóstico 9-nov-2026)
 
@@ -459,7 +532,7 @@ Presentar en **tabla** con ID, descripción, prioridad (Alta/Media/Baja).
 
 ### 8.4 Diseño de datos
 
-- Diagrama entidad-relación (tablas: `profiles`, `workers`, `jobs`, `payments`, `notifications`, `messages`, `job_photos`, etc.).
+- Diagrama entidad-relación (tablas: `perfiles`, `trabajadores`, `trabajos`, `pagos`, `notificaciones`, `mensajes`, `fotos_trabajo`, etc.).
 - Descripción de campos clave: `jobs.status`, `jobs.pricing_mode`, `jobs.pricing_snapshot`.
 
 ### 8.5 Diseño de comportamiento

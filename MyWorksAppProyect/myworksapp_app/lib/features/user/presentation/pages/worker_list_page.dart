@@ -19,6 +19,7 @@ import '../../../../core/database/repositories/worker_schedule_repository.dart';
 import '../../../../core/domain/weekly_schedule.dart';
 import '../../../../core/services/matching_service.dart';
 import '../../../../core/services/user_location_service.dart';
+import '../../../../core/domain/transport_surcharge.dart';
 import '../../../../core/domain/worker_highlight.dart';
 import '../../../../core/domain/worker_public_stats.dart';
 import '../../../../core/services/worker_reputation_service.dart';
@@ -816,7 +817,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
                 ),
               WorkerCardBadge(
                 icon: Icons.radar_rounded,
-                label: '${worker.serviceRadiusKm.round()} km sin extra',
+                label: '${formatServiceRadiusKm(worker.serviceRadiusKm)} km sin extra',
                 color: AppColors.brandOrange,
               ),
               if (isBusy)

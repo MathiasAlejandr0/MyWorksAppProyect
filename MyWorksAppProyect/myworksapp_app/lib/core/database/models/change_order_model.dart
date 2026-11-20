@@ -1,3 +1,5 @@
+import '../../domain/clp_rounding.dart';
+
 class ChangeOrderModel {
   final String id;
   final String jobId;
@@ -47,7 +49,7 @@ class ChangeOrderModel {
       tipo: map['tipo'] as String,
       titulo: map['titulo'] as String,
       descripcion: map['descripcion'] as String,
-      montoClp: (map['monto_clp'] as num).toInt(),
+      montoClp: roundClp(map['monto_clp'] as num),
       estado: map['estado'] as String,
       paymentId: map['id_pago'] as String?,
       createdAt: DateTime.parse(map['creado_en'] as String),

@@ -70,6 +70,8 @@ class JobBookingService {
     required String serviceId,
     required String address,
     required String skuCode,
+    int? visitFeeClp,
+    int transportExtraClp = 0,
     String? description,
     DateTime? scheduledDate,
     String? comunaKey,
@@ -77,10 +79,16 @@ class JobBookingService {
     double? longitude,
     Map<String, dynamic>? serviceMetadata,
   }) async {
-    final quote = await PricingService.instance.calculateFixedPrice(
-      skuCode: skuCode,
-      comunaKey: comunaKey,
-    );
+    final quote = visitFeeClp != null && visitFeeClp > 0
+        ? PricingService.instance.calculateVisitBooking(
+            visitFeeClp: visitFeeClp,
+            comunaKey: comunaKey,
+            transportExtraClp: transportExtraClp,
+          )
+        : await PricingService.instance.calculateFixedPrice(
+            skuCode: skuCode,
+            comunaKey: comunaKey,
+          );
     final result = await _createEscrowJob(
       userId: userId,
       workerId: workerId,

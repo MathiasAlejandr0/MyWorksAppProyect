@@ -16,6 +16,7 @@ export function asCoord(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Igual que `km_entre_puntos`: asin, y el cobro usa el km a 3 decimales. */
 export function haversineKm(
   lat1: number,
   lon1: number,
@@ -29,7 +30,24 @@ export function haversineKm(
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return earth * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const clamped = Math.min(1, Math.max(0, a));
+  return earth * 2 * Math.asin(Math.sqrt(clamped));
+}
+
+export function quantizeChargeKm(kilometers: number): number {
+  if (!Number.isFinite(kilometers) || kilometers <= 0) return 0;
+  return Math.round(kilometers * 1000) / 1000;
+}
+
+/** El ,5 sube. Sirve para tarifa_visita numeric antes de sumar el traslado. */
+export function roundClp(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  const negative = value < 0;
+  const magnitude = Math.abs(value);
+  const whole = Math.trunc(magnitude);
+  const fraction = magnitude - whole;
+  const rounded = fraction >= 0.5 ? whole + 1 : whole;
+  return negative ? -rounded : rounded;
 }
 
 export function resolveServiceRadiusKm(radiusKm?: number | null): number {
@@ -39,7 +57,7 @@ export function resolveServiceRadiusKm(radiusKm?: number | null): number {
 
 export function withinTravelRange(distanceKm: number | null | undefined): boolean {
   if (distanceKm == null || !Number.isFinite(distanceKm)) return true;
-  return distanceKm <= MAX_TRAVEL_WITH_SURCHARGE_KM;
+  return quantizeChargeKm(distanceKm) <= MAX_TRAVEL_WITH_SURCHARGE_KM;
 }
 
 export function transportQuote(input: {
@@ -58,12 +76,12 @@ export function transportQuote(input: {
     return { distanceKm: null, extraClp: 0 };
   }
   const radiusKm = resolveServiceRadiusKm(input.radiusKm);
-  const distanceKm = haversineKm(
+  const distanceKm = quantizeChargeKm(haversineKm(
     input.workerLat,
     input.workerLng,
     input.jobLat,
     input.jobLng,
-  );
+  ));
   const extraKm = Math.max(0, distanceKm - radiusKm);
   if (extraKm <= 0) return { distanceKm, extraClp: 0 };
   const raw = Math.round(extraKm * TRANSPORT_CLP_PER_EXTRA_KM);

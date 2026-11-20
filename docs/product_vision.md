@@ -18,6 +18,8 @@ Un mismo flujo en app, web y consola: buscar en Puerto Montt, agendar, retener e
 
 ## Fuera de esta entrega
 
-MFA obligatorio para todos los usuarios, payout bancario automático y Transbank en producción. El panel de administración sí pide un segundo factor.
+MFA obligatorio para todos los usuarios, payout bancario automático y Transbank en producción. La consola de escritorio sí pide un segundo factor TOTP.
+
+La web está publicada en https://myworksapp.cl.
 
 Guion de la demostración: [`MyWorksAppProyect/DEMO.md`](../MyWorksAppProyect/DEMO.md).

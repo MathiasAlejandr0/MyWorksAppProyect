@@ -1,3 +1,4 @@
+import { asCoord, roundClp, transportExtraClp } from "./transport.ts";
 import { detailBuyOrder, freshBuyOrder } from "./buy_order.ts";
 import { openJobAfterHold } from "./open_job_after_hold.ts";
 import { serviceClient } from "./supabase.ts";
@@ -9,8 +10,6 @@ import {
   tbkOneclickAuthorize,
   tbkOneclickStatus,
 } from "./tbk.ts";
-import { asCoord, transportExtraClp } from "./transport.ts";
-
 type Admin = ReturnType<typeof serviceClient>;
 
 export { cardLast4 } from "./oneclick_inscription.ts";
@@ -206,13 +205,23 @@ export async function expectedJobAmount(
   admin: Admin,
   jobId: string,
 ): Promise<number> {
+  const { data, error } = await admin.rpc("monto_esperado_trabajo_id", {
+    p_id: jobId,
+  });
+  const missing = error != null &&
+    /monto_esperado_trabajo_id|42883|schema cache/i.test(error.message ?? "");
+  if (!error && data != null) {
+    const amount = Number(data);
+    if (Number.isFinite(amount) && amount > 0) return Math.round(amount);
+  }
+  if (!missing) return 0;
+
   const { data: job } = await admin
     .from("trabajos")
     .select("id_trabajador, id_cotizacion_seleccionada, modalidad_cobro, latitud, longitud")
     .eq("id", jobId)
     .maybeSingle();
   if (!job) return 0;
-
   if (job.id_cotizacion_seleccionada && job.id_trabajador) {
     const { data: quote } = await admin
       .from("propuestas_cotizacion")
@@ -221,22 +230,21 @@ export async function expectedJobAmount(
       .eq("id_trabajador", job.id_trabajador)
       .in("estado", ["seleccionada", "aceptada"])
       .maybeSingle();
-    return Number(quote?.monto_total_clp || 0);
+    return roundClp(Number(quote?.monto_total_clp || 0));
   }
-
   if (
     job.modalidad_cobro === "cotizacion_abierta" ||
-    job.modalidad_cobro === "cotizacion"
+    job.modalidad_cobro === "cotizacion" ||
+    !job.id_trabajador
   ) {
     return 0;
   }
-  if (!job.id_trabajador) return 0;
   const { data: worker } = await admin
     .from("trabajadores")
     .select("tarifa_visita, latitud_base, longitud_base, radio_servicio_km")
     .eq("id_usuario", job.id_trabajador)
     .maybeSingle();
-  const visit = Number(worker?.tarifa_visita || 0);
+  const visit = roundClp(Number(worker?.tarifa_visita || 0));
   const extra = transportExtraClp({
     workerLat: asCoord(worker?.latitud_base),
     workerLng: asCoord(worker?.longitud_base),

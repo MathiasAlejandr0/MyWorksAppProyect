@@ -3,7 +3,11 @@
 La base viva es `wxqrfcqifkfgawrnqmnj`. Cada versión de
 `supabase_migrations.schema_migrations` tiene su archivo en
 `supabase/migrations/` con el mismo número, y cada archivo tiene su fila en la
-base. Hoy hay 115 versiones en los dos lados (verificado el 18-nov-2026).
+base. Hubo 115 versiones en los dos lados al verificarlo el 18-nov-2026. Al
+20-nov-2026 (`main` `d9d2c7c`) el repositorio tiene 125 archivos `.sql`; las 10
+migraciones posteriores están al final de la tabla. El 20-nov-2026, cerca de las
+04:14 (hora de Chile), la lista de migraciones del proyecto (solo lectura) tenía
+las mismas 125 versiones que el repositorio: todas están aplicadas en vivo.
 
 Los archivos se ordenan por número. Para un entorno nuevo basta `supabase db push`.
 Para una base que ya tiene el historial no hay nada que reparar.
@@ -64,6 +68,16 @@ archivos llevan ese mismo número.
 | 20261117223850 | `quitar_indice_duplicado_servicios.sql` | Quita `servicios_categoria_idx`, que repetía `idx_servicios_categoria`. |
 | 20261118050658 | `invitacion_tarifa_visita.sql` | `monto_esperado_trabajo`: la opción `visita` de una invitación por tarifa cobra `trabajadores.tarifa_visita`; las demás variantes salen de `trabajador_precios` o `trabajador_servicios_extra`. |
 | 20261118053913 | `cobros_profesional_neto.sql` | Función `comision_servicio_clp` (5 %, mínimo $1.000, nunca mayor que el pago) y vista `cobros_profesional` (security invoker) con bruto, comisión y neto por pago; en órdenes de cambio el neto es el monto de la orden. |
+| 20261118230000 | `agenda_por_defecto_trabajador_nuevo.sql` | El alta del profesional publica de lunes a viernes de 09:00 a 17:00 en `trabajador_horas_publicadas`. Aplicada en vivo. **Tiene el error H1:** usa `generate_series` con valores `time`, que no existe en Postgres 17, y todo `INSERT` en `trabajadores` falla. La corrección está en el parche de pruebas (ver [`../../docs/PRUEBAS.md`](../../docs/PRUEBAS.md#hallazgos)). |
+| 20261118233000 | `reserva_respeta_ventanas.sql` | Un día con `activo = false` no se ofrece ni se reserva; dos citas en el mismo minuto siguen chocando. Aplicada en vivo. |
+| 20261119163000 | `resumen_cobro_trabajo.sql` | `resumen_cobro_trabajo`: el mismo entero en CLP que acepta el cobro, con la coordenada real del profesional. Aplicada en vivo. |
+| 20261119170000 | `contacto_antes_de_garantia.sql` | El pago principal se frena si la descripción o un mensaje traen datos de contacto (`pagos_exigir_sin_contacto`). |
+| 20261120120000 | `contacto_preciso.sql` | Precisa `texto_tiene_contacto`: redes solo con usuario, enlace o @; un RUT, una medida o un monto no es teléfono. El reporte del 20-nov indica que la migración del filtro de contacto se aplicó en vivo. |
+| 20261120130000 | `auditoria_consola.sql` | Tabla inmutable `auditoria_consola`, tipo `accion_auditoria_consola`, `registrar_auditoria()`, 17 RPC `consola_*` y nota obligatoria al rechazar una verificación. Aplicada en vivo (reporte del 20-nov; la prueba de la consola vio la tabla con datos). |
+| 20261120140000 | `ocultar_profesionales_demo.sql` | Columna `es_demo` y filtros de catálogo, reserva y cobro para cuentas demo cuando `demo_modo` no es 1. Aplicada en vivo (reporte del 20-nov). |
+| 20261120150000 | `rate_limit_global.sql` | Tabla `rate_limit_ventana` y `rate_limit_consumir` (solo `service_role`). Aplicada en vivo (reporte del 20-nov). |
+| 20261120160000 | `perfil_publico_profesional.sql` | `perfil_publico_profesional`, `horario_publico_profesional` y `resenas_publicas_profesional`. Aplicada en vivo (reporte del 20-nov). |
+| 20261120170000 | `derechos_y_cobro_extra.sql` | `exportar_mis_datos`, `solicitar_eliminacion_cuenta`, tabla `direcciones_cliente`, `monto_a_cobrar_orden_cambio` y `rechazar_orden_cambio`. Aplicada en vivo (reporte del 20-nov). |
 
 ## Dump del esquema
 

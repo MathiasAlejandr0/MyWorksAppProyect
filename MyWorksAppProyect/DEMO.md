@@ -6,13 +6,15 @@ Guion para mostrar MyWorksApp con las cuentas de demostración del proyecto Supa
 
 | Parte | Dónde |
 |---|---|
-| Web (clientes) | https://myworksapp-cl.vercel.app |
-| App Android (clientes y profesionales) | APK release `MyWorksApp-1.0.4.apk` (versión 1.0.4+5), construida desde `main` |
+| Web (clientes) | https://myworksapp.cl (también `www.myworksapp.cl` y https://myworksapp-cl.vercel.app) |
+| App Android (clientes y profesionales) | APK release construido desde `main`; la versión del código es 1.0.11+12 (`myworksapp_app/pubspec.yaml`) |
 | Consola de escritorio (administración) | `myworksapp_desktop/` (sección 6) |
-| Encuesta de prueba con usuarios (SUS) | https://myworksapp-cl.vercel.app/encuesta; en la app, inicio del cliente → **Encuesta de la prueba**, y perfil del profesional → **Encuesta de la prueba** |
+| Encuesta de prueba con usuarios (SUS) | https://myworksapp.cl/encuesta; en la app, inicio del cliente → **Encuesta de la prueba**, y perfil del profesional → **Encuesta de la prueba** |
 | Migraciones de la base | `myworksapp_app/supabase/MIGRATIONS_INVENTORY.md` (cada versión de la base tiene su archivo) |
 
-Configuración vigente en `public.app_config`: `demo_modo = 0` (el registro de un invitado pide confirmar el correo) y `admin_requiere_aal2 = 1` (el panel de administración exige el segundo factor).
+Configuración vigente en `public.app_config` (informada el 20-nov-2026): `demo_modo = 1` y `admin_requiere_aal2 = 1` (la consola exige el segundo factor).
+
+Con `demo_modo = 1` las cuentas demo aparecen en el catálogo con el aviso «Datos de demostración» y el invitado queda con la cuenta confirmada sin correo (`_shared/guest_ticket.ts`). Con otro valor, las cuentas `@demo.myworksapp.cl` y `@demo.com` se ocultan del catálogo y no se pueden reservar ni cobrar (migración `20261120140000_ocultar_profesionales_demo.sql`).
 
 ## 2. Cuentas (misma contraseña en todas; la entrega el equipo, no se publica)
 
@@ -168,6 +170,10 @@ Los pagos pasan por Edge Functions de Supabase; las claves de Transbank viven so
 | `guest-checkout`, `definir-clave-invitado` | Pedido sin sesión desde la web y creación de la clave del invitado |
 | `webpay-release`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-resolve-dispute`, `webpay-reconcile` | Liberación, reembolsos, disputas y conciliación |
 | `invitar-colaborador` | Invitación de soporte y QA desde la consola |
+| `soporte-automatico` | Devolución automática del soporte. Desplegada el 20-nov; ninguna tarea del repositorio la llama todavía |
+| `send-push` | Push FCM. Está en el repositorio, pero no está desplegada en vivo |
+
+`webpay-release`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-resolve-dispute` e `invitar-colaborador` llaman `is_admin()` con el JWT del usuario antes de mover dinero o invitar; cada acción queda en la bitácora `auditoria_consola`. `guest-checkout`, `definir-clave-invitado`, `webpay-create` y `oneclick-charge` usan el límite de tasa global en Postgres (`rate_limit_consumir`).
 
 Con `TBK_ENV=integration` y sin `TBK_COMMERCE_CODE` ni `TBK_API_KEY`, las funciones usan el comercio público de integración de Transbank. En `production` exigen los secretos del comercio real (`docs/RUNBOOK_TRANSBANK_PRODUCCION.md`).
 
@@ -175,7 +181,7 @@ Con `TBK_ENV=integration` y sin `TBK_COMMERCE_CODE` ni `TBK_API_KEY`, las funcio
 
 1. Secretos de Transbank de producción: `TBK_ENV=production`, `TBK_COMMERCE_CODE` y `TBK_API_KEY` del comercio real.
 2. `CORS_ALLOWED_ORIGINS` con el origen real de la web (y el del escritorio, si se publica).
-3. `TURNSTILE_SECRET_KEY` en las funciones y `VITE_TURNSTILE_SITE_KEY` al construir la web. En `production`, sin el secreto, el checkout de invitado responde 503.
+3. `TURNSTILE_SECRET_KEY` en las funciones y `VITE_TURNSTILE_SITE_KEY` al construir la web (ya configurados para `myworksapp.cl`). Sin el secreto, el checkout de invitado responde 503.
 4. En el plan Pro de Supabase, activar la protección de contraseñas filtradas.
 
 ## 9. Plan B

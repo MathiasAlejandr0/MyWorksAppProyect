@@ -1,5 +1,7 @@
 # Mapa esquema EN → ES (MyWorksApp)
 
+> **Documento histórico** (inventario del 13-09-2026). La migración a nombres en español ya está aplicada; el esquema vigente (60 tablas al 20-11-2026) está en [`DICCIONARIO_BASE_DATOS.md`](DICCIONARIO_BASE_DATOS.md).
+
 Fuente: modelos Dart + repositorios (dump OpenAPI remoto requiere service_role; no disponible con anon key).
 Proyecto Supabase: `wxqrfcqifkfgawrnqmnj`
 Fecha inventario: 2026-09-13

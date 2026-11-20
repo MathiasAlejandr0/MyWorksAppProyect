@@ -127,8 +127,8 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
     );
   }
 
-  /// Devuelve el entero que se va a cobrar. Si el servidor cambió el total,
-  /// actualiza el botón y no cobra: el cliente paga el monto que está viendo.
+  /// Entero del servidor. Si la pantalla tenía la suma redondeada del mapa,
+  /// la reemplaza y cobra ese entero en el mismo toque.
   Future<int?> _payableOrRefresh() async {
     if (_isChangeOrder) return _quote.totalClp;
     JobChargePreview? preview;
@@ -139,38 +139,59 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       preview = null;
     }
     if (!mounted) return null;
-    final total = payableTotalClp(preview?.totalClp);
-    if (preview == null || total == null) {
+    final tap = chargeForTap(
+      shownClp: _quote.totalClp,
+      serverTotalClp: preview?.totalClp,
+    );
+    if (preview == null || tap == null) {
       setState(() {
         _chargeReady = false;
         _banner = chargeNotReadyMessage;
       });
       return null;
     }
-    if (total != _quote.totalClp) {
+    if (tap.replacedShownTotal) {
       setState(() {
         _quote = PricingService.instance.applyServerCharge(_quote, preview!);
         _chargeReady = true;
-        _banner = 'El total se actualizó. El botón muestra el monto que se cobra.';
+        _banner = null;
       });
-      return null;
     }
-    return total;
+    return tap.amountClp;
+  }
+
+  /// Si el cobro rechazó la suma redondeada, reintenta con el monto real
+  /// sin pedir otro toque.
+  Future<void> _chargeOrRetry(Future<void> Function(int amount) charge) async {
+    final amount = await _payableOrRefresh();
+    if (amount == null || !mounted) return;
+    try {
+      await charge(amount);
+    } catch (e) {
+      final fixed = expectedChargeFromMismatch(_errorText(e));
+      if (fixed == null || fixed == amount || !mounted) rethrow;
+      setState(() {
+        _quote = PricingService.instance.alignToChargedTotal(_quote, fixed);
+        _chargeReady = true;
+        _banner = null;
+      });
+      await charge(fixed);
+    }
   }
 
   /// El aviso va dentro de la hoja. Un SnackBar del scaffold de atrás
   /// queda tapado hasta que el cliente cierra el cobro.
   void _fail(Object e) {
     final text = _errorText(e);
-    if (!_isChangeOrder && paymentMismatchNeedsReload(text)) {
-      setState(() {
-        _chargeReady = false;
-        _banner = null;
-      });
-      _alignCharge();
-      return;
-    }
-    setState(() => _banner = text);
+    final expected =
+        _isChangeOrder ? null : expectedChargeFromMismatch(text);
+    setState(() {
+      if (expected != null) {
+        _quote = PricingService.instance.alignToChargedTotal(_quote, expected);
+        _chargeReady = true;
+      }
+      _banner = text;
+    });
   }
 
   Future<void> _openWebpay(
@@ -197,17 +218,17 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
   Future<void> _payWithoutSavingCard() async {
     setState(() => _processing = true);
     try {
-      final amount = await _payableOrRefresh();
-      if (amount == null || !mounted) return;
-      final session =
-          await ref.read(paymentServiceProvider).initiateWebpayPayment(
-                jobId: widget.jobId,
-                amount: amount.toDouble(),
-                changeOrderId: widget.changeOrderId,
-              );
-      final url = session.redirectUrl ?? session.url;
-      if (!mounted) return;
-      await _openWebpay(url, paymentId: session.paymentId);
+      await _chargeOrRetry((amount) async {
+        final session =
+            await ref.read(paymentServiceProvider).initiateWebpayPayment(
+                  jobId: widget.jobId,
+                  amount: amount.toDouble(),
+                  changeOrderId: widget.changeOrderId,
+                );
+        final url = session.redirectUrl ?? session.url;
+        if (!mounted) return;
+        await _openWebpay(url, paymentId: session.paymentId);
+      });
     } catch (e) {
       if (!mounted) return;
       _fail(e);
@@ -249,34 +270,34 @@ class _EscrowCheckoutSheetState extends ConsumerState<EscrowCheckoutSheet> {
       }
 
       final payments = ref.read(paymentServiceProvider);
-      final amount = await _payableOrRefresh();
-      if (amount == null || !mounted) return;
-      var charge = await payments.chargeSavedCard(
-        jobId: widget.jobId,
-        amount: amount.toDouble(),
-      );
-      if (!mounted) return;
-      if (charge.needsCard) {
-        if (kIsWeb && !skipWebFallback) {
-          await _payWithoutSavingCard();
-          return;
-        }
-        final enrolled = await CardEnrollmentPage.open(context);
-        if (!mounted || !enrolled) return;
-        charge = await payments.chargeSavedCard(
+      await _chargeOrRetry((amount) async {
+        var charge = await payments.chargeSavedCard(
           jobId: widget.jobId,
           amount: amount.toDouble(),
         );
-      }
-      if (!mounted) return;
-      if (!charge.charged) {
-        setState(() {
-          _banner =
-              'La tarjeta no quedó lista. Puedes pagar este pedido en Transbank sin guardarla.';
-        });
-        return;
-      }
-      Navigator.of(context).pop(true);
+        if (!mounted) return;
+        if (charge.needsCard) {
+          if (kIsWeb && !skipWebFallback) {
+            await _payWithoutSavingCard();
+            return;
+          }
+          final enrolled = await CardEnrollmentPage.open(context);
+          if (!mounted || !enrolled) return;
+          charge = await payments.chargeSavedCard(
+            jobId: widget.jobId,
+            amount: amount.toDouble(),
+          );
+        }
+        if (!mounted) return;
+        if (!charge.charged) {
+          setState(() {
+            _banner =
+                'La tarjeta no quedó lista. Puedes pagar este pedido en Transbank sin guardarla.';
+          });
+          return;
+        }
+        Navigator.of(context).pop(true);
+      });
     } catch (e) {
       if (kIsWeb && !skipWebFallback && mounted) {
         await _payWithoutSavingCard();

@@ -61,31 +61,38 @@ class DisputeSection extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      color: AppColors.brandOrangeSoft,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.gavel, color: AppColors.brandOrange),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '¿Problema con el trabajo?',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+    final brightness = Theme.of(context).brightness;
+    final titleColor = AppColors.onCanvas(brightness);
+    final muted = AppColors.onCanvasMuted(brightness);
+
+    return _DisputeFrame(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const _DisputeIconBadge(icon: Icons.gavel),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '¿Problema con el trabajo?',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: titleColor,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Si los dos están de acuerdo, el sistema cierra el caso. Si abres una disputa, el pago queda retenido: los casos simples se cierran solos al vencer el plazo y el resto lo ve una persona.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Si los dos están de acuerdo, el sistema cierra el caso. Si abres una disputa, el pago queda retenido: los casos simples se cierran solos al vencer el plazo y el resto lo ve una persona.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: muted,
+                  height: 1.4,
+                  fontSize: 13,
+                ),
+          ),
             if (pendingAgreementType != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -116,12 +123,13 @@ class DisputeSection extends StatelessWidget {
               icon: const Icon(Icons.report_problem_outlined),
               label: const Text('Abrir disputa'),
               style: OutlinedButton.styleFrom(
+                foregroundColor: titleColor,
+                side: const BorderSide(color: AppColors.brandOrange, width: 1.5),
                 minimumSize: const Size.fromHeight(48),
               ),
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -200,37 +208,46 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
         dispute.status == AppConstants.disputeStatusNeedsHuman ||
         dispute.status == AppConstants.disputeStatusRefundPending;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  isOpen ? Icons.gavel : Icons.check_circle_outline,
-                  color: isOpen ? AppColors.brandOrange : AppColors.success,
+    final brightness = Theme.of(context).brightness;
+    final titleColor = AppColors.onCanvas(brightness);
+    final muted = AppColors.onCanvasMuted(brightness);
+    final accent = isOpen ? AppColors.brandOrange : AppColors.success;
+
+    return _DisputeFrame(
+      accent: accent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _DisputeIconBadge(
+                icon: isOpen ? Icons.gavel : Icons.check_circle_outline,
+                color: accent,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  dispute.status == AppConstants.disputeStatusNeedsHuman
+                      ? 'Una persona va a revisar este caso'
+                      : dispute.status ==
+                              AppConstants.disputeStatusRefundPending
+                          ? 'La devolución a la tarjeta está en curso'
+                          : isOpen
+                              ? 'Disputa abierta'
+                              : 'Disputa resuelta',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: titleColor,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    dispute.status == AppConstants.disputeStatusNeedsHuman
-                        ? 'Una persona va a revisar este caso'
-                        : dispute.status ==
-                                AppConstants.disputeStatusRefundPending
-                            ? 'La devolución a la tarjeta está en curso'
-                            : isOpen
-                                ? 'Disputa abierta'
-                                : 'Disputa resuelta',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text('Motivo: ${_reasonLabel(dispute.reason)}'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Motivo: ${_reasonLabel(dispute.reason)}',
+            style: TextStyle(color: titleColor, fontWeight: FontWeight.w600),
+          ),
             if (dispute.rule != null) Text('Regla: ${dispute.rule}'),
             if (widget.pendingAgreementType != null)
               Text(
@@ -296,13 +313,86 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
                 child: Text(
                   'Calificación y pago retenidos hasta resolución.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.grayMedium,
+                        color: muted,
+                        height: 1.35,
                       ),
                 ),
               ),
           ],
         ),
+    );
+  }
+}
+
+class _DisputeFrame extends StatelessWidget {
+  const _DisputeFrame({
+    required this.child,
+    this.accent = AppColors.brandOrange,
+  });
+
+  final Widget child;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: dark ? AppColors.surfaceDarkElevated : AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: dark
+              ? Colors.white.withValues(alpha: 0.22)
+              : AppColors.grayBorder,
+        ),
       ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ColoredBox(
+              color: accent,
+              child: const SizedBox(width: 4),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 16, 16, 16),
+                child: child,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DisputeIconBadge extends StatelessWidget {
+  const _DisputeIconBadge({
+    required this.icon,
+    this.color = AppColors.brandOrange,
+  });
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final base = dark ? AppColors.surfaceDarkElevated : AppColors.surfaceLight;
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+          color.withValues(alpha: dark ? 0.28 : 0.14),
+          base,
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(icon, color: color, size: 20),
     );
   }
 }
@@ -534,11 +624,18 @@ class _SelectableOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final border =
-        selected ? AppColors.brandOrange : AppColors.hairlineOf(context);
+    final base = dark ? const Color(0xFF0E1624) : AppColors.grayLight;
+    final border = selected
+        ? AppColors.brandOrange
+        : (dark ? Colors.white.withValues(alpha: 0.28) : AppColors.grayBorder);
     final fill = selected
-        ? AppColors.brandOrange.withValues(alpha: dark ? 0.18 : 0.10)
-        : AppColors.fieldFillOf(context);
+        ? Color.alphaBlend(
+            AppColors.brandOrange.withValues(alpha: dark ? 0.24 : 0.14),
+            base,
+          )
+        : base;
+    final titleColor = AppColors.onCanvas(Theme.of(context).brightness);
+    final muted = AppColors.onCanvasMuted(Theme.of(context).brightness);
     return Material(
       color: fill,
       borderRadius: BorderRadius.circular(14),
@@ -550,7 +647,7 @@ class _SelectableOptionCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: border, width: selected ? 1.6 : 1),
+            border: Border.all(color: border, width: selected ? 2 : 1),
           ),
           child: Row(
             children: [
@@ -563,6 +660,7 @@ class _SelectableOptionCard extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: titleColor,
                             fontWeight: FontWeight.w700,
                           ),
                     ),
@@ -570,9 +668,7 @@ class _SelectableOptionCard extends StatelessWidget {
                     Text(
                       detail,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.onCanvasMuted(
-                              Theme.of(context).brightness,
-                            ),
+                            color: muted,
                             height: 1.3,
                           ),
                     ),
@@ -588,7 +684,7 @@ class _SelectableOptionCard extends StatelessWidget {
                     : Icons.chevron_right,
                 color: selected || !showRadio
                     ? AppColors.brandOrange
-                    : AppColors.grayMedium,
+                    : muted,
               ),
             ],
           ),

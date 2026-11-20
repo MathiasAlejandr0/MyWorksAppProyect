@@ -1,5 +1,7 @@
 # Flip a producción Transbank (cuando exista la empresa)
 
+> Estado al 20-nov-2026: Webpay Plus y Oneclick operan en **integración** (`TBK_ENV=integration`) con la web en https://myworksapp.cl. Las Edge Functions ya aceptan `https://myworksapp.cl`, `https://www.myworksapp.cl` y `https://myworksapp-cl.vercel.app` sin configurarlos (`_shared/cors_origin.ts`); las variables de abajo solo agregan orígenes. No se verificó la ruta exacta de `WEBPAY_WEB_RETURN_URL` en producción.
+
 ## Estado actual
 
 - Ambiente por defecto: **integration** (`TBK_ENV=integration`).
@@ -47,9 +49,9 @@ npx supabase secrets set TBK_ENV=integration
 npx supabase secrets set WEBPAY_HANDOFF_SECRET=<random-32-chars>
 npx supabase secrets set WEBPAY_RETURN_URL=https://<project>.supabase.co/functions/v1/webpay-commit
 # Orígenes para postMessage del commit (popup autenticado):
-npx supabase secrets set WEBPAY_ALLOWED_RETURN_ORIGINS=https://app.myworksapp.cl,http://localhost:5173
+npx supabase secrets set WEBPAY_ALLOWED_RETURN_ORIGINS=https://myworksapp.cl,https://www.myworksapp.cl,http://localhost:5173
 # Opcional:
-# npx supabase secrets set CORS_ALLOWED_ORIGINS=https://app.myworksapp.cl,http://localhost:5173
+# npx supabase secrets set CORS_ALLOWED_ORIGINS=https://myworksapp.cl,https://www.myworksapp.cl,http://localhost:5173
 ```
 
 Cuando Transbank entregue comercio real:
@@ -59,7 +61,7 @@ npx supabase secrets set TBK_ENV=production
 npx supabase secrets set TBK_COMMERCE_CODE=<codigo_comercio>
 npx supabase secrets set TBK_API_KEY=<api_key_secreta>
 npx supabase secrets set WEBPAY_RETURN_URL=https://<project>.supabase.co/functions/v1/webpay-commit
-npx supabase secrets set WEBPAY_WEB_RETURN_URL=https://app.myworksapp.cl/?pago=ok
+npx supabase secrets set WEBPAY_WEB_RETURN_URL=https://myworksapp.cl/?pago=ok
 npx supabase secrets set WEBPAY_APP_RETURN_URL=myworksapp://pago/retorno
 ```
 

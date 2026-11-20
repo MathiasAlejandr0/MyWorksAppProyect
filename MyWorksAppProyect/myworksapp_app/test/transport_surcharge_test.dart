@@ -27,6 +27,20 @@ void main() {
     expect(withinTravelRange(quote.distanceKm), isTrue);
   });
 
+  test('la base aproximada del catálogo no inventa el recargo', () {
+    final quote = transportSurcharge(
+      workerLat: -41.47,
+      workerLng: -72.94,
+      jobLat: -41.4499,
+      jobLng: -72.8148,
+      radiusKm: 7,
+      catalogBaseIsApproximate: true,
+    );
+    expect(quote.extraClp, 0);
+    expect(quote.insideRadar, isNull);
+    expect(quote.distanceKm, isNotNull);
+  });
+
   test('más de 30 km no se ofrece el viaje', () {
     expect(withinTravelRange(30), isTrue);
     expect(withinTravelRange(30.1), isFalse);

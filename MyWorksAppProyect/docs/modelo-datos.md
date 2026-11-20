@@ -1,6 +1,8 @@
 # Modelo de datos de MyWorksApp
 
-> **Total: 57 tablas** en el esquema `public` de la base de datos (PostgreSQL en Supabase), con 458 columnas, 57 claves primarias y 85 claves foráneas (84 entre tablas de `public` y 1 hacia `auth.users`).
+> **Actualización 20-11-2026 (`main` `d9d2c7c`).** Las migraciones `20261120130000`, `20261120150000` y `20261120170000` agregan `auditoria_consola` (administración), `rate_limit_ventana` (administración) y `direcciones_cliente` (usuarios, FK a `perfiles`). Con ellas el esquema queda en **60 tablas**, 481 columnas y 86 claves foráneas, contadas desde el DDL del repositorio (no se volvió a medir la base viva). Detalle de las columnas en la sección 0 de [`DICCIONARIO_BASE_DATOS.md`](DICCIONARIO_BASE_DATOS.md). El resto de este documento describe el snapshot del 17-11-2026:
+
+> **Total del snapshot: 57 tablas** en el esquema `public` de la base de datos (PostgreSQL en Supabase), con 458 columnas, 57 claves primarias y 85 claves foráneas (84 entre tablas de `public` y 1 hacia `auth.users`).
 
 ## 1. De dónde sale el número
 

@@ -1,5 +1,7 @@
 # Plan para alinear migraciones con producción (13 nov 2026)
 
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (12-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `d9d2c7c`) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
+
 Proyecto: `wxqrfcqifkfgawrnqmnj` (MyWorksApp Proyect). **Nada de esto se ha
 aplicado.** Lo corre el dueño del proyecto, a mano, después de revisar el PR.
 

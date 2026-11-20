@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
+  formatServiceRadiusKm,
   resolveServiceRadiusKm,
-  transportSurcharge,
+  roundClp,
 } from '@myworksapp/shared';
 import type { SearchWorker } from './SearchResultsView';
 import { addFastBasemap, fastMapOptions, isCoarseMap } from '../map/basemap';
@@ -29,7 +30,7 @@ function workerLatLng(worker: SearchWorker): [number, number] | null {
 }
 
 function clp(amount: number): string {
-  return Math.round(amount).toLocaleString('es-CL');
+  return roundClp(amount).toLocaleString('es-CL');
 }
 
 const pinIcon = L.divIcon({
@@ -62,7 +63,7 @@ const clientIcon = L.divIcon({
 
 function workerPopup(
   worker: SearchWorker,
-  clientLocation: ClientMapLocation | null,
+  _clientLocation: ClientMapLocation | null,
 ): HTMLElement {
   const root = document.createElement('div');
   root.className = 'mwa-map-popup';
@@ -75,24 +76,8 @@ function workerPopup(
   meta.textContent = `${worker.rating > 0 ? `★ ${worker.rating.toFixed(1)}` : 'Nuevo'} · desde $${price}`;
   const radar = document.createElement('span');
   radar.className = 'mwa-map-radar';
-  const radiusKm = resolveServiceRadiusKm(worker.serviceRadiusKm);
-  const quote = transportSurcharge({
-    workerLat: worker.latitude,
-    workerLng: worker.longitude,
-    jobLat: clientLocation?.latitude,
-    jobLng: clientLocation?.longitude,
-    radiusKm,
-  });
-  if (quote.insideRadar === true) {
-    radar.classList.add('is-near');
-    radar.textContent = `Dentro de ${radiusKm} km: sin extra de traslado`;
-  } else if (quote.insideRadar === false) {
-    radar.classList.add('is-extra');
-    const km = quote.distanceKm?.toFixed(1) ?? '?';
-    radar.textContent = `Fuera del área (${km} km). El traslado se confirma al pagar`;
-  } else {
-    radar.textContent = `Hasta ${radiusKm} km cubre sin extra de traslado`;
-  }
+  const radiusKm = formatServiceRadiusKm(worker.serviceRadiusKm);
+  radar.textContent = `Hasta ${radiusKm} km sin extra. El traslado se confirma al pagar`;
   root.append(title, role, meta, radar);
   return root;
 }
@@ -304,22 +289,7 @@ export function PremiumSearchMap({
     clientMarkerRef.current = null;
     if (!clientLocation) return;
     const selected = workers.find((worker) => worker.id === selectedWorkerId);
-    const quote = selected
-      ? transportSurcharge({
-          workerLat: selected.latitude,
-          workerLng: selected.longitude,
-          jobLat: clientLocation.latitude,
-          jobLng: clientLocation.longitude,
-          radiusKm: selected.serviceRadiusKm,
-        })
-      : null;
-    let clientText = 'Tu trabajo. Arrástralo si quieres corregirlo.';
-    if (quote?.insideRadar === true) {
-      clientText = 'Estás dentro del área: sin extra de traslado';
-    } else if (quote?.insideRadar === false) {
-      const km = quote.distanceKm?.toFixed(1) ?? '?';
-      clientText = `Fuera del área (${km} km). El traslado se confirma al pagar`;
-    }
+    const clientText = 'Tu trabajo. Arrástralo si quieres corregirlo.';
     const marker = L.marker([clientLocation.latitude, clientLocation.longitude], {
       icon: clientIcon,
       draggable: true,
@@ -369,7 +339,7 @@ export function PremiumSearchMap({
               <span>
                 {selected.profession}
                 {selected.id === selectedWorkerId
-                  ? ` · ${resolveServiceRadiusKm(selected.serviceRadiusKm)} km sin extra`
+                  ? ` · ${formatServiceRadiusKm(selected.serviceRadiusKm)} km sin extra`
                   : ''}
               </span>
             </div>

@@ -1,3 +1,4 @@
+import '../domain/clp_rounding.dart';
 import '../domain/job_charge_preview.dart';
 import '../domain/price_quote.dart';
 import '../domain/pricing_constants.dart';
@@ -12,17 +13,6 @@ import '../utils/app_error.dart';
 class PricingService {
   static final PricingService instance = PricingService._();
   PricingService._();
-
-  static const _comunaFactors = <String, double>{
-    'puerto_montt': 1.0,
-    'puerto_varas': 1.0,
-    'osorno': 0.98,
-    'providencia': 1.08,
-    'las_condes': 1.10,
-    'santiago': 1.0,
-    'maipu': 0.95,
-    'puente_alto': 0.92,
-  };
 
   static const _skuBaseClp = <String, int>{
     'LOCK_CYLINDER_REPLACE': 45000,
@@ -41,8 +31,7 @@ class PricingService {
     int? unitRateClp,
     int transportExtraClp = 0,
   }) {
-    final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
-    final rate = unitRateClp ?? amountClp;
+    final rate = publishedServiceClp(rate: unitRateClp ?? amountClp);
     final baseTotal = unit == WorkerPriceUnit.perSqm && (squareMeters ?? 0) > 0
         ? rate * squareMeters!
         : amountClp;
@@ -72,7 +61,8 @@ class PricingService {
         if (m2 > 0) 'square_meters': m2,
         'price_unit': unit.name,
         'transport_extra_clp': extra,
-        'comuna_factor': factor,
+        if (comunaKey != null) 'comuna_key': comunaKey,
+        'comuna_factor': 1,
         'service_fee_rate': serviceFeeRate,
         'service_fee_clp': fee,
         'worker_payout_clp': subtotal - fee,
@@ -99,8 +89,7 @@ class PricingService {
     int comunaSurchargeClp = 0,
   }) async {
     final base = _skuBaseClp[skuCode] ?? 40000;
-    final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
-    final subtotal = (base * factor).round() + comunaSurchargeClp;
+    final subtotal = applyComunaFactor(base, comunaKey) + comunaSurchargeClp;
     final fee = serviceFeeFor(subtotal);
     return PriceQuote(
       pricingMode: PricingConstants.modeFixedPrice,
@@ -111,7 +100,7 @@ class PricingService {
       breakdown: {
         'sku_code': skuCode,
         'base_clp': base,
-        'comuna_factor': factor,
+        'comuna_factor': (comunaFactorHundredths[comunaKey?.toLowerCase()] ?? 100) / 100,
         'comuna_surcharge_clp': comunaSurchargeClp,
         'service_fee_rate': serviceFeeRate,
         'service_fee_clp': fee,
@@ -131,8 +120,8 @@ class PricingService {
     if (![2, 4, 8].contains(blockHours)) {
       throw AppError.validation('El bloque debe ser de 2, 4 u 8 horas');
     }
-    final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
-    final subtotal = (hourlyRateClp * blockHours * factor).round();
+    // El servidor cobra visita×2,5×horas, sin factor de comuna, y le suma el traslado real.
+    final subtotal = hourlyRateClp * blockHours;
     final fee = serviceFeeFor(subtotal);
     return PriceQuote(
       pricingMode: PricingConstants.modeHourlyBlock,
@@ -143,7 +132,8 @@ class PricingService {
       breakdown: {
         'hourly_rate_clp': hourlyRateClp,
         'block_hours': blockHours,
-        'comuna_factor': factor,
+        if (comunaKey != null) 'comuna_key': comunaKey,
+        'comuna_factor': 1,
         'service_fee_rate': serviceFeeRate,
         'service_fee_clp': fee,
         'worker_payout_clp': subtotal - fee,
@@ -192,8 +182,11 @@ class PricingService {
     if (extraHours < 1 || extraHours > 8) {
       throw AppError.validation('Las horas extra deben ser entre 1 y 8');
     }
-    final factor = _comunaFactors[comunaKey?.toLowerCase()] ?? 1.0;
-    final subtotal = (hourlyRateClp * extraHours * factor * 1.15).round();
+    final subtotal = overtimeAmountClp(
+      hourlyRateClp: hourlyRateClp,
+      extraHours: extraHours,
+      comunaKey: comunaKey,
+    );
     final fee = serviceFeeFor(subtotal);
     return PriceQuote(
       pricingMode: PricingConstants.modeHourlyBlock,
@@ -205,7 +198,7 @@ class PricingService {
         'overtime_hours': extraHours,
         'hourly_rate_clp': hourlyRateClp,
         'surge_factor': 1.15,
-        'comuna_factor': factor,
+        'comuna_factor': (comunaFactorHundredths[comunaKey?.toLowerCase()] ?? 100) / 100,
         'service_fee_rate': serviceFeeRate,
         'service_fee_clp': fee,
         'worker_payout_clp': subtotal - fee,
@@ -217,7 +210,7 @@ class PricingService {
 
   /// Tarifa hora estimada desde tarifa de visita (demo, sin columna hourly en BD).
   int estimateHourlyRateFromVisitFee(int visitFeeClp) =>
-      (visitFeeClp * 2.5).round().clamp(15000, 120000);
+      hourlyRateFromVisitFee(visitFeeClp);
 
   /// Comisión del servicio: 5% del monto de la cotización aprobada,
   /// con un mínimo de [PricingService.minServiceFeeClp] CLP.
@@ -229,18 +222,9 @@ class PricingService {
 
   int serviceFeeFor(int amountClp) {
     if (amountClp <= 0) return 0;
-    final percent = _roundHalfAway(amountClp * 5, 100);
+    final percent = roundHalfAway(amountClp * 5, 100);
     final withMinimum = percent < minServiceFeeClp ? minServiceFeeClp : percent;
     return withMinimum > amountClp ? amountClp : withMinimum;
-  }
-
-  /// `round(numerador / denominador)` para montos positivos, igual que
-  /// `round(numeric)` de Postgres: el .5 sube.
-  static int _roundHalfAway(int numerator, int denominator) {
-    final quotient = numerator ~/ denominator;
-    final remainder = numerator % denominator;
-    if (remainder * 2 >= denominator) return quotient + 1;
-    return quotient;
   }
 
   /// Líneas que se muestran juntas en el cobro.

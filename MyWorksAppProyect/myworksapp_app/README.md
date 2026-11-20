@@ -2,6 +2,23 @@
 
 App móvil online-first (Supabase) para conectar usuarios con trabajadores de oficios.
 
+Versión en `pubspec.yaml`: **1.0.11+12** (`main` `d9d2c7c`, 20-11-2026). Es la app de clientes y profesionales; la operación interna se hace en la consola de escritorio (`../myworksapp_desktop/`).
+
+Es parte del monorepo [`MyWorksAppProyect/`](../README.md); el índice de toda la documentación está en [`docs/INDICE.md`](../../docs/INDICE.md). Desde el PR #82, recuperar la contraseña vuelve a la app (`cl.myworksapp.auth`) y abre «Nueva contraseña»; las instalaciones existentes lo reciben con la próxima compilación.
+
+## Contenido
+
+- [Documentación del repositorio](#documentación-del-repositorio)
+- [Inicio rápido](#inicio-rápido)
+- [Módulos principales](#módulos-principales)
+- [Datos demo](#datos-demo)
+- [Diseño y sistema compartido](#diseño-y-sistema-compartido)
+- [Credenciales demo](#credenciales-demo)
+- [Tests y CI](#tests-y-ci)
+- [Migraciones Supabase](#migraciones-supabase)
+- [Claves Google Maps (local)](#claves-google-maps-local)
+- [Scripts](#scripts)
+
 ## Documentación del repositorio
 
 | Archivo | Uso |
@@ -46,12 +63,16 @@ flutter analyze
 | Trabajador | `lib/features/worker/` |
 | Trabajos | `lib/features/jobs/` |
 | Chat | `lib/features/chat/` |
-| Onboarding / Welcome | `lib/features/role_selector/` |
+| Onboarding / Welcome | `lib/features/onboarding/`, `lib/features/role_selector/` |
+| Pagos (Webpay, Oneclick, cobros del profesional) | `lib/features/payments/` |
+| Calificaciones | `lib/features/ratings/` |
+| Bandeja y notificaciones | `lib/features/inbox/`, `lib/features/notifications/` |
+| Ajustes y derechos de datos | `lib/features/settings/`, `lib/features/gdpr/` |
+| Pantallas admin (la consola oficial es la de escritorio) | `lib/features/admin/` |
 
 ## Datos demo
 
 - Credenciales: `lib/core/config/demo_credentials.dart`
-- Seeder: `lib/core/services/demo_data_seeder.dart`
 - Catálogo (versión): `lib/core/config/demo_catalog_config.dart`
 - Medios demo (perfiles y portafolio): `lib/core/config/demo_free_media.dart`
 
@@ -72,7 +93,7 @@ Solo visibles en **modo debug** (`kDebugMode`) en la pantalla de login.
 | Administrador | `admin.ops@demo.myworksapp.cl` | (la entrega el equipo) |
 | Trabajadora | `carmen.lagos@demo.myworksapp.cl` | (la entrega el equipo) |
 
-Las cuentas `@demo.com` / `demo123` ya no se usan (ver `DEMO.md`).
+Las cuentas `@demo.com` / `demo123` ya no se usan (ver `DEMO.md`). Con `app_config.demo_modo = 1` (estado en vivo al 20-11-2026) los profesionales demo aparecen en el catálogo.
 
 ## Tests y CI
 
@@ -85,7 +106,7 @@ Workflow: `.github/workflows/flutter_ci.yml`
 
 ## Migraciones Supabase
 
-SQL versionado en `supabase/migrations/`. Aplicar con Supabase CLI o dashboard.
+SQL versionado en `supabase/migrations/` (125 archivos al 20-11-2026; inventario en `supabase/MIGRATIONS_INVENTORY.md`). No aplicar migraciones a la base en vivo sin el responsable del proyecto.
 
 ### Seguridad Auth — contraseñas filtradas (Have I Been Pwned)
 
@@ -105,7 +126,7 @@ Documentación: [Password security](https://supabase.com/docs/guides/auth/passwo
 | Tema | Estado |
 |------|--------|
 | `protect_profile_sensitive_fields` | `EXECUTE` revocado a `anon`/`authenticated` (solo trigger) |
-| `is_admin()` ejecutable por `authenticated` | Intencional: lo usan las políticas RLS del panel admin |
+| `is_admin()` ejecutable por `authenticated` | Intencional: lo usan las políticas RLS y las Edge Functions de administrador (`_shared/require_admin.ts`) |
 | Prevent use of leaked passwords | Requiere **plan Pro+**; en Free queda pendiente hasta upgrade |
 
 ## Claves Google Maps (local)

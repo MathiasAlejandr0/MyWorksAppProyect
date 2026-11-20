@@ -31,6 +31,17 @@ void main() {
     expect(chargeNotReadyMessage.contains('Confirma otra vez'), isFalse);
   });
 
+  test('el toque cobra la tarifa real aunque la pantalla sumó con la base redondeada', () {
+    final tap = chargeForTap(shownClp: 75219, serverTotalClp: 74829);
+    expect(tap?.amountClp, 74829);
+    expect(tap?.replacedShownTotal, isTrue);
+    expect(
+      chargeForTap(shownClp: 74829, serverTotalClp: 74829)?.replacedShownTotal,
+      isFalse,
+    );
+    expect(chargeForTap(shownClp: 75219, serverTotalClp: null), isNull);
+  });
+
   test('alinea comisión y pago del profesional al total real', () {
     const original = PriceQuote(
       pricingMode: 'precio_fijo',

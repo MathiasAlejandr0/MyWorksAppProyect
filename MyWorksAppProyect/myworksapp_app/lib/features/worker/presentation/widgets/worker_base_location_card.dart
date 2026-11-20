@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:latlong2/latlong.dart' as ll;
 
+import '../../../../core/domain/transport_surcharge.dart';
 import '../../../../core/map/app_map_tiles.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -179,7 +180,7 @@ class _WorkerBaseLocationCardState extends State<WorkerBaseLocationCard> {
               ),
             ),
             Text(
-              'Radio cercano: ${_radius.round()} km (sin extra de traslado)',
+              'Radio cercano: ${formatServiceRadiusKm(_radius)} km (sin extra de traslado)',
             ),
             Slider(
               min: _minKm,

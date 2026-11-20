@@ -10,10 +10,14 @@ class TrasladoRadarBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = quote.radiusKm.round();
+    final radius = formatServiceRadiusKm(quote.radiusKm);
     late final String text;
     late final Color color;
-    if (quote.insideRadar == true) {
+    if (quote.catalogBaseIsApproximate) {
+      text =
+          'Hasta $radius km sin extra. El traslado se calcula con la ubicación real al pagar.';
+      color = AppColors.grayMedium;
+    } else if (quote.insideRadar == true) {
       text = 'El trabajo queda dentro de $radius km: sin extra de traslado.';
       color = AppColors.success;
     } else if (quote.insideRadar == false) {
