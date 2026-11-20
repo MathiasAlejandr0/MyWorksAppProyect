@@ -36,6 +36,25 @@ export function translateAuthError(message: string): string {
 /** Marca que agrega la web al enlace del correo de recuperación. */
 export const PASSWORD_RESET_PARAM = 'restablecer';
 
+/** El code de PKCE se abrió en otro navegador: no hay code verifier guardado. */
+export function isPkceCodeVerifierError(message: string): boolean {
+  return /code verifier|code_verifier|both auth code and code verifier/i.test(message);
+}
+
+/** Texto para el alta o para la recuperación, según la marca `restablecer=1`. */
+export function pkceCallbackFailureMessage(recovery: boolean): string {
+  return recovery
+    ? 'Abre el enlace en el mismo navegador donde lo pediste o pide uno nuevo.'
+    : 'Tu correo quedó confirmado. Inicia sesión.';
+}
+
+function browserOrigin(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const origin = window.location?.origin?.trim();
+  if (!origin || origin === 'null') return undefined;
+  return origin;
+}
+
 /** Vuelve al mismo sitio que pidió el correo (producción, preview o local). */
 export function passwordResetRedirect(origin: string): string {
   return `${origin.replace(/\/+$/, '')}/?${PASSWORD_RESET_PARAM}=1`;
@@ -111,11 +130,13 @@ export async function signUpUser(
   const policy = passwordPolicyMessage(password);
   if (policy) throw new AuthError(policy);
 
+  const emailRedirectTo = browserOrigin();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { name, role: 'usuario' },
+      ...(emailRedirectTo ? { emailRedirectTo } : {}),
       ...(captchaToken ? { captchaToken } : {}),
     },
   });

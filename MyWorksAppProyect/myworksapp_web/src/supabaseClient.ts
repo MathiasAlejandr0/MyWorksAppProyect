@@ -17,7 +17,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    // El intercambio de `?code=` lo hace AuthProvider para avisar si falta
+    // el code verifier (el correo se abrió en otro navegador). Sigue siendo PKCE.
+    detectSessionInUrl: false,
     flowType: 'pkce',
   },
 });

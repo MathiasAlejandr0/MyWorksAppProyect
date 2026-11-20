@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   isEmailNotConfirmed,
+  isPkceCodeVerifierError,
   loadProfileAfterSignup,
+  pkceCallbackFailureMessage,
   signUpUser,
   translateAuthError,
   updateAccountPassword,
@@ -118,6 +120,50 @@ describe('authLinkRequiresPassword', () => {
     assert.equal(authLinkRequiresPassword('?code=abc&type=recovery'), true);
     assert.equal(authLinkRequiresPassword('#type=signup'), false);
     assert.equal(authLinkRequiresPassword(''), false);
+  });
+});
+
+describe('signUpUser pide el enlace en el mismo origen', () => {
+  it('manda emailRedirectTo con window.location.origin', async () => {
+    const previous = globalThis.window;
+    Object.defineProperty(globalThis, 'window', {
+      value: { location: { origin: 'https://myworksapp.cl' } },
+      configurable: true,
+    });
+    let redirect = '';
+    const supabase = {
+      auth: {
+        signUp: async (args: { options?: { emailRedirectTo?: string } }) => {
+          redirect = args.options?.emailRedirectTo ?? '';
+          return { data: { user: { id: 'u1' }, session: null }, error: null };
+        },
+      },
+    };
+    try {
+      await signUpUser(supabase as never, 'ana@myworksapp.cl', sample('a', 6, '12'), 'Ana');
+    } finally {
+      if (previous === undefined) {
+        Reflect.deleteProperty(globalThis, 'window');
+      } else {
+        Object.defineProperty(globalThis, 'window', { value: previous, configurable: true });
+      }
+    }
+    assert.equal(redirect, 'https://myworksapp.cl');
+  });
+});
+
+describe('pkceCallbackFailureMessage', () => {
+  it('distingue el alta de la recuperacion cuando falta el code verifier', () => {
+    assert.equal(isPkceCodeVerifierError('PKCE code verifier not found in storage'), true);
+    assert.equal(isPkceCodeVerifierError('invalid login'), false);
+    assert.equal(
+      pkceCallbackFailureMessage(false),
+      'Tu correo quedó confirmado. Inicia sesión.',
+    );
+    assert.equal(
+      pkceCallbackFailureMessage(true),
+      'Abre el enlace en el mismo navegador donde lo pediste o pide uno nuevo.',
+    );
   });
 });
 
