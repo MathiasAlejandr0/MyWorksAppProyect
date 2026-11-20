@@ -13,10 +13,18 @@
 7. Disputa con motivos fijos y acuerdos, con el pago retenido mientras el caso sigue abierto.
 8. Chat y descripción del pedido que rechazan teléfono, correo, enlaces y un usuario de red social, también al crear el pago.
 9. Módulo tributario local (RUT, giro y tipo de documento SII) en el perfil del profesional.
-10. Consola de escritorio para verificación y mediación.
+10. Consola de escritorio con segundo factor TOTP: pedidos, disputas (abiertas y resueltas), pagos, liquidaciones, verificación con nota de rechazo obligatoria, equipo y roles, y bitácora inmutable `auditoria_consola`.
+11. Perfil público del profesional con reseñas en la web (`/profesional/:id`).
+12. Cuenta del cliente en la web: direcciones guardadas, exportar datos y eliminar la cuenta (`/cuenta`).
+13. El cliente aprueba o rechaza un cobro adicional desde la web.
+14. Web en el dominio propio `myworksapp.cl`, con Turnstile en el registro y en la compra como invitado, y correos de Auth por Resend.
 
 ## Pendiente, fuera del MVP
 
 - Payout automático al banco del profesional.
 - Transbank en producción.
 - MFA para clientes y profesionales.
+- Correos transaccionales de pago, reembolso y liberación (rama `cursor/correos-resend`, sin merge).
+- Textos legales y `/aviso-legal` (rama `cursor/aviso-academico-duoc-v2`, sin merge).
+- Arreglo de los 24 errores de la consola (rama `cursor/consola-bugs`, sin merge).
+- Push FCM y soporte automático con devolución: `send-push` y `soporte-automatico` no están desplegadas en vivo.
