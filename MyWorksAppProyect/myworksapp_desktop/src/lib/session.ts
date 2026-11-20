@@ -1,0 +1,22 @@
+const KEY = 'mwa-equipo-compartido';
+
+export function sharedDeviceEnabled(): boolean {
+  return localStorage.getItem(KEY) === '1';
+}
+
+export function setSharedDevice(enabled: boolean): void {
+  localStorage.setItem(KEY, enabled ? '1' : '0');
+}
+
+const THEME = 'mwa-tema';
+
+export type ThemeName = 'dark' | 'light';
+
+export function savedTheme(): ThemeName {
+  return localStorage.getItem(THEME) === 'light' ? 'light' : 'dark';
+}
+
+export function applyTheme(theme: ThemeName): void {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem(THEME, theme);
+}
