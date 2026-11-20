@@ -1,8 +1,6 @@
 /** Catálogo completo de oficios My Works App (web). */
 
-const U = 'https://images.unsplash.com';
-const img = (id: string) =>
-  `${U}/photo-${id}?auto=format&fit=crop&w=640&h=400&q=70`;
+const local = (name: string) => `/categories/${name}.webp`;
 
 export type ServiceCategory = {
   id: string;
@@ -25,7 +23,7 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'electricidad',
     title: 'Electricidad',
     subtitle: 'Instalaciones, reparaciones y más',
-    photo: img('1621905251189-08b45d6a269e'),
+    photo: local('electricidad'),
     searchQuery: 'electricidad',
   },
   {
@@ -53,14 +51,14 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'pintura',
     title: 'Pintura',
     subtitle: 'Interiores y exteriores',
-    photo: img('1562259949-e8e7689d7828'),
+    photo: local('pintura'),
     searchQuery: 'pintura',
   },
   {
     id: 'jardineria',
     title: 'Jardinería',
     subtitle: 'Poda, riego y mantención',
-    photo: img('1416879595882-3373a0480b5b'),
+    photo: local('jardineria'),
     searchQuery: 'jardinería',
   },
   {
@@ -74,28 +72,28 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'construccion',
     title: 'Construcción',
     subtitle: 'Remodelaciones y obras menores',
-    photo: img('1504307651254-35680f356dfd'),
+    photo: local('construccion'),
     searchQuery: 'construcción',
   },
   {
     id: 'soporte_tecnico',
     title: 'Soporte técnico',
     subtitle: 'PC, redes y dispositivos',
-    photo: img('1516321318423-f06f85e504b3'),
+    photo: local('soporte-tecnico'),
     searchQuery: 'soporte técnico',
   },
   {
     id: 'mudanza',
     title: 'Mudanza',
     subtitle: 'Traslado y embalaje',
-    photo: img('1600518464441-9154a4dea21b'),
+    photo: local('mudanza'),
     searchQuery: 'mudanza',
   },
   {
     id: 'climatizacion',
     title: 'Climatización',
     subtitle: 'Aire acondicionado y calefacción',
-    photo: img('1558618666-fcd25c85cd64'),
+    photo: local('climatizacion'),
     searchQuery: 'climatización aire acondicionado',
   },
 ];

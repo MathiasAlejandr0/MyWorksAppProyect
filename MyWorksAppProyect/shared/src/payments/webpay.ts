@@ -38,6 +38,7 @@ export async function createWebpaySession(
     amountClp: number;
     returnUrl?: string;
     presentMode?: WebpayPresentMode;
+    changeOrderId?: string;
   },
 ): Promise<WebpayCreateResult> {
   const presentMode = input.presentMode ?? 'embed';
@@ -47,6 +48,7 @@ export async function createWebpaySession(
       amountClp: input.amountClp,
       returnUrl: input.returnUrl,
       presentMode,
+      changeOrderId: input.changeOrderId,
     },
   });
 

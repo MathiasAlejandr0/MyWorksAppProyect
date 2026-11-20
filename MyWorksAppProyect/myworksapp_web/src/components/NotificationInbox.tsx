@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { groupNoticesByJob, type AppNotification } from '@myworksapp/shared';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 interface NotificationInboxProps {
   notices: AppNotification[];
@@ -16,9 +17,11 @@ export function NotificationInbox({
 }: NotificationInboxProps) {
   const folders = groupNoticesByJob(notices, jobTitles);
   const [openKey, setOpenKey] = useState<string | null>(folders[0]?.key ?? null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(true, onClose, dialogRef);
 
   return (
-    <div className="notice-inbox" role="dialog" aria-label="Notificaciones">
+    <div className="notice-inbox" role="dialog" aria-modal="true" aria-label="Notificaciones" ref={dialogRef}>
       <div className="notice-inbox-head">
         <strong>Notificaciones</strong>
         <button type="button" onClick={onClose}>Cerrar</button>

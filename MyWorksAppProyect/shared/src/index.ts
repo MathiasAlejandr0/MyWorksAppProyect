@@ -50,6 +50,7 @@ export * from './jobs/startPin';
 export * from './jobs/bookingSlot';
 export * from './jobs/reschedule';
 export * from './jobs/clientActions';
+export * from './jobs/rpcError';
 export * from './chat/messages';
 export { contactBlockedMessage, contactBlockedTitle } from './chat/contactFilter';
 export * from './verification';

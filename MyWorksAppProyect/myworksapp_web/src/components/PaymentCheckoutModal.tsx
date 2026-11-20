@@ -1,10 +1,11 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ShieldCheck, CheckCircle2, Lock, X, CreditCard, MapPin } from 'lucide-react';
 import {
   orderConfirmedMessage,
   type OneclickChargeResult,
   type SavedCardStatus,
 } from '@myworksapp/shared';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 export type CheckoutPayResult =
   | OneclickChargeResult
@@ -61,6 +62,8 @@ export function PaymentCheckoutModal({
   const [savedCard, setSavedCard] = useState<SavedCardStatus | null>(null);
   const [saveCard, setSaveCard] = useState(true);
   const [changingCard, setChangingCard] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(true, onClose, dialogRef);
 
   // Se consulta una sola vez al abrir el pedido, aunque el padre se vuelva a pintar.
   const [loadOnce] = useState(() => loadSavedCard);
@@ -152,7 +155,7 @@ export function PaymentCheckoutModal({
       aria-modal="true"
       aria-labelledby="checkout-title"
     >
-      <div className="checkout-card-v2 modal-rise">
+      <div className="checkout-card-v2 modal-rise" ref={dialogRef}>
         <button
           type="button"
           className="modal-close"

@@ -1,15 +1,17 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Bell,
   Star,
   ChevronLeft,
-  Heart,
   MapPin,
   Navigation,
   Search,
   X,
 } from 'lucide-react';
 import { pluralize } from '@myworksapp/shared';
+import { StarScore } from './StarScore';
+import { supabase } from '../supabaseClient';
 import { BrandLogo } from './BrandLogo';
 import { profileLabel } from '../profileLabel';
 import { sortSearchWorkers, type CatalogSort } from '../catalogSort';
@@ -121,10 +123,21 @@ export function SearchResultsView({
   const [sort, setSort] = useState<CatalogSort>('recommended');
   const [minRating, setMinRating] = useState(0);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const rpc = supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>;
+    void Promise.resolve(rpc('demo_modo_activo')).then(({ data, error }) => {
+      if (!cancelled && !error && data === true) setDemoMode(true);
+    }).catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const visibleWorkers = useMemo(() => {
     const filtered = workers.filter((worker) => {
       if (worker.rating < minRating) return false;
-      if (onlyAvailable && worker.availableNow === false) return false;
+      if (onlyAvailable && worker.availableNow !== true) return false;
       return true;
     });
     return sortSearchWorkers(filtered, sort, clientLocation);
@@ -165,6 +178,7 @@ export function SearchResultsView({
         </div>
 
         <div className="search-view-nav-right">
+          {profileName ? (
           <button
             type="button"
             className="search-nav-bell"
@@ -174,6 +188,7 @@ export function SearchResultsView({
             <Bell size={18} />
             {unreadCount > 0 ? <span className="search-nav-badge">{unreadCount}</span> : null}
           </button>
+          ) : null}
           {profileName ? (
             <button type="button" className="search-nav-profile" onClick={() => onLogout?.()}>
               <div className="search-nav-avatar">{profileName.trim().charAt(0).toUpperCase()}</div>
@@ -291,13 +306,14 @@ export function SearchResultsView({
               <p>Prueba con otra calificación o limpia los filtros.</p>
             </div>
           ) : (
+            <>
+            {demoMode ? <p className="demo-banner" role="status">Datos de demostración</p> : null}
             <div className="search-results-grid">
               {visibleWorkers.map((w) => (
-                <button
+                <Link
                   key={w.id}
-                  type="button"
+                  to={`/profesional/${w.id}`}
                   className={`pro-card${selectedWorkerId === w.id ? ' is-selected' : ''}`}
-                  onClick={() => onSelectWorker(w)}
                 >
                   <img
                     src={w.photoUrl}
@@ -313,9 +329,7 @@ export function SearchResultsView({
                       <strong>{w.name}</strong>
                       {w.isElite ? (
                         <span className="pro-card-elite">Élite</span>
-                      ) : (
-                        <Heart size={16} className="pro-card-heart" />
-                      )}
+                      ) : null}
                     </div>
                     <span className="pro-card-role">{w.profession}</span>
                     <div className="pro-card-rating">
@@ -328,7 +342,7 @@ export function SearchResultsView({
                       ) : (
                         <>
                           <strong>{w.rating.toFixed(1)}</strong>
-                          <span className="pro-card-stars" aria-hidden>★★★★★</span>
+                          <StarScore rating={w.rating} />
                           <span>{pluralize(w.jobsDone, 'trabajo')}</span>
                         </>
                       )}
@@ -338,14 +352,15 @@ export function SearchResultsView({
                       <span className="pro-card-price">
                         Desde ${clp(w.pricePerVisit)} / visita
                       </span>
-                      {w.availableNow !== false && (
+                      {w.availableNow === true && (
                         <span className="pro-card-badge">Disponible ahora</span>
                       )}
                     </div>
                   </div>
-                </button>
+                </Link>
               ))}
             </div>
+            </>
           )}
 
           {hasMore && (

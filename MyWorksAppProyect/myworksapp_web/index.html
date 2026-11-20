@@ -8,27 +8,30 @@
     <link
       rel="preload"
       as="image"
-      href="/hero/tecnico-640.webp"
-      imagesrcset="/hero/tecnico-480.webp 480w, /hero/tecnico-640.webp 640w, /hero/tecnico-960.webp 960w"
-      imagesizes="(max-width: 900px) 100vw, 560px"
+      href="/hero/tecnico-480.webp"
+      media="(max-width: 900px)"
       fetchpriority="high"
     />
-    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link
+      rel="preload"
+      as="image"
+      href="/hero/tecnico-640.webp"
+      media="(min-width: 901px)"
+      fetchpriority="high"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <title>My Works App — Servicios del Hogar & Profesionales Verificados</title>
-    <meta name="description" content="Plataforma líder para encontrar profesionales verificados de gasfitería, electricidad, cerrajería y remodelación en segundos con custodia de pago Escrow MyWorks Protect." />
-    
-    <!-- OpenGraph SEO -->
+    <title>MyWorksApp — Servicios del hogar</title>
+    <meta name="description" content="Encuentra un oficio, reserva un horario y paga con el monto retenido hasta que recibes conforme." />
+    <link rel="canonical" href="https://myworksapp-cl.vercel.app/" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="My Works App — Servicios del Hogar & Profesionales Verificados" />
-    <meta property="og:description" content="Encuentra especialistas calificados con cotización instantánea y pago protegido por PIN." />
-    <meta property="og:image" content="https://myworksapp.cl/og-image.jpg" />
+    <meta property="og:title" content="MyWorksApp — Servicios del hogar" />
+    <meta property="og:description" content="Reserva un horario y paga con el monto retenido hasta que recibes conforme." />
+    <meta property="og:url" content="https://myworksapp-cl.vercel.app/" />
+    <meta property="og:image" content="https://myworksapp-cl.vercel.app/og-image.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://myworksapp-cl.vercel.app/og-image.jpg" />
     <meta name="theme-color" content="#00205B" />
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://webpay3gint.transbank.cl https://webpay3g.transbank.cl https://challenges.cloudflare.com https://photon.komoot.io https://nominatim.openstreetmap.org https://tiles.openfreemap.org https://*.openfreemap.org; frame-src https://challenges.cloudflare.com https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; form-action https://webpay3gint.transbank.cl https://webpay3g.transbank.cl; base-uri 'self'; worker-src 'self' blob:; object-src 'none'"
-    />
   </head>
   <body class="dark">
     <div id="root"></div>

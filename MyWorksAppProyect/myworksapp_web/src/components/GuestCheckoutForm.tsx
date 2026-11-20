@@ -3,6 +3,8 @@ import { Lock, MapPin, Phone, User, Mail, X, ExternalLink } from 'lucide-react';
 import { reservedEmailMessage } from '@myworksapp/shared';
 import { TurnstileWidget } from './TurnstileWidget';
 import { turnstileSiteKey } from './turnstileSite';
+import { useDialogA11y } from '../hooks/useDialogA11y';
+import { chileE164 } from '../chilePhone';
 
 export type GuestCheckoutPayload = {
   name: string;
@@ -49,7 +51,9 @@ export function GuestCheckoutForm({
     ? payableTotalClp
     : null;
   const previewRef = useRef(onPreviewAddress);
+  const dialogRef = useRef<HTMLDivElement>(null);
   previewRef.current = onPreviewAddress;
+  useDialogA11y(true, onClose, dialogRef);
 
   useEffect(() => {
     const text = address.trim();
@@ -65,6 +69,11 @@ export function GuestCheckoutForm({
     setError(null);
     if (!name.trim() || !email.trim() || !phone.trim() || !address.trim()) {
       setError('Completa tus datos personales y la dirección del trabajo.');
+      return;
+    }
+    const phoneE164 = chileE164(phone);
+    if (!phoneE164) {
+      setError('Usa un teléfono de Chile: +56 y 9 dígitos.');
       return;
     }
     const reserved = reservedEmailMessage(email);
@@ -85,7 +94,7 @@ export function GuestCheckoutForm({
       await onSubmit({
         name: name.trim(),
         email: email.trim(),
-        phone: phone.trim(),
+        phone: phoneE164,
         address: address.trim(),
         turnstileToken: captchaToken || undefined,
       });
@@ -104,7 +113,7 @@ export function GuestCheckoutForm({
       aria-modal="true"
       aria-labelledby="guest-checkout-title"
     >
-      <div className="checkout-card-v2 guest-checkout-card modal-rise">
+      <div className="checkout-card-v2 guest-checkout-card modal-rise" ref={dialogRef}>
         <button
           type="button"
           className="modal-close"

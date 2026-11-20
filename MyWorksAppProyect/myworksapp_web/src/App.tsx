@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { LandingHome } from './views/LandingHome';
@@ -14,6 +15,14 @@ import {
   type ServiceCategory,
 } from './data/serviceCategories';
 import { resolveCategory, type MapSite } from './data/resolveServiceQuery';
+import { categoryFromPath, pathForView, recordIdFromPath, viewFromPath, type AppView } from './routing/paths';
+import { AccountPage } from './pages/AccountPage';
+import { LegalPage } from './pages/LegalPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { ProfessionalProfilePage } from './pages/ProfessionalProfilePage';
+import { WorkWithUsPage } from './pages/WorkWithUsPage';
+import { ChangeOrderPanel } from './components/ChangeOrderPanel';
+import { SiteFooter } from './components/SiteFooter';
 import {
   CATALOG_STALE_MS,
   chargeSavedCard,
@@ -27,6 +36,7 @@ import {
   previewGuestCharge,
   type AppNotification,
   fetchActiveServices,
+  agreementErrorMessage,
   orderConfirmedMessage,
   openJobForWorker,
   closeJobOnClientApproval,
@@ -138,12 +148,15 @@ async function withScheduleAvailability(workers: WorkerWithProfile[]): Promise<S
   } catch {
     schedules = new Map();
   }
-  return workers.map((worker) => ({
-    ...toWebWorkerCard(worker),
-    availableNow:
-      worker.isAvailable === 1 &&
-      isOpenAt(schedules.get(worker.userId) ?? null, now),
-  }));
+  return workers.map((worker) => {
+    const schedule = schedules.get(worker.userId);
+    return {
+      ...toWebWorkerCard(worker),
+      availableNow: Boolean(
+        schedule && worker.isAvailable === 1 && isOpenAt(schedule, now),
+      ),
+    };
+  });
 }
 
 const PaymentCheckoutModal = lazy(() =>
@@ -208,8 +221,6 @@ function ViewFallback() {
 }
 
 
-type AppView = 'landing' | 'categories' | 'search' | 'tracking' | 'paid';
-
 const CategoriesCatalogView = lazy(() =>
   import('./components/CategoriesCatalogView').then((m) => ({
     default: m.CategoriesCatalogView,
@@ -245,8 +256,6 @@ export function App() {
   const { profile, loading: authLoading, logout, error: authError, clearError } = useAuth();
   const queryClient = useQueryClient();
 
-  const [view, setView] = useState<AppView>('landing');
-
   const [query, setQuery] = useState('');
 
   const [serviceMatch, setServiceMatch] = useState<ServiceMatch | null>(null);
@@ -272,6 +281,16 @@ export function App() {
   const [showGuestCheckout, setShowGuestCheckout] = useState(false);
 
   const [checkoutJobId, setCheckoutJobId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const view = viewFromPath(location.pathname);
+  const setView = (next: AppView) => {
+    const target = pathForView(next, {
+      category: serviceMatch?.category ?? categoryFromPath(location.pathname),
+      jobId: checkoutJobId,
+    });
+    if (location.pathname !== target) navigate(target);
+  };
   const [pendingAgreement, setPendingAgreement] = useState<{ id: string; tipo: string } | null>(null);
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
   const [bookingSlots, setBookingSlots] = useState<string[]>([]);
@@ -405,7 +424,8 @@ export function App() {
         if (!cancelled) setPendingAgreement(null);
       });
     loadSnapshot();
-    const timer = window.setInterval(() => {
+    const tick = () => {
+      if (document.visibilityState === 'hidden') return;
       loadSnapshot();
       void syncJobEvidencePhotos(supabase, checkoutJobId, jobEvidenceRef.current)
         .then((photos) => {
@@ -414,10 +434,16 @@ export function App() {
         .catch(() => {
           // Se conserva la última evidencia visible si el refresco falla.
         });
-    }, 8000);
+    };
+    const timer = window.setInterval(tick, 8000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [view, checkoutJobId]);
 
@@ -545,7 +571,7 @@ export function App() {
       });
       setMyOrders(null);
       setBookingError(null);
-      setView('tracking');
+      navigate(`/pedido/${snapshot.id}`);
     } catch {
       setBookingError('No se pudo abrir el seguimiento. Entra de nuevo e inténtalo.');
     }
@@ -604,7 +630,25 @@ export function App() {
         setUnreadCount(0);
         setNotices([]);
       });
-  }, [profile, view]);
+    const channel = supabase
+      .channel(`notificaciones-${profile.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notificaciones', filter: `id_usuario=eq.${profile.id}` },
+        () => {
+          void fetchMyNotifications(supabase, profile.id)
+            .then((rows) => {
+              setUnreadCount(rows.filter((row) => !row.read).length);
+              setNotices(rows);
+            })
+            .catch(() => undefined);
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [profile]);
 
   useEffect(() => {
     const ids = [...new Set(
@@ -801,8 +845,6 @@ export function App() {
 
     setQuery(text);
 
-    setView('search');
-
     setSelectedWorker(null);
 
 
@@ -817,7 +859,11 @@ export function App() {
     if (!meta) {
       setCatalogError('No reconocimos el oficio. Elige una categoría del catálogo.');
       setIsSearching(false);
+      navigate('/servicios');
       return;
+    }
+    if (location.pathname !== `/servicios/${encodeURIComponent(meta.category)}`) {
+      navigate(`/servicios/${encodeURIComponent(meta.category)}`);
     }
 
 
@@ -865,7 +911,25 @@ export function App() {
 
   };
 
+  useEffect(() => {
+    const slug = categoryFromPath(location.pathname);
+    if (!slug) return;
+    if (serviceMatch?.category === slug) return;
+    const row = ALL_SERVICE_CATEGORIES.find((item) => item.id === slug);
+    if (!row) {
+      setCatalogError('Esa categoría no está en el catálogo.');
+      setIsSearching(false);
+      return;
+    }
+    void searchService(row.searchQuery);
+  }, [location.pathname]);
 
+  useEffect(() => {
+    const jobId = recordIdFromPath(location.pathname, 'pedido');
+    if (!jobId || !profile) return;
+    if (checkoutJobId === jobId && jobSnapshot) return;
+    void openJobTracking(jobId);
+  }, [location.pathname, profile, checkoutJobId, jobSnapshot]);
 
   const loadMoreWorkers = async () => {
     const match = serviceMatch;
@@ -1282,6 +1346,12 @@ export function App() {
     void searchService(cat.searchQuery);
   };
 
+  if (view === 'notfound') return <NotFoundPage />;
+  if (view === 'account') return <AccountPage />;
+  if (view === 'trabaja') return <WorkWithUsPage />;
+  if (view === 'terminos') return <LegalPage kind="terminos" />;
+  if (view === 'privacidad') return <LegalPage kind="privacidad" />;
+
   if (view === 'paid') {
     return (
       <Suspense fallback={<ViewFallback />}>
@@ -1382,6 +1452,8 @@ export function App() {
           onOpenChat={() => setShowChat(true)}
 
           clientActions={checkoutJobId && profile && jobSnapshot && jobSnapshot.userId === profile.id ? (
+            <>
+            <ChangeOrderPanel jobId={checkoutJobId} />
             <JobClientActions
               jobId={checkoutJobId}
               status={jobSnapshot.status}
@@ -1399,6 +1471,7 @@ export function App() {
                   });
               }}
             />
+            </>
           ) : null}
 
           evidence={checkoutJobId && profile ? (
@@ -1444,7 +1517,7 @@ export function App() {
               p_id_trabajo: checkoutJobId,
               p_tipo: tipo,
             });
-            if (error) throw new Error(error.message);
+            if (error) throw new Error(agreementErrorMessage(error.message, 'proponer'));
             const { data } = await supabase.rpc('acuerdo_pendiente', { p_id_trabajo: checkoutJobId });
             const row = data?.[0];
             setPendingAgreement(row ? { id: row.id, tipo: row.tipo } : null);
@@ -1454,7 +1527,7 @@ export function App() {
               p_id: pendingAgreement.id,
               p_acepta: acepta,
             });
-            if (error) throw new Error(error.message);
+            if (error) throw new Error(agreementErrorMessage(error.message, 'responder'));
             if (!checkoutJobId) return;
             const { data } = await supabase.rpc('acuerdo_pendiente', { p_id_trabajo: checkoutJobId });
             const row = data?.[0];
@@ -1540,12 +1613,24 @@ export function App() {
     );
   }
 
-  if (view === 'search') {
+  if (view === 'search' || view === 'profile') {
 
     return (
       <Suspense fallback={<ViewFallback />}>
       <div className="min-h-screen app-shell app-shell--search">
 
+        {view === 'profile' ? (
+          <ProfessionalProfilePage
+            onReserve={(worker) => {
+              setSelectedWorker(worker);
+              if (!worker.category) return;
+              void fetchServiceByCategory(supabase, worker.category).then((service) => {
+                if (service) setSelectedServiceId(service.id);
+              });
+            }}
+          />
+        ) : null}
+        {view === 'search' ? (
         <SearchResultsView
 
           query={query}
@@ -1587,15 +1672,16 @@ export function App() {
           locatingAddress={locatingAddress}
 
         />
+        ) : null}
 
-        {showNotifications && (
+        {showNotifications && profile ? (
           <NotificationInbox
             notices={notices}
             jobTitles={noticeJobTitles}
             onClose={() => setShowNotifications(false)}
             onOpen={openNotice}
           />
-        )}
+        ) : null}
 
         {selectedWorker && (
 
@@ -1715,6 +1801,7 @@ export function App() {
 
 
   return (
+    <>
     <LandingHome
       activeNav={activeNav}
       setActiveNav={setActiveNav}
@@ -1744,6 +1831,8 @@ export function App() {
       onOpenOrder={(jobId) => void openJobTracking(jobId)}
       onCloseOrders={() => setMyOrders(null)}
     />
+    <SiteFooter />
+    </>
   );
 
 }
