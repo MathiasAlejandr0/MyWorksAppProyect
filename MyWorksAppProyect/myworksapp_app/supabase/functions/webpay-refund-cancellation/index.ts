@@ -2,6 +2,7 @@ import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
+import { scheduleRefundEmail } from "../_shared/payment_mail.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
 import { requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
@@ -80,6 +81,7 @@ Deno.serve(async (req) => {
     }
 
     const result = await refundHeldPaymentOnce(admin, payment.id);
+    if (result.status === "refunded") scheduleRefundEmail(admin, String(payment.id));
     return jsonResponse(req, result);
   } catch (e) {
     return jsonResponse(req, { error: publicErrorMessage(e) }, 500);

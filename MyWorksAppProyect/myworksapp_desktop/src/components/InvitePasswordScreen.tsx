@@ -38,7 +38,7 @@ export function InvitePasswordScreen({
             });
           }}
         >
-          <h1>Definir contraseña</h1>
+          <h1>Define tu contraseña</h1>
           <p className="muted">El enlace de invitación o de recuperación abre esta pantalla.</p>
           <label className="field">
             <span>Nueva contraseña</span>

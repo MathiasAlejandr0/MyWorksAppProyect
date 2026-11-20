@@ -1,4 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { schedulePaymentReceivedEmail } from "../_shared/payment_mail.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { chargeInscribedCard } from "../_shared/oneclick_charge.ts";
 import { clientIp, rateLimitExceededMessage } from "../_shared/rate_limit.ts";
@@ -261,6 +262,7 @@ Deno.serve(async (req) => {
         amountClp: Number(paymentRow.monto || amountClp),
         payment: paymentRow,
       });
+      schedulePaymentReceivedEmail(admin, String(charged.paymentId));
       return jsonResponse(req, {
         charged: true,
         paymentId: charged.paymentId,
@@ -357,6 +359,7 @@ Deno.serve(async (req) => {
         throw e;
       }
 
+      schedulePaymentReceivedEmail(admin, String(charged.paymentId));
       return jsonResponse(req, {
         charged: true,
         paymentId: charged.paymentId,

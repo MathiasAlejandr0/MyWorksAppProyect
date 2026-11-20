@@ -27,6 +27,15 @@ import {
   TicketsPage,
   UsuariosPage,
 } from './features/screens';
+import {
+  authDeepLinkNeedsPassword,
+  beginAuthDeepLink,
+  clearPasswordSetupMark,
+  endAuthDeepLink,
+  markPasswordSetup,
+  parseAuthDeepLink,
+  passwordSetupMarked,
+} from './lib/authCallback';
 import { isTauriRuntime } from './lib/redirect';
 import { supabase, supabaseConfigStatus } from './supabaseClient';
 import { Shell } from './shell/Shell';
@@ -82,20 +91,21 @@ function Gate() {
 export default function App() {
   useEffect(() => {
     if (!isTauriRuntime()) return;
-    void import('@tauri-apps/plugin-deep-link').then(async ({ onOpenUrl, getCurrent }) => {
-      const handle = async (urls: string[]) => {
-        const target = urls[0];
-        if (!target) return;
-        const url = new URL(target);
-        const code = url.searchParams.get('code');
-        if (code) await supabaseAuthExchange(code);
-      };
-      const current = await getCurrent();
-      if (current?.length) await handle(current);
-      await onOpenUrl((urls) => { void handle(urls); });
-    }).catch(() => {
-      // La versión web no tiene el plugin.
-    });
+    const timer = window.setTimeout(() => {
+      void import('@tauri-apps/plugin-deep-link').then(async ({ onOpenUrl, getCurrent }) => {
+        const handle = async (urls: string[]) => {
+          const target = urls[0];
+          if (!target) return;
+          await applyAuthDeepLink(target);
+        };
+        const current = await getCurrent();
+        if (current?.length) await handle(current);
+        await onOpenUrl((urls) => { void handle(urls); });
+      }).catch(() => {
+        // La versión web no tiene el plugin.
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
   return (
     <BrowserRouter>
@@ -104,6 +114,36 @@ export default function App() {
   );
 }
 
-async function supabaseAuthExchange(code: string): Promise<void> {
-  await supabase.auth.exchangeCodeForSession(code);
+async function applyAuthDeepLink(raw: string): Promise<void> {
+  const parsed = parseAuthDeepLink(raw);
+  if (parsed.kind === 'ignore') return;
+  const needsPassword = authDeepLinkNeedsPassword(parsed.type);
+  const hadFlag = passwordSetupMarked();
+  if (needsPassword) markPasswordSetup();
+  beginAuthDeepLink();
+  try {
+    if (parsed.kind === 'code') {
+      const { error } = await supabase.auth.exchangeCodeForSession(parsed.code);
+      if (error) throw error;
+      return;
+    }
+    if (parsed.kind === 'otp') {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: parsed.tokenHash,
+        type: parsed.type as 'signup' | 'invite' | 'magiclink' | 'recovery' | 'email_change' | 'email',
+      });
+      if (error) throw error;
+      return;
+    }
+    const { error } = await supabase.auth.setSession({
+      access_token: parsed.accessToken,
+      refresh_token: parsed.refreshToken,
+    });
+    if (error) throw error;
+  } catch {
+    if (needsPassword && !hadFlag) clearPasswordSetupMark();
+    console.error('deep link de auth rechazado');
+  } finally {
+    endAuthDeepLink();
+  }
 }

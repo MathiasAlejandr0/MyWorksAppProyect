@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/oauth_config.dart';
+import 'oauth_deep_link_service.dart';
 import '../database/models/user_model.dart';
 import '../database/repositories/user_repository.dart';
 import '../database/supabase_db.dart';
@@ -29,11 +30,13 @@ class AuthSessionEvent {
     required this.isSignedIn,
     this.userId,
     this.isInitial = false,
+    this.passwordRecovery = false,
   });
 
   final bool isSignedIn;
   final String? userId;
   final bool isInitial;
+  final bool passwordRecovery;
 }
 
 enum SocialAuthProvider { google, apple }
@@ -94,6 +97,7 @@ class SupabaseAuthService implements AuthService {
         isSignedIn: session != null,
         userId: session?.user.id,
         isInitial: data.event == AuthChangeEvent.initialSession,
+        passwordRecovery: data.event == AuthChangeEvent.passwordRecovery,
       );
     });
   }
@@ -113,6 +117,7 @@ class SupabaseAuthService implements AuthService {
       final res = await _client.auth.signUp(
         email: normalizedEmail,
         password: password,
+        emailRedirectTo: OAuthConfig.redirectUrl,
         data: {
           'name': trimmedName,
           'nombre': trimmedName,
@@ -180,6 +185,7 @@ class SupabaseAuthService implements AuthService {
 
   @override
   Future<void> loginWithOAuth(SocialAuthProvider provider) async {
+    OAuthDeepLinkService.instance.expectOAuthCallback();
     try {
       await _client.auth.signInWithOAuth(
         provider == SocialAuthProvider.apple
@@ -189,6 +195,7 @@ class SupabaseAuthService implements AuthService {
         authScreenLaunchMode: LaunchMode.externalApplication,
       );
     } catch (e) {
+      OAuthDeepLinkService.instance.cancelOAuthCallback();
       throw _mapError(e);
     }
   }

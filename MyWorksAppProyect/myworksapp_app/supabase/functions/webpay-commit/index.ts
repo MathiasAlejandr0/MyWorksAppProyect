@@ -7,6 +7,11 @@ import {
 } from "../_shared/guest_ticket.ts";
 import { openJobAfterHold } from "../_shared/open_job_after_hold.ts";
 import {
+  guestPasswordUrl,
+  scheduleGuestPasswordEmail,
+  schedulePaymentReceivedEmail,
+} from "../_shared/payment_mail.ts";
+import {
   fallbackWebReturnOrigin,
   signGuestPasswordTicket,
 } from "../_shared/security.ts";
@@ -316,6 +321,24 @@ Deno.serve(async (req) => {
             }
           }
         }
+      }
+    }
+
+    if (transitioned) {
+      schedulePaymentReceivedEmail(admin, String(payment.id));
+    }
+    if (alta) {
+      try {
+        const link = guestPasswordUrl({
+          origin: returnOrigin(payment.origen_retorno),
+          paymentId: String(payment.id),
+          jobId: String(payment.id_trabajo),
+          alta,
+          webReturnUrl: Deno.env.get("WEBPAY_WEB_RETURN_URL"),
+        });
+        scheduleGuestPasswordEmail(admin, String(payment.id), link);
+      } catch (mailError) {
+        console.error("alta correo", mailError instanceof Error ? mailError.message : "error");
       }
     }
 

@@ -9,8 +9,10 @@ import type { Profile } from '@myworksapp/shared';
 import {
   AuthError,
   getSessionProfile,
+  isPkceCodeVerifierError,
   PASSWORD_RESET_PARAM,
   passwordResetRedirect,
+  pkceCallbackFailureMessage,
   requestPasswordReset,
   signIn,
   signInWithOAuthProvider,
@@ -44,6 +46,36 @@ async function enforceWebClientRole(profile: Profile | null): Promise<Profile | 
 function urlMarksPasswordReset(): boolean {
   if (typeof window === 'undefined') return false;
   return new URLSearchParams(window.location.search).has(PASSWORD_RESET_PARAM);
+}
+
+type AuthCodeResult = { message: string | null; failedRecovery: boolean; openRecovery: boolean };
+
+/** Intercambia `?code=` (PKCE). Si el verifier no está, deja un mensaje claro. */
+async function consumeAuthCode(): Promise<AuthCodeResult> {
+  const empty = { message: null, failedRecovery: false, openRecovery: false };
+  if (typeof window === 'undefined') return empty;
+  const url = new URL(window.location.href);
+  const recovery = url.searchParams.has(PASSWORD_RESET_PARAM);
+  const code = url.searchParams.get('code');
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    url.searchParams.delete('code');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    if (error && isPkceCodeVerifierError(error.message)) {
+      return { message: pkceCallbackFailureMessage(recovery), failedRecovery: recovery, openRecovery: false };
+    }
+    return { message: null, failedRecovery: false, openRecovery: recovery && !error };
+  }
+  const hash = new URLSearchParams(url.hash.startsWith('#') ? url.hash.slice(1) : url.hash);
+  const accessToken = hash.get('access_token');
+  const refreshToken = hash.get('refresh_token');
+  if (!accessToken || !refreshToken) return empty;
+  const type = (hash.get('type') || '').toLowerCase();
+  const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+  url.hash = '';
+  window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  const openRecovery = !error && (recovery || type === 'recovery');
+  return { message: null, failedRecovery: false, openRecovery };
 }
 
 function clearPasswordResetParam(): void {
@@ -84,13 +116,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return inFlight;
     };
 
-    void run();
     const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') setRecoveringPassword(true);
       if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;
       void run();
     });
-    return () => subscription.subscription.unsubscribe();
+    let cancelled = false;
+    void (async () => {
+      const result = await consumeAuthCode();
+      if (cancelled) return;
+      if (result.failedRecovery) setRecoveringPassword(false);
+      else if (result.openRecovery) setRecoveringPassword(true);
+      if (result.message) setError(result.message);
+      await run();
+    })();
+    return () => {
+      cancelled = true;
+      subscription.subscription.unsubscribe();
+    };
   }, [refreshProfile]);
 
   const login = useCallback(async (email: string, password: string) => {
