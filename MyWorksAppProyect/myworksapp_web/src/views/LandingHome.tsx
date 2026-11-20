@@ -362,8 +362,6 @@ export function LandingHome({
 
               <p>Cédula revisada antes de cobrar</p>
 
-              <div className="hero-progress"><span /></div>
-
             </div>
 
             <div className="hero-float-card hero-float-eta">

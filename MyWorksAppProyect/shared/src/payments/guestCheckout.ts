@@ -103,21 +103,20 @@ export async function createGuestWebpayCheckout(
     throw new Error('Respuesta guest-checkout vacía');
   }
 
-  if (payload.needsLogin === true) {
-    const err = new Error(
-      'No se abrió el pago. Si ya estás registrado, entra con tu cuenta.',
-    );
-    (err as Error & { code?: string }).code = 'sign_in';
-    throw err;
-  }
-
   if (payload.error) {
     throw new Error(String(payload.error));
   }
 
   const redirectUrl = String(payload.redirectUrl || '');
   if (!redirectUrl) {
-    throw new Error('guest-checkout no devolvió redirectUrl');
+    const err = new Error(
+      String(
+        payload.message ||
+          'No se abrió el pago. Si ya tienes una cuenta, entra con ella.',
+      ),
+    );
+    (err as Error & { code?: string }).code = 'sign_in';
+    throw err;
   }
 
   return {

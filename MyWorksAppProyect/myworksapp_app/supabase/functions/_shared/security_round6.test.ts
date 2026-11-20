@@ -126,18 +126,18 @@ describe("ticket de contraseña del invitado", () => {
 });
 
 describe("Turnstile", () => {
-  it("en integración sin secreto deja pasar la demo", () => {
-    assert.equal(turnstileDecision("integration", false), "skip");
-    assert.equal(turnstileDecision(undefined, false), "skip");
+  it("sin secreto falla cerrado, también en integración", () => {
+    assert.equal(turnstileDecision(false), "fail_closed");
+    assert.equal(turnstileDecision(false, false), "fail_closed");
   });
 
-  it("en producción sin secreto falla cerrado", () => {
-    assert.equal(turnstileDecision("production", false), "fail_closed");
+  it("el flag explícito es el único atajo sin secreto", () => {
+    assert.equal(turnstileDecision(false, true), "skip");
   });
 
   it("con secreto siempre verifica", () => {
-    assert.equal(turnstileDecision("integration", true), "verify");
-    assert.equal(turnstileDecision("production", true), "verify");
+    assert.equal(turnstileDecision(true, false), "verify");
+    assert.equal(turnstileDecision(true, true), "verify");
   });
 });
 
@@ -371,11 +371,14 @@ describe("CORS", () => {
   });
 });
 
-describe("web pública en Vercel", () => {
+describe("web pública", () => {
   const vercel = "https://myworksapp-cl.vercel.app";
+  const apex = "https://myworksapp.cl";
+  const www = "https://www.myworksapp.cl";
+  const publicOrigins = [vercel, apex, www];
 
   it("es un origen exacto, sin comodines", () => {
-    assert.deepEqual([...PUBLIC_WEB_ORIGINS], [vercel]);
+    assert.deepEqual([...PUBLIC_WEB_ORIGINS], publicOrigins);
     for (const o of PUBLIC_WEB_ORIGINS) {
       assert.equal(o.includes("*"), false);
       assert.equal(new URL(o).origin, o);
@@ -387,6 +390,14 @@ describe("web pública en Vercel", () => {
       assert.equal(
         resolveCorsAllowOrigin({ origin: vercel, allowlist: corsAllowlist(undefined), tbkEnv }),
         vercel,
+      );
+      assert.equal(
+        resolveCorsAllowOrigin({ origin: apex, allowlist: corsAllowlist(undefined), tbkEnv }),
+        apex,
+      );
+      assert.equal(
+        resolveCorsAllowOrigin({ origin: www, allowlist: corsAllowlist(undefined), tbkEnv }),
+        www,
       );
     }
   });
@@ -409,7 +420,7 @@ describe("web pública en Vercel", () => {
 
   it("CORS mantiene CORS_ALLOWED_ORIGINS y localhost como antes", () => {
     const list = corsAllowlist(" https://app.example.cl , ,");
-    assert.deepEqual(list, [vercel, ...DESKTOP_APP_ORIGINS, "https://app.example.cl"]);
+    assert.deepEqual(list, [...publicOrigins, ...DESKTOP_APP_ORIGINS, "https://app.example.cl"]);
     assert.equal(
       resolveCorsAllowOrigin({ origin: "tauri://localhost", allowlist: list, tbkEnv: "production" }),
       "tauri://localhost",
@@ -433,9 +444,9 @@ describe("web pública en Vercel", () => {
   });
 
   it("el retorno de Transbank puede volver a la web pública", () => {
-    assert.deepEqual(webReturnOrigins({ tbkEnv: "production" }), [vercel]);
+    assert.deepEqual(webReturnOrigins({ tbkEnv: "production" }), publicOrigins);
     assert.deepEqual(webReturnOrigins({ tbkEnv: "integration" }), [
-      vercel,
+      ...publicOrigins,
       "http://localhost:5173",
       "http://127.0.0.1:5173",
     ]);
@@ -445,7 +456,7 @@ describe("web pública en Vercel", () => {
         corsOrigins: "https://b.example.cl",
         tbkEnv: "production",
       }),
-      [vercel, "https://a.example.cl", "https://b.example.cl"],
+      [...publicOrigins, "https://a.example.cl", "https://b.example.cl"],
     );
   });
 });

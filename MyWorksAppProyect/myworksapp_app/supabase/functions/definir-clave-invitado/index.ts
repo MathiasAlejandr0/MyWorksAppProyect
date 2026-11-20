@@ -5,11 +5,8 @@ import {
   paymentHoldTransitioned,
   sha256Hex,
 } from "../_shared/guest_ticket.ts";
-import {
-  allowRate,
-  clientIp,
-  rateLimitExceededMessage,
-} from "../_shared/rate_limit.ts";
+import { clientIp, rateLimitExceededMessage } from "../_shared/rate_limit.ts";
+import { allowRateDb } from "../_shared/rate_limit_db.ts";
 import { verifyGuestPasswordTicket } from "../_shared/security.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 
@@ -34,7 +31,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    if (!allowRate(`alta:${clientIp(req)}`, 8, 60_000)) {
+    const admin = serviceClient();
+    if (!(await allowRateDb(admin, `alta:ip:${clientIp(req)}`, 8, 60_000))) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
@@ -51,7 +49,6 @@ Deno.serve(async (req) => {
     const verified = await verifyGuestPasswordTicket(token);
     if (!verified.ok) return jsonResponse(req, { error: verified.error }, 403);
 
-    const admin = serviceClient();
     const { data: pago } = await admin
       .from("pagos")
       .select("id, alta_nonce_hash, alta_consumido_en")

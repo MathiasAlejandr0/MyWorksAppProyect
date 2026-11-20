@@ -22,6 +22,10 @@ export function CategoryCard({ title, subtitle, photo, onClick, variant = 'landi
         {!failed ? (
           <img
             src={photo}
+            srcSet={/\/categories\/(electricidad|pintura|jardineria|construccion|soporte-tecnico|mudanza|climatizacion)\.webp$/.test(photo)
+              ? `${photo.replace('.webp', '-480.webp')} 480w, ${photo.replace('.webp', '-640.webp')} 640w, ${photo.replace('.webp', '-960.webp')} 960w`
+              : undefined}
+            sizes="(max-width: 700px) 100vw, 320px"
             alt=""
             loading="lazy"
             decoding="async"

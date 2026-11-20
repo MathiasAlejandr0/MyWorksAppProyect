@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import { AuthError, passwordPolicyMessage } from '@myworksapp/shared';
 import { useAuth } from '../context/useAuth';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 /** Se abre al volver del enlace «restablecer contraseña» del correo. */
 export function PasswordRecoveryModal() {
@@ -11,8 +12,11 @@ export function PasswordRecoveryModal() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const open = recoveringPassword || done;
+  useDialogA11y(open, () => { void cancelPasswordReset(); }, dialogRef);
 
-  if (!recoveringPassword && !done) return null;
+  if (!open) return null;
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -41,7 +45,7 @@ export function PasswordRecoveryModal() {
 
   return (
     <div className="auth-modal-backdrop modal-fade-in" role="dialog" aria-modal="true" aria-labelledby="reset-title">
-      <div className="card-3d auth-modal-card modal-rise">
+      <div className="card-3d auth-modal-card modal-rise" ref={dialogRef}>
         <p className="auth-modal-kicker">Acceso clientes</p>
         <h2 id="reset-title" className="auth-modal-title">
           {done ? 'Contraseña actualizada' : 'Crea tu nueva contraseña'}

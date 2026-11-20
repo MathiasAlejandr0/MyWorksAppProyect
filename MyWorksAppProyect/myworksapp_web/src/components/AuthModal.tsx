@@ -6,10 +6,11 @@ import {
   passwordPolicyMessage,
   resendSignupConfirmation,
 } from '@myworksapp/shared';
-import { supabase } from '../supabaseClient';
+import { supabase, SUPABASE_ANON_KEY, SUPABASE_URL } from '../supabaseClient';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 import { useAuth } from '../context/useAuth';
 import { TurnstileWidget } from './TurnstileWidget';
-import { turnstileSiteKey } from './turnstileSite';
+import { turnstileCanRender } from './turnstileSite';
 
 interface AuthModalProps {
   open: boolean;
@@ -33,6 +34,10 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
   const [confirmationSentTo, setConfirmationSentTo] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState('');
   const wasOpen = useRef(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const [providers, setProviders] = useState({ google: false, apple: false });
+  const [resendWait, setResendWait] = useState(0);
+  useDialogA11y(open, onClose, dialogRef);
 
   useEffect(() => {
     if (open && !wasOpen.current) {
@@ -46,6 +51,35 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
     }
     wasOpen.current = open;
   }, [open, initialEmail, initialMode]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: SUPABASE_ANON_KEY },
+    })
+      .then((response) => response.json())
+      .then((body: { external?: { google?: boolean; apple?: boolean } }) => {
+        if (cancelled) return;
+        const external = body.external ?? {};
+        setProviders({
+          google: external.google === true,
+          apple: external.apple === true && import.meta.env.VITE_AUTH_APPLE_ENABLED === '1',
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setProviders({ google: false, apple: false });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (resendWait <= 0) return;
+    const timer = window.setTimeout(() => setResendWait((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendWait]);
 
   if (!open) return null;
 
@@ -79,7 +113,7 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
           setLocalError(policy);
           return;
         }
-        if (turnstileSiteKey() && !captchaToken) {
+        if (turnstileCanRender() && !captchaToken) {
           setLocalError('Confirma que no eres un robot');
           return;
         }
@@ -100,7 +134,7 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
 
   return (
     <div className="auth-modal-backdrop modal-fade-in" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
-      <div className="card-3d auth-modal-card modal-rise">
+      <div className="card-3d auth-modal-card modal-rise" ref={dialogRef}>
         <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">
           <X size={18} />
         </button>
@@ -235,19 +269,22 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
             <button
               type="button"
               className="auth-modal-switch"
-              disabled={submitting}
+              disabled={submitting || resendWait > 0}
               onClick={() => {
                 setSubmitting(true);
                 setResendNote(null);
                 void resendSignupConfirmation(supabase, email.trim())
-                  .then(() => setResendNote('Te enviamos un correo para confirmar.'))
+                  .then(() => {
+                    setResendNote('Te enviamos un correo para confirmar.');
+                    setResendWait(60);
+                  })
                   .catch((e: unknown) => {
                     setLocalError(e instanceof AuthError ? e.message : 'No se pudo reenviar el correo.');
                   })
                   .finally(() => setSubmitting(false));
               }}
             >
-              Reenviar correo de confirmación
+              {resendWait > 0 ? `Reenviar en ${resendWait} s` : 'Reenviar correo de confirmación'}
             </button>
           ) : null}
           {resendNote ? <p role="status">{resendNote}</p> : null}
@@ -272,14 +309,20 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
           <span>o continúa con</span>
         </div>
 
+        {providers.google || providers.apple ? (
         <div className="auth-modal-oauth">
+          {providers.google ? (
           <button type="button" className="auth-oauth-btn" disabled={submitting} onClick={() => void handleOAuth('google')}>
             Continuar con Google
           </button>
+          ) : null}
+          {providers.apple ? (
           <button type="button" className="auth-oauth-btn auth-oauth-apple" disabled={submitting} onClick={() => void handleOAuth('apple')}>
             Continuar con Apple
           </button>
+          ) : null}
         </div>
+        ) : null}
         </>
         ) : null}
 
@@ -288,6 +331,8 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
           className="auth-modal-switch"
           onClick={() => {
             setMode(mode === 'login' ? 'register' : 'login');
+            setEmail('');
+            setPassword('');
             setLocalError(null);
           }}
         >

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ClipboardList, X } from 'lucide-react';
 import {
   SUS_ITEMS,
@@ -14,6 +14,7 @@ import {
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/useAuth';
 import { OPEN_SURVEY_EVENT, surveyRequestedByUrl } from './testingSurveyEvents';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 
 const ROLE_OPTIONS: { value: SurveyRole; label: string }[] = [
@@ -54,6 +55,12 @@ export function TestingSurveyModal() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [doneScore, setDoneScore] = useState<number | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const close = () => {
+    setOpen(false);
+    if (surveyRequestedByUrl()) window.history.replaceState({}, '', '/');
+  };
+  useDialogA11y(open, close, dialogRef);
 
   useEffect(() => {
     const show = () => setOpen(true);
@@ -62,11 +69,6 @@ export function TestingSurveyModal() {
   }, []);
 
   if (!open) return null;
-
-  const close = () => {
-    setOpen(false);
-    if (surveyRequestedByUrl()) window.history.replaceState({}, '', '/');
-  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -104,7 +106,7 @@ export function TestingSurveyModal() {
       aria-modal="true"
       aria-labelledby="survey-title"
     >
-      <div className="card-3d auth-modal-card survey-card modal-rise">
+      <div className="card-3d auth-modal-card survey-card modal-rise" ref={dialogRef}>
         <button type="button" className="modal-close" onClick={close} aria-label="Cerrar encuesta">
           <X size={18} />
         </button>

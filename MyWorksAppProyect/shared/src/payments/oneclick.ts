@@ -97,10 +97,14 @@ async function errorMessage(error: { message?: string; context?: Response }): Pr
 /** Cobra la tarjeta inscrita. Si no hay tarjeta, needsCard y la web abre Webpay Plus. */
 export async function chargeSavedCard(
   supabase: AppSupabase,
-  input: { jobId: string; amountClp: number },
+  input: { jobId: string; amountClp: number; changeOrderId?: string },
 ): Promise<OneclickChargeResult> {
   const { data, error } = await supabase.functions.invoke('oneclick-charge', {
-    body: { jobId: input.jobId, amountClp: input.amountClp },
+    body: {
+      jobId: input.jobId,
+      amountClp: input.amountClp,
+      changeOrderId: input.changeOrderId,
+    },
   });
   if (error) {
     throw new Error(await errorMessage(error));
