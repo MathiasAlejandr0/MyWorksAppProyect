@@ -21,7 +21,7 @@
 
 ## 0. Cambios posteriores al snapshot (migraciones del 20-11-2026)
 
-> Esta sección se escribió a mano desde el DDL de las migraciones del repositorio (`main` `08154dfc`), no desde una introspección de la base viva. El resto del documento sigue siendo el snapshot del 17-11-2026. Al regenerar el diccionario desde la base, esta sección se reemplaza.
+> Esta sección se escribió a mano desde el DDL de las migraciones del repositorio (`main` `d9d2c7c`), no desde una introspección de la base viva. El resto del documento sigue siendo el snapshot del 17-11-2026. Al regenerar el diccionario desde la base, esta sección se reemplaza.
 
 Con las migraciones `20261118050658` a `20261120170000` el esquema `public` queda así:
 

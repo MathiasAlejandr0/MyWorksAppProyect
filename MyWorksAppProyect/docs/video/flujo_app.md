@@ -1,6 +1,6 @@
 # MyWorksApp — Flujo real de la app (fuente para el video)
 
-> Documento fuente del video. La sección 4 y la URL se actualizaron al 20-nov-2026 (`main` `08154dfc`); el resto describe el código del commit `310f00b` y las capturas del 15-nov.
+> Documento fuente del video. La sección 4 y la URL se actualizaron al 20-nov-2026 (`main` `d9d2c7c`); el resto describe el código del commit `310f00b` y las capturas del 15-nov.
 
 Extraído del código en `main` (commit `310f00b`, repo `nicoussj/Proyecto-Titulo-MyWorksApp`, carpeta `MyWorksAppProyect/`) y de la base en vivo (`wxqrfcqifkfgawrnqmnj`, solo lectura). Rutas relativas a `MyWorksAppProyect/`.
 Las capturas están en `/workspace/mwa_video/screens/` (ver índice al final).
@@ -157,7 +157,7 @@ Línea de tiempo (`features/jobs/presentation/widgets/job_status_timeline.dart`;
 
 ## 4. Rol ADMINISTRADOR (consola de escritorio)
 
-> Sección actualizada al 20-nov-2026 (`main` `08154dfc`). La consola se rehízo después de la captura `desk_01_login_consola.png`: esa captura ya no corresponde a la pantalla actual.
+> Sección actualizada al 20-nov-2026 (`main` `d9d2c7c`). La consola se rehízo después de la captura `desk_01_login_consola.png`: esa captura ya no corresponde a la pantalla actual.
 
 `myworksapp_desktop` (Tauri 2 + React 19; ventana nativa; en desarrollo también en `http://127.0.0.1:3001`).
 1. **Login** «Consola MyWorksApp — Operación del marketplace para administración, soporte y QA.» (`components/DesktopLoginScreen.tsx`).

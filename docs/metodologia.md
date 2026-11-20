@@ -74,7 +74,7 @@ Los commits acreditan entregas, no la realización de reuniones: el calendario e
 | S10 | 16 – 22 nov 2026 | 1 | Cierre de la Fase 2 | 26 | En curso |
 | S11 | 23 nov – 6 dic 2026 | 2 | Defensa | — | Planificado |
 
-Nota del 20-nov-2026: después del corte en `514781d` entraron 55 commits más a `main` hasta `08154dfc` (S10), entre ellos la consola nueva, la web en `myworksapp.cl` y el límite de tasa global (PR #75 a #81). La tabla mantiene los conteos del corte del 17-nov.
+Nota del 20-nov-2026: después del corte en `514781d` entraron 60 commits más a `main` hasta `d9d2c7c` (S10), entre ellos la consola nueva, la web en `myworksapp.cl`, el límite de tasa global y los correos transaccionales (PR #75 a #82). La tabla mantiene los conteos del corte del 17-nov.
 
 Plan por fases, según `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`:
 

@@ -1,6 +1,6 @@
 # Modelo entidad-relación
 
-> Al 20-11-2026 (`main` `08154dfc`) el esquema tiene **60 tablas** y 86 claves foráneas: las migraciones del 20-nov agregaron `auditoria_consola`, `rate_limit_ventana` y `direcciones_cliente` (detalle en la sección 0 de [`DICCIONARIO_BASE_DATOS.md`](DICCIONARIO_BASE_DATOS.md)). Las figuras del informe final se rehicieron con las 60 tablas en [`modelo_er60/`](modelo_er60/) (archivos `er60_*`, con sus generadores `gen_er60.py` y `gen_overview.py`; requieren Graphviz). Las fuentes DBML y SQL de abajo siguen en el snapshot del 17-11.
+> Al 20-11-2026 (`main` `d9d2c7c`) el esquema tiene **60 tablas** y 86 claves foráneas: las migraciones del 20-nov agregaron `auditoria_consola`, `rate_limit_ventana` y `direcciones_cliente` (detalle en la sección 0 de [`DICCIONARIO_BASE_DATOS.md`](DICCIONARIO_BASE_DATOS.md)). Las figuras del informe final se rehicieron con las 60 tablas en [`modelo_er60/`](modelo_er60/) (archivos `er60_*`, con sus generadores `gen_er60.py` y `gen_overview.py`; requieren Graphviz). Las fuentes DBML y SQL de abajo siguen en el snapshot del 17-11.
 
 El modelo ER del snapshot (57 tablas, 85 claves foráneas, migración `20261117223850`) está en
 [`Fase 2/modelo_entidad_relacion/`](../../Fase%202/modelo_entidad_relacion/LEEME.txt):

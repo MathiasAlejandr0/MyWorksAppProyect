@@ -212,7 +212,9 @@ Las migraciones están en `myworksapp_app/supabase/migrations/` (125 archivos, l
 Invitaciones de RRHH (función `invitar-colaborador`, solo un administrador):
 
 - `INVITE_PROVIDER=supabase` (por defecto, y el valor en vivo) usa `inviteUserByEmail`, que sale por el SMTP de Resend configurado en Supabase Auth.
-- `INVITE_PROVIDER=resend` exige `RESEND_API_KEY` y `RESEND_FROM`.
+- `INVITE_PROVIDER=resend` exige `RESEND_API_KEY` y `RESEND_FROM`. Está listo en el código (PR #82), pero el secreto no está cargado: espera la aprobación del dueño.
+
+Correos transaccionales (pago recibido, alta de invitado, reembolso y pago liberado): las Edge Functions usan `RESEND_API_KEY` y `RESEND_FROM`; sin ellos no envían y el pago sigue.
 - `INVITE_REDIRECT_URL` es opcional (a dónde vuelve quien acepta).
 
 Esos secretos viven en las Edge Functions, no en el escritorio.

@@ -18,13 +18,15 @@
 12. Cuenta del cliente en la web: direcciones guardadas, exportar datos y eliminar la cuenta (`/cuenta`).
 13. El cliente aprueba o rechaza un cobro adicional desde la web.
 14. Web en el dominio propio `myworksapp.cl`, con Turnstile en el registro y en la compra como invitado, y correos de Auth por Resend.
+15. Correos transaccionales de pago recibido, alta de invitado, reembolso y pago liberado, y enlaces de recuperación e invitación que vuelven a la app y a la consola (PR #82).
 
 ## Pendiente, fuera del MVP
 
 - Payout automático al banco del profesional.
 - Transbank en producción.
 - MFA para clientes y profesionales.
-- Correos transaccionales de pago, reembolso y liberación (rama `cursor/correos-resend`, sin merge).
+- Invitación de colaboradores por Resend: falta el secreto `INVITE_PROVIDER=resend`.
 - Textos legales y `/aviso-legal` (rama `cursor/aviso-academico-duoc-v2`, sin merge).
 - Arreglo de los 24 errores de la consola (rama `cursor/consola-bugs`, sin merge).
-- Push FCM y soporte automático con devolución: `send-push` y `soporte-automatico` no están desplegadas en vivo.
+- Push FCM: `send-push` no está desplegada en vivo.
+- Programar la llamada periódica a `soporte-automatico` (ya desplegada) para que las devoluciones del soporte automático salgan solas.

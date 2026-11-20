@@ -4,7 +4,7 @@ La base viva es `wxqrfcqifkfgawrnqmnj`. Cada versión de
 `supabase_migrations.schema_migrations` tiene su archivo en
 `supabase/migrations/` con el mismo número, y cada archivo tiene su fila en la
 base. Hubo 115 versiones en los dos lados al verificarlo el 18-nov-2026. Al
-20-nov-2026 (`main` `08154dfc`) el repositorio tiene 125 archivos `.sql`; las 10
+20-nov-2026 (`main` `d9d2c7c`) el repositorio tiene 125 archivos `.sql`; las 10
 migraciones posteriores están al final de la tabla y su estado en vivo se indica
 según el reporte de despliegue del 20-nov (no se consultó `schema_migrations`).
 

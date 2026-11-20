@@ -1,6 +1,6 @@
 # Web de clientes: despliegue y configuración vigente
 
-Estado al 20 de noviembre de 2026, `main` `08154dfc`. Esta guía describe lo que el código exige y lo que está configurado fuera del repositorio según el reporte de despliegue del 20-nov. No contiene secretos.
+Estado al 20 de noviembre de 2026, `main` `d9d2c7c`. Esta guía describe lo que el código exige y lo que está configurado fuera del repositorio según el reporte de despliegue del 20-nov. No contiene secretos.
 
 ## Dónde está publicada
 
@@ -27,8 +27,9 @@ Estado al 20 de noviembre de 2026, `main` `08154dfc`. Esta guía describe lo que
 - Remitente `no-responder@myworksapp.cl`. 13 plantillas en español: confirmación, enlace mágico, recuperación, invitación, cambio de correo, reautenticación y los avisos de contraseña cambiada, correo cambiado, teléfono cambiado, factor MFA agregado o quitado e identidad vinculada o desvinculada.
 - `site_url` de Auth: `https://myworksapp.cl`.
 - El formulario de registro tiene «Reenviar» con una espera de 60 segundos.
-- `soporte@myworksapp.cl` con Cloudflare Email Routing: **en configuración**.
-- Los correos transaccionales desde Edge Functions (pago recibido, reembolso, pago liberado) **no existen en `main`**: están en la rama `cursor/correos-resend`, sin merge.
+- `soporte@myworksapp.cl` reenvía con Cloudflare Email Routing: falta la prueba de punta a punta.
+- Desde el PR #82 (20-nov) las Edge Functions envían correos transaccionales con Resend: pago recibido (al cliente y al profesional), alta de invitado («define tu contraseña»), reembolso y pago liberado, con un diseño común (`_shared/email_layout.ts`, `email_send.ts` y `payment_mail.ts`). Usan los secretos `RESEND_API_KEY` y `RESEND_FROM`; sin ellos no envían y el pago sigue. No escriben a cuentas demo.
+- La invitación de colaboradores por Resend **no está activa**: falta el secreto `INVITE_PROVIDER=resend`. Hoy sale por Supabase Auth.
 
 ## Apple y Google
 

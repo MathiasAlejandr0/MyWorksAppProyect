@@ -2,7 +2,7 @@
 
 ## Seguridad
 
-- Row Level Security activo en todas las tablas de `public` (60 en `main` `08154dfc`), entre ellas `perfiles`, `trabajos`, `mensajes`, `pagos`, `disputas`, `trabajador_horarios` / `trabajador_horas_publicadas` y `auditoria_consola`. `rate_limit_ventana` no tiene políticas: solo la usa `service_role`.
+- Row Level Security activo en todas las tablas de `public` (60 en `main` `d9d2c7c`), entre ellas `perfiles`, `trabajos`, `mensajes`, `pagos`, `disputas`, `trabajador_horarios` / `trabajador_horas_publicadas` y `auditoria_consola`. `rate_limit_ventana` no tiene políticas: solo la usa `service_role`.
 - El cliente autenticado lee pagos del trabajo en el que participa. No inserta ni actualiza `pagos` por PostgREST.
 - Estado, profesional asignado y estado de pago del trabajo solo cambian por procedimientos del servidor.
 - La base exacta del profesional no sale en el catálogo: se redondea a 2 decimales. El dueño la lee por `mi_ficha_propia`.

@@ -1,6 +1,6 @@
 # Auditoría integral — 2026-10-05
 
-> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (12-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `08154dfc`) está en [`ESTADO_DEL_PROYECTO.md`](../ESTADO_DEL_PROYECTO.md).
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (12-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `d9d2c7c`) está en [`ESTADO_DEL_PROYECTO.md`](../ESTADO_DEL_PROYECTO.md).
 
 Rama: `fix/auditoria-integral` (desde `main` d0086de). BD de la demo: `wxqrfcqifkfgawrnqmnj`.
 Alcance: funcionalidad, seguridad y calidad. Partió revisando lo que ya se había pedido

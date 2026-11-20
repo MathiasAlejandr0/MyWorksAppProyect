@@ -1,6 +1,6 @@
 # Solución — My Works App
 
-**Estado del documento:** 2026-11-20, sobre `main` en `08154dfc`. Las rutas son relativas a `MyWorksAppProyect/` (el monorepo de software), salvo que se indique otra cosa.
+**Estado del documento:** 2026-11-20, sobre `main` en `d9d2c7c`. Las rutas son relativas a `MyWorksAppProyect/` (el monorepo de software), salvo que se indique otra cosa.
 
 ## Descripción de la solución
 

@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión del código analizada | `main` en `08154dfc` (20 de noviembre de 2026; app 1.0.11+12). Incluye la consola con bitácora `auditoria_consola` y 17 RPC `consola_*`, la web con perfil público, cuenta del cliente, rechazo de cobros adicionales y límite de tasa global, y la comisión de `comision_servicio_clp` |
+| Versión del código analizada | `main` en `d9d2c7c` (20 de noviembre de 2026; app 1.0.11+12). Incluye la consola con bitácora `auditoria_consola` y 17 RPC `consola_*`, la web con perfil público, cuenta del cliente, rechazo de cobros adicionales y límite de tasa global, y la comisión de `comision_servicio_clp` |
 | Fuentes | Código de `myworksapp_app` (Flutter), `myworksapp_web` (React/Vite), `myworksapp_desktop` (Tauri), `shared/` (TypeScript), `myworksapp_app/supabase/migrations` (SQL) y `myworksapp_app/supabase/functions` (Edge Functions). La web se publica en https://myworksapp.cl. Lo que depende de la configuración en vivo se toma del reporte de despliegue del 20-nov-2026 y se indica como tal |
 | Diagrama | [`casos_de_uso_diagrama.png`](casos_de_uso_diagrama.png) (fuente Mermaid en §3) |
 
@@ -264,7 +264,7 @@ Reglas transversales que impone el servidor:
 - 5a. La contraseña nueva es igual a la anterior: «La nueva contraseña debe ser distinta a la anterior.»
 - 5b. No cumple RN-07 o las dos no coinciden: el formulario lo indica antes de enviar.
 
-**Observación**: Supabase Auth envía por el SMTP de Resend (plantilla «Restablece tu contraseña de MyWorksApp», plan gratis de 100 correos al día). En la web el enlace solo sirve si se abre en el mismo navegador (PKCE). En la app, el correo sale pero el enlace abre la web sin `redirectTo` propio, y la app no puede canjear el código: restablecer desde la app no funciona hoy. El arreglo del flujo está en la rama `cursor/correos-resend`, sin merge.
+**Observación**: Supabase Auth envía por el SMTP de Resend (plantilla «Restablece tu contraseña de MyWorksApp», plan gratis de 100 correos al día). En la web el enlace solo sirve si se abre en el mismo navegador (PKCE). Desde el PR #82 la app pide el correo con retorno a `cl.myworksapp.auth` y, al volver, abre «Nueva contraseña» (`auth_recovery_redirect.dart`, `oauth_deep_link_service.dart`).
 
 **Trazabilidad**: `myworksapp_app/lib/features/auth/presentation/pages/forgot_password_page.dart`; `myworksapp_web/src/components/AuthModal.tsx` (modo `forgot`), `PasswordRecoveryModal.tsx`, `src/context/AuthContext.tsx`; `shared/src/auth.ts` (`requestPasswordReset`, `passwordResetRedirect`), `shared/src/emailDomain.ts`.
 
@@ -774,7 +774,7 @@ Reglas transversales que impone el servidor:
 - 3a. El reembolso falla en Transbank: queda pendiente y el cron lo reintenta.
 - 3b. La sesión no es de administrador o el motivo es muy corto: la función responde 403 o 400 y no mueve dinero.
 
-**Observación**: la devolución automática del cierre por plazo depende de la Edge Function `soporte-automatico`, que según el reporte del 20-nov no está desplegada en vivo.
+**Observación**: la devolución automática del cierre por plazo depende de la Edge Function `soporte-automatico`, desplegada el 20-nov. Ninguna tarea del repositorio la llama todavía. La devolución envía al cliente el correo de reembolso.
 
 **Trazabilidad**: `myworksapp_desktop/src/features/screens.tsx` (`DisputasPage`); `supabase/functions/webpay-resolve-dispute`, `_shared/require_admin.ts`, `soporte-automatico`; SQL `admin_actualizar_estado_disputa`, `consola_disputas_abiertas`, `consola_disputas_resueltas`, `registrar_auditoria`.
 
@@ -998,7 +998,7 @@ Reglas transversales que impone el servidor:
 - 4a. El perfil no existe o el trigger lo rechaza: «No se pudo asignar el rol del panel».
 - 1b. El administrador revoca una invitación pendiente (`consola_revocar_invitacion`) o cambia el rol de un integrante (`consola_cambiar_rol`); ambas acciones quedan en la bitácora.
 
-**Estado conocido**: según la revisión de correos del 20-nov, el enlace de la invitación vuelve a la consola con un fragmento `#access_token` que la consola de `main` no procesa, así que la persona invitada no queda con sesión para definir su clave. El arreglo está en la rama `cursor/correos-resend`, sin merge.
+**Estado conocido**: desde el PR #82 la consola lee el retorno `myworksapp-admin://auth/callback` con `code`, `token_hash` o el fragmento, y si es una invitación abre «Define tu contraseña» (`src/lib/authCallback.ts`). Una cuenta que ya existe recibe 409 al invitar o reenviar. La invitación por Resend (`INVITE_PROVIDER=resend`) no está activa: espera la aprobación del dueño.
 
 **Observación**: desde la versión 1.0.3 los colaboradores `soporte` y `qa` entran a la consola con mínimo privilegio (CU-34). El trigger `perfiles_rol_inicial_seguro` impide que un usuario se asigne un rol de consola al registrarse.
 
@@ -1026,7 +1026,7 @@ Reglas transversales que impone el servidor:
 **Flujos alternativos / excepciones**
 - Transbank no responde: el pago queda como estaba y se reintenta en la siguiente ejecución.
 
-**Estado conocido**: según el reporte del 20-nov, la Edge Function `soporte-automatico` no está desplegada en vivo, así que las devoluciones a la tarjeta que decide el soporte automático no se ejecutan solas. La prueba de la consola del 20-nov vio 3 tareas `pg_cron` en estado «succeeded» y una disputa demo abierta desde el 19-oct que no se escaló.
+**Estado conocido**: la Edge Function `soporte-automatico` está desplegada desde el 20-nov, pero ninguna tarea `pg_cron` del repositorio la llama (solo `webpay-reconcile` se invoca por HTTP), así que las devoluciones a la tarjeta que decide el soporte automático no se ejecutan solas hasta programar esa llamada. La prueba de la consola del 20-nov vio 3 tareas `pg_cron` en estado «succeeded» y una disputa demo abierta desde el 19-oct que no se escaló.
 
 **Trazabilidad**: migraciones `20261115060002_cron_webpay_reconcile.sql`, `20261115160001_reconcile_secret_vault.sql`, `20261112000001_soporte_automatico.sql`; `supabase/functions/webpay-reconcile`, `soporte-automatico`.
 
@@ -1154,12 +1154,12 @@ Reglas transversales que impone el servidor:
 
 ## 8. Observaciones encontradas al derivar los casos desde el código
 
-Estado al 20-nov-2026 (`main` `08154dfc`):
+Estado al 20-nov-2026 (`main` `d9d2c7c`):
 
 1. **Comisión (RN-06, CU-30).** El código cobra 5 % con un mínimo de $1.000. Versiones anteriores de este documento y del informe decían 15 %. Se documenta el código; la tasa queda por decidir.
 2. **CU-29.** El rechazo exige una nota de al menos 10 caracteres. En la prueba de la consola del 20-nov el módulo Profesionales respondió 403: el caso no se puede ejecutar hasta el merge de `cursor/consola-bugs`.
 3. **CU-01.** El captcha de Supabase Auth no está activado: el token de Turnstile del registro no se valida en el servidor.
-4. **CU-24 y CU-32.** `send-push` y `soporte-automatico` están en el repositorio, pero no desplegadas en vivo.
-5. **CU-03 y CU-31.** Restablecer la clave desde la app y aceptar una invitación en la consola no terminan bien hoy; el arreglo está en `cursor/correos-resend`.
+4. **CU-24 y CU-32.** `send-push` no está desplegada. `soporte-automatico` sí (20-nov), pero falta programar su llamada.
+5. **CU-03 y CU-31.** El PR #82 arregla restablecer la clave desde la app (`cl.myworksapp.auth`) y aceptar una invitación en la consola; llega a los usuarios con la próxima compilación de la app y de la consola. La invitación por Resend sigue pendiente (`INVITE_PROVIDER=resend`).
 
-**En desarrollo (ramas sin merge, no forman parte de estos casos):** `cursor/aviso-academico-duoc-v2` (banner y páginas `/aviso-legal`, `/terminos`, `/privacidad`), `cursor/correos-resend` (correos transaccionales y flujo de definir contraseña) y `cursor/consola-bugs` (24 errores de la consola).
+**En desarrollo (ramas sin merge, no forman parte de estos casos):** `cursor/aviso-academico-duoc-v2` (banner y páginas `/aviso-legal`, `/terminos`, `/privacidad`) y `cursor/consola-bugs` (24 errores de la consola, con la migración `20261120210000_consola_lectura_config_y_disputas.sql` sin aplicar).

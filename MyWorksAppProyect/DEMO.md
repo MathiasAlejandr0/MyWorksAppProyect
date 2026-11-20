@@ -170,7 +170,8 @@ Los pagos pasan por Edge Functions de Supabase; las claves de Transbank viven so
 | `guest-checkout`, `definir-clave-invitado` | Pedido sin sesión desde la web y creación de la clave del invitado |
 | `webpay-release`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-resolve-dispute`, `webpay-reconcile` | Liberación, reembolsos, disputas y conciliación |
 | `invitar-colaborador` | Invitación de soporte y QA desde la consola |
-| `send-push`, `soporte-automatico` | Push FCM y devolución automática del soporte. Están en el repositorio, pero según el reporte del 20-nov no están desplegadas en vivo |
+| `soporte-automatico` | Devolución automática del soporte. Desplegada el 20-nov; ninguna tarea del repositorio la llama todavía |
+| `send-push` | Push FCM. Está en el repositorio, pero no está desplegada en vivo |
 
 `webpay-release`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-resolve-dispute` e `invitar-colaborador` llaman `is_admin()` con el JWT del usuario antes de mover dinero o invitar; cada acción queda en la bitácora `auditoria_consola`. `guest-checkout`, `definir-clave-invitado`, `webpay-create` y `oneclick-charge` usan el límite de tasa global en Postgres (`rate_limit_consumir`).
 

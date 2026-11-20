@@ -1,6 +1,6 @@
 # Migraciones Supabase (MyWorks App)
 
-> Estado al 20-nov-2026 (`main` `08154dfc`): 125 archivos `.sql`, del `20250607000001` al `20261120170000`. El inventario actualizado está en [`../MIGRATIONS_INVENTORY.md`](../MIGRATIONS_INVENTORY.md). Lo que sigue describe el baseline histórico; el esquema vigente está en `docs/DICCIONARIO_BASE_DATOS.md` y `docs/modelo-datos.md`.
+> Estado al 20-nov-2026 (`main` `d9d2c7c`): 125 archivos `.sql`, del `20250607000001` al `20261120170000`. El inventario actualizado está en [`../MIGRATIONS_INVENTORY.md`](../MIGRATIONS_INVENTORY.md). Lo que sigue describe el baseline histórico; el esquema vigente está en `docs/DICCIONARIO_BASE_DATOS.md` y `docs/modelo-datos.md`.
 
 Este directorio documenta el schema y el hardening del proyecto Supabase.
 
