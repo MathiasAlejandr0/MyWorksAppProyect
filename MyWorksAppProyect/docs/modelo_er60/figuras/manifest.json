@@ -1,0 +1,183 @@
+[
+ {
+  "file": "er60_01_usuarios_territorio_1.png",
+  "dominio": "Usuarios, autenticación y territorio",
+  "parte": 1,
+  "partes": 2,
+  "tablas": [
+   "perfiles",
+   "codigos_restablecimiento",
+   "consentimientos_usuario",
+   "dispositivos_push",
+   "suscripciones",
+   "bloqueos_usuario"
+  ],
+  "w_pt": 506.0,
+  "h_pt": 402.0,
+  "rankdir": "LR1"
+ },
+ {
+  "file": "er60_01_usuarios_territorio_2.png",
+  "dominio": "Usuarios, autenticación y territorio",
+  "parte": 2,
+  "partes": 2,
+  "tablas": [
+   "direcciones_cliente",
+   "verificacion_eventos",
+   "paises",
+   "regiones",
+   "comunas"
+  ],
+  "w_pt": 349.0,
+  "h_pt": 273.0,
+  "rankdir": "TB2"
+ },
+ {
+  "file": "er60_02_profesionales_catalogo_1.png",
+  "dominio": "Profesionales, servicios y precios",
+  "parte": 1,
+  "partes": 2,
+  "tablas": [
+   "trabajadores",
+   "trabajador_precios",
+   "trabajador_horarios",
+   "trabajador_horas_publicadas",
+   "trabajador_servicios_extra",
+   "trabajador_servicios"
+  ],
+  "w_pt": 557.0,
+  "h_pt": 390.0,
+  "rankdir": "LR1"
+ },
+ {
+  "file": "er60_02_profesionales_catalogo_2.png",
+  "dominio": "Profesionales, servicios y precios",
+  "parte": 2,
+  "partes": 2,
+  "tablas": [
+   "categorias_servicio",
+   "servicios",
+   "configuraciones_servicio",
+   "portafolio_trabajador",
+   "impulsos"
+  ],
+  "w_pt": 367.0,
+  "h_pt": 260.0,
+  "rankdir": "TB2"
+ },
+ {
+  "file": "er60_03_trabajos_reservas_1.png",
+  "dominio": "Trabajos, reservas, reprogramación y PIN",
+  "parte": 1,
+  "partes": 2,
+  "tablas": [
+   "trabajos",
+   "propuestas_cotizacion",
+   "propuesta_cotizacion_items",
+   "acuerdos_trabajo",
+   "cancelaciones_trabajo",
+   "reprogramaciones_trabajo"
+  ],
+  "w_pt": 630.0,
+  "h_pt": 364.0,
+  "rankdir": "TB1"
+ },
+ {
+  "file": "er60_03_trabajos_reservas_2.png",
+  "dominio": "Trabajos, reservas, reprogramación y PIN",
+  "parte": 2,
+  "partes": 2,
+  "tablas": [
+   "pines_inicio_trabajo",
+   "bloqueos_pin_inicio",
+   "intentos_pin_inicio",
+   "fotos_trabajo",
+   "ubicacion_en_vivo"
+  ],
+  "w_pt": 213.0,
+  "h_pt": 376.0,
+  "rankdir": "LR1"
+ },
+ {
+  "file": "er60_04_pagos_escrow_1.png",
+  "dominio": "Pagos, escrow, liquidaciones y cuentas bancarias",
+  "parte": 1,
+  "partes": 1,
+  "tablas": [
+   "pagos",
+   "ordenes_cambio",
+   "liquidaciones",
+   "metodos_pago_oneclick",
+   "cuentas_bancarias"
+  ],
+  "w_pt": 391.0,
+  "h_pt": 351.0,
+  "rankdir": "TB2"
+ },
+ {
+  "file": "er60_05_comunicacion_disputas_1.png",
+  "dominio": "Comunicación, notificaciones, disputas y soporte",
+  "parte": 1,
+  "partes": 1,
+  "tablas": [
+   "disputas",
+   "disputa_mensajes",
+   "mensajes",
+   "notificaciones",
+   "tickets_soporte"
+  ],
+  "w_pt": 369.0,
+  "h_pt": 316.0,
+  "rankdir": "TB3"
+ },
+ {
+  "file": "er60_06_calificaciones_ranking_1.png",
+  "dominio": "Calificaciones y ranking",
+  "parte": 1,
+  "partes": 1,
+  "tablas": [
+   "calificaciones",
+   "senales_resena",
+   "calificaciones_cliente",
+   "eventos_ranking",
+   "ranking_aprendizaje",
+   "ranking_config"
+  ],
+  "w_pt": 453.0,
+  "h_pt": 261.0,
+  "rankdir": "LR2"
+ },
+ {
+  "file": "er60_07_admin_auditoria_1.png",
+  "dominio": "Administración, moderación y auditoría",
+  "parte": 1,
+  "partes": 2,
+  "tablas": [
+   "auditoria_consola",
+   "rate_limit_ventana",
+   "app_config",
+   "banderas_funcionalidad",
+   "acciones_pendientes",
+   "reportes"
+  ],
+  "w_pt": 602.0,
+  "h_pt": 149.0,
+  "rankdir": "LR3"
+ },
+ {
+  "file": "er60_07_admin_auditoria_2.png",
+  "dominio": "Administración, moderación y auditoría",
+  "parte": 2,
+  "partes": 2,
+  "tablas": [
+   "eventos_abuso",
+   "registros_error_app",
+   "eventos_analitica",
+   "encuestas_testing",
+   "encuesta_testing_respuestas"
+  ],
+  "w_pt": 646.0,
+  "h_pt": 149.0,
+  "rankdir": "LR3"
+ }
+]

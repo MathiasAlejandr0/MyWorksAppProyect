@@ -1,6 +1,6 @@
 # Diccionario de base de datos — My Works App
 
-> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-17 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. No editar a mano: actualizar el snapshot o volver a introspectar y regenerar.
+> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-17 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. No editar a mano: actualizar el snapshot o volver a introspectar y regenerar. La sección 0 es la única excepción: agrega a mano las 3 tablas de las migraciones del 20-11-2026 (60 tablas en total).
 
 | Campo | Valor |
 |-------|-------|
@@ -18,6 +18,81 @@
 | Fecha de generación | 2026-11-17 (America/Santiago) |
 
 `perfiles.id` coincide con `auth.users.id` (Auth de Supabase, fuera de `public`). No hay tipos ENUM en `public`; hay una vista, `encuestas_testing_con_puntaje`.
+
+## 0. Cambios posteriores al snapshot (migraciones del 20-11-2026)
+
+> Esta sección se escribió a mano desde el DDL de las migraciones del repositorio (`main` `08154dfc`), no desde una introspección de la base viva. El resto del documento sigue siendo el snapshot del 17-11-2026. Al regenerar el diccionario desde la base, esta sección se reemplaza.
+
+Con las migraciones `20261118050658` a `20261120170000` el esquema `public` queda así:
+
+| Concepto | Snapshot 17-11 | Con las migraciones del repositorio |
+|----------|----------------|-------------------------------------|
+| Tablas | 57 | **60** (+ `auditoria_consola`, `rate_limit_ventana`, `direcciones_cliente`) |
+| Columnas | 458 | **481** (+20 de las tablas nuevas, + `disputa_mensajes.interna`, `trabajadores.es_demo`, `perfiles.telefono`) |
+| Claves foráneas físicas | 85 | **86** (+ `direcciones_cliente.id_usuario` → `perfiles.id`) |
+| Políticas RLS | 129 | **132** (+ `auditoria_consola_select_admin`, `direcciones_cliente_propias`, `trabajadores_ocultar_demo`; `disputa_mensajes_select` se reemplaza) |
+| Tipos ENUM | 0 | **1** (`accion_auditoria_consola`, 27 valores) |
+| Vistas | 1 | **2** (+ `cobros_profesional`, security invoker, migración `20261118053913`) |
+| Última migración | `20261117223850` | `20261120170000` |
+
+Los conteos de la columna derecha salen del DDL; no se volvieron a medir en la base viva.
+
+### 0.1 auditoria_consola (grupo administración)
+
+Bitácora inmutable de las acciones de la consola. Solo se inserta con `registrar_auditoria()`; un trigger (`auditoria_consola_solo_rpc`) rechaza cualquier INSERT, UPDATE o DELETE directo.
+
+| Columna | Tipo | Restricciones | Nota |
+|---------|------|---------------|------|
+| `id` | `uuid` | pk, not null, default `gen_random_uuid()` |  |
+| `creado_en` | `timestamptz` | not null, default `now()` |  |
+| `id_actor` | `uuid` |  | Usuario que hizo la acción. Sin FK, para que el registro sobreviva a la cuenta. |
+| `rol_actor` | `text` |  | Rol del actor en ese momento. |
+| `accion` | `accion_auditoria_consola` | not null | Una de las 27 acciones del ENUM. |
+| `entidad` | `text` | not null | Tabla u objeto afectado. |
+| `id_entidad` | `text` |  |  |
+| `antes` | `jsonb` |  | Estado anterior. |
+| `despues` | `jsonb` |  | Estado nuevo. |
+| `motivo` | `text` |  | Motivo escrito por el operador. |
+| `ip` | `text` |  |  |
+| `user_agent` | `text` |  |  |
+
+Índices: `auditoria_consola_creado_idx (creado_en DESC)`, `auditoria_consola_actor_idx (id_actor, creado_en DESC)`, `auditoria_consola_entidad_idx (entidad, id_entidad)`.
+
+**RLS.** RLS activo. Solo un administrador lee (SELECT «auditoria_consola_select_admin», `is_admin()`). Nadie tiene permiso de escritura directa.
+
+Valores de `accion_auditoria_consola`: liberar_pago, devolver_pago, liquidar, resolver_disputa, invitar_colaborador, reenviar_invitacion, revocar_invitacion, cambiar_rol, suspender_cuenta, reactivar_cuenta, aprobar_verificacion, rechazar_verificacion, pedir_correccion, ocultar_resena, restaurar_resena, proponer_resena, cerrar_sesion, editar_ajuste, editar_bandera, aviso_masivo, consultar_rut, exportar_datos, eliminar_datos, sancionar_reporte, descartar_reporte, marcar_error_revisado, nota_interna.
+
+### 0.2 rate_limit_ventana (grupo administración)
+
+Contador del límite de tasa por clave (IP o correo), compartido por todas las instancias de las Edge Functions. Lo escribe `rate_limit_consumir(p_clave, p_max, p_ventana_segundos)`.
+
+| Columna | Tipo | Restricciones | Nota |
+|---------|------|---------------|------|
+| `clave` | `text` | pk, not null | Hasta 200 caracteres. |
+| `conteo` | `integer` | not null | Solicitudes en la ventana. |
+| `vence_en` | `timestamptz` | not null | Fin de la ventana. |
+
+**RLS.** RLS activo y sin políticas: `anon` y `authenticated` no tienen acceso. Solo `service_role` lee y escribe.
+
+### 0.3 direcciones_cliente (grupo usuarios)
+
+Direcciones guardadas por el cliente en la web (`/cuenta`).
+
+| Columna | Tipo | Restricciones | Nota |
+|---------|------|---------------|------|
+| `id` | `text` | pk, not null |  |
+| `id_usuario` | `uuid` | fk → perfiles.id, not null | Si se borra el perfil, se borran sus direcciones. |
+| `etiqueta` | `text` | not null, default `''` | Por ejemplo «Casa». |
+| `direccion` | `text` | not null |  |
+| `creado_en` | `text` | not null |  |
+
+**RLS.** RLS activo. Cada usuario ve y edita solo sus direcciones (ALL «direcciones_cliente_propias», `id_usuario = auth.uid()`). `anon` no tiene acceso.
+
+### 0.4 Columnas agregadas a tablas existentes
+
+- `disputa_mensajes.interna boolean not null default false`: nota interna de la consola; las partes no la leen (migración `20261120130000`).
+- `trabajadores.es_demo boolean not null default false`: marca las cuentas demo; se ocultan del catálogo cuando `demo_modo` no es 1 (migración `20261120140000`).
+- `perfiles.telefono text` (migración `20261120170000`).
 
 ## 1. Cambios respecto del diccionario v2.3 (2026-11-08, 43 tablas, hasta 20261108000005)
 
