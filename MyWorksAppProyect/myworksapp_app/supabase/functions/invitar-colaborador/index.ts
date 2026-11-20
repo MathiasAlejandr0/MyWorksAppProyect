@@ -1,4 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 const ROLES = ["Admin", "Soporte", "QA"] as const;
@@ -74,14 +75,9 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "No autenticado" }, 401);
     }
 
-    const { data: profile, error: profileError } = await userSb
-      .from("perfiles")
-      .select("rol")
-      .eq("id", authData.user.id)
-      .maybeSingle();
-    if (profileError) return jsonResponse(req, { error: profileError.message }, 400);
-    if (profile?.rol !== "administrador") {
-      return jsonResponse(req, { error: "Solo un administrador puede invitar" }, 403);
+    const adminGate = await requireAdmin(userSb);
+    if (!adminGate.ok) {
+      return jsonResponse(req, { error: adminGate.error }, adminGate.status);
     }
 
     const parsed = parseInvite(await req.json().catch(() => null));

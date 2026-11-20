@@ -2,6 +2,7 @@ import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
+import { requireAdmin } from "../_shared/require_admin.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
 /**
@@ -23,13 +24,9 @@ Deno.serve(async (req) => {
     } = await userSb.auth.getUser();
     if (!user) return jsonResponse(req, { error: "No autenticado" }, 401);
 
-    const { data: profile } = await userSb
-      .from("perfiles")
-      .select("rol")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (profile?.rol !== "administrador") {
-      return jsonResponse(req, { error: "Solo administrador" }, 403);
+    const adminGate = await requireAdmin(userSb);
+    if (!adminGate.ok) {
+      return jsonResponse(req, { error: adminGate.error }, adminGate.status);
     }
 
     const body = await req.json();
