@@ -109,6 +109,7 @@ void main() {
     expect(worker.pricingConfigured, isTrue);
     expect(worker.completedJobs, 5);
     expect(worker.listingScore, 74.4);
+    expect(worker.catalogBaseIsApproximate, isTrue);
   });
 
   test('el fallback de login demo prioriza gasfitería y no queda vacío', () {

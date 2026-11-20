@@ -1,4 +1,42 @@
-import { haversineKm } from './distance';
+import { quantizeChargeKm } from './money';
+
+export { roundClp } from './money';
+
+/** Haversine con `asin`, la misma expresión que `km_entre_puntos` en Postgres. */
+export function haversineKmForCharge(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const earth = 6371;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const clamped = Math.min(1, Math.max(0, a));
+  return earth * 2 * Math.asin(Math.sqrt(clamped));
+}
+
+/** Piso a 1 decimal. No promete un radio gratis mayor al que cobra el servidor. */
+export function formatServiceRadiusKm(radiusKm?: number | null): string {
+  const radius = resolveServiceRadiusKm(radiusKm);
+  const tenths = Math.floor(Math.round(radius * 1000) / 100);
+  const whole = Math.floor(tenths / 10);
+  const fraction = tenths % 10;
+  if (fraction === 0) return String(whole);
+  return `${whole},${fraction}`;
+}
+
+/** El pin del catálogo puede mentir ~1 km. Se oculta pasado este margen sobre 30 km. */
+export const CATALOG_PIN_HIDE_BEYOND_KM = 31.5;
+
+export function catalogPinTooFar(distanceKm: number | null | undefined): boolean {
+  if (distanceKm == null || !Number.isFinite(distanceKm)) return false;
+  return distanceKm > CATALOG_PIN_HIDE_BEYOND_KM;
+}
 
 /** Radio cercano realista: unos 10–15 min en auto, sin extra de traslado. */
 export const NEARBY_SERVICE_RADIUS_KM = 7;
@@ -18,6 +56,8 @@ export type TransportQuote = {
   extraKm: number;
   extraClp: number;
   insideRadar: boolean | null;
+  /** Base del catálogo, redondeada. extraClp no se cobra. */
+  catalogBaseIsApproximate?: boolean;
 };
 
 function finiteCoord(value: number | null | undefined): value is number {
@@ -33,7 +73,7 @@ export function withinTravelRange(
   distanceKm: number | null | undefined,
 ): boolean {
   if (distanceKm == null || !Number.isFinite(distanceKm)) return true;
-  return distanceKm <= MAX_TRAVEL_WITH_SURCHARGE_KM;
+  return quantizeChargeKm(distanceKm) <= MAX_TRAVEL_WITH_SURCHARGE_KM;
 }
 
 export function tooFarToBookCopy(): string {
@@ -47,8 +87,10 @@ export function transportSurcharge(input: {
   jobLat?: number | null;
   jobLng?: number | null;
   radiusKm?: number | null;
+  catalogBaseIsApproximate?: boolean;
 }): TransportQuote {
   const radiusKm = resolveServiceRadiusKm(input.radiusKm);
+  const approximate = input.catalogBaseIsApproximate === true;
   if (
     !finiteCoord(input.workerLat) ||
     !finiteCoord(input.workerLng) ||
@@ -61,15 +103,28 @@ export function transportSurcharge(input: {
       extraKm: 0,
       extraClp: 0,
       insideRadar: null,
+      catalogBaseIsApproximate: approximate,
     };
   }
 
-  const distanceKm = haversineKm(
-    input.workerLat,
-    input.workerLng,
-    input.jobLat,
-    input.jobLng,
+  const distanceKm = quantizeChargeKm(
+    haversineKmForCharge(
+      input.workerLat,
+      input.workerLng,
+      input.jobLat,
+      input.jobLng,
+    ),
   );
+  if (approximate) {
+    return {
+      distanceKm,
+      radiusKm,
+      extraKm: 0,
+      extraClp: 0,
+      insideRadar: null,
+      catalogBaseIsApproximate: true,
+    };
+  }
   const extraKm = Math.max(0, distanceKm - radiusKm);
   if (extraKm <= 0) {
     return {

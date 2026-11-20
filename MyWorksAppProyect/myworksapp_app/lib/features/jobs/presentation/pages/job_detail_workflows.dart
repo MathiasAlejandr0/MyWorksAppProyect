@@ -124,7 +124,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
 
     try {
       final rate =
-          PricingService.instance.estimateHourlyRateFromVisitFee(worker.visitFee.round());
+          PricingService.instance.estimateHourlyRateFromVisitFee(roundClp(worker.visitFee));
       final quote = PricingService.instance.calculateHourlyOvertime(
         hourlyRateClp: rate,
         extraHours: extra,

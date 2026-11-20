@@ -8,6 +8,20 @@ int? payableTotalClp(int? serverTotal) {
   return serverTotal;
 }
 
+/// Lo que se cobra en este toque.
+///
+/// [shownClp] es la suma que armó la pantalla (a veces con la base redondeada
+/// del mapa). Si el servidor trae otro entero, se cobra ese, sin pedir
+/// confirmar otra vez.
+({int amountClp, bool replacedShownTotal})? chargeForTap({
+  required int shownClp,
+  required int? serverTotalClp,
+}) {
+  final amount = payableTotalClp(serverTotalClp);
+  if (amount == null) return null;
+  return (amountClp: amount, replacedShownTotal: amount != shownClp);
+}
+
 /// Un rechazo de monto no reescribe el total en pantalla: se vuelve a leer.
 bool paymentMismatchNeedsReload(String message) =>
     expectedChargeFromMismatch(message) != null;

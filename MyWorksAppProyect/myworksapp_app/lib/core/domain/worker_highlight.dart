@@ -39,7 +39,14 @@ CoverageNotice coverageNotice({
   double? clientLatitude,
   double? clientLongitude,
 }) {
-  final radiusKm = resolveServiceRadiusKm(worker.serviceRadiusKm);
+  final radiusLabel = formatServiceRadiusKm(worker.serviceRadiusKm);
+  if (worker.catalogBaseIsApproximate) {
+    return CoverageNotice(
+      inside: null,
+      text:
+          'Hasta $radiusLabel km sin extra de traslado. El monto se confirma al pagar.',
+    );
+  }
   final quote = transportSurcharge(
     workerLat: worker.baseLatitude,
     workerLng: worker.baseLongitude,
@@ -51,13 +58,13 @@ CoverageNotice coverageNotice({
     return CoverageNotice(
       inside: null,
       text:
-          'Hasta ${radiusKm.round()} km sin extra de traslado. Más lejos, recargo por km.',
+          'Hasta $radiusLabel km sin extra de traslado. Más lejos, recargo por km.',
     );
   }
   if (quote.insideRadar == true) {
     return CoverageNotice(
       inside: true,
-      text: 'Dentro de ${radiusKm.round()} km: sin extra de traslado.',
+      text: 'Dentro de $radiusLabel km: sin extra de traslado.',
     );
   }
   final km = quote.distanceKm?.toStringAsFixed(1) ?? '?';

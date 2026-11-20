@@ -57,9 +57,8 @@ import {
   fetchUserJobs,
   toWebWorkerCard,
   fetchWorkerPublicStats,
-  tooFarToBookCopy,
+  catalogPinTooFar,
   transportSurcharge,
-  withinTravelRange,
   isOpenAt,
   type WeeklyHours,
   type JobTrackingSnapshot,
@@ -981,9 +980,9 @@ export function App() {
           jobLat: site?.latitude,
           jobLng: site?.longitude,
           radiusKm: worker.serviceRadiusKm,
+          catalogBaseIsApproximate: true,
         })
       : null;
-  const liveQuote = quoteFor(selectedWorker, liveSite);
   const [chargeAttempt, setChargeAttempt] = useState(0);
 
   useEffect(() => {
@@ -1098,15 +1097,11 @@ export function App() {
   const listedWorkers = (serviceMatch?.workers ?? []).filter((worker) => {
     if (!clientLocation) return true;
     const quote = quoteFor(worker, clientLocation);
-    return withinTravelRange(quote?.distanceKm);
+    return !catalogPinTooFar(quote?.distanceKm);
   });
-  const liveTooFar =
-    liveQuote?.distanceKm != null && !withinTravelRange(liveQuote.distanceKm);
-  const radarHint = !selectedWorker
-    ? undefined
-    : liveTooFar
-      ? tooFarToBookCopy()
-      : 'El total, con traslado, se muestra al pagar.';
+  const radarHint = selectedWorker
+    ? 'El total, con traslado, se muestra al pagar.'
+    : undefined;
 
   const pickClientLocation = (site: MapSite) => {
     setClientLocation(site);
@@ -1186,10 +1181,6 @@ export function App() {
     }
     setScheduledAt(slotIso);
     setBookingError(null);
-    if (liveTooFar) {
-      setBookingError(tooFarToBookCopy());
-      return;
-    }
     if (authLoading) {
       setBookingError('Estamos confirmando tu sesión. Inténtalo en un momento.');
       return;
@@ -1226,16 +1217,13 @@ export function App() {
       throw new Error('Espera a que calculemos el total antes de pagar.');
     }
     const preview = await fetchJobChargePreview(supabase, jobId);
-    if (!preview || preview.totalClp !== payableTotalClp) {
-      setPayableTotalClp(preview?.totalClp ?? null);
-      setChargeLockError(
-        preview
-          ? null
-          : 'No pudimos calcular el total. Reintenta antes de pagar.',
-      );
-      throw new Error(
-        'El total se actualizó. El botón muestra el monto que se cobra.',
-      );
+    if (!preview) {
+      setPayableTotalClp(null);
+      setChargeLockError('No pudimos calcular el total. Reintenta antes de pagar.');
+      throw new Error('No pudimos calcular el total. Reintenta antes de pagar.');
+    }
+    if (preview.totalClp !== payableTotalClp) {
+      setPayableTotalClp(preview.totalClp);
     }
     const amountClp = preview.totalClp;
 
@@ -1305,9 +1293,6 @@ export function App() {
     });
     if (fresh.totalClp !== guestPayableClp) {
       setGuestPayableClp(fresh.totalClp);
-      throw new Error(
-        'El total se actualizó. El botón muestra el monto que se cobra.',
-      );
     }
     const guestAmount = fresh.totalClp;
     const session = await createGuestWebpayCheckout(supabase, {

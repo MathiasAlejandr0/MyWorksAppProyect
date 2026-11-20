@@ -1,3 +1,4 @@
+import '../../domain/clp_rounding.dart';
 import '../../domain/worker_custom_service.dart';
 import '../../domain/worker_service_options_catalog.dart';
 import '../../domain/worker_hours.dart';
@@ -16,6 +17,9 @@ class WorkerModel {
   final String? workZone;
   final double? baseLatitude;
   final double? baseLongitude;
+
+  /// Fila de catálogo: la base está redondeada a ~1 km y no sirve para cobrar.
+  final bool catalogBaseIsApproximate;
   final double serviceRadiusKm;
   /// `mapa` si el profesional la fijó; `comuna` si salió del texto de zona.
   final String? baseOrigin;
@@ -31,7 +35,7 @@ class WorkerModel {
   final bool isElite;
   /// Kilómetros con movilización en \$0.
   final double urbanRadiusKm;
-  /// Cobro fijo de movilización fuera del radio urbano.
+  /// Dato guardado por el profesional. El cobro no lo usa: el traslado es por km.
   final int outsideMobilizationFeeClp;
   /// Bloques semanales que el profesional publica para reservar.
   final List<WorkerHourSlot> availableHours;
@@ -50,6 +54,7 @@ class WorkerModel {
     this.workZone,
     this.baseLatitude,
     this.baseLongitude,
+    this.catalogBaseIsApproximate = false,
     this.serviceRadiusKm = 7,
     this.baseOrigin,
     this.rejectionCount = 0,
@@ -84,7 +89,7 @@ class WorkerModel {
       if (row is! Map) continue;
       final code = row['codigo'];
       final amount = row['monto_clp'];
-      if (code is String && amount is num) tiers[code] = amount.toInt();
+      if (code is String && amount is num) tiers[code] = roundClp(amount);
     }
     return tiers;
   }
@@ -102,7 +107,7 @@ class WorkerModel {
             id: row['id'] as String,
             title: row['titulo'] as String,
             subtitle: row['subtitulo'] as String? ?? '',
-            priceClp: (row['monto_clp'] as num).toInt(),
+            priceClp: roundClp(row['monto_clp'] as num),
             unit: row['unidad'] == 'por_m2'
                 ? WorkerPriceUnit.perSqm
                 : WorkerPriceUnit.fixed,
@@ -165,7 +170,7 @@ class WorkerModel {
       isElite: map['es_elite'] == true,
       urbanRadiusKm: (map['radio_urbano_km'] as num?)?.toDouble() ?? 5,
       outsideMobilizationFeeClp:
-          (map['tarifa_fuera_radio_clp'] as num?)?.toInt() ?? 0,
+          roundClp((map['tarifa_fuera_radio_clp'] as num?) ?? 0),
       availableHours: parseWorkerHours(map['horas_publicadas']),
     );
   }
@@ -178,7 +183,7 @@ class WorkerModel {
       ...map,
       'disponible': map['disponible'] ?? 1,
       'precios_configurados': map['precios_configurados'] ?? 1,
-    });
+    }).copyWith(catalogBaseIsApproximate: true);
   }
 
   WorkerModel copyWith({
@@ -195,6 +200,7 @@ class WorkerModel {
     String? workZone,
     double? baseLatitude,
     double? baseLongitude,
+    bool? catalogBaseIsApproximate,
     double? serviceRadiusKm,
     String? baseOrigin,
     int? rejectionCount,
@@ -220,6 +226,8 @@ class WorkerModel {
       workZone: workZone ?? this.workZone,
       baseLatitude: baseLatitude ?? this.baseLatitude,
       baseLongitude: baseLongitude ?? this.baseLongitude,
+      catalogBaseIsApproximate:
+          catalogBaseIsApproximate ?? this.catalogBaseIsApproximate,
       serviceRadiusKm: serviceRadiusKm ?? this.serviceRadiusKm,
       baseOrigin: baseOrigin ?? this.baseOrigin,
       rejectionCount: rejectionCount ?? this.rejectionCount,

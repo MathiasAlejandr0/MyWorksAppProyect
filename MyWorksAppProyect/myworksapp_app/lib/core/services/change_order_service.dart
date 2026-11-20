@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../database/models/change_order_model.dart';
 import '../database/repositories/change_order_repository.dart';
 import '../database/repositories/job_repository.dart';
+import '../domain/clp_rounding.dart';
 import '../domain/pricing_constants.dart';
 import '../domain/price_quote.dart';
 import '../utils/app_error.dart';
@@ -62,7 +63,7 @@ class ChangeOrderService {
 
   /// Cotización del cobro extra (monto + fee plataforma 8%).
   PriceQuote buildQuote(ChangeOrderModel order) {
-    final fee = (order.montoClp * 0.08).round();
+    final fee = changeOrderFeeClp(order.montoClp);
     return PriceQuote(
       pricingMode: PricingConstants.modeFixedPrice,
       subtotalClp: order.montoClp,

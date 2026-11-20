@@ -33,13 +33,15 @@ void main() {
           read: true,
         ),
       ],
-      jobTitles: {'job-a': 'Fuga en la cocina'},
+      jobLabels: {
+        'job-a': const JobNoticeLabel(title: 'Fuga en la cocina'),
+      },
     );
 
     expect(folders.first.title, 'Fuga en la cocina');
     expect(folders.first.unreadCount, 1);
     expect(folders.first.items.map((item) => item.id), ['2', '1']);
-    expect(folders[1].title, 'Generales');
+    expect(folders[1].title, 'Avisos generales');
     expect(folders[1].key, generalNoticesKey);
   });
 
@@ -50,5 +52,36 @@ void main() {
       ],
     );
     expect(folders.single.title, 'Pedido');
+  });
+
+  test('la carpeta se llama como el servicio y guarda el detalle del pedido', () {
+    final label = labelForJob(
+      serviceName: 'Gasfitería',
+      description: 'Fuga en la cocina',
+      address: 'Calle Uno 123',
+    );
+    expect(label.title, 'Gasfitería');
+    expect(label.detail, 'Fuga en la cocina');
+    expect(serviceNameFromEmbed({
+      'nombre': ' Gasfitería ',
+    }), 'Gasfitería');
+  });
+
+  test('dos pedidos del mismo servicio quedan en carpetas distintas', () {
+    final folders = groupNotificationsByJob(
+      [
+        _notice(id: '1', at: DateTime.utc(2026, 11, 19, 10), relatedId: 'job-a'),
+        _notice(id: '2', at: DateTime.utc(2026, 11, 19, 12), relatedId: 'job-b'),
+      ],
+      jobLabels: {
+        'job-a': labelForJob(serviceName: 'Gasfitería', description: 'Fuga'),
+        'job-b': labelForJob(serviceName: 'Gasfitería', description: 'Termo'),
+      },
+    );
+
+    expect(folders.map((folder) => folder.key), ['job-b', 'job-a']);
+    expect(folders.map((folder) => folder.title), ['Gasfitería', 'Gasfitería']);
+    expect(folders.first.detail, 'Termo');
+    expect(folders[1].detail, 'Fuga');
   });
 }

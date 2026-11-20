@@ -9,7 +9,7 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import { pluralize } from '@myworksapp/shared';
+import { formatServiceRadiusKm, pluralize, roundClp } from '@myworksapp/shared';
 import { StarScore } from './StarScore';
 import { supabase } from '../supabaseClient';
 import { BrandLogo } from './BrandLogo';
@@ -65,13 +65,12 @@ interface SearchResultsViewProps {
 }
 
 function clp(amount: number): string {
-  const value = Number.isFinite(amount) ? Math.round(amount) : 0;
-  return value.toLocaleString('es-CL');
+  return roundClp(amount).toLocaleString('es-CL');
 }
 
 function coverageLine(worker: SearchWorker): string {
-  const km = Math.round(worker.serviceRadiusKm ?? 7);
-  return `Hasta ${km} km sin extra de traslado. Más lejos, recargo por km.`;
+  const km = formatServiceRadiusKm(worker.serviceRadiusKm);
+  return `Hasta ${km} km sin extra de traslado. El monto se confirma al pagar.`;
 }
 
 export function SearchResultsView({

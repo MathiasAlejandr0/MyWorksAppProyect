@@ -26,9 +26,6 @@ class _WorkerUrbanCoverageCardState extends State<WorkerUrbanCoverageCard> {
   late final TextEditingController _km = TextEditingController(
     text: widget.urbanRadiusKm.toStringAsFixed(0),
   );
-  late final TextEditingController _fee = TextEditingController(
-    text: widget.outsideFeeClp.toString(),
-  );
   bool _saving = false;
   String? _error;
 
@@ -37,26 +34,19 @@ class _WorkerUrbanCoverageCardState extends State<WorkerUrbanCoverageCard> {
     super.didUpdateWidget(oldWidget);
     if (!widget.enabled && oldWidget.enabled) {
       _km.text = widget.urbanRadiusKm.toStringAsFixed(0);
-      _fee.text = widget.outsideFeeClp.toString();
     }
   }
 
   @override
   void dispose() {
     _km.dispose();
-    _fee.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     final km = double.tryParse(_km.text.replaceAll(',', '.'));
-    final fee = int.tryParse(_fee.text.replaceAll('.', '').trim());
     if (km == null || km < 1 || km > 40) {
       setState(() => _error = 'El radio urbano va de 1 a 40 km.');
-      return;
-    }
-    if (fee == null || fee < 0 || fee > 200000) {
-      setState(() => _error = 'La movilización fuera del radio va de 0 a 200.000.');
       return;
     }
     setState(() {
@@ -64,7 +54,7 @@ class _WorkerUrbanCoverageCardState extends State<WorkerUrbanCoverageCard> {
       _error = null;
     });
     try {
-      await widget.onSave(km, fee);
+      await widget.onSave(km, widget.outsideFeeClp);
     } catch (_) {
       if (mounted) {
         setState(() => _error = 'No se pudo guardar el radio urbano.');
@@ -90,8 +80,9 @@ class _WorkerUrbanCoverageCardState extends State<WorkerUrbanCoverageCard> {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Dato de zona. El extra de traslado que paga el cliente sale del '
-              'radar de Ubicación base: cerca no cobra extra; más lejos, recargo por km.',
+              'Dato de zona. No se suma al pago. El traslado que paga el cliente '
+              'sale del radar de Ubicación base: dentro del radio no hay extra; '
+              'más lejos son \$1.200 por km, con un mínimo de \$3.000 y un máximo de \$18.000.',
             ),
             const SizedBox(height: 12),
             TextField(
@@ -102,18 +93,6 @@ class _WorkerUrbanCoverageCardState extends State<WorkerUrbanCoverageCard> {
               decoration: const InputDecoration(
                 labelText: 'Radio urbano (km)',
                 prefixIcon: Icon(Icons.radar),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _fee,
-              enabled: widget.enabled && !_saving,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'Movilización fuera del radio (CLP)',
-                prefixIcon: Icon(Icons.payments_outlined),
-                helperText: '0 si tampoco cobras fuera de la zona',
               ),
             ),
             if (_error != null) ...[

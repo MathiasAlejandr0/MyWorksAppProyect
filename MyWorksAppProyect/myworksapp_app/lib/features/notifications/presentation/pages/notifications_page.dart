@@ -9,6 +9,7 @@ import '../../domain/notification_groups.dart';
 import '../../../../core/database/models/notification_model.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/loading_skeleton.dart';
+import '../../../../core/design_system/app_radius.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/design_system/layout_utils.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -27,7 +28,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   final NotificationRepository _notificationRepository =
       NotificationRepository();
   List<NotificationModel> _notifications = [];
-  Map<String, String> _jobTitles = {};
+  Map<String, JobNoticeLabel> _jobLabels = {};
   bool _isLoading = true;
   String? _error;
 
@@ -57,11 +58,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       }
       final notifications =
           await _notificationRepository.getNotificationsByUserId(user.id);
-      final titles = await _loadJobTitles(notifications);
+      final labels = await _loadJobLabels(notifications);
       if (!mounted) return;
       setState(() {
         _notifications = notifications;
-        _jobTitles = titles;
+        _jobLabels = labels;
         _isLoading = false;
       });
     } catch (e) {
@@ -73,7 +74,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     }
   }
 
-  Future<Map<String, String>> _loadJobTitles(
+  Future<Map<String, JobNoticeLabel>> _loadJobLabels(
     List<NotificationModel> notifications,
   ) async {
     final ids = notifications
@@ -86,23 +87,48 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     try {
       final rows = await supabase
           .from('trabajos')
-          .select('id, descripcion, direccion')
+          .select('id, descripcion, direccion, servicios(nombre)')
           .inFilter('id', ids);
-      final titles = <String, String>{};
-      for (final row in rows) {
-        final id = row['id']?.toString() ?? '';
-        if (id.isEmpty) continue;
-        final description = (row['descripcion'] as String?)?.trim() ?? '';
-        final address = (row['direccion'] as String?)?.trim() ?? '';
-        final title = description.isNotEmpty
-            ? description
-            : (address.isNotEmpty ? address : 'Pedido');
-        titles[id] = title;
-      }
-      return titles;
+      return _labelsFromRows(rows);
     } catch (_) {
-      return {};
+      try {
+        final rows = await supabase
+            .from('trabajos')
+            .select('id, descripcion, direccion')
+            .inFilter('id', ids);
+        return _labelsFromRows(rows);
+      } catch (_) {
+        return {};
+      }
     }
+  }
+
+  Map<String, JobNoticeLabel> _labelsFromRows(Object? rows) {
+    final labels = <String, JobNoticeLabel>{};
+    if (rows is! Iterable) return labels;
+    for (final row in rows) {
+      if (row is! Map) continue;
+      final id = row['id']?.toString() ?? '';
+      if (id.isEmpty) continue;
+      labels[id] = labelForJob(
+        serviceName: serviceNameFromEmbed(row['servicios']),
+        description: row['descripcion']?.toString(),
+        address: row['direccion']?.toString(),
+      );
+    }
+    return labels;
+  }
+
+  Future<void> _openFolder(NotificationFolder folder) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => _NotificationFolderPage(
+          folder: folder,
+          onOpenNotice: _handleNotificationTap,
+        ),
+      ),
+    );
+    if (mounted) await _loadNotifications();
   }
 
   Future<void> _markAsRead(String id) async {
@@ -119,26 +145,33 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     }
   }
 
-  void _handleNotificationTap(NotificationModel notification) {
+  void _handleNotificationTap(
+    NotificationModel notification, [
+    BuildContext? from,
+  ]) {
     _markAsRead(notification.id);
 
     if (notification.relatedId == null) return;
+    final nav = from ?? context;
+    if (!nav.mounted) return;
 
-    switch (notification.type) {
-      case 'job_accepted':
-      case 'job_rejected':
-      case 'job_completed':
-      case 'job_cancelled':
-      case 'job_rescheduled':
-      case 'pago_reembolsado':
-      case 'new_job':
-        context
-            .push('${AppConstants.routeJobDetail}/${notification.relatedId}');
-        break;
-      case 'new_message':
-        context.push('${AppConstants.routeChat}/${notification.relatedId}');
-        break;
+    if (notification.type == 'new_message') {
+      nav.push('${AppConstants.routeChat}/${notification.relatedId}');
+      return;
     }
+    if (_opensJob(notification.type)) {
+      nav.push('${AppConstants.routeJobDetail}/${notification.relatedId}');
+    }
+  }
+
+  bool _opensJob(String type) {
+    return type == 'new_job' ||
+        type == 'new_job_quote' ||
+        type == 'pago_reembolsado' ||
+        type == 'quote_received' ||
+        type == 'dispute_opened' ||
+        type == 'worker_unavailable' ||
+        type.startsWith('job_');
   }
 
   @override
@@ -180,11 +213,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
                         children: [
                           for (final folder in groupNotificationsByJob(
                             _notifications,
-                            jobTitles: _jobTitles,
+                            jobLabels: _jobLabels,
                           ))
                             _NoticeFolder(
                               folder: folder,
-                              onTap: _handleNotificationTap,
+                              onOpen: () => _openFolder(folder),
                             ),
                         ],
                       ),
@@ -194,34 +227,162 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 }
 
 class _NoticeFolder extends StatelessWidget {
-  const _NoticeFolder({required this.folder, required this.onTap});
+  const _NoticeFolder({required this.folder, required this.onOpen});
 
   final NotificationFolder folder;
-  final void Function(NotificationModel notification) onTap;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final titleColor = AppColors.onCanvas(brightness);
+    final muted = AppColors.onCanvasMuted(brightness);
+    final latest = folder.items.first;
     final unread = folder.unreadCount;
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: ExpansionTile(
-        initiallyExpanded: unread > 0,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.brandOrange.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: const Icon(
+                  Icons.folder_rounded,
+                  color: AppColors.brandOrange,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      folder.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: titleColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (folder.detail != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        folder.detail!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: muted, fontSize: 13),
+                      ),
+                    ],
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_avisosLabel(folder.items.length)} · ${latest.title} · ${formatNoticeAge(folder.latestAt)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: muted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              if (unread > 0) ...[
+                const SizedBox(width: 8),
+                Container(
+                  constraints: const BoxConstraints(minWidth: 22),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.brandOrange,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    unread > 99 ? '99+' : '$unread',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+              Icon(Icons.chevron_right, color: muted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationFolderPage extends StatefulWidget {
+  const _NotificationFolderPage({
+    required this.folder,
+    required this.onOpenNotice,
+  });
+
+  final NotificationFolder folder;
+  final void Function(NotificationModel notification, BuildContext from) onOpenNotice;
+
+  @override
+  State<_NotificationFolderPage> createState() => _NotificationFolderPageState();
+}
+
+class _NotificationFolderPageState extends State<_NotificationFolderPage> {
+  final Set<String> _openedIds = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final folder = widget.folder;
+    final brightness = Theme.of(context).brightness;
+    final muted = AppColors.onCanvasMuted(brightness);
+    final isJob = folder.key != generalNoticesKey;
+
+    return Scaffold(
+      appBar: AppGradientAppBar(
         title: Text(
           folder.title,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
-        subtitle: Text(
-          unread == 0
-              ? '${folder.items.length} avisos'
-              : '$unread sin leer · ${folder.items.length} avisos',
-        ),
+        actions: [
+          if (isJob)
+            TextButton(
+              onPressed: () => context.push(
+                '${AppConstants.routeJobDetail}/${folder.key}',
+              ),
+              child: const Text('Ver trabajo'),
+            ),
+        ],
+      ),
+      body: ListView(
+        padding: LayoutUtils.scrollPadding(context, top: 8),
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+            child: Text(
+              folder.detail == null
+                  ? _avisosLabel(folder.items.length)
+                  : '${folder.detail} · ${_avisosLabel(folder.items.length)}',
+              style: TextStyle(color: muted, fontSize: 13),
+            ),
+          ),
           for (final notification in folder.items)
             _NotificationItem(
               notification: notification,
-              onTap: () => onTap(notification),
+              isRead: notification.isRead || _openedIds.contains(notification.id),
+              onTap: () {
+                setState(() => _openedIds.add(notification.id));
+                widget.onOpenNotice(notification, context);
+              },
             ),
         ],
       ),
@@ -232,11 +393,15 @@ class _NoticeFolder extends StatelessWidget {
 class _NotificationItem extends StatelessWidget {
   final NotificationModel notification;
   final VoidCallback onTap;
+  final bool? isRead;
 
   const _NotificationItem({
     required this.notification,
     required this.onTap,
+    this.isRead,
   });
+
+  bool get _read => isRead ?? notification.isRead;
 
   IconData _getIcon() {
     switch (notification.type) {
@@ -280,7 +445,7 @@ class _NotificationItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: notification.isRead
+      color: _read
           ? null
           : Theme.of(context)
               .colorScheme
@@ -297,8 +462,7 @@ class _NotificationItem extends StatelessWidget {
         title: Text(
           notification.title,
           style: TextStyle(
-            fontWeight:
-                notification.isRead ? FontWeight.normal : FontWeight.bold,
+            fontWeight: _read ? FontWeight.normal : FontWeight.bold,
           ),
         ),
         subtitle: Column(
@@ -307,12 +471,12 @@ class _NotificationItem extends StatelessWidget {
             Text(notification.body),
             const SizedBox(height: 4),
             Text(
-              _formatDate(notification.createdAt),
+              formatNoticeAge(notification.createdAt),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),
-        trailing: notification.isRead
+        trailing: _read
             ? null
             : Container(
                 width: 8,
@@ -326,21 +490,18 @@ class _NotificationItem extends StatelessWidget {
       ),
     );
   }
+}
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
+String _avisosLabel(int count) => count == 1 ? '1 aviso' : '$count avisos';
 
-    if (difference.inMinutes < 1) {
-      return 'Ahora';
-    } else if (difference.inMinutes < 60) {
-      return 'Hace ${difference.inMinutes} min';
-    } else if (difference.inHours < 24) {
-      return 'Hace ${difference.inHours} h';
-    } else if (difference.inDays < 7) {
-      return 'Hace ${difference.inDays} días';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+String formatNoticeAge(DateTime date, {DateTime? now}) {
+  final difference = (now ?? DateTime.now()).difference(date);
+  if (difference.inMinutes < 1) return 'Ahora';
+  if (difference.inMinutes < 60) return 'Hace ${difference.inMinutes} min';
+  if (difference.inHours < 24) return 'Hace ${difference.inHours} h';
+  if (difference.inDays < 7) {
+    final days = difference.inDays;
+    return days == 1 ? 'Hace 1 día' : 'Hace $days días';
   }
+  return '${date.day}/${date.month}/${date.year}';
 }

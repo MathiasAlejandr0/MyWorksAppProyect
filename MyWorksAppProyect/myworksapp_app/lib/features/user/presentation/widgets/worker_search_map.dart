@@ -503,7 +503,7 @@ class _WorkerSearchMapState extends State<WorkerSearchMap> {
                         worker: selected,
                         user: widget.users[selected.userId],
                         coverage: coverage?.text ??
-                            'Hasta ${radiusKm.round()} km sin extra de traslado',
+                            'Hasta ${formatServiceRadiusKm(radiusKm)} km sin extra de traslado',
                         onOpen: widget.onOpenWorker == null
                             ? null
                             : () => widget.onOpenWorker!(selected),
@@ -807,7 +807,7 @@ class _SelectedWorkerCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${worker.profession} · ${resolveServiceRadiusKm(worker.serviceRadiusKm).round()} km sin extra',
+                      '${worker.profession} · ${formatServiceRadiusKm(worker.serviceRadiusKm)} km sin extra',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

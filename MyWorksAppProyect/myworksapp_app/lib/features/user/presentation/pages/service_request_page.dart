@@ -18,6 +18,7 @@ import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/service_model.dart';
 import '../../../../core/domain/price_quote.dart';
 import '../../../../core/domain/pricing_constants.dart';
+import '../../../../core/domain/clp_rounding.dart';
 import '../../../../core/domain/transport_surcharge.dart';
 import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/providers/service_providers.dart';
@@ -200,6 +201,8 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       jobLat: _selectedLatitude,
       jobLng: _selectedLongitude,
       radiusKm: _selectedWorker?.serviceRadiusKm,
+      catalogBaseIsApproximate:
+          _selectedWorker?.catalogBaseIsApproximate ?? false,
     );
   }
 
@@ -516,6 +519,10 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
           serviceId: _selectedServiceId!,
           address: _selectedAddress,
           skuCode: sku,
+          visitFeeClp: _selectedWorker == null
+              ? null
+              : roundClp(_selectedWorker!.visitFee),
+          transportExtraClp: _traslado.extraClp,
           description: description,
           scheduledDate: scheduledDate,
           comunaKey: comuna,
@@ -530,7 +537,7 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
 
       if (_pricingMode == PricingConstants.modeHourlyBlock) {
         final rate = PricingService.instance
-            .estimateHourlyRateFromVisitFee(_selectedWorker!.visitFee.round());
+            .estimateHourlyRateFromVisitFee(roundClp(_selectedWorker!.visitFee));
         final bookingService = ref.read(jobBookingServiceProvider);
         final booking = await bookingService.createHourlyBlockBooking(
           userId: user.id,

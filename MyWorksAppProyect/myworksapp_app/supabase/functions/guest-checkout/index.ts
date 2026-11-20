@@ -15,6 +15,7 @@ import { tbkConfig, tbkCreateTransaction } from "../_shared/tbk.ts";
 import { turnstileDecision } from "../_shared/turnstile_gate.ts";
 import {
   asCoord,
+  roundClp,
   transportQuote,
   withinTravelRange,
 } from "../_shared/transport.ts";
@@ -43,6 +44,82 @@ function clean(s: unknown, max = 200): string {
 
 function isEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+type VisitCharge = {
+  tarifaClp: number;
+  trasladoClp: number;
+  totalClp: number;
+  tooFar: boolean;
+};
+
+function rowOf(data: unknown): Record<string, unknown> | null {
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || typeof row !== "object") return null;
+  return row as Record<string, unknown>;
+}
+
+function localVisitCharge(
+  worker: {
+    tarifa_visita: unknown;
+    latitud_base: unknown;
+    longitud_base: unknown;
+    radio_servicio_km: unknown;
+  },
+  jobLat: number,
+  jobLng: number,
+): VisitCharge {
+  const tarifaClp = roundClp(Number(worker.tarifa_visita));
+  const quote = transportQuote({
+    workerLat: asCoord(worker.latitud_base),
+    workerLng: asCoord(worker.longitud_base),
+    jobLat,
+    jobLng,
+    radiusKm: asCoord(worker.radio_servicio_km),
+  });
+  if (!withinTravelRange(quote.distanceKm)) {
+    return { tarifaClp, trasladoClp: 0, totalClp: tarifaClp, tooFar: true };
+  }
+  return {
+    tarifaClp,
+    trasladoClp: quote.extraClp,
+    totalClp: tarifaClp + quote.extraClp,
+    tooFar: false,
+  };
+}
+
+async function quoteVisitCharge(
+  admin: ReturnType<typeof serviceClient>,
+  workerId: string,
+  worker: {
+    tarifa_visita: unknown;
+    latitud_base: unknown;
+    longitud_base: unknown;
+    radio_servicio_km: unknown;
+  },
+  jobLat: number,
+  jobLng: number,
+): Promise<VisitCharge> {
+  const { data, error } = await admin.rpc("cotizar_visita_publica", {
+    p_trabajador: workerId,
+    p_lat: jobLat,
+    p_lng: jobLng,
+  });
+  const missing = error != null &&
+    /cotizar_visita_publica|42883|schema cache/i.test(error.message ?? "");
+  const row = error ? null : rowOf(data);
+  if (row && Number.isFinite(Number(row.total_clp))) {
+    return {
+      tarifaClp: Number(row.tarifa_clp),
+      trasladoClp: Number(row.traslado_clp),
+      totalClp: Number(row.total_clp),
+      tooFar: row.fuera_de_alcance === true,
+    };
+  }
+  if (!missing && error) {
+    throw new Error("No pudimos calcular el total");
+  }
+  return localVisitCharge(worker, jobLat, jobLng);
 }
 
 function scheduledOrNull(value: unknown): string | null {
@@ -96,26 +173,24 @@ async function previewGuestTotal(req: Request, body: GuestBody): Promise<Respons
   if (!Number.isFinite(visitFee) || visitFee <= 0) {
     return jsonResponse(req, { error: "El profesional no tiene tarifa de visita" }, 400);
   }
-  const quote = transportQuote({
-    workerLat: asCoord(worker.latitud_base),
-    workerLng: asCoord(worker.longitud_base),
-    jobLat,
-    jobLng,
-    radiusKm: asCoord(worker.radio_servicio_km),
-  });
-  if (!withinTravelRange(quote.distanceKm)) {
+  let charge: VisitCharge;
+  try {
+    charge = await quoteVisitCharge(admin, workerId, worker, jobLat, jobLng);
+  } catch (err) {
+    return jsonResponse(req, { error: err instanceof Error ? err.message : "No pudimos calcular el total" }, 400);
+  }
+  if (charge.tooFar) {
     return jsonResponse(
       req,
       { error: "Este profesional queda a más de 30 km del trabajo" },
       400,
     );
   }
-  const totalClp = visitFee + quote.extraClp;
   return jsonResponse(req, {
     preview: true,
-    totalClp,
-    tarifaClp: visitFee,
-    trasladoClp: quote.extraClp,
+    totalClp: charge.totalClp,
+    tarifaClp: charge.tarifaClp,
+    trasladoClp: charge.trasladoClp,
   });
 }
 
@@ -283,23 +358,26 @@ Deno.serve(async (req) => {
         400,
       );
     }
-    const quote = transportQuote({
-      workerLat: asCoord(worker.latitud_base),
-      workerLng: asCoord(worker.longitud_base),
-      jobLat,
-      jobLng,
-      radiusKm: asCoord(worker.radio_servicio_km),
-    });
-    if (!withinTravelRange(quote.distanceKm)) {
+    let charge: VisitCharge;
+    try {
+      charge = await quoteVisitCharge(admin, workerId, worker, jobLat, jobLng);
+    } catch (err) {
+      return jsonResponse(
+        req,
+        { error: err instanceof Error ? err.message : "No pudimos calcular el total" },
+        400,
+      );
+    }
+    if (charge.tooFar) {
       return jsonResponse(
         req,
         { error: "Este profesional queda a más de 30 km del trabajo" },
         400,
       );
     }
-    const extra = quote.extraClp;
-    const expected = visitFee + extra;
-    if (Math.abs(amountClp - expected) > 1) {
+    const extra = charge.trasladoClp;
+    const expected = charge.totalClp;
+    if (amountClp !== expected) {
       return jsonResponse(
         req,
         { error: `Monto ${amountClp} no coincide con tarifa ${expected}` },
