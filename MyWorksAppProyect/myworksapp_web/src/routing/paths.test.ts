@@ -11,6 +11,9 @@ describe('rutas de la web', () => {
     assert.equal(viewFromPath('/profesional/abc'), 'profile');
     assert.equal(viewFromPath('/pedido/job-1'), 'tracking');
     assert.equal(viewFromPath('/pago/retorno'), 'paid');
+    assert.equal(viewFromPath('/aviso-legal'), 'aviso');
+    assert.equal(viewFromPath('/terminos'), 'terminos');
+    assert.equal(viewFromPath('/privacidad'), 'privacidad');
     assert.equal(viewFromPath('/xyz'), 'notfound');
   });
 
@@ -26,5 +29,6 @@ describe('rutas de la web', () => {
     assert.equal(categoryFromPath('/servicios/gasfiteria'), 'gasfiteria');
     assert.equal(pathForView('search', { category: 'plomeria' }), '/servicios/plomeria');
     assert.equal(pathForView('tracking', { jobId: 'p-1' }), '/pedido/p-1');
+    assert.equal(pathForView('aviso'), '/aviso-legal');
   });
 });

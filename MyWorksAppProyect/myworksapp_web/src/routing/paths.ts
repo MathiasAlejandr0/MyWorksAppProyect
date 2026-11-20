@@ -7,6 +7,7 @@ export type AppView =
   | 'profile'
   | 'account'
   | 'trabaja'
+  | 'aviso'
   | 'terminos'
   | 'privacidad'
   | 'notfound';
@@ -26,6 +27,7 @@ export function viewFromPath(pathname: string): AppView {
   if (path === '/pago/retorno') return 'paid';
   if (path === '/cuenta') return 'account';
   if (path === '/trabaja') return 'trabaja';
+  if (path === '/aviso-legal') return 'aviso';
   if (path === '/terminos') return 'terminos';
   if (path === '/privacidad') return 'privacidad';
   return 'notfound';
@@ -56,6 +58,7 @@ export function pathForView(
   if (view === 'paid') return '/pago/retorno';
   if (view === 'account') return '/cuenta';
   if (view === 'trabaja') return '/trabaja';
+  if (view === 'aviso') return '/aviso-legal';
   if (view === 'terminos') return '/terminos';
   if (view === 'privacidad') return '/privacidad';
   return '/no-existe';

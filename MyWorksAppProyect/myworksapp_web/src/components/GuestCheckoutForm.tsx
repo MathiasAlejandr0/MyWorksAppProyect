@@ -4,6 +4,7 @@ import { reservedEmailMessage } from '@myworksapp/shared';
 import { TurnstileWidget } from './TurnstileWidget';
 import { turnstileCanRender } from './turnstileSite';
 import { useDialogA11y } from '../hooks/useDialogA11y';
+import { AcademicInlineNote } from './AcademicInlineNote';
 import { chileE164 } from '../chilePhone';
 
 export type GuestCheckoutPayload = {
@@ -214,6 +215,7 @@ export function GuestCheckoutForm({
             </p>
           ) : null}
 
+          <AcademicInlineNote />
           <button
             type="submit"
             className="btn-primary checkout-v2-pay"
