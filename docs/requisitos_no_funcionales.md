@@ -7,7 +7,7 @@
 - Estado, profesional asignado y estado de pago del trabajo solo cambian por procedimientos del servidor.
 - La base exacta del profesional no sale en el catálogo: se redondea a 2 decimales. El dueño la lee por `mi_ficha_propia`.
 - No hay `service_role` ni llaves privadas en `lib/`. La app usa la clave anónima pública.
-- El chat y el alta del pago principal rechazan teléfono, correo, enlaces y redes (WhatsApp, Instagram, Facebook, TikTok, Telegram, Snapchat, Twitter).
+- El chat, la descripción del pedido y el alta del pago principal rechazan teléfono chileno (móvil y fijo), correo, enlaces y un usuario o enlace de red social. Un RUT, una medida, un monto o la sola mención de una red no cuentan como contacto.
 
 ## Dinero
 

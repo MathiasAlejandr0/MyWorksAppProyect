@@ -20,22 +20,27 @@ class ErrorHandler {
       return error;
     }
 
-    // Si es String, crear AppError genérico
-    if (error is String) {
-      return AppError(message: error);
-    }
-
     // En Postgres el hint a veces dice "connection" aunque el fallo sea de
     // permisos. Solo el mensaje (o el texto de una excepción de red) decide.
     final errorString = error is PostgrestException
         ? error.message.toLowerCase()
-        : error.toString().toLowerCase();
+        : error is String
+            ? error.toLowerCase()
+            : error.toString().toLowerCase();
 
     if (errorString.contains('mensaje bloqueado') ||
         errorString.contains('no se permite compartir') ||
         errorString.contains('este tipo de mensaje no está permitido') ||
         errorString.contains('este tipo de contenido no esta permitido')) {
       return AppError.validation(ContentFilter.blockedMessage);
+    }
+    if (errorString.contains('ya hay un cobro en curso') ||
+        errorString.contains('ya tiene un pago en garantia') ||
+        errorString.contains('ya tiene un pago en garantía') ||
+        errorString.contains('pagos_un_principal_activo')) {
+      return AppError.validation(
+        'Este trabajo ya tiene un cobro en curso. Espera un momento antes de pagar otra vez.',
+      );
     }
     if (errorString.contains('ya esta reservado') ||
         errorString.contains('ya está reservado') ||
@@ -55,14 +60,6 @@ class ErrorHandler {
     if (errorString.contains('demasiados pedidos esperando pago')) {
       return AppError.validation(
         'Tienes pedidos sin pagar en curso. Completa o espera a que venza uno para reservar otra hora.',
-      );
-    }
-    if (errorString.contains('ya hay un cobro en curso') ||
-        errorString.contains('ya tiene un pago en garantia') ||
-        errorString.contains('ya tiene un pago en garantía') ||
-        errorString.contains('pagos_un_principal_activo')) {
-      return AppError.validation(
-        'Este trabajo ya tiene un cobro en curso. Espera un momento antes de pagar otra vez.',
       );
     }
     if (errorString.contains('sube al menos una evidencia') ||
@@ -117,6 +114,10 @@ class ErrorHandler {
         errorString.contains('supabase')) {
       return AppError.database(
           'Error al guardar datos. Intenta nuevamente', error);
+    }
+
+    if (error is String && _looksLikeUserText(error)) {
+      return AppError.validation(error.trim());
     }
 
     // Error genérico

@@ -4,6 +4,7 @@ import '../database/repositories/job_repository.dart';
 import '../database/models/dispute_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
+import '../utils/error_handler.dart';
 import 'dispute_rules.dart';
 import 'payment_service.dart';
 
@@ -120,7 +121,7 @@ class DisputeService {
     } catch (e) {
       if (e is AppError) rethrow;
       AppLogger.e('Error resolviendo disputa', e);
-      throw AppError.database('Error al resolver disputa: ${e.toString()}');
+      throw AppError.validation(ErrorHandler.userMessageFor(e));
     }
   }
 

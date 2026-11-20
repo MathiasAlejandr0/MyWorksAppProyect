@@ -11,7 +11,7 @@
 5. Pago en garantía con Webpay Plus u Oneclick, sin un segundo cobro principal activo para el mismo trabajo.
 6. PIN de inicio, evidencia fotográfica y conformidad del cliente para liberar el pago.
 7. Disputa con motivos fijos y acuerdos, con el pago retenido mientras el caso sigue abierto.
-8. Chat que rechaza teléfono, correo, enlaces y redes sociales, también antes de crear el pago.
+8. Chat y descripción del pedido que rechazan teléfono, correo, enlaces y un usuario de red social, también al crear el pago.
 9. Módulo tributario local (RUT, giro y tipo de documento SII) en el perfil del profesional.
 10. Consola de escritorio para verificación y mediación.
 
