@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/utils/job_status_copy.dart';
 import '../../../../core/utils/santiago_time.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/providers/repository_providers.dart';
@@ -12,6 +12,7 @@ import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../widgets/job_history_cards.dart';
 
 class JobHistoryPage extends ConsumerStatefulWidget {
   const JobHistoryPage({super.key});
@@ -128,47 +129,106 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
       );
     }
 
+    final entries = _entries();
     final showFooter = _hasMore || _error != null;
     return RefreshIndicator(
       onRefresh: _reload,
       child: ListView.builder(
         controller: _scroll,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        itemCount: _jobs.length + (showFooter ? 1 : 0),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        itemCount: entries.length + (showFooter ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index >= _jobs.length) return _buildFooter();
-          final job = _jobs[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              title: Text(
-                job.description ?? 'Sin descripción',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  Text(job.address),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_formatDate(job.createdAt)} - ${_getStatusText(job.status)}',
-                  ),
-                ],
-              ),
-              trailing: Icon(
-                _getStatusIcon(job.status),
-                color: _getStatusColor(job.status),
-              ),
-              onTap: () {
-                context.push('${AppConstants.routeJobDetail}/${job.id}');
-              },
-            ),
+          if (index >= entries.length) return _buildFooter();
+          final entry = entries[index];
+          if (entry.header != null) return _sectionLabel(entry.header!);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _cardFor(entry.job!),
           );
         },
       ),
+    );
+  }
+
+  /// Los trabajos con pago retenido quedan arriba, aunque haya pedidos más nuevos ya cerrados.
+  List<_HistoryEntry> _entries() {
+    final live = <JobModel>[];
+    final past = <JobModel>[];
+    for (final job in _jobs) {
+      if (jobHistoryIsLive(job.status)) {
+        live.add(job);
+      } else {
+        past.add(job);
+      }
+    }
+    final entries = <_HistoryEntry>[];
+    if (live.isNotEmpty) {
+      entries.add(const _HistoryEntry.header('En curso'));
+      for (final job in live) {
+        entries.add(_HistoryEntry.job(job));
+      }
+    }
+    if (past.isNotEmpty) {
+      if (live.isNotEmpty) {
+        entries.add(const _HistoryEntry.header('Anteriores'));
+      }
+      for (final job in past) {
+        entries.add(_HistoryEntry.job(job));
+      }
+    }
+    return entries;
+  }
+
+  Widget _sectionLabel(String title) {
+    final live = title == 'En curso';
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8, top: live ? 0 : 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: live
+              ? AppColors.brandOrange
+              : AppColors.onCanvasMuted(Theme.of(context).brightness),
+          fontWeight: FontWeight.w800,
+          fontSize: 13,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+
+  Widget _cardFor(JobModel job) {
+    final title = (job.description ?? '').trim().isEmpty
+        ? 'Sin descripción'
+        : job.description!.trim();
+    final dateLabel = _formatDate(job.createdAt);
+    void open() => context.push('${AppConstants.routeJobDetail}/${job.id}');
+
+    if (jobHistoryIsLive(job.status)) {
+      return JobHistoryLiveCard(
+        title: title,
+        address: job.address,
+        dateLabel: dateLabel,
+        status: job.status,
+        onTap: open,
+      );
+    }
+    if (job.status == AppConstants.jobStatusCompleted) {
+      return JobHistoryCompletedCard(
+        title: title,
+        address: job.address,
+        dateLabel: dateLabel,
+        paymentStatus: job.paymentStatus,
+        onTap: open,
+      );
+    }
+    return JobHistoryClosedCard(
+      title: title,
+      address: job.address,
+      dateLabel: dateLabel,
+      status: job.status,
+      onTap: open,
     );
   }
 
@@ -195,14 +255,16 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     );
   }
 
-  Color _getStatusColor(String status) => JobStatusCopy.color(status);
-
-  IconData _getStatusIcon(String status) => JobStatusCopy.icon(status);
-
-  String _getStatusText(String status) => JobStatusCopy.label(status);
-
   String _formatDate(DateTime date) {
     final local = SantiagoTime.wall(date);
     return '${local.day}/${local.month}/${local.year}';
   }
+}
+
+class _HistoryEntry {
+  const _HistoryEntry.header(this.header) : job = null;
+  const _HistoryEntry.job(this.job) : header = null;
+
+  final String? header;
+  final JobModel? job;
 }
