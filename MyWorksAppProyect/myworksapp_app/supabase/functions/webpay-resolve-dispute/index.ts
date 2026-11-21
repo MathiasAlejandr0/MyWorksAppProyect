@@ -64,30 +64,34 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: "La disputa no está abierta" }, 409);
     }
 
-    let refundedPaymentId = "";
+    const refundedPaymentIds: string[] = [];
     if (decision === "reembolsar") {
-      const { data: payment, error: payErr } = await admin
+      const { data: payments, error: payErr } = await admin
         .from("pagos")
-        .select("id, monto, token_tbk, estado")
+        .select("id, estado")
         .eq("id_trabajo", dispute.id_trabajo)
-        .eq("tipo_pago", "principal")
-        .order("creado_en", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (payErr || !payment) {
+        .in("tipo_pago", ["principal", "orden_cambio", "horas_extra"])
+        .order("creado_en", { ascending: true });
+      if (payErr) {
+        return jsonResponse(req, { error: "No se pudieron leer los cobros" }, 500);
+      }
+      const rows = payments ?? [];
+      if (rows.length === 0) {
         return jsonResponse(req, { error: "No hay pago para devolver" }, 409);
       }
-      if (payment.estado === "liberado") {
+      if (rows.some((row) => row.estado === "liberado")) {
         return jsonResponse(
           req,
           { error: "El pago ya fue liberado al profesional" },
           409,
         );
       }
-      if (payment.estado !== "reembolsado") {
-        await refundHeldPaymentOnce(admin, payment.id);
+      for (const row of rows) {
+        if (row.estado === "retenido" || row.estado === "autorizado" || row.estado === "pendiente") {
+          await refundHeldPaymentOnce(admin, row.id);
+          refundedPaymentIds.push(String(row.id));
+        }
       }
-      refundedPaymentId = String(payment.id);
     }
 
     const { data: rpcResult, error: rpcErr } = await admin.rpc(
@@ -102,8 +106,8 @@ Deno.serve(async (req) => {
     if (rpcErr) {
       return jsonResponse(req, { error: publicErrorMessage(rpcErr, "No se pudo cerrar la disputa") }, 409);
     }
-    if (decision === "reembolsar" && refundedPaymentId) {
-      scheduleRefundEmail(admin, refundedPaymentId);
+    if (decision === "reembolsar") {
+      for (const paymentId of refundedPaymentIds) scheduleRefundEmail(admin, paymentId);
     }
 
     const meta = requestClientMeta(req);

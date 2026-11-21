@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/app_radius.dart';
 import '../../../../core/design_system/app_spacing.dart';
+import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/job_status_copy.dart';
@@ -17,6 +18,7 @@ class InProgressJobCard extends StatelessWidget {
     required this.address,
     required this.status,
     required this.onOpen,
+    this.pausedByDispute = false,
   });
 
   final String? serviceName;
@@ -24,6 +26,7 @@ class InProgressJobCard extends StatelessWidget {
   final String address;
   final String status;
   final VoidCallback onOpen;
+  final bool pausedByDispute;
 
   @override
   Widget build(BuildContext context) {
@@ -38,12 +41,21 @@ class InProgressJobCard extends StatelessWidget {
     final step = jobProgressStep(status);
     final total = jobTimelineSteps.length;
     final percent = (jobProgressFraction(status) * 100).round();
-    final next = jobProgressNextStatus(status);
-    final statusLabel = JobStatusCopy.label(status);
+    final next = pausedByDispute ? null : jobProgressNextStatus(status);
+    final statusLabel = pausedByDispute
+        ? 'En pausa por una disputa'
+        : JobStatusCopy.label(status);
+    final headline = pausedByDispute
+        ? 'En pausa por una disputa'
+        : status == PricingConstants.jobAwaitingClientApproval
+            ? 'Falta tu conformidad'
+            : status == PricingConstants.jobPausedChangeOrder
+                ? 'Cobro adicional'
+                : 'Trabajo en curso';
 
     return Semantics(
       container: true,
-      label: 'Trabajo en curso, ${label.title}, avance $percent por ciento',
+      label: '$headline, ${label.title}, avance $percent por ciento',
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         decoration: AppDecorations.surfaceCardOf(
@@ -70,10 +82,10 @@ class InProgressJobCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Trabajo en curso',
-                    style: TextStyle(
+                    headline,
+                    style: const TextStyle(
                       color: AppColors.brandOrange,
                       fontWeight: FontWeight.w800,
                       fontSize: 13,

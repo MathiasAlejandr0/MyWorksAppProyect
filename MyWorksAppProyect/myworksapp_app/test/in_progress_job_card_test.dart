@@ -31,4 +31,43 @@ void main() {
     await tester.pump();
     expect(opened, 1);
   });
+
+  testWidgets('con disputa no anuncia el paso siguiente', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: InProgressJobCard(
+            serviceName: 'Gasfitería',
+            description: 'Llave',
+            address: 'Puerto Montt',
+            status: 'en_curso',
+            pausedByDispute: true,
+            onOpen: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('En pausa por una disputa'), findsWidgets);
+    expect(find.textContaining('Siguiente:'), findsNothing);
+  });
+
+  testWidgets('la conformidad sigue visible en el inicio', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: InProgressJobCard(
+            serviceName: 'Gasfitería',
+            description: 'Llave',
+            address: 'Puerto Montt',
+            status: 'esperando_aprobacion_cliente',
+            onOpen: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Falta tu conformidad'), findsOneWidget);
+    expect(find.text('Siguiente: Completado'), findsOneWidget);
+  });
 }

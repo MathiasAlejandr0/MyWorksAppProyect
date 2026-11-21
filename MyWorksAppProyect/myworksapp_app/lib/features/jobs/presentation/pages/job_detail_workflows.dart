@@ -541,7 +541,6 @@ extension JobDetailWorkflows on _JobDetailPageState {
     final currentUser = authState.user;
     final isWorker = currentUser?.role == AppConstants.roleWorker;
     final isOwner = currentUser?.id == _job!.userId || currentUser?.id == _job!.workerId;
-    final isClient = currentUser?.id == _job!.userId;
     final disputeOpen = DisputeService.isOpenStatus(_dispute?.status);
     final hasCoordinates =
         _job!.latitude != null && _job!.longitude != null;
@@ -689,7 +688,11 @@ extension JobDetailWorkflows on _JobDetailPageState {
               onOpenDispute: (reason, description, outcome) =>
                   _openDispute(reason, description, outcome),
               onAddComment: _addDisputeComment,
-              onCancelRequest: isClient
+              onCancelRequest: JobDetailHelpers.clientCanCancelRequest(
+                job: _job!,
+                dispute: _dispute,
+                userId: currentUser?.id,
+              )
                   ? () => JobDetailStatusActions(this)._cancelJob()
                   : null,
               onRespondAgreement: _respondAgreement,

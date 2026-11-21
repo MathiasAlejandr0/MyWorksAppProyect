@@ -56,7 +56,8 @@ class _UserHomePageState extends ConsumerState<UserHomePage>
   late Future<List<ServiceModel>> _servicesFuture;
   bool _hasUnreadNotices = false;
   int _unreadMessages = 0;
-  List<({JobModel job, String? serviceName})> _inProgressJobs = const [];
+  List<({JobModel job, String? serviceName, bool disputeOpen})> _inProgressJobs =
+      const [];
   String? _inProgressRequestedFor;
 
   @override
@@ -126,6 +127,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage>
           description: _inProgressJobs[i].job.description,
           address: _inProgressJobs[i].job.address,
           status: _inProgressJobs[i].job.status,
+          pausedByDispute: _inProgressJobs[i].disputeOpen,
           onOpen: () => _openInProgressJob(_inProgressJobs[i].job.id),
         ),
       ],
@@ -165,7 +167,9 @@ class _UserHomePageState extends ConsumerState<UserHomePage>
     final user = ref.read(authProvider).user;
     if (!mounted || user == null || user.role != AppConstants.roleUser) return;
     try {
-      final enrolled = await ref.read(paymentServiceProvider).hasSavedCard();
+      final enrolled = await ref
+          .read(paymentServiceProvider)
+          .hasSavedCard(recoverAbandoned: true);
       if (!mounted || enrolled) return;
       await CardEnrollmentPage.open(context);
     } catch (_) {
@@ -245,7 +249,10 @@ class _UserHomePageState extends ConsumerState<UserHomePage>
       child: Scaffold(
           backgroundColor: AppDecorations.canvasOf(context),
           bottomNavigationBar: _UserBottomNav(
-            onProjects: () => context.push(AppConstants.routeJobHistory),
+            onProjects: () async {
+              await context.push(AppConstants.routeJobHistory);
+              if (mounted) await _loadInProgressJobs();
+            },
             onNotices: _openNotices,
             hasUnreadNotices: _hasUnreadNotices,
             onMessages: () async {

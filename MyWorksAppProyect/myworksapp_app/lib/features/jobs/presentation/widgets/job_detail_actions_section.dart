@@ -72,7 +72,8 @@ class JobDetailActionsSection extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         if (isOwner) ...[
-          if (!isWorker &&
+          if (!workPausedByDispute &&
+              !isWorker &&
               job.status == AppConstants.jobStatusPending &&
               canTransition[AppConstants.jobStatusCancelled] == true)
             OutlinedButton(
@@ -80,7 +81,8 @@ class JobDetailActionsSection extends StatelessWidget {
               style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
               child: const Text('Cancelar Solicitud'),
             ),
-          if (isWorker &&
+          if (!workPausedByDispute &&
+              isWorker &&
               job.status == AppConstants.jobStatusPending &&
               canTransition[AppConstants.jobStatusAccepted] == true) ...[
             FutureBuilder<Map<String, ClientRatingSummary>>(

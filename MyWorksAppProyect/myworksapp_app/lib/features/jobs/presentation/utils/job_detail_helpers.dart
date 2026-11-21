@@ -97,6 +97,19 @@ class JobDetailHelpers {
   static bool canNegotiateDispute(JobModel job, DisputeModel? dispute) =>
       isDisputeOpen(dispute) && !isJobClosed(job.status);
 
+  /// El cliente cancela desde la disputa solo si él la abrió.
+  /// Sin disputa, la cancelación con devolución queda para la entrega en
+  /// revisión. Un trabajo en marcha se cierra con acuerdo, no con este botón.
+  static bool clientCanCancelRequest({
+    required JobModel job,
+    required DisputeModel? dispute,
+    required String? userId,
+  }) {
+    if (userId == null || userId != job.userId) return false;
+    if (isDisputeOpen(dispute)) return dispute!.openedBy == userId;
+    return job.status == PricingConstants.jobAwaitingClientApproval;
+  }
+
   static String agreementTypeLabel(String? type) {
     switch (type) {
       case 'aceptar':

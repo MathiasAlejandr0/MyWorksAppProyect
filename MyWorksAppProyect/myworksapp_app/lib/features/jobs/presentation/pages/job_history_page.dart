@@ -24,10 +24,13 @@ class JobHistoryPage extends ConsumerStatefulWidget {
 class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
   static const _pageSize = 20;
 
-  final _jobs = <JobModel>[];
+  final _live = <JobModel>[];
+  final _past = <JobModel>[];
   final _scroll = ScrollController();
   bool _loading = false;
   bool _hasMore = true;
+  bool _liveLoaded = false;
+  int _request = 0;
   Object? _error;
 
   @override
@@ -53,25 +56,41 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     if (_loading || !_hasMore) return;
     final user = ref.read(authProvider).user;
     if (user == null) return;
+    final request = _request;
+    final asWorker = user.role == AppConstants.roleWorker;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final page = await ref.read(jobRepositoryProvider).getJobsPage(
-            userId: user.id,
-            asWorker: user.role == AppConstants.roleWorker,
-            offset: _jobs.length,
-            limit: _pageSize,
-          );
-      if (!mounted) return;
+      final repo = ref.read(jobRepositoryProvider);
+      if (!_liveLoaded) {
+        final live = await repo.getHistoryLiveJobs(
+          userId: user.id,
+          asWorker: asWorker,
+        );
+        if (!mounted || request != _request) return;
+        setState(() {
+          _live
+            ..clear()
+            ..addAll(live);
+          _liveLoaded = true;
+        });
+      }
+      final page = await repo.getHistoryPastPage(
+        userId: user.id,
+        asWorker: asWorker,
+        offset: _past.length,
+        limit: _pageSize,
+      );
+      if (!mounted || request != _request) return;
       setState(() {
-        _jobs.addAll(page);
+        _past.addAll(page);
         _hasMore = page.length == _pageSize;
         _loading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || request != _request) return;
       setState(() {
         _error = e;
         _loading = false;
@@ -80,9 +99,14 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
   }
 
   Future<void> _reload() async {
+    _request += 1;
     setState(() {
-      _jobs.clear();
+      _live.clear();
+      _past.clear();
+      _liveLoaded = false;
       _hasMore = true;
+      _loading = false;
+      _error = null;
     });
     await _loadMore();
   }
@@ -108,9 +132,10 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
   }
 
   Widget _buildBody(bool isWorker) {
-    if (_jobs.isEmpty && _loading) return const LoadingWidget();
+    final empty = _live.isEmpty && _past.isEmpty;
+    if (empty && _loading) return const LoadingWidget();
 
-    if (_jobs.isEmpty && _error != null) {
+    if (empty && _error != null) {
       return ErrorStateWidget(
         title: 'Error al cargar historial',
         message: ErrorHandler.getErrorMessage(_error),
@@ -119,7 +144,7 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
       );
     }
 
-    if (_jobs.isEmpty) {
+    if (empty) {
       return EmptyStateWidget(
         icon: Icons.history,
         title: 'No hay trabajos',
@@ -151,29 +176,21 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     );
   }
 
-  /// Los trabajos con pago retenido quedan arriba, aunque haya pedidos más nuevos ya cerrados.
+  /// Los trabajos con pago retenido se piden aparte, así quedan arriba
+  /// aunque haya pedidos cerrados más nuevos.
   List<_HistoryEntry> _entries() {
-    final live = <JobModel>[];
-    final past = <JobModel>[];
-    for (final job in _jobs) {
-      if (jobHistoryIsLive(job.status)) {
-        live.add(job);
-      } else {
-        past.add(job);
-      }
-    }
     final entries = <_HistoryEntry>[];
-    if (live.isNotEmpty) {
-      entries.add(const _HistoryEntry.header('En curso'));
-      for (final job in live) {
+    if (_live.isNotEmpty) {
+      entries.add(const _HistoryEntry.header('Pago retenido'));
+      for (final job in _live) {
         entries.add(_HistoryEntry.job(job));
       }
     }
-    if (past.isNotEmpty) {
-      if (live.isNotEmpty) {
+    if (_past.isNotEmpty) {
+      if (_live.isNotEmpty) {
         entries.add(const _HistoryEntry.header('Anteriores'));
       }
-      for (final job in past) {
+      for (final job in _past) {
         entries.add(_HistoryEntry.job(job));
       }
     }
@@ -181,7 +198,7 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
   }
 
   Widget _sectionLabel(String title) {
-    final live = title == 'En curso';
+    final live = title == 'Pago retenido';
     return Padding(
       padding: EdgeInsets.only(bottom: 8, top: live ? 0 : 8),
       child: Text(

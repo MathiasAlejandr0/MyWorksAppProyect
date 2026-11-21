@@ -293,22 +293,19 @@ class PaymentService {
     return released;
   }
 
+  /// Devuelve principal, orden de cambio y horas extra. La función no cancela
+  /// el trabajo: la transición corre después, cuando ya no queda cobro retenido.
   Future<void> refundPrimaryOnCancellation(String jobId) async {
-    final payment = await getPrimaryPayment(jobId);
-    if (payment == null) return;
-    if ([PricingConstants.paymentAuthorized, PricingConstants.paymentHeld]
-        .contains(payment.status)) {
-      final response = await supabase.functions.invoke(
-        'webpay-refund-cancellation',
-        body: {'jobId': jobId},
-      );
-      final data = _asMap(response.data);
-      if (data['error'] != null) {
-        throw AppError.validation(data['error'].toString());
-      }
-      if (data['skipped'] == true) return;
-      await _syncJobPaymentStatus(jobId, PricingConstants.paymentRefunded);
+    final response = await supabase.functions.invoke(
+      'webpay-refund-cancellation',
+      body: {'jobId': jobId},
+    );
+    final data = _asMap(response.data);
+    if (data['error'] != null) {
+      throw AppError.validation(data['error'].toString());
     }
+    if (data['skipped'] == true) return;
+    await _syncJobPaymentStatus(jobId, PricingConstants.paymentRefunded);
   }
 
   Future<void> _syncJobPaymentStatus(String jobId, String paymentStatus) async {
@@ -327,29 +324,26 @@ class PaymentService {
     return payment != null;
   }
 
-  Future<bool> hasSavedCard() async {
-    final sessionId = supabase.auth.currentUser?.id;
-    if (sessionId == null || sessionId.isEmpty) return false;
-    final response = await supabase.functions.invoke(
-      'oneclick-charge',
-      body: {'action': 'status'},
-    );
-    final data = _asMap(response.data);
-    if (data['error'] != null) {
-      throw AppError.validation(data['error'].toString());
-    }
-    return data['enrolled'] == true;
+  Future<bool> hasSavedCard({bool recoverAbandoned = false}) async {
+    final card = await savedCard(recoverAbandoned: recoverAbandoned);
+    return card.enrolled;
   }
 
   /// Tarjeta que el cliente ya guardó (últimos 4 y tipo). Sin tarjeta: [enrolled] es false.
-  Future<({bool enrolled, String last4, String cardType})> savedCard() async {
+  /// [recoverAbandoned] devuelve la tarjeta anterior si el reemplazo se interrumpió.
+  Future<({bool enrolled, String last4, String cardType})> savedCard({
+    bool recoverAbandoned = false,
+  }) async {
     final sessionId = supabase.auth.currentUser?.id;
     if (sessionId == null || sessionId.isEmpty) {
       return (enrolled: false, last4: '', cardType: '');
     }
     final response = await supabase.functions.invoke(
       'oneclick-charge',
-      body: {'action': 'status'},
+      body: {
+        'action': 'status',
+        if (recoverAbandoned) 'recover': true,
+      },
     );
     final data = _asMap(response.data);
     if (data['error'] != null) {
@@ -380,8 +374,28 @@ class PaymentService {
     }
   }
 
+  /// Deja la tarjeta anterior si el reemplazo no terminó.
+  Future<void> restoreReplacedCard() async {
+    final sessionId = supabase.auth.currentUser?.id;
+    if (sessionId == null || sessionId.isEmpty) return;
+    try {
+      final response = await supabase.functions.invoke(
+        'oneclick-charge',
+        body: {'action': 'restore'},
+      );
+      final data = _asMap(response.data);
+      if (data['error'] != null) {
+        throw AppError.validation(data['error'].toString());
+      }
+    } catch (e) {
+      if (e is AppError) rethrow;
+      AppLogger.e('Error recuperando la tarjeta anterior', e);
+      throw AppError.network(_edgeErrorMessage(e), e);
+    }
+  }
+
   /// Primera vez en la app: URL del servidor que abre Transbank. Vacía si ya hay tarjeta.
-  Future<String> startCardEnrollment() async {
+  Future<String> startCardEnrollment({bool replacing = false}) async {
     final sessionId = supabase.auth.currentUser?.id;
     if (sessionId == null || sessionId.isEmpty) {
       throw AppError.authentication(
@@ -391,7 +405,7 @@ class PaymentService {
       final response = await supabase.functions.invoke(
         'oneclick-charge',
         body: {
-          'action': 'enroll',
+          'action': replacing ? 'replace' : 'enroll',
           if (!kIsWeb) 'client': 'app',
         },
       );

@@ -33,7 +33,9 @@ class _PaymentMethodsPageState extends ConsumerState<PaymentMethodsPage> {
       _error = null;
     });
     try {
-      final card = await ref.read(paymentServiceProvider).savedCard();
+      final card = await ref
+          .read(paymentServiceProvider)
+          .savedCard(recoverAbandoned: true);
       if (!mounted) return;
       setState(() {
         _cardLabel = card.enrolled ? savedCardLabel(card.cardType, card.last4) : null;
@@ -49,13 +51,14 @@ class _PaymentMethodsPageState extends ConsumerState<PaymentMethodsPage> {
   }
 
   Future<void> _addAnother() async {
-    if (_cardLabel != null) {
+    final replacing = _cardLabel != null;
+    if (replacing) {
       final replace = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Agregar otra tarjeta'),
           content: const Text(
-            'Solo se guarda una tarjeta para tus pedidos. La nueva reemplaza a la actual. Si sales sin terminarla, te quedas sin tarjeta hasta que inscribas otra.',
+            'Solo se guarda una tarjeta para tus pedidos. La actual sigue activa hasta que termines la nueva. Si sales, no cambia.',
           ),
           actions: [
             TextButton(
@@ -70,20 +73,25 @@ class _PaymentMethodsPageState extends ConsumerState<PaymentMethodsPage> {
         ),
       );
       if (replace != true || !mounted) return;
-      setState(() => _busy = true);
-      try {
-        await ref.read(paymentServiceProvider).removeSavedCard();
-      } catch (e) {
-        if (!mounted) return;
-        setState(() => _busy = false);
-        _showError(e is AppError ? e.message : 'No se pudo quitar la tarjeta actual');
-        return;
-      }
     }
     if (!mounted) return;
-    setState(() => _busy = false);
-    await CardEnrollmentPage.open(context);
-    if (mounted) await _load();
+    setState(() => _busy = true);
+    var replaced = false;
+    try {
+      replaced = await CardEnrollmentPage.open(context, replacing: replacing);
+    } finally {
+      if (replacing && !replaced) {
+        try {
+          await ref.read(paymentServiceProvider).restoreReplacedCard();
+        } catch (_) {
+          // La tarjeta anterior sigue en el servidor si este aviso falla.
+        }
+      }
+      if (mounted) {
+        setState(() => _busy = false);
+        await _load();
+      }
+    }
   }
 
   Future<void> _remove() async {
@@ -201,15 +209,17 @@ class PaymentMethodsBody extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: TextButton(onPressed: busy ? null : onRetry, child: const Text('Reintentar')),
             ),
+        ] else ...[
+          const SizedBox(height: 16),
+          if (cardLabel == null)
+            Text(
+              'No tienes una tarjeta guardada.',
+              style: TextStyle(color: muted),
+            )
+          else
+            _SavedCardPanel(label: cardLabel!),
         ],
-        const SizedBox(height: 16),
-        if (cardLabel == null)
-          Text(
-            'No tienes una tarjeta guardada.',
-            style: TextStyle(color: muted),
-          )
-        else
-          _SavedCardPanel(label: cardLabel!),
+        if (error == null) ...[
         const SizedBox(height: 20),
         OutlinedButton.icon(
           onPressed: busy ? null : onAdd,
@@ -233,6 +243,7 @@ class PaymentMethodsBody extends StatelessWidget {
               minimumSize: const Size.fromHeight(48),
             ),
           ),
+        ],
         ],
       ],
     );

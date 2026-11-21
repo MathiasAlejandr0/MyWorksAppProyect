@@ -387,7 +387,9 @@ class _PaymentMethodsShortcutState extends ConsumerState<_PaymentMethodsShortcut
 
   Future<void> _load() async {
     try {
-      final card = await ref.read(paymentServiceProvider).savedCard();
+      final card = await ref
+          .read(paymentServiceProvider)
+          .savedCard(recoverAbandoned: true);
       if (!mounted) return;
       setState(() {
         _label = card.enrolled ? savedCardLabel(card.cardType, card.last4) : null;

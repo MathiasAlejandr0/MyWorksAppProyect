@@ -19,7 +19,22 @@ import {
 } from "../_shared/tbk.ts";
 
 const CARD_COLUMNS =
-  "ultimos4, tipo_tarjeta, estado, tbk_user, token_inscripcion, username";
+  "ultimos4, tipo_tarjeta, estado, tbk_user, token_inscripcion, username, url_inscripcion, ticket_handoff, tbk_user_prev, username_prev, tipo_tarjeta_prev, ultimos4_prev";
+
+type CardRow = {
+  ultimos4?: string | null;
+  tipo_tarjeta?: string | null;
+  estado?: string | null;
+  tbk_user?: string | null;
+  token_inscripcion?: string | null;
+  username?: string | null;
+  url_inscripcion?: string | null;
+  ticket_handoff?: string | null;
+  tbk_user_prev?: string | null;
+  username_prev?: string | null;
+  tipo_tarjeta_prev?: string | null;
+  ultimos4_prev?: string | null;
+};
 
 /** Un pedido solo se deja pendiente de la inscripción si es del cliente y espera pago. */
 async function pendingJobFor(
@@ -37,6 +52,90 @@ async function pendingJobFor(
   return String(job.estado || "") === "esperando_pago" ? jobId : null;
 }
 
+function previousCardFields(card: CardRow | null | undefined) {
+  if (!card) return {};
+  if (card.tbk_user_prev) {
+    return {
+      tbk_user_prev: card.tbk_user_prev,
+      username_prev: card.username_prev || card.username,
+      tipo_tarjeta_prev: card.tipo_tarjeta_prev,
+      ultimos4_prev: card.ultimos4_prev,
+    };
+  }
+  if (!isEnrolled(card)) return {};
+  return {
+    tbk_user_prev: card.tbk_user,
+    username_prev: card.username,
+    tipo_tarjeta_prev: card.tipo_tarjeta,
+    ultimos4_prev: card.ultimos4,
+  };
+}
+
+async function retirePreviousInscription(
+  admin: ReturnType<typeof serviceClient>,
+  userId: string,
+  card: CardRow,
+) {
+  if (!card.tbk_user_prev) return;
+  try {
+    await tbkOneclickDeleteInscription({
+      username: String(card.username_prev || userId),
+      tbkUser: String(card.tbk_user_prev),
+    });
+  } catch (e) {
+    if (!(e instanceof OneclickInscriptionInactiveError)) throw e;
+  }
+  await admin
+    .from("metodos_pago_oneclick")
+    .update({
+      tbk_user_prev: null,
+      username_prev: null,
+      tipo_tarjeta_prev: null,
+      ultimos4_prev: null,
+      actualizado_en: new Date().toISOString(),
+    })
+    .eq("id_usuario", userId);
+}
+
+async function restorePreviousCard(
+  admin: ReturnType<typeof serviceClient>,
+  userId: string,
+): Promise<CardRow | null> {
+  const { data, error } = await admin
+    .from("metodos_pago_oneclick")
+    .select(CARD_COLUMNS)
+    .eq("id_usuario", userId)
+    .maybeSingle();
+  if (error) throw new Error("No se pudo leer la tarjeta guardada.");
+  const card = data as CardRow | null;
+  if (!card?.tbk_user_prev) return card;
+  if (card.estado === "activa" && card.tbk_user) {
+    await retirePreviousInscription(admin, userId, card);
+    return { ...card, tbk_user_prev: null };
+  }
+  const restored = {
+    estado: "activa",
+    tbk_user: card.tbk_user_prev,
+    username: card.username_prev || card.username || userId,
+    tipo_tarjeta: card.tipo_tarjeta_prev,
+    ultimos4: card.ultimos4_prev,
+    token_inscripcion: null,
+    url_inscripcion: null,
+    ticket_handoff: null,
+    tbk_user_prev: null,
+    username_prev: null,
+    tipo_tarjeta_prev: null,
+    ultimos4_prev: null,
+    actualizado_en: new Date().toISOString(),
+  };
+  const { error: upErr } = await admin
+    .from("metodos_pago_oneclick")
+    .update(restored)
+    .eq("id_usuario", userId);
+  if (upErr) throw new Error("No se pudo recuperar la tarjeta anterior.");
+  return { ...card, ...restored };
+}
+
 async function cardSetup(
   req: Request,
   userId: string,
@@ -44,6 +143,7 @@ async function cardSetup(
   action: string,
   fromApp: boolean,
   jobId: string,
+  options: { replace?: boolean; recover?: boolean } = {},
 ) {
   const admin = serviceClient();
   const { data: stored, error: cardErr } = await admin
@@ -54,15 +154,31 @@ async function cardSetup(
   if (cardErr) {
     return jsonResponse(req, { error: "No se pudo leer la tarjeta guardada." }, 500);
   }
-  const card = await activatePendingInscription(admin, userId, stored);
+  let card = await activatePendingInscription(admin, userId, stored) as CardRow | null;
+  if (options.recover && card?.tbk_user_prev && !isEnrolled(card)) {
+    try {
+      card = await restorePreviousCard(admin, userId);
+    } catch (e) {
+      return jsonResponse(req, { error: publicErrorMessage(e) }, 500);
+    }
+  }
+  if (card?.tbk_user_prev && isEnrolled(card)) {
+    try {
+      await retirePreviousInscription(admin, userId, card);
+    } catch (e) {
+      return jsonResponse(req, { error: publicErrorMessage(e) }, 500);
+    }
+    card = { ...card, tbk_user_prev: null };
+  }
   const enrolled = isEnrolled(card);
-  if (action === "status" || enrolled) {
+  if (action === "status" || (enrolled && !options.replace)) {
     return jsonResponse(req, {
       enrolled,
       last4: card?.ultimos4 || "",
       cardType: card?.tipo_tarjeta || "",
     });
   }
+  const kept = options.replace ? previousCardFields(card) : {};
 
   const mail = email.trim();
   if (!mail) {
@@ -99,7 +215,10 @@ async function cardSetup(
       ticket_handoff: ticket,
       id_trabajo_pendiente: await pendingJobFor(admin, userId, jobId),
       tbk_user: null,
+      tipo_tarjeta: options.replace ? null : undefined,
+      ultimos4: options.replace ? null : undefined,
       actualizado_en: new Date().toISOString(),
+      ...kept,
     },
     { onConflict: "id_usuario" },
   );
@@ -118,7 +237,7 @@ async function removeCard(req: Request, userId: string) {
   const admin = serviceClient();
   const { data: card, error } = await admin
     .from("metodos_pago_oneclick")
-    .select("tbk_user, username")
+    .select("tbk_user, username, tbk_user_prev, username_prev")
     .eq("id_usuario", userId)
     .maybeSingle();
   if (error) {
@@ -129,6 +248,16 @@ async function removeCard(req: Request, userId: string) {
       username: String(card.username || userId),
       tbkUser: String(card.tbk_user),
     });
+  }
+  if (card?.tbk_user_prev && card.tbk_user_prev !== card.tbk_user) {
+    try {
+      await tbkOneclickDeleteInscription({
+        username: String(card.username_prev || userId),
+        tbkUser: String(card.tbk_user_prev),
+      });
+    } catch (e) {
+      if (!(e instanceof OneclickInscriptionInactiveError)) throw e;
+    }
   }
   const { error: delErr } = await admin
     .from("metodos_pago_oneclick")
@@ -191,15 +320,31 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
 
-    if (action === "status" || action === "enroll") {
+    if (action === "status" || action === "enroll" || action === "replace") {
       return await cardSetup(
         req,
         user.id,
         String(user.email || ""),
-        action,
+        action === "replace" ? "enroll" : action,
         body.client === "app",
         String(body.jobId || ""),
+        {
+          replace: action === "replace",
+          recover: action === "status" && body.recover === true,
+        },
       );
+    }
+    if (action === "restore") {
+      try {
+        const card = await restorePreviousCard(serviceClient(), user.id);
+        return jsonResponse(req, {
+          enrolled: isEnrolled(card),
+          last4: card?.ultimos4 || "",
+          cardType: card?.tipo_tarjeta || "",
+        });
+      } catch (e) {
+        return jsonResponse(req, { error: publicErrorMessage(e) }, 500);
+      }
     }
     if (action === "remove") {
       return await removeCard(req, user.id);

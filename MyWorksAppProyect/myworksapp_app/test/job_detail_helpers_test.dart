@@ -135,6 +135,53 @@ void main() {
       );
     });
 
+    test('cancelar la solicitud solo si el cliente abrió la disputa', () {
+      final job = _job(status: AppConstants.jobStatusInProgress);
+      expect(
+        JobDetailHelpers.clientCanCancelRequest(
+          job: job,
+          dispute: dispute('abierta'),
+          userId: 'user-1',
+        ),
+        isFalse,
+      );
+      expect(
+        JobDetailHelpers.clientCanCancelRequest(
+          job: job,
+          dispute: DisputeModel(
+            id: 'd2',
+            jobId: 'job-1',
+            openedBy: 'user-1',
+            reason: 'calidad',
+            status: 'abierta',
+            createdAt: DateTime.utc(2026, 1, 1),
+            updatedAt: DateTime.utc(2026, 1, 1),
+          ),
+          userId: 'user-1',
+        ),
+        isTrue,
+      );
+    });
+
+    test('sin disputa, cancelar con devolución queda para la conformidad', () {
+      expect(
+        JobDetailHelpers.clientCanCancelRequest(
+          job: _job(status: AppConstants.jobStatusInProgress),
+          dispute: null,
+          userId: 'user-1',
+        ),
+        isFalse,
+      );
+      expect(
+        JobDetailHelpers.clientCanCancelRequest(
+          job: _job(status: PricingConstants.jobAwaitingClientApproval),
+          dispute: null,
+          userId: 'user-1',
+        ),
+        isTrue,
+      );
+    });
+
     test('no negocia acuerdos con la disputa resuelta o el trabajo cerrado', () {
       final enCurso = _job(status: AppConstants.jobStatusInProgress);
       final cerrado = _job(status: AppConstants.jobStatusCompleted);

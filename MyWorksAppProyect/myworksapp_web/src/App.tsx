@@ -295,6 +295,7 @@ export function App() {
     if (location.pathname !== target) navigate(target);
   };
   const [pendingAgreement, setPendingAgreement] = useState<{ id: string; tipo: string } | null>(null);
+  const [openDispute, setOpenDispute] = useState<{ openedBy: string | null } | null>(null);
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
   const [bookingSlots, setBookingSlots] = useState<string[]>([]);
   const [bookingSlotsLoading, setBookingSlotsLoading] = useState(false);
@@ -418,18 +419,43 @@ export function App() {
       });
     // supabase.rpc devuelve un PromiseLike (sin .catch): se envuelve en una Promise real.
     // Si la función aún no existe en la base, el acuerdo queda en null sin romper la vista.
-    void Promise.resolve(supabase.rpc('acuerdo_pendiente', { p_id_trabajo: checkoutJobId }))
-      .then(({ data, error }) => {
-        const row = error ? undefined : data?.[0];
-        if (!cancelled) setPendingAgreement(row ? { id: row.id, tipo: row.tipo } : null);
-      })
-      .catch(() => {
-        if (!cancelled) setPendingAgreement(null);
-      });
+    const loadAgreement = () => {
+      void Promise.resolve(supabase.rpc('acuerdo_pendiente', { p_id_trabajo: checkoutJobId }))
+        .then(({ data, error }) => {
+          const row = error ? undefined : data?.[0];
+          if (!cancelled) setPendingAgreement(row ? { id: row.id, tipo: row.tipo } : null);
+        })
+        .catch(() => {
+          if (!cancelled) setPendingAgreement(null);
+        });
+    };
+    const loadDispute = () => {
+      void supabase
+        .from('disputas')
+        .select('abierta_por')
+        .eq('id_trabajo', checkoutJobId)
+        .in('estado', ['abierta', 'en_revision', 'requiere_humano', 'reembolso_pendiente'])
+        .order('creado_en', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (cancelled) return;
+          if (error || !data) {
+            setOpenDispute(null);
+            return;
+          }
+          const row = data as { abierta_por?: string | null };
+          setOpenDispute({ openedBy: row.abierta_por ? String(row.abierta_por) : null });
+        });
+    };
     loadSnapshot();
+    loadDispute();
+    loadAgreement();
     const tick = () => {
       if (document.visibilityState === 'hidden') return;
       loadSnapshot();
+      loadDispute();
+      loadAgreement();
       void syncJobEvidencePhotos(supabase, checkoutJobId, jobEvidenceRef.current)
         .then((photos) => {
           if (!cancelled) setJobEvidence(photos);
@@ -462,6 +488,7 @@ export function App() {
     setPaymentNotice(null);
     setJobEvidence([]);
     setClientStartPin(null);
+    setOpenDispute(null);
     setView('landing');
   };
 
@@ -1450,6 +1477,8 @@ export function App() {
               workerId={jobSnapshot.workerId}
               workerName={selectedWorker.name}
               userId={profile.id}
+              disputeOpen={openDispute != null}
+              disputeOpenedBy={openDispute?.openedBy ?? null}
               onChanged={() => {
                 void fetchJobTrackingSnapshot(supabase, checkoutJobId)
                   .then((snapshot) => {
@@ -1496,9 +1525,11 @@ export function App() {
                     : 'No se pudo abrir la disputa.',
               );
             }
+            setOpenDispute({ openedBy: profile.id });
           } : undefined}
 
           pendingAgreement={pendingAgreement}
+          disputeOpen={openDispute != null}
           onProposeAgreement={profile ? async (tipo) => {
             if (!checkoutJobId) throw new Error('Falta el trabajo.');
             const { error } = await supabase.rpc('proponer_acuerdo', {

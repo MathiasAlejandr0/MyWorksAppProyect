@@ -41,21 +41,32 @@ Deno.serve(async (req) => {
     const refunds = Array.isArray(payload.reembolsos) ? payload.reembolsos : [];
     const refunded: string[] = [];
     const failed: { disputa_id: string; error: string }[] = [];
-
+    const groups = new Map<string, { resolucion: string; pagos: string[] }>();
     for (const item of refunds) {
       const disputeId = String(item.disputa_id || "");
-      const paymentId = String(item.pago_id || "");
-      if (!disputeId || !paymentId) continue;
+      if (!disputeId) continue;
+      const group = groups.get(disputeId) ?? {
+        resolucion: String(item.resolucion || "Devolución automática"),
+        pagos: [],
+      };
+      const paymentId = item.pago_id == null ? "" : String(item.pago_id);
+      if (paymentId && !group.pagos.includes(paymentId)) group.pagos.push(paymentId);
+      groups.set(disputeId, group);
+    }
+
+    for (const [disputeId, group] of groups) {
       try {
-        const refund = await refundHeldPaymentOnce(admin, paymentId);
-        if (refund.status === "refunded" || refund.status === "already") {
-          scheduleRefundEmail(admin, paymentId);
+        for (const paymentId of group.pagos) {
+          const refund = await refundHeldPaymentOnce(admin, paymentId);
+          if (refund.status === "refunded" || refund.status === "already") {
+            scheduleRefundEmail(admin, paymentId);
+          }
         }
         const { error: closeError } = await admin.rpc("aplicar_cierre_disputa", {
           p_disputa_id: disputeId,
           p_operador: "sistema",
           p_decision: "reembolsar",
-          p_resolucion: String(item.resolucion || "Devolución automática"),
+          p_resolucion: group.resolucion,
         });
         if (closeError) throw new Error(closeError.message);
         refunded.push(disputeId);

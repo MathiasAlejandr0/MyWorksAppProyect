@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/domain/escrow_confirmation.dart';
+export '../../../../core/domain/job_history_scope.dart' show jobHistoryIsLive;
 import '../../../../core/domain/pricing_constants.dart';
 import '../../../../core/design_system/app_radius.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,16 +18,6 @@ const jobHistoryPhaseLabels = <String>[
   'Conforme',
   'Listo',
 ];
-
-/// Trabajo con el pago ya retenido y todavía abierto.
-///
-/// `esperando_pago` no entra: el cobro aún no quedó en garantía.
-/// `pausado_orden_cambio` sí: el trabajo sigue abierto y el pago retenido.
-bool jobHistoryIsLive(String status) {
-  if (status == PricingConstants.jobPausedChangeOrder) return true;
-  if (status == AppConstants.jobStatusCompleted) return false;
-  return escrowHoldAlreadyConfirmed(status);
-}
 
 /// Índice de la fase visible. El cobro extra deja el trabajo en «en curso».
 int jobHistoryPhaseIndex(String status) {

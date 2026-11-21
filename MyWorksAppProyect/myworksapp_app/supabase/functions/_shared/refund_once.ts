@@ -112,13 +112,21 @@ export async function refundHeldPaymentOnce(
     throw new Error("No se pudo registrar el reembolso");
   }
   if (updated.id_trabajo) {
-    await admin
-      .from("trabajos")
-      .update({
-        estado_pago: "reembolsado",
-        actualizado_en: now,
-      })
-      .eq("id", updated.id_trabajo);
+    const { count, error: leftErr } = await admin
+      .from("pagos")
+      .select("id", { count: "exact", head: true })
+      .eq("id_trabajo", updated.id_trabajo)
+      .in("tipo_pago", ["principal", "orden_cambio", "horas_extra"])
+      .in("estado", ["autorizado", "retenido"]);
+    if (!leftErr && count === 0) {
+      await admin
+        .from("trabajos")
+        .update({
+          estado_pago: "reembolsado",
+          actualizado_en: now,
+        })
+        .eq("id", updated.id_trabajo);
+    }
   }
   return { status: "refunded", payment: updated };
 }

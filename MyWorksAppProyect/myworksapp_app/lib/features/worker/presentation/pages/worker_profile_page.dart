@@ -239,18 +239,25 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
       );
       await _userRepository.updateUser(updatedUser);
 
-      // Actualizar trabajador
+      // Actualizar trabajador. Las tarifas de catálogo solo viven en memoria
+      // para el editor: guardar el nombre no las publica.
       if (_worker != null) {
+        final editingPrices = _editingSection == 'tarifas';
+        final editingExtras = _editingSection == 'servicios';
         final updatedWorker = _worker!.copyWith(
           profession: _professionController.text.trim(),
           description: _descriptionController.text.trim(),
           workZone: _workZone,
-          pricingTiers: _pricingTiers,
-          customServices: _customServices,
-          pricingConfigured:
-              _editingSection == 'tarifas' ? true : null,
+          pricingTiers: editingPrices ? _pricingTiers : _worker!.pricingTiers,
+          customServices:
+              editingExtras ? _customServices : _worker!.customServices,
+          pricingConfigured: editingPrices ? true : null,
         );
-        await _workerRepository.updateWorker(updatedWorker);
+        await _workerRepository.updateWorker(
+          updatedWorker,
+          savePrices: editingPrices,
+          saveExtras: editingExtras,
+        );
       }
 
       await ref

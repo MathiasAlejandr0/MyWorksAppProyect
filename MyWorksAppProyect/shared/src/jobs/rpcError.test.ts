@@ -10,6 +10,13 @@ describe('errores de acuerdo', () => {
     assert.equal(text, 'No se pudo proponer el acuerdo.');
   });
 
+  it('pide una disputa abierta', () => {
+    assert.equal(
+      agreementErrorMessage('solo se acuerda con una disputa abierta', 'proponer'),
+      'Los acuerdos solo se proponen con una disputa abierta.',
+    );
+  });
+
   it('traduce un pedido cerrado', () => {
     assert.equal(
       agreementErrorMessage('el trabajo está cerrado', 'responder'),

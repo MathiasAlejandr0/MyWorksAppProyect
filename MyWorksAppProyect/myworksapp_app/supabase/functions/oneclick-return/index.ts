@@ -6,7 +6,11 @@ import {
 } from "../_shared/oneclick_charge.ts";
 import { allowRate, clientIp } from "../_shared/rate_limit.ts";
 import { serviceClient } from "../_shared/supabase.ts";
-import { tbkOneclickFinish } from "../_shared/tbk.ts";
+import {
+  OneclickInscriptionInactiveError,
+  tbkOneclickDeleteInscription,
+  tbkOneclickFinish,
+} from "../_shared/tbk.ts";
 
 import { allowedWebReturnOrigins } from "../_shared/security.ts";
 import { oneclickReturnBase } from "../_shared/oneclick_return_base.ts";
@@ -86,7 +90,7 @@ Deno.serve(async (req) => {
     const { data: row } = await admin
       .from("metodos_pago_oneclick")
       .select(
-        "id_usuario, username, tbk_user, ultimos4, estado, id_trabajo_pendiente",
+        "id_usuario, username, tbk_user, ultimos4, estado, id_trabajo_pendiente, tbk_user_prev, username_prev, tipo_tarjeta_prev, ultimos4_prev",
       )
       .eq("token_inscripcion", token)
       .maybeSingle();
@@ -103,14 +107,35 @@ Deno.serve(async (req) => {
       tbkUser = String(finished.tbk_user || "");
       last4 = cardLast4(finished.card_number);
       if (code !== 0 || !tbkUser) {
-        await admin
-          .from("metodos_pago_oneclick")
-          .update({
-            estado: "rechazada",
-            token_inscripcion: null,
-            actualizado_en: new Date().toISOString(),
-          })
-          .eq("id_usuario", row.id_usuario);
+        if (row.tbk_user_prev) {
+          await admin
+            .from("metodos_pago_oneclick")
+            .update({
+              estado: "activa",
+              tbk_user: row.tbk_user_prev,
+              username: row.username_prev || row.username,
+              tipo_tarjeta: row.tipo_tarjeta_prev,
+              ultimos4: row.ultimos4_prev,
+              token_inscripcion: null,
+              url_inscripcion: null,
+              ticket_handoff: null,
+              tbk_user_prev: null,
+              username_prev: null,
+              tipo_tarjeta_prev: null,
+              ultimos4_prev: null,
+              actualizado_en: new Date().toISOString(),
+            })
+            .eq("id_usuario", row.id_usuario);
+        } else {
+          await admin
+            .from("metodos_pago_oneclick")
+            .update({
+              estado: "rechazada",
+              token_inscripcion: null,
+              actualizado_en: new Date().toISOString(),
+            })
+            .eq("id_usuario", row.id_usuario);
+        }
         return redirect(
           enrollOnly
             ? cardSavedUrl(false, dest)
@@ -127,6 +152,26 @@ Deno.serve(async (req) => {
           actualizado_en: new Date().toISOString(),
         })
         .eq("id_usuario", row.id_usuario);
+      if (row.tbk_user_prev) {
+        try {
+          await tbkOneclickDeleteInscription({
+            username: String(row.username_prev || row.id_usuario),
+            tbkUser: String(row.tbk_user_prev),
+          });
+        } catch (e) {
+          if (!(e instanceof OneclickInscriptionInactiveError)) throw e;
+        }
+        await admin
+          .from("metodos_pago_oneclick")
+          .update({
+            tbk_user_prev: null,
+            username_prev: null,
+            tipo_tarjeta_prev: null,
+            ultimos4_prev: null,
+            actualizado_en: new Date().toISOString(),
+          })
+          .eq("id_usuario", row.id_usuario);
+      }
     }
 
     if (enrollOnly) {

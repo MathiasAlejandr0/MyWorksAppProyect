@@ -57,10 +57,9 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
       if (!mounted) return;
       if (account != null) {
         _bank.text = account.bank;
-        _type = const {'vista', 'corriente', 'rut', 'ahorro'}
-                .contains(account.accountType)
-            ? account.accountType
-            : 'vista';
+        _type = account.accountType.trim().isEmpty
+            ? 'vista'
+            : account.accountType.trim();
         _number.text = account.accountNumber;
         _rut.text = account.holderRut;
         _name.text = account.holderName;
@@ -220,6 +219,21 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
   }
 }
 
+List<DropdownMenuItem<String>> _accountTypeItems(String type) {
+  const known = <String, String>{
+    'vista': 'Cuenta vista',
+    'corriente': 'Cuenta corriente',
+    'rut': 'Cuenta RUT',
+    'ahorro': 'Cuenta de ahorro',
+  };
+  return [
+    for (final entry in known.entries)
+      DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+    if (!known.containsKey(type))
+      DropdownMenuItem(value: type, child: Text(type)),
+  ];
+}
+
 class _BankAccountForm extends StatelessWidget {
   const _BankAccountForm({
     required this.bank,
@@ -286,11 +300,8 @@ class _BankAccountForm extends StatelessWidget {
               'Tipo de cuenta',
               Icons.account_balance_wallet_outlined,
             ),
-            items: const [
-              DropdownMenuItem(value: 'vista', child: Text('Cuenta vista')),
-              DropdownMenuItem(value: 'corriente', child: Text('Cuenta corriente')),
-              DropdownMenuItem(value: 'rut', child: Text('Cuenta RUT')),
-              DropdownMenuItem(value: 'ahorro', child: Text('Cuenta de ahorro')),
+            items: [
+              for (final item in _accountTypeItems(type)) item,
             ],
             onChanged: (value) {
               if (value != null) onTypeChanged(value);
