@@ -5,13 +5,11 @@ import '../../../../core/theme/app_colors.dart';
 class WorkerQuickActionsRow extends StatelessWidget {
   const WorkerQuickActionsRow({
     super.key,
-    required this.onNewJob,
     required this.onCalendar,
     required this.onHistory,
     required this.onEarnings,
   });
 
-  final VoidCallback onNewJob;
   final VoidCallback onCalendar;
   final VoidCallback onHistory;
   final VoidCallback onEarnings;
@@ -22,11 +20,6 @@ class WorkerQuickActionsRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
       child: Row(
         children: [
-          _ActionTile(
-            icon: Icons.post_add_outlined,
-            label: 'Nuevo trabajo',
-            onTap: onNewJob,
-          ),
           _ActionTile(
             icon: Icons.calendar_month_outlined,
             label: 'Mi agenda',

@@ -11,7 +11,6 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: WorkerQuickActionsRow(
-            onNewJob: () {},
             onCalendar: () {},
             onHistory: () => history++,
             onEarnings: () => earnings++,
@@ -20,6 +19,7 @@ void main() {
       ),
     );
 
+    expect(find.text('Nuevo trabajo'), findsNothing);
     expect(find.text('Mapa de trabajos'), findsNothing);
     expect(find.text('Mis facturas'), findsNothing);
 
