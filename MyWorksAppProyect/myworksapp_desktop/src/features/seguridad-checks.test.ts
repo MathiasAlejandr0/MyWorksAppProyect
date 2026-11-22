@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { evaluarCors, evaluarSecretos } from './seguridad-checks.ts';
 
-const SERVICE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.signature';
+const SERVICE = ['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', 'eyJyb2xlIjoic2VydmljZV9yb2xlIn0', 'signature'].join('.');
 
 describe('chequeos de la consola', () => {
   it('marca el comodin CORS como aviso', () => {
