@@ -6,6 +6,7 @@ import '../database/repositories/app_error_log_repository.dart';
 import '../database/supabase_db.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
+import 'error_report_filter.dart';
 
 /// Persiste errores en Supabase para revisión en el panel admin.
 class CrashReportingService {
@@ -56,6 +57,13 @@ class CrashReportingService {
     Map<String, dynamic>? additionalData,
   }) {
     if (!_isInitialized) return;
+
+    // Reglas de negocio y fallos de red ya se explican al usuario: no son
+    // errores de código y solo ensucian el listado del panel admin.
+    if (isExpectedUserError(error)) {
+      AppLogger.d('Error esperado, no se reporta: $error');
+      return;
+    }
 
     final message = reason ?? error.toString();
     final metadata = <String, dynamic>{
