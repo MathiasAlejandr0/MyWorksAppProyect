@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/auth-store';
+import { callRpc } from '../lib/rpc';
 import { supabase } from '../supabaseClient';
 import { Button } from '../ui/kit';
 import { makeScannableTotpQr } from '../lib/totpQr';
@@ -77,6 +78,7 @@ export function AdminMfaGate() {
               });
               setBusy(false);
               if (verified.error) {
+                void callRpc('registrar_evento_acceso', { p_tipo: 'mfa_fallido', p_correo: '' }).catch(() => undefined);
                 setError('El código no es válido.');
                 return;
               }

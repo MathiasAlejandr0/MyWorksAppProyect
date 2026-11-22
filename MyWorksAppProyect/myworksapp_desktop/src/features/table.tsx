@@ -43,7 +43,7 @@ export function PagedTable<T extends { id: string }>({
       <div className="spread">
         <label className="field">
           <span>Buscar</span>
-          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} />
+          <input aria-label="Buscar en la tabla" value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} />
         </label>
         <div className="row">
           {toolbar}
@@ -75,7 +75,19 @@ export function PagedTable<T extends { id: string }>({
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.id} className={onRow ? 'clickable' : undefined} onClick={() => onRow?.(row)}>
+                <tr
+                  key={row.id}
+                  className={onRow ? 'clickable' : undefined}
+                  tabIndex={onRow ? 0 : undefined}
+                  onClick={() => onRow?.(row)}
+                  onKeyDown={(event) => {
+                    if (!onRow) return;
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onRow(row);
+                    }
+                  }}
+                >
                   {columns.map((column) => <td key={column.key}>{column.cell(row)}</td>)}
                 </tr>
               ))}

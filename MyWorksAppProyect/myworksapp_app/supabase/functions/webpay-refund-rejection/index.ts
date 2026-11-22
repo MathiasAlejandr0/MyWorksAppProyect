@@ -1,6 +1,8 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
+import { ipBloqueada, pagosPausados } from "../_shared/defensa.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
+import { clientIp } from "../_shared/rate_limit.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 import { scheduleRefundEmail } from "../_shared/payment_mail.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
@@ -33,6 +35,9 @@ Deno.serve(async (req) => {
     if (!jobId) return jsonResponse(req, { error: "jobId requerido" }, 400);
 
     const admin = serviceClient();
+    if (await pagosPausados(admin) || await ipBloqueada(admin, clientIp(req))) {
+      return jsonResponse(req, killSwitchResponse(), 503);
+    }
     const { data: job, error: jobErr } = await admin
       .from("trabajos")
       .select("id, estado, id_trabajador, metadatos_servicio")

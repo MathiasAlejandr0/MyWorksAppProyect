@@ -1,7 +1,24 @@
 .shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 248px 1fr;
+  grid-template-columns: minmax(200px, 248px) minmax(0, 1fr);
+}
+
+.nav-toggle { display: none; }
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -40px;
+  z-index: 80;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.skip-link:focus {
+  top: 12px;
 }
 
 .side {
@@ -58,6 +75,19 @@
 }
 
 .profile-slot { position: relative; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; }
+  .nav-toggle { display: inline-flex; }
+  .side {
+    position: fixed;
+    z-index: 25;
+    width: min(280px, 88vw);
+    transform: translateX(-105%);
+    transition: transform 160ms ease;
+  }
+  .side.is-open { transform: translateX(0); }
+}
 
 .warn-banner {
   background: color-mix(in srgb, var(--brand-orange) 16%, var(--bg-surface));

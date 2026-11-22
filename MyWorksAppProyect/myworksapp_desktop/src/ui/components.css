@@ -17,7 +17,7 @@ body,
 }
 
 body {
-  min-width: 1180px;
+  min-width: 0;
 }
 
 button,
@@ -136,11 +136,34 @@ a {
   gap: var(--space-2);
 }
 
-.kpi strong {
+.kpi strong,
+.queue-card strong {
   display: block;
-  margin-top: 8px;
-  font-size: 24px;
+  margin-top: 10px;
+  font-size: 28px;
   font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.queue-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 104px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.queue-card:hover {
+  border-color: var(--brand-orange);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
 }
 
 .muted { color: var(--text-muted); }
@@ -254,6 +277,60 @@ textarea { min-height: 88px; resize: vertical; }
   min-width: 240px;
 }
 
+.tablist {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.tablist button {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+}
+
+.tablist button.is-active {
+  background: var(--bg-elevated);
+  color: var(--text-main);
+}
+
+.switch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.switch-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.switch {
+  flex: 0 0 auto;
+  min-width: 96px;
+  min-height: 36px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.switch.is-on {
+  background: color-mix(in srgb, var(--emerald) 18%, var(--bg-surface));
+  color: var(--emerald);
+  border-color: transparent;
+}
+
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 .tabs a,
 .tabs button {
@@ -341,6 +418,32 @@ textarea { min-height: 88px; resize: vertical; }
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--bg-canvas);
+}
+
+@media (max-width: 1100px) {
+  .kpi-grid,
+  .queue-grid,
+  .split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .kpi-grid,
+  .queue-grid,
+  .split,
+  .login-screen {
+    grid-template-columns: 1fr;
+  }
+
+  .spread {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .content {
+    padding: 16px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

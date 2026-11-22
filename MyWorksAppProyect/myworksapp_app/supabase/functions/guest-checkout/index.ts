@@ -1,5 +1,6 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { isReservedEmailDomain, sha256Hex } from "../_shared/guest_ticket.ts";
+import { ipBloqueada, pagosPausados, registrosPausados } from "../_shared/defensa.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { chileE164, postalAddress } from "../_shared/chile_input.ts";
 import { clientIp, rateLimitExceededMessage } from "../_shared/rate_limit.ts";
@@ -226,6 +227,9 @@ Deno.serve(async (req) => {
 
     const ip = clientIp(req);
     const admin = serviceClient();
+    if (await registrosPausados(admin) || await pagosPausados(admin) || await ipBloqueada(admin, ip)) {
+      return jsonResponse(req, killSwitchResponse(), 503);
+    }
     const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY")?.trim() ?? "";
     const turnstile = turnstileDecision(
       turnstileSecret.length > 0,

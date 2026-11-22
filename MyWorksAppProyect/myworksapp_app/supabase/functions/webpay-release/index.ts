@@ -1,4 +1,7 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { ipBloqueada, pagosPausados } from "../_shared/defensa.ts";
+import { killSwitchResponse } from "../_shared/kill_switch.ts";
+import { clientIp } from "../_shared/rate_limit.ts";
 import { scheduleReleasedEmail } from "../_shared/payment_mail.ts";
 import { jobHasOpenDispute } from "../_shared/dispute_guard.ts";
 import { motivoValido, registrarAuditoria, requestClientMeta, requireAdmin } from "../_shared/require_admin.ts";
@@ -73,6 +76,9 @@ Deno.serve(async (req) => {
     }
 
     const admin = serviceClient();
+    if (await pagosPausados(admin) || await ipBloqueada(admin, clientIp(req))) {
+      return jsonResponse(req, killSwitchResponse(), 503);
+    }
     const { data: paymentRow } = await admin
       .from("pagos")
       .select("id_trabajo")
