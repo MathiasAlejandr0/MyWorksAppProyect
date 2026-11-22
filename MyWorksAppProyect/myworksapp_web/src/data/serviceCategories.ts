@@ -24,7 +24,7 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'electricidad',
     title: 'Electricidad',
     subtitle: 'Instalaciones, reparaciones y más',
-    photo: '/categories/electricidad.webp',
+    photo: '/categories/electricidad-new.webp',
     searchQuery: 'electricidad',
   },
   {
