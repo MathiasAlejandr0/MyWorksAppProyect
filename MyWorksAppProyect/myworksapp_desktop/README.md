@@ -52,7 +52,7 @@ La clave pública del actualizador está en `src-tauri/tauri.conf.json` (`plugin
 
 ## Módulos
 
-20 módulos de menú (`src/shell/nav.ts`) más «Mi cuenta»: Inicio, Pedidos, Disputas (pestañas Abiertas y Resueltas), Tickets de soporte, Reportes y abuso, Clientes, Profesionales, Pagos y escrow, Liquidaciones, Reembolsos, Conciliación Transbank, Finanzas, Reseñas, Catálogo, Notificaciones, Equipo y roles, Auditoría, Ajustes, Salud y monitoreo y Errores de la app. Tickets y Catálogo son de solo lectura.
+20 módulos de menú (`src/shell/nav.ts`) más «Mi cuenta», en el orden del trabajo: Inicio; Operación (Pedidos, Disputas, Tickets de soporte, Reportes y abuso); Personas (Clientes, Profesionales); Dinero (Pagos y escrow, Conciliación Transbank, Liquidaciones, Reembolsos, Finanzas); Contenido (Reseñas, Catálogo, Notificaciones); Empresa (Equipo y roles, Auditoría, Ajustes); Sistema (Salud y monitoreo, Errores de la app). Tickets y Catálogo son de solo lectura.
 
 ## Seguridad de las acciones
 
