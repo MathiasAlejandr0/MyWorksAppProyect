@@ -260,23 +260,6 @@ export function validarSugerenciaDocumento(raw: unknown): SugerenciaDocumento | 
   };
 }
 
-function unidadHash(semilla: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < semilla.length; i += 1) {
-    h ^= semilla.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  const positivo = h >>> 0;
-  return (positivo % 2000000 - 1000000) / 1000000;
-}
-
-/** Vector de 384 dimensiones, normalizado. No es semántico: gte-small lo reemplaza. */
-export function embeddingHash(texto: string): number[] {
-  const crudo = Array.from({ length: 384 }, (_, i) => unidadHash(`${texto}:${i}`));
-  const norma = Math.sqrt(crudo.reduce((sum, n) => sum + n * n, 0)) || 1;
-  return crudo.map((n) => Math.round((n / norma) * 1e6) / 1e6);
-}
-
 export function parsearJsonModelo(texto: string): unknown {
   const limpio = texto.trim().replace(/^```json\s*/i, "").replace(/```$/g, "").trim();
   const inicio = limpio.indexOf("{");

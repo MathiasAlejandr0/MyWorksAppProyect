@@ -1,17 +1,35 @@
--- Rellena embeddings provisionales (hash) de perfiles y solicitudes ya guardados.
--- La función embed con gte-small los reemplaza después.
+-- Encola perfiles y solicitudes que todavía no tienen embedding de gte-small.
+-- No escribe un vector falso. La función embed los completa cuando el modelo está.
 -- No ejecutar contra wxqrfcqifkfgawrnqmnj.
--- Requiere la migración 20261122210000.
 
-UPDATE public.trabajadores
-SET
-  embedding = privado.embedding_hash(left(btrim(coalesce(profesion, '') || ' ' || coalesce(descripcion, '')), 2000)),
-  embedding_origen = 'hash'
-WHERE embedding IS NULL;
+INSERT INTO public.ia_cola_embeddings (tabla, entidad_id, texto)
+SELECT
+  'trabajadores',
+  t.id_usuario::text,
+  left(btrim(coalesce(t.profesion, '') || ' ' || coalesce(t.descripcion, '')), 2000)
+FROM public.trabajadores t
+WHERE t.embedding IS NULL
+  AND btrim(coalesce(t.profesion, '') || coalesce(t.descripcion, '')) <> ''
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.ia_cola_embeddings c
+    WHERE c.tabla = 'trabajadores'
+      AND c.entidad_id = t.id_usuario::text
+      AND c.estado = 'pendiente'
+  );
 
-UPDATE public.trabajos
-SET
-  embedding = privado.embedding_hash(left(btrim(coalesce(descripcion, '')), 2000)),
-  embedding_origen = 'hash'
-WHERE embedding IS NULL
-  AND descripcion IS NOT NULL;
+INSERT INTO public.ia_cola_embeddings (tabla, entidad_id, texto)
+SELECT
+  'trabajos',
+  t.id::text,
+  left(btrim(coalesce(t.descripcion, '')), 2000)
+FROM public.trabajos t
+WHERE t.embedding IS NULL
+  AND btrim(coalesce(t.descripcion, '')) <> ''
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.ia_cola_embeddings c
+    WHERE c.tabla = 'trabajos'
+      AND c.entidad_id = t.id::text
+      AND c.estado = 'pendiente'
+  );

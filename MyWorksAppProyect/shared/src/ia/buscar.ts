@@ -64,16 +64,30 @@ function mapFila(row: Record<string, unknown>): WorkerWithProfile {
  * Intenta la RPC híbrida. Si no está o falla, usa el catálogo actual.
  * `respaldo` dice cuál de las dos respondió.
  */
+async function vectorConsulta(supabase: AppSupabase, texto: string): Promise<string | null> {
+  try {
+    const respuesta = await supabase.functions.invoke("embed", { body: { texto } });
+    const data = respuesta?.data as { embedding?: unknown; origen?: string } | null;
+    if (respuesta?.error || !data || data.origen !== "gte-small" || !Array.isArray(data.embedding)) return null;
+    if (data.embedding.length !== 384) return null;
+    return `[${data.embedding.join(",")}]`;
+  } catch {
+    return null;
+  }
+}
+
 export async function buscarProfesionales(
   supabase: AppSupabase,
   input: BusquedaHibridaInput,
 ): Promise<{ workers: WorkerWithProfile[]; respaldo: boolean; modo: string }> {
+  const embedding = input.q.trim() ? await vectorConsulta(supabase, input.q) : null;
   try {
     const rpc = await supabase.rpc("buscar_profesionales_hibrido", {
       p_q: input.q,
       p_lat: input.origin?.latitude ?? null,
       p_lng: input.origin?.longitude ?? null,
       p_categoria: input.categoria ?? null,
+      p_embedding: embedding,
       p_limit: input.limit ?? 20,
     });
     if (!rpc.error && Array.isArray(rpc.data)) {

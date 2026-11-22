@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   clasificarMensaje,
-  embeddingHash,
   enmascararParaExterno,
   puntajeHibrido,
   redactarPerfil,
@@ -91,11 +90,7 @@ describe("asistente", () => {
 });
 
 describe("búsqueda y documento", () => {
-  it("arma un embedding de 384 dimensiones y un puntaje entre 0 y 1", () => {
-    const vector = embeddingHash("gasfiter puerto montt");
-    assert.equal(vector.length, 384);
-    const norma = Math.sqrt(vector.reduce((sum, n) => sum + n * n, 0));
-    assert.ok(Math.abs(norma - 1) < 0.02);
+  it("el puntaje híbrido premia cercanía y nota sin inventar un vector", () => {
     const alto = puntajeHibrido({
       similitud: 0.9,
       distanciaKm: 1,

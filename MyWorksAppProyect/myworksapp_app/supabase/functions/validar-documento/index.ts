@@ -13,7 +13,7 @@ function esWebp(base64: string): boolean {
   }
 }
 
-Deno.serve(async (req) => {
+Deno.serve({ port: Number(Deno.env.get("PORT") || "8000") }, async (req) => {
   if (req.method === "OPTIONS") return jsonResponse(req, { ok: true });
   if (req.method !== "POST") return jsonResponse(req, { error: "Método no permitido" }, 405);
   const usuario = userClient(req);

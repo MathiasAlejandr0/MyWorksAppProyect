@@ -4,7 +4,6 @@ export {
   PESOS_BUSQUEDA,
   TIPOS_EVENTO,
   clasificarMensaje,
-  embeddingHash,
   enmascararParaExterno,
   puntajeHibrido,
   redactarPerfil,

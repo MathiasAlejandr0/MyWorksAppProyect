@@ -4,7 +4,7 @@ import { crearProveedor } from "../_shared/ia_proveedor.ts";
 import { allowRateDb } from "../_shared/rate_limit_db.ts";
 import { serviceClient, userClient } from "../_shared/supabase.ts";
 
-Deno.serve(async (req) => {
+Deno.serve({ port: Number(Deno.env.get("PORT") || "8000") }, async (req) => {
   if (req.method === "OPTIONS") return jsonResponse(req, { ok: true });
   if (req.method !== "POST") return jsonResponse(req, { error: "Método no permitido" }, 405);
   const { data: authData } = await userClient(req).auth.getUser();
