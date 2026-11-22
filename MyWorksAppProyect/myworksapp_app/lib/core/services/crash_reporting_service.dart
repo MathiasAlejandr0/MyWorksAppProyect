@@ -7,6 +7,7 @@ import '../database/supabase_db.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 import 'error_report_filter.dart';
+import 'error_stack_sanitizer.dart';
 
 /// Persiste errores en Supabase para revisión en el panel admin.
 class CrashReportingService {
@@ -76,7 +77,7 @@ class CrashReportingService {
       message: message,
       userId: supabase.auth.currentUser?.id,
       errorType: fatal ? 'fatal' : 'error',
-      stackTrace: stackTrace?.toString(),
+      stackTrace: stackForErrorLog(stackTrace),
       metadata: metadata,
       appVersion: _appVersion,
       platform: _platformLabel(),

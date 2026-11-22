@@ -38,13 +38,14 @@ class AppLogger {
 
   /// Log de error
   static void e(String message, [dynamic error, StackTrace? stackTrace]) {
-    instance.e(message, error: error, stackTrace: stackTrace);
-    
+    final stack = stackTrace ?? StackTrace.current;
+    instance.e(message, error: error, stackTrace: stack);
+
     // Enviar a Crashlytics si está disponible
     if (error != null && CrashReportingService.instance.isInitialized) {
       CrashReportingService.instance.recordError(
         error,
-        stackTrace,
+        stack,
         reason: message,
         fatal: false,
       );
@@ -53,17 +54,17 @@ class AppLogger {
 
   /// Log de error fatal
   static void f(String message, [dynamic error, StackTrace? stackTrace]) {
-    instance.f(message, error: error, stackTrace: stackTrace);
-    
+    final stack = stackTrace ?? StackTrace.current;
+    instance.f(message, error: error, stackTrace: stack);
+
     // Enviar a Crashlytics si está disponible
     if (error != null && CrashReportingService.instance.isInitialized) {
       CrashReportingService.instance.recordError(
         error,
-        stackTrace,
+        stack,
         reason: message,
         fatal: true,
       );
     }
   }
 }
-
