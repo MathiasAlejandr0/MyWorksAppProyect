@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html';
 
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Permisos de galería/fotos compatibles con Android 13+ e iOS.
@@ -8,7 +9,7 @@ class AppMediaPermissions {
 
   /// Permiso principal para leer imágenes de la galería.
   static Permission get galleryRead {
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       return Permission.photos;
     }
     return Permission.photos;
