@@ -405,7 +405,10 @@ Deno.serve(async (req) => {
         tbkUser: String(card.tbk_user),
         jobId,
         amountClp: Number(paymentRow.monto || amountClp),
-        payment: paymentRow,
+        payment: {
+          ...paymentRow,
+          id_orden_cambio: paymentRow.id_orden_cambio || changeOrderId,
+        },
       });
       schedulePaymentReceivedEmail(admin, String(charged.paymentId));
       return jsonResponse(req, {
