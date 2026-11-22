@@ -294,6 +294,14 @@ textarea { min-height: 88px; resize: vertical; }
 }
 
 .login-card { width: min(420px, 100%); }
+.login-card .totp-qr {
+  display: block;
+  margin: 0 auto;
+  background: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  image-rendering: pixelated;
+}
 
 .side-link {
   display: flex;

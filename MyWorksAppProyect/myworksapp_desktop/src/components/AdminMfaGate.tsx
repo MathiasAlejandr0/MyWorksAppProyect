@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/auth-store';
 import { supabase } from '../supabaseClient';
 import { Button } from '../ui/kit';
+import { makeScannableTotpQr } from '../lib/totpQr';
 
 /** Segundo factor TOTP obligatorio para entrar a la consola. */
 export function AdminMfaGate() {
@@ -42,7 +43,9 @@ export function AdminMfaGate() {
         return;
       }
       setFactorId(enrolled.data.id);
-      setQr(enrolled.data.totp.qr_code);
+      const qrSrc = await makeScannableTotpQr(enrolled.data.totp);
+      if (cancelled) return;
+      setQr(qrSrc);
     };
     void prepare();
     return () => {
@@ -83,7 +86,7 @@ export function AdminMfaGate() {
         >
           <h1>Segundo factor</h1>
           <p className="muted">La consola pide un código de tu aplicación de autenticación.</p>
-          {qr ? <img src={qr} alt="Código QR para configurar el segundo factor" width={180} height={180} /> : null}
+          {qr ? <img className="totp-qr" src={qr} alt="Código QR para configurar el segundo factor" width={240} height={240} /> : null}
           <label className="field">
             <span>Código de 6 dígitos</span>
             <input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value)} />
