@@ -6,6 +6,7 @@ import {
   type SavedCardStatus,
 } from '@myworksapp/shared';
 import { useDialogA11y } from '../hooks/useDialogA11y';
+import { AcademicInlineNote } from './AcademicInlineNote';
 
 export type CheckoutPayResult =
   | OneclickChargeResult
@@ -297,6 +298,7 @@ export function PaymentCheckoutModal({
               </p>
             ) : null}
 
+            <AcademicInlineNote />
             <button
               type="button"
               onClick={() => void handlePay()}
