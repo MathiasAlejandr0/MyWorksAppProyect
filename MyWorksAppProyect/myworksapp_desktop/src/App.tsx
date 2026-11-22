@@ -27,6 +27,7 @@ import {
   TicketsPage,
   UsuariosPage,
 } from './features/screens';
+import { SeguridadPage } from './features/seguridad';
 import {
   authDeepLinkNeedsPassword,
   beginAuthDeepLink,
@@ -78,6 +79,7 @@ function Gate() {
           <Route path="/equipo" element={<EquipoPage />} />
           <Route path="/auditoria" element={<AuditoriaPage />} />
           <Route path="/ajustes" element={<AjustesPage />} />
+          <Route path="/seguridad" element={<SeguridadPage />} />
           <Route path="/salud" element={<SaludPage />} />
           <Route path="/errores" element={<ErroresPage />} />
           <Route path="/cuenta" element={<CuentaPage />} />

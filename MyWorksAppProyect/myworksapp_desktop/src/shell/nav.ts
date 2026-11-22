@@ -26,6 +26,7 @@ export const NAV: NavItem[] = [
   { to: '/equipo', label: 'Equipo y roles', group: 'Empresa', allow: (p) => p.people },
   { to: '/auditoria', label: 'Auditoría', group: 'Empresa', allow: (p) => p.viewAudit },
   { to: '/ajustes', label: 'Ajustes', group: 'Empresa', allow: (p) => p.manageCatalog },
+  { to: '/seguridad', label: 'Seguridad', group: 'Sistema', allow: (p) => p.people },
   { to: '/salud', label: 'Salud y monitoreo', group: 'Sistema', allow: (p) => p.security },
   { to: '/errores', label: 'Errores de la app', group: 'Sistema', allow: (p) => p.viewErrors },
 ];

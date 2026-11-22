@@ -18,6 +18,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState('');
   const [idle, setIdle] = useState<'active' | 'warning' | 'expired'>('active');
   const [theme, setTheme] = useState(savedTheme);
+  const [navOpen, setNavOpen] = useState(false);
 
   useEffect(() => {
     let last = Date.now();
@@ -89,7 +90,8 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="shell">
-      <aside className="side">
+      <a className="skip-link" href="#contenido">Saltar al contenido</a>
+      <aside className={`side${navOpen ? ' is-open' : ''}`}>
         <NavLink to="/resumen" className="brand">
           <img src="/brand/mark.svg" alt="" />
           <strong>MyWorksApp</strong>
@@ -98,7 +100,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <div key={group.group}>
             <div className="side-group">{group.group}</div>
             {group.items.map((item) => (
-              <NavLink key={item.to} to={item.to} className={({ isActive }) => `side-link${isActive ? ' is-active' : ''}`}>
+              <NavLink key={item.to} to={item.to} className={({ isActive }) => `side-link${isActive ? ' is-active' : ''}`} onClick={() => setNavOpen(false)}>
                 <span>{item.label}</span>
               </NavLink>
             ))}
@@ -107,6 +109,9 @@ export function Shell({ children }: { children: ReactNode }) {
       </aside>
       <div className="workspace">
         <header className="topbar">
+          <button type="button" className="icon-btn nav-toggle" aria-label="Abrir menú" aria-expanded={navOpen} onClick={() => setNavOpen((value) => !value)}>
+            Menú
+          </button>
           <button type="button" className="btn btn-secondary search" onClick={() => setPalette(true)}>
             Buscar personas, pedidos, pagos o disputas · Ctrl K
           </button>
@@ -141,7 +146,7 @@ export function Shell({ children }: { children: ReactNode }) {
             La sesión se cerrará por inactividad en menos de 2 minutos. Mueve el cursor o usa el teclado para seguir.
           </p>
         ) : null}
-        <main className="content">{children}</main>
+        <main id="contenido" className="content">{children}</main>
       </div>
       {palette ? (
         <Dialog title="Buscar" onClose={() => setPalette(false)}>
