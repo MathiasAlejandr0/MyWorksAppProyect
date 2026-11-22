@@ -1,4 +1,7 @@
-﻿-- Con una disputa abierta el trabajo no avanza.
+﻿-- Versión 20261122230000. Antes compartía 20261120193000 con
+-- montos_redondeo_unico, y esa versión ya está aplicada: db push no
+-- ejecutaba este cambio y el trabajo quedaba trabado tras cancelar.
+-- Con una disputa abierta el trabajo no avanza.
 -- La parte cliente sí puede cancelar la solicitud si la disputa fue un error.
 -- Al cancelar, las disputas activas de ese trabajo quedan cerradas.
 CREATE OR REPLACE FUNCTION public.transicionar_trabajo(
