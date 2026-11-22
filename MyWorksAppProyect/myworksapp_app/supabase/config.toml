@@ -63,9 +63,9 @@ verify_jwt = true
 [functions.definir-clave-invitado]
 verify_jwt = false
 
-# Respaldo lógico. Exige JWT de administrador y no se despliega desde esta rama.
+# El cron no trae JWT. La función exige admin o x-respaldo-secret.
 [functions.consola-respaldo]
-verify_jwt = true
+verify_jwt = false
 
 # Local hasta que se publique en el proyecto (Authentication → Password).
 [auth]
