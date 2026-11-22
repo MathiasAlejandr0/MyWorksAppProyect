@@ -1,6 +1,9 @@
 import { asCoord, roundClp, transportExtraClp } from "./transport.ts";
 import { detailBuyOrder, freshBuyOrder } from "./buy_order.ts";
-import { openJobAfterHold } from "./open_job_after_hold.ts";
+import {
+  holdOptionsForPayment,
+  openJobAfterHold,
+} from "./open_job_after_hold.ts";
 import { serviceClient } from "./supabase.ts";
 import {
   oneclickAuthCode,
@@ -22,6 +25,7 @@ async function markHeld(
     buyOrder: string;
     detailOrder: string;
     authCode: string;
+    changeOrderId?: string | null;
   },
 ) {
   const now = new Date().toISOString();
@@ -43,7 +47,14 @@ async function markHeld(
     .eq("id", input.paymentId);
   if (error) throw new Error("No se pudo registrar el cobro.");
 
-  await openJobAfterHold(admin, input.jobId);
+  await openJobAfterHold(
+    admin,
+    input.jobId,
+    holdOptionsForPayment({
+      id: input.paymentId,
+      id_orden_cambio: input.changeOrderId,
+    }),
+  );
 }
 
 async function releaseClaim(admin: Admin, paymentId: string) {
@@ -75,15 +86,18 @@ export async function chargeInscribedCard(
       buy_order?: string | null;
       estado?: string | null;
       metodo_pago?: string | null;
+      id_orden_cambio?: string | null;
     };
   },
 ): Promise<{ paymentId: string; amount: number }> {
   const amount = Math.round(input.amountClp);
+  const holdOpts = holdOptionsForPayment(input.payment);
   if (
     input.payment.estado === "retenido" ||
     input.payment.estado === "autorizado" ||
     input.payment.estado === "liberado"
   ) {
+    await openJobAfterHold(admin, input.jobId, holdOpts);
     return { paymentId: input.payment.id, amount };
   }
 
@@ -98,6 +112,7 @@ export async function chargeInscribedCard(
         buyOrder: existing,
         detailOrder: detailBuyOrder(existing),
         authCode: oneclickAuthCode(priorExisting),
+        changeOrderId: holdOpts.changeOrderId,
       });
       return { paymentId: input.payment.id, amount };
     }
@@ -122,6 +137,7 @@ export async function chargeInscribedCard(
     throw new Error("No se pudo preparar el cobro.");
   }
   if (claim === "listo") {
+    await openJobAfterHold(admin, input.jobId, holdOpts);
     return { paymentId: input.payment.id, amount };
   }
 
@@ -134,6 +150,7 @@ export async function chargeInscribedCard(
       buyOrder,
       detailOrder: detail,
       authCode: oneclickAuthCode(prior),
+      changeOrderId: holdOpts.changeOrderId,
     });
     return { paymentId: input.payment.id, amount };
   }
@@ -149,6 +166,7 @@ export async function chargeInscribedCard(
       row?.estado === "autorizado" ||
       row?.estado === "liberado"
     ) {
+      await openJobAfterHold(admin, input.jobId, holdOpts);
       return { paymentId: input.payment.id, amount };
     }
     const current = String(row?.buy_order || "");
@@ -161,6 +179,7 @@ export async function chargeInscribedCard(
           buyOrder: current,
           detailOrder: detailBuyOrder(current),
           authCode: oneclickAuthCode(racing),
+          changeOrderId: holdOpts.changeOrderId,
         });
         return { paymentId: input.payment.id, amount };
       }
@@ -196,6 +215,7 @@ export async function chargeInscribedCard(
     buyOrder,
     detailOrder: detail,
     authCode: oneclickAuthCode(commit),
+    changeOrderId: holdOpts.changeOrderId,
   });
 
   return { paymentId: input.payment.id, amount };
