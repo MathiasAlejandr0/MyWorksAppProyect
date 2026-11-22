@@ -5,6 +5,7 @@ import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/ia/sugerencia_solicitud.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/database/repositories/worker_schedule_repository.dart';
 import '../../../../core/domain/booking_schedule.dart';
@@ -884,6 +885,13 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                       maxLines: 5,
                       validator: Validators.validateDescription,
                     ),
+                    if (enmascararParaExterno(_descriptionController.text).trim().length >= 10)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Sugerencia de la IA: el rango y la categoría se proponen al enviar el texto al asistente. Tú confirmas el pedido.',
+                        ),
+                      ),
                     const SizedBox(height: 16),
                     ListTile(
                       contentPadding: EdgeInsets.zero,

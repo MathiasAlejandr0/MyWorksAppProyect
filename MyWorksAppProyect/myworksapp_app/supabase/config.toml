@@ -67,6 +67,19 @@ verify_jwt = false
 [functions.consola-respaldo]
 verify_jwt = false
 
+# Búsqueda anónima. El límite va por IP y el texto se enmascara.
+[functions.embed]
+verify_jwt = false
+
+[functions.asistente-solicitud]
+verify_jwt = true
+
+[functions.moderar-mensaje]
+verify_jwt = true
+
+[functions.validar-documento]
+verify_jwt = true
+
 # Local hasta que se publique en el proyecto (Authentication → Password).
 [auth]
 minimum_password_length = 8

@@ -12,6 +12,7 @@ import '../../../../core/design_system/layout_utils.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/domain/worker_public_stats.dart';
+import '../../../../core/ia/sugerencia_solicitud.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
@@ -581,6 +582,24 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
             return null;
           },
         ),
+        if (_isEditing && redactarPerfil(_descriptionController.text).isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Sugerencia de la IA. Tú la aceptas o la editas.'),
+                Text(redactarPerfil(_descriptionController.text)),
+                TextButton(
+                  onPressed: () {
+                    _descriptionController.text = redactarPerfil(_descriptionController.text);
+                    setState(() {});
+                  },
+                  child: const Text('Usar esta redacción'),
+                ),
+              ],
+            ),
+          ),
         const SizedBox(height: 16),
         if (_isEditing)
           WorkerWorkZoneField(
