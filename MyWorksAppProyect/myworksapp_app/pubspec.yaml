@@ -59,7 +59,7 @@ dependencies:
   logger: ^2.0.2+1
   
   # Permisos
-  permission_handler: ^11.3.0
+  permission_handler: ^13.0.2
   
   # Compartir/Exportar
   share_plus: ^13.3.1
