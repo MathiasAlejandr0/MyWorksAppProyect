@@ -11,6 +11,7 @@ import { Badge, Button, EmptyState, ErrorState, SkeletonRows } from '../ui/kit';
 import { useToast } from '../ui/toast-store';
 import { asNum, asRows, asText } from './seguridad-model';
 import { SeguridadHerramientas } from './seguridad-herramientas';
+import { Banda } from './premium/Banda';
 
 type Accion =
   | { kind: 'umbral'; clave: string; valor: number }
@@ -105,6 +106,7 @@ export function SeguridadPage() {
         </div>
         <span className="muted nums">{panel.data ? `Actualizado ${formatDateTime(asText(data.generado_en, ''))}` : 'Esperando datos'}</span>
       </div>
+      <Banda seccion="seguridad" />
       {panel.isLoading ? <SkeletonRows /> : null}
       {panel.isError ? <ErrorState message="No se pudo leer el panel de seguridad." onRetry={() => void panel.refetch()} /> : null}
       <div className="tablist" role="tablist" aria-label="Seguridad" onKeyDown={(event) => moverPestana(event, tab, setTab)}>

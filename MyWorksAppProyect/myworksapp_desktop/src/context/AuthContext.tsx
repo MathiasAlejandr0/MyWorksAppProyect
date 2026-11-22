@@ -22,6 +22,7 @@ import { authDeepLinkPending, passwordSetupMarked } from '../lib/authCallback';
 import { CONSOLE_ACCESS_DENIED, CONSOLE_ROLES, canAccessDesktopHub } from '../authAccess';
 import { markTotpVerified } from '../lib/totp';
 import { supabase } from '../supabaseClient';
+import { capturaActiva } from '../features/premium/captura';
 
 function locationRequiresPassword(): boolean {
   if (typeof window === 'undefined') return false;
@@ -117,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [sessionNeedsMfa]);
 
   useEffect(() => {
+    if (capturaActiva()) return;
     let inFlight: Promise<void> | null = null;
     const run = () => {
       if (inFlight) return inFlight;
@@ -198,16 +200,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshProfile]);
 
   const value = useMemo(
-    () => ({
-      profile,
-      loading,
-      needsMfa,
-      mustSetPassword,
-      login,
-      logout,
-      completeMfa,
-      finishPasswordSetup,
-    }),
+    () => capturaActiva()
+      ? {
+          profile: {
+            id: '11111111-1111-1111-1111-111111111111',
+            name: 'Admin de prueba',
+            email: 'admin.consola@local.test',
+            role: 'administrador' as const,
+            accountStatus: 'activo' as const,
+          },
+          loading: false,
+          needsMfa: false,
+          mustSetPassword: false,
+          login,
+          logout,
+          completeMfa,
+          finishPasswordSetup,
+        }
+      : {
+          profile,
+          loading,
+          needsMfa,
+          mustSetPassword,
+          login,
+          logout,
+          completeMfa,
+          finishPasswordSetup,
+        },
     [profile, loading, needsMfa, mustSetPassword, login, logout, completeMfa, finishPasswordSetup],
   );
 

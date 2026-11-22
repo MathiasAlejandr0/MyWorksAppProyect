@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { EmptyState, ErrorState, SkeletonRows } from '../ui/kit';
 import { toCsv, downloadCsv } from '../lib/csv';
+import { capturaActiva } from './premium/captura';
+import { filasCaptura } from './premium/muestras';
 
 export interface PageResult<T> {
   rows: T[];
@@ -33,7 +35,16 @@ export function PagedTable<T extends { id: string }>({
   }, [search]);
   const query = useQuery({
     queryKey: [...queryKey, page, debounced],
-    queryFn: () => load(page, debounced),
+    queryFn: () => {
+      if (capturaActiva()) {
+        const rows = filasCaptura(String(queryKey[0])).filter((row) => {
+          if (!debounced) return true;
+          return JSON.stringify(row).toLowerCase().includes(debounced.toLowerCase());
+        }) as T[];
+        return { rows: rows.slice(page * pageSize, page * pageSize + pageSize), total: rows.length };
+      }
+      return load(page, debounced);
+    },
   });
   const rows = query.data?.rows ?? [];
   const total = query.data?.total ?? 0;

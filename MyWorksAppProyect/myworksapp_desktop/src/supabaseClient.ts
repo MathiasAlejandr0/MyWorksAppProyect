@@ -1,5 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@myworksapp/shared';
+import { clienteCaptura } from './captura/cliente';
+import { capturaActiva } from './features/premium/captura';
 
 const SUPABASE_URL =
   (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() ||
@@ -8,7 +10,7 @@ const SUPABASE_ANON_KEY =
   (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() ||
   'public-anon-placeholder';
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+const real = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -16,6 +18,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     flowType: 'pkce',
   },
 });
+
+export const supabase = (capturaActiva() ? clienteCaptura() : real) as SupabaseClient<Database>;
 
 export const supabaseConfigStatus = {
   urlConfigured: Boolean(

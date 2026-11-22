@@ -70,6 +70,8 @@ const LABELS: Record<string, string> = {
   cotizacion_seleccionada: 'Cotización elegida',
   esperando_aprobacion_cliente: 'Esperando conformidad',
   pausado_orden_cambio: 'Pausado por orden de cambio',
+  reembolsar: 'Devolver el pago',
+  liberar: 'Liberar al profesional',
   manual: 'Transferencia manual',
   khipu: 'Khipu',
   fintoc: 'Fintoc',
