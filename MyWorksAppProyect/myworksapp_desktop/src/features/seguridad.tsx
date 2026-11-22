@@ -10,6 +10,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { Badge, Button, EmptyState, ErrorState, SkeletonRows } from '../ui/kit';
 import { useToast } from '../ui/toast-store';
 import { asNum, asRows, asText } from './seguridad-model';
+import { AlertasIaPanel } from './alertas-ia';
 import { SeguridadHerramientas } from './seguridad-herramientas';
 
 type Accion =
@@ -243,6 +244,7 @@ export function SeguridadPage() {
         })}
       </article>
       ) : null}
+      {tab === 'alertas' ? <AlertasIaPanel /> : null}
       {tab === 'pruebas' || tab === 'defensa' || tab === 'respaldos' ? <SeguridadHerramientas tab={tab} /> : null}
       {tab === 'actividad' ? (
       <article className="panel stack">
@@ -300,6 +302,7 @@ const PESTANAS = [
   ['defensa', 'Defensa'],
   ['respaldos', 'Respaldos'],
   ['umbrales', 'Umbrales'],
+  ['alertas', 'Alertas IA'],
 ] as const;
 
 type Pestana = (typeof PESTANAS)[number][0];

@@ -1,0 +1,23 @@
+name: Anomalias IA
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  isolation-forest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Puntajes sobre datos sintéticos
+        env:
+          IA_ANOMALIAS_ACTIVAS: ${{ vars.IA_ANOMALIAS_ACTIVAS || '0' }}
+        run: |
+          python MyWorksAppProyect/scripts/ia/isolation_forest.py \
+            --entrada MyWorksAppProyect/scripts/ia/fixtures/eventos_sinteticos.csv \
+            --salida /tmp/alertas-ia.json
+          python -m unittest MyWorksAppProyect/scripts/ia/test_isolation_forest.py
