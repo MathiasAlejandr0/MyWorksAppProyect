@@ -1,3 +1,4 @@
+import '../../services/evento_service.dart';
 import '../models/job_cancellation_model.dart';
 import '../supabase_db.dart';
 
@@ -6,6 +7,7 @@ class JobCancellationRepository {
 
   Future<void> createCancellation(JobCancellationModel cancellation) async {
     await supabase.from(_table).insert(cancellation.toMap());
+    registrarEvento(tipo: 'cancelacion', entidadId: cancellation.jobId);
   }
 
   Future<JobCancellationModel?> getCancellationByJobId(String jobId) async {

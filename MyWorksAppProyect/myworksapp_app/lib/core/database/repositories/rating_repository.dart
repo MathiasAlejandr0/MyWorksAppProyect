@@ -1,3 +1,4 @@
+import '../../services/evento_service.dart';
 import '../models/rating_model.dart';
 import '../models/worker_review_model.dart';
 import '../supabase_db.dart';
@@ -21,6 +22,7 @@ class RatingRepository {
 
   Future<void> createRating(RatingModel rating) async {
     await supabase.from(_table).insert(rating.toMap());
+    registrarEvento(tipo: 'resena', entidadId: rating.jobId);
   }
 
   Future<RatingModel?> getRatingByJobId(

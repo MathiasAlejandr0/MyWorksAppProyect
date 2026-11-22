@@ -5,6 +5,7 @@ import '../database/models/dispute_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/app_error.dart';
 import '../utils/error_handler.dart';
+import 'evento_service.dart';
 import 'dispute_rules.dart';
 import 'payment_service.dart';
 
@@ -69,6 +70,7 @@ class DisputeService {
       );
 
       await _disputeRepository.createDispute(dispute);
+      registrarEvento(tipo: 'disputa', entidadId: jobId);
       // El cliente no escribe pagos. El commit de Webpay ya dejó el cobro retenido.
 
       AppLogger.i('Disputa abierta: ${dispute.id}');

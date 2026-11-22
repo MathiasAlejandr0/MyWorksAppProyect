@@ -49,7 +49,7 @@ describe('Acciones del cliente en la web', () => {
     await cancelJobAsClient(client, { jobId: 'j', userId: 'u', workerId: 'w', reason: 'Ya no lo necesito' });
     assert.deepEqual(
       calls.map((c) => `${c.kind}:${c.name}`),
-      ['fn:webpay-refund-cancellation', 'rpc:transicionar_trabajo', 'insert:cancelaciones_trabajo', 'insert:notificaciones'],
+      ['fn:webpay-refund-cancellation', 'rpc:transicionar_trabajo', 'insert:cancelaciones_trabajo', 'rpc:registrar_evento', 'insert:notificaciones'],
     );
   });
 

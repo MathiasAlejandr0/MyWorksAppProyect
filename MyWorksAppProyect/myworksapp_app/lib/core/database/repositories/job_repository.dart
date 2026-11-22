@@ -12,6 +12,7 @@ import '../../utils/worker_job_status.dart';
 import '../job_insert_policy.dart';
 import '../job_amount_hydrator.dart';
 import '../models/job_model.dart';
+import '../../services/evento_service.dart';
 import '../supabase_db.dart';
 
 class JobRepository {
@@ -27,6 +28,7 @@ class JobRepository {
     data['instantanea_precio'] = null;
     data['id_cotizacion_seleccionada'] = null;
     await supabase.from(_table).insert(data);
+    registrarEvento(tipo: 'contratacion', entidadId: job.id, categoria: job.serviceId);
     return job.id;
   }
 

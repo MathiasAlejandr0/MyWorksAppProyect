@@ -1,4 +1,5 @@
 import type { AppSupabase } from '../client';
+import { registrarEvento } from '../ia/buscar';
 import { edgeFunctionErrorMessage } from '../payments/edgeError';
 
 /**
@@ -70,6 +71,7 @@ export async function cancelJobAsClient(supabase: AppSupabase, input: CancelJobI
     motivo: reason.slice(0, 500),
     cancelado_en: now,
   });
+  await registrarEvento(supabase, { tipo: 'cancelacion', entidadId: input.jobId });
   if (input.workerId) {
     await supabase.from('notificaciones').insert({
       id: newId(),
@@ -122,7 +124,10 @@ export async function rateJobAsClient(supabase: AppSupabase, input: RateJobInput
     comentario: input.comment.trim() || null,
     creado_en: new Date().toISOString(),
   });
-  if (!error) return;
+  if (!error) {
+    await registrarEvento(supabase, { tipo: 'resena', entidadId: input.jobId });
+    return;
+  }
   if (error.code === '23505') throw new Error('Ya calificaste este trabajo.');
   throw new Error(
     rpcMessage(

@@ -17,6 +17,7 @@ import '../../../../core/domain/catalog_order.dart';
 import '../../../../core/domain/user_location_context.dart';
 import '../../../../core/database/repositories/worker_schedule_repository.dart';
 import '../../../../core/domain/weekly_schedule.dart';
+import '../../../../core/services/evento_service.dart';
 import '../../../../core/services/matching_service.dart';
 import '../../../../core/services/user_location_service.dart';
 import '../../../../core/domain/transport_surcharge.dart';
@@ -105,6 +106,14 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
     // Usar debounce para evitar búsquedas en cada tecla
     _debouncer.run(() {
       if (!mounted) return;
+      final consulta = _searchController.text.trim();
+      if (consulta.length >= 3) {
+        registrarEvento(
+          tipo: 'busqueda',
+          categoria: widget.serviceId,
+          metadata: {'largo': consulta.length},
+        );
+      }
       _filterWorkers();
     });
   }
@@ -431,6 +440,7 @@ class _WorkerListPageState extends ConsumerState<WorkerListPage> {
   }
 
   void _openWorker(WorkerModel worker) {
+    registrarEvento(tipo: 'click', entidadId: worker.userId, categoria: widget.serviceId);
     context.push(
       '${AppConstants.routeWorkerDetail}/${worker.userId}',
       extra: {'serviceId': widget.serviceId},
