@@ -30,17 +30,38 @@ Cada sección parte con indicadores calculados en `consola_premium_kpis` y al me
 
 La prioridad pedida (reseñas, pedidos y disputas) tiene lista, filtro, detalle y confirmación. El resto de las 13 secciones tiene la banda de indicadores y gráficos encima de la operación que ya existía.
 
+## Verificación en Postgres de Supabase
+
+Imagen `supabase/postgres:17.6.1.071` en la red host, PostgREST 14.3 y GoTrue v2.180.0. No se usó el proyecto `wxqrfcqifkfgawrnqmnj`.
+
+Orden aplicado con `ON_ERROR_STOP`:
+
+1. `auth.jwt()`, `auth.uid()` y las tablas `storage.buckets` y `storage.objects`, que el repo no crea.
+2. Baseline en inglés `schema_remote_dump.sql`.
+3. Las cinco migraciones anteriores a `20260322000001`.
+4. El rename a español `20260914000001` a `20260914000006`, antes del archivo de Webpay.
+5. El resto de las migraciones de `main`, y al final las dos de esta rama.
+
+Las dos migraciones nuevas se volvieron a ejecutar y terminaron sin error.
+
+Con datos sintéticos y `admin_requiere_aal2=1`:
+
+- Admin con `aal2`: `is_admin()` verdadero. `consola_premium_kpis` de reseñas devolvió 6 indicadores. `consola_premium_clasificar` marcó positiva la reseña de puntualidad y alerta grave la de amenaza. `consola_premium_resenas` con filtro negativas devolvió una fila, fuente `reglas_estrellas`. Prioridad, asignación y reasignación se guardaron.
+- Un cliente, aunque tenga `aal2`, recibe `forbidden` en `consola_premium_kpis`.
+- El admin con `aal1` no es admin y recibe `forbidden` al cambiar la prioridad.
+
+`origin/feat/ia-ml` se aplicó encima, sin pushear ese merge. Las nueve migraciones `20261122200000` a `20261122260000` corrieron con `ON_ERROR_STOP`. No comparten versión con `20261123010000` ni `20261123020000`. Después se volvieron a aplicar las dos de esta rama y los KPI y el listado de reseñas siguieron respondiendo. El valor de enum que agrega ia-ml es `revisar_moderacion`, distinto de los cuatro de esta rama.
+
+El listado de reseñas falló la primera vez: `puntaje` es `integer` y la función lo devolvía sin casteo. Quedó `f.puntaje::numeric`.
+
 ## Qué no quedó
 
-- No hay Docker ni CLI de Supabase en esta máquina, así que no se levantó el stack completo (`supabase start`). Las funciones se ejecutaron en PostgreSQL 16 local con un arnés que imita `rol_consola`, `is_admin`, `texto_a_timestamptz`, `disputa_esta_activa` y `comision_servicio_clp`, y con filas sintéticas. El arnés está en `myworksapp_desktop/scripts/validar-premium.sql`. No es una migración.
-- Las capturas y el video usan `?captura=local`, que solo existe con el servidor de desarrollo. Muestran datos sintéticos y un cartel de que no es producción y no mueve dinero. No hay una réplica con el historial real.
-- La rama `feat/ia-ml` no está en este entorno. La consola llama por nombre a `asistente-solicitud` y `moderar-mensaje`. Si no responden, lo dice y no decide. El sentimiento de reseñas sale de estrellas y reglas de texto (`reglas_estrellas`). No se envía RUT, teléfono ni correo: el texto se redacta antes.
-- No hay fecha de aceptación ni de término del pedido. Esos dos indicadores quedan en «Sin dato» a propósito. La retención a 30/90 días tampoco se inventa.
-- No hay columna de respuesta pública a una reseña. La tasa de respuesta queda en «Sin dato».
+- `supabase start` completo no se usó. Postgres, PostgREST y GoTrue sí. Realtime no entra en esta verificación.
+- No hay hora de aceptación ni de término del pedido, ni respuesta pública a una reseña, ni retención a 30/90 días. Esos indicadores quedan en «Sin dato».
 - No hay tablero Kanban persistente ni mapa geográfico. La bandeja es lista con plazo, y el lugar se ve como ranking de comunas.
-- `cargo` de esta máquina es 1.83 y no puede resolver dependencias que piden la edición 2024 de Rust. El código Rust no se modificó. `npm run build` (el paso de interfaz que usa Tauri antes de empaquetar) sí compiló.
-- El servidor MCP de Semgrep no estaba disponible y no hay CLI de Semgrep instalada. No se pudo correr el análisis sobre el diff.
-- Los pagos en vivo no se probaron contra Transbank. Las pruebas confirman el diálogo y se detienen. En la captura, el aviso es «no se envió dinero».
+- `feat/ia-ml` sigue sin merge. La consola llama por nombre a `asistente-solicitud` y `moderar-mensaje`. Si no responden, lo dice y no decide. El texto que saldría se redacta: sin RUT, teléfono ni correo.
+- Los pagos en vivo no se probaron contra Transbank. El E2E real confirma el diálogo de reembolso y comprueba que no aparece «Disputa actualizada», porque `webpay-resolve-dispute` no está en este entorno. No se movió dinero.
+- `?captura=local` sigue solo para el servidor de desarrollo. Las capturas de esta pasada salen de la sesión real, sin ese parámetro.
 
 ## Migraciones para aprobar
 
@@ -59,16 +80,20 @@ En el Postgres local, con datos sintéticos del 1 al 22 de noviembre de 2026, la
 ## Pruebas
 
 - Unitarias: `npm test` en `myworksapp_desktop`. 30 pruebas, 30 en verde. Incluyen clasificación, variación, redacción de RUT y la ventana virtual de 10.000 filas.
-- Fin de extremo: `npx playwright test e2e/premium.spec.ts e2e/recorrido.spec.ts`. 3 pruebas, 3 en verde. Cada sección carga en claro y oscuro, axe sin hallazgos de impacto crítico, pedidos filtra, disputas confirma `REEMBOLSAR` sin llamar a Transbank, reseñas filtra negativas y abre el detalle, y la tabla virtual pinta menos de 40 filas de 10.000 y llega a la fila 10000.
+- Playwright de interfaz con `?captura=local`: `e2e/premium.spec.ts` y `e2e/recorrido.spec.ts`, 3 de 3 en verde.
+- Playwright contra PostgREST y GoTrue locales, sin `?captura=local`: `e2e/real.spec.ts`, 1 de 1 en verde. Entra con TOTP (aal2), filtra reseñas negativas, busca un pedido, confirma el diálogo de reembolso sin que la disputa quede actualizada, y cancela «Liberar» en pagos.
 - `npm run build`: correcto.
+- `cargo check` en `src-tauri` con Rust 1.100: correcto.
+- `npm run tauri:build -- --debug`: correcto. Binario de depuración y paquetes deb, rpm y AppImage. No se publican.
+- Semgrep 1.186 `--config auto` sobre `myworksapp_desktop/src` y las dos migraciones nuevas: 0 hallazgos. El único aviso era un JWT de prueba; ahora se arma en el test y no queda escrito de corrido.
 
 ## Capturas
 
 `docs/pruebas/consola-premium/capturas/`
 
-Claro y oscuro: `inicio`, `pedidos`, `disputas`, `resenas`, `clientes`, `trabajadores`, `verificaciones`, `pagos`, `soporte`, `notificaciones`, `seguridad`, `reportes`, `auditoria`, `configuracion`, `sistema-diseno`.
+Regeneradas desde la sesión real con aal2, en claro y oscuro: `inicio`, `pedidos`, `disputas`, `resenas`, `clientes`, `trabajadores`, `verificaciones`, `pagos`, `soporte`, `notificaciones`, `seguridad`, `reportes`, `auditoria`, `configuracion`, `sistema-diseno`.
 
-Video: `docs/pruebas/consola-premium/capturas/recorrido.webm`.
+Video corto del recorrido de desarrollo: `docs/pruebas/consola-premium/capturas/recorrido.webm`.
 
 ## Aprobaciones que necesita Mathias
 
@@ -76,4 +101,4 @@ Video: `docs/pruebas/consola-premium/capturas/recorrido.webm`.
 2. Abrir el PR de `feat/consola-premium` hacia `main`. No se abrió.
 3. Decidir si `reasignar_pedido`, la prioridad y la asignación de disputas entran a producción. Quedan en bitácora y solo las puede un administrador.
 4. Confirmar que el sentimiento siga en reglas de estrellas hasta que `feat/ia-ml` esté en el entorno. La IA, cuando exista, solo propone.
-5. Aceptar que las capturas son de la captura local de desarrollo, no de la base de Puerto Montt.
+5. Aceptar que las capturas salen de la base local con datos sintéticos, no del historial de Puerto Montt.
