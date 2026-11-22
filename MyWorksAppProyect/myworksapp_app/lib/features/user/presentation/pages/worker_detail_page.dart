@@ -19,6 +19,7 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../core/domain/user_location_context.dart';
 import '../../../../core/domain/worker_highlight.dart';
 import '../../../../core/domain/worker_public_stats.dart';
+import '../../../../core/services/evento_service.dart';
 import '../../../../core/services/user_location_service.dart';
 import '../../../../core/utils/service_worker_mapper.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
@@ -29,6 +30,7 @@ import '../../../../core/widgets/design_system/loading_skeleton.dart';
 import '../../../../core/widgets/portfolio_media_tile.dart';
 import '../../../../core/widgets/portfolio_media_viewer.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
+import '../widgets/parecidos_ia.dart';
 import '../widgets/worker_reviews_section.dart';
 import '../widgets/worker_search_map.dart';
 import '../../../../core/utils/plural.dart';
@@ -63,6 +65,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
   @override
   void initState() {
     super.initState();
+    registrarEvento(tipo: 'vista_perfil', entidadId: widget.workerId, categoria: widget.serviceId);
     _loadWorkerDetails();
   }
 
@@ -227,6 +230,8 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
                     reviews: _reviews,
                     averageRating: _worker!.rating,
                   ),
+                  const SizedBox(height: AppSpacing.md),
+                  ParecidosIa(workerId: widget.workerId),
                 ],
               ),
             ),

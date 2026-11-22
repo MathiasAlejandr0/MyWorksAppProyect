@@ -44,6 +44,8 @@ import {
   fetchPaymentStatus,
   fetchServiceByCategory,
   fetchWorkersCatalog,
+  buscarProfesionales,
+  registrarEvento,
   fetchWorkerFreeSlots,
   formatBookingSlotLabel,
   fetchCategoriesWithPros,
@@ -260,6 +262,7 @@ export function App() {
   const [serviceMatch, setServiceMatch] = useState<ServiceMatch | null>(null);
 
   const [isSearching, setIsSearching] = useState(false);
+  const [notaBusqueda, setNotaBusqueda] = useState('');
 
   const [selectedWorker, setSelectedWorker] = useState<SearchWorker | null>(null);
   const [clientLocation, setClientLocation] = useState<MapSite | null>(null);
@@ -882,9 +885,24 @@ export function App() {
         }),
 
         queryClient.fetchQuery({
-          queryKey: queryKeys.workersByCategory(meta.category, catalogOrigin),
-          queryFn: () =>
-            fetchWorkersCatalog(supabase, { category: meta.category, origin: catalogOrigin }),
+          queryKey: [...queryKeys.workersByCategory(meta.category, catalogOrigin), text],
+          queryFn: async () => {
+            const hibrido = await buscarProfesionales(supabase, {
+              q: text,
+              categoria: meta.category,
+              origin: catalogOrigin,
+            });
+            void registrarEvento(supabase, {
+              tipo: 'busqueda',
+              categoria: meta.category,
+              metadata: { respaldo: hibrido.respaldo, modo: hibrido.modo },
+            });
+            if (!hibrido.respaldo) {
+              return { workers: hibrido.workers, nextCursor: null, notaIa: 'Búsqueda híbrida. Si falla, volvemos al catálogo.' };
+            }
+            const page = await fetchWorkersCatalog(supabase, { category: meta.category, origin: catalogOrigin });
+            return { ...page, notaIa: 'Catálogo habitual: la búsqueda híbrida no respondió.' };
+          },
           staleTime: CATALOG_STALE_MS,
         }),
 
@@ -893,9 +911,7 @@ export function App() {
       setSelectedServiceId(service?.id ?? null);
 
       const workers: SearchWorker[] = await withScheduleAvailability(page.workers);
-
-
-
+      setNotaBusqueda('notaIa' in page ? String(page.notaIa ?? '') : '');
       setServiceMatch({ ...meta, workers, nextCursor: page.nextCursor });
 
     } catch {
@@ -965,6 +981,16 @@ export function App() {
     setSelectedWorker(worker);
     setBookingError(null);
     setScheduledAt(null);
+    void registrarEvento(supabase, {
+      tipo: 'click',
+      entidadId: worker.id,
+      categoria: worker.category,
+    });
+    void registrarEvento(supabase, {
+      tipo: 'vista_perfil',
+      entidadId: worker.id,
+      categoria: worker.category,
+    });
   };
 
   const liveSite = clientLocation;
@@ -1627,6 +1653,7 @@ export function App() {
           workers={listedWorkers}
 
           isLoading={isSearching}
+          notaIa={notaBusqueda}
 
           profileName={profile?.name}
 

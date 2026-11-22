@@ -24,6 +24,8 @@ export * from './emailDomain';
 export * from './avatar';
 export * from './plural';
 export * from './searchText';
+export * from './ia';
+export { buscarProfesionales, registrarEvento } from './ia/buscar';
 export type {
   Profile,
   ServiceRow,

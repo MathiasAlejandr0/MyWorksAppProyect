@@ -15,6 +15,8 @@ import { supabase } from '../supabaseClient';
 import { BrandLogo } from './BrandLogo';
 import { profileLabel } from '../profileLabel';
 import { sortSearchWorkers, type CatalogSort } from '../catalogSort';
+import { AsistenteSolicitud } from './AsistenteSolicitud';
+import { Parecidos } from './Parecidos';
 
 const PremiumSearchMap = lazy(() =>
   import('./PremiumSearchMap').then((m) => ({ default: m.PremiumSearchMap })),
@@ -62,6 +64,7 @@ interface SearchResultsViewProps {
   onSearchAddress?: (query: string) => Promise<unknown>;
   locating?: boolean;
   locatingAddress?: boolean;
+  notaIa?: string;
 }
 
 function clp(amount: number): string {
@@ -96,6 +99,7 @@ export function SearchResultsView({
   onSearchAddress,
   locating = false,
   locatingAddress = false,
+  notaIa = '',
 }: SearchResultsViewProps) {
   const displayQuery = query.trim() || 'profesionales';
   const [addressQuery, setAddressQuery] = useState('');
@@ -176,6 +180,7 @@ export function SearchResultsView({
               </button>
             )}
           </div>
+          <AsistenteSolicitud texto={query} />
         </div>
 
         <div className="search-view-nav-right">
@@ -308,6 +313,7 @@ export function SearchResultsView({
             </div>
           ) : (
             <>
+            {notaIa ? <p className="demo-banner" role="status">{notaIa}</p> : null}
             {demoMode ? <p className="demo-banner" role="status">Datos de demostración</p> : null}
             <div className="search-results-grid">
               {visibleWorkers.map((w) => (
@@ -363,6 +369,7 @@ export function SearchResultsView({
                 </article>
               ))}
             </div>
+            <Parecidos workerId={selectedWorkerId} />
             </>
           )}
 

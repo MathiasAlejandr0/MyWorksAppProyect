@@ -2845,3 +2845,12 @@ a.pro-card { text-decoration: none; color: inherit; }
 @media (max-width: 720px) {
   .checkout-card-v2 .checkout-v2-pay { position: sticky; bottom: 0; z-index: 2; }
 }
+.asistente-ia { margin-top: 8px; }
+.asistente-ia-card, .parecidos {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-dark);
+  border-radius: 12px;
+  background: var(--bg-surface-dark);
+}
+.asistente-ia-card strong { display: block; margin-bottom: 4px; }
