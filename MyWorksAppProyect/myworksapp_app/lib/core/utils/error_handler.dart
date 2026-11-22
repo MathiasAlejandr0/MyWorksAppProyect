@@ -5,7 +5,6 @@ import 'package:myworksapp/utils/content_filter.dart';
 
 import '../theme/app_colors.dart';
 import '../exceptions/auth_exceptions.dart';
-import '../services/crash_reporting_service.dart';
 import 'app_error.dart';
 import 'app_logger.dart';
 
@@ -139,8 +138,9 @@ class ErrorHandler {
   }) {
     final text = userMessageFor(error, fallback: fallback);
     if (error is! AppError && error is! AppAuthException) {
+      // AppLogger.e ya lo envía a CrashReportingService; llamarlo otra vez
+      // dejaba cada error duplicado en registros_error_app.
       AppLogger.e('Error mostrado como mensaje amigable', error, stackTrace);
-      CrashReportingService.instance.recordError(error, stackTrace);
     }
     return text;
   }
