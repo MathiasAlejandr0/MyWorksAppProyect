@@ -63,6 +63,10 @@ verify_jwt = true
 [functions.definir-clave-invitado]
 verify_jwt = false
 
+# Respaldo lógico. Exige JWT de administrador y no se despliega desde esta rama.
+[functions.consola-respaldo]
+verify_jwt = true
+
 # Local hasta que se publique en el proyecto (Authentication → Password).
 [auth]
 minimum_password_length = 8

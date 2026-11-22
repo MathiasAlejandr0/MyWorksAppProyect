@@ -1,6 +1,8 @@
 import { abandonedCheckoutUpdate } from "../_shared/abandon_payment.ts";
 import { assessWebpayCommit } from "../_shared/commit_guard.ts";
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { pagosPausados } from "../_shared/defensa.ts";
+import { killSwitchResponse } from "../_shared/kill_switch.ts";
 import {
   paymentHoldTransitioned,
   shouldIssueGuestPasswordTicket,
@@ -120,6 +122,9 @@ Deno.serve(async (req) => {
     });
 
     const admin = serviceClient();
+    if (await pagosPausados(admin)) {
+      return jsonResponse(req, killSwitchResponse(), 503);
+    }
 
     if (!tokenWs && tbkToken) {
       const { data: abandoned } = await admin

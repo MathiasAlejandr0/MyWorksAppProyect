@@ -2,6 +2,7 @@ import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
 import { scheduleRefundEmail } from "../_shared/payment_mail.ts";
 import { refundHeldPaymentOnce } from "../_shared/refund_once.ts";
 import { serviceClient } from "../_shared/supabase.ts";
+import { pagosPausados } from "../_shared/defensa.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { publicErrorMessage } from "../_shared/safe_error.ts";
 
@@ -28,6 +29,9 @@ Deno.serve(async (req) => {
 
   try {
     const admin = serviceClient();
+    if (await pagosPausados(admin)) {
+      return jsonResponse(req, killSwitchResponse(), 503);
+    }
     const { data, error } = await admin.rpc("resolver_soporte_automatico");
     if (error) {
       return jsonResponse(req, { error: publicErrorMessage(error, "No se pudo resolver el soporte") }, 409);
