@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -130,7 +131,7 @@ class _PortfolioImagePage extends StatelessWidget {
       );
     }
 
-    if (PortfolioMediaResolver.isLocalFile(imagePath)) {
+    if (PortfolioMediaResolver.isLocalFile(imagePath) && !kIsWeb) {
       return Image.file(
         File(imagePath),
         fit: BoxFit.contain,
@@ -187,8 +188,10 @@ class _PortfolioVideoPageState extends State<_PortfolioVideoPage> {
         controller = VideoPlayerController.asset(path);
       } else if (PortfolioMediaResolver.isNetwork(path)) {
         controller = VideoPlayerController.networkUrl(Uri.parse(path));
-      } else {
+      } else if (!kIsWeb) {
         controller = VideoPlayerController.file(File(path));
+      } else {
+        throw UnsupportedError('Local video files are not supported on web');
       }
 
       await controller.initialize();

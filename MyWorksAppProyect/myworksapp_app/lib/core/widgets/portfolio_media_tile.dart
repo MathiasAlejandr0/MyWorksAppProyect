@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -65,7 +66,7 @@ class PortfolioMediaTile extends StatelessWidget {
                   placeholder: (_, __) => _placeholder(),
                   errorWidget: (_, __, ___) => _placeholder(),
                 )
-              else if (_isLocalFile)
+              else if (_isLocalFile && !kIsWeb)
                 Image.file(
                   File(_thumbnailPath),
                   fit: BoxFit.cover,

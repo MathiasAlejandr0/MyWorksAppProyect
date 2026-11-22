@@ -1,5 +1,8 @@
+import 'dart:io' if (dart.library.html) 'dart:html';
+
+import 'package:flutter/foundation.dart';
+
 import '../config/demo_free_media.dart';
-import 'dart:io';
 
 /// Resuelve rutas de portafolio para miniatura y reproducción.
 class PortfolioMediaResolver {
@@ -44,9 +47,14 @@ class PortfolioMediaResolver {
   static bool isAsset(String path) => path.startsWith('assets/');
 
   static bool isLocalFile(String path) {
+    if (kIsWeb) return false;
     if (isNetwork(path) || path.startsWith('demo:') || isAsset(path)) {
       return false;
     }
-    return File(path).existsSync();
+    try {
+      return File(path).existsSync();
+    } catch (_) {
+      return false;
+    }
   }
 }

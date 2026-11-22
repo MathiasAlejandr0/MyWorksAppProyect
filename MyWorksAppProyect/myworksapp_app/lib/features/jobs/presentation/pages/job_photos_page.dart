@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -431,12 +432,35 @@ class _EvidenceThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (signedUrl != null) {
-      return Image.network(signedUrl!, fit: BoxFit.cover);
+      return Image.network(
+        signedUrl!,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return const ColoredBox(
+            color: AppColors.grayDark,
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.brandOrange,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) => const ColoredBox(
+          color: AppColors.grayDark,
+          child: Icon(Icons.broken_image, color: Colors.white),
+        ),
+      );
     }
-    if (!EvidenceStoragePath.isStoragePath(path)) {
-      final file = File(path);
-      if (file.existsSync()) {
-        return Image.file(file, fit: BoxFit.cover);
+    if (!kIsWeb && !EvidenceStoragePath.isStoragePath(path)) {
+      try {
+        final file = File(path);
+        if (file.existsSync()) {
+          return Image.file(file, fit: BoxFit.cover);
+        }
+      } catch (_) {
+        // Fall through to placeholder
       }
     }
     return const ColoredBox(

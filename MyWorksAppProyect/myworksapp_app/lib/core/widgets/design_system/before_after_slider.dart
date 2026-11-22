@@ -92,6 +92,21 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
                         child: Image.network(
                           widget.afterImageUrl,
                           fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: AppColors.brandOrangeSoft,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  color: AppColors.brandOrange,
+                                ),
+                              ),
+                            );
+                          },
                           errorBuilder: (context, error, stackTrace) => Container(
                             color: AppColors.brandOrangeSoft,
                             child: const Center(
@@ -127,6 +142,21 @@ class _BeforeAfterSliderState extends State<BeforeAfterSlider> {
                               child: Image.network(
                                 widget.beforeImageUrl,
                                 fit: BoxFit.cover,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    color: AppColors.grayBorder,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                        color: AppColors.brandNavy,
+                                      ),
+                                    ),
+                                  );
+                                },
                                 errorBuilder: (context, error, stackTrace) => Container(
                                   color: AppColors.grayBorder,
                                   child: const Center(
