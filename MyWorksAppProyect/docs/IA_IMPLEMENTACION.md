@@ -39,37 +39,68 @@ No corren solas en producción. Timestamps posteriores a `20261122190000`.
 | `20261122230100_ia_moderacion_enum.sql` | Valor de bitácora `revisar_moderacion` |
 | `20261122230200_ia_moderacion_revision.sql` | Listar y revisar la cola. No borra el mensaje |
 | `20261122240000_ia_fraude.sql` | Reglas (reseñas, huella, login, disputas, cuenta y retiro), bandera del Isolation Forest, cron cada 15 min |
+| `20261122250000_ia_embeddings_sin_hash.sql` | Quita el vector hash. Sin gte-small el embedding queda null y el texto sigue en la cola |
+| `20261122260000_ia_fraude_liquidacion_uuid.sql` | La regla de retiro compara `liquidaciones.id_trabajador` uuid y `creado_en` timestamptz |
 
 ## Funciones
 
 | Función | Rol |
 | --- | --- |
-| `embed` | gte-small con `Supabase.ai.Session`. Si el modelo no está, hash local. No llama a una API de pago |
+| `embed` | gte-small con `Supabase.ai.Session`. Si el modelo no está, responde 503 y no inventa un vector |
 | `asistente-solicitud` | JSON de categoría, urgencia, rango y preguntas. Gemini si hay `GEMINI_API_KEY`. Ollama si `OLLAMA_URL`. Si no, mock |
 | `moderar-mensaje` | Reglas primero. El modelo solo opina en los casos `dudoso` |
 | `validar-documento` | Visión de Gemini sobre la foto ya recortada. Sin el campo `rut`. Guarda `sugerencia_validacion` |
 
-Secretos solo en el entorno o en secrets de Supabase: `GEMINI_API_KEY`, `OLLAMA_URL`, `IA_PROVEEDOR`, `IA_EMBED_PROVEEDOR`, `EMBED_INTERNO_SECRET`. El código no trae claves.
+Secretos solo en el entorno o en secrets de Supabase: `GEMINI_API_KEY`, `OLLAMA_URL`, `IA_PROVEEDOR`, `EMBED_INTERNO_SECRET`. El código no trae claves.
 
 ## Cómo probar en local
 
 1. Supabase local (no el proyecto `wxqrfcqifkfgawrnqmnj`).
 2. `supabase db reset` dentro de `myworksapp_app`, o aplicar las migraciones en orden.
 3. No correr `scripts/demo/seed_historial_puerto_montt.sql`.
-4. Embeddings provisionales: `psql "$DATABASE_URL" -f scripts/ia/backfill_embeddings.sql`.
-5. Para gte-small, desplegar `embed` en el stack local. Para el asistente sin Gemini: no definas la clave. Para Ollama: `IA_PROVEEDOR=ollama` y `OLLAMA_URL=http://127.0.0.1:11434`.
-6. Tests: `npm test` en `shared` y en `myworksapp_desktop`. En la app, `flutter test test/ia_ml_test.dart`. Python: `python3 -m unittest scripts/ia/test_isolation_forest.py`.
-7. Comparación del catálogo sin Docker: `node scripts/ia/bench_catalogo.mjs`. Con k6: `node scripts/ia/bench_http.mjs` y `k6 run -e RUTA=antes scripts/load/k6/catalogo-mv.js`, luego `RUTA=despues`.
+4. Encolar textos sin vector: `psql "$DATABASE_URL" -f scripts/ia/backfill_embeddings.sql`. No escribe un embedding.
+5. gte-small corre dentro del Edge Runtime (`edge-runtime`), no en Deno pelado. El asistente sin Gemini usa el mock. Ollama: `IA_PROVEEDOR=ollama` y `OLLAMA_URL=http://127.0.0.1:11434`.
+6. k6 real: `scripts/load/k6/catalogo-real.js` contra PostgREST, con `K6_URL` y `K6_JWT`.
 
-En esta máquina no hay Docker, así que no se levantó Supabase local ni se tocó producción. El k6 (20 VU, 20 s, 2.000 peticiones, 0 errores) pegó a un servidor que imita el patrón: `/antes` recalcula por profesional y `/despues` lee el agregado.
+## Resultados locales (22-nov-2026)
 
-| Ruta | mediana | p95 |
-| --- | --- | --- |
-| antes | 0,96 ms | 2,10 ms |
-| después | 0,69 ms | 1,47 ms |
+Postgres 17.6 de la imagen `supabase/postgres:17.6.1.071`, con `vector` y `pg_cron`. PostgREST 14.3, pool de 10. 801 profesionales sintéticos de electricidad, 1.602 trabajos completados y 1.602 reseñas. No se usó el proyecto `wxqrfcqifkfgawrnqmnj`.
 
-El microbenchmark de 1.000 profesionales dio 0,25 ms contra 0,11 ms, con los mismos 20 resultados. En Postgres el ahorro es mayor: la función deja de ejecutar `stats_profesional()` por cada fila.
-8. Consola: pestaña **Alertas IA** y ruta **Moderación**. Capturas de la vista fija: `VITE_IA_PREVIEW=1 npm run dev` en el escritorio.
+El `supabase start` no llegó a quedar en pie: la red bridge de Docker no deja que un contenedor hable con otro, y el runtime de Realtime no conectaba. El Postgres, PostgREST y GoTrue se levantaron en la red host. Las migraciones se aplicaron con `psql` y `ON_ERROR_STOP`.
+
+El orden de archivos del repo no recrea solo el esquema: los primeros asumen tablas que el baseline crea después, y `20260322000001` usa `pagos` antes del rename de septiembre. Para llegar a cero errores se aplicó el baseline, después el rename, y el resto en orden. Hicieron falta objetos que el repo no crea: `auth.jwt()`, `storage.buckets` y `storage.objects`, y columnas que el baseline no trae (`tickets_soporte.estado`, `codigos_restablecimiento.usado`). `is_admin()` se creó vacío y las migraciones posteriores lo reemplazaron. Al final, los 142 archivos más `20261122250000` y `20261122260000` quedaron aplicados.
+
+Comprobado en esa base:
+
+- `refrescar_mv_stats_profesional` llenó 801 filas. El catálogo devolvió 20.
+- `buscar_profesionales_hibrido('enchufe', ...)` devolvió 10 filas en modo `lexico` (no había vector).
+- `profesionales_parecidos` devolvió 4.
+- Un mensaje con insulto se insertó y quedó en `cola_moderacion` con motivo `insulto` y estado `pendiente`. El mensaje sigue en `mensajes`.
+- `evaluar_alertas_ia` abrió `ia_rafaga_resenas` (el cliente sintético cargó las reseñas).
+- Un usuario inserta su evento y no lee el de otro. Con `admin_requiere_aal2=1`, el admin en aal1 recibe `forbidden` en `consola_alertas_ia` y en `consola_revisar_moderacion`. Con aal2, `is_admin()` es verdadero y lee las alertas.
+- No queda la función `embedding_hash`. Un alta deja `embedding` null y una fila en `ia_cola_embeddings`.
+
+k6 (`catalogo-real.js`, rampa 50→300 VU, 2 min 45 s, solo `listar_profesionales_catalogo`, think 0,1 s). El p95 de 10 s en el antes es el tope de la espera, no una respuesta útil.
+
+| VU | Antes p50 | Antes p95 | Después p50 | Después p95 |
+| --- | --- | --- | --- | --- |
+| ~50 | 883 ms | 6,7 s | 16 ms | 88 ms |
+| ~100 | 3,0 s | 10 s | 115 ms | 532 ms |
+| ~150 | 4,5 s | 10 s | 240 ms | 1,1 s |
+| ~200 | 6,5 s | 10 s | 358 ms | 1,6 s |
+| ~280 | 8,6 s | 10 s | 512 ms | 2,4 s |
+| ~300 | 9,7 s | 10 s | 579 ms | 2,7 s |
+
+Antes: 4.924 peticiones, 27,9 % de error. Se degrada ya cerca de 50 VU y el p95 queda pegado al tope desde unos 100 VU. Después: 49.930 peticiones, 0 % de error. Sube con los VU por el pool de 10, y no se cae a 300.
+
+gte-small sí corrió en el Edge Runtime local (`public.ecr.aws/supabase/edge-runtime:v1.70.0`). `POST /` de `embed` respondió `origen: gte-small` y un vector de 384. En Deno pelado, sin `Supabase.ai`, la misma función responde 503 y `embedding: null`.
+
+Curl contra las funciones servidas con Deno, JWT de GoTrue local:
+
+- `embed` sin apikey: 401. Sin modelo: 503, sin vector.
+- `asistente-solicitud` sin sesión: 401. Sin consentimiento no se usó; con consentimiento y mock: 200, gasfitería, urgencia alta. Tras 20 llamadas: 429. Un Ollama falso que devolvió categoría `magia`: 422.
+- `moderar-mensaje` con insulto: 200, motivo `insulto`, sin borrar.
+- `validar-documento` con campo `rut`: 400. Con WebP recortado y sin RUT: 200, sugerencia, no aprueba.
 
 ## Costo
 

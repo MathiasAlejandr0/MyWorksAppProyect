@@ -13,7 +13,7 @@ Nada de esto se entrena con RUT ni con datos que identifiquen a una persona. El 
 - `eventos` de tipo `busqueda`, `click`, `vista_perfil` y `contratacion`, con `categoria` y `comuna`.
 - `mv_stats_profesional`: nota, trabajos, tasa de cancelación, tiempo de respuesta y disputas.
 - Distancia que ya calcula `buscar_profesionales_hibrido`.
-- Embedding del perfil, cuando `embedding_origen` sea `gte-small` y no el hash provisional.
+- Embedding del perfil, solo cuando `embedding_origen` es `gte-small`. Si el modelo no corrió, la columna está vacía.
 
 **Etiqueta.** Hubo contratación después del click, en la misma sesión o en 7 días.
 
@@ -44,6 +44,6 @@ Nada de esto se entrena con RUT ni con datos que identifiquen a una persona. El 
 ## Qué mirar antes de empezar
 
 1. Volumen de `eventos` por tipo, sin datos personales.
-2. Porcentaje de embeddings `gte-small` frente a `hash`.
+2. Porcentaje de perfiles con embedding `gte-small`. El resto está en null, en la cola.
 3. Que `mv_stats_profesional` se refresque cada hora.
 4. Consentimiento vigente y un conjunto anonimizado aparte del de producción.
