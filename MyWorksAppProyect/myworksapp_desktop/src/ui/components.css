@@ -297,13 +297,17 @@ textarea { min-height: 88px; resize: vertical; }
 
 .side-link {
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   color: var(--text-main);
   text-decoration: none;
 }
+
+.side-link svg { flex: none; }
+.side-link span { min-width: 0; }
 
 .side-link.is-active { background: var(--bg-elevated); }
 .side-group { margin: 16px 0 8px; font-size: 12px; color: var(--text-muted); }

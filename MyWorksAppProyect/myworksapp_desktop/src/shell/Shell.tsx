@@ -99,6 +99,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="side-group">{group.group}</div>
             {group.items.map((item) => (
               <NavLink key={item.to} to={item.to} className={({ isActive }) => `side-link${isActive ? ' is-active' : ''}`}>
+                <item.icon size={18} aria-hidden="true" />
                 <span>{item.label}</span>
               </NavLink>
             ))}
