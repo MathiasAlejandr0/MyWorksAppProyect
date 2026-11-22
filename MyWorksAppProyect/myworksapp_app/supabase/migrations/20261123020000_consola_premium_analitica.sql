@@ -1153,7 +1153,7 @@ BEGIN
   )
   SELECT
     f.id::text,
-    f.puntaje,
+    f.puntaje::numeric,
     left(f.comentario, 600),
     f.estado_revision,
     f.clase ->> 'sentimiento',
