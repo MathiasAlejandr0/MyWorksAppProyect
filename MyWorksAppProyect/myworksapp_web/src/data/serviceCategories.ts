@@ -1,5 +1,6 @@
 /** Catálogo completo de oficios My Works App (web). */
 
+/** Helper para rutas de imágenes locales en /categories/ */
 const local = (name: string) => `/categories/${name}.webp`;
 
 export type ServiceCategory = {
@@ -23,7 +24,7 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'electricidad',
     title: 'Electricidad',
     subtitle: 'Instalaciones, reparaciones y más',
-    photo: local('electricidad'),
+    photo: '/categories/electricidad.webp',
     searchQuery: 'electricidad',
   },
   {
@@ -51,14 +52,14 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'pintura',
     title: 'Pintura',
     subtitle: 'Interiores y exteriores',
-    photo: local('pintura'),
+    photo: '/categories/pintura.webp',
     searchQuery: 'pintura',
   },
   {
     id: 'jardineria',
     title: 'Jardinería',
     subtitle: 'Poda, riego y mantención',
-    photo: local('jardineria'),
+    photo: '/categories/jardineria.webp',
     searchQuery: 'jardinería',
   },
   {
