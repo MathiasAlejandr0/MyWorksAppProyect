@@ -1,4 +1,5 @@
 import { corsHeadersFor, jsonResponse } from "../_shared/cors.ts";
+import { ipBloqueada, pagosPausados } from "../_shared/defensa.ts";
 import { schedulePaymentReceivedEmail } from "../_shared/payment_mail.ts";
 import { isKillSwitchOn, killSwitchResponse } from "../_shared/kill_switch.ts";
 import { chargeInscribedCard } from "../_shared/oneclick_charge.ts";
@@ -304,6 +305,9 @@ Deno.serve(async (req) => {
 
     const ip = clientIp(req);
     const admin = serviceClient();
+    if (!polling && (await pagosPausados(admin) || await ipBloqueada(admin, ip))) {
+      return jsonResponse(req, killSwitchResponse(), 503);
+    }
     if (!(await allowRateDb(admin, `oneclick${polling ? ":status" : ""}:ip:${ip}`, polling ? 240 : 20, 60_000))) {
       return jsonResponse(req, { error: rateLimitExceededMessage() }, 429);
     }
