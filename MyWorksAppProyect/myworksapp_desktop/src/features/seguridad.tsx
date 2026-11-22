@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { consolePermissions } from '../authAccess';
 import { useAuth } from '../context/auth-store';
@@ -23,6 +23,7 @@ export function SeguridadPage() {
   const client = useQueryClient();
   const [accion, setAccion] = useState<Accion | null>(null);
   const [persona, setPersona] = useState('');
+  const [tab, setTab] = useState<Pestana>('resumen');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const panel = useQuery({
     queryKey: ['seguridad'],
@@ -106,6 +107,25 @@ export function SeguridadPage() {
       </div>
       {panel.isLoading ? <SkeletonRows /> : null}
       {panel.isError ? <ErrorState message="No se pudo leer el panel de seguridad." onRetry={() => void panel.refetch()} /> : null}
+      <div className="tablist" role="tablist" aria-label="Seguridad" onKeyDown={(event) => moverPestana(event, tab, setTab)}>
+        {PESTANAS.map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            id={`pestana-${id}`}
+            aria-selected={tab === id}
+            aria-controls={`panel-${id}`}
+            className={tab === id ? 'is-active' : undefined}
+            onClick={() => setTab(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`pestana-${tab}`} className="stack">
+      {tab === 'resumen' ? (
+      <>
       <div className="kpi-grid">
         <Meter label="Accesos fallidos" value={asNum(data.logins_fallidos)} />
         <Meter label="Errores en la ventana" value={asNum(data.errores)} />
@@ -126,6 +146,10 @@ export function SeguridadPage() {
         )}
       </article>
 
+      </>
+      ) : null}
+      {tab === 'actividad' ? (
+      <>
       <article className="panel stack">
         <h2>Actividad reciente de acceso</h2>
         {auth.length === 0 ? <EmptyState title="Sin eventos de Auth en las últimas 24 horas." detail="Los intentos fallidos de esta consola se suman aunque GoTrue no los guarde." /> : null}
@@ -188,6 +212,9 @@ export function SeguridadPage() {
         ))}
       </article>
 
+      </>
+      ) : null}
+      {tab === 'umbrales' ? (
       <article className="panel stack">
         <h2>Umbrales</h2>
         {umbrales.map((row) => {
@@ -215,9 +242,9 @@ export function SeguridadPage() {
           );
         })}
       </article>
-
-      <SeguridadHerramientas />
-
+      ) : null}
+      {tab === 'pruebas' || tab === 'defensa' || tab === 'respaldos' ? <SeguridadHerramientas tab={tab} /> : null}
+      {tab === 'actividad' ? (
       <article className="panel stack">
         <h2>Persona</h2>
         <label className="field">
@@ -240,6 +267,8 @@ export function SeguridadPage() {
           </div>
         ) : null}
       </article>
+      ) : null}
+      </div>
 
       {accion ? (
         <ConfirmDialog
@@ -262,6 +291,24 @@ export function SeguridadPage() {
       ) : null}
     </section>
   );
+}
+
+const PESTANAS = [
+  ['resumen', 'Resumen'],
+  ['actividad', 'Actividad'],
+  ['pruebas', 'Pruebas'],
+  ['defensa', 'Defensa'],
+  ['respaldos', 'Respaldos'],
+  ['umbrales', 'Umbrales'],
+] as const;
+
+type Pestana = (typeof PESTANAS)[number][0];
+
+function moverPestana(event: ReactKeyboardEvent, actual: Pestana, setTab: (tab: Pestana) => void) {
+  const ids = PESTANAS.map(([id]) => id);
+  const index = ids.indexOf(actual);
+  if (event.key === 'ArrowRight') setTab(ids[(index + 1) % ids.length]);
+  if (event.key === 'ArrowLeft') setTab(ids[(index - 1 + ids.length) % ids.length]);
 }
 
 function Meter({ label, value }: { label: string; value: number }) {

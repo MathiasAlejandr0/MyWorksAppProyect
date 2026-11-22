@@ -60,15 +60,34 @@ test('la consola entra, muestra cada módulo y ejecuta pruebas y respaldo', asyn
   await page.goto('/disputas');
   await expect(page.getByText('Trabajo incompleto')).toBeVisible();
   await page.goto('/seguridad');
+  await expect(page.getByRole('link', { name: 'Seguridad' })).toBeVisible();
+  for (const nombre of ['Resumen', 'Actividad', 'Pruebas', 'Defensa', 'Respaldos', 'Umbrales']) {
+    await page.getByRole('tab', { name: nombre }).click();
+    await page.screenshot({ path: `${OUT}/seguridad-${nombre.toLowerCase()}.png`, fullPage: true });
+  }
+  await page.getByRole('tab', { name: 'Pruebas' }).click();
   await page.getByRole('button', { name: 'RLS' }).click();
-  await expect(page.getByText(/RLS|tablas public|politica/i).first()).toBeVisible();
-  await page.screenshot({ path: `${OUT}/seguridad-prueba-rls.png`, fullPage: true });
+  await expect(page.getByText(/RLS|tablas|política|politica/i).first()).toBeVisible();
 
+  await page.getByRole('tab', { name: 'Defensa' }).click();
+  await expect(page.getByRole('button', { name: 'Modo bloqueo total' })).toBeVisible();
+  await expect(page.getByRole('switch', { name: 'Solo lectura' })).toBeVisible();
+
+  await page.getByRole('tab', { name: 'Respaldos' }).click();
   await page.getByRole('button', { name: 'Crear respaldo' }).click();
   await page.getByLabel('Motivo (mínimo 10 caracteres)').fill('Respaldo de la prueba local de la consola');
   await page.getByRole('button', { name: 'Confirmar' }).click();
-  await expect(page.getByText(/KB|B/).first()).toBeVisible();
+  await expect(page.getByText('Listo.')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/KB|MB|B de/).first()).toBeVisible();
+  await expect(page.getByText('Listo.')).toBeHidden({ timeout: 10_000 });
   await page.screenshot({ path: `${OUT}/seguridad-respaldo.png`, fullPage: true });
+  await page.getByRole('button', { name: 'Restaurar' }).first().click();
+  await page.getByLabel('Frase de confirmación').fill('RESTAURAR');
+  await page.getByLabel('Motivo (mínimo 10 caracteres)').fill('Restauracion de la prueba local');
+  await page.getByRole('button', { name: 'Confirmar' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden({ timeout: 30_000 });
+  await expect(page.getByText('Listo.')).toBeVisible();
+  await page.screenshot({ path: `${OUT}/seguridad-restauracion.png`, fullPage: true });
 });
 
 function codigoTotp(secret: string): string {

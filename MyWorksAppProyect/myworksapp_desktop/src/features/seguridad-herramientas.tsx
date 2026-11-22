@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { friendlyError } from '../lib/errors';
 import { formatDateTime } from '../lib/format';
+import { edgeFunctionErrorMessage } from '@myworksapp/shared';
 import { callRpc } from '../lib/rpc';
+import { supabase } from '../supabaseClient';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { Badge, Button, EmptyState } from '../ui/kit';
 import { useToast } from '../ui/toast-store';
@@ -18,9 +20,9 @@ const PRUEBAS = [
 ] as const;
 
 type DefensaAccion = { clave: string; activo: boolean; frase: 'BLOQUEAR' | 'LIBERAR' };
-type RespaldoAccion = { id: string; kind: 'restaurar' } | { kind: 'crear' } | { id: string; kind: 'ip' } | { id: string; kind: 'liberar-ip' };
+type RespaldoAccion = { id: string; kind: 'restaurar'; tabla: string } | { kind: 'crear' } | { id: string; kind: 'ip' } | { id: string; kind: 'liberar-ip' };
 
-export function SeguridadHerramientas() {
+export function SeguridadHerramientas({ tab }: { tab: 'pruebas' | 'defensa' | 'respaldos' }) {
   const toast = useToast();
   const client = useQueryClient();
   const [ultimo, setUltimo] = useState<Record<string, unknown> | null>(null);
@@ -73,8 +75,10 @@ export function SeguridadHerramientas() {
   const flags = defensa.data ?? {};
   const ips = asRows(flags.ips);
 
+  const bloqueo = flags.defensa_bloqueo === true;
   return (
     <>
+      {tab === 'pruebas' ? (
       <article className="panel stack" id="pruebas-seguridad">
         <h2>Herramientas de testeo</h2>
         <p className="muted">Cada corrida deja resultado, severidad y recomendación en el historial. No prueba contraseñas ni muestra secretos.</p>
@@ -104,16 +108,21 @@ export function SeguridadHerramientas() {
           ))}
         </ul>
       </article>
+      ) : null}
 
+      {tab === 'defensa' ? (
       <article className="panel stack" id="defensa">
-        <h2>Defensa</h2>
-        <p className="muted">El modo bloqueo pausa pagos, liberaciones, altas y escrituras sensibles. Se revierte con la frase LIBERAR. La app y las functions leen las mismas claves de app_config.</p>
-        <div className="row">
-          <Flag label="Modo bloqueo" on={flags.defensa_bloqueo === true} onActivate={() => setDefensaAccion({ clave: 'defensa_bloqueo', activo: true, frase: 'BLOQUEAR' })} onRelease={() => setDefensaAccion({ clave: 'defensa_bloqueo', activo: false, frase: 'LIBERAR' })} />
-          <Flag label="Solo lectura" on={flags.defensa_solo_lectura === true} onActivate={() => setDefensaAccion({ clave: 'defensa_solo_lectura', activo: true, frase: 'BLOQUEAR' })} onRelease={() => setDefensaAccion({ clave: 'defensa_solo_lectura', activo: false, frase: 'LIBERAR' })} />
-          <Flag label="Pausar pagos" on={flags.defensa_pausar_pagos === true} onActivate={() => setDefensaAccion({ clave: 'defensa_pausar_pagos', activo: true, frase: 'BLOQUEAR' })} onRelease={() => setDefensaAccion({ clave: 'defensa_pausar_pagos', activo: false, frase: 'LIBERAR' })} />
-          <Flag label="Pausar registros" on={flags.defensa_pausar_registros === true} onActivate={() => setDefensaAccion({ clave: 'defensa_pausar_registros', activo: true, frase: 'BLOQUEAR' })} onRelease={() => setDefensaAccion({ clave: 'defensa_pausar_registros', activo: false, frase: 'LIBERAR' })} />
-          <Flag label="Automático por umbral" on={flags.defensa_automatica === true} onActivate={() => setDefensaAccion({ clave: 'defensa_automatica', activo: true, frase: 'BLOQUEAR' })} onRelease={() => setDefensaAccion({ clave: 'defensa_automatica', activo: false, frase: 'LIBERAR' })} />
+        <div className="spread">
+          <h2>Defensa</h2>
+          <Button variant={bloqueo ? 'secondary' : 'danger'} onClick={() => setDefensaAccion({ clave: 'defensa_bloqueo', activo: !bloqueo, frase: bloqueo ? 'LIBERAR' : 'BLOQUEAR' })}>
+            {bloqueo ? 'Quitar bloqueo total' : 'Modo bloqueo total'}
+          </Button>
+        </div>
+        <div className="stack">
+          <Interruptor titulo="Solo lectura" detalle="Congela disputas, tickets, reportes y catálogo." on={flags.defensa_solo_lectura === true} onToggle={() => setDefensaAccion({ clave: 'defensa_solo_lectura', activo: flags.defensa_solo_lectura !== true, frase: flags.defensa_solo_lectura === true ? 'LIBERAR' : 'BLOQUEAR' })} />
+          <Interruptor titulo="Pausar pagos" detalle="No libera ni reembolsa." on={flags.defensa_pausar_pagos === true} onToggle={() => setDefensaAccion({ clave: 'defensa_pausar_pagos', activo: flags.defensa_pausar_pagos !== true, frase: flags.defensa_pausar_pagos === true ? 'LIBERAR' : 'BLOQUEAR' })} />
+          <Interruptor titulo="Pausar registros" detalle="No hay altas nuevas." on={flags.defensa_pausar_registros === true} onToggle={() => setDefensaAccion({ clave: 'defensa_pausar_registros', activo: flags.defensa_pausar_registros !== true, frase: flags.defensa_pausar_registros === true ? 'LIBERAR' : 'BLOQUEAR' })} />
+          <Interruptor titulo="Automático" detalle="Un incidente alto enciende el bloqueo." on={flags.defensa_automatica === true} onToggle={() => setDefensaAccion({ clave: 'defensa_automatica', activo: flags.defensa_automatica !== true, frase: flags.defensa_automatica === true ? 'LIBERAR' : 'BLOQUEAR' })} />
         </div>
         <div className="row">
           <label className="field"><span>IP</span><input aria-label="IP a bloquear" value={ip} onChange={(event) => setIp(event.target.value)} placeholder="203.0.113.10" /></label>
@@ -128,28 +137,39 @@ export function SeguridadHerramientas() {
           </div>
         ))}
       </article>
+      ) : null}
 
+      {tab === 'respaldos' ? (
       <article className="panel stack" id="respaldos">
-        <h2>Respaldos</h2>
-        <p className="muted">Copia lógica de configuración, umbrales, banderas y catálogo. Se guardan como máximo 5 archivos y 40 MB, muy por debajo del gigabyte de Storage. No incluye contraseñas ni el service role. La restauración exige la frase RESTAURAR y se comprueba el hash antes de escribir.</p>
-        <Button onClick={() => setRespaldoAccion({ kind: 'crear' })}>Crear respaldo</Button>
+        <div className="spread">
+          <h2>Respaldos</h2>
+          <Button onClick={() => setRespaldoAccion({ kind: 'crear' })}>Crear respaldo</Button>
+        </div>
+        <p className="muted nums">{usoTexto(respaldos.data?.[0])}</p>
         {(respaldos.data ?? []).length === 0 ? <EmptyState title="No hay respaldos todavía." /> : null}
-        {(respaldos.data ?? []).map((row) => (
-          <div key={asText(row.id)} className="spread">
-            <div>
-              <strong className="nums">{formatBytes(asNum(row.tamano_bytes))}</strong>
-              <p className="muted">{formatDateTime(asText(row.creado_en, ''))} · {asText(row.estado)} · {asText(row.sha256).slice(0, 12)}</p>
+        {(respaldos.data ?? []).map((row) => {
+          const tablas = Array.isArray(row.tablas) ? row.tablas.map(String) : [];
+          return (
+            <div key={asText(row.id)} className="spread">
+              <div>
+                <strong className="nums">{formatBytes(asNum(row.tamano_bytes))}</strong>
+                <p className="muted">{formatDateTime(asText(row.creado_en, ''))} · {asText(row.origen, 'manual')} · {asText(row.sha256).slice(0, 12)}</p>
+                <p className="muted">{resumenFilas(row.filas)} · {tablas.length} tablas</p>
+              </div>
+              <div className="row">
+                <Button variant="secondary" onClick={() => void invocar('verificar', { id: row.id }).then((data) => {
+                  toast(data.ok ? 'El hash coincide.' : 'El hash no coincide.');
+                }).catch((error: unknown) => toast(mensaje(error)))}>Verificar</Button>
+                <Button variant="secondary" onClick={() => void invocar('firmar', { id: row.id }).then((data) => {
+                  if (data.url) window.open(String(data.url), '_blank', 'noopener');
+                }).catch((error: unknown) => toast(mensaje(error)))}>Descargar</Button>
+                <Button variant="danger" onClick={() => setRespaldoAccion({ id: asText(row.id, ''), kind: 'restaurar', tabla: 'todas' })}>Restaurar</Button>
+              </div>
             </div>
-            <div className="row">
-              <Button variant="secondary" onClick={() => void callRpc('consola_verificar_respaldo', { p_id: row.id }).then((data) => {
-                const ok = Boolean((data as { ok?: boolean }).ok);
-                toast(ok ? 'El hash coincide.' : 'El hash no coincide.');
-              }).catch((error: unknown) => toast(mensaje(error)))}>Verificar</Button>
-              <Button variant="danger" onClick={() => setRespaldoAccion({ id: asText(row.id, ''), kind: 'restaurar' })}>Restaurar</Button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </article>
+      ) : null}
 
       {defensaAccion ? (
         <ConfirmDialog
@@ -191,9 +211,9 @@ export function SeguridadHerramientas() {
           onConfirm={(motivo) => {
             const frase = respaldoAccion.kind === 'restaurar' ? 'RESTAURAR' : respaldoAccion.kind === 'liberar-ip' ? 'LIBERAR' : 'BLOQUEAR';
             const trabajo = respaldoAccion.kind === 'crear'
-              ? callRpc('consola_crear_respaldo', { p_motivo: motivo })
+              ? invocar('crear', { motivo })
               : respaldoAccion.kind === 'restaurar'
-                ? callRpc('consola_restaurar_respaldo', { p_id: respaldoAccion.id, p_frase: frase, p_motivo: motivo })
+                ? invocar('restaurar', { id: respaldoAccion.id, frase, motivo, tablas: respaldoAccion.tabla === 'todas' ? null : [respaldoAccion.tabla] })
                 : respaldoAccion.kind === 'ip'
                   ? callRpc('consola_bloquear_ip', { p_ip: ip, p_horas: Number(horas), p_frase: frase, p_motivo: motivo })
                   : callRpc('consola_desbloquear_ip', { p_id: respaldoAccion.id, p_frase: frase, p_motivo: motivo });
@@ -211,13 +231,24 @@ export function SeguridadHerramientas() {
   );
 }
 
-function Flag({ label, on, onActivate, onRelease }: { label: string; on: boolean; onActivate: () => void; onRelease: () => void }) {
+function Interruptor({ titulo, detalle, on, onToggle }: { titulo: string; detalle: string; on: boolean; onToggle: () => void }) {
   return (
-    <div className="stack">
-      <span>{label}: {on ? 'activo' : 'apagado'}</span>
-      <Button variant={on ? 'secondary' : 'danger'} onClick={on ? onRelease : onActivate}>{on ? 'Desactivar' : 'Activar'}</Button>
+    <div className="switch-row">
+      <span>
+        <strong>{titulo}</strong>
+        <span className="muted">{detalle}</span>
+      </span>
+      <button type="button" role="switch" aria-label={titulo} aria-checked={on} className={on ? 'switch is-on' : 'switch'} onClick={onToggle}>
+        {on ? 'Activo' : 'Inactivo'}
+      </button>
     </div>
   );
+}
+
+async function invocar(accion: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const { data, error } = await supabase.functions.invoke('consola-respaldo', { body: { accion, ...body } });
+  if (error) throw new Error(await edgeFunctionErrorMessage(error, 'No se pudo completar el respaldo.'));
+  return (data ?? {}) as Record<string, unknown>;
 }
 
 async function revisarCors(): Promise<Hallazgo> {
@@ -233,7 +264,23 @@ async function revisarCors(): Promise<Hallazgo> {
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function usoTexto(row: Record<string, unknown> | undefined): string {
+  if (!row) return '0 B de 1 GB';
+  return `${formatBytes(asNum(row.uso_bytes))} de ${formatBytes(asNum(row.limite_bytes) || 1073741824)}`;
+}
+
+function resumenFilas(value: unknown): string {
+  if (!value || typeof value !== 'object') return 'Sin conteo';
+  return Object.entries(value as Record<string, unknown>)
+    .filter(([, count]) => asNum(count) > 0)
+    .slice(0, 4)
+    .map(([tabla, count]) => `${tabla} ${asNum(count)}`)
+    .join(' · ') || 'Sin filas';
 }
 
 function mensaje(error: unknown): string {
@@ -249,8 +296,8 @@ function tituloRespaldo(kind: RespaldoAccion['kind']): string {
 }
 
 function resumenRespaldo(kind: RespaldoAccion['kind']): string {
-  if (kind === 'crear') return 'Se guarda una copia de la configuración y del catálogo. No incluye contraseñas.';
-  if (kind === 'restaurar') return 'Sobrescribe ajustes, umbrales, banderas y el activo del catálogo con esta copia, solo si el hash coincide.';
+  if (kind === 'crear') return 'Copia el negocio en gzip a Storage privado. No incluye tokens ni contraseñas.';
+  if (kind === 'restaurar') return 'Borra y vuelve a cargar las tablas del respaldo. Mientras tanto queda el modo bloqueo. Hace falta la frase RESTAURAR.';
   if (kind === 'ip') return 'Las functions de pago rechazan esa IP mientras el bloqueo siga activo.';
   return 'La IP vuelve a poder llamar a las functions.';
 }

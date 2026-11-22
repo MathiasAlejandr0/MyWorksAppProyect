@@ -277,6 +277,60 @@ textarea { min-height: 88px; resize: vertical; }
   min-width: 240px;
 }
 
+.tablist {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.tablist button {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+}
+
+.tablist button.is-active {
+  background: var(--bg-elevated);
+  color: var(--text-main);
+}
+
+.switch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.switch-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.switch {
+  flex: 0 0 auto;
+  min-width: 96px;
+  min-height: 36px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.switch.is-on {
+  background: color-mix(in srgb, var(--emerald) 18%, var(--bg-surface));
+  color: var(--emerald);
+  border-color: transparent;
+}
+
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 .tabs a,
 .tabs button {
