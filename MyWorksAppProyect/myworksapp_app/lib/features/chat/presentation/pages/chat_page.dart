@@ -17,6 +17,7 @@ import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/ia/clasificar_mensaje.dart';
 import '../../../../utils/content_filter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -183,6 +184,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       );
 
       await _messageRepository.createMessage(message);
+      final motivo = clasificarMensaje(text);
+      if (motivo != 'limpio' && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(avisoModeracion(motivo))),
+        );
+      }
 
       try {
         await NotificationService.instance.showNotification(

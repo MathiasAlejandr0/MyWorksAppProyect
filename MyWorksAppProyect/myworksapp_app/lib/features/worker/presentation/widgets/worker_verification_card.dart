@@ -7,6 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'dart:convert';
+
+import '../../../../core/ia/documento_foto_ui.dart';
+import '../../../../core/services/evidence_webp.dart';
 import '../../../../core/database/repositories/verification_event_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/database/supabase_db.dart';
@@ -108,18 +112,29 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
     var storedNote = note;
     try {
       if (_preview != null) {
-        final path = '${widget.userId}/documento.jpg';
+        final webp = await encodeEvidenceWebp(_preview!);
+        final ruta = '${widget.userId}/documento.webp';
         await supabase.storage.from('verificacion-profesional').uploadBinary(
-              path,
-              _preview!,
+              ruta,
+              webp,
               fileOptions: const FileOptions(
                 upsert: true,
-                contentType: 'image/jpeg',
+                contentType: 'image/webp',
               ),
             );
+        try {
+          final recorte = await recortarFraccionInferior(_preview!, 0.28);
+          final paraModelo = await encodeEvidenceWebp(recorte);
+          await supabase.functions.invoke('validar-documento', body: {
+            'imagen_webp_base64': base64Encode(paraModelo),
+            'nombre': 'documento',
+          });
+        } catch (_) {
+          // Sin recorte no se manda la foto a una API externa: trae el RUT.
+        }
         storedNote = storedNote.isEmpty
-            ? 'Documento: $path'
-            : '$storedNote\nDocumento: $path';
+            ? 'Documento: $ruta'
+            : '$storedNote\nDocumento: $ruta';
       }
       await _workers.submitVerificationReview(
         userId: widget.userId,
@@ -165,7 +180,8 @@ class _WorkerVerificationCardState extends State<WorkerVerificationCard> {
             const SizedBox(height: 8),
             const Text(
               'Un administrador revisa tu nota y el documento. '
-              'Hasta entonces no apareces como verificado.',
+              'Hasta entonces no apareces como verificado. '
+              'La foto se comprime a WebP. Si una IA la mira, es una sugerencia y no ve el RUT completo.',
             ),
             const SizedBox(height: 12),
             TextField(

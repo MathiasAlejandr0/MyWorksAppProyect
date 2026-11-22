@@ -21,6 +21,7 @@ export const NAV: NavItem[] = [
   { to: '/conciliacion', label: 'Conciliación Transbank', group: 'Dinero', allow: (p) => p.viewMoney },
   { to: '/finanzas', label: 'Finanzas', group: 'Dinero', allow: (p) => p.executive },
   { to: '/resenas', label: 'Reseñas', group: 'Contenido', allow: (p) => p.viewPeople },
+  { to: '/moderacion', label: 'Moderación', group: 'Contenido', allow: (p) => p.viewPeople },
   { to: '/catalogo', label: 'Catálogo', group: 'Contenido', allow: (p) => p.manageCatalog },
   { to: '/notificaciones', label: 'Notificaciones', group: 'Contenido', allow: () => true },
   { to: '/equipo', label: 'Equipo y roles', group: 'Empresa', allow: (p) => p.people },

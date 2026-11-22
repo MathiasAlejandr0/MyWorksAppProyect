@@ -27,6 +27,8 @@ import {
   TicketsPage,
   UsuariosPage,
 } from './features/screens';
+import { IaVista } from './features/ia-vista';
+import { ModeracionPage } from './features/moderacion';
 import { SeguridadPage } from './features/seguridad';
 import {
   authDeepLinkNeedsPassword,
@@ -74,6 +76,7 @@ function Gate() {
           <Route path="/conciliacion" element={<ConciliacionPage />} />
           <Route path="/finanzas" element={<FinanzasPage />} />
           <Route path="/resenas" element={<ResenasPage />} />
+          <Route path="/moderacion" element={<ModeracionPage />} />
           <Route path="/catalogo" element={<CatalogoPage />} />
           <Route path="/notificaciones" element={<NotificacionesPage />} />
           <Route path="/equipo" element={<EquipoPage />} />
@@ -109,6 +112,13 @@ export default function App() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+  if (import.meta.env.VITE_IA_PREVIEW === '1') {
+    return (
+      <BrowserRouter>
+        <IaVista />
+      </BrowserRouter>
+    );
+  }
   return (
     <BrowserRouter>
       <Gate />

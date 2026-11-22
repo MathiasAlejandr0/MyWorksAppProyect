@@ -574,9 +574,26 @@ function FichaProfesional({ id, canAct, onClose }: { id: string; canAct: boolean
       const worker = await supabase.from('trabajadores').select('id_usuario, profesion, estado_verificacion, nota_verificacion, descripcion').eq('id_usuario', id).maybeSingle();
       if (worker.error) throw worker.error;
       const events = await supabase.from('verificacion_eventos').select('id, estado, nota, creado_en').eq('id_usuario', id).order('creado_en', { ascending: false });
-      const file = await supabase.storage.from('verificacion-profesional').createSignedUrl(`${id}/documento.jpg`, 60);
+      const webp = await supabase.storage.from('verificacion-profesional').createSignedUrl(`${id}/documento.webp`, 60);
+      const jpg = webp.data?.signedUrl ? webp : await supabase.storage.from('verificacion-profesional').createSignedUrl(`${id}/documento.jpg`, 60);
       const stats = await supabase.rpc('stats_profesionales', { p_ids: [id] });
-      return { worker: worker.data, events: events.data ?? [], url: file.data?.signedUrl ?? null, stats: stats.data ?? [] };
+      let sugerencia: unknown = null;
+      const suelta = supabase as unknown as {
+        from: (tabla: string) => {
+          select: (cols: string) => {
+            eq: (col: string, valor: string) => {
+              maybeSingle: () => Promise<{ data: { sugerencia_validacion?: unknown } | null }>;
+            };
+          };
+        };
+      };
+      try {
+        const extra = await suelta.from('trabajadores').select('sugerencia_validacion').eq('id_usuario', id).maybeSingle();
+        sugerencia = extra.data?.sugerencia_validacion ?? null;
+      } catch {
+        sugerencia = null;
+      }
+      return { worker: worker.data, events: events.data ?? [], url: jpg.data?.signedUrl ?? null, stats: stats.data ?? [], sugerencia };
     },
   });
   const note = query.data?.worker?.nota_verificacion ?? '';
@@ -595,6 +612,9 @@ function FichaProfesional({ id, canAct, onClose }: { id: string; canAct: boolean
           <Badge value={query.data.worker.estado_verificacion} />
           <p>Nota de la fuente de verdad: {stat ? `${stat.calificacion} · ${stat.trabajos_completados} trabajos` : 'Sin estadísticas.'}</p>
           <p>{visibleNote || 'Sin nota de verificación.'}</p>
+          {query.data.sugerencia ? (
+            <p className="muted">Sugerencia de la IA, no es una decisión: {JSON.stringify(query.data.sugerencia)}</p>
+          ) : null}
           {canAct ? (
             <Button variant="secondary" onClick={() => {
               void supabase.rpc('consola_registrar_vista_sensible', {
