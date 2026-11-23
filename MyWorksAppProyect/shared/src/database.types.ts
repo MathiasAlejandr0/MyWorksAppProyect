@@ -2114,9 +2114,6 @@ export type Database = {
           estado: string | null
           id: string
           id_trabajo: string | null
-          monto_escrow: number
-          nombre_cliente: string
-          nombre_trabajador: string
         }
         Insert: {
           asunto: string
@@ -2124,9 +2121,6 @@ export type Database = {
           estado?: string | null
           id?: string
           id_trabajo?: string | null
-          monto_escrow: number
-          nombre_cliente: string
-          nombre_trabajador: string
         }
         Update: {
           asunto?: string
@@ -2134,9 +2128,6 @@ export type Database = {
           estado?: string | null
           id?: string
           id_trabajo?: string | null
-          monto_escrow?: number
-          nombre_cliente?: string
-          nombre_trabajador?: string
         }
         Relationships: [
           {
@@ -2602,6 +2593,19 @@ export type Database = {
       }
     }
     Views: {
+      consola_tickets: {
+        Row: {
+          asunto: string | null
+          creado_en: string | null
+          estado: string | null
+          id: string | null
+          id_trabajo: string | null
+          monto_escrow: number | null
+          nombre_cliente: string | null
+          nombre_trabajador: string | null
+        }
+        Relationships: []
+      }
       cobros_profesional: {
         Row: {
           bruto_clp: number | null

@@ -10,6 +10,7 @@ import {
 import { jobStatusDetail, jobStatusLabel, paymentStatusLabel, type JobEvidencePhoto } from '@myworksapp/shared';
 import { BrandLogo } from './BrandLogo';
 import { profileLabel } from '../profileLabel';
+import { DarkSelect } from './DarkSelect';
 import { JobLocationMap } from './JobLocationMap';
 
 interface TrackingDashboardProps {
@@ -368,12 +369,18 @@ export function TrackingDashboard({
                 <p>El pago sigue retenido. Si el caso es simple, se cierra solo al vencer el plazo. Conducta, reincidencia o un monto alto los ve una persona.</p>
                 <label>
                   Motivo
-                  <select value={disputeReason} onChange={(event) => setDisputeReason(event.target.value)}>
-                    <option value="calidad">Calidad del trabajo</option>
-                    <option value="pago">Pago</option>
-                    <option value="conducta">Conducta</option>
-                    <option value="otro">Otro</option>
-                  </select>
+                  <DarkSelect
+                    block
+                    label="Motivo de la disputa"
+                    value={disputeReason}
+                    onChange={setDisputeReason}
+                    options={[
+                      { value: 'calidad', label: 'Calidad del trabajo' },
+                      { value: 'pago', label: 'Pago' },
+                      { value: 'conducta', label: 'Conducta' },
+                      { value: 'otro', label: 'Otro' },
+                    ]}
+                  />
                 </label>
                 <textarea
                   value={disputeDetail}

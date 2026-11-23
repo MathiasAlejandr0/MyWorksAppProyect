@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { formatServiceRadiusKm, pluralize, roundClp } from '@myworksapp/shared';
+import { DarkSelect } from './DarkSelect';
 import { StarScore } from './StarScore';
 import { supabase } from '../supabaseClient';
 import { BrandLogo } from './BrandLogo';
@@ -268,16 +269,17 @@ export function SearchResultsView({
                   : `Mostrando ${total} profesional${total === 1 ? '' : 'es'}${hasMore ? ' (hay más)' : ''}`}
               </p>
             </div>
-            <select
-              className="search-sort"
+            <DarkSelect
+              label="Ordenar por"
+              align="end"
               value={sort}
-              aria-label="Ordenar por"
-              onChange={(event) => setSort(event.target.value as CatalogSort)}
-            >
-              <option value="recommended">Ordenar por: Cercanía, nota y precio</option>
-              <option value="price">Precio</option>
-              <option value="rating">Calificación</option>
-            </select>
+              onChange={(next) => setSort(next as CatalogSort)}
+              options={[
+                { value: 'recommended', label: 'Ordenar por: Cercanía, nota y precio' },
+                { value: 'price', label: 'Precio' },
+                { value: 'rating', label: 'Calificación' },
+              ]}
+            />
           </div>
 
           {isLoading ? (
