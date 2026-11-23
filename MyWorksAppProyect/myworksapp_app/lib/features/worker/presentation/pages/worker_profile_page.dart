@@ -33,7 +33,6 @@ import '../../../user/presentation/widgets/testing_feedback_sheet.dart';
 import '../widgets/worker_base_location_card.dart';
 import '../widgets/worker_urban_coverage_card.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
-import '../widgets/sii_tax_info_widget.dart';
 import '../widgets/worker_custom_services_editor.dart';
 import '../widgets/worker_profile_section_card.dart';
 import '../widgets/worker_work_zone_field.dart';
@@ -763,7 +762,6 @@ class _WorkerProfilePageState extends ConsumerState<WorkerProfilePage> {
           onSave: () => setState(() => _editingSection = null),
           child: _portfolioBody(),
         ),
-        const SiiTaxInfoWidget(),
         const SizedBox(height: 8),
         Container(
           clipBehavior: Clip.antiAlias,
