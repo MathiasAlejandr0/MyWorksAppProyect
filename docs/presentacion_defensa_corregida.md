@@ -6,7 +6,7 @@
 **Fecha:** Diciembre 2026  
 **Estado:** Versión corregida según retroalimentación del profesor patrocinante (20-nov-2026)
 
-> **22-11-2026.** El catálogo de la base viva midió **76 tablas**, las 76 con RLS, y 94 claves foráneas. Donde este guion dice 60 tablas, ese era el corte del 20-11. La cuarta forma normal no cubre el esquema completo: el piso auditado es la segunda forma normal, la mayoría de esas tablas está en BCNF y la 4FN se declara solo para las listas del profesional. Ver `MyWorksAppProyect/docs/normalizacion.md`.
+> **22-11-2026, 23:07 hora de Chile.** Esta presentación es el material de la Fase 3 y última (pruebas, informe final y demostración). El relato de las fases 1 y 2 se conserva. El catálogo de la base viva midió **76 tablas**, las 76 con RLS, y 94 claves foráneas; la remedición de las 23:04 hora de Chile repitió esas cifras y la migración `20261123020000`. Donde este guion dice 60 tablas, ese era el corte del 20-11. La cuarta forma normal no cubre el esquema completo: el piso auditado es la segunda forma normal, la mayoría de esas tablas está en BCNF y la 4FN se declara solo para las listas del profesional. Ver `MyWorksAppProyect/docs/normalizacion.md`.
 
 ---
 

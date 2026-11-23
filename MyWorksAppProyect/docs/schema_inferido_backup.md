@@ -1,6 +1,6 @@
 # Backup inventario esquema (inferido)
 
-> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (20-09-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (22-11-2026) está en [`ESTADO_DEL_PROYECTO.md`](../ESTADO_DEL_PROYECTO.md).
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (20-09-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente de la fase 3 (22-11-2026, 23:07 hora de Chile) está en [`ESTADO_DEL_PROYECTO.md`](../ESTADO_DEL_PROYECTO.md).
 
 Proyecto: MyWorksApp / wxqrfcqifkfgawrnqmnj  
 Fecha: 2026-09-13  

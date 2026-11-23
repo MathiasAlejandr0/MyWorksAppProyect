@@ -5,7 +5,7 @@
 **Duración total:** 28 minutos (25 min core + 3 min consola opcional)  
 **Modalidad:** Video HD + Demo en vivo con 2 pantallas simultáneas
 
-> **22-11-2026.** Donde el guion dice 60 tablas o «60 tablas en 4FN», el catálogo de ese día midió 76 tablas con RLS. La cuarta forma normal no es la de todo el esquema. El piso auditado es 2FN, la mayoría de las tablas revisadas está en BCNF y la 4FN queda para las listas separadas del profesional. El detalle está en `MyWorksAppProyect/docs/normalizacion.md`.
+> **22-11-2026, 23:07 hora de Chile.** La fase académica vigente es la Fase 3 del PTY4614: pruebas, informe final y demostración. Los títulos «FASE 1» a «FASE 4» de este guion son tramos de la demostración, no las fases del Capstone. Donde el guion dice 60 tablas o «60 tablas en 4FN», el catálogo de ese día midió 76 tablas con RLS. La cuarta forma normal no es la de todo el esquema. El piso auditado es 2FN, la mayoría de las tablas revisadas está en BCNF y la 4FN queda para las listas separadas del profesional. El detalle está en `MyWorksAppProyect/docs/normalizacion.md`.
 
 ---
 

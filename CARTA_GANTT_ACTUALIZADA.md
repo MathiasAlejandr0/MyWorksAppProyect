@@ -3,8 +3,8 @@
 
 **Institución:** Duoc UC — Sede Puerto Montt  
 **Equipo:** Mathias Alejandro Jara Alvarado · Nicolas Chiguay · Gabriel Valderas  
-**Última actualización:** 20 de noviembre de 2026  
-**Estado:** Versión actualizada al cierre del Sprint 10
+**Última actualización:** 22 de noviembre de 2026, 23:07 hora de Chile  
+**Estado:** Fase 3 en curso (Sprint 11). La ventana del Sprint 10 cerró ese día
 
 ---
 
@@ -12,12 +12,12 @@
 
 Este documento presenta la planificación temporal completa del proyecto My Works App, desde su inicio en agosto de 2026 hasta su defensa en diciembre de 2026. El proyecto sigue metodología Scrum adaptada con 11 sprints organizados en 3 fases del Capstone PTY4614.
 
-**Estado actual (20-nov-2026):**
-- ✅ Sprint 10 en cierre (Fase 2 completa)
+**Estado actual (22-nov-2026, 23:07 hora de Chile):**
+- ✅ Ventana del Sprint 10 cerrada (Fase 2, desarrollo)
+- 🔄 Fase 3 en curso: pruebas, informe final y demostración (Sprint 11)
 - ✅ MVP técnico implementado y funcional
-- ✅ Web en producción (https://myworksapp.cl)
-- ✅ 641 pruebas automatizadas pasando
-- 🔄 Sprint 11 planificado (defensa y entrega final)
+- ✅ Web en producción (https://myworksapp.cl). El paquete publicado a las 23:03 seguía siendo el anterior; el redespliegue queda pendiente
+- ✅ 641 pruebas automatizadas pasando en el corte del 20-nov. Esta revisión no repitió esa corrida
 
 ---
 
@@ -268,7 +268,9 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 - ✅ Informe final actualizado
 - Migración de H1 aplicada en la base viva el 22-11; el alta no se volvió a medir
 - ⏳ 24 bugs de consola (rama sin merge)
-- Páginas legales en `main`; el sitio publicado no se había redesplegado el 22-11 a las 20:24 (hora de Chile)
+- Páginas legales en `main`; el 22-11 a las 23:03 (hora de Chile) el sitio seguía sirviendo `/assets/index-dFwoI3u5.js`
+
+Estos pendientes pasan a la Fase 3. No quedaron cerrados con el fin de la ventana del Sprint 10.
 
 **Métricas del Sprint 10 (al 20-nov):**
 - 86 commits (60 después del corte del 17-nov)
@@ -276,7 +278,7 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 - Web desplegada en producción
 - Consola de escritorio completada
 
-**Pendientes para cierre del sprint:**
+**Pendientes que pasan a la Fase 3:**
 1. Mergear rama `cursor/consola-bugs` (arreglo de 24 errores)
 2. Desplegar en Vercel el `main` que ya trae las páginas legales
 3. La migración de H1 ya está en la base viva; falta repetir el alta de un profesional
@@ -292,7 +294,7 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 ### Sprint 11: Defensa y entrega final
 **Fechas:** 23 de noviembre – 6 de diciembre de 2026  
 **Duración:** 2 semanas  
-**Estado:** 📅 Planificado
+**Estado:** 🔄 En curso desde el 22 de noviembre de 2026, 23:07 hora de Chile (Fase 3: pruebas, informe final y demostración)
 
 | Actividad | Responsable | Fecha objetivo |
 |-----------|-------------|----------------|
@@ -371,8 +373,9 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 | 13 | Correos con Resend | 20 nov 2026 | S10 | ✅ |
 | 14 | **641 pruebas automatizadas** | **20 nov 2026** | **S10** | **✅** |
 | 15 | Carta Gantt actualizada (este doc) | 20 nov 2026 | S10 | ✅ |
-| 16 | Cierre de Fase 2 | 22 nov 2026 | S10 | 🔄 |
-| 17 | Defensa del proyecto | 5-6 dic 2026 | S11 | 📅 |
+| 16 | Cierre de la ventana de Fase 2 | 22 nov 2026 | S10 | ✅ |
+| 17 | Fase 3: pruebas, informe final y demostración | 22 nov 2026 | S11 | 🔄 |
+| 18 | Defensa del proyecto | 5-6 dic 2026 | S11 | 📅 |
 
 ---
 

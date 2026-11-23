@@ -155,7 +155,7 @@ Diccionario de datos: [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](MyWor
 |----------|----------------|
 | Scrum adaptado | 11 sprints de 1 o 2 semanas reconstruidos desde el historial de GitHub; entregas por dominio: definición → backend/RLS → clientes → pagos → endurecimiento |
 | MVP primero | Primero lo demostrable; pendientes explícitos (payout automático, Transbank en producción, tiendas) |
-| Fases Capstone | Fase 1 definición del proyecto; Fase 2 y siguientes con evidencias; software en `MyWorksAppProyect/` |
+| Fases Capstone | Fase 1 definición; Fase 2 desarrollo, cerrada en su ventana el 22 de noviembre de 2026; Fase 3 vigente (pruebas, informe final y demostración). El software está en `MyWorksAppProyect/` |
 | Calidad continua | CI, runbooks, diccionario BD, auditorías de seguridad |
 
 Roles: Product Owner y Scrum Master, Mathias Jara Alvarado; equipo de desarrollo, Mathias Jara Alvarado, Gabriel Valderas y Nicolas Chiguay.
@@ -188,7 +188,7 @@ Priorizar un flujo → acordar estados en BD → implementar (apps + Edge + SQL)
 | Ruta | Contenido |
 |------|-----------|
 | `Fase 1/` | Entregables y evidencias de definición del proyecto |
-| `Fase 2/` | Entregables de la siguiente fase Capstone |
+| `Fase 2/` | Informe, guía, pauta, presentación y demás entregables que la comisión lee en la Fase 3. No hay carpeta `Fase 3/` |
 | `Documentos Guia/` | Guías e instructivos del programa |
 | `Capstone_Project.mpp` | Planificación del proyecto |
 | **`MyWorksAppProyect/`** | **Monorepo del producto** (app, web, desktop, shared, docs técnicos, CI) |
@@ -219,11 +219,13 @@ Configurar variables Supabase según `.env.example` de web/desktop y `--dart-def
 
 ## 9. Estado respecto al título y al producto
 
-Estado al 22 de noviembre de 2026 (`main` `a5f2f7d`, con el cierre descrito en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`).
+Estado al 22 de noviembre de 2026, 23:07 hora de Chile. La fase vigente es la Fase 3 (pruebas, informe final y demostración). `origin/main` está en `19d1da3`. El detalle está en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
 
 | Dimensión | Estado actual |
 |-----------|----------------|
-| Definición / evidencia Fase 1 | Presente en carpetas académicas |
+| Definición / evidencia Fase 1 | Presente en carpetas académicas; no se reescribe |
+| Fase 2 (desarrollo) | Ventana cerrada el 22 de noviembre de 2026. El relato sigue en `Fase 2/` y en la carta Gantt |
+| Fase 3 (vigente) | Pruebas, informe final y demostración. No hay plantilla de estudiante de esta fase en el repositorio |
 | MVP técnico multiplataforma | Implementado (`MyWorksAppProyect/`) |
 | Web en producción | Publicada en Vercel con dominio propio `myworksapp.cl` |
 | Pagos Webpay Plus y Oneclick | Implementados en **ambiente de integración** (solo tarjetas de prueba) |

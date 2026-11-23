@@ -1,6 +1,6 @@
 # Demo en vivo — MyWorksApp
 
-Guion para mostrar MyWorksApp con las cuentas de demostración del proyecto Supabase `wxqrfcqifkfgawrnqmnj`. Los pagos van por Transbank en **ambiente de integración**: no hay cobros reales.
+Guion para mostrar MyWorksApp con las cuentas de demostración del proyecto Supabase `wxqrfcqifkfgawrnqmnj`. Los pagos van por Transbank en **ambiente de integración**: no hay cobros reales. Al 22 de noviembre de 2026, 23:07 hora de Chile, este guion es el de la Fase 3 (pruebas, informe final y demostración).
 
 ## 1. Dónde está cada parte
 
@@ -12,7 +12,7 @@ Guion para mostrar MyWorksApp con las cuentas de demostración del proyecto Supa
 | Encuesta de prueba con usuarios (SUS) | https://myworksapp.cl/encuesta; en la app, inicio del cliente → **Encuesta de la prueba**, y perfil del profesional → **Encuesta de la prueba** |
 | Migraciones de la base | `myworksapp_app/supabase/MIGRATIONS_INVENTORY.md` (cada versión de la base tiene su archivo) |
 
-Configuración vigente en `public.app_config` (informada el 20-nov-2026): `demo_modo = 1` y `admin_requiere_aal2 = 1` (la consola exige el segundo factor).
+Configuración vigente en `public.app_config`: `demo_modo = 1`, leído otra vez el 22 de noviembre de 2026 a las 23:04 hora de Chile, y `admin_requiere_aal2 = 1` (la consola exige el segundo factor; este último valor se informó el 20-nov-2026 y no se volvió a cambiar).
 
 Con `demo_modo = 1` las cuentas demo aparecen en el catálogo con el aviso «Datos de demostración» y el invitado queda con la cuenta confirmada sin correo (`_shared/guest_ticket.ts`). Con otro valor, las cuentas `@demo.myworksapp.cl` y `@demo.com` se ocultan del catálogo y no se pueden reservar ni cobrar (migración `20261120140000_ocultar_profesionales_demo.sql`).
 

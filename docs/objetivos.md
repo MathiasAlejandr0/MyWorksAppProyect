@@ -4,6 +4,8 @@
 **Equipo:** Mathias Jara Alvarado (Product Owner y Scrum Master), Nicolás Chiguay y Gabriel Valderas.
 **Fuente oficial:** `Fase 2/Myworksapp_Informe_Final_PTY4614.docx`, sección 1.6 «Objetivos» (tabla 2) y capítulo de Resultados (tabla 29). Este documento repite esos objetivos y dice dónde se verifica cada uno en el repositorio.
 
+**Fase vigente:** Fase 3, al 22 de noviembre de 2026, 23:07 hora de Chile. La remedición de las 23:04 hora de Chile confirma 76 de 76 tablas con RLS, 94 claves foráneas y la migración `20261123020000`. No se agregan puntajes de satisfacción ni tiempos de piloto: esta revisión no midió la encuesta.
+
 ## Objetivo general
 
 Desarrollar y validar, entre agosto y diciembre de 2026, una plataforma multiplataforma (aplicación móvil, sitio web y consola de escritorio) que permita a clientes de Puerto Montt elegir trabajadores de oficio según precio y calificación y contratarlos con pago protegido, de modo que en las pruebas con usuarios al menos el 80 % complete la contratación en menos de 10 minutos y el 100 % de los pagos de prueba quede retenido hasta la conformidad del cliente.

@@ -1,6 +1,6 @@
 # Índice de la documentación de MyWorksApp
 
-Este índice ordena toda la documentación del repositorio por tema. Estado al 22-11-2026. El detalle vivo está en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
+Este índice ordena toda la documentación del repositorio por tema. Fase vigente: Fase 3 del Capstone PTY4614 (pruebas, informe final y demostración), al 22 de noviembre de 2026, 23:07 hora de Chile. El detalle vivo está en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`. No hay carpeta ni plantilla de estudiante de la Fase 3.
 
 **Si es tu primera vez, lee en este orden:**
 
@@ -104,8 +104,8 @@ Este índice ordena toda la documentación del repositorio por tema. Estado al 2
 | Carpeta o documento | Contenido |
 |---|---|
 | [`Fase 1/`](../Fase%201/) | Definición del proyecto y evidencias |
-| [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](../Fase%202/Myworksapp_Informe_Final_PTY4614.docx) y `.pdf` | Informe final actualizado al 20-11 |
-| [`Fase 2/`](../Fase%202/) | Casos de uso, guía de usuario, auditoría de la base, prueba de carga, presentación y diarios de reflexión |
+| [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](../Fase%202/Myworksapp_Informe_Final_PTY4614.docx) y `.pdf` | Informe final. El 22-11-2026, 23:07 hora de Chile, se agregó la nota de que el proyecto está en la Fase 3 |
+| [`Fase 2/`](../Fase%202/) | Casos de uso, guía de usuario, auditoría de la base, prueba de carga, presentación y diarios de reflexión. Es el material que la comisión lee en la Fase 3. No existe una carpeta `Fase 3/` |
 | [`Documentos Guia/`](../Documentos%20Guia/) | Guías del programa |
 
 ## 10. Documentos históricos

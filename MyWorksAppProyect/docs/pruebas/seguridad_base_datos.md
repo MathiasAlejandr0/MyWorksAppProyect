@@ -1,6 +1,6 @@
 # Pruebas de seguridad de la base de datos
 
-> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (16-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (22-11-2026) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (16-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente de la fase 3 (22-11-2026, 23:07 hora de Chile) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
 
 **Proyecto:** My Works App · **Base:** Supabase `wxqrfcqifkfgawrnqmnj` (PostgreSQL 17.6, PostgREST, Edge Functions)
 **Fecha:** 16 de noviembre de 2026. Primera corrida 01:13, corrida final 01:32 y reprueba de Edge Functions tras redesplegarlas 02:06 (hora de Chile, UTC−3).

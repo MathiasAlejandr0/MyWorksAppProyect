@@ -114,7 +114,7 @@ Detalle: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md) y [`
 |--------------|---------------------------|
 | **Ágil / iterativo-incremental** | Se entrega por ciclos: auth → trabajos → RLS → Webpay → liquidación → hardening. |
 | **MVP primero** | Priorizamos lo demostrable y comercializable; lo demorado (payout automático, Transbank en producción) queda explícito como pendiente. |
-| **Fases Capstone (PTY4614)** | Fase 1 definición; Fase 2 y siguientes con evidencias académicas; el código vive en el monorepo. |
+| **Fases Capstone (PTY4614)** | Fase 1 definición; Fase 2 desarrollo, con la ventana cerrada el 22 de noviembre de 2026; Fase 3 vigente (pruebas, informe final y demostración). El código vive en el monorepo. |
 | **Trabajo por dominio** | Cada incremento toca un flujo (reserva, pago, admin) de punta a punta, no “páginas sueltas”. |
 | **Calidad continua** | CI (analyze/test Flutter; pruebas de `shared/`, lint, build y Playwright en la web; lint, pruebas y build de la consola; build Tauri en Windows), runbooks, diccionario de BD, auditorías de seguridad. |
 

@@ -1,6 +1,6 @@
 # MyWorksApp — Flujo real de la app (fuente para el video)
 
-> Documento fuente del video. El estado vigente (22-11-2026) está en [`../../ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md). La sección 4 se actualizó al 20-nov-2026; el resto describe el código del commit `310f00b` y las capturas del 15-nov.
+> Documento fuente del video. El estado vigente de la fase 3 (22-11-2026, 23:07 hora de Chile) está en [`../../ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md). La sección 4 se actualizó al 20-nov-2026; el resto describe el código del commit `310f00b` y las capturas del 15-nov.
 
 Extraído del código en `main` (commit `310f00b`, repo `nicoussj/Proyecto-Titulo-MyWorksApp`, carpeta `MyWorksAppProyect/`) y de la base en vivo (`wxqrfcqifkfgawrnqmnj`, solo lectura). Rutas relativas a `MyWorksAppProyect/`.
 Las capturas están en `/workspace/mwa_video/screens/` (ver índice al final).
