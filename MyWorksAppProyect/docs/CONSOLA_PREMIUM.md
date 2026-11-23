@@ -56,7 +56,7 @@ El listado de reseñas falló la primera vez: `puntaje` es `integer` y la funci�
 
 ## Qué no quedó
 
-- `supabase start` completo no se usó. Postgres, PostgREST y GoTrue sí. Realtime no entra en esta verificación.
+- `supabase start` completo no se usó. Postgres, PostgREST, GoTrue y Realtime v2.148.3 sí, los cuatro en la red host. El canal `consola-presencia` llega a `SUBSCRIBED` por `http://127.0.0.1:54321/realtime/v1`. La salud del tenant dice `db_connected` y `replication_connected`. La publicación `supabase_realtime` incluye `incidentes_seguridad`.
 - No hay hora de aceptación ni de término del pedido, ni respuesta pública a una reseña, ni retención a 30/90 días. Esos indicadores quedan en «Sin dato».
 - No hay tablero Kanban persistente ni mapa geográfico. La bandeja es lista con plazo, y el lugar se ve como ranking de comunas.
 - `feat/ia-ml` sigue sin merge. La consola llama por nombre a `asistente-solicitud` y `moderar-mensaje`. Si no responden, lo dice y no decide. El texto que saldría se redacta: sin RUT, teléfono ni correo.
