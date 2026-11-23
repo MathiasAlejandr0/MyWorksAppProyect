@@ -37,6 +37,7 @@ import {
   passwordSetupMarked,
 } from './lib/authCallback';
 import { isTauriRuntime } from './lib/redirect';
+import { DesktopUpdateNotice } from './features/updateNotice';
 import { supabase, supabaseConfigStatus } from './supabaseClient';
 import { Shell } from './shell/Shell';
 import { RouteErrorBoundary } from './ui/boundary';
@@ -109,6 +110,7 @@ export default function App() {
   }, []);
   return (
     <BrowserRouter>
+      <DesktopUpdateNotice />
       <Gate />
     </BrowserRouter>
   );

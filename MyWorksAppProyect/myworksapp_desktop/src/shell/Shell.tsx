@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
+import { Bell } from 'lucide-react';
 import { consolePermissions, consoleRoleLabel } from '../authAccess';
 import { useAuth } from '../context/auth-store';
 import { idlePhase } from '../lib/idle';
@@ -14,6 +15,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const permissions = consolePermissions(profile?.role ?? '');
   const [menu, setMenu] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const [palette, setPalette] = useState(false);
   const [query, setQuery] = useState('');
   const [idle, setIdle] = useState<'active' | 'warning' | 'expired'>('active');
@@ -55,6 +57,22 @@ export function Shell({ children }: { children: ReactNode }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenu(false);
+    };
+    const onPointer = (event: PointerEvent) => {
+      if (!profileRef.current?.contains(event.target as Node)) setMenu(false);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onPointer);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerdown', onPointer);
+    };
+  }, [menu]);
 
   const groups = useMemo(() => {
     const visible = NAV.filter((item) => item.allow(permissions));
@@ -111,10 +129,11 @@ export function Shell({ children }: { children: ReactNode }) {
           <button type="button" className="btn btn-secondary search" onClick={() => setPalette(true)}>
             Buscar personas, pedidos, pagos o disputas · Ctrl K
           </button>
-          <button type="button" className="icon-btn" aria-label="Notificaciones" onClick={() => navigate('/notificaciones')}>
-            {unread.data ? unread.data : '0'}
+          <button type="button" className="icon-btn bell-btn" aria-label={`Notificaciones, ${unread.data ?? 0} sin leer`} onClick={() => navigate('/notificaciones')}>
+            <Bell size={18} aria-hidden="true" />
+            <span className="nums">{unread.data ?? 0}</span>
           </button>
-          <div className="profile-slot">
+          <div className="profile-slot" ref={profileRef}>
             <button type="button" className="btn btn-secondary" onClick={() => setMenu((value) => !value)}>
               {profile?.name} · {consoleRoleLabel(profile?.role ?? '')}
             </button>
@@ -128,6 +147,7 @@ export function Shell({ children }: { children: ReactNode }) {
                     const next = theme === 'dark' ? 'light' : 'dark';
                     setTheme(next);
                     applyTheme(next);
+                    setMenu(false);
                   }}
                 >
                   Tema {theme === 'dark' ? 'claro' : 'oscuro'}

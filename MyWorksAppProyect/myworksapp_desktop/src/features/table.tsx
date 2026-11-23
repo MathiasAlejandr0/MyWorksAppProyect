@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { collectPages, PAGE_SIZE } from '../lib/lists';
 import { EmptyState, ErrorState, SkeletonRows } from '../ui/kit';
 import { toCsv, downloadCsv } from '../lib/csv';
 
@@ -26,7 +27,9 @@ export function PagedTable<T extends { id: string }>({
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
-  const pageSize = 25;
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const pageSize = PAGE_SIZE;
   useEffect(() => {
     const timer = window.setTimeout(() => setDebounced(search.trim()), 300);
     return () => window.clearTimeout(timer);
@@ -50,18 +53,27 @@ export function PagedTable<T extends { id: string }>({
           <button
             type="button"
             className="btn btn-secondary"
+            disabled={exporting}
             onClick={() => {
-              const csv = toCsv(
-                columns.map((column) => column.header),
-                rows.map((row) => columns.map((column) => column.csv ? column.csv(row) : '')),
-              );
-              downloadCsv('myworksapp.csv', csv);
+              setExporting(true);
+              setExportError(null);
+              void collectPages((nextPage) => load(nextPage, debounced), pageSize)
+                .then((all) => {
+                  const csv = toCsv(
+                    columns.map((column) => column.header),
+                    all.map((row) => columns.map((column) => column.csv ? column.csv(row) : '')),
+                  );
+                  downloadCsv('myworksapp.csv', csv);
+                })
+                .catch(() => setExportError('No se pudo exportar. Revisa la conexión e inténtalo de nuevo.'))
+                .finally(() => setExporting(false));
             }}
           >
-            Exportar CSV
+            {exporting ? 'Exportando…' : 'Exportar CSV'}
           </button>
         </div>
       </div>
+      {exportError ? <p role="alert">{exportError}</p> : null}
       {query.isLoading ? <SkeletonRows /> : null}
       {query.isError ? (
         <ErrorState message="No se pudo cargar esta lista." onRetry={() => void query.refetch()} />
