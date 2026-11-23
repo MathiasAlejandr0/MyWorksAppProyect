@@ -6,6 +6,7 @@ import { LandingHome } from './views/LandingHome';
 import { NotificationInbox } from './components/NotificationInbox';
 import type { SearchWorker } from './components/SearchResultsView';
 import { useAuth } from './context/useAuth';
+import { registrarEventoUso } from './analytics/registrarEvento';
 import { supabase } from './supabaseClient';
 import { useLiveJobLocation } from './hooks/useLiveJobLocation';
 import { queryKeys } from './queryClient';
@@ -25,6 +26,7 @@ import { ChangeOrderPanel } from './components/ChangeOrderPanel';
 import { SiteFooter } from './components/SiteFooter';
 import {
   CATALOG_STALE_MS,
+  EVENTOS_USO,
   chargeSavedCard,
   createGuestWebpayCheckout,
   getSavedCard,
@@ -727,6 +729,7 @@ export function App() {
     const restorePending = () => {
       let workerName = '';
       let savedAmount = 0;
+      let workerId = '';
       try {
         const raw = sessionStorage.getItem('mwa-pending-checkout');
         if (raw) {
@@ -739,6 +742,7 @@ export function App() {
           if (saved.worker) {
             setSelectedWorker(saved.worker);
             workerName = saved.worker.name;
+            workerId = saved.worker.id;
           }
           if (saved.jobId) {
             setCheckoutJobId(saved.jobId);
@@ -757,7 +761,7 @@ export function App() {
       } catch {
         // el checkout pendiente no es JSON válido
       }
-      return { workerName, savedAmount };
+      return { workerName, savedAmount, workerId };
     };
 
     if (returned.kind === 'card') {
@@ -792,6 +796,10 @@ export function App() {
             if (jobIdParam) {
               await openJobForWorker(supabase, jobIdParam).catch(() => undefined);
             }
+            registrarEventoUso(EVENTOS_USO.confirmoPedido, {
+              ...(jobIdParam ? { id_trabajo: jobIdParam } : {}),
+              ...(pending.workerId ? { id_profesional: pending.workerId } : {}),
+            });
             setPaymentNotice(
               orderConfirmedMessage({
                 amountClp: amount,
@@ -844,6 +852,10 @@ export function App() {
               return;
             }
             if (jobIdParam) sessionStorage.setItem('mwa-active-job', jobIdParam);
+            registrarEventoUso(EVENTOS_USO.confirmoPedido, {
+              ...(jobIdParam ? { id_trabajo: jobIdParam } : {}),
+              ...(pending.workerId ? { id_profesional: pending.workerId } : {}),
+            });
             if (!returned.guest && pending.workerName) setView('tracking');
           })
           .catch(() => {
@@ -1206,6 +1218,10 @@ export function App() {
       setBookingError('Elige un horario publicado por el profesional para continuar.');
       return;
     }
+    registrarEventoUso(EVENTOS_USO.eligioHora, {
+      id_profesional: selectedWorker.id,
+      hora: slotIso,
+    });
     setScheduledAt(slotIso);
     setBookingError(null);
     if (authLoading) {
@@ -1765,6 +1781,10 @@ export function App() {
             onRemoveSavedCard={() => removeSavedCard(supabase)}
 
             onSuccess={(details) => {
+              registrarEventoUso(EVENTOS_USO.confirmoPedido, {
+                ...(checkoutJobId ? { id_trabajo: checkoutJobId } : {}),
+                id_profesional: selectedWorker.id,
+              });
               sessionStorage.removeItem('mwa-pending-checkout');
               setPaymentNotice(details.notice);
               void confirmBooking();

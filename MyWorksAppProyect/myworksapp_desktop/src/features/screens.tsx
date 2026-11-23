@@ -21,6 +21,7 @@ import { supabase } from '../supabaseClient';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { Badge, Button, CopyId, EmptyState, ErrorState, SkeletonRows } from '../ui/kit';
 import { useToast } from '../ui/toast-store';
+import { ColaResenasDudosas } from './colaResenas';
 import { PagedTable, type PageResult } from './table';
 
 function asPromise<T>(value: PromiseLike<T>): Promise<T> {
@@ -885,6 +886,7 @@ export function ResenasPage() {
   return (
     <section className="stack">
       <h1>Reseñas</h1>
+      <ColaResenasDudosas />
       <PagedTable
         queryKey={['resenas']}
         empty="Aún no hay reseñas."

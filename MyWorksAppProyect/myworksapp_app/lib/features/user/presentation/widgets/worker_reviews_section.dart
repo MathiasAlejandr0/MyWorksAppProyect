@@ -16,11 +16,13 @@ class WorkerReviewsSection extends StatelessWidget {
     required this.reviews,
     required this.averageRating,
     this.maxVisible,
+    this.resumenResenas,
   });
 
   final List<WorkerReviewModel> reviews;
   final double averageRating;
   final int? maxVisible;
+  final String? resumenResenas;
 
   static const double _reviewCardWidth = 260;
   static const double _reviewStripHeight = 132;
@@ -75,6 +77,14 @@ class WorkerReviewsSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
+        if ((resumenResenas?.trim().isNotEmpty ?? false)) ...[
+          Text(
+            resumenResenas!.trim(),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.4),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         if (reviews.isEmpty)
           const EmptyStateWidget(
             icon: Icons.chat_bubble_outline,

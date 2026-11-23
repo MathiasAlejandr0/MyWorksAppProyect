@@ -24,6 +24,7 @@ import '../../../../core/providers/repository_providers.dart';
 import '../../../../core/providers/service_providers.dart';
 import '../../../../core/services/open_quote_notification_service.dart';
 import '../../../../core/services/user_location_service.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/pricing_service.dart';
 import '../../../../core/utils/comuna_utils.dart';
 import '../../../../core/utils/sku_utils.dart';
@@ -291,6 +292,14 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       await bookingService.confirmEscrowAndAccept(
         jobId: booking.job.id,
         userId: user.id,
+      );
+      AnalyticsService.instance.registrarUso(
+        eventName: AnalyticsEvents.confirmoPedido,
+        userId: user.id,
+        metadata: {
+          'id_trabajo': booking.job.id,
+          if (_selectedWorkerId != null) 'id_profesional': _selectedWorkerId!,
+        },
       );
       if (afterPaid != null) await afterPaid();
       if (!mounted) return;
@@ -611,6 +620,15 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
         return;
       }
 
+      AnalyticsService.instance.registrarUso(
+        eventName: AnalyticsEvents.confirmoPedido,
+        userId: user.id,
+        metadata: {
+          'id_trabajo': job.id,
+          if (_selectedWorkerId != null) 'id_profesional': _selectedWorkerId!,
+        },
+      );
+
       final jobRepository = ref.read(jobRepositoryProvider);
       final near = _selectedLatitude != null && _selectedLongitude != null
           ? await UserLocationService.instance.fromCoordinates(
@@ -919,6 +937,16 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                       onChanged: (time) {
                         FocusManager.instance.primaryFocus?.unfocus();
                         setState(() => _selectedTime = time);
+                        AnalyticsService.instance.registrarUso(
+                          eventName: AnalyticsEvents.eligioHoraReserva,
+                          userId: ref.read(authProvider).user?.id,
+                          metadata: {
+                            if (_selectedWorkerId != null)
+                              'id_profesional': _selectedWorkerId!,
+                            'hora':
+                                '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
+                          },
+                        );
                       },
                     ),
                     const SizedBox(height: 20),

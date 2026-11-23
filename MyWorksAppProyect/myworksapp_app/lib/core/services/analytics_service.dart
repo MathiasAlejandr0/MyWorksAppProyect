@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:uuid/uuid.dart';
 import '../database/models/analytics_event_model.dart';
 import '../interfaces/analytics_repository_interface.dart';
@@ -38,6 +40,10 @@ class AnalyticsEvents {
   // Disputas
   static const String disputeOpened = 'dispute_opened';
   static const String disputeResolved = 'dispute_resolved';
+
+  static const String vioFichaProfesional = 'vio_ficha_profesional';
+  static const String eligioHoraReserva = 'eligio_hora_reserva';
+  static const String confirmoPedido = 'confirmo_pedido';
 
   // Calificaciones
   static const String ratingSubmitted = 'rating_submitted';
@@ -84,6 +90,19 @@ class AnalyticsService {
   /// [userId] - ID del usuario (opcional)
   /// [role] - Rol del usuario (opcional)
   /// [metadata] - Metadata adicional del evento
+  void registrarUso({
+    required String eventName,
+    String? userId,
+    Map<String, dynamic>? metadata,
+  }) {
+    unawaited(trackEvent(
+      eventName: eventName,
+      userId: userId,
+      role: userId == null ? null : 'cliente',
+      metadata: metadata,
+    ));
+  }
+
   Future<void> trackEvent({
     required String eventName,
     String? userId,
