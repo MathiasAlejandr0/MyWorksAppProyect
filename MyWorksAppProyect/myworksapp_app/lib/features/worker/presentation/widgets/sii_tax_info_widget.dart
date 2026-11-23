@@ -12,6 +12,8 @@ enum SiiDocumentType {
 
 /// Formulario local de datos tributarios del especialista.
 /// El estado queda en controladores y en SharedPreferences; no usa Supabase.
+///
+/// No se muestra en Mi Perfil hasta que el flujo de boleta / SII esté integrado.
 class SiiTaxInfoWidget extends StatefulWidget {
   const SiiTaxInfoWidget({super.key});
 
