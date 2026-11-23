@@ -1,6 +1,6 @@
 # Diccionario de base de datos — My Works App
 
-> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-17 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. El cuerpo de cada tabla sigue siendo ese snapshot. La sección 0 agrega a mano las 3 tablas del 20-11-2026. La sección 0-bis registra la lectura del catálogo del 22-11-2026 (76 tablas). No se regeneró el `.docx`.
+> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-17 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. El cuerpo de cada tabla sigue siendo ese snapshot. La sección 0 agrega a mano las 3 tablas del 20-11-2026. La sección 0-bis registra la lectura del catálogo del 22-11-2026 (76 tablas). La sección 0-ter anota la migración BCNF del 23-11-2026. No se regeneró el cuerpo del `.docx`: solo se agregó un párrafo al inicio.
 
 | Campo | Valor |
 |-------|-------|
@@ -48,7 +48,7 @@ Consulta de solo lectura al catálogo de PostgreSQL de la base viva (`wxqrfcqifk
 | Última versión en `supabase_migrations.schema_migrations` | `20261123020000` |
 | Archivos `.sql` de migración en el repositorio | 133. La versión `20261123020000` y otras de consola e inteligencia artificial aplicadas en vivo no tienen archivo en este árbol |
 
-Quince tablas de esa lectura no aparecen en el cuerpo de este diccionario. Cada una tiene clave primaria de una sola columna y el resto de las columnas describe esa fila. Con eso cumplen la primera forma normal y no presentan el problema de la segunda (no hay clave compuesta). **No se reclasificaron a tercera forma normal, BCNF ni cuarta forma normal.** El dictamen del 16 de noviembre no se extiende solo por existir la clave.
+Quince tablas de esa lectura no aparecen en el cuerpo de este diccionario. Cada una tiene clave primaria de una sola columna y el resto de las columnas describe esa fila. Con eso cumplen la primera forma normal y no presentan el problema de la segunda (no hay clave compuesta). **El 22-11 no se reclasificaron a tercera forma normal, BCNF ni cuarta forma normal.** Esa frase deja constancia de la lectura de ese día. La sección 0-ter, del 23-11-2026, fija la clasificación: esas 15 tablas están en BCNF.
 
 | Tabla | Clave | Columnas además de la clave |
 |-------|--------|------------------------------|
@@ -69,6 +69,25 @@ Quince tablas de esa lectura no aparecen en el cuerpo de este diccionario. Cada 
 | `umbrales_seguridad` | `clave` | `valor`, `ventana_minutos`, `descripcion` |
 
 En `metodos_pago_oneclick` se agregaron, el mismo día, `tbk_user_prev`, `username_prev`, `tipo_tarjeta_prev` y `ultimos4_prev`. Dependen de la fila de la tarjeta del usuario, que ya es la clave de esa tabla. El depósito `fotos-demo` es de Storage, no una tabla de `public`: guarda las 34 fotografías de perfil de la demostración.
+
+## 0-ter. Lectura del 23-11-2026
+
+Consulta de solo lectura al catálogo de la base viva `wxqrfcqifkfgawrnqmnj` el 23 de noviembre de 2026, 01:11 hora de Chile. No reemplaza las fichas del snapshot.
+
+| Concepto | Valor medido |
+|----------|----------------|
+| Tablas `public` | **76**, las 76 con RLS activo |
+| Claves foráneas en `public` | **94** (recontadas ese día) |
+| Última versión en `supabase_migrations.schema_migrations` | `20261123040924` |
+| Archivo de esa migración en el repositorio | `MyWorksAppProyect/myworksapp_app/supabase/migrations/20261124050000_esquema_bcnf.sql` (en `main` desde el merge del PR #106) |
+
+Tres cambios de columnas de esa migración. Los disparadores `mensajes_fijar_destinatario` y `trabajadores_z_cifras_desde_stats` están creados en la base viva.
+
+- `mensajes.id_destinatario` lo escribe solo el trigger `mensajes_fijar_destinatario`. PostgreSQL no admite en `GENERATED ALWAYS` una lectura de otra tabla, así que el destinatario no es una columna generada.
+- `tickets_soporte` ya no tiene `nombre_cliente`, `nombre_trabajador` ni `monto_escrow`. La consola lee la vista `consola_tickets`, que toma el nombre del perfil y el monto del pago del trabajo. Columnas medidas hoy en la tabla, y solo estas: `id` (text, not null, default `gen_random_uuid()::text`), `id_trabajo` (text, nulo), `asunto` (text, not null), `estado` (text, nulo, default `'pendiente'`), `creado_en` (timestamptz, nulo, default `now()`).
+- En `trabajadores`, `calificacion` y `trabajos_completados` los iguala `trabajadores_z_cifras_desde_stats` con la estadística del profesional. `score_listado` solo lo cambia el recálculo del ranking (`refrescar_ranking_trabajador`, con `mwa.ranking = 1`). `es_elite` es generada: `((COALESCE(calificacion, 0) >= 4.7) AND (trabajos_completados >= 5))`.
+
+Forma normal que se puede afirmar con esta migración. Las tablas auditadas quedan en BCNF. La cuarta forma normal se sostiene solo en las listas del profesional (servicios, precios, horarios y portafolio). El trigger copia la cifra desde la estadística; eso no convierte por sí solo la dependencia en una tercera forma normal teórica pura. Las 15 tablas de la sección 0-bis están en BCNF por clave de una columna y atributos de esa fila. El esquema completo no queda descrito como cuarta forma normal.
 
 ### 0.1 auditoria_consola (grupo administración)
 
