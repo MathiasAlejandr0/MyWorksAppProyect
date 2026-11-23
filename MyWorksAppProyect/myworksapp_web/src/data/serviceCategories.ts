@@ -1,8 +1,5 @@
 /** Catálogo completo de oficios My Works App (web). */
 
-/** Helper para rutas de imágenes locales en /categories/ */
-const local = (name: string) => `/categories/${name}.webp`;
-
 export type ServiceCategory = {
   id: string;
   title: string;
@@ -24,7 +21,7 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'electricidad',
     title: 'Electricidad',
     subtitle: 'Instalaciones, reparaciones y más',
-    photo: '/categories/electricidad-1795386019.webp',
+    photo: '/categories/electricidad-instalacion.webp',
     searchQuery: 'electricidad',
   },
   {
@@ -52,14 +49,14 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'pintura',
     title: 'Pintura',
     subtitle: 'Interiores y exteriores',
-    photo: '/categories/pintura.webp',
+    photo: '/categories/pintura-rodillo.webp',
     searchQuery: 'pintura',
   },
   {
     id: 'jardineria',
     title: 'Jardinería',
     subtitle: 'Poda, riego y mantención',
-    photo: '/categories/jardineria.webp',
+    photo: '/categories/jardineria-mantencion.webp',
     searchQuery: 'jardinería',
   },
   {
@@ -73,28 +70,28 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'construccion',
     title: 'Construcción',
     subtitle: 'Remodelaciones y obras menores',
-    photo: local('construccion'),
+    photo: '/categories/construccion-obra.webp',
     searchQuery: 'construcción',
   },
   {
     id: 'soporte_tecnico',
     title: 'Soporte técnico',
     subtitle: 'PC, redes y dispositivos',
-    photo: local('soporte-tecnico'),
+    photo: '/categories/soporte-tecnico-redes.webp',
     searchQuery: 'soporte técnico',
   },
   {
     id: 'mudanza',
     title: 'Mudanza',
     subtitle: 'Traslado y embalaje',
-    photo: local('mudanza'),
+    photo: '/categories/mudanza-cajas.webp',
     searchQuery: 'mudanza',
   },
   {
     id: 'climatizacion',
     title: 'Climatización',
     subtitle: 'Aire acondicionado y calefacción',
-    photo: local('climatizacion'),
+    photo: '/categories/climatizacion-aire.webp',
     searchQuery: 'climatización aire acondicionado',
   },
 ];
