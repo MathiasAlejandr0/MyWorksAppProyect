@@ -24,7 +24,7 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'electricidad',
     title: 'Electricidad',
     subtitle: 'Instalaciones, reparaciones y más',
-    photo: '/categories/electricidad-1795386019.webp',
+    photo: '/categories/electricidad-instalacion.webp',
     searchQuery: 'electricidad',
   },
   {
@@ -52,14 +52,14 @@ export const ALL_SERVICE_CATEGORIES: ServiceCategory[] = [
     id: 'pintura',
     title: 'Pintura',
     subtitle: 'Interiores y exteriores',
-    photo: '/categories/pintura.webp',
+    photo: '/categories/pintura-rodillo.webp',
     searchQuery: 'pintura',
   },
   {
     id: 'jardineria',
     title: 'Jardinería',
     subtitle: 'Poda, riego y mantención',
-    photo: '/categories/jardineria.webp',
+    photo: '/categories/jardineria-mantencion.webp',
     searchQuery: 'jardinería',
   },
   {
