@@ -21,6 +21,7 @@ import { supabase } from '../supabaseClient';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { Badge, Button, CopyId, EmptyState, ErrorState, SkeletonRows } from '../ui/kit';
 import { useToast } from '../ui/toast-store';
+import { ColaResenasDudosas } from './colaResenas';
 import { PagedTable, type PageResult } from './table';
 
 function asPromise<T>(value: PromiseLike<T>): Promise<T> {
@@ -325,7 +326,7 @@ export function TicketsPage() {
       <PagedTable
         queryKey={['tickets']}
         empty="Aún no hay tickets."
-        load={(page, search) => loadPage('tickets_soporte', page, search, 'id, asunto, estado, nombre_cliente, nombre_trabajador, creado_en')}
+        load={(page, search) => loadTickets(page, search)}
         columns={[
           { key: 'asunto', header: 'Asunto', cell: (row) => String(row.asunto ?? '—'), csv: (row) => row.asunto },
           { key: 'estado', header: 'Estado', cell: (row) => <Badge value={String(row.estado ?? 'pendiente')} />, csv: (row) => statusLabel(String(row.estado ?? '')) },
@@ -885,6 +886,7 @@ export function ResenasPage() {
   return (
     <section className="stack">
       <h1>Reseñas</h1>
+      <ColaResenasDudosas />
       <PagedTable
         queryKey={['resenas']}
         empty="Aún no hay reseñas."
@@ -1426,6 +1428,20 @@ export function CuentaPage() {
       <Button variant="secondary" onClick={() => void logout()}>Cerrar sesión</Button>
     </section>
   );
+}
+
+async function loadTickets(
+  page: number,
+  search: string,
+): Promise<PageResult<Record<string, unknown> & { id: string }>> {
+  const q = clean(search);
+  let request = supabase
+    .from('consola_tickets')
+    .select('id, asunto, estado, nombre_cliente, nombre_trabajador, creado_en', { count: 'exact' });
+  if (q) request = request.ilike('asunto', `%${q}%`);
+  const { data, error, count } = await fetchOrderedPage(request as unknown as PageQuery, 'consola_tickets', page);
+  if (error) throw error;
+  return { rows: (data ?? []) as unknown as Array<Record<string, unknown> & { id: string }>, total: count ?? 0 };
 }
 
 async function loadPage(

@@ -18,6 +18,7 @@ import {
   withdrawReschedule,
   type RescheduleProposal,
 } from '@myworksapp/shared';
+import { DarkSelect } from './DarkSelect';
 import { supabase } from '../supabaseClient';
 
 interface JobClientActionsProps {
@@ -230,17 +231,17 @@ export function JobClientActions({
                 ) : (
                   <>
                     <label htmlFor="reagendar-hora">Nueva hora</label>
-                    <select
+                    <DarkSelect
                       id="reagendar-hora"
+                      block
+                      label="Nueva hora"
                       value={slot}
-                      onChange={(event) => setSlot(event.target.value)}
-                      required
-                    >
-                      <option value="">Elige una hora</option>
-                      {options.map((iso) => (
-                        <option key={iso} value={iso}>{formatBookingSlotLabel(iso)}</option>
-                      ))}
-                    </select>
+                      onChange={setSlot}
+                      options={[
+                        { value: '', label: 'Elige una hora' },
+                        ...options.map((iso) => ({ value: iso, label: formatBookingSlotLabel(iso) })),
+                      ]}
+                    />
                     <label htmlFor="reagendar-motivo">Motivo (opcional)</label>
                     <input
                       id="reagendar-motivo"

@@ -11,6 +11,9 @@ import '../../../../core/database/repositories/rating_repository.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
+import '../../../../core/database/supabase_db.dart';
+import '../../../../core/services/analytics_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/design_system/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
@@ -54,6 +57,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
   UserModel? _user;
   List<PortfolioModel> _portfolio = [];
   List<WorkerReviewModel> _reviews = [];
+  String? _resumenResenas;
   UserLocationContext? _clientLocation;
   String? _resolvedServiceId;
   bool _isLoading = true;
@@ -109,6 +113,17 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
         );
       } catch (_) {}
 
+      String? resumenResenas;
+      try {
+        final row = await supabase
+            .from('ia_resumen_resenas')
+            .select('resumen')
+            .eq('id_profesional', widget.workerId)
+            .maybeSingle();
+        final texto = (row?['resumen'] as String?)?.trim();
+        if (texto != null && texto.isNotEmpty) resumenResenas = texto;
+      } catch (_) {}
+
       UserLocationContext? clientLocation;
       try {
         clientLocation = await UserLocationService.instance.resolve();
@@ -137,11 +152,17 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
         _user = user;
         _portfolio = portfolio;
         _reviews = reviews;
+        _resumenResenas = resumenResenas;
         _clientLocation = clientLocation;
         _resolvedServiceId = serviceId;
         _isAcceptingJobs = acceptingJobs;
         _isLoading = false;
       });
+      AnalyticsService.instance.registrarUso(
+        eventName: AnalyticsEvents.vioFichaProfesional,
+        userId: ref.read(authProvider).user?.id,
+        metadata: {'id_profesional': widget.workerId},
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -226,6 +247,7 @@ class _WorkerDetailPageState extends ConsumerState<WorkerDetailPage> {
                   WorkerReviewsSection(
                     reviews: _reviews,
                     averageRating: _worker!.rating,
+                    resumenResenas: _resumenResenas,
                   ),
                 ],
               ),

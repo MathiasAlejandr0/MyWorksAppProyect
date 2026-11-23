@@ -16,6 +16,7 @@ export interface OrderSpec {
 export const LIST_ORDERS = {
   trabajos: { column: 'creado_en', ascending: false, tie: 'id' },
   tickets_soporte: { column: 'creado_en', ascending: false, tie: 'id' },
+  consola_tickets: { column: 'creado_en', ascending: false, tie: 'id' },
   reportes: { column: 'creado_en', ascending: false, tie: 'id' },
   calificaciones: { column: 'creado_en', ascending: false, tie: 'id' },
   servicios: { column: 'nombre', ascending: true, tie: 'id' },

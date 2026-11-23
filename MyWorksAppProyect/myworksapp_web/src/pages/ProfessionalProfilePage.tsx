@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { profilePhotoOrInitials } from '@myworksapp/shared';
+import { EVENTOS_USO, profilePhotoOrInitials, type ProfesionalParecido } from '@myworksapp/shared';
+import { registrarEventoUso } from '../analytics/registrarEvento';
 import { SiteFooter } from '../components/SiteFooter';
 import { StarScore } from '../components/StarScore';
+import { leerProfesionalesParecidos, leerResumenResenas } from '../data/fichaPublica';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { supabase } from '../supabaseClient';
 import type { SearchWorker } from '../components/SearchResultsView';
@@ -52,10 +54,14 @@ export function ProfessionalProfilePage({
   const [row, setRow] = useState<ProfileRow | null>(null);
   const [hours, setHours] = useState<Slot[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [resumen, setResumen] = useState<string | null>(null);
+  const [parecidos, setParecidos] = useState<ProfesionalParecido[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
 
   useEffect(() => {
     let cancelled = false;
+    setResumen(null);
+    setParecidos([]);
     const db = supabase as unknown as Loose;
     void Promise.all([
       db.rpc('perfil_publico_profesional', { p_id: id }),
@@ -77,6 +83,12 @@ export function ProfessionalProfilePage({
       setHours(Array.isArray(schedule.data) ? schedule.data as Slot[] : []);
       setReviews(Array.isArray(notes.data) ? notes.data as Review[] : []);
       setStatus('ready');
+      registrarEventoUso(EVENTOS_USO.vioFicha, { id_profesional: id });
+      void Promise.all([leerResumenResenas(id), leerProfesionalesParecidos(id)]).then(([texto, lista]) => {
+        if (cancelled) return;
+        setResumen(texto);
+        setParecidos(lista);
+      });
     }).catch(() => {
       if (!cancelled) setStatus('error');
     });
@@ -142,6 +154,12 @@ export function ProfessionalProfilePage({
             ) : (
               <p>Nuevo · sin reseñas aún</p>
             )}
+            {resumen ? (
+              <>
+                <h2>Resumen de reseñas</h2>
+                <p>{resumen}</p>
+              </>
+            ) : null}
             <h2>Horario</h2>
             {hours.length === 0 ? <p>Sin horario publicado.</p> : (
               <ul>
@@ -165,6 +183,22 @@ export function ProfessionalProfilePage({
                 ))}
               </ul>
             )}
+            {parecidos.length > 0 ? (
+              <>
+                <h2>Profesionales parecidos</h2>
+                <ul>
+                  {parecidos.map((item) => (
+                    <li key={item.id}>
+                      <Link to={`/profesional/${item.id}`}>{item.nombre}</Link>
+                      <span> · {item.profesion}</span>
+                      {item.calificacion == null ? null : (
+                        <span> · {item.calificacion.toFixed(1)}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
             <button type="button" className="btn-primary" onClick={reserve}>Reservar</button>
           </article>
         ) : null}

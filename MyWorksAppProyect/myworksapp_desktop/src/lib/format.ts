@@ -24,6 +24,7 @@ export function formatDateTime(value: string | null | undefined): string {
 
 const LABELS: Record<string, string> = {
   pendiente: 'Pendiente',
+  respondido: 'Respondido',
   autorizado: 'Autorizado',
   retenido: 'Retenido',
   liberado: 'Liberado',

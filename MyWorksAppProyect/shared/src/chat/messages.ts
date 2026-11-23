@@ -25,6 +25,7 @@ export function buildJobMessageInsert(input: NewJobMessage) {
     id: input.id,
     id_trabajo: input.jobId,
     id_remitente: input.senderId,
+    // La base lo reemplaza con el otro participante del trabajo.
     id_destinatario: input.receiverId,
     contenido: content,
     tipo: 'texto',
