@@ -1,6 +1,6 @@
 # My Works App: prompts de video premium «Guía rápida · Cómo se usa». App, Web y Escritorio
 
-> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (18-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `d9d2c7c`) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (18-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (22-11-2026) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
 
 **Para:** el diseñador gráfico / motion designer
 **Versión:** v1 · 16-nov-2026, 00:40 (hora de Chile). Complementa (no reemplaza) al brief del *speech* `prompt_video_cinematografico_v2.md`. Índice: `LEEME.md`.

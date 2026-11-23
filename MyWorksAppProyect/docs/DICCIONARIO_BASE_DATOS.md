@@ -1,6 +1,6 @@
 # Diccionario de base de datos — My Works App
 
-> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-17 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. No editar a mano: actualizar el snapshot o volver a introspectar y regenerar. La sección 0 es la única excepción: agrega a mano las 3 tablas de las migraciones del 20-11-2026 (60 tablas en total).
+> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-17 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. El cuerpo de cada tabla sigue siendo ese snapshot. La sección 0 agrega a mano las 3 tablas del 20-11-2026. La sección 0-bis registra la lectura del catálogo del 22-11-2026 (76 tablas). No se regeneró el `.docx`.
 
 | Campo | Valor |
 |-------|-------|
@@ -36,6 +36,39 @@ Con las migraciones `20261118050658` a `20261120170000` el esquema `public` qued
 | Última migración | `20261117223850` | `20261120170000` |
 
 Los conteos de la columna derecha salen del DDL; no se volvieron a medir en la base viva.
+
+## 0-bis. Lectura del catálogo el 22-11-2026
+
+Consulta de solo lectura al catálogo de PostgreSQL de la base viva (`wxqrfcqifkfgawrnqmnj`), el 22 de noviembre de 2026. No reemplaza el detalle columna por columna del snapshot.
+
+| Concepto | Valor medido |
+|----------|----------------|
+| Tablas `public` | **76**, las 76 con RLS activo |
+| Claves foráneas en `public` | **94** |
+| Última versión en `supabase_migrations.schema_migrations` | `20261123020000` |
+| Archivos `.sql` de migración en el repositorio | 133. La versión `20261123020000` y otras de consola e inteligencia artificial aplicadas en vivo no tienen archivo en este árbol |
+
+Quince tablas de esa lectura no aparecen en el cuerpo de este diccionario. Cada una tiene clave primaria de una sola columna y el resto de las columnas describe esa fila. Con eso cumplen la primera forma normal y no presentan el problema de la segunda (no hay clave compuesta). **No se reclasificaron a tercera forma normal, BCNF ni cuarta forma normal.** El dictamen del 16 de noviembre no se extiende solo por existir la clave.
+
+| Tabla | Clave | Columnas además de la clave |
+|-------|--------|------------------------------|
+| `bloqueos_ip` | `id` | `creado_en`, `ip`, `hasta`, `motivo`, `activo` |
+| `cola_moderacion` | `id` | `id_mensaje`, `motivo`, `detalle`, `estado`, `veredicto_llm`, `creado_en`, `revisado_por`, `revisado_en` |
+| `eventos_acceso` | `id` | `creado_en`, `tipo`, `correo_enmascarado` |
+| `ia_banderas` | `clave` | `activa`, `nota` |
+| `ia_cambios_banco` | `id` | `user_id`, `creado_en` |
+| `ia_cola_embeddings` | `id` | `tabla`, `entidad_id`, `texto`, `estado`, `creado_en` |
+| `ia_huellas` | `id` | `user_id`, `device_hash`, `ip_hash`, `created_at` |
+| `ia_pesos_busqueda` | `clave` | `peso`, `descripcion` |
+| `ia_resumen_resenas` | `id_profesional` | `resumen`, `n_resenas`, `origen`, `generado_en` |
+| `ia_sugerencias_perfil` | `id` | `user_id`, `texto_sugerido`, `estado`, `creado_en` |
+| `incidentes_seguridad` | `id` | `creado_en`, `tipo`, `severidad`, `resumen`, `detalle` (jsonb), `estado`, `id_usuario` |
+| `pruebas_seguridad` | `id` | `creado_en`, `tipo`, `origen`, `resultado`, `severidad`, `resumen`, `recomendacion`, `detalle` (jsonb) |
+| `respaldos_consola` | `id` | `creado_en`, `tamano_bytes`, `sha256`, `tablas`, `estado`, `contenido`, `filas` (jsonb), `ruta`, `origen` |
+| `ticket_mensajes` | `id` | `id_ticket`, `id_autor`, `cuerpo`, `creado_en` |
+| `umbrales_seguridad` | `clave` | `valor`, `ventana_minutos`, `descripcion` |
+
+En `metodos_pago_oneclick` se agregaron, el mismo día, `tbk_user_prev`, `username_prev`, `tipo_tarjeta_prev` y `ultimos4_prev`. Dependen de la fila de la tarjeta del usuario, que ya es la clave de esa tabla. El depósito `fotos-demo` es de Storage, no una tabla de `public`: guarda las 34 fotografías de perfil de la demostración.
 
 ### 0.1 auditoria_consola (grupo administración)
 

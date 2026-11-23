@@ -25,7 +25,7 @@ Registro de pruebas vigente: [`docs/anexos/2026-11-15-pruebas/REGISTRO.md`](docs
 | Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`myworksapp_web/`](myworksapp_web/), publicado en https://myworksapp.cl |
 | Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`myworksapp_desktop/`](myworksapp_desktop/) |
 | Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`shared/`](shared/) |
-| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`myworksapp_app/supabase/`](myworksapp_app/supabase/) |
+| Backend | Supabase: PostgreSQL con RLS. El 22-11-2026 la base viva tenía 76 tablas. El diccionario está en [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md) | [`myworksapp_app/supabase/`](myworksapp_app/supabase/) |
 | Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`docs/`](docs/) |
 | Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](../docs/INDICE.md) (en la raíz del repositorio) |
 
@@ -153,7 +153,7 @@ graph TD
 | `myworksapp_web/` | Web de clientes (React 19 + Vite 8) |
 | `myworksapp_desktop/` | Consola operativa (Tauri 2 + React 19) |
 | `shared/` | Auth, repositorios, pagos, métricas y tipos TypeScript compartidos (web y consola) |
-| `myworksapp_app/supabase/migrations/` | 125 migraciones SQL (esquema, RLS, Webpay, consola, rate limit) |
+| `myworksapp_app/supabase/migrations/` | 133 archivos SQL al 22-11-2026 (esquema, RLS, Webpay, consola, rate limit). La base viva tiene versiones posteriores |
 | `myworksapp_app/supabase/functions/` | 18 Edge Functions y el código común `_shared/` |
 | `docs/` | Casos de uso, diccionario BD, runbooks, despliegue web y anexos de pruebas |
 

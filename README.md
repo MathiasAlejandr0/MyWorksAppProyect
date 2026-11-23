@@ -15,7 +15,7 @@
 | Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`MyWorksAppProyect/myworksapp_web/`](MyWorksAppProyect/myworksapp_web/), publicado en https://myworksapp.cl |
 | Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`MyWorksAppProyect/myworksapp_desktop/`](MyWorksAppProyect/myworksapp_desktop/) |
 | Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`MyWorksAppProyect/shared/`](MyWorksAppProyect/shared/) |
-| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`MyWorksAppProyect/myworksapp_app/supabase/`](MyWorksAppProyect/myworksapp_app/supabase/) |
+| Backend | Supabase: PostgreSQL con RLS. El 22-11-2026 la base viva tenía 76 tablas. El detalle y la forma normal están en el diccionario y en `docs/normalizacion.md` | [`MyWorksAppProyect/myworksapp_app/supabase/`](MyWorksAppProyect/myworksapp_app/supabase/) |
 | Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`MyWorksAppProyect/docs/`](MyWorksAppProyect/docs/) |
 | Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](docs/INDICE.md) |
 
@@ -136,7 +136,7 @@ Turnstile) · Resend (correo, dominio send.myworksapp.cl) · OpenFreeMap (mapas)
 | `MyWorksAppProyect/myworksapp_web/` | Web de clientes (sesión o invitado) |
 | `MyWorksAppProyect/myworksapp_desktop/` | Consola operativa de escritorio (Tauri 2) |
 | `MyWorksAppProyect/shared/` | Contratos TypeScript compartidos por la web y la consola |
-| `MyWorksAppProyect/myworksapp_app/supabase/` | 125 migraciones SQL y 18 Edge Functions |
+| `MyWorksAppProyect/myworksapp_app/supabase/` | 133 archivos de migración y 18 Edge Functions en el repositorio. La base viva llega más lejos (`20261123020000`) |
 | `Fase 1/`, `Fase 2/`, `Documentos Guia/` | Expediente académico Capstone |
 
 Diccionario de datos: [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md). Estado técnico completo: [`MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`](MyWorksAppProyect/ESTADO_DEL_PROYECTO.md).
@@ -219,7 +219,7 @@ Configurar variables Supabase según `.env.example` de web/desktop y `--dart-def
 
 ## 9. Estado respecto al título y al producto
 
-Estado a `main` `d9d2c7c` (20 de noviembre de 2026).
+Estado al 22 de noviembre de 2026 (`main` `a5f2f7d`, con el cierre descrito en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`).
 
 | Dimensión | Estado actual |
 |-----------|----------------|
@@ -231,7 +231,7 @@ Estado a `main` `d9d2c7c` (20 de noviembre de 2026).
 | Liquidación al profesional | Manual por administrador (automatización futura) |
 | Lanzamiento comercial | Condicionado a empresa, credenciales de producción de Transbank y al piloto con usuarios |
 
-**En desarrollo (ramas sin merge, no están en producción):** `cursor/aviso-academico-duoc-v2` (banner y páginas legales) y `cursor/consola-bugs` (24 errores de la consola). También pendientes: la invitación por Resend (falta `INVITE_PROVIDER=resend`) y la prueba de punta a punta de `soporte@myworksapp.cl`. Detalle en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
+**Pendiente de integrar o de publicar:** `cursor/consola-bugs` (24 errores de la consola del 20-11). El aviso académico ya está en `main`. Falta desplegar la web posterior al PR #100 y la función `oneclick-charge` que reanuda la orden de cambio. También pendientes: la invitación por Resend (`INVITE_PROVIDER=resend`) y la prueba de punta a punta de `soporte@myworksapp.cl`. Detalle en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
 
 ---
 

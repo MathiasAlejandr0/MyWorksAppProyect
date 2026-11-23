@@ -4,6 +4,8 @@ Este documento explica qué son las formas normales y muestra, con tablas reales
 
 Las 3 tablas agregadas el 20-11-2026 (`auditoria_consola`, `rate_limit_ventana` y `direcciones_cliente`) no se analizan aquí. Cada una tiene una clave propia y columnas que dependen solo de ella.
 
+**Lectura del 22-11-2026.** La base viva tiene 76 tablas en `public` (76 con RLS) y la última migración registrada es `20261123020000`. Quince de esas tablas no están en el diccionario del 17-11 ni en el anexo del 20-11: `bloqueos_ip`, `cola_moderacion`, `eventos_acceso`, `ia_banderas`, `ia_cambios_banco`, `ia_cola_embeddings`, `ia_huellas`, `ia_pesos_busqueda`, `ia_resumen_resenas`, `ia_sugerencias_perfil`, `incidentes_seguridad`, `pruebas_seguridad`, `respaldos_consola`, `ticket_mensajes` y `umbrales_seguridad`. Se miraron solo la clave primaria y las columnas: la clave es de una columna y el resto describe esa fila, así que no hay lista en una celda ni dependencia de una parte de una clave compuesta. **No se les asignó tercera forma normal, BCNF ni cuarta forma normal.** El veredicto de la sección 4 sigue valiendo para las tablas que ese texto nombra, no para las 76.
+
 ## 1. Qué es normalizar
 
 Normalizar es ordenar los datos en tablas para que cada hecho se guarde **una sola vez**. Así se evitan datos repetidos, contradicciones al actualizar y filas que no se pueden borrar sin perder otra información. Cada forma normal agrega una regla a la anterior.

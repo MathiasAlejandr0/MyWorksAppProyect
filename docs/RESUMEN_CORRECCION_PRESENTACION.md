@@ -1,7 +1,7 @@
 # Resumen de Correcciones — Presentación de Defensa MyWorksApp
 
-**Fecha:** 20 de noviembre de 2026  
-**Estado:** ✅ Completado y pusheado a GitHub  
+**Fecha del cuerpo:** 20 de noviembre de 2026  
+**Estado:** el corte de 60 tablas quedó superado el 22-11-2026: la base viva tiene 76 tablas, todas con RLS. Donde este resumen dice 60 o «4FN» para el esquema entero, usar `MyWorksAppProyect/docs/normalizacion.md`.  
 **Repositorio:** https://github.com/nicoussj/Proyecto-Titulo-MyWorksApp
 
 ---

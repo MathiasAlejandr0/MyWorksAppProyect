@@ -254,9 +254,9 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 | Límite de tasa global | Gabriel Valderas | ✅ Completado | `rate_limit_consumir` implementado |
 | Segundo factor (TOTP) en consola | Mathias Jara | ✅ Completado | Autenticación de dos factores |
 | Prueba integral P-17 | Equipo | ✅ Completado | 641 de 641 pruebas pasando |
-| Corrección H1 (alta profesionales) | Gabriel Valderas | ⏳ En parche | Migración sin `generate_series` |
+| Corrección H1 (alta profesionales) | Gabriel Valderas | Migración aplicada | `20261120180000` está en la base viva; el alta no se repitió el 22-11 |
 | Arreglo bugs consola (24 errores) | Equipo | ⏳ En rama | `cursor/consola-bugs` |
-| Páginas legales | Nicolas Chiguay | ⏳ En rama | `cursor/aviso-academico-duoc-v2` |
+| Páginas legales | Nicolas Chiguay | En `main` | Falta el despliegue de https://myworksapp.cl |
 | Informe final PTY4614 | Nicolas Chiguay y equipo | ✅ Completado | Documento Word actualizado |
 | Actualización de documentación Scrum | Nicolas Chiguay | ✅ Completado | Visión, backlog, sprint, retrospectiva |
 
@@ -266,9 +266,9 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 - ✅ Correos transaccionales con Resend
 - ✅ 641 pruebas automatizadas pasando
 - ✅ Informe final actualizado
-- ⏳ Corrección H1 (en parche local)
+- Migración de H1 aplicada en la base viva el 22-11; el alta no se volvió a medir
 - ⏳ 24 bugs de consola (rama sin merge)
-- ⏳ Páginas legales (rama sin merge)
+- Páginas legales en `main`; el sitio publicado no se había redesplegado el 22-11 a las 20:24 (hora de Chile)
 
 **Métricas del Sprint 10 (al 20-nov):**
 - 86 commits (60 después del corte del 17-nov)
@@ -278,8 +278,8 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 
 **Pendientes para cierre del sprint:**
 1. Mergear rama `cursor/consola-bugs` (arreglo de 24 errores)
-2. Mergear rama `cursor/aviso-academico-duoc-v2` (páginas legales)
-3. Aplicar parche de corrección H1 en producción
+2. Desplegar en Vercel el `main` que ya trae las páginas legales
+3. La migración de H1 ya está en la base viva; falta repetir el alta de un profesional
 4. Activar `INVITE_PROVIDER=resend`
 5. Probar `soporte@myworksapp.cl` de punta a punta
 6. Desplegar `send-push` (notificaciones remotas)
@@ -587,8 +587,8 @@ Un incremento está "Done" cuando:
 ### Inmediato (diciembre 2026)
 
 - [ ] Defensa exitosa del proyecto de título
-- [ ] Corrección de H1 en producción
-- [ ] Merge de ramas pendientes (`cursor/consola-bugs`, `cursor/aviso-academico-duoc-v2`)
+- [ ] Repetir el alta de un profesional (la migración de H1 ya está aplicada)
+- [ ] Merge de `cursor/consola-bugs` y despliegue web del aviso académico, que ya está en `main`
 - [ ] Activación de todas las funcionalidades pendientes
 
 ### Corto plazo (enero-marzo 2027)
@@ -623,7 +623,7 @@ Un incremento está "Done" cuando:
 El proyecto My Works App ha cumplido exitosamente con los objetivos académicos del Capstone PTY4614, entregando un **MVP técnico completo y funcional** que demuestra la viabilidad de un marketplace de servicios del hogar con:
 
 ✅ **Arquitectura profesional** (Feature-First + Clean Architecture pragmática)  
-✅ **Backend robusto** (60 tablas, 125 migraciones, RLS completo)  
+✅ **Backend** (al 22-11-2026: 76 tablas en la base viva, todas con RLS; 133 archivos de migración en el repositorio)  
 ✅ **Multiplataforma** (móvil Flutter, web React, consola Tauri)  
 ✅ **Pagos protegidos** (Transbank Webpay con escrow)  
 ✅ **Calidad demostrada** (641 pruebas automatizadas)  

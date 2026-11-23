@@ -1,6 +1,6 @@
 # Web de clientes: despliegue y configuración vigente
 
-Estado al 20 de noviembre de 2026, `main` `d9d2c7c`. Esta guía describe lo que el código exige y lo que está configurado fuera del repositorio según el reporte de despliegue del 20-nov. No contiene secretos.
+La guía de configuración sigue siendo la del 20 de noviembre de 2026. El 22-11-2026 `main` está en `a5f2f7d` y https://myworksapp.cl todavía servía el paquete anterior (última modificación de la portada a las 20:24, hora de Chile). Publicar ese `main` es un `npx vercel --prod` con la cuenta del proyecto `myworksapp`. Esta guía no contiene secretos.
 
 ## Dónde está publicada
 
@@ -50,7 +50,7 @@ Llamadas desde `myworksapp_web/src` o `shared/src`: `guest-checkout`, `definir-c
 
 ## Pendiente
 
-- Textos de términos y privacidad: las páginas existen, pero dicen que el texto oficial no está publicado. Los textos y `/aviso-legal` están en la rama `cursor/aviso-academico-duoc-v2`, sin merge.
+- Textos de términos, privacidad y aviso legal: están en `main` desde el 22-11-2026. El sitio publicado ese día todavía servía el paquete anterior.
 - HSTS `preload`: no se agrega.
 - Medir Lighthouse sobre el dominio propio.
 - Probar a mano el registro: con Turnstile no se puede automatizar.

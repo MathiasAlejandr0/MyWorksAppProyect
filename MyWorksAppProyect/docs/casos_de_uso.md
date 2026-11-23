@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión del código analizada | `main` en `d9d2c7c` (20 de noviembre de 2026; app 1.0.11+12). Incluye la consola con bitácora `auditoria_consola` y 17 RPC `consola_*`, la web con perfil público, cuenta del cliente, rechazo de cobros adicionales y límite de tasa global, y la comisión de `comision_servicio_clp` |
+| Versión del código analizada | `main` en `d9d2c7c` (20 de noviembre de 2026; app 1.0.11+12) para los casos de este archivo. El 22-11-2026 `main` avanzó a `a5f2f7d` (fotos de perfil, menú de la consola e isotipo). Esos cambios no reescriben los casos CU-01 a CU-34. El estado vivo está en `ESTADO_DEL_PROYECTO.md` |
 | Fuentes | Código de `myworksapp_app` (Flutter), `myworksapp_web` (React/Vite), `myworksapp_desktop` (Tauri), `shared/` (TypeScript), `myworksapp_app/supabase/migrations` (SQL) y `myworksapp_app/supabase/functions` (Edge Functions). La web se publica en https://myworksapp.cl. Lo que depende de la configuración en vivo se toma del reporte de despliegue del 20-nov-2026 y se indica como tal |
 | Diagrama | [`casos_de_uso_diagrama.png`](casos_de_uso_diagrama.png) (fuente Mermaid en §3) |
 
@@ -1162,4 +1162,4 @@ Estado al 20-nov-2026 (`main` `d9d2c7c`):
 4. **CU-24 y CU-32.** `send-push` no está desplegada. `soporte-automatico` sí (20-nov), pero falta programar su llamada.
 5. **CU-03 y CU-31.** El PR #82 arregla restablecer la clave desde la app (`cl.myworksapp.auth`) y aceptar una invitación en la consola; llega a los usuarios con la próxima compilación de la app y de la consola. La invitación por Resend sigue pendiente (`INVITE_PROVIDER=resend`).
 
-**En desarrollo (ramas sin merge, no forman parte de estos casos):** `cursor/aviso-academico-duoc-v2` (banner y páginas `/aviso-legal`, `/terminos`, `/privacidad`) y `cursor/consola-bugs` (24 errores de la consola, con la migración `20261120210000_consola_lectura_config_y_disputas.sql` sin aplicar).
+**Al 22-11-2026.** El aviso académico y las páginas legales están en `main`. Sigue sin merge `cursor/consola-bugs` (24 errores de la consola y la migración de lectura de configuración, sin aplicar). Esos cambios no forman parte de los casos CU-01 a CU-34.
