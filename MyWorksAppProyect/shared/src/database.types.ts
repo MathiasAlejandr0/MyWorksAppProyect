@@ -2896,6 +2896,13 @@ export type Database = {
         Args: { p_clave: string; p_motivo: string; p_valor: string }
         Returns: undefined
       }
+      consola_leer_config: {
+        Args: never
+        Returns: {
+          clave: string
+          valor: string
+        }[]
+      }
       consola_fijar_estado_cuenta: {
         Args: { p_estado: string; p_id: string; p_motivo: string }
         Returns: undefined

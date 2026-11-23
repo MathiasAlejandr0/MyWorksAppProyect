@@ -943,7 +943,7 @@ Reglas transversales que impone el servidor:
 - 4a. Rechazo con una nota de menos de 10 caracteres: «La nota de rechazo debe tener al menos 10 caracteres» y no cambia nada.
 - 5a. Lo intenta alguien que no es administrador: «Solo un administrador puede fijar la verificación».
 
-**Estado conocido**: en la prueba de la consola del 20-nov sobre `08154df`, el módulo «Profesionales» respondió 403 al leer `trabajadores`, así que hoy no se puede ejecutar este caso desde la consola. El arreglo está en la rama `cursor/consola-bugs`, sin merge.
+**Estado conocido**: el 403 del 20-nov se debía a pedir `nota_verificacion`, columna sin `SELECT` para `authenticated`. La lista ya no la pide; la nota sale de `fichas_sensibles_admin`.
 
 **Trazabilidad**: `myworksapp_desktop/src/features/screens.tsx` (`ProfesionalesPage`, `FichaProfesional`); migración `20261120130000_auditoria_consola.sql` (`fijar_verificacion_profesional`).
 
@@ -1157,9 +1157,9 @@ Reglas transversales que impone el servidor:
 Estado al 20-nov-2026 (`main` `d9d2c7c`):
 
 1. **Comisión (RN-06, CU-30).** El código cobra 5 % con un mínimo de $1.000. Versiones anteriores de este documento y del informe decían 15 %. Se documenta el código; la tasa queda por decidir.
-2. **CU-29.** El rechazo exige una nota de al menos 10 caracteres. En la prueba de la consola del 20-nov el módulo Profesionales respondió 403: el caso no se puede ejecutar hasta el merge de `cursor/consola-bugs`.
+2. **CU-29.** El rechazo exige una nota de al menos 10 caracteres. El 403 del 20-nov queda corregido: la lista no pide `nota_verificacion` y la nota se lee con `fichas_sensibles_admin`.
 3. **CU-01.** El captcha de Supabase Auth no está activado: el token de Turnstile del registro no se valida en el servidor.
 4. **CU-24 y CU-32.** `send-push` no está desplegada. `soporte-automatico` sí (20-nov), pero falta programar su llamada.
 5. **CU-03 y CU-31.** El PR #82 arregla restablecer la clave desde la app (`cl.myworksapp.auth`) y aceptar una invitación en la consola; llega a los usuarios con la próxima compilación de la app y de la consola. La invitación por Resend sigue pendiente (`INVITE_PROVIDER=resend`).
 
-**Al 22-11-2026.** El aviso académico y las páginas legales están en `main`. Sigue sin merge `cursor/consola-bugs` (24 errores de la consola y la migración de lectura de configuración, sin aplicar). Esos cambios no forman parte de los casos CU-01 a CU-34.
+**Al 23-11-2026.** El aviso académico y las páginas legales están en `main`. Los 24 errores de la consola del 20-nov quedan en este cambio, con la lectura de ajustes en `20261123032058_consola_lectura_config_y_disputas.sql`. Esos cambios no reescriben los casos CU-01 a CU-34.

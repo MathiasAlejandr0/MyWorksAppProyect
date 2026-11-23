@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Dialog } from './kit';
 
 export function ConfirmDialog({
@@ -20,14 +20,18 @@ export function ConfirmDialog({
 }) {
   const [motivo, setMotivo] = useState('');
   const [code, setCode] = useState('');
+  const locked = useRef(false);
   const ready = motivo.trim().length >= 10 && (!requireTotp || code.trim().length >= 6);
+  useEffect(() => {
+    if (!busy) locked.current = false;
+  }, [busy]);
   return (
-    <Dialog title={title} onClose={onCancel}>
+    <Dialog title={title} onClose={() => { if (!busy) onCancel(); }}>
       <p>{summary}</p>
       {irreversible ? <p className="muted">Esta acción no se deshace desde la consola.</p> : null}
       <label className="field">
         <span>Motivo (mínimo 10 caracteres)</span>
-        <textarea value={motivo} onChange={(event) => setMotivo(event.target.value)} required />
+        <textarea value={motivo} onChange={(event) => setMotivo(event.target.value)} required disabled={busy} />
       </label>
       {requireTotp ? (
         <label className="field">
@@ -36,17 +40,22 @@ export function ConfirmDialog({
             inputMode="numeric"
             autoComplete="one-time-code"
             value={code}
+            disabled={busy}
             onChange={(event) => setCode(event.target.value)}
           />
         </label>
       ) : null}
       <div className="row">
-        <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
+        <Button variant="secondary" onClick={onCancel} disabled={busy}>Cancelar</Button>
         <Button
           variant="danger"
           busy={busy}
-          disabled={!ready}
-          onClick={() => onConfirm(motivo.trim(), code.trim())}
+          disabled={!ready || busy}
+          onClick={() => {
+            if (busy || locked.current) return;
+            locked.current = true;
+            onConfirm(motivo.trim(), code.trim());
+          }}
         >
           Confirmar
         </Button>
