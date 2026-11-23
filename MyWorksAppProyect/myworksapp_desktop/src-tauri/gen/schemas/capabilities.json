@@ -1,1 +1,1 @@
-{"cl.myworksapp.desktop":{"identifier":"cl.myworksapp.desktop","description":"","local":true,"permissions":["core:default","shell:allow-open"]}}
+{"cl.myworksapp.desktop":{"identifier":"cl.myworksapp.desktop","description":"","local":true,"permissions":["core:default","deep-link:default","updater:default"]}}

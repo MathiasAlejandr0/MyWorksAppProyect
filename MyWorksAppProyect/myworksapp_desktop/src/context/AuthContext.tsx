@@ -23,6 +23,18 @@ import { CONSOLE_ACCESS_DENIED, CONSOLE_ROLES, canAccessDesktopHub } from '../au
 import { markTotpVerified } from '../lib/totp';
 import { supabase } from '../supabaseClient';
 
+let signOutTask: Promise<void> | null = null;
+
+/** Un solo logout a la vez. Si no, rechazar un cliente dispara dos y el segundo responde 403. */
+function signOutOnce(): Promise<void> {
+  if (!signOutTask) {
+    signOutTask = signOut(supabase).finally(() => {
+      signOutTask = null;
+    });
+  }
+  return signOutTask;
+}
+
 function locationRequiresPassword(): boolean {
   if (typeof window === 'undefined') return false;
   return (
@@ -110,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       setProfile(null);
       setNeedsMfa(false);
-      await signOut(supabase);
+      await signOutOnce();
     } finally {
       setLoading(false);
     }
@@ -161,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setNeedsMfa(false);
       setProfile(nextProfile);
     } catch (err) {
-      await signOut(supabase);
+      await signOutOnce();
       setProfile(null);
       setNeedsMfa(false);
       throw err instanceof AuthError
@@ -174,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearPasswordSetupFlag();
     mustSetPasswordRef.current = false;
     setMustSetPassword(false);
-    await signOut(supabase);
+    await signOutOnce();
     setProfile(null);
     setNeedsMfa(false);
   }, []);

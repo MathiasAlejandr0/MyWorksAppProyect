@@ -1,12 +1,21 @@
 import { useState, type ReactNode } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { edgeFunctionErrorMessage } from '@myworksapp/shared';
+import { edgeFunctionErrorMessage, passwordPolicyMessage } from '@myworksapp/shared';
 import { consolePermissions } from '../authAccess';
 import { useAuth } from '../context/auth-store';
-import { friendlyError } from '../lib/errors';
+import { describeLoadError, friendlyError } from '../lib/errors';
 import { formatClp, formatDateTime, maskId, maskRut, statusLabel } from '../lib/format';
+import {
+  cleanSearch,
+  fetchOrderedPage,
+  orIlike,
+  paymentFilter,
+  refundFilter,
+  type PageQuery,
+} from '../lib/lists';
 import { markTotpVerified, totpFresh } from '../lib/totp';
+import { authRedirectUrl } from '../lib/redirect';
 import { setSharedDevice, sharedDeviceEnabled } from '../lib/session';
 import { supabase } from '../supabaseClient';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
@@ -14,10 +23,12 @@ import { Badge, Button, CopyId, EmptyState, ErrorState, SkeletonRows } from '../
 import { useToast } from '../ui/toast-store';
 import { PagedTable, type PageResult } from './table';
 
-const PAGE = 25;
+function asPromise<T>(value: PromiseLike<T>): Promise<T> {
+  return Promise.resolve(value);
+}
 
 function clean(value: string): string {
-  return value.replace(/[%_,]/g, '').slice(0, 60);
+  return cleanSearch(value);
 }
 
 function Gate({ allow, children }: { allow: boolean; children: ReactNode }) {
@@ -129,6 +140,7 @@ function Queue({ to, label, value }: { to: string; label: string; value: unknown
 
 export function PedidosPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   return (
     <Gate allow={consolePermissions(useAuth().profile?.role ?? '').viewOrders}>
       <h1>Pedidos</h1>
@@ -142,29 +154,41 @@ export function PedidosPage() {
           { key: 'direccion', header: 'Dirección', cell: (row) => String(row.direccion ?? '—'), csv: (row) => row.direccion },
           { key: 'fecha', header: 'Creado', cell: (row) => formatDateTime(String(row.creado_en ?? '')), csv: (row) => row.creado_en },
         ]}
-        onRow={(row) => { window.location.assign(`/pedidos/${row.id}`); }}
+        onRow={(row) => navigate(`/pedidos/${row.id}`)}
       />
-      {id ? <PedidoFicha id={id} /> : null}
+      {id ? <PedidoFicha id={id} onClose={() => navigate('/pedidos')} /> : null}
     </Gate>
   );
 }
 
-function PedidoFicha({ id }: { id: string }) {
+function PedidoFicha({ id, onClose }: { id: string; onClose: () => void }) {
   const query = useQuery({
     queryKey: ['pedido', id],
     queryFn: async () => {
       const job = await supabase.from('trabajos').select('id, estado, direccion, descripcion, creado_en, fecha_programada, id_usuario, id_trabajador').eq('id', id).maybeSingle();
       if (job.error) throw job.error;
+      if (!job.data) return { job: null, pagos: [] as { id: string; estado: string; monto: number; creado_en: string }[] };
       const pagos = await supabase.from('pagos').select('id, estado, monto, creado_en').eq('id_trabajo', id);
+      if (pagos.error) throw pagos.error;
       return { job: job.data, pagos: pagos.data ?? [] };
     },
   });
   if (query.isLoading) return <SkeletonRows />;
-  if (!query.data?.job) return <EmptyState title="No se encontró el pedido." />;
+  if (query.isError) {
+    return (
+      <aside className="drawer">
+        <ErrorState message={describeLoadError(query.error, 'No se encontró el pedido.')} onRetry={() => void query.refetch()} />
+      </aside>
+    );
+  }
+  if (!query.data?.job) return <aside className="drawer"><EmptyState title="No se encontró el pedido." /></aside>;
   const job = query.data.job;
   return (
-    <article className="panel stack">
-      <h2>Ficha del pedido</h2>
+    <aside className="drawer stack">
+      <div className="spread">
+        <h2>Ficha del pedido</h2>
+        <Button variant="ghost" onClick={onClose}>Cerrar</Button>
+      </div>
       <Badge value={job.estado} />
       <p>{job.descripcion || 'Sin descripción.'}</p>
       <p className="muted">{job.direccion}</p>
@@ -175,7 +199,7 @@ function PedidoFicha({ id }: { id: string }) {
           <li key={pago.id}>Pago {statusLabel(pago.estado)} · {formatClp(pago.monto)}</li>
         ))}
       </ol>
-    </article>
+    </aside>
   );
 }
 
@@ -210,8 +234,8 @@ export function DisputasPage() {
       </div>
       {query.isLoading ? <SkeletonRows /> : null}
       {query.isError ? <ErrorState message="No se pudo cargar la cola." onRetry={() => void query.refetch()} /> : null}
-      {!query.isLoading && query.data?.length === 0 ? (
-        <EmptyState title={tab === 'abiertas' ? 'No hay disputas que requieran una persona.' : 'Aún no hay disputas resueltas.'} />
+      {!query.isLoading && !query.isError && query.data?.length === 0 ? (
+        <EmptyState title={tab === 'abiertas' ? 'No hay disputas abiertas.' : 'Aún no hay disputas resueltas.'} />
       ) : null}
       <div className="stack">
         {(query.data ?? []).map((row) => (
@@ -283,6 +307,7 @@ function Evidencia({ id }: { id: string }) {
       return data ?? [];
     },
   });
+  if (query.isError) return <p className="muted">{describeLoadError(query.error, 'Sin fotos de evidencia.')}</p>;
   if (!query.data?.length) return <p className="muted">Sin fotos de evidencia.</p>;
   return (
     <div className="row">
@@ -297,7 +322,6 @@ export function TicketsPage() {
   return (
     <section className="stack">
       <h1>Tickets de soporte</h1>
-      <p className="muted">La tabla existe. Si la app aún no crea tickets, la lista queda vacía: no hay un hilo de mensajes propio de tickets.</p>
       <PagedTable
         queryKey={['tickets']}
         empty="Aún no hay tickets."
@@ -316,7 +340,9 @@ export function ReportesPage() {
   const { profile } = useAuth();
   const admin = consolePermissions(profile?.role ?? '').people;
   const toast = useToast();
+  const client = useQueryClient();
   const [target, setTarget] = useState<{ id: string; estado: string } | null>(null);
+  const [busy, setBusy] = useState(false);
   return (
     <section className="stack">
       <h1>Reportes y abuso</h1>
@@ -336,14 +362,21 @@ export function ReportesPage() {
         <ConfirmDialog
           title="Descartar reporte"
           summary="El reporte queda como descartado. No se borra."
+          busy={busy}
           onCancel={() => setTarget(null)}
           onConfirm={(motivo) => {
-            void supabase.rpc('consola_resolver_reporte', { p_id: target.id, p_estado: target.estado, p_motivo: motivo })
-              .then(({ error }) => {
-                if (error) toast(friendlyError(error));
-                else toast('Reporte actualizado.');
+            setBusy(true);
+            void asPromise(supabase.rpc('consola_resolver_reporte', { p_id: target.id, p_estado: target.estado, p_motivo: motivo }))
+              .then(async ({ error }) => {
+                if (error) {
+                  toast(friendlyError(error));
+                  return;
+                }
+                toast('Reporte actualizado.');
+                await client.invalidateQueries({ queryKey: ['reportes'] });
                 setTarget(null);
-              });
+              })
+              .finally(() => setBusy(false));
           }}
         />
       ) : null}
@@ -353,6 +386,7 @@ export function ReportesPage() {
 
 export function UsuariosPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const admin = consolePermissions(profile?.role ?? '').verifyPeople;
   return (
@@ -362,51 +396,109 @@ export function UsuariosPage() {
         queryKey={['usuarios']}
         empty="Aún no hay clientes con ese filtro."
         load={async (page, search) => {
-          const q = clean(search);
-          let request = supabase.from('perfiles').select('id, nombre, rol, estado_cuenta, creado_en', { count: 'exact' }).eq('rol', 'usuario');
-          if (q) request = request.ilike('nombre', `%${q}%`);
-          const { data, error, count } = await request.order('creado_en', { ascending: false }).range(page * PAGE, page * PAGE + PAGE - 1);
+          const filter = orIlike(['nombre', 'correo'], search);
+          let request = supabase.from('perfiles').select('id, nombre, correo, rol, estado_cuenta, creado_en', { count: 'exact' }).eq('rol', 'usuario');
+          if (filter) request = request.or(filter);
+          const { data, error, count } = await fetchOrderedPage(request as unknown as PageQuery, 'perfiles', page);
           if (error) throw error;
-          return { rows: data ?? [], total: count ?? 0 };
+          return { rows: (data ?? []) as Array<{ id: string; nombre: string; correo: string | null; estado_cuenta: string }>, total: count ?? 0 };
         }}
         columns={[
           { key: 'nombre', header: 'Nombre', cell: (row) => String(row.nombre), csv: (row) => row.nombre },
+          { key: 'correo', header: 'Correo', cell: (row) => String(row.correo ?? '—'), csv: (row) => row.correo },
           { key: 'estado', header: 'Cuenta', cell: (row) => <Badge value={String(row.estado_cuenta)} />, csv: (row) => statusLabel(String(row.estado_cuenta)) },
         ]}
-        onRow={(row) => { window.location.assign(`/usuarios/${row.id}`); }}
+        onRow={(row) => navigate(`/usuarios/${row.id}`)}
       />
-      {id ? <EstadoCuenta id={id} enabled={admin} /> : null}
+      {id ? <EstadoCuenta id={id} enabled={admin} onClose={() => navigate('/usuarios')} /> : null}
     </Gate>
   );
 }
 
-function EstadoCuenta({ id, enabled }: { id: string; enabled: boolean }) {
+function EstadoCuenta({ id, enabled, onClose }: { id: string; enabled: boolean; onClose: () => void }) {
   const toast = useToast();
+  const client = useQueryClient();
   const [estado, setEstado] = useState<'suspendido' | 'activo' | null>(null);
+  const [busy, setBusy] = useState(false);
+  const query = useQuery({
+    queryKey: ['cliente', id],
+    queryFn: async () => {
+      const profile = await supabase.from('perfiles').select('id, nombre, correo, rol, estado_cuenta, creado_en').eq('id', id).maybeSingle();
+      if (profile.error) throw profile.error;
+      const jobs = await supabase.from('trabajos').select('id, estado, creado_en').eq('id_usuario', id).order('creado_en', { ascending: false }).order('id', { ascending: true }).limit(8);
+      if (jobs.error) throw jobs.error;
+      const ids = (jobs.data ?? []).map((job) => job.id);
+      const pagos = ids.length
+        ? await supabase.from('pagos').select('id, estado, monto, creado_en, id_trabajo').in('id_trabajo', ids).order('creado_en', { ascending: false }).limit(8)
+        : { data: [], error: null };
+      if (pagos.error) throw pagos.error;
+      return { profile: profile.data, jobs: jobs.data ?? [], pagos: pagos.data ?? [] };
+    },
+  });
   return (
-    <article className="panel stack">
-      <h2>Cuenta</h2>
-      <CopyId value={id} />
-      {enabled ? (
-        <div className="row">
-          <Button variant="danger" onClick={() => setEstado('suspendido')}>Suspender</Button>
-          <Button variant="secondary" onClick={() => setEstado('activo')}>Reactivar</Button>
+    <aside className="drawer stack">
+      <div className="spread">
+        <h2>Ficha del cliente</h2>
+        <Button variant="ghost" onClick={onClose}>Cerrar</Button>
+      </div>
+      {query.isLoading ? <SkeletonRows /> : null}
+      {query.isError ? (
+        <ErrorState message={describeLoadError(query.error, 'No se encontró el cliente.')} onRetry={() => void query.refetch()} />
+      ) : null}
+      {!query.isLoading && !query.isError && !query.data?.profile ? <EmptyState title="No se encontró el cliente." /> : null}
+      {query.data?.profile ? (
+        <div className="stack">
+          <p>{query.data.profile.nombre}</p>
+          <p>{query.data.profile.correo || 'Sin correo.'}</p>
+          <Badge value={query.data.profile.estado_cuenta} />
+          <p className="muted">Cuenta desde {formatDateTime(query.data.profile.creado_en)}</p>
+          <CopyId value={id} />
+          <h3>Pedidos recientes</h3>
+          {query.data.jobs.length === 0 ? <p className="muted">Sin pedidos.</p> : (
+            <ul className="timeline">
+              {query.data.jobs.map((job) => (
+                <li key={job.id}>{formatDateTime(job.creado_en)} · {statusLabel(job.estado)} · {maskId(job.id)}</li>
+              ))}
+            </ul>
+          )}
+          <h3>Pagos de esos pedidos</h3>
+          {query.data.pagos.length === 0 ? <p className="muted">Sin pagos en los pedidos recientes.</p> : (
+            <ul className="timeline">
+              {query.data.pagos.map((pago) => (
+                <li key={pago.id}>{statusLabel(pago.estado)} · {formatClp(Number(pago.monto))}</li>
+              ))}
+            </ul>
+          )}
+          {enabled ? (
+            <div className="row">
+              <Button variant="danger" onClick={() => setEstado('suspendido')}>Suspender</Button>
+              <Button variant="secondary" onClick={() => setEstado('activo')}>Reactivar</Button>
+            </div>
+          ) : <p className="muted">Los datos sensibles quedan enmascarados para tu rol.</p>}
         </div>
-      ) : <p className="muted">Los datos sensibles quedan enmascarados para tu rol.</p>}
+      ) : null}
       {estado ? (
         <ConfirmDialog
           title={estado === 'suspendido' ? 'Suspender cuenta' : 'Reactivar cuenta'}
           summary="El cambio queda en la bitácora."
+          busy={busy}
           onCancel={() => setEstado(null)}
           onConfirm={(motivo) => {
-            void supabase.rpc('consola_fijar_estado_cuenta', { p_id: id, p_estado: estado, p_motivo: motivo }).then(({ error }) => {
-              toast(error ? friendlyError(error) : 'Cuenta actualizada.');
+            setBusy(true);
+            void asPromise(supabase.rpc('consola_fijar_estado_cuenta', { p_id: id, p_estado: estado, p_motivo: motivo })).then(async ({ error }) => {
+              if (error) {
+                toast(friendlyError(error));
+                return;
+              }
+              toast('Cuenta actualizada.');
+              await client.invalidateQueries({ queryKey: ['usuarios'] });
+              await client.invalidateQueries({ queryKey: ['cliente', id] });
               setEstado(null);
-            });
+            }).finally(() => setBusy(false));
           }}
         />
       ) : null}
-    </article>
+    </aside>
   );
 }
 
@@ -432,21 +524,40 @@ export function ProfesionalesPage() {
         queryKey={['profesionales', estado]}
         empty="No hay profesionales en este estado."
         load={async (page, search) => {
-          const q = clean(search);
-          let request = supabase.from('trabajadores').select('id_usuario, profesion, estado_verificacion, nota_verificacion, calificacion', { count: 'exact' });
+          const filter = orIlike(['profesion', 'perfiles.nombre', 'perfiles.correo'], search);
+          let request = supabase.from('trabajadores').select(
+            'id_usuario, profesion, estado_verificacion, calificacion, perfiles!trabajadores_id_usuario_fkey(nombre, correo)',
+            { count: 'exact' },
+          );
           if (estado !== 'todos') request = request.eq('estado_verificacion', estado);
-          if (q) request = request.ilike('profesion', `%${q}%`);
-          const { data, error, count } = await request.range(page * PAGE, page * PAGE + PAGE - 1);
+          if (filter) request = request.or(filter);
+          const { data, error, count } = await fetchOrderedPage(request as unknown as PageQuery, 'trabajadores', page);
           if (error) throw error;
-          return {
-            rows: (data ?? []).map((row) => ({ ...row, id: row.id_usuario })),
-            total: count ?? 0,
-          };
+          const rows = ((data ?? []) as Array<{
+            id_usuario: string;
+            profesion: string | null;
+            estado_verificacion: string | null;
+            calificacion: number | null;
+            perfiles: { nombre: string | null; correo: string | null } | { nombre: string | null; correo: string | null }[] | null;
+          }>).map((row) => {
+            const profile = Array.isArray(row.perfiles) ? row.perfiles[0] : row.perfiles;
+            return {
+              id: row.id_usuario,
+              profesion: row.profesion,
+              estado_verificacion: row.estado_verificacion,
+              calificacion: row.calificacion,
+              nombre: profile?.nombre ?? '',
+              correo: profile?.correo ?? '',
+            };
+          });
+          return { rows, total: count ?? 0 };
         }}
         columns={[
+          { key: 'nombre', header: 'Nombre', cell: (row) => String(row.nombre || '—'), csv: (row) => row.nombre },
+          { key: 'correo', header: 'Correo', cell: (row) => String(row.correo || '—'), csv: (row) => row.correo },
           { key: 'oficio', header: 'Oficio', cell: (row) => String(row.profesion), csv: (row) => row.profesion },
           { key: 'estado', header: 'Verificación', cell: (row) => <Badge value={String(row.estado_verificacion)} />, csv: (row) => statusLabel(String(row.estado_verificacion)) },
-          { key: 'nota', header: 'Nota', cell: (row) => String(row.calificacion ?? '—'), csv: (row) => row.calificacion },
+          { key: 'nota', header: 'Calificación', cell: (row) => String(row.calificacion ?? '—'), csv: (row) => row.calificacion },
         ]}
         onRow={(row) => setSelected(row.id)}
       />
@@ -459,19 +570,32 @@ function FichaProfesional({ id, canAct, onClose }: { id: string; canAct: boolean
   const toast = useToast();
   const client = useQueryClient();
   const [action, setAction] = useState<'verificado' | 'rechazado' | 'en_revision' | null>(null);
+  const [busy, setBusy] = useState(false);
   const [showRut, setShowRut] = useState(false);
   const query = useQuery({
     queryKey: ['profesional', id],
     queryFn: async () => {
-      const worker = await supabase.from('trabajadores').select('id_usuario, profesion, estado_verificacion, nota_verificacion, descripcion').eq('id_usuario', id).maybeSingle();
+      const worker = await supabase.from('trabajadores').select('id_usuario, profesion, estado_verificacion, descripcion').eq('id_usuario', id).maybeSingle();
       if (worker.error) throw worker.error;
+      const notes = await supabase.rpc('fichas_sensibles_admin');
+      const note = notes.error
+        ? ''
+        : (notes.data ?? []).find((row) => row.id_usuario === id)?.nota_verificacion ?? '';
       const events = await supabase.from('verificacion_eventos').select('id, estado, nota, creado_en').eq('id_usuario', id).order('creado_en', { ascending: false });
+      if (events.error) throw events.error;
       const file = await supabase.storage.from('verificacion-profesional').createSignedUrl(`${id}/documento.jpg`, 60);
       const stats = await supabase.rpc('stats_profesionales', { p_ids: [id] });
-      return { worker: worker.data, events: events.data ?? [], url: file.data?.signedUrl ?? null, stats: stats.data ?? [] };
+      return {
+        worker: worker.data,
+        note,
+        notesDenied: Boolean(notes.error),
+        events: events.data ?? [],
+        url: file.data?.signedUrl ?? null,
+        stats: stats.data ?? [],
+      };
     },
   });
-  const note = query.data?.worker?.nota_verificacion ?? '';
+  const note = query.data?.note ?? '';
   const visibleNote = showRut ? note : note.replace(/\b\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b/g, (rut) => maskRut(rut));
   const stat = query.data?.stats?.[0];
   return (
@@ -481,12 +605,17 @@ function FichaProfesional({ id, canAct, onClose }: { id: string; canAct: boolean
         <Button variant="ghost" onClick={onClose}>Cerrar</Button>
       </div>
       {query.isLoading ? <SkeletonRows /> : null}
+      {query.isError ? (
+        <ErrorState message={describeLoadError(query.error, 'No se encontró el profesional.')} onRetry={() => void query.refetch()} />
+      ) : null}
+      {!query.isLoading && !query.isError && !query.data?.worker ? <EmptyState title="No se encontró el profesional." /> : null}
       {query.data?.worker ? (
         <div className="stack">
           <p>{query.data.worker.profesion}</p>
           <Badge value={query.data.worker.estado_verificacion} />
+          <p>{query.data.worker.descripcion || 'Sin descripción.'}</p>
           <p>Nota de la fuente de verdad: {stat ? `${stat.calificacion} · ${stat.trabajos_completados} trabajos` : 'Sin estadísticas.'}</p>
-          <p>{visibleNote || 'Sin nota de verificación.'}</p>
+          {query.data.notesDenied ? <p className="muted">No se pudo leer la nota de verificación.</p> : <p>{visibleNote || 'Sin nota de verificación.'}</p>}
           {canAct ? (
             <Button variant="secondary" onClick={() => {
               void supabase.rpc('consola_registrar_vista_sensible', {
@@ -518,21 +647,25 @@ function FichaProfesional({ id, canAct, onClose }: { id: string; canAct: boolean
         <ConfirmDialog
           title={action === 'rechazado' ? 'Rechazar verificación' : 'Actualizar verificación'}
           summary={action === 'rechazado' ? 'La nota se envía al profesional y queda en el historial. La fila sigue visible en Rechazados.' : 'El cambio queda en la bitácora.'}
+          busy={busy}
           onCancel={() => setAction(null)}
           onConfirm={(motivo) => {
-            void supabase.rpc('fijar_verificacion_profesional', {
+            setBusy(true);
+            void asPromise(supabase.rpc('fijar_verificacion_profesional', {
               p_id_usuario: id,
               p_estado: action,
               p_nota: motivo,
-            }).then(async ({ error }) => {
-              if (error) toast(friendlyError(error));
-              else {
-                toast('Verificación actualizada.');
-                await client.invalidateQueries({ queryKey: ['profesionales'] });
-                await client.invalidateQueries({ queryKey: ['profesional', id] });
+            })).then(async ({ error }) => {
+              if (error) {
+                toast(friendlyError(error));
+                return;
               }
+              toast('Verificación actualizada.');
+              await client.invalidateQueries({ queryKey: ['profesionales'] });
+              await client.invalidateQueries({ queryKey: ['profesional', id] });
+              await client.invalidateQueries({ queryKey: ['resumen'] });
               setAction(null);
-            });
+            }).finally(() => setBusy(false));
           }}
         />
       ) : null}
@@ -544,17 +677,27 @@ export function PagosPage() {
   return (
     <Gate allow={consolePermissions(useAuth().profile?.role ?? '').viewMoney}>
       <h1>Pagos y escrow</h1>
-      <p className="muted">Montos de la vista cobros_profesional. La comisión la calcula la base.</p>
       <PagedTable
         queryKey={['pagos']}
         empty="Aún no hay pagos."
         load={async (page, search) => {
-          const q = clean(search);
+          const filter = paymentFilter(search);
           let request = supabase.from('cobros_profesional').select('id_pago, estado_pago, tipo_pago, bruto_clp, comision_clp, neto_clp, creado_en', { count: 'exact' });
-          if (q) request = request.ilike('estado_pago', `%${q}%`);
-          const { data, error, count } = await request.order('creado_en', { ascending: false }).range(page * PAGE, page * PAGE + PAGE - 1);
+          if (filter.paymentId) request = request.eq('id_pago', filter.paymentId);
+          else if (filter.or) request = request.or(filter.or);
+          const { data, error, count } = await fetchOrderedPage(request as unknown as PageQuery, 'cobros_profesional', page);
           if (error) throw error;
-          return { rows: (data ?? []).map((row) => ({ ...row, id: String(row.id_pago) })), total: count ?? 0 };
+          return {
+            rows: ((data ?? []) as Array<{
+              id_pago: string | null;
+              estado_pago: string | null;
+              tipo_pago: string | null;
+              bruto_clp: number | null;
+              comision_clp: number | null;
+              neto_clp: number | null;
+            }>).map((row) => ({ ...row, id: String(row.id_pago) })),
+            total: count ?? 0,
+          };
         }}
         columns={[
           { key: 'estado', header: 'Estado', cell: (row) => <Badge value={String(row.estado_pago)} />, csv: (row) => statusLabel(String(row.estado_pago)) },
@@ -571,7 +714,9 @@ export function PagosPage() {
 
 export function LiquidacionesPage() {
   const toast = useToast();
+  const client = useQueryClient();
   const [pago, setPago] = useState<{ id: string; neto: number; cuenta: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
   const query = useQuery({
     queryKey: ['por-liquidar'],
     queryFn: async () => {
@@ -596,7 +741,10 @@ export function LiquidacionesPage() {
       <h1>Liquidaciones</h1>
       <p className="muted">Khipu y Fintoc: no conectados. La liberación manual pide referencia y motivo.</p>
       {query.isLoading ? <SkeletonRows /> : null}
-      {query.data?.length === 0 ? <EmptyState title="No hay pagos retenidos listos para liquidar." /> : null}
+      {query.isError ? (
+        <ErrorState message={describeLoadError(query.error, 'No hay pagos retenidos listos para liquidar.')} onRetry={() => void query.refetch()} />
+      ) : null}
+      {!query.isLoading && !query.isError && query.data?.length === 0 ? <EmptyState title="No hay pagos retenidos listos para liquidar." /> : null}
       <div className="stack">
         {(query.data ?? []).map((row) => (
           <article key={row.id} className="panel spread">
@@ -615,8 +763,10 @@ export function LiquidacionesPage() {
           summary={`${formatClp(pago.neto)} se marca liberado cuando confirmas que la transferencia ya se hizo fuera de la app.`}
           irreversible
           requireTotp={!totpFresh()}
+          busy={busy}
           onCancel={() => setPago(null)}
           onConfirm={(motivo, code) => {
+            setBusy(true);
             void (async () => {
               if (!(await reverify(code))) {
                 toast('El código no es válido.');
@@ -631,10 +781,16 @@ export function LiquidacionesPage() {
                   provider: 'manual',
                 },
               });
-              if (error) toast(await edgeFunctionErrorMessage(error, 'No se pudo liquidar.'));
-              else toast('Liquidación registrada.');
+              if (error) {
+                toast(await edgeFunctionErrorMessage(error, 'No se pudo liquidar.'));
+                return;
+              }
+              toast('Liquidación registrada.');
+              await client.invalidateQueries({ queryKey: ['por-liquidar'] });
+              await client.invalidateQueries({ queryKey: ['pagos'] });
+              await client.invalidateQueries({ queryKey: ['resumen'] });
               setPago(null);
-            })();
+            })().finally(() => setBusy(false));
           }}
         />
       ) : null}
@@ -649,15 +805,16 @@ export function ReembolsosPage() {
       <PagedTable
         queryKey={['reembolsos']}
         empty="Aún no hay reembolsos."
-        load={async (page) => {
-          const { data, error, count } = await supabase
+        load={async (page, search) => {
+          const filter = refundFilter(search);
+          let request = supabase
             .from('pagos')
             .select('id, estado, monto, reembolsado_en', { count: 'exact' })
-            .eq('estado', 'reembolsado')
-            .order('reembolsado_en', { ascending: false })
-            .range(page * PAGE, page * PAGE + PAGE - 1);
+            .eq('estado', 'reembolsado');
+          if (filter) request = request.or(filter);
+          const { data, error, count } = await fetchOrderedPage(request as unknown as PageQuery, 'pagos', page);
           if (error) throw error;
-          return { rows: data ?? [], total: count ?? 0 };
+          return { rows: (data ?? []) as Array<{ id: string; monto: number; reembolsado_en: string | null }>, total: count ?? 0 };
         }}
         columns={[
           { key: 'monto', header: 'Monto', cell: (row) => formatClp(Number(row.monto)), csv: (row) => row.monto },
@@ -669,12 +826,41 @@ export function ReembolsosPage() {
 }
 
 export function ConciliacionPage() {
+  const permissions = consolePermissions(useAuth().profile?.role ?? '').viewMoney;
+  const query = useQuery({
+    queryKey: ['cron', 'conciliacion'],
+    enabled: permissions,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('consola_cron_salud');
+      if (error) throw error;
+      return data;
+    },
+  });
+  const jobs = (Array.isArray(asRecord(query.data).jobs) ? asRecord(query.data).jobs as unknown[] : [])
+    .map((job) => asRecord(job))
+    .filter((row) => {
+      const name = String(row.jobname ?? '').toLowerCase();
+      return name.includes('webpay') || name.includes('reconcil');
+    });
   return (
-    <section className="stack">
+    <Gate allow={permissions}>
       <h1>Conciliación Transbank</h1>
-      <p>Entorno de pagos: integración. Consultar el estado en Transbank no cobra ni libera.</p>
-      <p className="muted">El reporte diario lo arma el cron mwa_webpay_reconcile. Su última ejecución está en Salud.</p>
-    </section>
+      <p>Entorno de pagos: integración. Consultar el estado no cobra ni libera.</p>
+      {query.isLoading ? <SkeletonRows /> : null}
+      {query.isError ? (
+        <ErrorState message={describeLoadError(query.error, 'No hay una ejecución reciente.')} onRetry={() => void query.refetch()} />
+      ) : null}
+      {!query.isLoading && !query.isError && jobs.length === 0 ? (
+        <EmptyState title="No hay una ejecución reciente del cron de conciliación." />
+      ) : null}
+      {jobs.map((row) => (
+        <article key={String(row.jobname)} className="panel">
+          <strong>{String(row.jobname ?? 'Cron')}</strong>
+          <p>{row.status ? String(row.status) : 'Sin ejecuciones registradas'}</p>
+          <p className="muted">{formatDateTime(row.start_time ? String(row.start_time) : null)}</p>
+        </article>
+      ))}
+    </Gate>
   );
 }
 
@@ -682,10 +868,9 @@ export function FinanzasPage() {
   return (
     <Gate allow={consolePermissions(useAuth().profile?.role ?? '').executive}>
       <h1>Finanzas</h1>
-      <ResumenPage />
-      <p className="muted">
-        La comisión sale de comision_servicio_clp: 5 % con mínimo de $1.000. El caso de uso CU-30 dice 15 %; este cambio no altera ese cálculo.
-      </p>
+      <p>Los indicadores del período están en Inicio.</p>
+      <p><Link to="/resumen">Abrir Inicio</Link></p>
+      <p className="muted">La comisión vigente es 5 % con un mínimo de $1.000.</p>
     </Gate>
   );
 }
@@ -694,7 +879,9 @@ export function ResenasPage() {
   const { profile } = useAuth();
   const permissions = consolePermissions(profile?.role ?? '');
   const toast = useToast();
+  const client = useQueryClient();
   const [target, setTarget] = useState<{ id: string; estado: string } | null>(null);
+  const [busy, setBusy] = useState(false);
   return (
     <section className="stack">
       <h1>Reseñas</h1>
@@ -718,12 +905,19 @@ export function ResenasPage() {
         <ConfirmDialog
           title="Moderar reseña"
           summary="No se borra. Cambia el estado de revisión."
+          busy={busy}
           onCancel={() => setTarget(null)}
           onConfirm={(motivo) => {
-            void supabase.rpc('consola_moderar_resena', { p_id: target.id, p_estado: target.estado, p_motivo: motivo }).then(({ error }) => {
-              toast(error ? friendlyError(error) : 'Reseña actualizada.');
+            setBusy(true);
+            void asPromise(supabase.rpc('consola_moderar_resena', { p_id: target.id, p_estado: target.estado, p_motivo: motivo })).then(async ({ error }) => {
+              if (error) {
+                toast(friendlyError(error));
+                return;
+              }
+              toast('Reseña actualizada.');
+              await client.invalidateQueries({ queryKey: ['resenas'] });
               setTarget(null);
-            });
+            }).finally(() => setBusy(false));
           }}
         />
       ) : null}
@@ -766,9 +960,11 @@ export function NotificacionesPage() {
   return (
     <section className="stack">
       <h1>Notificaciones</h1>
-      <p className="muted">Los avisos masivos no se simulan: el envío push depende del secreto de la función send-push, que esta pantalla no dispara.</p>
       {query.isLoading ? <SkeletonRows /> : null}
-      {query.data?.length === 0 ? <EmptyState title="Aún no tienes notificaciones." /> : null}
+      {query.isError ? (
+        <ErrorState message={describeLoadError(query.error, 'Aún no tienes notificaciones.')} onRetry={() => void query.refetch()} />
+      ) : null}
+      {!query.isLoading && !query.isError && query.data?.length === 0 ? <EmptyState title="Aún no tienes notificaciones." /> : null}
       {(query.data ?? []).map((item) => (
         <article key={item.id} className="panel spread">
           <div>
@@ -780,7 +976,10 @@ export function NotificacionesPage() {
             <Button variant="secondary" onClick={() => {
               void supabase.from('notificaciones').update({ leido: 1 }).eq('id', item.id).then(async ({ error }) => {
                 if (error) toast('No se pudo marcar como leída.');
-                else await client.invalidateQueries({ queryKey: ['bandeja'] });
+                else {
+                  await client.invalidateQueries({ queryKey: ['bandeja'] });
+                  await client.invalidateQueries({ queryKey: ['notificaciones'] });
+                }
               });
             }}>Marcar leída</Button>
           )}
@@ -821,7 +1020,7 @@ export function EquipoPage() {
   const invite = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.functions.invoke('invitar-colaborador', {
-        body: { ...form, motivo: form.message, redirectTo: 'myworksapp-admin://auth/callback' },
+        body: { ...form, motivo: form.message, redirectTo: authRedirectUrl() },
       });
       if (error) throw new Error(await edgeFunctionErrorMessage(error, 'No se pudo invitar.'));
     },
@@ -857,7 +1056,7 @@ export function EquipoPage() {
         role: label,
         message: motivo,
         motivo,
-        redirectTo: 'myworksapp-admin://auth/callback',
+        redirectTo: authRedirectUrl(),
       },
     });
     if (error) throw new Error(await edgeFunctionErrorMessage(error, 'No se pudo reenviar la invitación.'));
@@ -951,7 +1150,7 @@ export function EquipoPage() {
       ) : null}
       <form className="panel stack" onSubmit={(event) => { event.preventDefault(); invite.mutate(); }}>
         <h2>Invitar</h2>
-        <p className="muted">El rol inicial es Soporte.</p>
+        <p className="muted">El rol es el que eliges en la lista. Si no lo cambias, la invitación sale como Soporte.</p>
         <label className="field"><span>Correo</span><input type="email" required value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
         <label className="field"><span>Nombre</span><input required minLength={2} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
         <label className="field">
@@ -979,10 +1178,14 @@ export function AuditoriaPage() {
         load={async (page, search) => {
           const q = clean(search);
           let request = supabase.from('auditoria_consola').select('id, creado_en, accion, entidad, id_entidad, motivo, rol_actor', { count: 'exact' });
-          if (q) request = request.ilike('accion', `%${q}%`);
-          const { data, error, count } = await request.order('creado_en', { ascending: false }).range(page * PAGE, page * PAGE + PAGE - 1);
+          const filter = orIlike(['accion', 'motivo', 'entidad'], q);
+          if (filter) request = request.or(filter);
+          const { data, error, count } = await fetchOrderedPage(request as unknown as PageQuery, 'auditoria_consola', page);
           if (error) throw error;
-          return { rows: data ?? [], total: count ?? 0 };
+          return {
+            rows: (data ?? []) as Array<{ id: string; creado_en: string; accion: string; entidad: string; id_entidad: string | null; motivo: string | null }>,
+            total: count ?? 0,
+          };
         }}
         columns={[
           { key: 'cuando', header: 'Cuándo', cell: (row) => formatDateTime(String(row.creado_en)), csv: (row) => row.creado_en },
@@ -997,20 +1200,29 @@ export function AuditoriaPage() {
 
 export function AjustesPage() {
   const toast = useToast();
+  const client = useQueryClient();
   const query = useQuery({
     queryKey: ['config'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('app_config').select('clave, valor').order('clave');
+      const { data, error } = await supabase.rpc('consola_leer_config');
       if (error) throw error;
       return data ?? [];
     },
   });
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [pending, setPending] = useState<{ clave: string; valor: string; anterior: string } | null>(null);
+  const [busy, setBusy] = useState(false);
   return (
     <Gate allow={consolePermissions(useAuth().profile?.role ?? '').manageCatalog}>
       <h1>Ajustes</h1>
       <p className="muted">admin_requiere_aal2 y demo_modo se muestran y no se editan aquí.</p>
+      {query.isLoading ? <SkeletonRows /> : null}
+      {query.isError ? (
+        <ErrorState message={describeLoadError(query.error, 'No se pudieron leer los ajustes.')} onRetry={() => void query.refetch()} />
+      ) : null}
+      {!query.isLoading && !query.isError && (query.data ?? []).length === 0 ? (
+        <EmptyState title="No hay ajustes para mostrar." />
+      ) : null}
       {(query.data ?? []).map((row) => {
         const locked = row.clave === 'admin_requiere_aal2' || row.clave === 'demo_modo';
         return (
@@ -1037,12 +1249,19 @@ export function AjustesPage() {
         <ConfirmDialog
           title={`Cambiar ${pending.clave}`}
           summary={`De ${pending.anterior} a ${pending.valor}.`}
+          busy={busy}
           onCancel={() => setPending(null)}
           onConfirm={(motivo) => {
-            void supabase.rpc('consola_editar_config', { p_clave: pending.clave, p_valor: pending.valor, p_motivo: motivo }).then(({ error }) => {
-              toast(error ? friendlyError(error) : 'Ajuste guardado.');
+            setBusy(true);
+            void asPromise(supabase.rpc('consola_editar_config', { p_clave: pending.clave, p_valor: pending.valor, p_motivo: motivo })).then(async ({ error }) => {
+              if (error) {
+                toast(friendlyError(error));
+                return;
+              }
+              toast('Ajuste guardado.');
+              await client.invalidateQueries({ queryKey: ['config'] });
               setPending(null);
-            });
+            }).finally(() => setBusy(false));
           }}
         />
       ) : null}
@@ -1084,33 +1303,70 @@ export function SaludPage() {
 
 export function ErroresPage() {
   const toast = useToast();
-  const [id, setId] = useState<string | null>(null);
+  const client = useQueryClient();
+  const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
+  const [reviewId, setReviewId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   return (
     <Gate allow={consolePermissions(useAuth().profile?.role ?? '').viewErrors}>
       <h1>Errores de la app</h1>
       <PagedTable
         queryKey={['errores']}
         empty="No hay errores con este filtro."
-        load={(page, search) => loadPage('registros_error_app', page, search, 'id, mensaje, plataforma, version_app, estado, creado_en')}
+        load={(page, search) => loadPage(
+          'registros_error_app',
+          page,
+          search,
+          'id, mensaje, plataforma, version_app, estado, creado_en, tipo_error, traza_pila, metadatos, id_usuario',
+        )}
         columns={[
           { key: 'mensaje', header: 'Mensaje', cell: (row) => String(row.mensaje), csv: (row) => row.mensaje },
           { key: 'plataforma', header: 'Plataforma', cell: (row) => String(row.plataforma ?? '—'), csv: (row) => row.plataforma },
           { key: 'estado', header: 'Estado', cell: (row) => <Badge value={String(row.estado)} />, csv: (row) => statusLabel(String(row.estado)) },
-          { key: 'accion', header: 'Acción', cell: (row) => (
-            <Button variant="secondary" onClick={(event) => { event.stopPropagation(); setId(row.id); }}>Marcar revisado</Button>
-          ), csv: () => '' },
+          { key: 'accion', header: 'Acción', cell: (row) => row.estado === 'nuevo' ? (
+            <Button variant="secondary" onClick={(event) => { event.stopPropagation(); setReviewId(row.id); }}>Marcar revisado</Button>
+          ) : 'Ya revisado', csv: () => '' },
         ]}
+        onRow={(row) => setDetail(row)}
       />
-      {id ? (
+      {detail ? (
+        <aside className="drawer stack">
+          <div className="spread">
+            <h2>Detalle del error</h2>
+            <Button variant="ghost" onClick={() => setDetail(null)}>Cerrar</Button>
+          </div>
+          <p>{String(detail.mensaje ?? 'Sin mensaje')}</p>
+          <p className="muted">{String(detail.tipo_error ?? 'Sin tipo')} · {String(detail.plataforma ?? '—')} · {String(detail.version_app ?? 'sin versión')}</p>
+          <p className="muted">Usuario {maskId(detail.id_usuario ? String(detail.id_usuario) : null)} · {formatDateTime(detail.creado_en ? String(detail.creado_en) : null)}</p>
+          <Badge value={String(detail.estado ?? '')} />
+          <h3>Traza</h3>
+          <pre className="pre-block">{detail.traza_pila ? String(detail.traza_pila) : 'Sin traza.'}</pre>
+          <h3>Metadatos</h3>
+          <pre className="pre-block">{prettyJson(detail.metadatos)}</pre>
+          {detail.estado === 'nuevo' ? (
+            <Button onClick={() => setReviewId(String(detail.id))}>Marcar revisado</Button>
+          ) : null}
+        </aside>
+      ) : null}
+      {reviewId ? (
         <ConfirmDialog
           title="Marcar error como revisado"
           summary="Pasa a reconocido. No se borra."
-          onCancel={() => setId(null)}
+          busy={busy}
+          onCancel={() => setReviewId(null)}
           onConfirm={(motivo) => {
-            void supabase.rpc('consola_marcar_error', { p_id: id, p_motivo: motivo }).then(({ error }) => {
-              toast(error ? friendlyError(error) : 'Error marcado.');
-              setId(null);
-            });
+            setBusy(true);
+            void asPromise(supabase.rpc('consola_marcar_error', { p_id: reviewId, p_motivo: motivo })).then(async ({ error }) => {
+              if (error) {
+                toast(friendlyError(error));
+                return;
+              }
+              toast('Error marcado.');
+              await client.invalidateQueries({ queryKey: ['errores'] });
+              await client.invalidateQueries({ queryKey: ['resumen'] });
+              setReviewId(null);
+              setDetail(null);
+            }).finally(() => setBusy(false));
           }}
         />
       ) : null}
@@ -1122,6 +1378,8 @@ export function CuentaPage() {
   const { profile, logout } = useAuth();
   const [shared, setShared] = useState(sharedDeviceEnabled());
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
   const toast = useToast();
   return (
     <section className="stack">
@@ -1141,13 +1399,29 @@ export function CuentaPage() {
       </label>
       <form className="panel stack" onSubmit={(event) => {
         event.preventDefault();
+        const policy = passwordPolicyMessage(password);
+        if (policy) {
+          toast(policy);
+          return;
+        }
+        if (password !== confirm) {
+          toast('Las contraseñas no coinciden.');
+          return;
+        }
+        setBusy(true);
         void supabase.auth.updateUser({ password }).then(({ error }) => {
-          toast(error ? 'No se pudo cambiar la contraseña.' : 'Contraseña actualizada.');
+          if (error) {
+            toast(friendlyError(error, 'No se pudo cambiar la contraseña.'));
+            return;
+          }
+          toast('Contraseña actualizada.');
           setPassword('');
-        });
+          setConfirm('');
+        }).finally(() => setBusy(false));
       }}>
         <label className="field"><span>Nueva contraseña</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" /></label>
-        <Button type="submit">Cambiar clave</Button>
+        <label className="field"><span>Repite la contraseña</span><input type="password" value={confirm} onChange={(event) => setConfirm(event.target.value)} autoComplete="new-password" /></label>
+        <Button type="submit" busy={busy}>Cambiar clave</Button>
       </form>
       <Button variant="secondary" onClick={() => void logout()}>Cerrar sesión</Button>
     </section>
@@ -1167,9 +1441,19 @@ async function loadPage(
     request = request.ilike(column, `%${q}%`);
   }
   if (q && table === 'registros_error_app') request = request.ilike('mensaje', `%${q}%`);
-  const { data, error, count } = await request.range(page * PAGE, page * PAGE + PAGE - 1);
+  const { data, error, count } = await fetchOrderedPage(request as unknown as PageQuery, table, page);
   if (error) throw error;
   return { rows: (data ?? []) as unknown as Array<Record<string, unknown> & { id: string }>, total: count ?? 0 };
+}
+
+function prettyJson(value: unknown): string {
+  if (value == null || value === '') return 'Sin metadatos.';
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return 'No se pudo mostrar el detalle.';
+  }
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

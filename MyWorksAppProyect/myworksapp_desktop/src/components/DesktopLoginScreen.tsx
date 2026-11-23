@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AuthError, requestPasswordReset } from '@myworksapp/shared';
 import { useAuth } from '../context/auth-store';
+import { friendlyError } from '../lib/errors';
 import { authRedirectUrl } from '../lib/redirect';
 import { supabase } from '../supabaseClient';
 import { Button } from '../ui/kit';
@@ -69,7 +70,11 @@ export function DesktopLoginScreen() {
               }
               void requestPasswordReset(supabase, email, authRedirectUrl())
                 .then(() => setNotice('Si el correo está registrado, te enviamos un enlace para definir la contraseña.'))
-                .catch(() => setError('No se pudo enviar el correo de recuperación.'));
+                .catch((reason: unknown) => {
+                  setError(reason instanceof AuthError
+                    ? friendlyError(reason, 'No se pudo enviar el correo de recuperación.')
+                    : 'No se pudo enviar el correo de recuperación.');
+                });
             }}
           >
             Recuperar contraseña

@@ -295,7 +295,7 @@ Las cuentas `@demo.myworksapp.cl` y `@demo.com` se marcan con `es_demo` (migraci
 | Tests automatizados | CI en verde sobre `d9d2c7c` (Flutter, web, consola, Tauri en Windows y Gitleaks; corrida del 20-nov a las 02:31, hora de Chile). En el box, el 20-nov: `shared/` 231 de 231 y consola 12 de 12. Prueba P-17 (19 y 20-nov, réplica local): **641 de 641** pruebas automatizadas; ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md) | ✅ |
 | Capacidad | La última medición sigue siendo la de P-17 y la lectura en producción del 20-11 (degradación cerca de 100 usuarios virtuales en la réplica; 200 a 250 en lecturas reales). El 22-11 `listar_profesionales_catalogo` pasó a una sola consulta de cifras (`privado.stats_profesionales`). No se repitió la prueba de carga, así que no hay un p95 nuevo | Alta |
 | CI/CD (GitHub Actions) | Un solo `.github` en la raíz del repo, con actions fijadas por SHA | ✅ |
-| Consola de escritorio | El 22-11 quedaron en `main` el orden del menú (PR #99) y el isotipo de la ventana (PR #98). Los 24 errores del 20-nov, entre ellos el 403 al verificar profesionales, siguen en `cursor/consola-bugs`, sin merge | Alta |
+| Consola de escritorio | El 22-11 quedaron en `main` el orden del menú (PR #99) y el isotipo de la ventana (PR #98). Los 24 errores del 20-nov, entre ellos el 403 al verificar profesionales, quedan corregidos en este cambio. Ajustes depende de `consola_leer_config` | Alta |
 | Instalador de la consola | El par de claves del actualizador es nuevo; la privada no está en el repo y va como secrets `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Quien tenga la versión anterior debe reinstalar una vez | Media |
 | Publicación en tiendas | No publicada | Alta (al lanzar) |
 
@@ -305,7 +305,7 @@ Estas ramas existen en `nicoussj/Proyecto-Titulo-MyWorksApp` pero **no tienen me
 
 | Rama | Qué agrega |
 |---|---|
-| `cursor/consola-bugs` | Arreglo de los 24 errores de la consola del 20-nov. Trae la migración de lectura de configuración y disputas, que no está aplicada. El aviso académico ya está en `main`; esa otra rama no es ancestro del historial, pero el texto equivalente sí entró |
+| `cursor/consola-bugs` | Quedó superada por el arreglo de la consola sobre `main`. No mergear: parte de un `main` viejo y revierte el menú y el isotipo |
 | `cursor/informe-cierre-5321` | Informe final con la sección P-18 y estos documentos de estado al 22-11. No sustituye el despliegue de la web ni de `oneclick-charge` |
 
 Además hay un **parche local de pruebas** (no es una rama en GitHub): 12 pruebas de `shared`, 2 pruebas SQL y la corrección de H1, en 3 commits sobre `d9d2c7c`. Se entrega aparte al Programador.

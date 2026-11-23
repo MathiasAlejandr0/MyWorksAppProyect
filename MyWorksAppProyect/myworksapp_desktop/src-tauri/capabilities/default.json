@@ -3,6 +3,7 @@
   "identifier": "cl.myworksapp.desktop",
   "permissions": [
     "core:default",
-    "deep-link:default"
+    "deep-link:default",
+    "updater:default"
   ]
 }
