@@ -6,6 +6,8 @@
 **Fecha:** Diciembre 2026  
 **Estado:** Versión corregida según retroalimentación del profesor patrocinante (20-nov-2026)
 
+> **22-11-2026, 23:07 hora de Chile.** Esta presentación es el material de la Fase 3 y última (pruebas, informe final y demostración). El relato de las fases 1 y 2 se conserva. El catálogo de la base viva midió **76 tablas**, las 76 con RLS, y 94 claves foráneas; la remedición de las 23:04 hora de Chile repitió esas cifras y la migración `20261123020000`. Donde este guion dice 60 tablas, ese era el corte del 20-11. La cuarta forma normal no cubre el esquema completo: el piso auditado es la segunda forma normal, la mayoría de esas tablas está en BCNF y la 4FN se declara solo para las listas del profesional. Ver `MyWorksAppProyect/docs/normalizacion.md`.
+
 ---
 
 ## ESTRUCTURA DE LA PRESENTACIÓN
@@ -430,7 +432,7 @@ La tabla **`trabajador_servicios`** evita dependencias multivaluadas:
 - ✅ SQL (base de datos): 207 tests (pgTAP)
 
 **Plataformas Implementadas:**
-1. **App Móvil Flutter** — v1.0.11+12 (`myworksapp_app/`)
+1. **App Móvil Flutter** — v1.0.15+16 (`myworksapp_app/`). La carta de boleta del SII no se muestra en Mi Perfil.
 2. **Web React/Vite** — v1.0.0 en https://myworksapp.cl (`myworksapp_web/`)
 3. **Consola Tauri Desktop** — v0.1.0 con segundo factor TOTP (`myworksapp_desktop/`)
 4. **Módulo Compartido TypeScript** — Contratos comunes (`shared/`)
@@ -576,7 +578,7 @@ La tabla **`trabajador_servicios`** evita dependencias multivaluadas:
 | **2:00-3:00** | **MATHIAS** | "El problema: 78% de contrataciones son informales. Nuestra solución: escrow + agenda garantizada." | Diapositivas 2-3 | Proyector |
 | **3:00-5:00** | **GABRIEL** | "Objetivos medibles: 100% de pagos protegidos, 641 pruebas automatizadas pasando, 60 tablas con RLS." | Diapositivas 5-7 | Proyector |
 | **5:00-7:00** | **NICOLÁS** | "Metodología Scrum: roles definidos, 11 sprints, tablero en GitHub Projects, 228 commits." | Diapositiva 8 | Proyector |
-| **7:00-10:00** | **GABRIEL** | "Arquitectura: Feature-First + capas. Modelo de datos: 60 tablas en 4NF, sin dependencias multivaluadas." | Diapositivas 9-11 | Proyector |
+| **7:00-10:00** | **GABRIEL** | "Arquitectura: Feature-First + capas. Modelo de datos: piso en 2FN, mayoría en BCNF, 4FN solo en las listas del profesional. El 22-11 el catálogo midió 76 tablas." | Diapositivas 9-11 | Proyector |
 | **10:00-12:00** | **MATHIAS** | "Implementación: 128 migraciones SQL, 18 Edge Functions, 641 pruebas automatizadas, web en producción." | Diapositivas 12-13 | Proyector |
 | **12:00-13:00** | **NICOLÁS** | "Ahora la demo en vivo. Yo seré el cliente en la web, Mathias el profesional en la app móvil." | Preparar pantalla dividida | Ambas pantallas |
 | **13:00-14:30** | **NICOLÁS** | "Busco plomería en Puerto Montt, filtro por calificación mínima 4 estrellas..." | Catálogo web | Pantalla IZQ |

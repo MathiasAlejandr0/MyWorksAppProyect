@@ -1,9 +1,9 @@
 # Modelo de Datos — Presentación Técnica
-## MyWorksApp — 60 Tablas en PostgreSQL con RLS
+## MyWorksApp — PostgreSQL con RLS
 
-**Fecha:** 20 de noviembre de 2026  
-**Estado:** Definitivo según repositorio `main` commit `d9d2c7c`  
-**Fuente:** Migraciones aplicadas en `myworksapp_app/supabase/migrations/`
+**Fecha del cuerpo:** 20 de noviembre de 2026 (`main` `d9d2c7c`, 60 tablas contadas desde el DDL)  
+**Lectura del 22-11-2026:** la base viva tiene 76 tablas y 94 claves foráneas. Este documento no se reescribió tabla por tabla. La forma normal de las 15 tablas nuevas no se reclasificó. La 4FN del texto de abajo aplica a las listas del profesional, no al esquema completo.  
+**Fuente del cuerpo:** migraciones en `myworksapp_app/supabase/migrations/` y `MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md` sección 0-bis.
 
 ---
 
@@ -345,7 +345,7 @@ verificacion_eventos (id_trabajador, evento, creado_en, motivo)
 | `dispositivos_push` | Dispositivos vs Notificaciones | `fcm_tokens[]` en `perfiles` | Tabla separada |
 | `verificacion_eventos` | Histórico vs Estado actual | `eventos[]` en `trabajadores` | Tabla separada |
 
-**Conclusión:** El modelo de MyWorksApp **cumple 4NF** en todas las relaciones N:M descompuestas correctamente, evitando dependencias multivaluadas y anomalías de actualización.
+**Conclusión:** Las relaciones N:M descompuestas en listas propias **cumplen 4FN**. El esquema completo no se declara en 4FN: el piso auditado el 16-11 es 2FN y tres tablas se quedan ahí a propósito. Ver `MyWorksAppProyect/docs/normalizacion.md`.
 
 ---
 
@@ -476,7 +476,7 @@ verificacion_eventos (id_trabajador, evento, creado_en, motivo)
 | **1NF** | ✅ 100% | Valores atómicos, sin arrays de datos relacionales |
 | **2NF** | ✅ 100% | Dependencias de toda la clave primaria |
 | **3NF** | ✅ 100% | Sin dependencias transitivas |
-| **4NF** | ✅ 100% | Sin dependencias multivaluadas (descomposición N:M) |
+| **4FN** | Solo las listas N:M | El resto del esquema no se declara en 4FN |
 
 **Documento completo:** `docs/normalizacion.md`
 

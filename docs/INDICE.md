@@ -1,6 +1,6 @@
 # Índice de la documentación de MyWorksApp
 
-Este índice ordena toda la documentación del repositorio por tema. Estado al 20-11-2026, `main` `d9d2c7c`.
+Este índice ordena toda la documentación del repositorio por tema. Fase vigente: Fase 3 del Capstone PTY4614 (pruebas, informe final y demostración), al 22 de noviembre de 2026, 23:07 hora de Chile. El detalle vivo está en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`. No hay carpeta ni plantilla de estudiante de la Fase 3.
 
 **Si es tu primera vez, lee en este orden:**
 
@@ -65,10 +65,10 @@ Este índice ordena toda la documentación del repositorio por tema. Estado al 2
 
 | Documento | Para qué sirve |
 |---|---|
-| [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](../MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md) | Diccionario de las 60 tablas; la sección 0 resume los cambios del 20-11 |
-| [`MyWorksAppProyect/docs/MODELO_ENTIDAD_RELACION.md`](../MyWorksAppProyect/docs/MODELO_ENTIDAD_RELACION.md) | Modelo entidad-relación; las figuras de 60 tablas están en `docs/modelo_er60/` |
+| [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](../MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md) | Diccionario: 60 tablas con columnas y, en la sección 0-bis, las 15 leídas el 22-11 |
+| [`MyWorksAppProyect/docs/MODELO_ENTIDAD_RELACION.md`](../MyWorksAppProyect/docs/MODELO_ENTIDAD_RELACION.md) | Modelo entidad-relación. Las figuras siguen en 60 tablas; el catálogo del 22-11 midió 76 |
 | [`MyWorksAppProyect/docs/modelo-datos.md`](../MyWorksAppProyect/docs/modelo-datos.md) y [`normalizacion.md`](../MyWorksAppProyect/docs/normalizacion.md) | Modelo de datos y formas normales |
-| [`myworksapp_app/supabase/MIGRATIONS_INVENTORY.md`](../MyWorksAppProyect/myworksapp_app/supabase/MIGRATIONS_INVENTORY.md) | Las 125 migraciones y su estado en la base |
+| [`myworksapp_app/supabase/MIGRATIONS_INVENTORY.md`](../MyWorksAppProyect/myworksapp_app/supabase/MIGRATIONS_INVENTORY.md) | Inventario de migraciones. El 22-11 el repo tiene 133 archivos y la base viva llega a `20261123020000` |
 | [`Fase 2/Anexo_A_Diccionario_de_tablas.md`](../Fase%202/Anexo_A_Diccionario_de_tablas.md) | Anexo A del informe: una tabla por cada tabla de la base |
 
 ## 6. Pagos, correo y operación
@@ -104,8 +104,8 @@ Este índice ordena toda la documentación del repositorio por tema. Estado al 2
 | Carpeta o documento | Contenido |
 |---|---|
 | [`Fase 1/`](../Fase%201/) | Definición del proyecto y evidencias |
-| [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](../Fase%202/Myworksapp_Informe_Final_PTY4614.docx) y `.pdf` | Informe final actualizado al 20-11 |
-| [`Fase 2/`](../Fase%202/) | Casos de uso, guía de usuario, auditoría de la base, prueba de carga, presentación y diarios de reflexión |
+| [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](../Fase%202/Myworksapp_Informe_Final_PTY4614.docx) y `.pdf` | Informe final. El 22-11-2026, 23:07 hora de Chile, se agregó la nota de que el proyecto está en la Fase 3 |
+| [`Fase 2/`](../Fase%202/) | Casos de uso, guía de usuario, auditoría de la base, prueba de carga, presentación y diarios de reflexión. Es el material que la comisión lee en la Fase 3. No existe una carpeta `Fase 3/` |
 | [`Documentos Guia/`](../Documentos%20Guia/) | Guías del programa |
 
 ## 10. Documentos históricos

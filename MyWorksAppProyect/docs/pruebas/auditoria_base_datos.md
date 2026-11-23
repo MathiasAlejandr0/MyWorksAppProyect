@@ -1,6 +1,6 @@
 # Auditoría de la base de datos: integridad y normalización
 
-> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (16-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `d9d2c7c`) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (16-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente de la fase 3 (22-11-2026, 23:07 hora de Chile) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
 
 **Proyecto:** My Works App · **Base:** PostgreSQL 17.6 en Supabase (proyecto `wxqrfcqifkfgawrnqmnj`, plan gratuito, región us-west-2)
 **Fecha de ejecución:** 16 de noviembre de 2026, entre las 01:00 y las 02:00 (hora de Chile, America/Santiago, UTC−3)

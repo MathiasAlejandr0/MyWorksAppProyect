@@ -2,7 +2,7 @@
 
 App móvil online-first (Supabase) para conectar usuarios con trabajadores de oficios.
 
-Versión en `pubspec.yaml`: **1.0.11+12** (`main` `d9d2c7c`, 20-11-2026). Es la app de clientes y profesionales; la operación interna se hace en la consola de escritorio (`../myworksapp_desktop/`).
+Versión en `pubspec.yaml`: **1.0.15+16** (commit `19d1da3`). Esa versión no muestra la carta de boleta del SII en Mi Perfil. El estado del proyecto al 22-11-2026 está en `../ESTADO_DEL_PROYECTO.md`. Es la app de clientes y profesionales; la operación interna se hace en la consola de escritorio (`../myworksapp_desktop/`).
 
 Es parte del monorepo [`MyWorksAppProyect/`](../README.md); el índice de toda la documentación está en [`docs/INDICE.md`](../../docs/INDICE.md). Desde el PR #82, recuperar la contraseña vuelve a la app (`cl.myworksapp.auth`) y abre «Nueva contraseña»; las instalaciones existentes lo reciben con la próxima compilación.
 
@@ -106,7 +106,7 @@ Workflow: `.github/workflows/flutter_ci.yml`
 
 ## Migraciones Supabase
 
-SQL versionado en `supabase/migrations/` (125 archivos al 20-11-2026; inventario en `supabase/MIGRATIONS_INVENTORY.md`). No aplicar migraciones a la base en vivo sin el responsable del proyecto.
+SQL versionado en `supabase/migrations/` (133 archivos al 22-11-2026; inventario en `supabase/MIGRATIONS_INVENTORY.md`). La base viva tiene migraciones posteriores que no están como archivo aquí. No aplicar migraciones a la base en vivo sin el responsable del proyecto.
 
 ### Seguridad Auth — contraseñas filtradas (Have I Been Pwned)
 

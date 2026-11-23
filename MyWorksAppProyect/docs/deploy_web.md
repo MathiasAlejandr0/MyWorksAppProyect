@@ -1,6 +1,19 @@
 # Web de clientes: despliegue y configuración vigente
 
-Estado al 20 de noviembre de 2026, `main` `d9d2c7c`. Esta guía describe lo que el código exige y lo que está configurado fuera del repositorio según el reporte de despliegue del 20-nov. No contiene secretos.
+La guía de configuración sigue siendo la del 20 de noviembre de 2026. El 22 de noviembre de 2026, a las 23:03 hora de Chile, https://myworksapp.cl seguía sirviendo el paquete anterior: HTTP 200, `text/html`, y la portada carga `/assets/index-dFwoI3u5.js`. Ese JavaScript pide `/categories/electricidad.webp` (HTTP 200, `image/webp`, última modificación 18:18 hora de Chile). El fuente pide `/categories/electricidad-1795386019.webp`, archivo que sí está en `public/categories/` y es un WebP; en el sitio publicado esa URL responde HTTP 200 con `text/html` (el `index.html` de respaldo, última modificación 20 de noviembre de 2026, 05:44 hora de Chile). La CSP publicada no incluye `images.unsplash.com` ni `i.pravatar.cc`. `vercel.json` y `public/_headers` sí.
+
+Esta revisión no publicó el sitio. `npx vercel whoami` está deslogueado, no hay `VERCEL_TOKEN` y el MCP de Vercel solo ve el equipo `suertu2s` (`team_CX57ekCuO8nYDu0xgUyCIG6o`), cuyo único proyecto es `suertu2s` (`prj_zc3gZnTUAdTjjMMEzeVsYIhmTz1T`). No hay que desplegar ese proyecto.
+
+Con la cuenta dueña del proyecto `myworksapp`, desde la raíz del repositorio:
+
+```bash
+cd MyWorksAppProyect/myworksapp_web
+npx vercel login
+npx vercel link
+npx vercel --prod --yes
+```
+
+En `vercel link` hay que elegir el equipo del proyecto `myworksapp`. Después de publicar, la portada debe dejar de cargar `/assets/index-dFwoI3u5.js` y `https://myworksapp.cl/categories/electricidad-1795386019.webp` debe responder `image/webp`. Esta guía no contiene secretos.
 
 ## Dónde está publicada
 
@@ -50,7 +63,7 @@ Llamadas desde `myworksapp_web/src` o `shared/src`: `guest-checkout`, `definir-c
 
 ## Pendiente
 
-- Textos de términos y privacidad: las páginas existen, pero dicen que el texto oficial no está publicado. Los textos y `/aviso-legal` están en la rama `cursor/aviso-academico-duoc-v2`, sin merge.
+- Textos de términos, privacidad y aviso legal, y la foto `/categories/electricidad-1795386019.webp`: están en `main` desde el 22-11-2026. A las 23:03 hora de Chile el sitio publicado todavía servía `/assets/index-dFwoI3u5.js`.
 - HSTS `preload`: no se agrega.
 - Medir Lighthouse sobre el dominio propio.
 - Probar a mano el registro: con Turnstile no se puede automatizar.

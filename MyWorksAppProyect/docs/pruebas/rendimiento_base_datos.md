@@ -1,6 +1,6 @@
 # Rendimiento de la base de datos: planes de ejecución, índices y RLS
 
-> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (16-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente (20-11-2026, `main` `d9d2c7c`) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
+> **Documento histórico.** Registra el estado del proyecto a la fecha de su última revisión (16-11-2026) y no se actualiza. Las cifras, URL y pantallas que nombra pueden haber cambiado. El estado vigente de la fase 3 (22-11-2026, 23:07 hora de Chile) está en [`ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md).
 
 **Proyecto:** My Works App · **Base:** Supabase `wxqrfcqifkfgawrnqmnj` (PostgreSQL 17.6, plan gratuito: 60 conexiones, `statement_timeout` de 3 s para `anon` y 8 s para `authenticated`, 22 MB de datos)
 **Fecha:** 16 de noviembre de 2026, 01:19 (antes) y 01:35 (después), hora de Chile (UTC−3).

@@ -3,8 +3,8 @@
 
 **Institución:** Duoc UC — Sede Puerto Montt  
 **Equipo:** Mathias Alejandro Jara Alvarado · Nicolas Chiguay · Gabriel Valderas  
-**Última actualización:** 20 de noviembre de 2026  
-**Estado:** Versión actualizada al cierre del Sprint 10
+**Última actualización:** 22 de noviembre de 2026, 23:07 hora de Chile  
+**Estado:** Fase 3 en curso (Sprint 11). La ventana del Sprint 10 cerró ese día
 
 ---
 
@@ -12,12 +12,12 @@
 
 Este documento presenta la planificación temporal completa del proyecto My Works App, desde su inicio en agosto de 2026 hasta su defensa en diciembre de 2026. El proyecto sigue metodología Scrum adaptada con 11 sprints organizados en 3 fases del Capstone PTY4614.
 
-**Estado actual (20-nov-2026):**
-- ✅ Sprint 10 en cierre (Fase 2 completa)
+**Estado actual (22-nov-2026, 23:07 hora de Chile):**
+- ✅ Ventana del Sprint 10 cerrada (Fase 2, desarrollo)
+- 🔄 Fase 3 en curso: pruebas, informe final y demostración (Sprint 11)
 - ✅ MVP técnico implementado y funcional
-- ✅ Web en producción (https://myworksapp.cl)
-- ✅ 641 pruebas automatizadas pasando
-- 🔄 Sprint 11 planificado (defensa y entrega final)
+- ✅ Web en producción (https://myworksapp.cl). El paquete publicado a las 23:03 seguía siendo el anterior; el redespliegue queda pendiente
+- ✅ 641 pruebas automatizadas pasando en el corte del 20-nov. Esta revisión no repitió esa corrida
 
 ---
 
@@ -254,9 +254,9 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 | Límite de tasa global | Gabriel Valderas | ✅ Completado | `rate_limit_consumir` implementado |
 | Segundo factor (TOTP) en consola | Mathias Jara | ✅ Completado | Autenticación de dos factores |
 | Prueba integral P-17 | Equipo | ✅ Completado | 641 de 641 pruebas pasando |
-| Corrección H1 (alta profesionales) | Gabriel Valderas | ⏳ En parche | Migración sin `generate_series` |
+| Corrección H1 (alta profesionales) | Gabriel Valderas | Migración aplicada | `20261120180000` está en la base viva; el alta no se repitió el 22-11 |
 | Arreglo bugs consola (24 errores) | Equipo | ⏳ En rama | `cursor/consola-bugs` |
-| Páginas legales | Nicolas Chiguay | ⏳ En rama | `cursor/aviso-academico-duoc-v2` |
+| Páginas legales | Nicolas Chiguay | En `main` | Falta el despliegue de https://myworksapp.cl |
 | Informe final PTY4614 | Nicolas Chiguay y equipo | ✅ Completado | Documento Word actualizado |
 | Actualización de documentación Scrum | Nicolas Chiguay | ✅ Completado | Visión, backlog, sprint, retrospectiva |
 
@@ -266,9 +266,11 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 - ✅ Correos transaccionales con Resend
 - ✅ 641 pruebas automatizadas pasando
 - ✅ Informe final actualizado
-- ⏳ Corrección H1 (en parche local)
+- Migración de H1 aplicada en la base viva el 22-11; el alta no se volvió a medir
 - ⏳ 24 bugs de consola (rama sin merge)
-- ⏳ Páginas legales (rama sin merge)
+- Páginas legales en `main`; el 22-11 a las 23:03 (hora de Chile) el sitio seguía sirviendo `/assets/index-dFwoI3u5.js`
+
+Estos pendientes pasan a la Fase 3. No quedaron cerrados con el fin de la ventana del Sprint 10.
 
 **Métricas del Sprint 10 (al 20-nov):**
 - 86 commits (60 después del corte del 17-nov)
@@ -276,10 +278,10 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 - Web desplegada en producción
 - Consola de escritorio completada
 
-**Pendientes para cierre del sprint:**
+**Pendientes que pasan a la Fase 3:**
 1. Mergear rama `cursor/consola-bugs` (arreglo de 24 errores)
-2. Mergear rama `cursor/aviso-academico-duoc-v2` (páginas legales)
-3. Aplicar parche de corrección H1 en producción
+2. Desplegar en Vercel el `main` que ya trae las páginas legales
+3. La migración de H1 ya está en la base viva; falta repetir el alta de un profesional
 4. Activar `INVITE_PROVIDER=resend`
 5. Probar `soporte@myworksapp.cl` de punta a punta
 6. Desplegar `send-push` (notificaciones remotas)
@@ -292,7 +294,7 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 ### Sprint 11: Defensa y entrega final
 **Fechas:** 23 de noviembre – 6 de diciembre de 2026  
 **Duración:** 2 semanas  
-**Estado:** 📅 Planificado
+**Estado:** 🔄 En curso desde el 22 de noviembre de 2026, 23:07 hora de Chile (Fase 3: pruebas, informe final y demostración)
 
 | Actividad | Responsable | Fecha objetivo |
 |-----------|-------------|----------------|
@@ -333,7 +335,7 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 
 | Plataforma | Tecnología | Estado | URL/Ubicación |
 |------------|------------|--------|---------------|
-| App móvil | Flutter 3.x | ✅ Funcional | `MyWorksAppProyect/myworksapp_app/` (v1.0.11+12) |
+| App móvil | Flutter 3.x | ✅ Funcional | `MyWorksAppProyect/myworksapp_app/` (v1.0.15+16) |
 | Web de clientes | React 19 + Vite 8 | ✅ En producción | https://myworksapp.cl |
 | Consola de escritorio | Tauri 2 + React 19 | ✅ Funcional | `MyWorksAppProyect/myworksapp_desktop/` (v0.1.0) |
 | Backend | Supabase | ✅ En producción | PostgreSQL + Auth + Edge Functions |
@@ -371,8 +373,9 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 | 13 | Correos con Resend | 20 nov 2026 | S10 | ✅ |
 | 14 | **641 pruebas automatizadas** | **20 nov 2026** | **S10** | **✅** |
 | 15 | Carta Gantt actualizada (este doc) | 20 nov 2026 | S10 | ✅ |
-| 16 | Cierre de Fase 2 | 22 nov 2026 | S10 | 🔄 |
-| 17 | Defensa del proyecto | 5-6 dic 2026 | S11 | 📅 |
+| 16 | Cierre de la ventana de Fase 2 | 22 nov 2026 | S10 | ✅ |
+| 17 | Fase 3: pruebas, informe final y demostración | 22 nov 2026 | S11 | 🔄 |
+| 18 | Defensa del proyecto | 5-6 dic 2026 | S11 | 📅 |
 
 ---
 
@@ -587,8 +590,8 @@ Un incremento está "Done" cuando:
 ### Inmediato (diciembre 2026)
 
 - [ ] Defensa exitosa del proyecto de título
-- [ ] Corrección de H1 en producción
-- [ ] Merge de ramas pendientes (`cursor/consola-bugs`, `cursor/aviso-academico-duoc-v2`)
+- [ ] Repetir el alta de un profesional (la migración de H1 ya está aplicada)
+- [ ] Merge de `cursor/consola-bugs` y despliegue web del aviso académico, que ya está en `main`
 - [ ] Activación de todas las funcionalidades pendientes
 
 ### Corto plazo (enero-marzo 2027)
@@ -623,7 +626,7 @@ Un incremento está "Done" cuando:
 El proyecto My Works App ha cumplido exitosamente con los objetivos académicos del Capstone PTY4614, entregando un **MVP técnico completo y funcional** que demuestra la viabilidad de un marketplace de servicios del hogar con:
 
 ✅ **Arquitectura profesional** (Feature-First + Clean Architecture pragmática)  
-✅ **Backend robusto** (60 tablas, 125 migraciones, RLS completo)  
+✅ **Backend** (al 22-11-2026: 76 tablas en la base viva, todas con RLS; 133 archivos de migración en el repositorio)  
 ✅ **Multiplataforma** (móvil Flutter, web React, consola Tauri)  
 ✅ **Pagos protegidos** (Transbank Webpay con escrow)  
 ✅ **Calidad demostrada** (641 pruebas automatizadas)  

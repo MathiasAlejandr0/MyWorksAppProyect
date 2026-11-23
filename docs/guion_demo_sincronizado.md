@@ -5,6 +5,8 @@
 **Duración total:** 28 minutos (25 min core + 3 min consola opcional)  
 **Modalidad:** Video HD + Demo en vivo con 2 pantallas simultáneas
 
+> **22-11-2026, 23:07 hora de Chile.** La fase académica vigente es la Fase 3 del PTY4614: pruebas, informe final y demostración. Los títulos «FASE 1» a «FASE 4» de este guion son tramos de la demostración, no las fases del Capstone. Donde el guion dice 60 tablas o «60 tablas en 4FN», el catálogo de ese día midió 76 tablas con RLS. La cuarta forma normal no es la de todo el esquema. El piso auditado es 2FN, la mayoría de las tablas revisadas está en BCNF y la 4FN queda para las listas separadas del profesional. El detalle está en `MyWorksAppProyect/docs/normalizacion.md`.
+
 ---
 
 ## TABLA DE TIEMPOS Y RESPONSABILIDADES
@@ -15,7 +17,7 @@
 | **2:00** | **MATHIAS** | "El problema: 78% informalidad..." | Diapositivas 2-3 | Proyector | 1 min |
 | **3:00** | **GABRIEL** | "Objetivos medibles: 641 pruebas, 60 tablas RLS..." | Diapositivas 5-7 | Proyector | 2 min |
 | **5:00** | **NICOLÁS** | "Metodología Scrum: 11 sprints, GitHub Projects..." | Diapositiva 8 | Proyector | 2 min |
-| **7:00** | **GABRIEL** | "Arquitectura Feature-First, 60 tablas en 4NF..." | Diapositivas 9-11 | Proyector | 3 min |
+| **7:00** | **GABRIEL** | "Arquitectura Feature-First. El esquema auditado tiene piso en 2FN y la mayoría de esas tablas está en BCNF; la 4FN es solo de las listas del profesional. El 22-11 el catálogo midió 76 tablas." | Diapositivas 9-11 | Proyector | 3 min |
 | **10:00** | **MATHIAS** | "128 migraciones, 18 Edge Functions, web en producción..." | Diapositivas 12-13 | Proyector | 2 min |
 | **12:00** | **NICOLÁS** | "Ahora la demo en vivo. Pantalla dividida: yo cliente, Mathias profesional." | Preparar setup | Ambas | 1 min |
 | **13:00** | **NICOLÁS** | "Busco plomería, filtro por 4★..." | Catálogo web | Pantalla IZQ | 1.5 min |
@@ -249,7 +251,7 @@
 > **Estado: 641 de 641 pruebas aprobadas. 0 fallas.**
 >
 > **Plataformas implementadas:**
-> - App móvil Flutter, versión 1.0.11+12.
+> - App móvil Flutter, versión 1.0.15+16. No mostrar la carta de boleta del SII: no está integrada y Mi Perfil no la despliega.
 > - Web React en producción en https://myworksapp.cl, versión 1.0.0.
 > - Consola Tauri de escritorio, versión 0.1.0, con segundo factor TOTP.
 > - Módulo compartido TypeScript con contratos comunes.
