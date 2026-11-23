@@ -3,3 +3,6 @@
 Thumbs.db
 *.tmp
 _tmp_*/
+.vercel
+.env.local
+.env*.local
