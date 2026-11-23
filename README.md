@@ -11,7 +11,7 @@
 
 | Parte | Qué es | Dónde está |
 |---|---|---|
-| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`MyWorksAppProyect/myworksapp_app/`](MyWorksAppProyect/myworksapp_app/) |
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.15+16) | [`MyWorksAppProyect/myworksapp_app/`](MyWorksAppProyect/myworksapp_app/) |
 | Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`MyWorksAppProyect/myworksapp_web/`](MyWorksAppProyect/myworksapp_web/), publicado en https://myworksapp.cl |
 | Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`MyWorksAppProyect/myworksapp_desktop/`](MyWorksAppProyect/myworksapp_desktop/) |
 | Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`MyWorksAppProyect/shared/`](MyWorksAppProyect/shared/) |
@@ -132,7 +132,7 @@ Turnstile) · Resend (correo, dominio send.myworksapp.cl) · OpenFreeMap (mapas)
 
 | Componente | Rol |
 |------------|-----|
-| `MyWorksAppProyect/myworksapp_app/` | App móvil Flutter (versión 1.0.11+12) |
+| `MyWorksAppProyect/myworksapp_app/` | App móvil Flutter (versión 1.0.15+16) |
 | `MyWorksAppProyect/myworksapp_web/` | Web de clientes (sesión o invitado) |
 | `MyWorksAppProyect/myworksapp_desktop/` | Consola operativa de escritorio (Tauri 2) |
 | `MyWorksAppProyect/shared/` | Contratos TypeScript compartidos por la web y la consola |

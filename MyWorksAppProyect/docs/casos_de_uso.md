@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión del código analizada | `main` en `d9d2c7c` (20 de noviembre de 2026; app 1.0.11+12) para los casos de este archivo. El 22-11-2026 `main` avanzó a `a5f2f7d` (fotos de perfil, menú de la consola e isotipo). Esos cambios no reescriben los casos CU-01 a CU-34. El estado vivo está en `ESTADO_DEL_PROYECTO.md` |
+| Versión del código analizada | `main` en `d9d2c7c` (20 de noviembre de 2026; app 1.0.11+12) para los casos de este archivo. El 22-11-2026 `main` avanzó a `19d1da3` (fotos de perfil, menú de la consola, isotipo y app 1.0.15+16, que oculta la carta de boleta del SII). Esos cambios no reescriben los casos CU-01 a CU-34. El estado vivo está en `ESTADO_DEL_PROYECTO.md` |
 | Fuentes | Código de `myworksapp_app` (Flutter), `myworksapp_web` (React/Vite), `myworksapp_desktop` (Tauri), `shared/` (TypeScript), `myworksapp_app/supabase/migrations` (SQL) y `myworksapp_app/supabase/functions` (Edge Functions). La web se publica en https://myworksapp.cl. Lo que depende de la configuración en vivo se toma del reporte de despliegue del 20-nov-2026 y se indica como tal |
 | Diagrama | [`casos_de_uso_diagrama.png`](casos_de_uso_diagrama.png) (fuente Mermaid en §3) |
 

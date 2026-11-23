@@ -22,7 +22,7 @@
 
 - Mensajes de error de negocio en español. Un fallo técnico de PostgREST no se muestra con el nombre de la función.
 - Estados vacíos en el catálogo cuando no hay profesionales en la ciudad o el filtro no devuelve resultados.
-- La búsqueda de demostración parte en Puerto Montt. La insignia «Élite del mes» y el formulario SII del perfil se renderizan con el resto de la ficha.
+- La búsqueda de demostración parte en Puerto Montt. La insignia «Élite del mes» se muestra con la ficha. El formulario de boleta del SII no se muestra en Mi Perfil: guarda datos solo en el teléfono y la boleta no está integrada (app 1.0.15, commit `19d1da3`).
 
 ## Disponibilidad de la demo
 

@@ -251,7 +251,7 @@
 > **Estado: 641 de 641 pruebas aprobadas. 0 fallas.**
 >
 > **Plataformas implementadas:**
-> - App móvil Flutter, versión 1.0.11+12.
+> - App móvil Flutter, versión 1.0.15+16. No mostrar la carta de boleta del SII: no está integrada y Mi Perfil no la despliega.
 > - Web React en producción en https://myworksapp.cl, versión 1.0.0.
 > - Consola Tauri de escritorio, versión 0.1.0, con segundo factor TOTP.
 > - Módulo compartido TypeScript con contratos comunes.

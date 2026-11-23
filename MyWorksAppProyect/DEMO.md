@@ -7,7 +7,7 @@ Guion para mostrar MyWorksApp con las cuentas de demostración del proyecto Supa
 | Parte | Dónde |
 |---|---|
 | Web (clientes) | https://myworksapp.cl (también `www.myworksapp.cl` y https://myworksapp-cl.vercel.app) |
-| App Android (clientes y profesionales) | APK release construido desde `main`; la versión del código es 1.0.11+12 (`myworksapp_app/pubspec.yaml`) |
+| App Android (clientes y profesionales) | APK release construido desde `main`; la versión del código es 1.0.15+16 (`myworksapp_app/pubspec.yaml`). Esa versión no muestra la carta de boleta del SII en Mi Perfil |
 | Consola de escritorio (administración) | `myworksapp_desktop/` (sección 6) |
 | Encuesta de prueba con usuarios (SUS) | https://myworksapp.cl/encuesta; en la app, inicio del cliente → **Encuesta de la prueba**, y perfil del profesional → **Encuesta de la prueba** |
 | Migraciones de la base | `myworksapp_app/supabase/MIGRATIONS_INVENTORY.md` (cada versión de la base tiene su archivo) |

@@ -3,7 +3,7 @@
 Documento de referencia para **memoria de título**, **presentaciones universitarias**, **financiamiento** y **planificación técnica**.
 
 **Última actualización:** 22 de noviembre de 2026, sobre `main` `a5f2f7d` de `nicoussj/Proyecto-Titulo-MyWorksApp` (merge del PR #100). El inventario del 20-11 (`d9d2c7c`) queda debajo, corregido donde la lectura del 22-11 lo dejó falso.  
-**Versiones:** app Flutter 1.0.11+12 (`pubspec.yaml`); web 1.0.0 y consola 0.1.0 (`package.json`, `tauri.conf.json`).  
+**Versiones:** app Flutter 1.0.15+16 (`pubspec.yaml`, commit `19d1da3` del 22 de noviembre de 2026, 22:36 hora de Chile); web 1.0.0 y consola 0.1.0 (`package.json`, `tauri.conf.json`). Esa versión oculta en Mi Perfil la carta de boleta del SII, porque el formulario solo guarda RUT, giro y tipo de documento en el teléfono y la boleta no está integrada.  
 **Repositorio:** https://github.com/nicoussj/Proyecto-Titulo-MyWorksApp (el espejo `MathiasAlejandr0/MyWorksAppProyect` tiene un historial distinto y no se usa como fuente).
 
 ---
@@ -12,7 +12,7 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 
 | Parte | Qué es | Dónde está |
 |---|---|---|
-| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`myworksapp_app/`](myworksapp_app/) |
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.15+16) | [`myworksapp_app/`](myworksapp_app/) |
 | Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`myworksapp_web/`](myworksapp_web/), publicado en https://myworksapp.cl |
 | Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`myworksapp_desktop/`](myworksapp_desktop/) |
 | Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`shared/`](shared/) |

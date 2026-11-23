@@ -333,7 +333,7 @@ Agosto 2026          Septiembre 2026         Octubre 2026           Noviembre 20
 
 | Plataforma | Tecnología | Estado | URL/Ubicación |
 |------------|------------|--------|---------------|
-| App móvil | Flutter 3.x | ✅ Funcional | `MyWorksAppProyect/myworksapp_app/` (v1.0.11+12) |
+| App móvil | Flutter 3.x | ✅ Funcional | `MyWorksAppProyect/myworksapp_app/` (v1.0.15+16) |
 | Web de clientes | React 19 + Vite 8 | ✅ En producción | https://myworksapp.cl |
 | Consola de escritorio | Tauri 2 + React 19 | ✅ Funcional | `MyWorksAppProyect/myworksapp_desktop/` (v0.1.0) |
 | Backend | Supabase | ✅ En producción | PostgreSQL + Auth + Edge Functions |

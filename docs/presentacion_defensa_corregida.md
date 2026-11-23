@@ -432,7 +432,7 @@ La tabla **`trabajador_servicios`** evita dependencias multivaluadas:
 - ✅ SQL (base de datos): 207 tests (pgTAP)
 
 **Plataformas Implementadas:**
-1. **App Móvil Flutter** — v1.0.11+12 (`myworksapp_app/`)
+1. **App Móvil Flutter** — v1.0.15+16 (`myworksapp_app/`). La carta de boleta del SII no se muestra en Mi Perfil.
 2. **Web React/Vite** — v1.0.0 en https://myworksapp.cl (`myworksapp_web/`)
 3. **Consola Tauri Desktop** — v0.1.0 con segundo factor TOTP (`myworksapp_desktop/`)
 4. **Módulo Compartido TypeScript** — Contratos comunes (`shared/`)

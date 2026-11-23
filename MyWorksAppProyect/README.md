@@ -21,7 +21,7 @@ Registro de pruebas vigente: [`docs/anexos/2026-11-15-pruebas/REGISTRO.md`](docs
 
 | Parte | Qué es | Dónde está |
 |---|---|---|
-| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`myworksapp_app/`](myworksapp_app/) |
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.15+16) | [`myworksapp_app/`](myworksapp_app/) |
 | Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`myworksapp_web/`](myworksapp_web/), publicado en https://myworksapp.cl |
 | Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`myworksapp_desktop/`](myworksapp_desktop/) |
 | Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`shared/`](shared/) |
@@ -149,7 +149,7 @@ graph TD
 
 | Carpeta | Rol |
 |---------|-----|
-| `myworksapp_app/` | App Flutter para clientes y profesionales (versión 1.0.11+12) |
+| `myworksapp_app/` | App Flutter para clientes y profesionales (versión 1.0.15+16) |
 | `myworksapp_web/` | Web de clientes (React 19 + Vite 8) |
 | `myworksapp_desktop/` | Consola operativa (Tauri 2 + React 19) |
 | `shared/` | Auth, repositorios, pagos, métricas y tipos TypeScript compartidos (web y consola) |
