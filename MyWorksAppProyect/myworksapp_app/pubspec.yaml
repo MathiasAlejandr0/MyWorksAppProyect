@@ -24,6 +24,7 @@ dependencies:
   material_ui: ^1.11.0
 
   # Utilidades
+  crypto: 3.0.7
   path: ^1.8.3
   intl: ^0.20.2
   uuid: ^4.2.1

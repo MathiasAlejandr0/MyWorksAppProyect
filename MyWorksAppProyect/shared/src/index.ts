@@ -63,6 +63,7 @@ export * from './metrics/period';
 export * from './metrics/fetchPeriod';
 export * from './invites/parseInvite';
 export * from './evidence/path';
+export * from './evidence/dhash';
 export * from './evidence/save';
 export * from './scheduling/weeklyHours';
 export * from './survey/testingSurvey';

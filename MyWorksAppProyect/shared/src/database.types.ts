@@ -1002,27 +1002,51 @@ export type Database = {
       }
       fotos_trabajo: {
         Row: {
+          confianza: string
           creado_en: string
+          distancia_metros: number | null
+          duplicado: boolean
+          hash_original: string | null
+          hash_perceptual: string | null
+          hash_sha256: string | null
           id: string
           id_trabajo: string
           imagen_webp: string | null
+          origen_captura: string | null
           ruta_foto: string
+          tipo_evidencia: string | null
           tipo_medio: string
         }
         Insert: {
+          confianza?: string
           creado_en: string
+          distancia_metros?: number | null
+          duplicado?: boolean
+          hash_original?: string | null
+          hash_perceptual?: string | null
+          hash_sha256?: string | null
           id: string
           id_trabajo: string
           imagen_webp?: string | null
+          origen_captura?: string | null
           ruta_foto: string
+          tipo_evidencia?: string | null
           tipo_medio?: string
         }
         Update: {
+          confianza?: string
           creado_en?: string
+          distancia_metros?: number | null
+          duplicado?: boolean
+          hash_original?: string | null
+          hash_perceptual?: string | null
+          hash_sha256?: string | null
           id?: string
           id_trabajo?: string
           imagen_webp?: string | null
+          origen_captura?: string | null
           ruta_foto?: string
+          tipo_evidencia?: string | null
           tipo_medio?: string
         }
         Relationships: [
@@ -2730,6 +2754,22 @@ export type Database = {
         Args: { p_tipo: string; p_trabajador: string; p_trabajo: string }
         Returns: undefined
       }
+      apelar_disputa: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      registrar_evidencia_web: {
+        Args: {
+          p_hash_original: string
+          p_hash_sha256: string
+          p_id_foto: string
+          p_id_trabajo: string
+          p_luma: string | null
+          p_metadata: Json
+          p_tipo: string
+        }
+        Returns: Json
+      }
       abrir_disputa: {
         Args: {
           p_descripcion: string
@@ -2954,6 +2994,7 @@ export type Database = {
       consola_disputas_abiertas: {
         Args: never
         Returns: {
+          asignado_a: string | null
           creado_en: string
           decision_sugerida: string
           descripcion: string
@@ -2963,8 +3004,11 @@ export type Database = {
           monto_retenido: number
           motivo: string
           motivo_regla: string
+          nombre_asignado: string | null
           nombre_cliente: string
           nombre_profesional: string
+          prioridad: string | null
+          puntaje_riesgo: number | null
           vence_en: string
         }[]
       }
@@ -3109,8 +3153,15 @@ export type Database = {
       evidencia_disputa: {
         Args: { p_id_disputa: string }
         Returns: {
+          confianza: string | null
+          distancia_metros: number | null
+          duplicado: boolean
+          hash_perceptual: string | null
           id: string
           imagen_base64: string
+          luz_amarilla: boolean
+          origen_captura: string | null
+          tipo_evidencia: string | null
         }[]
       }
       expirar_pagos_abandonados: { Args: never; Returns: number }

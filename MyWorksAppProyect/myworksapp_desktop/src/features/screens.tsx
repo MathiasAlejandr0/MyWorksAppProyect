@@ -22,6 +22,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { Badge, Button, CopyId, EmptyState, ErrorState, SkeletonRows } from '../ui/kit';
 import { useToast } from '../ui/toast-store';
 import { ColaResenasDudosas } from './colaResenas';
+import { filtrarDisputas, ordenarDisputas, textoProcedencia } from './disputas/bandeja';
 import { PagedTable, type PageResult } from './table';
 
 function asPromise<T>(value: PromiseLike<T>): Promise<T> {
@@ -204,6 +205,24 @@ function PedidoFicha({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
+type FilaDisputa = {
+  id: string;
+  motivo: string;
+  estado: string;
+  nombre_cliente: string;
+  nombre_profesional: string;
+  monto_retenido: number;
+  decision_sugerida: string | null;
+  motivo_regla: string | null;
+  vence_en: string | null;
+  resolucion: string | null;
+  resuelta_en: string | null;
+  prioridad: string | null;
+  asignado_a: string | null;
+  nombre_asignado: string | null;
+  puntaje_riesgo: number | null;
+};
+
 export function DisputasPage() {
   const { profile } = useAuth();
   const permissions = consolePermissions(profile?.role ?? '');
@@ -212,44 +231,87 @@ export function DisputasPage() {
   const [decision, setDecision] = useState<{ id: string; decision: 'liberar' | 'reembolsar'; monto: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<'abiertas' | 'resueltas'>('abiertas');
+  const [filtro, setFiltro] = useState('todas');
   const query = useQuery({
     queryKey: ['disputas', tab],
     queryFn: async () => {
       if (tab === 'resueltas') {
         const { data, error } = await supabase.rpc('consola_disputas_resueltas');
         if (error) throw error;
-        return (data ?? []).map((row) => ({ ...row, decision_sugerida: null as string | null, motivo_regla: null as string | null, vence_en: null as string | null }));
+        return (data ?? []).map((row) => ({
+          ...row,
+          decision_sugerida: null as string | null,
+          motivo_regla: null as string | null,
+          vence_en: null as string | null,
+          prioridad: null as string | null,
+          asignado_a: null as string | null,
+          nombre_asignado: null as string | null,
+          puntaje_riesgo: null as number | null,
+        }));
       }
       const { data, error } = await supabase.rpc('consola_disputas_abiertas');
       if (error) throw error;
-      return (data ?? []).map((row) => ({ ...row, resolucion: null as string | null, resuelta_en: null as string | null }));
+      return (data ?? []).map((row) => ({
+        ...row,
+        resolucion: null as string | null,
+        resuelta_en: null as string | null,
+        prioridad: (row.prioridad ?? null) as string | null,
+        asignado_a: (row.asignado_a ?? null) as string | null,
+        nombre_asignado: (row.nombre_asignado ?? null) as string | null,
+        puntaje_riesgo: (row.puntaje_riesgo ?? null) as number | null,
+      }));
     },
     refetchInterval: tab === 'abiertas' ? 30_000 : false,
   });
+  const visibles = tab === 'abiertas'
+    ? ordenarDisputas(filtrarDisputas((query.data ?? []) as FilaDisputa[], filtro, profile?.id ?? null))
+    : ((query.data ?? []) as FilaDisputa[]);
   return (
     <Gate allow={permissions.supportQueue}>
       <h1>Disputas</h1>
+      <p className="muted">Bandeja de casos. La cola incluye abierta, en revisión y apelaciones. La sugerencia no mueve el dinero.</p>
+      {tab === 'abiertas' ? (
+        <label className="field">
+          <span>Prioridad</span>
+          <select aria-label="Filtrar por prioridad" value={filtro} onChange={(event) => setFiltro(event.target.value)}>
+            <option value="todas">Todas</option>
+            <option value="alta">Alta</option>
+            <option value="media">Media</option>
+            <option value="baja">Baja</option>
+            <option value="sin_asignar">Sin asignar</option>
+            <option value="mias">Asignadas a mí</option>
+          </select>
+        </label>
+      ) : null}
       <div className="tabs">
         <button type="button" className={tab === 'abiertas' ? 'is-active' : undefined} onClick={() => setTab('abiertas')}>Abiertas</button>
         <button type="button" className={tab === 'resueltas' ? 'is-active' : undefined} onClick={() => setTab('resueltas')}>Resueltas</button>
       </div>
       {query.isLoading ? <SkeletonRows /> : null}
       {query.isError ? <ErrorState message="No se pudo cargar la cola." onRetry={() => void query.refetch()} /> : null}
-      {!query.isLoading && !query.isError && query.data?.length === 0 ? (
-        <EmptyState title={tab === 'abiertas' ? 'No hay disputas abiertas.' : 'Aún no hay disputas resueltas.'} />
+      {!query.isLoading && !query.isError && visibles.length === 0 ? (
+        <EmptyState title={tab === 'abiertas' ? (filtro === 'todas' ? 'No hay disputas que requieran una persona.' : 'Ninguna disputa en este filtro.') : 'Aún no hay disputas resueltas.'} />
       ) : null}
       <div className="stack">
-        {(query.data ?? []).map((row) => (
+        {visibles.map((row) => (
           <article key={row.id} className="panel stack">
             <div className="spread">
               <strong>{row.motivo}</strong>
-              <Badge value={row.estado} />
+              <span className="row">
+                {row.prioridad ? <Badge value={row.prioridad} /> : null}
+                <Badge value={row.estado} />
+              </span>
             </div>
             <p>{row.nombre_cliente} · {row.nombre_profesional} · {formatClp(row.monto_retenido)}</p>
+            <p className="muted">Asignada a {row.nombre_asignado || 'nadie'}</p>
             {tab === 'resueltas' ? (
               <p className="muted">Resolución: {row.resolucion || 'Sin texto de resolución.'} · {formatDateTime(row.resuelta_en)}</p>
             ) : (
-              <p className="muted">Sugerencia: {statusLabel(row.decision_sugerida)} · {row.motivo_regla || 'Sin regla'} · vence {formatDateTime(row.vence_en)}</p>
+              <>
+                <p className="muted">Sugerencia, no es una decisión: {statusLabel(row.decision_sugerida)} · {row.motivo_regla || 'Sin regla'} · vence {formatDateTime(row.vence_en)}</p>
+                <p className="muted">Propuesta de riesgo {row.puntaje_riesgo ?? '—'}. No mueve el dinero.</p>
+                <p className="muted">Plazo {formatDateTime(row.vence_en)}</p>
+              </>
             )}
             {permissions.disputeEvidence ? <Evidencia id={row.id} /> : <p className="muted">Tu rol no ve la evidencia.</p>}
             {tab === 'abiertas' && permissions.resolveDisputes ? (
@@ -311,9 +373,15 @@ function Evidencia({ id }: { id: string }) {
   if (query.isError) return <p className="muted">{describeLoadError(query.error, 'Sin fotos de evidencia.')}</p>;
   if (!query.data?.length) return <p className="muted">Sin fotos de evidencia.</p>;
   return (
-    <div className="row">
+    <div className="stack">
       {query.data.map((photo) => (
-        <img key={photo.id} alt="Evidencia del trabajo" width={120} height={90} src={`data:image/webp;base64,${photo.imagen_base64}`} />
+        <figure key={photo.id} className="stack">
+          {photo.imagen_base64 ? (
+            <img alt="Evidencia del trabajo" width={120} height={90} src={`data:image/webp;base64,${photo.imagen_base64}`} />
+          ) : null}
+          <figcaption>{textoProcedencia(photo)}</figcaption>
+          {photo.luz_amarilla ? <p className="muted">Luz amarilla: esta foto no decide el dinero.</p> : null}
+        </figure>
       ))}
     </div>
   );

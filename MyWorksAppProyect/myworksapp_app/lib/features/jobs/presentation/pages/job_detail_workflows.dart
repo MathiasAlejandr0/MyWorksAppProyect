@@ -688,6 +688,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
               onOpenDispute: (reason, description, outcome) =>
                   _openDispute(reason, description, outcome),
               onAddComment: _addDisputeComment,
+              onAppeal: _appealDispute,
               onCancelRequest: JobDetailHelpers.clientCanCancelRequest(
                 job: _job!,
                 dispute: _dispute,

@@ -12,6 +12,7 @@ typedef OpenDisputeCallback = Future<void> Function(
 );
 
 typedef AddDisputeCommentCallback = Future<void> Function(String comment);
+typedef AppealDisputeCallback = Future<void> Function(String motivo);
 typedef RespondAgreementCallback = Future<void> Function(bool accept);
 
 class DisputeSection extends StatelessWidget {
@@ -23,6 +24,7 @@ class DisputeSection extends StatelessWidget {
     this.canNegotiate = false,
     this.onOpenDispute,
     this.onAddComment,
+    this.onAppeal,
     this.onRespondAgreement,
     this.onCancelRequest,
     this.pendingAgreementType,
@@ -37,6 +39,7 @@ class DisputeSection extends StatelessWidget {
   final bool canNegotiate;
   final OpenDisputeCallback? onOpenDispute;
   final AddDisputeCommentCallback? onAddComment;
+  final AppealDisputeCallback? onAppeal;
   final RespondAgreementCallback? onRespondAgreement;
 
   /// Cancela el trabajo si la disputa se abrió por error.
@@ -52,6 +55,7 @@ class DisputeSection extends StatelessWidget {
       return _DisputeStatusCard(
         dispute: dispute!,
         onAddComment: onAddComment,
+        onAppeal: onAppeal,
         onRespondAgreement: canNegotiate ? onRespondAgreement : null,
         onCancelRequest: onCancelRequest,
         pendingAgreementType: canNegotiate ? pendingAgreementType : null,
@@ -150,6 +154,7 @@ class _DisputeStatusCard extends StatefulWidget {
   const _DisputeStatusCard({
     required this.dispute,
     this.onAddComment,
+    this.onAppeal,
     this.onRespondAgreement,
     this.onCancelRequest,
     this.pendingAgreementType,
@@ -158,6 +163,7 @@ class _DisputeStatusCard extends StatefulWidget {
 
   final DisputeModel dispute;
   final AddDisputeCommentCallback? onAddComment;
+  final AppealDisputeCallback? onAppeal;
   final RespondAgreementCallback? onRespondAgreement;
   final VoidCallback? onCancelRequest;
   final String? pendingAgreementType;
@@ -301,6 +307,27 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
                 child: Text(_sending ? 'Enviando…' : 'Agregar comentario'),
               ),
             ],
+            if (!isOpen &&
+                dispute.origin == 'sistema' &&
+                widget.onAppeal != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Si el sistema cerró el caso, puedes pedir que una persona lo revise. Pedirlo no vuelve a mover el dinero.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () async {
+                  final motivo = await showDialog<String>(
+                    context: context,
+                    builder: (ctx) => const _AppealDialog(),
+                  );
+                  if (motivo == null || motivo.trim().length < 10) return;
+                  await widget.onAppeal!(motivo.trim());
+                },
+                child: const Text('Pedir revisión humana'),
+              ),
+            ],
             if (isOpen)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -399,6 +426,49 @@ class _DisputeIconBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(icon, color: color, size: 20),
+    );
+  }
+}
+
+
+class _AppealDialog extends StatefulWidget {
+  const _AppealDialog();
+
+  @override
+  State<_AppealDialog> createState() => _AppealDialogState();
+}
+
+class _AppealDialogState extends State<_AppealDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Pedir revisión humana'),
+      content: TextField(
+        controller: _controller,
+        decoration: const InputDecoration(
+          labelText: 'Por qué pides la revisión',
+          alignLabelWithHint: true,
+        ),
+        maxLines: 4,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          child: const Text('Enviar'),
+        ),
+      ],
     );
   }
 }

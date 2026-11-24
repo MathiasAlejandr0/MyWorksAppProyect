@@ -45,6 +45,7 @@ interface TrackingDashboardProps {
   confirmError?: string | null;
   onOpenDispute?: (reason: string, detail: string) => Promise<void>;
   onAddDisputeComment?: (comment: string) => Promise<void>;
+  onAppealDispute?: (motivo: string) => Promise<void>;
   onProposeAgreement?: (tipo: 'aceptar' | 'rehacer' | 'anular') => Promise<void>;
   onRespondAgreement?: (acepta: boolean) => Promise<void>;
   pendingAgreement?: { id: string; tipo: string } | null;
@@ -125,6 +126,7 @@ export function TrackingDashboard({
   confirmError = null,
   onOpenDispute,
   onAddDisputeComment,
+  onAppealDispute,
   onProposeAgreement,
   onRespondAgreement,
   pendingAgreement = null,
@@ -147,6 +149,7 @@ export function TrackingDashboard({
   const [disputeReason, setDisputeReason] = useState('calidad');
   const [disputeDetail, setDisputeDetail] = useState('');
   const [disputeComment, setDisputeComment] = useState('');
+  const [appealMotivo, setAppealMotivo] = useState('');
   const [disputeBusy, setDisputeBusy] = useState(false);
   const [disputeNote, setDisputeNote] = useState<string | null>(null);
   const hasPoint = typeof latitude === 'number' && typeof longitude === 'number'
@@ -422,6 +425,39 @@ export function TrackingDashboard({
                 />
                 <button type="submit" className="btn-primary" disabled={disputeBusy || !disputeComment.trim()}>
                   Agregar comentario
+                </button>
+              </div>
+            </form>
+          ) : null}
+          {closedJob && onAppealDispute ? (
+            <form
+              className="tracking-escrow-card"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setDisputeBusy(true);
+                setDisputeNote(null);
+                void onAppealDispute(appealMotivo)
+                  .then(() => {
+                    setAppealMotivo('');
+                    setDisputeNote('Revisión pedida. El dinero no se movió otra vez.');
+                  })
+                  .catch((error: unknown) => {
+                    setDisputeNote(error instanceof Error ? error.message : 'No se pudo pedir la revisión.');
+                  })
+                  .finally(() => setDisputeBusy(false));
+              }}
+            >
+              <div>
+                <strong>Pedir revisión humana</strong>
+                <p>Si el sistema cerró el caso, una persona puede revisarlo. Pedirlo no vuelve a mover el dinero.</p>
+                <textarea
+                  value={appealMotivo}
+                  onChange={(event) => setAppealMotivo(event.target.value)}
+                  placeholder="Por qué pides la revisión"
+                  rows={2}
+                />
+                <button type="submit" className="btn-ghost" disabled={disputeBusy || appealMotivo.trim().length < 10}>
+                  Pedir revisión
                 </button>
               </div>
             </form>
