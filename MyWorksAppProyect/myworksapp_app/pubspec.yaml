@@ -1,7 +1,7 @@
 name: myworksapp
 description: App Flutter para conectar usuarios con trabajadores de oficios — perfiles, portafolio y gestión de trabajos con Supabase.
 publish_to: 'none'
-version: 1.0.15+16
+version: 1.0.16+17
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
