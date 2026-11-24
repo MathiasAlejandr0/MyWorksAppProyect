@@ -46,6 +46,14 @@ for (const tema of ['light', 'dark'] as const) {
 
     await page.goto('/disputas?captura=local');
     await expect(page.getByText('Trabajo incompleto')).toBeVisible();
+    await expect(page.getByText(/Sugerencia, no es una decisión/)).toBeVisible();
+    await expect(page.getByText(/No verificada/)).toBeVisible();
+    await expect(page.getByText('Luz amarilla: esta foto no decide el dinero.')).toBeVisible();
+    await page.getByLabel('Filtrar por prioridad').selectOption('baja');
+    await expect(page.getByText('Ninguna disputa en este filtro.')).toBeVisible();
+    await page.getByLabel('Filtrar por prioridad').selectOption('alta');
+    await expect(page.getByText('Trabajo incompleto')).toBeVisible();
+    await page.getByLabel('Filtrar por prioridad').selectOption('todas');
     await page.getByRole('button', { name: 'Devolver a la tarjeta' }).click();
     await page.getByLabel('Motivo (mínimo 10 caracteres)').fill('Prueba local sin mover dinero');
     await page.getByLabel('Frase de confirmación').fill('REEMBOLSAR');

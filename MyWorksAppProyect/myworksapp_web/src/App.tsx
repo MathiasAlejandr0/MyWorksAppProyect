@@ -1522,6 +1522,26 @@ export function App() {
             const row = data?.[0];
             setPendingAgreement(row ? { id: row.id, tipo: row.tipo } : null);
           } : undefined}
+          onAppealDispute={profile ? async (motivo) => {
+            if (!checkoutJobId) throw new Error('Falta el trabajo.');
+            const { data, error } = await supabase
+              .from('disputas')
+              .select('id, estado, origen')
+              .eq('id_trabajo', checkoutJobId)
+              .order('creado_en', { ascending: false })
+              .limit(1);
+            if (error) throw new Error('No se pudo leer la disputa.');
+            const row = data?.[0];
+            if (!row || row.estado !== 'resuelta' || row.origen !== 'sistema') {
+              throw new Error('Solo se puede apelar un cierre automático reciente.');
+            }
+            const { error: appealError } = await supabase.rpc('apelar_disputa', {
+              p_id: row.id,
+              p_motivo: motivo,
+            });
+            if (appealError) throw new Error('No se pudo pedir la revisión.');
+          } : undefined}
+
           onAddDisputeComment={profile ? async (comment) => {
             if (!checkoutJobId) throw new Error('Falta el trabajo.');
             const { data, error } = await supabase

@@ -125,6 +125,17 @@ class DisputeService {
     }
   }
 
+  Future<void> appeal({
+    required String disputeId,
+    required String motivo,
+  }) async {
+    final text = motivo.trim();
+    if (text.length < 10) {
+      throw AppError.validation('Cuéntanos en al menos 10 caracteres por qué pides la revisión.');
+    }
+    await _disputeRepository.appeal(disputeId, text);
+  }
+
   Future<void> addComment({
     required String disputeId,
     required String comment,

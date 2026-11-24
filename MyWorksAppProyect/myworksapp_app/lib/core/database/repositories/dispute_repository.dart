@@ -13,6 +13,13 @@ class DisputeRepository {
     });
   }
 
+  Future<void> appeal(String disputeId, String motivo) async {
+    await supabase.rpc('apelar_disputa', params: {
+      'p_id': disputeId,
+      'p_motivo': motivo,
+    });
+  }
+
   Future<void> addComment(String disputeId, String comment) async {
     await supabase.rpc('comentar_disputa', params: {
       'p_id': disputeId,

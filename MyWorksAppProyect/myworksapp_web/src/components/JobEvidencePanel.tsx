@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { byteaHex, sha256Hex } from '@myworksapp/shared';
 
 /** La base solo acepta fotos WebP en imagen_webp. El video sigue igual. */
 async function imageFileToWebp(file: File): Promise<File> {
@@ -24,7 +25,25 @@ async function imageFileToWebp(file: File): Promise<File> {
 import { saveJobEvidence, signedEvidenceUrl, isEvidenceStoragePath } from '@myworksapp/shared';
 import { supabase } from '../supabaseClient';
 
-type Item = { id: string; url: string; video: boolean };
+type Item = { id: string; url: string; video: boolean; confianza: string | null };
+
+async function luma9x8(file: Blob): Promise<Uint8Array> {
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement('canvas');
+  canvas.width = 9;
+  canvas.height = 8;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new Error('No se pudo leer la foto');
+  ctx.drawImage(bitmap, 0, 0, 9, 8);
+  bitmap.close();
+  const pixels = ctx.getImageData(0, 0, 9, 8).data;
+  const luma = new Uint8Array(72);
+  for (let i = 0; i < 72; i += 1) {
+    const offset = i * 4;
+    luma[i] = Math.round((pixels[offset] * 30 + pixels[offset + 1] * 59 + pixels[offset + 2] * 11) / 100);
+  }
+  return luma;
+}
 
 export function JobEvidencePanel({
   jobId,
@@ -44,7 +63,7 @@ export function JobEvidencePanel({
   async function load() {
     const { data, error: readError } = await supabase
       .from('fotos_trabajo')
-      .select('id, ruta_foto, tipo_medio')
+      .select('id, ruta_foto, tipo_medio, confianza')
       .eq('id_trabajo', jobId)
       .order('creado_en', { ascending: false });
     if (readError) {
@@ -61,6 +80,7 @@ export function JobEvidencePanel({
         id: String(row.id),
         url,
         video: row.tipo_medio === 'video',
+        confianza: row.confianza == null ? null : String(row.confianza),
       });
     }
     setItems(next);
@@ -77,19 +97,44 @@ export function JobEvidencePanel({
     setError(null);
     setProgress(0.05);
     try {
-      const prepared = file.type.startsWith('video/') ? file : await imageFileToWebp(file);
+      const originalBytes = new Uint8Array(await file.arrayBuffer());
+      const hashOriginal = await sha256Hex(originalBytes);
+      const metadata = {
+        nombre: file.name,
+        tipo: file.type,
+        bytes: file.size,
+        modificado: file.lastModified,
+      };
+      const video = file.type.startsWith('video/');
+      const luma = video ? null : await luma9x8(file);
+      const prepared = video ? file : await imageFileToWebp(file);
+      const preparedBytes = new Uint8Array(await prepared.arrayBuffer());
+      const hashWebp = video ? hashOriginal : await sha256Hex(preparedBytes);
+      const fileId = crypto.randomUUID();
       await saveJobEvidence(
         supabase,
         {
           jobId,
           userId,
-          fileId: crypto.randomUUID(),
+          fileId,
           body: prepared,
-          mime: prepared.type || (file.type.startsWith('video/') ? 'video/mp4' : 'image/webp'),
+          mime: prepared.type || (video ? 'video/mp4' : 'image/webp'),
           byteLength: prepared.size,
         },
         setProgress,
       );
+      const { error: procedenciaError } = await supabase.rpc('registrar_evidencia_web', {
+        p_id_foto: fileId,
+        p_id_trabajo: jobId,
+        p_hash_original: hashOriginal,
+        p_hash_sha256: hashWebp,
+        p_luma: luma ? byteaHex(luma) : null,
+        p_tipo: video ? 'video' : 'detalle',
+        p_metadata: metadata,
+      });
+      if (procedenciaError) {
+        throw new Error('La evidencia quedó guardada como no verificada.');
+      }
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo subir la evidencia');
@@ -102,7 +147,10 @@ export function JobEvidencePanel({
     <section className="tracking-escrow-card">
       <div>
         <strong>Evidencia</strong>
-        <p>Las fotos y videos quedan en un depósito privado. Aquí se ven con un enlace temporal.</p>
+        <p>
+          Desde el navegador la evidencia queda marcada como no verificada.
+          No cierra el pago sola. El hash original se guarda antes de convertir a WebP.
+        </p>
         {busy ? <progress value={progress} max={1} /> : null}
         {error ? <p role="alert">{error}</p> : null}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -110,7 +158,12 @@ export function JobEvidencePanel({
             item.video ? (
               <video key={item.id} src={item.url} controls width={160} />
             ) : (
-              <img key={item.id} src={item.url} alt="" width={96} height={96} style={{ objectFit: 'cover' }} />
+              <figure key={item.id} style={{ margin: 0 }}>
+                <img src={item.url} alt="" width={96} height={96} style={{ objectFit: 'cover' }} />
+                <figcaption>
+                  {item.confianza === 'confiable' ? 'Verificada' : 'No verificada'}
+                </figcaption>
+              </figure>
             ),
           )}
         </div>

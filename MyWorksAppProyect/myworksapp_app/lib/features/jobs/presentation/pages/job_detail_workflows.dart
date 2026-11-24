@@ -684,6 +684,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
                   JobDetailHelpers.canNegotiateDispute(_job!, _dispute),
               onOpenDispute: _openDispute,
               onAddComment: _addDisputeComment,
+              onAppeal: _appealDispute,
               onProposeAgreement: _proposeAgreement,
               onRespondAgreement: _respondAgreement,
               pendingAgreementId: _pendingAgreementId,

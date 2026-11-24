@@ -163,6 +163,9 @@ export function disputasCaptura() {
       resolucion: null,
       resuelta_en: null,
       prioridad: 'alta',
+      asignado_a: null,
+      nombre_asignado: null,
+      puntaje_riesgo: 70,
     },
   ];
 }
