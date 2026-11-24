@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
+import '../../domain/job_history_scope.dart';
 import '../../domain/pricing_constants.dart';
 import '../../utils/app_error.dart';
 import '../../utils/constants.dart';
@@ -53,6 +54,64 @@ class JobRepository {
     );
   }
 
+  /// Trabajos del cliente que todavía piden su atención: en curso, conformidad
+  /// o un cobro adicional. El nombre del servicio sale del embed; si esa
+  /// relación no responde, la lista igual vuelve y la carta usa la descripción.
+  Future<List<({JobModel job, String? serviceName, bool disputeOpen})>>
+      getInProgressJobsByUserId(
+    String userId,
+  ) async {
+    final rows = await _inProgressRows(userId);
+    return [
+      for (final row in rows)
+        (
+          job: JobModel.fromMap(row),
+          serviceName: _serviceNameEmbed(row['servicios']),
+          disputeOpen: _disputeOpenEmbed(row['disputas']),
+        ),
+    ];
+  }
+
+  static const _clientHomeStatuses = <String>[
+    AppConstants.jobStatusInProgress,
+    PricingConstants.jobAwaitingClientApproval,
+    PricingConstants.jobPausedChangeOrder,
+  ];
+
+  static const _openDisputeStatuses = <String>{
+    'abierta',
+    'en_revision',
+    'requiere_humano',
+    'reembolso_pendiente',
+  };
+
+  Future<List<Map<String, dynamic>>> _inProgressRows(String userId) async {
+    Object? rows;
+    try {
+      rows = await supabase
+          .from(_table)
+          .select('*, servicios(nombre), disputas(estado)')
+          .eq('id_usuario', userId)
+          .inFilter('estado', _clientHomeStatuses)
+          .order('actualizado_en', ascending: false);
+    } catch (_) {
+      rows = await supabase
+          .from(_table)
+          .select()
+          .eq('id_usuario', userId)
+          .inFilter('estado', _clientHomeStatuses)
+          .order('actualizado_en', ascending: false);
+    }
+    if (rows is! List) return const [];
+    return [
+      for (final row in rows)
+        if (row is Map<String, dynamic>)
+          row
+        else if (row is Map)
+          Map<String, dynamic>.from(row),
+    ];
+  }
+
   /// Un pedido en `esperando_pago` todavía no tiene cobro retenido: es un
   /// checkout sin terminar del cliente. El profesional lo ve recién cuando el
   /// pago lo pasa a `pendiente`, así que ninguna lista ni contador suyo lo trae.
@@ -70,9 +129,26 @@ class JobRepository {
     );
   }
 
-  /// Una página del historial (más recientes primero). Para «Mis Proyectos»:
-  /// un cliente con 88 trabajos ya no baja todo de una vez.
-  Future<List<JobModel>> getJobsPage({
+  /// Trabajos con pago retenido, sin paginar. Son pocos y el historial los
+  /// muestra arriba aunque haya pedidos cerrados más nuevos.
+  Future<List<JobModel>> getHistoryLiveJobs({
+    required String userId,
+    required bool asWorker,
+  }) async {
+    var query = supabase
+        .from(_table)
+        .select()
+        .eq(asWorker ? 'id_trabajador' : 'id_usuario', userId)
+        .inFilter('estado', jobHistoryOpenStatuses);
+    if (asWorker) query = query.neq('estado', _unpaidStatus);
+    final rows = await query.order('actualizado_en', ascending: false);
+    return _withAmounts(
+      rows.map<JobModel>((m) => JobModel.fromMap(m)).toList(),
+    );
+  }
+
+  /// Página de trabajos ya cerrados o todavía sin pago retenido.
+  Future<List<JobModel>> getHistoryPastPage({
     required String userId,
     required bool asWorker,
     required int offset,
@@ -81,7 +157,8 @@ class JobRepository {
     var query = supabase
         .from(_table)
         .select()
-        .eq(asWorker ? 'id_trabajador' : 'id_usuario', userId);
+        .eq(asWorker ? 'id_trabajador' : 'id_usuario', userId)
+        .not('estado', 'in', '(${jobHistoryOpenStatuses.join(',')})');
     if (asWorker) query = query.neq('estado', _unpaidStatus);
     final rows = await query
         .order('creado_en', ascending: false)
@@ -442,6 +519,35 @@ class JobRepository {
   /// Obtiene todos los trabajos de un trabajador (alias para getJobsByWorkerId)
   Future<List<JobModel>> getWorkerJobs(String workerId) async {
     return await getJobsByWorkerId(workerId);
+  }
+
+  String? _serviceNameEmbed(Object? embed) {
+    if (embed is Map) {
+      final name = embed['nombre']?.toString().trim() ?? '';
+      return name.isEmpty ? null : name;
+    }
+    if (embed is List) {
+      for (final item in embed) {
+        final name = _serviceNameEmbed(item);
+        if (name != null) return name;
+      }
+    }
+    return null;
+  }
+
+  bool _disputeOpenEmbed(Object? embed) {
+    final rows = embed is List
+        ? embed
+        : embed is Map
+            ? [embed]
+            : const [];
+    for (final row in rows) {
+      if (row is Map &&
+          _openDisputeStatuses.contains(row['estado']?.toString())) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 

@@ -174,18 +174,17 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         type.startsWith('job_');
   }
 
+  bool get _hasUnread => _notifications.any((n) => !n.isRead);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppGradientAppBar(
-        title: const Text('Notificaciones'),
-        actions: [
-          if (!_isLoading && _notifications.any((n) => !n.isRead))
-            TextButton(
-              onPressed: _markAllAsRead,
-              child: const Text('Marcar todas como leídas'),
-            ),
-        ],
+      appBar: const AppGradientAppBar(
+        title: Text(
+          'Notificaciones',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       body: _isLoading
           ? ListView.builder(
@@ -206,21 +205,44 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
                       message:
                           'Las notificaciones aparecerán aquí cuando haya actualizaciones',
                     )
-                  : RefreshIndicator(
-                      onRefresh: _loadNotifications,
-                      child: ListView(
-                        padding: LayoutUtils.scrollPadding(context, top: 8),
-                        children: [
-                          for (final folder in groupNotificationsByJob(
-                            _notifications,
-                            jobLabels: _jobLabels,
-                          ))
-                            _NoticeFolder(
-                              folder: folder,
-                              onOpen: () => _openFolder(folder),
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (_hasUnread)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                AppSpacing.lg,
+                                AppSpacing.xs,
+                                AppSpacing.sm,
+                                0,
+                              ),
+                              child: TextButton(
+                                onPressed: _markAllAsRead,
+                                child: const Text('Marcar todas como leídas'),
+                              ),
                             ),
-                        ],
-                      ),
+                          ),
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: _loadNotifications,
+                            child: ListView(
+                              padding: LayoutUtils.scrollPadding(context, top: 8),
+                              children: [
+                                for (final folder in groupNotificationsByJob(
+                                  _notifications,
+                                  jobLabels: _jobLabels,
+                                ))
+                                  _NoticeFolder(
+                                    folder: folder,
+                                    onOpen: () => _openFolder(folder),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
     );
   }

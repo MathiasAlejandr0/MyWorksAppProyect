@@ -9,6 +9,7 @@ import {
 import { supabase, SUPABASE_ANON_KEY, SUPABASE_URL } from '../supabaseClient';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { useAuth } from '../context/useAuth';
+import { AcademicInlineNote } from './AcademicInlineNote';
 import { TurnstileWidget } from './TurnstileWidget';
 import { turnstileCanRender } from './turnstileSite';
 
@@ -289,6 +290,7 @@ export function AuthModal({ open, onClose, initialEmail = '', initialMode = 'log
           ) : null}
           {resendNote ? <p role="status">{resendNote}</p> : null}
 
+          {mode === 'register' ? <AcademicInlineNote /> : null}
           <button type="submit" className="btn-primary auth-modal-submit" disabled={submitting}>
             {mode === 'login' ? <LogIn size={16} /> : mode === 'register' ? <UserPlus size={16} /> : <KeyRound size={16} />}
             {submitting

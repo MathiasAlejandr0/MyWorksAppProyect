@@ -37,11 +37,28 @@ function fakeClient(opts: { refundError?: string; rpcError?: string; insertError
 }
 
 describe('Acciones del cliente en la web', () => {
-  it('cancela solo antes de que el profesional acepte', () => {
+  it('cancela antes de aceptar, en la conformidad, o si el cliente abrió la disputa', () => {
     assert.equal(canClientCancel('pendiente'), true);
     assert.equal(canClientCancel('esperando_pago'), true);
+    assert.equal(canClientCancel('esperando_aprobacion_cliente'), true);
     assert.equal(canClientCancel('aceptado'), false);
     assert.equal(canClientCancel('completado'), false);
+    assert.equal(
+      canClientCancel('en_curso', { disputeOpen: true, disputeOpenedBy: 'cliente', userId: 'cliente' }),
+      true,
+    );
+    assert.equal(
+      canClientCancel('en_curso', { disputeOpen: true, disputeOpenedBy: 'pro', userId: 'cliente' }),
+      false,
+    );
+  });
+
+  it('si el aviso no se guarda, no dice que todo salió bien', async () => {
+    const { client } = fakeClient({ insertError: { message: 'permission denied' } });
+    await assert.rejects(
+      cancelJobAsClient(client, { jobId: 'j', userId: 'u', workerId: 'w', reason: 'Ya no lo necesito' }),
+      /se canceló/,
+    );
   });
 
   it('devuelve el pago antes de cancelar y avisa al profesional', async () => {

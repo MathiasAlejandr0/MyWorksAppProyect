@@ -45,58 +45,65 @@ class WorkerRepository {
 
   /// Guarda precios, servicios propios y categoría en sus tablas. Lo que ya
   /// no está en el modelo se borra, para que la base quede igual a la pantalla.
+  /// Cada bloque es opcional: guardar el nombre no debe publicar ni borrar tarifas.
   Future<void> _saveOffer(
     WorkerModel worker, {
     bool includeCategory = false,
+    bool savePrices = true,
+    bool saveExtras = true,
   }) async {
     final userId = worker.userId;
-    if (worker.pricingTiers.isEmpty) {
-      await supabase.from('trabajador_precios').delete().eq('id_usuario', userId);
-    } else {
-      await supabase.from('trabajador_precios').upsert(
-        [
-          for (final entry in worker.pricingTiers.entries)
-            {
-              'id_usuario': userId,
-              'codigo': entry.key,
-              'monto_clp': entry.value,
-            },
-        ],
-        onConflict: 'id_usuario,codigo',
-      );
-      await supabase
-          .from('trabajador_precios')
-          .delete()
-          .eq('id_usuario', userId)
-          .not('codigo', 'in', '(${worker.pricingTiers.keys.join(',')})');
+    if (savePrices) {
+      if (worker.pricingTiers.isEmpty) {
+        await supabase.from('trabajador_precios').delete().eq('id_usuario', userId);
+      } else {
+        await supabase.from('trabajador_precios').upsert(
+          [
+            for (final entry in worker.pricingTiers.entries)
+              {
+                'id_usuario': userId,
+                'codigo': entry.key,
+                'monto_clp': entry.value,
+              },
+          ],
+          onConflict: 'id_usuario,codigo',
+        );
+        await supabase
+            .from('trabajador_precios')
+            .delete()
+            .eq('id_usuario', userId)
+            .not('codigo', 'in', '(${worker.pricingTiers.keys.join(',')})');
+      }
     }
 
-    if (worker.customServices.isEmpty) {
-      await supabase
-          .from('trabajador_servicios_extra')
-          .delete()
-          .eq('id_usuario', userId);
-    } else {
-      await supabase.from('trabajador_servicios_extra').upsert(
-        [
-          for (final service in worker.customServices)
-            {
-              'id': service.id,
-              'id_usuario': userId,
-              'titulo': service.title,
-              'subtitulo': service.subtitle,
-              'monto_clp': service.priceClp,
-              'unidad': service.unit == WorkerPriceUnit.perSqm ? 'por_m2' : 'fijo',
-            },
-        ],
-        onConflict: 'id_usuario,id',
-      );
-      await supabase
-          .from('trabajador_servicios_extra')
-          .delete()
-          .eq('id_usuario', userId)
-          .not('id', 'in',
-              '(${worker.customServices.map((s) => s.id).join(',')})');
+    if (saveExtras) {
+      if (worker.customServices.isEmpty) {
+        await supabase
+            .from('trabajador_servicios_extra')
+            .delete()
+            .eq('id_usuario', userId);
+      } else {
+        await supabase.from('trabajador_servicios_extra').upsert(
+          [
+            for (final service in worker.customServices)
+              {
+                'id': service.id,
+                'id_usuario': userId,
+                'titulo': service.title,
+                'subtitulo': service.subtitle,
+                'monto_clp': service.priceClp,
+                'unidad': service.unit == WorkerPriceUnit.perSqm ? 'por_m2' : 'fijo',
+              },
+          ],
+          onConflict: 'id_usuario,id',
+        );
+        await supabase
+            .from('trabajador_servicios_extra')
+            .delete()
+            .eq('id_usuario', userId)
+            .not('id', 'in',
+                '(${worker.customServices.map((s) => s.id).join(',')})');
+      }
     }
 
     if (includeCategory && worker.serviceCategory != 'general') {
@@ -297,12 +304,21 @@ class WorkerRepository {
     return sortWorkerLoginItems(DemoCredentials.loginWorkers);
   }
 
-  Future<void> updateWorker(WorkerModel worker) async {
+  Future<void> updateWorker(
+    WorkerModel worker, {
+    bool savePrices = true,
+    bool saveExtras = true,
+  }) async {
     await supabase
         .from(_table)
         .update(worker.toMap())
         .eq('id_usuario', worker.userId);
-    await _saveOffer(worker);
+    if (!savePrices && !saveExtras) return;
+    await _saveOffer(
+      worker,
+      savePrices: savePrices,
+      saveExtras: saveExtras,
+    );
   }
 
   Future<void> updateAvailableHours({
@@ -491,10 +507,11 @@ class WorkerRepository {
         },
       );
       if (rows is List) {
-        return await _overlayStats([
+        // La RPC ya trae la nota, los trabajos y la élite canónicos.
+        return [
           for (final row in rows.whereType<Map>())
             WorkerModel.fromCatalogMap(Map<String, dynamic>.from(row)),
-        ]);
+        ];
       }
     } catch (_) {
       // Si la RPC no está, un autenticado todavía puede leer el marketplace.

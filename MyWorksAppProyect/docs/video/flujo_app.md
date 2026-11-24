@@ -1,6 +1,6 @@
 # MyWorksApp — Flujo real de la app (fuente para el video)
 
-> Documento fuente del video. La sección 4 y la URL se actualizaron al 20-nov-2026 (`main` `d9d2c7c`); el resto describe el código del commit `310f00b` y las capturas del 15-nov.
+> Documento fuente del video. El estado vigente de la fase 3 (22-11-2026, 23:07 hora de Chile) está en [`../../ESTADO_DEL_PROYECTO.md`](../../ESTADO_DEL_PROYECTO.md). La sección 4 se actualizó al 20-nov-2026; el resto describe el código del commit `310f00b` y las capturas del 15-nov.
 
 Extraído del código en `main` (commit `310f00b`, repo `nicoussj/Proyecto-Titulo-MyWorksApp`, carpeta `MyWorksAppProyect/`) y de la base en vivo (`wxqrfcqifkfgawrnqmnj`, solo lectura). Rutas relativas a `MyWorksAppProyect/`.
 Las capturas están en `/workspace/mwa_video/screens/` (ver índice al final).
@@ -164,7 +164,7 @@ Línea de tiempo (`features/jobs/presentation/widgets/job_status_timeline.dart`;
 2. **Segundo factor obligatorio** «Segundo factor — La consola pide un código de tu aplicación de autenticación.» (`AdminMfaGate.tsx`). Para mover dinero vuelve a pedir el código si el último tiene más de 5 minutos (`lib/totp.ts`). Cierra la sesión tras 15 minutos sin uso (`lib/idle.ts`).
 3. **Menú** (`shell/nav.ts`): Inicio · Operación (Pedidos, Disputas, Tickets de soporte, Reportes y abuso) · Personas (Clientes, Profesionales) · Dinero (Pagos y escrow, Liquidaciones, Reembolsos, Conciliación Transbank, Finanzas) · Contenido (Reseñas, Catálogo, Notificaciones) · Empresa (Equipo y roles, Auditoría, Ajustes) · Sistema (Salud y monitoreo, Errores de la app). Las pantallas están en `features/screens.tsx`.
 4. **Finanzas**: la comisión es la del código, **5 % por pago con mínimo $1.000** (`shared/src/metrics/period.ts`).
-5. **Profesionales**: aprobar, rechazar (con nota obligatoria de al menos 10 caracteres) o pedir corrección. Los documentos se abren con un enlace firmado de 60 segundos. En la prueba del 20-nov este módulo devolvió 403 (error B1, arreglo en la rama `cursor/consola-bugs`, sin merge).
+5. **Profesionales**: aprobar, rechazar (con nota obligatoria de al menos 10 caracteres) o pedir corrección. Los documentos se abren con un enlace firmado de 60 segundos. El 403 del 20-nov (error B1) se debía a pedir `nota_verificacion`; la lista ya no la pide y la nota sale de `fichas_sensibles_admin`.
 6. **Disputas y pagos**: liberar, devolver o resolver una disputa exige un motivo de 10 a 2000 caracteres; las Edge Functions verifican `is_admin()` y cada acción queda en la bitácora `auditoria_consola`.
 7. **Equipo y roles**: invitar colaborador (`invitar-colaborador`), cambiar rol, revocar invitación y cerrar sesiones.
 - La app Flutter también trae pantallas admin (`features/admin/...`), pero la consola oficial es la de escritorio.

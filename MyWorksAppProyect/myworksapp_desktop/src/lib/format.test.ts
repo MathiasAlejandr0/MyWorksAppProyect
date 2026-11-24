@@ -17,6 +17,7 @@ describe('formato de la consola', () => {
   it('no muestra el valor técnico de un pago', () => {
     assert.equal(statusLabel('pagado_por_confirmar'), 'Pagado por confirmar');
     assert.equal(statusLabel('retenido'), 'Retenido');
+    assert.equal(statusLabel('respondido'), 'Respondido');
     assert.equal(statusLabel('algo_desconocido'), 'Estado no reconocido');
   });
 });

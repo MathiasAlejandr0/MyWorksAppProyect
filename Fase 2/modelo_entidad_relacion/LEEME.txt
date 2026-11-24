@@ -8,6 +8,11 @@ proyecto wxqrfcqifkfgawrnqmnj. Las figuras y los scripts salen del esquema
 real de la base, leído en modo solo lectura (migración 20261117223850,
 17-11-2026, hora de Chile).
 
+El catálogo vivo del 23-11-2026 tiene 76 tablas. El archivo que se abre en
+MySQL Workbench para explicar el modelo es modelo_er_central_workbench.sql
+(12 tablas centrales). Este LEEME y modelo_er_mysql_workbench.sql siguen
+siendo el snapshot de 57 tablas. No se borran.
+
   57 tablas · 458 columnas · 57 claves primarias
   85 claves foráneas (84 entre tablas de public + perfiles.id -> auth.users.id)
   RLS activo en las 57 tablas · sin ENUM (los estados usan CHECK) · una vista

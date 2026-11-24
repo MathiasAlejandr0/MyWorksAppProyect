@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
@@ -78,6 +79,74 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
     }
   }
 
+  Future<void> _saveEvidence(XFile file, String mime) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Inicia sesión para subir evidencia');
+    }
+    final length = await file.length();
+    final problem =
+        EvidenceStoragePath.validate(mime: mime, byteLength: length);
+    if (problem != null) {
+      throw StateError(problem);
+    }
+    setState(() {
+      _uploading = true;
+      _uploadFraction = 0;
+      _uploadError = null;
+      _pendingRetry = _PendingEvidence(file, mime);
+    });
+    try {
+      final fileId = const Uuid().v4();
+      if (mime.startsWith('video/')) {
+        await _uploader.saveFile(
+          jobId: widget.jobId,
+          userId: userId,
+          fileId: fileId,
+          filePath: file.path,
+          byteLength: length,
+          mime: mime,
+          onProgress: (progress) {
+            if (!mounted) return;
+            setState(() => _uploadFraction = progress.fraction);
+          },
+        );
+      } else {
+        final raw = await file.readAsBytes();
+        final webp = await encodeEvidenceWebp(raw);
+        await _uploader.save(
+          jobId: widget.jobId,
+          userId: userId,
+          fileId: fileId,
+          bytes: webp,
+          mime: 'image/webp',
+          imageWebp: webp,
+          onProgress: (progress) {
+            if (!mounted) return;
+            setState(() => _uploadFraction = progress.fraction);
+          },
+        );
+      }
+      if (!mounted) return;
+      setState(() => _pendingRetry = null);
+      await _loadPhotos();
+      if (!mounted) return;
+      showAppSnackBar(
+        context,
+        mime.startsWith('video/') ? 'Video agregado' : 'Foto agregada',
+        type: AppSnackBarType.success,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _uploadError = ErrorHandler.getErrorMessage(e));
+      showAppSnackBar(context, ErrorHandler.getErrorMessage(e),
+          type: AppSnackBarType.error);
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+
   Future<Position> _gpsDeLaCaptura() async {
     var permiso = await Geolocator.checkPermission();
     if (permiso == LocationPermission.denied) {
@@ -97,7 +166,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
     );
   }
 
-  /// Solo cámara de la app. La galería no cuenta como evidencia del trabajo.
+  /// Cámara de la app: evidencia con nonce, hash y GPS.
   Future<void> _capturar(String tipo) async {
     try {
       final XFile? image = await _imagePicker.pickImage(
@@ -184,6 +253,48 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
     }
   }
 
+  String _mimeFor(XFile file, {required bool video}) {
+    final fromPicker = file.mimeType;
+    if (fromPicker != null && fromPicker.isNotEmpty) return fromPicker;
+    final lower = file.path.toLowerCase();
+    if (video || lower.endsWith('.mp4')) return 'video/mp4';
+    if (lower.endsWith('.mov')) return 'video/quicktime';
+    if (lower.endsWith('.webm')) return 'video/webm';
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+      if (image == null) return;
+      await _saveEvidence(image, _mimeFor(image, video: false));
+    } catch (e) {
+      if (!mounted) return;
+      showAppSnackBar(context, ErrorHandler.getErrorMessage(e),
+          type: AppSnackBarType.error);
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    try {
+      final XFile? video = await _imagePicker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(minutes: 3),
+      );
+      if (video == null) return;
+      await _saveEvidence(video, _mimeFor(video, video: true));
+    } catch (e) {
+      if (!mounted) return;
+      showAppSnackBar(context, ErrorHandler.getErrorMessage(e),
+          type: AppSnackBarType.error);
+    }
+  }
+
   void _showAddEvidenceSheet() {
     showModalBottomSheet<void>(
       context: context,
@@ -194,7 +305,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
             ListTile(
               leading: const Icon(Icons.photo_camera),
               title: const Text('Foto del antes'),
-              subtitle: const Text('Cámara de la app'),
+              subtitle: const Text('Cámara de la app, con procedencia'),
               onTap: () {
                 Navigator.pop(ctx);
                 _capturar('antes');
@@ -203,7 +314,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
               title: const Text('Foto del después'),
-              subtitle: const Text('Cámara de la app'),
+              subtitle: const Text('Cámara de la app, con procedencia'),
               onTap: () {
                 Navigator.pop(ctx);
                 _capturar('despues');
@@ -212,10 +323,28 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
             ListTile(
               leading: const Icon(Icons.center_focus_strong),
               title: const Text('Detalle del trabajo'),
-              subtitle: const Text('Cámara de la app'),
+              subtitle: const Text('Cámara de la app, con procedencia'),
               onTap: () {
                 Navigator.pop(ctx);
                 _capturar('detalle');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Elegir foto de galería'),
+              subtitle: const Text('Queda como no verificada'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam),
+              title: const Text('Elegir video'),
+              subtitle: const Text('Queda como no verificado'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickVideo();
               },
             ),
           ],
@@ -297,10 +426,15 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                               child: TextButton(
                                 onPressed: _uploading
                                     ? null
-                                    : () => _registrarCaptura(
-                                          _pendingRetry!.file,
-                                          _pendingRetry!.tipo,
-                                        ),
+                                    : () => _pendingRetry!.tipo != null
+                                        ? _registrarCaptura(
+                                            _pendingRetry!.file,
+                                            _pendingRetry!.tipo!,
+                                          )
+                                        : _saveEvidence(
+                                            _pendingRetry!.file,
+                                            _pendingRetry!.mime,
+                                          ),
                                 child: const Text('Reintentar'),
                               ),
                             ),
@@ -314,7 +448,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                           icon: Icons.photo_library,
                           title: 'Sin evidencia',
                           message:
-                              'Toma con la cámara una foto del antes y otra del después, en el lugar del trabajo',
+                              'Toma la foto con la cámara de la app para que quede verificada. La galería y el video quedan como no verificados.',
                         )
                       : GridView.builder(
                           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -421,10 +555,10 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
 }
 
 class _PendingEvidence {
-  const _PendingEvidence(this.file, this.mime, this.tipo);
+  const _PendingEvidence(this.file, this.mime, [this.tipo]);
   final XFile file;
   final String mime;
-  final String tipo;
+  final String? tipo;
 }
 
 class _EvidenceThumb extends StatelessWidget {
@@ -436,12 +570,35 @@ class _EvidenceThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (signedUrl != null) {
-      return Image.network(signedUrl!, fit: BoxFit.cover);
+      return Image.network(
+        signedUrl!,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return const ColoredBox(
+            color: AppColors.grayDark,
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.brandOrange,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) => const ColoredBox(
+          color: AppColors.grayDark,
+          child: Icon(Icons.broken_image, color: Colors.white),
+        ),
+      );
     }
-    if (!EvidenceStoragePath.isStoragePath(path)) {
-      final file = File(path);
-      if (file.existsSync()) {
-        return Image.file(file, fit: BoxFit.cover);
+    if (!kIsWeb && !EvidenceStoragePath.isStoragePath(path)) {
+      try {
+        final file = File(path);
+        if (file.existsSync()) {
+          return Image.file(file, fit: BoxFit.cover);
+        }
+      } catch (_) {
+        // Fall through to placeholder
       }
     }
     return const ColoredBox(

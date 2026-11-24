@@ -10,6 +10,7 @@ import {
 import { jobStatusDetail, jobStatusLabel, paymentStatusLabel, type JobEvidencePhoto } from '@myworksapp/shared';
 import { BrandLogo } from './BrandLogo';
 import { profileLabel } from '../profileLabel';
+import { DarkSelect } from './DarkSelect';
 import { JobLocationMap } from './JobLocationMap';
 
 interface TrackingDashboardProps {
@@ -48,6 +49,8 @@ interface TrackingDashboardProps {
   onProposeAgreement?: (tipo: 'aceptar' | 'rehacer' | 'anular') => Promise<void>;
   onRespondAgreement?: (acepta: boolean) => Promise<void>;
   pendingAgreement?: { id: string; tipo: string } | null;
+  /** Sin disputa abierta no se ofrecen acuerdos ni comentarios. */
+  disputeOpen?: boolean;
   evidencePhotos?: JobEvidencePhoto[];
   evidence?: ReactNode;
   /** Cancelar, reagendar y calificar (JobClientActions). */
@@ -75,8 +78,8 @@ function escrowCopy(jobStatus: string | null | undefined, paymentStatus: string 
       return `${payment}. Diste tu conformidad y el pago se entregó al profesional.`;
     case 'esperando_pago':
       return 'Todavía no hay un cobro retenido: el pedido espera el pago.';
-    default:
-      return `${payment}. Se libera cuando das tu conformidad. Si abres una disputa, solo el equipo de atención puede liberarlo o devolverlo.`;
+      default:
+      return `${payment}. Se libera cuando das tu conformidad. Si abriste la disputa, puedes cancelar y recuperar todos los cobros. Si la abrió el profesional, el cierre lo acuerdan ustedes o lo ve atención al cliente.`;
   }
 }
 
@@ -127,6 +130,7 @@ export function TrackingDashboard({
   onProposeAgreement,
   onRespondAgreement,
   pendingAgreement = null,
+  disputeOpen = false,
   evidencePhotos = [],
   evidence,
   clientActions,
@@ -327,7 +331,7 @@ export function TrackingDashboard({
             <MessageCircle size={18} /> Abrir chat
           </button>
 
-          {disputeAllowed && onProposeAgreement ? (
+          {disputeOpen && onProposeAgreement ? (
             <div className="tracking-escrow-card">
               <strong>Resolver entre ustedes</strong>
               <p>Si los dos están de acuerdo, el sistema cierra el caso sin una persona de soporte.</p>
@@ -348,7 +352,7 @@ export function TrackingDashboard({
             </div>
           ) : null}
 
-          {disputeAllowed && onOpenDispute ? (
+          {disputeAllowed && !disputeOpen && onOpenDispute ? (
             <form
               className="tracking-escrow-card"
               onSubmit={(event) => {
@@ -368,12 +372,18 @@ export function TrackingDashboard({
                 <p>El pago sigue retenido. Si el caso es simple, se cierra solo al vencer el plazo. Conducta, reincidencia o un monto alto los ve una persona.</p>
                 <label>
                   Motivo
-                  <select value={disputeReason} onChange={(event) => setDisputeReason(event.target.value)}>
-                    <option value="calidad">Calidad del trabajo</option>
-                    <option value="pago">Pago</option>
-                    <option value="conducta">Conducta</option>
-                    <option value="otro">Otro</option>
-                  </select>
+                  <DarkSelect
+                    block
+                    label="Motivo de la disputa"
+                    value={disputeReason}
+                    onChange={setDisputeReason}
+                    options={[
+                      { value: 'calidad', label: 'Calidad del trabajo' },
+                      { value: 'pago', label: 'Pago' },
+                      { value: 'conducta', label: 'Conducta' },
+                      { value: 'otro', label: 'Otro' },
+                    ]}
+                  />
                 </label>
                 <textarea
                   value={disputeDetail}
@@ -387,7 +397,7 @@ export function TrackingDashboard({
               </div>
             </form>
           ) : null}
-          {disputeAllowed && onAddDisputeComment ? (
+          {disputeOpen && onAddDisputeComment ? (
             <form
               className="tracking-escrow-card"
               onSubmit={(event) => {

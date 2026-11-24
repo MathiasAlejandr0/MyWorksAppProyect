@@ -4,6 +4,8 @@
 **Equipo:** Mathias Jara Alvarado (Product Owner y Scrum Master), Nicolás Chiguay y Gabriel Valderas.
 **Fuente oficial:** `Fase 2/Myworksapp_Informe_Final_PTY4614.docx`, sección 1.6 «Objetivos» (tabla 2) y capítulo de Resultados (tabla 29). Este documento repite esos objetivos y dice dónde se verifica cada uno en el repositorio.
 
+**Fase vigente:** Fase 3, al 22 de noviembre de 2026, 23:07 hora de Chile. La remedición de las 23:04 hora de Chile confirma 76 de 76 tablas con RLS, 94 claves foráneas y la migración `20261123020000`. No se agregan puntajes de satisfacción ni tiempos de piloto: esta revisión no midió la encuesta.
+
 ## Objetivo general
 
 Desarrollar y validar, entre agosto y diciembre de 2026, una plataforma multiplataforma (aplicación móvil, sitio web y consola de escritorio) que permita a clientes de Puerto Montt elegir trabajadores de oficio según precio y calificación y contratarlos con pago protegido, de modo que en las pruebas con usuarios al menos el 80 % complete la contratación en menos de 10 minutos y el 100 % de los pagos de prueba quede retenido hasta la conformidad del cliente.
@@ -32,7 +34,7 @@ Las rutas que no indican otra cosa son relativas a `MyWorksAppProyect/`.
 
 ## Cumplimiento
 
-Resultados de la tabla 29 del informe final (mediciones al 17-nov-2026).
+Resultados de la tabla 29 del informe final (mediciones al 17-nov-2026). El 22-11-2026 el catálogo mostró 76 de 76 tablas con RLS. El OE1 pide tercera forma normal: el esquema auditado el 16-11 tiene piso en segunda forma normal, la mayoría de esas tablas está en BCNF y tres se quedan en 2FN a propósito. La cuarta forma normal se declara solo para las listas del profesional. Las tablas posteriores no se reclasificaron.
 
 | OE | Resultado medido | Estado |
 |----|------------------|--------|
@@ -42,6 +44,18 @@ Resultados de la tabla 29 del informe final (mediciones al 17-nov-2026).
 | OE4 | PIN, evidencia, conformidad y liberación recorridos en vivo; las transiciones se aplican solo mediante la función `transicionar_trabajo` y están cubiertas por pruebas automatizadas. | Cumplido |
 | OE5 | Consola con segundo factor, verificación de profesionales, mediación, liquidación y roles soporte y QA. El número de profesionales verificados del piloto se informa al cierre del piloto. | Implementado; meta del piloto |
 | OE6 | 303 pruebas automatizadas aprobadas y 0 fallidas; p95 de 283 ms con 200 usuarios virtuales (0 de 55.537 peticiones fallidas); Lighthouse 94 (móvil) y 99 (escritorio). La encuesta de satisfacción y SUS está disponible en la plataforma para el piloto. | Técnico cumplido; aceptación en el piloto |
+
+## Estado de la base al 22-11-2026
+
+Lectura de solo lectura del catálogo, el 22 de noviembre de 2026. No sustituye la medición del 18-11 que sigue más abajo.
+
+| Dato | Valor |
+|------|-------|
+| Tablas de `public` | 76, las 76 con RLS |
+| Claves foráneas en `public` | 94 |
+| Última migración registrada | `20261123020000` |
+| `demo_modo` | 1, consultado el 22-11 |
+| Forma normal | Piso 2FN en el esquema auditado el 16-11. La mayoría de esas tablas está en BCNF. La 4FN se declara solo para las listas separadas del profesional. Quince tablas nuevas no se reclasificaron. Ver `MyWorksAppProyect/docs/normalizacion.md` |
 
 ## Estado de la base al 18-nov-2026
 
@@ -54,4 +68,4 @@ Consulta agregada de solo lectura a Supabase (`wxqrfcqifkfgawrnqmnj`), sin datos
 | Disputas | 2 registradas, 1 resuelta |
 | Respuestas de la encuesta de prueba (SUS) | 0; se responde en https://myworksapp.cl/encuesta |
 
-Después de esa consulta, las migraciones del 20-nov agregaron 3 tablas (`auditoria_consola`, `rate_limit_ventana` y `direcciones_cliente`), todas con `ENABLE ROW LEVEL SECURITY` en su migración. El esquema queda en 60 tablas; el conteo de políticas en vivo no se volvió a medir. `app_config.demo_modo` está en 1 (reporte del 20-nov), así que el conteo de verificados incluye las cuentas demo visibles.
+Después de esa consulta, las migraciones del 20-nov agregaron 3 tablas. El corte documentado quedó en 60. El 22-11-2026 el catálogo midió 76 de 76 con RLS; el conteo de políticas no se repitió. `app_config.demo_modo` seguía en 1, así que el conteo de verificados del 18-11 incluye las cuentas demo visibles.

@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -26,8 +27,13 @@ class ProfileAvatarImage extends StatelessWidget {
       (photoPath!.startsWith('http://') || photoPath!.startsWith('https://'));
 
   bool get _isLocalFile {
+    if (kIsWeb) return false;
     if (photoPath == null || _isNetwork) return false;
-    return File(photoPath!).existsSync();
+    try {
+      return File(photoPath!).existsSync();
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
@@ -50,7 +56,7 @@ class ProfileAvatarImage extends StatelessWidget {
       );
     }
 
-    if (_isLocalFile) {
+    if (_isLocalFile && !kIsWeb) {
       return ClipOval(
         child: SizedBox(
           width: size,
@@ -235,8 +241,13 @@ class ProfileAvatarPicker extends StatelessWidget {
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return CachedNetworkImageProvider(path);
     }
-    final file = File(path);
-    if (file.existsSync()) return FileImage(file);
+    if (kIsWeb) return null;
+    try {
+      final file = File(path);
+      if (file.existsSync()) return FileImage(file);
+    } catch (_) {
+      return null;
+    }
     return null;
   }
 }

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { edgeFunctionErrorMessage } from '@myworksapp/shared';
 import { consolePermissions } from '../authAccess';
 import { useAuth } from '../context/auth-store';
-import { friendlyError } from '../lib/errors';
+import { describeLoadError, friendlyError } from '../lib/errors';
 import { formatClp, formatDateTime, maskId, maskRut, statusLabel } from '../lib/format';
 import { markTotpVerified, totpFresh } from '../lib/totp';
 import { setSharedDevice, sharedDeviceEnabled } from '../lib/session';
@@ -91,7 +91,7 @@ export function ResumenPage() {
       </div>
       <Banda seccion="inicio" />
       {query.isLoading ? <SkeletonRows /> : null}
-      {query.isError ? <ErrorState message="No se pudo cargar el resumen." onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? <ErrorState message={describeLoadError(query.error, 'No se pudo cargar el resumen.')} onRetry={() => void query.refetch()} /> : null}
       {permissions.executive && financiero.gmv_clp != null ? (
         <div className="kpi-grid">
           <Kpi label="GMV" value={formatClp(num(financiero.gmv_clp))} delta={delta(num(financiero.gmv_clp), num(prev.gmv_clp))} />
@@ -277,7 +277,7 @@ export function DisputasPage() {
         <button type="button" className={tab === 'resueltas' ? 'is-active' : undefined} onClick={() => setTab('resueltas')}>Resueltas</button>
       </div>
       {query.isLoading ? <SkeletonRows /> : null}
-      {query.isError ? <ErrorState message="No se pudo cargar la cola." onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? <ErrorState message={describeLoadError(query.error, 'No se pudo cargar la cola.')} onRetry={() => void query.refetch()} /> : null}
       {!query.isLoading && visibles.length === 0 ? (
         <EmptyState title={tab === 'abiertas' ? (filtro === 'todas' ? 'No hay disputas que requieran una persona.' : 'Ninguna disputa en este filtro.') : 'Aún no hay disputas resueltas.'} />
       ) : null}
@@ -422,6 +422,7 @@ function Evidencia({ id }: { id: string }) {
       return data ?? [];
     },
   });
+  if (query.isError) return <p className="muted">{describeLoadError(query.error, 'Sin fotos de evidencia.')}</p>;
   if (!query.data?.length) return <p className="muted">Sin fotos de evidencia.</p>;
   return (
     <div className="stack">
@@ -472,13 +473,13 @@ export function TicketsPage() {
         empty="No hay tickets en este filtro."
         load={async (page, search) => {
           const q = clean(search);
-          let request = supabase.from('tickets_soporte').select('id, asunto, estado, nombre_cliente, nombre_trabajador, creado_en', { count: 'exact' });
+          let request = supabase.from('consola_tickets').select('id, asunto, estado, nombre_cliente, nombre_trabajador, creado_en', { count: 'exact' });
           if (q) request = request.ilike('asunto', `%${q}%`);
           if (estado === 'abiertos') request = request.or('estado.is.null,estado.neq.resuelto');
           else if (estado !== 'todos') request = request.eq('estado', estado);
           const { data, error, count } = await request.order('creado_en', { ascending: false }).range(page * PAGE, page * PAGE + PAGE - 1);
           if (error) throw error;
-          return { rows: (data ?? []) as Array<Record<string, unknown> & { id: string }>, total: count ?? 0 };
+          return { rows: (data ?? []) as unknown as Array<Record<string, unknown> & { id: string }>, total: count ?? 0 };
         }}
         columns={[
           { key: 'asunto', header: 'Asunto', cell: (row) => String(row.asunto ?? '—'), csv: (row) => row.asunto },
@@ -494,7 +495,7 @@ export function TicketsPage() {
             <Button variant="ghost" onClick={() => setSelected(null)}>Cerrar</Button>
           </div>
           {mensajes.isLoading ? <SkeletonRows /> : null}
-          {mensajes.isError ? <ErrorState message="No se pudo leer el hilo." onRetry={() => void mensajes.refetch()} /> : null}
+          {mensajes.isError ? <ErrorState message={describeLoadError(mensajes.error, 'No se pudo leer el hilo.')} onRetry={() => void mensajes.refetch()} /> : null}
           {(mensajes.data ?? []).length === 0 ? <p className="muted">Todavía no hay respuestas.</p> : null}
           <ul className="timeline">
             {(mensajes.data ?? []).map((item) => (
@@ -1226,7 +1227,7 @@ export function EquipoPage() {
       <h1>Equipo y roles</h1>
       <Banda seccion="configuracion" />
       {query.isLoading ? <SkeletonRows /> : null}
-      {query.isError ? <ErrorState message="No se pudo cargar el equipo." onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? <ErrorState message={describeLoadError(query.error, 'No se pudo cargar el equipo.')} onRetry={() => void query.refetch()} /> : null}
       {query.data?.length === 0 ? <EmptyState title="No hay colaboradores con rol de consola." /> : null}
       <div className="table-wrap panel">
         <table className="data">
@@ -1375,7 +1376,7 @@ export function AjustesPage() {
       <Banda seccion="configuracion" />
       <p className="muted">admin_requiere_aal2 y demo_modo se muestran y no se editan aquí.</p>
       {query.isLoading ? <SkeletonRows /> : null}
-      {query.isError ? <ErrorState message="No se pudo leer la configuración. Revisa el permiso de administrador." onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? <ErrorState message={describeLoadError(query.error, 'No se pudo leer la configuración. Revisa el permiso de administrador.')} onRetry={() => void query.refetch()} /> : null}
       {!query.isLoading && !query.isError && (query.data ?? []).length === 0 ? (
         <EmptyState title="No hay claves de configuración." detail="La tabla app_config no devolvió filas para esta sesión." />
       ) : null}
@@ -1440,7 +1441,7 @@ export function SaludPage() {
       <Banda seccion="seguridad" />
       <p className="muted">El interruptor de pagos vive en los secretos de las Edge Functions. Esta pantalla no lo simula ni lo cambia.</p>
       {query.isLoading ? <SkeletonRows /> : null}
-      {query.isError ? <ErrorState message="No se pudo leer el estado de los cron." onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? <ErrorState message={describeLoadError(query.error, 'No se pudo leer el estado de los cron.')} onRetry={() => void query.refetch()} /> : null}
       {body.disponible === false ? <EmptyState title="pg_cron no está visible" detail={String(body.nota ?? '')} /> : null}
       {jobs.map((job) => {
         const row = asRecord(job);

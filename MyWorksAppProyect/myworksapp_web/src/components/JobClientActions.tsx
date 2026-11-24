@@ -18,6 +18,7 @@ import {
   withdrawReschedule,
   type RescheduleProposal,
 } from '@myworksapp/shared';
+import { DarkSelect } from './DarkSelect';
 import { supabase } from '../supabaseClient';
 
 interface JobClientActionsProps {
@@ -27,6 +28,9 @@ interface JobClientActionsProps {
   workerId: string | null | undefined;
   workerName: string;
   userId: string;
+  /** Disputa abierta, si la hay. Sin ella no se ofrece cancelar un trabajo en marcha. */
+  disputeOpen?: boolean;
+  disputeOpenedBy?: string | null;
   /** Recarga el pedido tras cancelar o reagendar. */
   onChanged: () => void;
 }
@@ -43,6 +47,8 @@ export function JobClientActions({
   workerId,
   workerName,
   userId,
+  disputeOpen = false,
+  disputeOpenedBy = null,
   onChanged,
 }: JobClientActionsProps) {
   const [history, setHistory] = useState<RescheduleProposal[]>([]);
@@ -136,7 +142,11 @@ export function JobClientActions({
     }
   };
 
-  const showCancel = canClientCancel(status);
+  const showCancel = canClientCancel(status, {
+    disputeOpen,
+    disputeOpenedBy,
+    userId,
+  });
   const showRate = ratingLoaded && canClientRate(status, rating !== null);
   const showReschedule = reschedulable || history.length > 0;
 
@@ -221,17 +231,17 @@ export function JobClientActions({
                 ) : (
                   <>
                     <label htmlFor="reagendar-hora">Nueva hora</label>
-                    <select
+                    <DarkSelect
                       id="reagendar-hora"
+                      block
+                      label="Nueva hora"
                       value={slot}
-                      onChange={(event) => setSlot(event.target.value)}
-                      required
-                    >
-                      <option value="">Elige una hora</option>
-                      {options.map((iso) => (
-                        <option key={iso} value={iso}>{formatBookingSlotLabel(iso)}</option>
-                      ))}
-                    </select>
+                      onChange={setSlot}
+                      options={[
+                        { value: '', label: 'Elige una hora' },
+                        ...options.map((iso) => ({ value: iso, label: formatBookingSlotLabel(iso) })),
+                      ]}
+                    />
                     <label htmlFor="reagendar-motivo">Motivo (opcional)</label>
                     <input
                       id="reagendar-motivo"
@@ -272,8 +282,11 @@ export function JobClientActions({
           <div>
             <strong id="cancelar-titulo">Cancelar la solicitud</strong>
             <p>
-              Puedes cancelar mientras el profesional no la acepte. Si ya pagaste, el cobro retenido
-              se devuelve a tu tarjeta antes de cancelar.
+              {disputeOpen && disputeOpenedBy === userId
+                ? 'Abriste esta disputa. Cancelar devuelve a tu tarjeta el pago principal, la orden de cambio y las horas extra, y cierra la disputa.'
+                : status === 'esperando_aprobacion_cliente'
+                  ? 'Si no estás conforme, puedes cancelar. Se devuelven a tu tarjeta todos los cobros que sigan retenidos.'
+                  : 'Puedes cancelar mientras el profesional no la acepte. Si ya pagaste, los cobros retenidos se devuelven a tu tarjeta antes de cancelar.'}
             </p>
             {confirmCancel ? (
               <form

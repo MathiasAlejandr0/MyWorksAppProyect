@@ -56,7 +56,7 @@ Los commits acreditan entregas, no la realización de reuniones: el calendario e
 | Dato | Valor | Fuente |
 |------|-------|--------|
 | Duración del sprint | 1 semana en la Fase 1 (S1–S3) y en el cierre técnico (S9–S10); 2 semanas en el desarrollo (S4–S8) y en la preparación de la defensa (S11) | Historial de GitHub con el criterio anterior. La Fase 1 declaraba sprints semanales (`Fase 1/Evidencias Grupales/Definicion Proyecto APT - Fase 1_ My Works App.docx`, sección 3.6). |
-| Número total de sprints | 11 (S1–S9 terminados, S10 en curso, S11 planificado) | Historial de GitHub y calendario de hitos. |
+| Número total de sprints | 11. Al 17-nov la tabla de abajo decía S10 en curso. Al 22 de noviembre de 2026, 23:07 hora de Chile, la ventana de S10 está cerrada y S11 es la Fase 3 en curso | Historial de GitHub y calendario de hitos. |
 | Primer commit del repositorio | 2026-08-10 | `git log` (commit `2b5f923`, «Initial commit», autor Nicolas Chiguay). |
 | Plan del Capstone | Semanas 1 a 18 | `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx` (cronograma por actividad). |
 
@@ -75,6 +75,8 @@ Los commits acreditan entregas, no la realización de reuniones: el calendario e
 | S11 | 23 nov – 6 dic 2026 | 2 | Defensa | — | Planificado |
 
 Nota del 20-nov-2026: después del corte en `514781d` entraron 60 commits más a `main` hasta `d9d2c7c` (S10), entre ellos la consola nueva, la web en `myworksapp.cl`, el límite de tasa global y los correos transaccionales (PR #75 a #82). La tabla mantiene los conteos del corte del 17-nov.
+
+Nota del 22 de noviembre de 2026, 23:07 hora de Chile. La ventana del Sprint 10 cerró ese día. La fase vigente es la Fase 3 (Sprint 11): pruebas, informe final y demostración. La columna «Estado al 17-nov» se conserva como corte histórico.
 
 Plan por fases, según `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx`:
 

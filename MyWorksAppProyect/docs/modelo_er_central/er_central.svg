@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="980" viewBox="0 0 1160 980">
+<rect width="100%" height="100%" fill="white"/>
+<style>text { font-family: "Liberation Sans", "Nimbus Sans", sans-serif; }</style>
+<text x="36.0" y="32.0" fill="#1C2430" font-size="22" font-weight="700" text-anchor="start">MyWorksApp — tablas centrales del pedido</text>
+<text x="36.0" y="54.0" fill="#4E5963" font-size="13" font-weight="500" text-anchor="start">Doce tablas. La pata de gallo está en la tabla que guarda la clave foránea.</text>
+<text x="36.0" y="74.0" fill="#4E5963" font-size="13" font-weight="500" text-anchor="start">Raya = uno.   Círculo = puede no existir.   Pata de gallo = varios.</text>
+<path d="M 316.0,154.0 L 444.0,154.0" fill="none" stroke="#1F4E79" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="289.0" y1="154.0" x2="301.0" y2="144.0" stroke="#1F4E79" stroke-width="1.7" stroke-linecap="round"/>
+<line x1="289.0" y1="154.0" x2="306.0" y2="154.0" stroke="#1F4E79" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="289.0" y1="154.0" x2="301.0" y2="164.0" stroke="#1F4E79" stroke-width="1.7" stroke-linecap="round"/>
+<circle cx="309.0" cy="154.0" r="3.4" fill="white" stroke="#1F4E79" stroke-width="1.6"/>
+<line x1="452.0" y1="147.0" x2="452.0" y2="161.0" stroke="#1F4E79" stroke-width="2" stroke-linecap="round"/>
+<path d="M 840.0,154.0 L 704.0,154.0" fill="none" stroke="#1F4E79" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="857.0" y1="147.0" x2="857.0" y2="161.0" stroke="#1F4E79" stroke-width="2" stroke-linecap="round"/>
+<circle cx="847.0" cy="154.0" r="3.4" fill="white" stroke="#1F4E79" stroke-width="1.6"/>
+<line x1="696.0" y1="161.0" x2="696.0" y2="147.0" stroke="#1F4E79" stroke-width="2" stroke-linecap="round"/>
+<path d="M 260.0,268.0 L 260.0,234.0 L 484.0,234.0 L 484.0,228.0" fill="none" stroke="#1B6B43" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="267.0" y1="285.0" x2="253.0" y2="285.0" stroke="#1B6B43" stroke-width="2" stroke-linecap="round"/>
+<circle cx="260.0" cy="275.0" r="3.4" fill="white" stroke="#1B6B43" stroke-width="1.6"/>
+<line x1="477.0" y1="220.0" x2="491.0" y2="220.0" stroke="#1B6B43" stroke-width="2" stroke-linecap="round"/>
+<path d="M 534.0,260.0 L 534.0,228.0" fill="none" stroke="#1F4E79" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="534.0" y1="287.0" x2="524.0" y2="275.0" stroke="#1F4E79" stroke-width="1.7" stroke-linecap="round"/>
+<line x1="534.0" y1="287.0" x2="534.0" y2="270.0" stroke="#1F4E79" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="534.0" y1="287.0" x2="544.0" y2="275.0" stroke="#1F4E79" stroke-width="1.7" stroke-linecap="round"/>
+<circle cx="534.0" cy="267.0" r="3.4" fill="white" stroke="#1F4E79" stroke-width="1.6"/>
+<line x1="527.0" y1="220.0" x2="541.0" y2="220.0" stroke="#1F4E79" stroke-width="2" stroke-linecap="round"/>
+<path d="M 632.0,260.0 L 632.0,236.0" fill="none" stroke="#8A4B08" stroke-width="1.7" stroke-dasharray="5 4" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="632.0" y1="287.0" x2="622.0" y2="275.0" stroke="#8A4B08" stroke-width="1.7" stroke-linecap="round"/>
+<line x1="632.0" y1="287.0" x2="632.0" y2="270.0" stroke="#8A4B08" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="632.0" y1="287.0" x2="642.0" y2="275.0" stroke="#8A4B08" stroke-width="1.7" stroke-linecap="round"/>
+<circle cx="632.0" cy="267.0" r="3.4" fill="white" stroke="#8A4B08" stroke-width="1.6"/>
+<line x1="625.0" y1="219.0" x2="639.0" y2="219.0" stroke="#8A4B08" stroke-width="2" stroke-linecap="round"/>
+<circle cx="632.0" cy="229.0" r="3.4" fill="white" stroke="#8A4B08" stroke-width="1.6"/>
+<path d="M 832.0,350.0 L 704.0,350.0" fill="none" stroke="#1B6B43" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="859.0" y1="350.0" x2="847.0" y2="360.0" stroke="#1B6B43" stroke-width="1.7" stroke-linecap="round"/>
+<line x1="859.0" y1="350.0" x2="842.0" y2="350.0" stroke="#1B6B43" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="859.0" y1="350.0" x2="847.0" y2="340.0" stroke="#1B6B43" stroke-width="1.7" stroke-linecap="round"/>
+<circle cx="839.0" cy="350.0" r="3.4" fill="white" stroke="#1B6B43" stroke-width="1.6"/>
+<line x1="696.0" y1="357.0" x2="696.0" y2="343.0" stroke="#1B6B43" stroke-width="2" stroke-linecap="round"/>
+<path d="M 1028.0,456.0 L 1028.0,432.0" fill="none" stroke="#1B6B43" stroke-width="1.7" stroke-dasharray="5 4" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="1028.0" y1="483.0" x2="1018.0" y2="471.0" stroke="#1B6B43" stroke-width="1.7" stroke-linecap="round"/>
+<line x1="1028.0" y1="483.0" x2="1028.0" y2="466.0" stroke="#1B6B43" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="1028.0" y1="483.0" x2="1038.0" y2="471.0" stroke="#1B6B43" stroke-width="1.7" stroke-linecap="round"/>
+<circle cx="1028.0" cy="463.0" r="3.4" fill="white" stroke="#1B6B43" stroke-width="1.6"/>
+<line x1="1021.0" y1="415.0" x2="1035.0" y2="415.0" stroke="#1B6B43" stroke-width="2" stroke-linecap="round"/>
+<circle cx="1028.0" cy="425.0" r="3.4" fill="white" stroke="#1B6B43" stroke-width="1.6"/>
+<path d="M 316.0,546.0 L 420.0,546.0 L 420.0,322.0 L 444.0,322.0" fill="none" stroke="#8C2F39" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="289.0" y1="546.0" x2="301.0" y2="536.0" stroke="#8C2F39" stroke-width="1.7" stroke-linecap="round"/>
+<line x1="289.0" y1="546.0" x2="306.0" y2="546.0" stroke="#8C2F39" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="289.0" y1="546.0" x2="301.0" y2="556.0" stroke="#8C2F39" stroke-width="1.7" stroke-linecap="round"/>
+<circle cx="309.0" cy="546.0" r="3.4" fill="white" stroke="#8C2F39" stroke-width="1.6"/>
+<line x1="452.0" y1="315.0" x2="452.0" y2="329.0" stroke="#8C2F39" stroke-width="2" stroke-linecap="round"/>
+<path d="M 24.0,742.0 L 18.0,742.0 L 18.0,434.0 L 364.0,434.0 L 364.0,386.0 L 444.0,386.0" fill="none" stroke="#8C2F39" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="51.0" y1="742.0" x2="39.0" y2="752.0" stroke="#8C2F39" stroke-width="1.7" stroke-linecap="round"/>
+<line x1="51.0" y1="742.0" x2="34.0" y2="742.0" stroke="#8C2F39" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="51.0" y1="742.0" x2="39.0" y2="732.0" stroke="#8C2F39" stroke-width="1.7" stroke-linecap="round"/>
+<circle cx="31.0" cy="742.0" r="3.4" fill="white" stroke="#8C2F39" stroke-width="1.6"/>
+<line x1="452.0" y1="379.0" x2="452.0" y2="393.0" stroke="#8C2F39" stroke-width="2" stroke-linecap="round"/>
+<path d="M 574.0,456.0 L 574.0,424.0" fill="none" stroke="#8C2F39" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="574.0" y1="483.0" x2="564.0" y2="471.0" stroke="#8C2F39" stroke-width="1.7" stroke-linecap="round"/>
+<line x1="574.0" y1="483.0" x2="574.0" y2="466.0" stroke="#8C2F39" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="574.0" y1="483.0" x2="584.0" y2="471.0" stroke="#8C2F39" stroke-width="1.7" stroke-linecap="round"/>
+<circle cx="574.0" cy="463.0" r="3.4" fill="white" stroke="#8C2F39" stroke-width="1.6"/>
+<line x1="567.0" y1="416.0" x2="581.0" y2="416.0" stroke="#8C2F39" stroke-width="2" stroke-linecap="round"/>
+<path d="M 720.0,742.0 L 832.0,742.0 L 832.0,460.0 L 652.0,460.0 L 652.0,424.0" fill="none" stroke="#8C2F39" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="693.0" y1="742.0" x2="705.0" y2="732.0" stroke="#8C2F39" stroke-width="1.7" stroke-linecap="round"/>
+<line x1="693.0" y1="742.0" x2="710.0" y2="742.0" stroke="#8C2F39" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="693.0" y1="742.0" x2="705.0" y2="752.0" stroke="#8C2F39" stroke-width="1.7" stroke-linecap="round"/>
+<circle cx="713.0" cy="742.0" r="3.4" fill="white" stroke="#8C2F39" stroke-width="1.6"/>
+<line x1="645.0" y1="416.0" x2="659.0" y2="416.0" stroke="#8C2F39" stroke-width="2" stroke-linecap="round"/>
+<text x="372.0" y="138.0" fill="#1F4E79" font-size="12" font-weight="600" text-anchor="middle">uno a varias</text>
+<text x="776.0" y="138.0" fill="#1F4E79" font-size="12" font-weight="600" text-anchor="middle">uno a 0..1</text>
+<text x="60.0" y="250.0" fill="#1B6B43" font-size="12" font-weight="600" text-anchor="start">tarjeta, uno a 0..1</text>
+<text x="542.0" y="244.0" fill="#1F4E79" font-size="12" font-weight="600" text-anchor="start">cliente</text>
+<text x="542.0" y="260.0" fill="#1F4E79" font-size="12" font-weight="600" text-anchor="start">uno a varios</text>
+<text x="700.0" y="244.0" fill="#8A4B08" font-size="12" font-weight="600" text-anchor="start">profesional</text>
+<text x="700.0" y="260.0" fill="#8A4B08" font-size="12" font-weight="600" text-anchor="start">0..1 a varios</text>
+<text x="702.0" y="318.0" fill="#1B6B43" font-size="12" font-weight="600" text-anchor="start">varios pagos</text>
+<text x="702.0" y="334.0" fill="#1B6B43" font-size="12" font-weight="600" text-anchor="start">un principal activo</text>
+<text x="868.0" y="444.0" fill="#1B6B43" font-size="12" font-weight="600" text-anchor="start">id_pago, opcional</text>
+<text x="412.0" y="470.0" fill="#8C2F39" font-size="12" font-weight="600" text-anchor="end">evidencia, uno a varias</text>
+<text x="28.0" y="470.0" fill="#8C2F39" font-size="12" font-weight="600" text-anchor="start">calificación, una por sentido</text>
+<text x="464.0" y="448.0" fill="#8C2F39" font-size="12" font-weight="600" text-anchor="start">chat, uno a varios</text>
+<text x="700.0" y="708.0" fill="#8C2F39" font-size="12" font-weight="600" text-anchor="start">disputa, uno a varias</text>
+<rect x="52" y="92" width="236" height="124" rx="8" fill="white" stroke="#1F4E79" stroke-width="2"/>
+<rect x="52" y="92" width="236" height="36" rx="8" fill="#1F4E79"/>
+<rect x="52" y="116" width="236" height="12" fill="#1F4E79"/>
+<text x="64" y="108" fill="white" font-size="14" font-weight="700">Dirección del cliente</text>
+<text x="64" y="123" fill="#F4F8FC" font-size="11">direcciones_cliente</text>
+<text x="64" y="148" fill="#1C2430" font-size="12.5" font-weight="700">clave id</text>
+<text x="64" y="166" fill="#1C2430" font-size="12.5">id_usuario → perfil</text>
+<text x="64" y="184" fill="#1C2430" font-size="12.5">etiqueta y dirección</text>
+<rect x="456" y="92" width="236" height="124" rx="8" fill="white" stroke="#1F4E79" stroke-width="2"/>
+<rect x="456" y="92" width="236" height="36" rx="8" fill="#1F4E79"/>
+<rect x="456" y="116" width="236" height="12" fill="#1F4E79"/>
+<text x="468" y="108" fill="white" font-size="14" font-weight="700">Perfil</text>
+<text x="468" y="123" fill="#F4F8FC" font-size="11">perfiles</text>
+<text x="468" y="148" fill="#1C2430" font-size="12.5" font-weight="700">clave id = auth.users.id</text>
+<text x="468" y="166" fill="#1C2430" font-size="12.5">nombre, rol y estado</text>
+<text x="468" y="184" fill="#1C2430" font-size="12.5">correo, copia de Auth</text>
+<rect x="860" y="92" width="236" height="124" rx="8" fill="white" stroke="#1F4E79" stroke-width="2"/>
+<rect x="860" y="92" width="236" height="36" rx="8" fill="#1F4E79"/>
+<rect x="860" y="116" width="236" height="12" fill="#1F4E79"/>
+<text x="872" y="108" fill="white" font-size="14" font-weight="700">Ficha del profesional</text>
+<text x="872" y="123" fill="#F4F8FC" font-size="11">trabajadores</text>
+<text x="872" y="148" fill="#1C2430" font-size="12.5" font-weight="700">clave id_usuario → perfil</text>
+<text x="872" y="166" fill="#1C2430" font-size="12.5">profesión y verificación</text>
+<text x="872" y="184" fill="#1C2430" font-size="12.5">nota, copia calculada</text>
+<rect x="52" y="288" width="236" height="124" rx="8" fill="white" stroke="#1B6B43" stroke-width="2"/>
+<rect x="52" y="288" width="236" height="36" rx="8" fill="#1B6B43"/>
+<rect x="52" y="312" width="236" height="12" fill="#1B6B43"/>
+<text x="64" y="304" fill="white" font-size="14" font-weight="700">Tarjeta Oneclick</text>
+<text x="64" y="319" fill="#F4F8FC" font-size="11">metodos_pago_oneclick</text>
+<text x="64" y="344" fill="#1C2430" font-size="12.5" font-weight="700">clave id_usuario → perfil</text>
+<text x="64" y="362" fill="#1C2430" font-size="12.5">últimos 4 y estado</text>
+<text x="64" y="380" fill="#1C2430" font-size="12.5">token solo en el servidor</text>
+<rect x="456" y="288" width="236" height="124" rx="8" fill="white" stroke="#8A4B08" stroke-width="2"/>
+<rect x="456" y="288" width="236" height="36" rx="8" fill="#8A4B08"/>
+<rect x="456" y="312" width="236" height="12" fill="#8A4B08"/>
+<text x="468" y="304" fill="white" font-size="14" font-weight="700">Trabajo</text>
+<text x="468" y="319" fill="#F4F8FC" font-size="11">trabajos</text>
+<text x="468" y="344" fill="#1C2430" font-size="12.5" font-weight="700">clave id</text>
+<text x="468" y="362" fill="#1C2430" font-size="12.5">cliente y profesional</text>
+<text x="468" y="380" fill="#1C2430" font-size="12.5">estado y estado del pago</text>
+<rect x="860" y="288" width="236" height="124" rx="8" fill="white" stroke="#1B6B43" stroke-width="2"/>
+<rect x="860" y="288" width="236" height="36" rx="8" fill="#1B6B43"/>
+<rect x="860" y="312" width="236" height="12" fill="#1B6B43"/>
+<text x="872" y="304" fill="white" font-size="14" font-weight="700">Pago</text>
+<text x="872" y="319" fill="#F4F8FC" font-size="11">pagos</text>
+<text x="872" y="344" fill="#1C2430" font-size="12.5" font-weight="700">clave id</text>
+<text x="872" y="362" fill="#1C2430" font-size="12.5">id_trabajo → trabajo</text>
+<text x="872" y="380" fill="#1C2430" font-size="12.5">tipo, estado y monto</text>
+<text x="872" y="398" fill="#1C2430" font-size="12.5">un principal activo</text>
+<rect x="52" y="484" width="236" height="124" rx="8" fill="white" stroke="#8C2F39" stroke-width="2"/>
+<rect x="52" y="484" width="236" height="36" rx="8" fill="#8C2F39"/>
+<rect x="52" y="508" width="236" height="12" fill="#8C2F39"/>
+<text x="64" y="500" fill="white" font-size="14" font-weight="700">Evidencia</text>
+<text x="64" y="515" fill="#F4F8FC" font-size="11">fotos_trabajo</text>
+<text x="64" y="540" fill="#1C2430" font-size="12.5" font-weight="700">clave id</text>
+<text x="64" y="558" fill="#1C2430" font-size="12.5">id_trabajo → trabajo</text>
+<text x="64" y="576" fill="#1C2430" font-size="12.5">foto o video del hecho</text>
+<rect x="456" y="484" width="236" height="124" rx="8" fill="white" stroke="#8C2F39" stroke-width="2"/>
+<rect x="456" y="484" width="236" height="36" rx="8" fill="#8C2F39"/>
+<rect x="456" y="508" width="236" height="12" fill="#8C2F39"/>
+<text x="468" y="500" fill="white" font-size="14" font-weight="700">Mensaje</text>
+<text x="468" y="515" fill="#F4F8FC" font-size="11">mensajes</text>
+<text x="468" y="540" fill="#1C2430" font-size="12.5" font-weight="700">clave id</text>
+<text x="468" y="558" fill="#1C2430" font-size="12.5">id_trabajo → trabajo</text>
+<text x="468" y="576" fill="#1C2430" font-size="12.5">remitente y destinatario</text>
+<rect x="860" y="484" width="236" height="124" rx="8" fill="white" stroke="#1B6B43" stroke-width="2"/>
+<rect x="860" y="484" width="236" height="36" rx="8" fill="#1B6B43"/>
+<rect x="860" y="508" width="236" height="12" fill="#1B6B43"/>
+<text x="872" y="500" fill="white" font-size="14" font-weight="700">Orden de cambio</text>
+<text x="872" y="515" fill="#F4F8FC" font-size="11">ordenes_cambio</text>
+<text x="872" y="540" fill="#1C2430" font-size="12.5" font-weight="700">clave id</text>
+<text x="872" y="558" fill="#1C2430" font-size="12.5">id_trabajo → trabajo</text>
+<text x="872" y="576" fill="#1C2430" font-size="12.5">monto y estado</text>
+<text x="872" y="594" fill="#1C2430" font-size="12.5">id_pago, opcional</text>
+<rect x="52" y="680" width="236" height="124" rx="8" fill="white" stroke="#8C2F39" stroke-width="2"/>
+<rect x="52" y="680" width="236" height="36" rx="8" fill="#8C2F39"/>
+<rect x="52" y="704" width="236" height="12" fill="#8C2F39"/>
+<text x="64" y="696" fill="white" font-size="14" font-weight="700">Calificación</text>
+<text x="64" y="711" fill="#F4F8FC" font-size="11">calificaciones</text>
+<text x="64" y="736" fill="#1C2430" font-size="12.5" font-weight="700">clave id</text>
+<text x="64" y="754" fill="#1C2430" font-size="12.5">id_trabajo → trabajo</text>
+<text x="64" y="772" fill="#1C2430" font-size="12.5">una por trabajo y sentido</text>
+<text x="64" y="790" fill="#1C2430" font-size="12.5">puntaje de 1 a 5</text>
+<rect x="456" y="680" width="236" height="124" rx="8" fill="white" stroke="#8C2F39" stroke-width="2"/>
+<rect x="456" y="680" width="236" height="36" rx="8" fill="#8C2F39"/>
+<rect x="456" y="704" width="236" height="12" fill="#8C2F39"/>
+<text x="468" y="696" fill="white" font-size="14" font-weight="700">Disputa</text>
+<text x="468" y="711" fill="#F4F8FC" font-size="11">disputas</text>
+<text x="468" y="736" fill="#1C2430" font-size="12.5" font-weight="700">clave id</text>
+<text x="468" y="754" fill="#1C2430" font-size="12.5">id_trabajo → trabajo</text>
+<text x="468" y="772" fill="#1C2430" font-size="12.5">motivo y resolución</text>
+<rect x="860" y="680" width="236" height="124" rx="8" fill="white" stroke="#3E4651" stroke-width="2"/>
+<rect x="860" y="680" width="236" height="36" rx="8" fill="#3E4651"/>
+<rect x="860" y="704" width="236" height="12" fill="#3E4651"/>
+<text x="872" y="696" fill="white" font-size="14" font-weight="700">Auditoría de la consola</text>
+<text x="872" y="711" fill="#F4F8FC" font-size="11">auditoria_consola</text>
+<text x="872" y="736" fill="#1C2430" font-size="12.5" font-weight="700">clave id</text>
+<text x="872" y="754" fill="#1C2430" font-size="12.5">id_actor, sin clave foránea</text>
+<text x="872" y="772" fill="#1C2430" font-size="12.5">acción, antes y después</text>
+<text x="860.0" y="824.0" fill="#3E4651" font-size="12" font-weight="500" text-anchor="start">Sin flecha: el registro queda aunque se borre la cuenta.</text>
+<rect x="28" y="910" width="1104" height="54" rx="8" fill="#F4F7FB" stroke="#D5DDE5"/>
+<text x="44.0" y="930.0" fill="#1C2430" font-size="13" font-weight="700" text-anchor="start">Lectura del pedido</text>
+<text x="44.0" y="950.0" fill="#1C2430" font-size="13" font-weight="500" text-anchor="start">1. El perfil reserva.   2. El pago principal queda retenido.   3. Se hace el trabajo.   4. Hay evidencia.   5. Conformidad, o disputa.</text>
+</svg>

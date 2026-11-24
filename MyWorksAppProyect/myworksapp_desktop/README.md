@@ -52,7 +52,7 @@ La clave pública del actualizador está en `src-tauri/tauri.conf.json` (`plugin
 
 ## Módulos
 
-20 módulos de menú (`src/shell/nav.ts`) más «Mi cuenta»: Inicio, Pedidos, Disputas (pestañas Abiertas y Resueltas), Tickets de soporte, Reportes y abuso, Clientes, Profesionales, Pagos y escrow, Liquidaciones, Reembolsos, Conciliación Transbank, Finanzas, Reseñas, Catálogo, Notificaciones, Equipo y roles, Auditoría, Ajustes, Salud y monitoreo y Errores de la app. Tickets y Catálogo son de solo lectura.
+20 módulos de menú (`src/shell/nav.ts`) más «Mi cuenta», en el orden del trabajo: Inicio; Operación (Pedidos, Disputas, Tickets de soporte, Reportes y abuso); Personas (Clientes, Profesionales); Dinero (Pagos y escrow, Conciliación Transbank, Liquidaciones, Reembolsos, Finanzas); Contenido (Reseñas, Catálogo, Notificaciones); Empresa (Equipo y roles, Auditoría, Ajustes); Sistema (Salud y monitoreo, Errores de la app). Tickets y Catálogo son de solo lectura.
 
 ## Seguridad de las acciones
 
@@ -74,6 +74,6 @@ Las pruebas de permisos `docs/PRUEBAS_RLS_CONSOLA_20261120.sql` están escritas,
 
 ## Estado conocido
 
-La prueba de la consola del 20-nov sobre `08154df` encontró 24 errores (1 crítico, 2 altos, 8 medios y 13 bajos). El crítico: el módulo Profesionales responde 403 al leer `trabajadores`, así que hoy no se puede verificar ni rechazar a nadie desde la consola. Ajustes aparece en blanco (403 en `app_config`). El arreglo está en la rama `cursor/consola-bugs`, **sin merge**, junto con la migración `20261120210000_consola_lectura_config_y_disputas.sql`, que no está aplicada.
+La prueba de la consola del 20-nov sobre `08154df` encontró 24 errores (1 crítico, 2 altos, 8 medios y 13 bajos). El crítico era el 403 de Profesionales: la lista pedía `nota_verificacion`, columna sin `SELECT` para `authenticated`. La lista ya no la pide; la nota sale de `fichas_sensibles_admin`. Ajustes lee `consola_leer_config()` (migración `20261123032058_consola_lectura_config_y_disputas.sql`) y muestra carga, error o vacío en lugar de quedar en blanco.
 
 La invitación por Resend no está activa: falta el secreto `INVITE_PROVIDER=resend` en `invitar-colaborador`. Mientras tanto la invitación sale por Supabase Auth con el SMTP de Resend.

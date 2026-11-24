@@ -12,17 +12,19 @@ import '../../../../core/widgets/webpay_webview_page.dart';
 /// Primera entrada del cliente: guarda la tarjeta una vez.
 /// Esa tarjeta se usa en la app y también al iniciar sesión en la web.
 class CardEnrollmentPage extends ConsumerStatefulWidget {
-  const CardEnrollmentPage({super.key});
+  const CardEnrollmentPage({super.key, this.replacing = false});
 
-  static Future<bool> open(BuildContext context) async {
+  static Future<bool> open(BuildContext context, {bool replacing = false}) async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => const CardEnrollmentPage(),
+        builder: (_) => CardEnrollmentPage(replacing: replacing),
       ),
     );
     return result == true;
   }
+
+  final bool replacing;
 
   @override
   ConsumerState<CardEnrollmentPage> createState() => _CardEnrollmentPageState();
@@ -38,7 +40,9 @@ class _CardEnrollmentPageState extends ConsumerState<CardEnrollmentPage> {
       _error = null;
     });
     try {
-      final handoff = await ref.read(paymentServiceProvider).startCardEnrollment();
+      final handoff = await ref
+          .read(paymentServiceProvider)
+          .startCardEnrollment(replacing: widget.replacing);
       if (!mounted) return;
       if (handoff.isEmpty) {
         Navigator.of(context).pop(true);
@@ -53,7 +57,9 @@ class _CardEnrollmentPageState extends ConsumerState<CardEnrollmentPage> {
         paymentUrl: handoff,
         title: 'Inscribir tarjeta',
         watchOutcome: () async {
-          final saved = await ref.read(paymentServiceProvider).hasSavedCard();
+          final saved = await ref
+              .read(paymentServiceProvider)
+              .hasSavedCard(recoverAbandoned: false);
           return saved ? true : null;
         },
       );

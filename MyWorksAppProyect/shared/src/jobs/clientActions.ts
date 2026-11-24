@@ -3,16 +3,29 @@ import { edgeFunctionErrorMessage } from '../payments/edgeError';
 
 /**
  * Acciones del cliente en la web con las mismas reglas que la app:
- * cancelar (devolver el retenido con webpay-refund-cancellation y luego
- * transicionar_trabajo) y calificar un trabajo completado (tabla
- * calificaciones; la política RLS exige trabajo completado y sin disputa
- * activa).
+ * cancelar (devolver principal, orden de cambio y horas extra con
+ * webpay-refund-cancellation y luego transicionar_trabajo) y calificar un
+ * trabajo completado.
  */
 
-/** Igual que la app: el cliente cancela antes de que el profesional acepte. */
-export const CLIENT_CANCELLABLE_STATUSES = ['esperando_pago', 'pendiente'] as const;
+/** Sin disputa: antes de que acepten, o cuando la entrega espera conformidad. */
+export const CLIENT_CANCELLABLE_STATUSES = [
+  'esperando_pago',
+  'pendiente',
+  'esperando_aprobacion_cliente',
+] as const;
 
-export function canClientCancel(status: string | null | undefined): boolean {
+/**
+ * Con disputa abierta solo cancela el cliente que la abrió.
+ * Sin disputa, también puede devolver la entrega que está en revisión.
+ */
+export function canClientCancel(
+  status: string | null | undefined,
+  options?: { disputeOpen?: boolean; disputeOpenedBy?: string | null; userId?: string },
+): boolean {
+  if (options?.disputeOpen) {
+    return Boolean(options.userId) && options.disputeOpenedBy === options.userId;
+  }
   return (CLIENT_CANCELLABLE_STATUSES as readonly string[]).includes(status ?? '');
 }
 
@@ -63,15 +76,18 @@ export async function cancelJobAsClient(supabase: AppSupabase, input: CancelJobI
   if (error) throw new Error(rpcMessage(error.message, 'No se pudo cancelar la solicitud.'));
 
   const now = new Date().toISOString();
-  await supabase.from('cancelaciones_trabajo').insert({
+  const cancellation = await supabase.from('cancelaciones_trabajo').insert({
     id: newId(),
     id_trabajo: input.jobId,
     cancelado_por: input.userId,
     motivo: reason.slice(0, 500),
     cancelado_en: now,
   });
+  if (cancellation.error) {
+    throw new Error('La solicitud se canceló, pero no se guardó el motivo. No hace falta cancelar de nuevo.');
+  }
   if (input.workerId) {
-    await supabase.from('notificaciones').insert({
+    const notice = await supabase.from('notificaciones').insert({
       id: newId(),
       id_usuario: input.workerId,
       tipo: 'job_cancelled',
@@ -81,6 +97,9 @@ export async function cancelJobAsClient(supabase: AppSupabase, input: CancelJobI
       leido: 0,
       creado_en: now,
     });
+    if (notice.error) {
+      throw new Error('La solicitud se canceló, pero no se pudo avisar al profesional.');
+    }
   }
 }
 

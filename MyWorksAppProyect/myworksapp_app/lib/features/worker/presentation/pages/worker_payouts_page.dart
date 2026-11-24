@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/repositories/payout_repository.dart';
 import '../../../../core/domain/payout_summary.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -56,7 +57,9 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
       if (!mounted) return;
       if (account != null) {
         _bank.text = account.bank;
-        _type = account.accountType;
+        _type = account.accountType.trim().isEmpty
+            ? 'vista'
+            : account.accountType.trim();
         _number.text = account.accountNumber;
         _rut.text = account.holderRut;
         _name.text = account.holderName;
@@ -147,59 +150,24 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
                     'Bruto ${money.format(summary!.pendingGrossClp)} − comisión ${money.format(summary.pendingFeeClp)}',
                   ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Es lo que recibirás por trabajos retenidos o liberados que todavía no tienen una transferencia marcada: lo que pagó el cliente menos la comisión del servicio (5 %, mínimo \$1.000).',
-                ),
-                const SizedBox(height: 20),
-                Text('Cuenta para la transferencia',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _bank,
-                  decoration: const InputDecoration(labelText: 'Banco'),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: _type,
-                  decoration:
-                      const InputDecoration(labelText: 'Tipo de cuenta'),
-                  items: const [
-                    DropdownMenuItem(
-                        value: 'vista', child: Text('Cuenta vista')),
-                    DropdownMenuItem(
-                        value: 'corriente', child: Text('Cuenta corriente')),
-                    DropdownMenuItem(value: 'rut', child: Text('Cuenta RUT')),
-                    DropdownMenuItem(
-                        value: 'ahorro', child: Text('Cuenta de ahorro')),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) setState(() => _type = value);
-                  },
-                ),
-                TextField(
-                  controller: _number,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Número de cuenta',
-                    helperText: _number.text.isEmpty
-                        ? null
-                        : 'Se muestra como ${maskAccountNumber(_number.text)}',
+                  style: TextStyle(
+                    height: 1.4,
+                    color: AppColors.onCanvasMuted(Theme.of(context).brightness),
                   ),
                 ),
-                TextField(
-                  controller: _rut,
-                  decoration:
-                      const InputDecoration(labelText: 'RUT del titular'),
-                ),
-                TextField(
-                  controller: _name,
-                  decoration:
-                      const InputDecoration(labelText: 'Nombre del titular'),
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: _saving ? null : _save,
-                  child: Text(_saving ? 'Guardando…' : 'Guardar cuenta'),
+                const SizedBox(height: 20),
+                _BankAccountForm(
+                  bank: _bank,
+                  number: _number,
+                  rut: _rut,
+                  name: _name,
+                  type: _type,
+                  saving: _saving,
+                  onTypeChanged: (value) => setState(() => _type = value),
+                  onNumberChanged: () => setState(() {}),
+                  onSave: _save,
                 ),
                 const SizedBox(height: 24),
                 Text('Liquidaciones',
@@ -248,5 +216,150 @@ class _WorkerPayoutsPageState extends ConsumerState<WorkerPayoutsPage> {
       default:
         return 'Sin estado';
     }
+  }
+}
+
+List<DropdownMenuItem<String>> _accountTypeItems(String type) {
+  const known = <String, String>{
+    'vista': 'Cuenta vista',
+    'corriente': 'Cuenta corriente',
+    'rut': 'Cuenta RUT',
+    'ahorro': 'Cuenta de ahorro',
+  };
+  return [
+    for (final entry in known.entries)
+      DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+    if (!known.containsKey(type))
+      DropdownMenuItem(value: type, child: Text(type)),
+  ];
+}
+
+class _BankAccountForm extends StatelessWidget {
+  const _BankAccountForm({
+    required this.bank,
+    required this.number,
+    required this.rut,
+    required this.name,
+    required this.type,
+    required this.saving,
+    required this.onTypeChanged,
+    required this.onNumberChanged,
+    required this.onSave,
+  });
+
+  final TextEditingController bank;
+  final TextEditingController number;
+  final TextEditingController rut;
+  final TextEditingController name;
+  final String type;
+  final bool saving;
+  final ValueChanged<String> onTypeChanged;
+  final VoidCallback onNumberChanged;
+  final VoidCallback onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = AppColors.onCanvasMuted(Theme.of(context).brightness);
+    final masked = number.text.trim().isEmpty
+        ? null
+        : 'Se muestra como ${maskAccountNumber(number.text)}';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+      decoration: AppDecorations.surfaceCardOf(
+        context,
+        accent: AppColors.brandOrange,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Cuenta para la transferencia',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Datos del titular. Quedan visibles solo para ti y para un administrador.',
+            style: TextStyle(color: muted, height: 1.35, fontSize: 13),
+          ),
+          const SizedBox(height: 18),
+          TextField(
+            controller: bank,
+            textCapitalization: TextCapitalization.words,
+            decoration: _field(context, 'Banco', Icons.account_balance_outlined),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            initialValue: type,
+            isExpanded: true,
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: AppColors.brandOrange,
+            ),
+            decoration: _field(
+              context,
+              'Tipo de cuenta',
+              Icons.account_balance_wallet_outlined,
+            ),
+            items: [
+              for (final item in _accountTypeItems(type)) item,
+            ],
+            onChanged: (value) {
+              if (value != null) onTypeChanged(value);
+            },
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: number,
+            keyboardType: TextInputType.number,
+            onChanged: (_) => onNumberChanged(),
+            decoration: _field(context, 'Número de cuenta', Icons.tag_outlined),
+          ),
+          if (masked != null) ...[
+            const SizedBox(height: 6),
+            Text(masked, style: TextStyle(color: muted, fontSize: 12)),
+          ],
+          const SizedBox(height: 14),
+          TextField(
+            controller: rut,
+            textCapitalization: TextCapitalization.characters,
+            decoration: _field(context, 'RUT del titular', Icons.badge_outlined),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: name,
+            textCapitalization: TextCapitalization.words,
+            decoration: _field(context, 'Nombre del titular', Icons.person_outline),
+          ),
+          const SizedBox(height: 20),
+          FilledButton(
+            onPressed: saving ? null : onSave,
+            child: Text(saving ? 'Guardando…' : 'Guardar cuenta'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _field(BuildContext context, String label, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final radius = BorderRadius.circular(16);
+    final idle = BorderSide(
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.14)
+          : AppColors.grayBorder,
+    );
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, size: 20, color: AppColors.brandOrange),
+      filled: true,
+      fillColor: isDark ? AppColors.surfaceDarkElevated : AppColors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      border: OutlineInputBorder(borderRadius: radius, borderSide: idle),
+      enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: idle),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: AppColors.brandOrange, width: 1.6),
+      ),
+    );
   }
 }

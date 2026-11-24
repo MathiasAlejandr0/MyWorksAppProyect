@@ -627,7 +627,7 @@ Table trabajadores {
   score_desglose jsonb [not null]
   ranking_actualizado_en "timestamp with time zone"
   radio_urbano_km "numeric(5,2)" [not null]
-  tarifa_fuera_radio_clp integer [not null]
+  tarifa_fuera_radio_clp integer [not null, note: 'Columna conservada. El cobro no la suma: lo calcula recargo_traslado_clp.']
   trabajos_completados integer [not null]
   es_elite boolean
   id_comuna text

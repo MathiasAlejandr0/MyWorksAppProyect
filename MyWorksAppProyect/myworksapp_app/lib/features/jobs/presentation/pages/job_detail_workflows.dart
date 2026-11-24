@@ -541,6 +541,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
     final currentUser = authState.user;
     final isWorker = currentUser?.role == AppConstants.roleWorker;
     final isOwner = currentUser?.id == _job!.userId || currentUser?.id == _job!.workerId;
+    final disputeOpen = DisputeService.isOpenStatus(_dispute?.status);
     final hasCoordinates =
         _job!.latitude != null && _job!.longitude != null;
     final workerShowsLocationCard = isWorker &&
@@ -603,6 +604,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
               onPayEscrow: _payEscrow,
               onApproveCompletion: _approveCompletion,
               onRejectCompletion: _rejectCompletion,
+              blockedByDispute: disputeOpen,
             ),
             const SizedBox(height: 16),
             JobDetailDescriptionSection(job: _job!),
@@ -665,12 +667,13 @@ extension JobDetailWorkflows on _JobDetailPageState {
               orders: _changeOrders,
               isWorker: isWorker,
               canRequest: isWorker &&
+                  !disputeOpen &&
                   _job!.status == AppConstants.jobStatusInProgress,
               onRequest: _requestChangeOrder,
               onReview: !isWorker ? _approveChangeOrder : null,
             ),
             const SizedBox(height: 16),
-            if (isOwner)
+            if (isOwner && !disputeOpen)
               RescheduleSection(
                 job: _job!,
                 currentUserId: currentUser?.id,
@@ -682,10 +685,18 @@ extension JobDetailWorkflows on _JobDetailPageState {
               canOpenDispute: _canOpenDispute(_job!),
               canNegotiate:
                   JobDetailHelpers.canNegotiateDispute(_job!, _dispute),
-              onOpenDispute: _openDispute,
+              onOpenDispute: (reason, description, outcome) =>
+                  _openDispute(reason, description, outcome),
               onAddComment: _addDisputeComment,
               onAppeal: _appealDispute,
               onProposeAgreement: _proposeAgreement,
+              onCancelRequest: JobDetailHelpers.clientCanCancelRequest(
+                job: _job!,
+                dispute: _dispute,
+                userId: currentUser?.id,
+              )
+                  ? () => JobDetailStatusActions(this)._cancelJob()
+                  : null,
               onRespondAgreement: _respondAgreement,
               pendingAgreementId: _pendingAgreementId,
               pendingAgreementType: _pendingAgreementType,
@@ -696,6 +707,7 @@ extension JobDetailWorkflows on _JobDetailPageState {
               isWorker: isWorker,
               isOwner: isOwner,
               canTransition: _canTransition,
+              workPausedByDispute: disputeOpen,
               onGoToDashboard: _goToDashboard,
               onCancelJob: () => JobDetailStatusActions(this)._cancelJob(),
               onAcceptJob: () => JobDetailStatusActions(this)._acceptJob(),

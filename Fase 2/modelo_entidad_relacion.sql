@@ -320,7 +320,7 @@ COMMENT ON COLUMN trabajadores.radio_servicio_km IS 'Radio máximo de matching e
 COMMENT ON COLUMN trabajadores.score_listado IS 'Orden de marketplace. Incluye pesos configurables + prioridad_manual*2.';
 COMMENT ON COLUMN trabajadores.prioridad_manual IS 'Override de admin (-50..50) para mostrar un profesional antes o después.';
 COMMENT ON COLUMN trabajadores.radio_urbano_km IS 'Kilómetros alrededor de la base donde la movilización es $0.';
-COMMENT ON COLUMN trabajadores.tarifa_fuera_radio_clp IS 'Movilización fija si el cliente está fuera del radio urbano. 0 = tampoco cobra fuera.';
+COMMENT ON COLUMN trabajadores.tarifa_fuera_radio_clp IS 'Columna conservada. El cobro no la suma: el traslado lo calcula recargo_traslado_clp ($1.200 por km fuera del radio, mínimo $3.000, máximo $18.000).';
 COMMENT ON COLUMN trabajadores.es_elite IS 'Destacado del mes: nota >= 4.7 y al menos 5 trabajos completados.';
 COMMENT ON COLUMN trabajadores.id_comuna IS 'Comuna de cobertura. zona_trabajo sigue como texto de UI.';
 COMMENT ON COLUMN trabajadores.pausa_por_trabajo IS 'true cuando disponible = 0 lo dejó un trabajo activo; se restablece al terminar.';

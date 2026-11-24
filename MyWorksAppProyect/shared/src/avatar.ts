@@ -33,7 +33,24 @@ export function initialsAvatarDataUrl(name: string, seed = name): string {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
+/**
+ * Solo una URL http(s) o un data:image se puede poner en un <img>.
+ * Una ruta del teléfono o una clave demo: no es una foto de la web.
+ */
+export function displayablePhotoUrl(url: string | null | undefined): string | null {
+  const value = url?.trim() ?? '';
+  if (!value) return null;
+  if (value.startsWith('data:image/')) return value;
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return value;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 /** Foto del perfil o, si no hay, avatar con iniciales. */
 export function profilePhotoOrInitials(url: string | null | undefined, name: string, seed?: string): string {
-  return url && url.trim() ? url : initialsAvatarDataUrl(name, seed ?? name);
+  return displayablePhotoUrl(url) ?? initialsAvatarDataUrl(name, seed ?? name);
 }

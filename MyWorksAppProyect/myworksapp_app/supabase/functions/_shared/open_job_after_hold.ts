@@ -1,12 +1,42 @@
-import { serviceClient } from "./supabase.ts";
+type Admin = {
+  rpc: (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ error: { message?: string } | null }>;
+  from: (table: string) => {
+    update: (values: Record<string, unknown>) => {
+      eq: (column: string, value: string) => {
+        eq: (
+          column: string,
+          value: string,
+        ) => Promise<{ error: { message?: string } | null }>;
+      };
+    };
+  };
+};
 
-type Admin = ReturnType<typeof serviceClient>;
+export type HoldOptions = {
+  changeOrderId?: string | null;
+  paymentId?: string | null;
+};
+
+export function holdOptionsForPayment(payment: {
+  id?: string | null;
+  id_orden_cambio?: string | null;
+}): HoldOptions {
+  const paymentId = String(payment.id || "").trim();
+  const changeOrderId = String(payment.id_orden_cambio || "").trim();
+  return {
+    paymentId: paymentId || null,
+    changeOrderId: changeOrderId || null,
+  };
+}
 
 /** El pago ya está retenido: el profesional puede aceptar el pedido. */
 export async function openJobAfterHold(
   admin: Admin,
   jobId: string,
-  options?: { changeOrderId?: string | null; paymentId?: string | null },
+  options?: HoldOptions,
 ) {
   const changeOrderId = (options?.changeOrderId || "").trim();
   const paymentId = (options?.paymentId || "").trim();

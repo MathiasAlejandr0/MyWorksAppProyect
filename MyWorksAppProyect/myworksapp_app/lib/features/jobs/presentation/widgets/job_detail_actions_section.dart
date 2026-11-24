@@ -27,6 +27,9 @@ class JobDetailActionsSection extends StatelessWidget {
   final VoidCallback onCompleteJob;
 
   /// La página ya cargó la disputa; no se vuelve a pedir en cada build.
+  /// Con disputa abierta no se muestran los pasos que hacen avanzar el trabajo.
+  final bool workPausedByDispute;
+
   final bool ratingBlockedByDispute;
 
   /// Ya hay una calificación de quien mira esta pantalla (puesta aquí o en la web).
@@ -50,6 +53,7 @@ class JobDetailActionsSection extends StatelessWidget {
     required this.onStartJob,
     required this.onRequestOvertimeHours,
     required this.onCompleteJob,
+    this.workPausedByDispute = false,
     this.ratingBlockedByDispute = false,
     this.alreadyRated = false,
     this.onRatingChanged,
@@ -60,8 +64,16 @@ class JobDetailActionsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (workPausedByDispute) ...[
+          const Text(
+            'Este trabajo está en pausa por una disputa abierta. No se puede continuar hasta cerrarla.',
+            style: TextStyle(color: AppColors.warning, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+        ],
         if (isOwner) ...[
-          if (!isWorker &&
+          if (!workPausedByDispute &&
+              !isWorker &&
               job.status == AppConstants.jobStatusPending &&
               canTransition[AppConstants.jobStatusCancelled] == true)
             OutlinedButton(
@@ -69,7 +81,8 @@ class JobDetailActionsSection extends StatelessWidget {
               style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
               child: const Text('Cancelar Solicitud'),
             ),
-          if (isWorker &&
+          if (!workPausedByDispute &&
+              isWorker &&
               job.status == AppConstants.jobStatusPending &&
               canTransition[AppConstants.jobStatusAccepted] == true) ...[
             FutureBuilder<Map<String, ClientRatingSummary>>(
@@ -122,7 +135,9 @@ class JobDetailActionsSection extends StatelessWidget {
               ),
             ),
           ],
-          if (isWorker && job.status == AppConstants.jobStatusAccepted) ...[
+          if (!workPausedByDispute &&
+              isWorker &&
+              job.status == AppConstants.jobStatusAccepted) ...[
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: onMarkEnRoute,
@@ -132,7 +147,9 @@ class JobDetailActionsSection extends StatelessWidget {
               child: const Text('Voy en camino'),
             ),
           ],
-          if (isWorker && job.status == AppConstants.jobStatusEnRoute) ...[
+          if (!workPausedByDispute &&
+              isWorker &&
+              job.status == AppConstants.jobStatusEnRoute) ...[
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: onStartJob,
@@ -142,7 +159,9 @@ class JobDetailActionsSection extends StatelessWidget {
               child: const Text('Iniciar trabajo'),
             ),
           ],
-          if (isWorker && job.status == AppConstants.jobStatusInProgress) ...[
+          if (!workPausedByDispute &&
+              isWorker &&
+              job.status == AppConstants.jobStatusInProgress) ...[
             if (job.pricingMode == PricingConstants.modeHourlyBlock) ...[
               const SizedBox(height: 8),
               OutlinedButton.icon(
@@ -153,7 +172,8 @@ class JobDetailActionsSection extends StatelessWidget {
             ],
             const SizedBox(height: 8),
           ],
-          if (isWorker &&
+          if (!workPausedByDispute &&
+              isWorker &&
               job.status == AppConstants.jobStatusInProgress &&
               (canTransition[AppConstants.jobStatusCompleted] == true ||
                   canTransition[PricingConstants.jobAwaitingClientApproval] ==

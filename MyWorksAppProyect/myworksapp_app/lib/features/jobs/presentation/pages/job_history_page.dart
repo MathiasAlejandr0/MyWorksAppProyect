@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:myworksapp/core/widgets/design_system/app_gradient_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/utils/job_status_copy.dart';
 import '../../../../core/utils/santiago_time.dart';
 import '../../../../core/database/models/job_model.dart';
 import '../../../../core/providers/repository_providers.dart';
@@ -12,6 +12,7 @@ import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../widgets/job_history_cards.dart';
 
 class JobHistoryPage extends ConsumerStatefulWidget {
   const JobHistoryPage({super.key});
@@ -23,10 +24,13 @@ class JobHistoryPage extends ConsumerStatefulWidget {
 class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
   static const _pageSize = 20;
 
-  final _jobs = <JobModel>[];
+  final _live = <JobModel>[];
+  final _past = <JobModel>[];
   final _scroll = ScrollController();
   bool _loading = false;
   bool _hasMore = true;
+  bool _liveLoaded = false;
+  int _request = 0;
   Object? _error;
 
   @override
@@ -52,25 +56,41 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     if (_loading || !_hasMore) return;
     final user = ref.read(authProvider).user;
     if (user == null) return;
+    final request = _request;
+    final asWorker = user.role == AppConstants.roleWorker;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final page = await ref.read(jobRepositoryProvider).getJobsPage(
-            userId: user.id,
-            asWorker: user.role == AppConstants.roleWorker,
-            offset: _jobs.length,
-            limit: _pageSize,
-          );
-      if (!mounted) return;
+      final repo = ref.read(jobRepositoryProvider);
+      if (!_liveLoaded) {
+        final live = await repo.getHistoryLiveJobs(
+          userId: user.id,
+          asWorker: asWorker,
+        );
+        if (!mounted || request != _request) return;
+        setState(() {
+          _live
+            ..clear()
+            ..addAll(live);
+          _liveLoaded = true;
+        });
+      }
+      final page = await repo.getHistoryPastPage(
+        userId: user.id,
+        asWorker: asWorker,
+        offset: _past.length,
+        limit: _pageSize,
+      );
+      if (!mounted || request != _request) return;
       setState(() {
-        _jobs.addAll(page);
+        _past.addAll(page);
         _hasMore = page.length == _pageSize;
         _loading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || request != _request) return;
       setState(() {
         _error = e;
         _loading = false;
@@ -79,9 +99,14 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
   }
 
   Future<void> _reload() async {
+    _request += 1;
     setState(() {
-      _jobs.clear();
+      _live.clear();
+      _past.clear();
+      _liveLoaded = false;
       _hasMore = true;
+      _loading = false;
+      _error = null;
     });
     await _loadMore();
   }
@@ -107,9 +132,10 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
   }
 
   Widget _buildBody(bool isWorker) {
-    if (_jobs.isEmpty && _loading) return const LoadingWidget();
+    final empty = _live.isEmpty && _past.isEmpty;
+    if (empty && _loading) return const LoadingWidget();
 
-    if (_jobs.isEmpty && _error != null) {
+    if (empty && _error != null) {
       return ErrorStateWidget(
         title: 'Error al cargar historial',
         message: ErrorHandler.getErrorMessage(_error),
@@ -118,7 +144,7 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
       );
     }
 
-    if (_jobs.isEmpty) {
+    if (empty) {
       return EmptyStateWidget(
         icon: Icons.history,
         title: 'No hay trabajos',
@@ -128,47 +154,98 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
       );
     }
 
+    final entries = _entries();
     final showFooter = _hasMore || _error != null;
     return RefreshIndicator(
       onRefresh: _reload,
       child: ListView.builder(
         controller: _scroll,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        itemCount: _jobs.length + (showFooter ? 1 : 0),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        itemCount: entries.length + (showFooter ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index >= _jobs.length) return _buildFooter();
-          final job = _jobs[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              title: Text(
-                job.description ?? 'Sin descripción',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  Text(job.address),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_formatDate(job.createdAt)} - ${_getStatusText(job.status)}',
-                  ),
-                ],
-              ),
-              trailing: Icon(
-                _getStatusIcon(job.status),
-                color: _getStatusColor(job.status),
-              ),
-              onTap: () {
-                context.push('${AppConstants.routeJobDetail}/${job.id}');
-              },
-            ),
+          if (index >= entries.length) return _buildFooter();
+          final entry = entries[index];
+          if (entry.header != null) return _sectionLabel(entry.header!);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _cardFor(entry.job!),
           );
         },
       ),
+    );
+  }
+
+  /// Los trabajos con pago retenido se piden aparte, así quedan arriba
+  /// aunque haya pedidos cerrados más nuevos.
+  List<_HistoryEntry> _entries() {
+    final entries = <_HistoryEntry>[];
+    if (_live.isNotEmpty) {
+      entries.add(const _HistoryEntry.header('Pago retenido'));
+      for (final job in _live) {
+        entries.add(_HistoryEntry.job(job));
+      }
+    }
+    if (_past.isNotEmpty) {
+      if (_live.isNotEmpty) {
+        entries.add(const _HistoryEntry.header('Anteriores'));
+      }
+      for (final job in _past) {
+        entries.add(_HistoryEntry.job(job));
+      }
+    }
+    return entries;
+  }
+
+  Widget _sectionLabel(String title) {
+    final live = title == 'Pago retenido';
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8, top: live ? 0 : 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: live
+              ? AppColors.brandOrange
+              : AppColors.onCanvasMuted(Theme.of(context).brightness),
+          fontWeight: FontWeight.w800,
+          fontSize: 13,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+
+  Widget _cardFor(JobModel job) {
+    final title = (job.description ?? '').trim().isEmpty
+        ? 'Sin descripción'
+        : job.description!.trim();
+    final dateLabel = _formatDate(job.createdAt);
+    void open() => context.push('${AppConstants.routeJobDetail}/${job.id}');
+
+    if (jobHistoryIsLive(job.status)) {
+      return JobHistoryLiveCard(
+        title: title,
+        address: job.address,
+        dateLabel: dateLabel,
+        status: job.status,
+        onTap: open,
+      );
+    }
+    if (job.status == AppConstants.jobStatusCompleted) {
+      return JobHistoryCompletedCard(
+        title: title,
+        address: job.address,
+        dateLabel: dateLabel,
+        paymentStatus: job.paymentStatus,
+        onTap: open,
+      );
+    }
+    return JobHistoryClosedCard(
+      title: title,
+      address: job.address,
+      dateLabel: dateLabel,
+      status: job.status,
+      onTap: open,
     );
   }
 
@@ -195,14 +272,16 @@ class _JobHistoryPageState extends ConsumerState<JobHistoryPage> {
     );
   }
 
-  Color _getStatusColor(String status) => JobStatusCopy.color(status);
-
-  IconData _getStatusIcon(String status) => JobStatusCopy.icon(status);
-
-  String _getStatusText(String status) => JobStatusCopy.label(status);
-
   String _formatDate(DateTime date) {
     final local = SantiagoTime.wall(date);
     return '${local.day}/${local.month}/${local.year}';
   }
+}
+
+class _HistoryEntry {
+  const _HistoryEntry.header(this.header) : job = null;
+  const _HistoryEntry.job(this.job) : header = null;
+
+  final String? header;
+  final JobModel? job;
 }

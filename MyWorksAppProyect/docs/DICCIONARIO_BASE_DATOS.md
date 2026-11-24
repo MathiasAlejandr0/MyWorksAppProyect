@@ -1,6 +1,6 @@
 # Diccionario de base de datos — My Works App
 
-> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-17 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. No editar a mano: actualizar el snapshot o volver a introspectar y regenerar. La sección 0 es la única excepción: agrega a mano las 3 tablas de las migraciones del 20-11-2026 (60 tablas en total).
+> Generado por `docs/_gen_diccionario_desde_schema.py` el 2026-11-17 (America/Santiago) desde el esquema real de Supabase `wxqrfcqifkfgawrnqmnj`. El cuerpo de cada tabla sigue siendo ese snapshot. La sección 0 agrega a mano las 3 tablas del 20-11-2026. La sección 0-bis registra la lectura del catálogo del 22-11-2026 (76 tablas). La sección 0-ter anota la migración BCNF del 23-11-2026. No se regeneró el cuerpo del `.docx`: solo se agregó un párrafo al inicio.
 
 | Campo | Valor |
 |-------|-------|
@@ -36,6 +36,58 @@ Con las migraciones `20261118050658` a `20261120170000` el esquema `public` qued
 | Última migración | `20261117223850` | `20261120170000` |
 
 Los conteos de la columna derecha salen del DDL; no se volvieron a medir en la base viva.
+
+## 0-bis. Lectura del catálogo el 22-11-2026
+
+Consulta de solo lectura al catálogo de PostgreSQL de la base viva (`wxqrfcqifkfgawrnqmnj`), el 22 de noviembre de 2026. No reemplaza el detalle columna por columna del snapshot.
+
+| Concepto | Valor medido |
+|----------|----------------|
+| Tablas `public` | **76**, las 76 con RLS activo |
+| Claves foráneas en `public` | **94** |
+| Última versión en `supabase_migrations.schema_migrations` | `20261123020000` |
+| Archivos `.sql` de migración en el repositorio | 133. La versión `20261123020000` y otras de consola e inteligencia artificial aplicadas en vivo no tienen archivo en este árbol |
+
+Quince tablas de esa lectura no aparecen en el cuerpo de este diccionario. Cada una tiene clave primaria de una sola columna y el resto de las columnas describe esa fila. Con eso cumplen la primera forma normal y no presentan el problema de la segunda (no hay clave compuesta). **El 22-11 no se reclasificaron a tercera forma normal, BCNF ni cuarta forma normal.** Esa frase deja constancia de la lectura de ese día. La sección 0-ter, del 23-11-2026, fija la clasificación: esas 15 tablas están en BCNF.
+
+| Tabla | Clave | Columnas además de la clave |
+|-------|--------|------------------------------|
+| `bloqueos_ip` | `id` | `creado_en`, `ip`, `hasta`, `motivo`, `activo` |
+| `cola_moderacion` | `id` | `id_mensaje`, `motivo`, `detalle`, `estado`, `veredicto_llm`, `creado_en`, `revisado_por`, `revisado_en` |
+| `eventos_acceso` | `id` | `creado_en`, `tipo`, `correo_enmascarado` |
+| `ia_banderas` | `clave` | `activa`, `nota` |
+| `ia_cambios_banco` | `id` | `user_id`, `creado_en` |
+| `ia_cola_embeddings` | `id` | `tabla`, `entidad_id`, `texto`, `estado`, `creado_en` |
+| `ia_huellas` | `id` | `user_id`, `device_hash`, `ip_hash`, `created_at` |
+| `ia_pesos_busqueda` | `clave` | `peso`, `descripcion` |
+| `ia_resumen_resenas` | `id_profesional` | `resumen`, `n_resenas`, `origen`, `generado_en` |
+| `ia_sugerencias_perfil` | `id` | `user_id`, `texto_sugerido`, `estado`, `creado_en` |
+| `incidentes_seguridad` | `id` | `creado_en`, `tipo`, `severidad`, `resumen`, `detalle` (jsonb), `estado`, `id_usuario` |
+| `pruebas_seguridad` | `id` | `creado_en`, `tipo`, `origen`, `resultado`, `severidad`, `resumen`, `recomendacion`, `detalle` (jsonb) |
+| `respaldos_consola` | `id` | `creado_en`, `tamano_bytes`, `sha256`, `tablas`, `estado`, `contenido`, `filas` (jsonb), `ruta`, `origen` |
+| `ticket_mensajes` | `id` | `id_ticket`, `id_autor`, `cuerpo`, `creado_en` |
+| `umbrales_seguridad` | `clave` | `valor`, `ventana_minutos`, `descripcion` |
+
+En `metodos_pago_oneclick` se agregaron, el mismo día, `tbk_user_prev`, `username_prev`, `tipo_tarjeta_prev` y `ultimos4_prev`. Dependen de la fila de la tarjeta del usuario, que ya es la clave de esa tabla. El depósito `fotos-demo` es de Storage, no una tabla de `public`: guarda las 34 fotografías de perfil de la demostración.
+
+## 0-ter. Lectura del 23-11-2026
+
+Consulta de solo lectura al catálogo de la base viva `wxqrfcqifkfgawrnqmnj` el 23 de noviembre de 2026, 01:11 hora de Chile. No reemplaza las fichas del snapshot.
+
+| Concepto | Valor medido |
+|----------|----------------|
+| Tablas `public` | **76**, las 76 con RLS activo |
+| Claves foráneas en `public` | **94** (recontadas ese día) |
+| Última versión en `supabase_migrations.schema_migrations` | `20261123040924` |
+| Archivo de esa migración en el repositorio | `MyWorksAppProyect/myworksapp_app/supabase/migrations/20261124050000_esquema_bcnf.sql` (en `main` desde el merge del PR #106) |
+
+Tres cambios de columnas de esa migración. Los disparadores `mensajes_fijar_destinatario` y `trabajadores_z_cifras_desde_stats` están creados en la base viva.
+
+- `mensajes.id_destinatario` lo escribe solo el trigger `mensajes_fijar_destinatario`. PostgreSQL no admite en `GENERATED ALWAYS` una lectura de otra tabla, así que el destinatario no es una columna generada.
+- `tickets_soporte` ya no tiene `nombre_cliente`, `nombre_trabajador` ni `monto_escrow`. La consola lee la vista `consola_tickets`, que toma el nombre del perfil y el monto del pago del trabajo. Columnas medidas hoy en la tabla, y solo estas: `id` (text, not null, default `gen_random_uuid()::text`), `id_trabajo` (text, nulo), `asunto` (text, not null), `estado` (text, nulo, default `'pendiente'`), `creado_en` (timestamptz, nulo, default `now()`).
+- En `trabajadores`, `calificacion` y `trabajos_completados` los iguala `trabajadores_z_cifras_desde_stats` con la estadística del profesional. `score_listado` solo lo cambia el recálculo del ranking (`refrescar_ranking_trabajador`, con `mwa.ranking = 1`). `es_elite` es generada: `((COALESCE(calificacion, 0) >= 4.7) AND (trabajos_completados >= 5))`.
+
+Forma normal que se puede afirmar con esta migración. Las tablas auditadas quedan en BCNF. La cuarta forma normal se sostiene solo en las listas del profesional (servicios, precios, horarios y portafolio). El trigger copia la cifra desde la estadística; eso no convierte por sí solo la dependencia en una tercera forma normal teórica pura. Las 15 tablas de la sección 0-bis están en BCNF por clave de una columna y atributos de esa fila. El esquema completo no queda descrito como cuarta forma normal.
 
 ### 0.1 auditoria_consola (grupo administración)
 
@@ -898,7 +950,7 @@ Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios adicionales
 | `score_desglose` | `jsonb` | not null, default: '{}' |  |
 | `ranking_actualizado_en` | `timestamptz` |  |  |
 | `radio_urbano_km` | `numeric(5,2)` | not null, default: 5 | Kilómetros alrededor de la base donde la movilización es $0. |
-| `tarifa_fuera_radio_clp` | `integer` | not null, default: 0 | Movilización fija si el cliente está fuera del radio urbano. 0 = tampoco cobra fuera. |
+| `tarifa_fuera_radio_clp` | `integer` | not null, default: 0 | Columna conservada. El cobro no la suma: el traslado lo calcula `recargo_traslado_clp` ($1.200 por km fuera del radio, mínimo $3.000, máximo $18.000). |
 | `trabajos_completados` | `integer` | not null, default: 0 |  |
 | `es_elite` | `boolean` | generated always | Destacado del mes: nota >= 4.7 y al menos 5 trabajos completados. GENERATED ALWAYS AS ((COALESCE(calificacion, (0)::numeric) >= 4.7) AND (trabajos_completados >= 5)) |
 | `id_comuna` | `text` | fk → comunas.id | Comuna de cobertura. zona_trabajo sigue como texto de UI. |
@@ -2272,6 +2324,8 @@ El esquema `public` no define tipos ENUM ni vistas materializadas; su única vis
 
 Hay 150 funciones (o procedimientos) en `public`. 120 son SECURITY DEFINER. A continuación se documentan las que forman la API de cliente (GRANT a `anon` o `authenticated`) y, en un segundo listado, las de backend / disparadores (solo `service_role` o uso interno).
 
+El 20 de noviembre de 2026 la migración `20261120193000_montos_redondeo_unico` no agrega tablas ni columnas. Deja un solo entero de cobro: el kilómetro del traslado se fija a 3 decimales antes del salto de $0 a $3.000 y del tope de 30 km; la tarifa se redondea antes de sumar el traslado; el 8 % de una orden de cambio sale de `(monto * 8 + 50) / 100`. Suma tres funciones: `comision_orden_cambio_clp`, `monto_esperado_trabajo_id` y `cotizar_visita_publica`.
+
 ### 6.1 API de cliente (`anon` / `authenticated`)
 
 | Función | Argumentos | Retorno | Seguridad | Quién ejecuta | Propósito |
@@ -2304,12 +2358,14 @@ Hay 150 funciones (o procedimientos) en `public`. 120 son SECURITY DEFINER. A co
 | `categorias_con_disponibles` | — | SETOF text | SECURITY DEFINER | Categorías del catálogo que hoy tienen profesionales disponibles. También para anon. |
 | `cerrar_trabajo_conforme` | p_trabajo_id text | trabajos | SECURITY DEFINER | El cliente cierra el trabajo conforme y habilita la liberación del pago retenido. |
 | `clasificar_disputa` | p_trabajo_id text, p_motivo text | TABLE(decision text, regla text, estado text, vence timestamp with time zone) | SECURITY DEFINER | Clasificación automática de una disputa (soporte automático, interno). |
+| `comision_orden_cambio_clp` | p_monto integer | integer | IMMUTABLE | 8 % entero de una orden de cambio: `(monto * 8 + 50) / 100`. La pueden ejecutar `authenticated` y `service_role`. |
 | `comentar_disputa` | p_id text, p_comentario text | void | SECURITY DEFINER | Una de las partes agrega un comentario al hilo de la disputa. |
 | `confirmar_trabajo_tras_captura` | p_id_pago text | text | SECURITY DEFINER | Tras capturar el pago (Webpay/Oneclick), confirma el trabajo. Lo llama el backend. |
 | `consola_disputas_abiertas` | — | TABLE(id text, id_trabajo text, motivo text, descripcion text, estado text, decision_sugerida text, motivo_regla text, vence_en timestamp with time zone, creado_en text, nombre_cliente text, nombre_profesional text, monto_retenido numeric) | SECURITY DEFINER | Cola de disputas para la consola de escritorio (administrador, soporte o qa). qa no ve la evidencia del domicilio. |
 | `copiar_estado_pago_trabajo` | — | trigger | SECURITY DEFINER | Trigger: copia el estado del pago principal a trabajos.estado_pago. |
+| `cotizar_visita_publica` | p_trabajador uuid, p_lat double precision, p_lng double precision | TABLE(tarifa_clp integer, traslado_clp integer, total_clp integer, distancia_km numeric, fuera_de_alcance boolean) | SECURITY DEFINER | Cotiza una visita con la base real del profesional, sin devolver la coordenada. Solo `service_role`. Si el km cuantizado pasa de 30, marca fuera de alcance y no cobra traslado. |
 | `crear_intencion_pago` | p_id_trabajo text, p_monto numeric, p_buy_order text | pagos | SECURITY DEFINER | Crea la intención de pago (Webpay) del trabajo, con el monto que fija el servidor. |
-| `crear_intencion_pago_orden_cambio` | p_id_trabajo text, p_id_orden_cambio text, p_monto numeric, p_buy_order text | pagos | SECURITY DEFINER | Crea la intención de pago de una orden de cambio. |
+| `crear_intencion_pago_orden_cambio` | p_id_trabajo text, p_id_orden_cambio text, p_monto numeric, p_buy_order text | pagos | SECURITY DEFINER | Crea la intención de pago de una orden de cambio. El monto tiene que ser exactamente la base redondeada más `comision_orden_cambio_clp`. |
 | `crear_intencion_pago_servicio` | p_id_usuario text, p_id_trabajo text, p_monto numeric | pagos | SECURITY DEFINER | Variante de servicio (Edge Function / service_role) para crear la intención de pago. |
 | `disputa_esta_activa` | p_estado text | boolean | SECURITY INVOKER | Indica si el estado de una disputa se considera activo. |
 | `enviar_encuesta_testing` | p_plataforma text, p_rol text, p_tarea_completada text, p_satisfaccion smallint, p_sus smallint[], p_que_funciono text, p_que_mejorar text, p_version_app text | uuid | SECURITY DEFINER | Guarda una encuesta de testing con sus 10 respuestas SUS (también anon). |
@@ -2353,7 +2409,8 @@ Hay 150 funciones (o procedimientos) en `public`. 120 son SECURITY DEFINER. A co
 | `metadatos_sin_pin` | p_raw text | text | SECURITY INVOKER | Quita el PIN de un JSON de metadatos antes de guardarlo o devolverlo. |
 | `mi_ficha_propia` | — | TABLE(latitud_base double precision, longitud_base double precision, radio_servicio_km numeric, origen_base text, estado_verificacion text, nota_verificacion text) | SECURITY DEFINER | Devuelve la ficha del profesional autenticado, incluyendo campos no públicos. |
 | `minuto_utc` | p_valor text | timestamp with time zone | SECURITY INVOKER | Normaliza una fecha-hora en texto al minuto UTC; se usa en el índice único de agenda. |
-| `monto_esperado_trabajo` | p_job trabajos | numeric | SECURITY DEFINER | Calcula el monto que el servidor espera para el trabajo (no lo fija el cliente). |
+| `monto_esperado_trabajo` | p_job trabajos | numeric | SECURITY DEFINER | Calcula el entero que el servidor espera: tarifa redondeada (o metros cuadrados redondeados, o bloque de horas) más el traslado. No lo fija el cliente. |
+| `monto_esperado_trabajo_id` | p_id text | integer | SECURITY DEFINER | El mismo entero de `monto_esperado_trabajo` para un id de trabajo. Solo `service_role`. Devuelve 0 si el trabajo no existe. |
 | `normalizar_bloques_horario` | p_horarios jsonb | jsonb | SECURITY INVOKER | Normaliza el JSON de bloques horarios antes de guardarlo. |
 | `obtener_config_ranking` | — | jsonb | SECURITY DEFINER | Lee la configuración actual del ranking. |
 | `obtener_pin_inicio` | p_trabajo_id text | text | SECURITY DEFINER | El cliente (o un administrador) obtiene el PIN para mostrárselo al profesional. |
@@ -2373,7 +2430,7 @@ Hay 150 funciones (o procedimientos) en `public`. 120 son SECURITY DEFINER. A co
 | `proteger_verificacion_profesional` | — | trigger | SECURITY DEFINER | Trigger: el estado de verificación solo lo cambia un administrador o la RPC. |
 | `publicar_ubicacion_trabajo` | p_trabajo_id text, p_lat double precision, p_lng double precision, p_precision double precision | void | SECURITY DEFINER | El profesional publica su GPS durante un trabajo activo. |
 | `quitar_dispositivo_push` | p_token text | void | SECURITY DEFINER | El usuario elimina un token de notificaciones push. |
-| `recargo_traslado_clp` | p_lat_trabajador double precision, p_lng_trabajador double precision, p_lat_trabajo double precision, p_lng_trabajo double precision, p_radio_km numeric | integer | SECURITY INVOKER | Calcula el recargo de traslado según el radio urbano y la tarifa fuera de radio. |
+| `recargo_traslado_clp` | p_lat_trabajador double precision, p_lng_trabajador double precision, p_lat_trabajo double precision, p_lng_trabajo double precision, p_radio_km numeric | integer | SECURITY INVOKER | Traslado en pesos enteros. Fija el km a 3 decimales, cobra $1.200 por km fuera del radio, mínimo $3.000 y máximo $18.000, y rechaza más de 30 km. No usa `tarifa_fuera_radio_clp`. |
 | `rechazar_trabajo_pendiente` | p_trabajo_id text, p_metadatos text | trabajos | SECURITY DEFINER | Cancela un pendiente. Solo admin o el trabajador ya asignado. Sin id_trabajador el control no se salta. |
 | `reclamar_cobro_oneclick` | p_id_pago text, p_buy_order text, p_monto numeric | text | SECURITY DEFINER | Inicia o registra una autorización Oneclick (backend). |
 | `recomputar_agregados_profesional` | p_id uuid | void | SECURITY DEFINER | Función interna, disparador o tarea de servicio. |

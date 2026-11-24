@@ -1,6 +1,8 @@
 # Anexo A. Diccionario de datos
 
-A continuación se describe cada una de las 60 tablas del esquema public. Las tablas A-1 a A-57 están alineadas a la base viva de Supabase (`wxqrfcqifkfgawrnqmnj`) al 2026-11-17 (America/Santiago), migración `20261117223850` (quitar_indice_duplicado_servicios); las tablas A-58 a A-60 salen de las migraciones del 20-11-2026 leídas del repositorio (`main` `d9d2c7c`), sin medirlas otra vez en la base viva. Los atributos se listan con su tipo de dato y su restricción. PK indica la clave primaria y FK la clave foránea. perfiles.id coincide con el identificador de autenticación de Supabase (auth.users.id). Hasta el 17-11 no había tipos ENUM en public (los conjuntos cerrados se restringen con CHECK); la migración `20261120130000` agrega el único ENUM, `accion_auditoria_consola`. Hay dos vistas: encuestas_testing_con_puntaje y cobros_profesional (migración `20261118053913`).
+> **22-11-2026.** La base viva tiene 76 tablas. Este anexo sigue describiendo 60. Las 15 que faltan, con su clave y sus columnas, están en la sección 0-bis de `MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`. No se les asignó forma normal más allá de comprobar que la clave es de una columna.
+
+A continuación se describe cada una de las 60 tablas del esquema public documentadas hasta el 20-11-2026. Las tablas A-1 a A-57 están alineadas a la base viva de Supabase (`wxqrfcqifkfgawrnqmnj`) al 2026-11-17 (America/Santiago), migración `20261117223850` (quitar_indice_duplicado_servicios); las tablas A-58 a A-60 salen de las migraciones del 20-11-2026 leídas del repositorio (`main` `d9d2c7c`), sin medirlas otra vez en la base viva. Los atributos se listan con su tipo de dato y su restricción. PK indica la clave primaria y FK la clave foránea. perfiles.id coincide con el identificador de autenticación de Supabase (auth.users.id). Hasta el 17-11 no había tipos ENUM en public (los conjuntos cerrados se restringen con CHECK); la migración `20261120130000` agrega el único ENUM, `accion_auditoria_consola`. Hay dos vistas: encuestas_testing_con_puntaje y cobros_profesional (migración `20261118053913`).
 
 Fuente: elaboración propia a partir del esquema real (modelo entidad-relación v2.5).
 
@@ -404,7 +406,7 @@ Ficha 1:1 del profesional (PK = perfiles.id). Sus precios, servicios adicionales
 | `score_desglose` | jsonb | Obligatorio, Default '{}' |
 | `ranking_actualizado_en` | timestamptz | Opcional |
 | `radio_urbano_km` | numeric(5,2) | Obligatorio, Default 5. Kilómetros alrededor de la base donde la movilización es $0. |
-| `tarifa_fuera_radio_clp` | integer | Obligatorio, Default 0. Movilización fija si el cliente está fuera del radio urbano. 0 = tampoco cobra fuera. |
+| `tarifa_fuera_radio_clp` | integer | Obligatorio, Default 0. Columna conservada. El cobro no la suma: el traslado lo calcula `recargo_traslado_clp` ($1.200 por km fuera del radio, mínimo $3.000, máximo $18.000). |
 | `trabajos_completados` | integer | Obligatorio, Default 0 |
 | `es_elite` | boolean | Opcional, GENERATED ALWAYS. Destacado del mes: nota >= 4.7 y al menos 5 trabajos completados. GENERATED ALWAYS AS ((COALESCE(calificacion, (0)::numeric) >= 4.7) AND (trabajos_completados >= 5)) |
 | `id_comuna` | text | FK → comunas.id, Opcional. Comuna de cobertura. zona_trabajo sigue como texto de UI. |

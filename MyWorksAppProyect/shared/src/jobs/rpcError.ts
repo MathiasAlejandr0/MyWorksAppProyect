@@ -7,6 +7,9 @@ export function agreementErrorMessage(raw: string, action: 'proponer' | 'respond
   if (text.includes('permiso') || text.includes('solo el') || text.includes('no es parte')) {
     return 'Solo quien participa en el pedido puede hacer esto.';
   }
+  if (text.includes('disputa')) {
+    return 'Los acuerdos solo se proponen con una disputa abierta.';
+  }
   if (text.includes('cerrado') || text.includes('estado')) {
     return 'Este pedido ya no admite un acuerdo.';
   }

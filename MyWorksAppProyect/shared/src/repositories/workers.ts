@@ -6,7 +6,7 @@ import {
 import { sortCatalog, type CatalogOrderOrigin } from '../catalogOrder';
 import { uniqueIsoSlots } from '../jobs/bookingSlot';
 import type { WebWorkerCard, WorkerWithProfile } from '../types';
-import { initialsAvatarDataUrl } from '../avatar';
+import { displayablePhotoUrl, initialsAvatarDataUrl } from '../avatar';
 
 type WorkerQueryRow = {
   id_usuario: string;
@@ -45,13 +45,14 @@ export type WorkersCatalogPage = {
 };
 
 function listPhotoUrl(url: string | null | undefined, name: string, seed: string): string {
-  if (!url) return initialsAvatarDataUrl(name, seed);
-  if (url.includes('images.unsplash.com')) {
-    return url
+  const photo = displayablePhotoUrl(url);
+  if (!photo) return initialsAvatarDataUrl(name, seed);
+  if (photo.includes('images.unsplash.com')) {
+    return photo
       .replace(/([?&])w=\d+/g, '$1w=200')
       .replace(/([?&])h=\d+/g, '$1h=200');
   }
-  return url;
+  return photo;
 }
 
 /** Categoría del profesional: la menor de sus filas en `trabajador_servicios` (igual que la RPC). */
@@ -192,9 +193,10 @@ export async function fetchWorkersCatalog(
   });
 
   if (!rpc.error && Array.isArray(rpc.data)) {
+    // La RPC ya trae nota, trabajos y élite desde la misma fuente que
+    // stats_profesionales. No se vuelve a pedir: serían las mismas cifras.
     const page = pageFromRows(rpc.data as WorkerQueryRow[], limit, offset);
-    const workers = await overlayPublicStats(supabase, page.workers);
-    return { ...page, workers: sortWorkersForCatalog(workers, opts.origin) };
+    return { ...page, workers: sortWorkersForCatalog(page.workers, opts.origin) };
   }
 
   const query = supabase

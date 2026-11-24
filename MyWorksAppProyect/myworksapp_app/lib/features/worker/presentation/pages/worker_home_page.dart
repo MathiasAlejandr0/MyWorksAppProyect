@@ -384,7 +384,6 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage>
                     tourKey: _actionsKey,
                     width: double.infinity,
                     child: WorkerQuickActionsRow(
-                      onNewJob: () => _tabController.animateTo(0),
                       onCalendar: () =>
                           context.push(AppConstants.routeJobSchedule),
                       onHistory: () =>

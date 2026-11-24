@@ -11,11 +11,11 @@
 
 | Parte | Qué es | Dónde está |
 |---|---|---|
-| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`MyWorksAppProyect/myworksapp_app/`](MyWorksAppProyect/myworksapp_app/) |
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.15+16) | [`MyWorksAppProyect/myworksapp_app/`](MyWorksAppProyect/myworksapp_app/) |
 | Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`MyWorksAppProyect/myworksapp_web/`](MyWorksAppProyect/myworksapp_web/), publicado en https://myworksapp.cl |
 | Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`MyWorksAppProyect/myworksapp_desktop/`](MyWorksAppProyect/myworksapp_desktop/) |
 | Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`MyWorksAppProyect/shared/`](MyWorksAppProyect/shared/) |
-| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`MyWorksAppProyect/myworksapp_app/supabase/`](MyWorksAppProyect/myworksapp_app/supabase/) |
+| Backend | Supabase: PostgreSQL con RLS. El 22-11-2026 la base viva tenía 76 tablas. El detalle y la forma normal están en el diccionario y en `docs/normalizacion.md` | [`MyWorksAppProyect/myworksapp_app/supabase/`](MyWorksAppProyect/myworksapp_app/supabase/) |
 | Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`MyWorksAppProyect/docs/`](MyWorksAppProyect/docs/) |
 | Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](docs/INDICE.md) |
 
@@ -132,11 +132,11 @@ Turnstile) · Resend (correo, dominio send.myworksapp.cl) · OpenFreeMap (mapas)
 
 | Componente | Rol |
 |------------|-----|
-| `MyWorksAppProyect/myworksapp_app/` | App móvil Flutter (versión 1.0.11+12) |
+| `MyWorksAppProyect/myworksapp_app/` | App móvil Flutter (versión 1.0.15+16) |
 | `MyWorksAppProyect/myworksapp_web/` | Web de clientes (sesión o invitado) |
 | `MyWorksAppProyect/myworksapp_desktop/` | Consola operativa de escritorio (Tauri 2) |
 | `MyWorksAppProyect/shared/` | Contratos TypeScript compartidos por la web y la consola |
-| `MyWorksAppProyect/myworksapp_app/supabase/` | 125 migraciones SQL y 18 Edge Functions |
+| `MyWorksAppProyect/myworksapp_app/supabase/` | 133 archivos de migración y 18 Edge Functions en el repositorio. La base viva llega más lejos (`20261123020000`) |
 | `Fase 1/`, `Fase 2/`, `Documentos Guia/` | Expediente académico Capstone |
 
 Diccionario de datos: [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md). Estado técnico completo: [`MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`](MyWorksAppProyect/ESTADO_DEL_PROYECTO.md).
@@ -155,7 +155,7 @@ Diccionario de datos: [`MyWorksAppProyect/docs/DICCIONARIO_BASE_DATOS.md`](MyWor
 |----------|----------------|
 | Scrum adaptado | 11 sprints de 1 o 2 semanas reconstruidos desde el historial de GitHub; entregas por dominio: definición → backend/RLS → clientes → pagos → endurecimiento |
 | MVP primero | Primero lo demostrable; pendientes explícitos (payout automático, Transbank en producción, tiendas) |
-| Fases Capstone | Fase 1 definición del proyecto; Fase 2 y siguientes con evidencias; software en `MyWorksAppProyect/` |
+| Fases Capstone | Fase 1 definición; Fase 2 desarrollo, cerrada en su ventana el 22 de noviembre de 2026; Fase 3 vigente (pruebas, informe final y demostración). El software está en `MyWorksAppProyect/` |
 | Calidad continua | CI, runbooks, diccionario BD, auditorías de seguridad |
 
 Roles: Product Owner y Scrum Master, Mathias Jara Alvarado; equipo de desarrollo, Mathias Jara Alvarado, Gabriel Valderas y Nicolas Chiguay.
@@ -188,7 +188,7 @@ Priorizar un flujo → acordar estados en BD → implementar (apps + Edge + SQL)
 | Ruta | Contenido |
 |------|-----------|
 | `Fase 1/` | Entregables y evidencias de definición del proyecto |
-| `Fase 2/` | Entregables de la siguiente fase Capstone |
+| `Fase 2/` | Informe, guía, pauta, presentación y demás entregables que la comisión lee en la Fase 3. No hay carpeta `Fase 3/` |
 | `Documentos Guia/` | Guías e instructivos del programa |
 | `Capstone_Project.mpp` | Planificación del proyecto |
 | **`MyWorksAppProyect/`** | **Monorepo del producto** (app, web, desktop, shared, docs técnicos, CI) |
@@ -219,11 +219,13 @@ Configurar variables Supabase según `.env.example` de web/desktop y `--dart-def
 
 ## 9. Estado respecto al título y al producto
 
-Estado a `main` `d9d2c7c` (20 de noviembre de 2026).
+Estado al 22 de noviembre de 2026, 23:07 hora de Chile. La fase vigente es la Fase 3 (pruebas, informe final y demostración). `origin/main` está en `19d1da3`. El detalle está en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
 
 | Dimensión | Estado actual |
 |-----------|----------------|
-| Definición / evidencia Fase 1 | Presente en carpetas académicas |
+| Definición / evidencia Fase 1 | Presente en carpetas académicas; no se reescribe |
+| Fase 2 (desarrollo) | Ventana cerrada el 22 de noviembre de 2026. El relato sigue en `Fase 2/` y en la carta Gantt |
+| Fase 3 (vigente) | Pruebas, informe final y demostración. No hay plantilla de estudiante de esta fase en el repositorio |
 | MVP técnico multiplataforma | Implementado (`MyWorksAppProyect/`) |
 | Web en producción | Publicada en Vercel con dominio propio `myworksapp.cl` |
 | Pagos Webpay Plus y Oneclick | Implementados en **ambiente de integración** (solo tarjetas de prueba) |
@@ -231,7 +233,7 @@ Estado a `main` `d9d2c7c` (20 de noviembre de 2026).
 | Liquidación al profesional | Manual por administrador (automatización futura) |
 | Lanzamiento comercial | Condicionado a empresa, credenciales de producción de Transbank y al piloto con usuarios |
 
-**En desarrollo (ramas sin merge, no están en producción):** `cursor/aviso-academico-duoc-v2` (banner y páginas legales) y `cursor/consola-bugs` (24 errores de la consola). También pendientes: la invitación por Resend (falta `INVITE_PROVIDER=resend`) y la prueba de punta a punta de `soporte@myworksapp.cl`. Detalle en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
+**Pendiente de integrar o de publicar:** `cursor/consola-bugs` (24 errores de la consola del 20-11). El aviso académico ya está en `main`. Falta desplegar la web posterior al PR #100 y la función `oneclick-charge` que reanuda la orden de cambio. También pendientes: la invitación por Resend (`INVITE_PROVIDER=resend`) y la prueba de punta a punta de `soporte@myworksapp.cl`. Detalle en `MyWorksAppProyect/ESTADO_DEL_PROYECTO.md`.
 
 ---
 

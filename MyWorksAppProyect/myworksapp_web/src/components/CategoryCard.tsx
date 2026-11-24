@@ -10,7 +10,7 @@ type CategoryCardProps = {
 };
 
 export function CategoryCard({ title, subtitle, photo, onClick, variant = 'landing' }: CategoryCardProps) {
-  const [failed, setFailed] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   return (
     <button
@@ -18,22 +18,21 @@ export function CategoryCard({ title, subtitle, photo, onClick, variant = 'landi
       className={`category-card category-card--${variant}`}
       onClick={onClick}
     >
-      <div className={`category-media${failed ? ' category-media--fallback' : ''}`}>
-        {!failed ? (
+      <div className={`category-media${imageError ? ' category-media--fallback' : ''}`}>
+        {!imageError && (
           <img
             src={photo}
-            srcSet={/\/categories\/(electricidad|pintura|jardineria|construccion|soporte-tecnico|mudanza|climatizacion)\.webp$/.test(photo)
-              ? `${photo.replace('.webp', '-480.webp')} 480w, ${photo.replace('.webp', '-640.webp')} 640w, ${photo.replace('.webp', '-960.webp')} 960w`
-              : undefined}
-            sizes="(max-width: 700px) 100vw, 320px"
-            alt=""
+            alt={`${title} - ${subtitle}`}
             loading="lazy"
             decoding="async"
             width={640}
             height={400}
-            onError={() => setFailed(true)}
+            onError={(e) => {
+              console.error(`Failed to load image: ${photo}`, e);
+              setImageError(true);
+            }}
           />
-        ) : null}
+        )}
         <div className="category-media-scrim" aria-hidden />
         <div className="category-media-label">
           <span className="category-title">{title}</span>

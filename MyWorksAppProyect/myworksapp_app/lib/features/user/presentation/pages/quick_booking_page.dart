@@ -10,6 +10,7 @@ import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/database/repositories/user_repository.dart';
 import '../../../../core/database/repositories/worker_repository.dart';
 import '../../../../core/providers/service_providers.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/pricing_service.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/utils/comuna_utils.dart';
@@ -199,6 +200,14 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
           jobId: booking.job.id,
           userId: auth.id,
         );
+        AnalyticsService.instance.registrarUso(
+          eventName: AnalyticsEvents.confirmoPedido,
+          userId: auth.id,
+          metadata: {
+            'id_trabajo': booking.job.id,
+            'id_profesional': widget.workerId,
+          },
+        );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Visita agendada y pago en garantía')),
@@ -283,7 +292,17 @@ class _QuickBookingPageState extends ConsumerState<QuickBookingPage> {
               emptyHint: _freeSlots.isEmpty
                   ? 'Este profesional aún no publica horarios de atención.'
                   : 'Este profesional no tiene horas libres este día.',
-              onChanged: (time) => setState(() => _selectedTime = time),
+              onChanged: (time) {
+                setState(() => _selectedTime = time);
+                AnalyticsService.instance.registrarUso(
+                  eventName: AnalyticsEvents.eligioHoraReserva,
+                  userId: ref.read(authProvider).user?.id,
+                  metadata: {
+                    'id_profesional': widget.workerId,
+                    'hora': '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
+                  },
+                );
+              },
             ),
             const SizedBox(height: 8),
             TextField(

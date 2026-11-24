@@ -253,6 +253,7 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     }
   }
 
+
   Future<void> _proposeAgreement(String type) async {
     final job = _job;
     if (job == null) return;
@@ -334,7 +335,11 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
     }
   }
 
-  Future<void> _openDispute(String reason, String? description) async {
+  Future<void> _openDispute(
+    String reason,
+    String? description, [
+    String? outcome,
+  ]) async {
     final user = ref.read(authProvider).user;
     final job = _job;
     if (user == null || job == null) return;
@@ -346,6 +351,18 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
         reason: reason,
         description: description,
       );
+      var agreementFailed = false;
+      if (outcome != null && outcome.isNotEmpty) {
+        try {
+          await DisputeService.instance.proposeAgreement(
+            jobId: job.id,
+            type: outcome,
+          );
+        } catch (e) {
+          agreementFailed = true;
+          AppLogger.w('La disputa quedó abierta, pero el acuerdo no se envió: $e');
+        }
+      }
 
       final notifyUserId = user.id == job.userId ? job.workerId : job.userId;
       if (notifyUserId != null) {
@@ -361,9 +378,12 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
       await _loadJobDetails();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
+          backgroundColor: agreementFailed ? AppColors.error : null,
           content: Text(
-            'Disputa abierta. El pago sigue retenido. Si el caso es simple, se cierra solo al vencer el plazo.',
+            agreementFailed
+                ? 'La disputa quedó abierta, pero no se registró la opción elegida. Avísale a la otra parte por el chat.'
+                : 'Disputa abierta. El trabajo queda en pausa y el pago sigue retenido.',
           ),
         ),
       );

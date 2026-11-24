@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/database/models/job_model.dart';
 import '../../../../core/database/models/service_model.dart';
+import '../../../../core/database/repositories/job_repository.dart';
 import '../../../../core/database/repositories/message_repository.dart';
 import '../../../../core/database/repositories/service_repository.dart';
 import '../../../../core/design_system/app_breakpoints.dart';
@@ -24,6 +26,7 @@ import '../../../../core/widgets/design_system/app_brand_logo.dart';
 import '../../../../core/widgets/design_system/auth_soft_background.dart';
 import '../../../../core/widgets/design_system/error_state_widget.dart';
 import '../../../../core/widgets/profile_avatar_picker.dart';
+import '../widgets/in_progress_job_card.dart';
 import '../widgets/testing_feedback_sheet.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../payments/presentation/pages/card_enrollment_page.dart';
@@ -37,8 +40,10 @@ class UserHomePage extends ConsumerStatefulWidget {
   ConsumerState<UserHomePage> createState() => _UserHomePageState();
 }
 
-class _UserHomePageState extends ConsumerState<UserHomePage> {
+class _UserHomePageState extends ConsumerState<UserHomePage>
+    with WidgetsBindingObserver {
   final ServiceRepository _serviceRepository = ServiceRepository();
+  final JobRepository _jobRepository = JobRepository();
   final MessageRepository _messageRepository = MessageRepository();
   final _searchController = TextEditingController();
   final _profileKey = GlobalKey();
@@ -51,16 +56,83 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
   late Future<List<ServiceModel>> _servicesFuture;
   bool _hasUnreadNotices = false;
   int _unreadMessages = 0;
+  List<({JobModel job, String? serviceName, bool disputeOpen})> _inProgressJobs =
+      const [];
+  String? _inProgressRequestedFor;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _servicesFuture = _serviceRepository.getMainServices();
     _refreshUnreadNotices();
+    final userId = ref.read(authProvider).user?.id;
+    if (userId != null) {
+      _inProgressRequestedFor = userId;
+      _loadInProgressJobs();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _askForCardOnce();
       _refreshUnreadMessages();
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _loadInProgressJobs();
+  }
+
+  void _ensureInProgressLoaded(String? userId) {
+    if (userId == null) {
+      if (_inProgressRequestedFor == null) return;
+      _inProgressRequestedFor = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _inProgressJobs.isNotEmpty) {
+          setState(() => _inProgressJobs = const []);
+        }
+      });
+      return;
+    }
+    if (_inProgressRequestedFor == userId) return;
+    _inProgressRequestedFor = userId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadInProgressJobs();
+    });
+  }
+
+  Future<void> _loadInProgressJobs() async {
+    final user = ref.read(authProvider).user;
+    if (user == null) return;
+    try {
+      final jobs = await _jobRepository.getInProgressJobsByUserId(user.id);
+      if (!mounted) return;
+      setState(() => _inProgressJobs = jobs);
+    } catch (_) {
+      // El inicio sigue usable si el resumen del trabajo no carga.
+    }
+  }
+
+  Future<void> _openInProgressJob(String jobId) async {
+    await context.push('${AppConstants.routeJobDetail}/$jobId');
+    if (mounted) await _loadInProgressJobs();
+  }
+
+  List<Widget> _inProgressCards() {
+    if (_inProgressJobs.isEmpty) return const [];
+    return [
+      for (var i = 0; i < _inProgressJobs.length; i++) ...[
+        if (i > 0) const SizedBox(height: 12),
+        InProgressJobCard(
+          serviceName: _inProgressJobs[i].serviceName,
+          description: _inProgressJobs[i].job.description,
+          address: _inProgressJobs[i].job.address,
+          status: _inProgressJobs[i].job.status,
+          pausedByDispute: _inProgressJobs[i].disputeOpen,
+          onOpen: () => _openInProgressJob(_inProgressJobs[i].job.id),
+        ),
+      ],
+      const SizedBox(height: 16),
+    ];
   }
 
   Future<void> _refreshUnreadMessages() async {
@@ -95,7 +167,9 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
     final user = ref.read(authProvider).user;
     if (!mounted || user == null || user.role != AppConstants.roleUser) return;
     try {
-      final enrolled = await ref.read(paymentServiceProvider).hasSavedCard();
+      final enrolled = await ref
+          .read(paymentServiceProvider)
+          .hasSavedCard(recoverAbandoned: true);
       if (!mounted || enrolled) return;
       await CardEnrollmentPage.open(context);
     } catch (_) {
@@ -143,6 +217,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
   }
@@ -163,6 +238,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
     final authState = ref.watch(authProvider);
     final user = authState.user;
     final userName = user?.name.split(' ').first ?? 'Usuario';
+    _ensureInProgressLoaded(user?.id);
     final brightness = Theme.of(context).brightness;
     final titleColor = AppColors.onCanvas(brightness);
     final mutedColor = AppColors.onCanvasMuted(brightness);
@@ -173,7 +249,10 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
       child: Scaffold(
           backgroundColor: AppDecorations.canvasOf(context),
           bottomNavigationBar: _UserBottomNav(
-            onProjects: () => context.push(AppConstants.routeJobHistory),
+            onProjects: () async {
+              await context.push(AppConstants.routeJobHistory);
+              if (mounted) await _loadInProgressJobs();
+            },
             onNotices: _openNotices,
             hasUnreadNotices: _hasUnreadNotices,
             onMessages: () async {
@@ -205,28 +284,50 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                         if (snapshot.connectionState ==
                                 ConnectionState.waiting &&
                             _allServices.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
-                            child: Column(
-                              children: [
-                                ListItemSkeleton(),
-                                ListItemSkeleton(),
-                                ListItemSkeleton(),
-                                ListItemSkeleton(),
-                              ],
+                          return ListView(
+                            padding: EdgeInsets.fromLTRB(
+                              AppBreakpoints.screenPadding(context) + 4,
+                              24,
+                              AppBreakpoints.screenPadding(context) + 4,
+                              24,
                             ),
+                            children: [
+                              ..._inProgressCards(),
+                              const ListItemSkeleton(),
+                              const ListItemSkeleton(),
+                              const ListItemSkeleton(),
+                              const ListItemSkeleton(),
+                            ],
                           );
                         }
 
                         if (snapshot.hasError) {
-                          return ErrorStateWidget(
-                            title: 'No se pudieron cargar los servicios',
-                            message: '${snapshot.error}',
-                            actionLabel: 'Reintentar',
-                            onRetry: () => setState(() {
-                              _servicesFuture =
-                                  _serviceRepository.getMainServices();
-                            }),
+                          return Column(
+                            children: [
+                              if (_inProgressJobs.isNotEmpty)
+                                Padding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    AppBreakpoints.screenPadding(context) + 4,
+                                    12,
+                                    AppBreakpoints.screenPadding(context) + 4,
+                                    0,
+                                  ),
+                                  child: Column(
+                                    children: _inProgressCards(),
+                                  ),
+                                ),
+                              Expanded(
+                                child: ErrorStateWidget(
+                                  title: 'No se pudieron cargar los servicios',
+                                  message: '${snapshot.error}',
+                                  actionLabel: 'Reintentar',
+                                  onRetry: () => setState(() {
+                                    _servicesFuture =
+                                        _serviceRepository.getMainServices();
+                                  }),
+                                ),
+                              ),
+                            ],
                           );
                         }
 
@@ -274,6 +375,7 @@ class _UserHomePageState extends ConsumerState<UserHomePage> {
                                 ),
                               ),
                               const SizedBox(height: 12),
+                              ..._inProgressCards(),
                               Align(
                                 alignment: Alignment.centerLeft,
                                 child: OutlinedButton.icon(

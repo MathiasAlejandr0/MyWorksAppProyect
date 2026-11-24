@@ -1,6 +1,6 @@
 # Pruebas de MyWorksApp
 
-Qué se probó, cómo, con qué resultado y qué falta. Estado al 20-11-2026. Es la prueba P-17 del informe final (`Fase 2/Myworksapp_Informe_Final_PTY4614.pdf`); las pruebas anteriores, P-01 a P-16, también están en el informe.
+Qué se probó, cómo, con qué resultado y qué falta. El cuerpo de este archivo es la prueba al 20-11-2026 (P-17 y las anteriores). El 22-11-2026 no se repitieron estas mediciones. Sí consta que la migración `20261120180000` (corrección de H1) está en la lista de migraciones de la base viva, y que el catálogo pasó a una sola consulta de cifras. Ninguna de las dos cosas tiene un p95 nuevo. El cierre de integración está en la sección P-18 del informe `Fase 2/Myworksapp_Informe_Final_PTY4614.docx` (rama `cursor/informe-cierre-5321`).
 
 ## Contenido
 

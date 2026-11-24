@@ -2,9 +2,17 @@
 
 Documento de referencia para **memoria de título**, **presentaciones universitarias**, **financiamiento** y **planificación técnica**.
 
-**Última actualización:** 20 de noviembre de 2026, sobre `main` `d9d2c7c` de `nicoussj/Proyecto-Titulo-MyWorksApp` (merge del PR #82).  
-**Versiones:** app Flutter 1.0.11+12 (`pubspec.yaml`); web 1.0.0 y consola 0.1.0 (`package.json`, `tauri.conf.json`).  
+**Fase vigente:** Fase 3 y última del Capstone PTY4614 (pruebas, informe final y demostración). La guía `Fase 2/2.4_DesarrolloProyecto_APT_MyWorksApp.docx` describe así esta fase. La Fase 1 (definición) y la Fase 2 (desarrollo) quedan como antecedente.
+
+**Última actualización:** 22 de noviembre de 2026, 23:07 hora de Chile (23 de noviembre de 2026, 02:07 UTC), en la rama `cursor/informe-cierre-5321`. `origin/main` está en `19d1da3` y no tiene commits posteriores. El inventario del 20-11 (`d9d2c7c`) y el cierre sobre `a5f2f7d` quedan debajo, corregidos donde esta lectura los dejó falsos.  
+**Versiones:** app Flutter 1.0.15+16 (`pubspec.yaml`, commit `19d1da3` del 22 de noviembre de 2026, 22:36 hora de Chile); web 1.0.0 y consola 0.1.0 (`package.json`, `tauri.conf.json`). Esa versión oculta en Mi Perfil la carta de boleta del SII, porque el formulario solo guarda RUT, giro y tipo de documento en el teléfono y la boleta no está integrada.  
 **Repositorio:** https://github.com/nicoussj/Proyecto-Titulo-MyWorksApp (el espejo `MathiasAlejandr0/MyWorksAppProyect` tiene un historial distinto y no se usa como fuente).
+
+**Base remedida.** El 22 de noviembre de 2026, a las 23:04 hora de Chile, Supabase respondió sobre `wxqrfcqifkfgawrnqmnj`: 76 tablas en `public`, las 76 con RLS, 94 claves foráneas y última migración `20261123020000`. `app_config.demo_modo` sigue en 1. No se modificó la base, no se tocaron comisiones y no se ejecutó `seed_historial_puerto_montt.sql`. De 82 perfiles, 34 tienen foto en el bucket público `fotos-demo` y 48 siguen sin `ruta_foto_perfil`. El piso de forma normal no cambia: 2FN en el esquema auditado el 16-11, la mayoría de esas tablas en BCNF, 4FN solo en las listas del profesional, y tres tablas a propósito en 2FN (`mensajes`, `tickets_soporte`, `trabajadores`). Las 15 tablas nuevas no se reclasificaron.
+
+**Plantilla de Fase 3.** No existe una carpeta `Fase 3/` ni una guía de estudiante en blanco para esa fase, ni en esta rama ni en `origin/main`. Las guías 1.5 y 2.6 no se rellenan: son rúbricas del programa. El estado de la fase queda en este archivo.
+
+**Sitio publicado, sin despliegue nuevo.** A las 23:03 hora de Chile, https://myworksapp.cl respondió HTTP 200, `text/html; charset=utf-8`, y la portada carga `/assets/index-dFwoI3u5.js`. Ese JavaScript arma `/categories/electricidad.webp`, que respondió HTTP 200, `image/webp`, 2626 bytes, última modificación 22 de noviembre de 2026, 18:18 hora de Chile. El fuente de `main` pide `/categories/electricidad-1795386019.webp`: el archivo está en el repositorio y es un WebP real, pero en el sitio publicado esa URL responde HTTP 200 con `text/html` (el `index.html` de respaldo, última modificación 20 de noviembre de 2026, 05:44 hora de Chile). La foto `fotos-demo/11111111-1111-4111-8111-000000000109.jpg` respondió HTTP 200, `image/jpeg`, última modificación 22 de noviembre de 2026, 20:34 hora de Chile. La CSP publicada no incluye `images.unsplash.com` ni `i.pravatar.cc`; `myworksapp_web/vercel.json` y `public/_headers` sí. No se publicó un paquete nuevo: la cuenta de Vercel de esta sesión solo ve el equipo `suertu2s` y el proyecto `suertu2s`; `npx vercel whoami` está deslogueado y no hay `VERCEL_TOKEN`. No se desplegó `suertu2s.cl`. El comando para la cuenta dueña de `myworksapp` está en [`docs/deploy_web.md`](docs/deploy_web.md).
 
 ---
 
@@ -12,11 +20,11 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 
 | Parte | Qué es | Dónde está |
 |---|---|---|
-| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`myworksapp_app/`](myworksapp_app/) |
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.15+16) | [`myworksapp_app/`](myworksapp_app/) |
 | Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`myworksapp_web/`](myworksapp_web/), publicado en https://myworksapp.cl |
 | Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`myworksapp_desktop/`](myworksapp_desktop/) |
 | Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`shared/`](shared/) |
-| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`myworksapp_app/supabase/`](myworksapp_app/supabase/) |
+| Backend | Supabase: PostgreSQL con RLS en las 76 tablas de `public` medidas el 22-11; 133 archivos de migración en el repo; la base viva llega a `20261123020000`. El repo lista 18 Edge Functions; en el proyecto hay además funciones de consola e IA que no están en esa carpeta | [`myworksapp_app/supabase/`](myworksapp_app/supabase/) |
 | Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`docs/`](docs/) |
 | Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](../docs/INDICE.md) (en la raíz del repositorio) |
 
@@ -63,7 +71,7 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 |---|---|---|
 | Migraciones SQL | 125 (primera `20250607000001`, última `20261120170000`) | `myworksapp_app/supabase/migrations/*.sql` |
 | Edge Functions | 18 (más el código común `_shared/`) | `myworksapp_app/supabase/functions/` |
-| Tablas del esquema `public` | 60: las 57 del snapshot del 17-nov (`docs/_schema_public.json`) más `auditoria_consola`, `rate_limit_ventana` y `direcciones_cliente`, creadas por migraciones del 20-nov | migraciones `20261120130000`, `20261120150000`, `20261120170000` |
+| Tablas del esquema `public` | 76 medidas el 22-11-2026 en la base viva, las 76 con RLS y 94 claves foráneas. El diccionario detalla 60 y lista las otras 15 en la sección 0-bis, sin reclasificar su forma normal | catálogo de PostgreSQL; [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md) |
 | Vistas | 2: `encuestas_testing_con_puntaje` y `cobros_profesional` (`20261118053913`) | migraciones |
 | Tipos ENUM | 1: `accion_auditoria_consola` (27 acciones) | `20261120130000_auditoria_consola.sql` |
 | RPC de la consola `consola_*` | 17 | migraciones |
@@ -73,7 +81,7 @@ Documento de referencia para **memoria de título**, **presentaciones universita
 
 Edge Functions en el repositorio: `definir-clave-invitado`, `guest-checkout`, `invitar-colaborador`, `oneclick-charge`, `oneclick-handoff`, `oneclick-return`, `send-push`, `soporte-automatico`, `webpay-commit`, `webpay-create`, `webpay-handoff`, `webpay-reconcile`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-release`, `webpay-resolve-dispute` y `webpay-status`.
 
-Según el reporte de despliegue del 20-nov (después del PR #82), `soporte-automatico` ya está desplegada junto con `invitar-colaborador`, `webpay-commit`, `oneclick-charge`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-resolve-dispute` y `webpay-release`. `send-push` sigue **sin desplegar**. Ninguna migración programa una llamada a `soporte-automatico` (la única Edge Function a la que llama `pg_cron` es `webpay-reconcile`). No se pudo verificar desde el repositorio el estado de `oneclick-handoff` ni de `webpay-handoff`.
+Según el reporte de despliegue del 20-nov (después del PR #82), `soporte-automatico` ya está desplegada junto con `invitar-colaborador`, `webpay-commit`, `oneclick-charge`, `webpay-refund`, `webpay-refund-cancellation`, `webpay-refund-rejection`, `webpay-resolve-dispute` y `webpay-release`. El 22-11-2026 `oneclick-charge` seguía en la versión 15: el cobro principal abre el trabajo, y la reanudación de una orden de cambio está en el código de `main` y todavía no en esa función publicada. `send-push` sigue **sin desplegar**. Ninguna migración programa una llamada a `soporte-automatico` (la única Edge Function a la que llama `pg_cron` es `webpay-reconcile`). No se pudo verificar desde el repositorio el estado de `oneclick-handoff` ni de `webpay-handoff`.
 
 ---
 
@@ -232,7 +240,7 @@ Detalle en [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADE
 - **Consola operativa** (`myworksapp_desktop`, Tauri 2 + React 19): 20 módulos de menú más «Mi cuenta»; deep link `myworksapp-admin://auth/callback`; segundo factor TOTP; código TOTP otra vez para mover dinero si el último tiene más de 5 minutos; cierre de sesión tras 15 minutos sin uso (aviso a los 13); actualizador con un par de claves nuevo.
 - Módulo compartido TypeScript (`shared/`): auth, repositorios, chat y filtro de contacto, pagos, métricas, agenda, evidencia y tipos alineados con Flutter (la CI compara el dominio TS con el Dart).
 - Supabase: autenticación, perfiles, trabajos, pagos, chat, notificaciones, calificaciones, disputas y bitácora de la consola.
-- RLS activo en las 60 tablas de `public` (`rate_limit_ventana` no tiene políticas: solo la usa `service_role`).
+- El 22-11-2026 el catálogo mostró RLS activo en las 76 tablas de `public`. El detalle de políticas por tabla no se volvió a contar.
 - Límite de tasa global en Postgres (`rate_limit_consumir`) usado por `guest-checkout`, `definir-clave-invitado`, `webpay-create` y `oneclick-charge`.
 - Bootstrap centralizado y health check del backend.
 
@@ -264,7 +272,7 @@ Detalle en [docs/ARQUITECTURA_MODALIDADES_COBRO.md](docs/ARQUITECTURA_MODALIDADE
 
 Las cuentas `@demo.com` son legado: el administrador `admin@demo.com` está suspendido (auditoría 2026-10-05).
 
-Las cuentas `@demo.myworksapp.cl` y `@demo.com` se marcan con `es_demo` (migración `20261120140000`). Con `app_config.demo_modo = 1`, que es el valor en vivo informado el 20-nov, siguen visibles en el catálogo con el aviso «Datos de demostración»; con otro valor se ocultan y no se pueden reservar ni cobrar.
+Las cuentas `@demo.myworksapp.cl` y `@demo.com` se marcan con `es_demo` (migración `20261120140000`). Con `app_config.demo_modo = 1` siguen visibles en el catálogo con el aviso «Datos de demostración»; con otro valor se ocultan y no se pueden reservar ni cobrar. El 22-11-2026 ese valor seguía en 1.
 
 ---
 
@@ -272,7 +280,7 @@ Las cuentas `@demo.myworksapp.cl` y `@demo.com` se marcan con `es_demo` (migraci
 
 | Área | Estado | Prioridad |
 |------|--------|-----------|
-| **Alta de profesionales (H1)** | **Falla en producción.** La migración `20261118230000` (aplicada en vivo, verificado el 20-nov con la lista de migraciones y consultas de solo lectura) crea un trigger que usa `generate_series` con valores `time`, que no existe en Postgres 17: todo `INSERT` en `trabajadores` falla. La corrección (`20261120180000_agenda_alta_sin_generate_series_time.sql`) y su prueba están en el parche de pruebas, sin aplicar. Ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md#hallazgos) | **Crítica** |
+| **Alta de profesionales (H1)** | La corrección `20261120180000_agenda_alta_sin_generate_series_time` está en la lista de migraciones de la base viva. No se repitió el alta de un profesional el 22-11, así que el síntoma no se declara cerrado. Ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md#hallazgos) | Alta |
 | Pasarela de pago | Webpay exige `TBK_ENV`. Sin la variable el checkout falla. En vivo se usa `integration`. Producción sigue en `docs/RUNBOOK_TRANSBANK_PRODUCCION.md` | Alta |
 | Liquidación al profesional | El administrador confirma la transferencia bancaria (`provider=manual`). Khipu y Fintoc responden 501 hasta tener contrato y claves | Alta |
 | Notificaciones push remotas (FCM / APNs) | `send-push` y `firebase_messaging` están en el repo, pero `send-push` no está desplegada en vivo (reporte del 20-nov) | Media |
@@ -281,13 +289,13 @@ Las cuentas `@demo.myworksapp.cl` y `@demo.com` se marcan con `es_demo` (migraci
 | Correos transaccionales | ✅ En producción desde el 20-nov (PR #82): pago recibido (al cliente y al profesional), alta de invitado («define tu contraseña»), reembolso y pago liberado, con un diseño común (`_shared/email_layout.ts`, `email_send.ts` y `payment_mail.ts`). No se envían a cuentas demo; si faltan `RESEND_API_KEY` o `RESEND_FROM`, no se envían y el pago sigue | — |
 | Invitación por Resend | **Pendiente**: falta el secreto `INVITE_PROVIDER=resend` (espera la aprobación del dueño). Mientras tanto la invitación sale por Supabase Auth con el SMTP de Resend | Media |
 | Buzón de soporte | `soporte@myworksapp.cl` reenvía con Cloudflare Email Routing; falta la prueba de punta a punta | Baja |
-| Textos legales | `/terminos` y `/privacidad` existen, pero dicen que el texto oficial aún no está publicado | Media |
+| Textos legales | El aviso de proyecto de título y las páginas legales están en `main` (`a5f2f7d`). El 22-11 a las 23:03, hora de Chile, https://myworksapp.cl todavía servía `/assets/index-dFwoI3u5.js`: falta el despliegue de Vercel | Media |
 | Chat en tiempo real | ✅ Supabase Realtime (`postgres_changes` sobre `mensajes`): app `chat_page.dart`, web `LiveChatWidget.tsx`. El cobro en garantía también se frena si la descripción, la dirección o los mensajes del cliente traen datos de contacto (`20261120120000`) | — |
 | Evidencia del trabajo | Fotos en WebP (`fotos_trabajo_exigir_webp`, bucket privado `evidencias`) y videos de hasta 20 MB | — |
 | Tests automatizados | CI en verde sobre `d9d2c7c` (Flutter, web, consola, Tauri en Windows y Gitleaks; corrida del 20-nov a las 02:31, hora de Chile). En el box, el 20-nov: `shared/` 231 de 231 y consola 12 de 12. Prueba P-17 (19 y 20-nov, réplica local): **641 de 641** pruebas automatizadas; ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md) | ✅ |
-| Capacidad | Con todos los tipos de uso, en una réplica local con 1.000 profesionales sintéticos, se degrada con unos 100 usuarios virtuales y cae con unos 280. La causa es el catálogo, que llama a `stats_profesional()` por cada profesional, más el pool de 10 conexiones de PostgREST. En producción, con solo lecturas (otra prueba, del Programador), aguanta 200 a 250. Ver [`docs/PRUEBAS.md`](docs/PRUEBAS.md) | Alta |
+| Capacidad | La última medición sigue siendo la de P-17 y la lectura en producción del 20-11 (degradación cerca de 100 usuarios virtuales en la réplica; 200 a 250 en lecturas reales). El 22-11 `listar_profesionales_catalogo` pasó a una sola consulta de cifras (`privado.stats_profesionales`). No se repitió la prueba de carga, así que no hay un p95 nuevo | Alta |
 | CI/CD (GitHub Actions) | Un solo `.github` en la raíz del repo, con actions fijadas por SHA | ✅ |
-| Consola de escritorio | En uso con datos reales. La prueba del 20-nov (`08154df`) encontró 24 errores; el más grave es que el módulo «Profesionales» responde 403 y no se puede verificar a nadie desde la consola. El arreglo está en la rama `cursor/consola-bugs` (sin merge) | Alta |
+| Consola de escritorio | El 22-11 quedaron en `main` el orden del menú (PR #99) y el isotipo de la ventana (PR #98). Los 24 errores del 20-nov, entre ellos el 403 al verificar profesionales, quedan corregidos en este cambio. Ajustes depende de `consola_leer_config` | Alta |
 | Instalador de la consola | El par de claves del actualizador es nuevo; la privada no está en el repo y va como secrets `TAURI_SIGNING_PRIVATE_KEY` y `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. Quien tenga la versión anterior debe reinstalar una vez | Media |
 | Publicación en tiendas | No publicada | Alta (al lanzar) |
 
@@ -297,8 +305,8 @@ Estas ramas existen en `nicoussj/Proyecto-Titulo-MyWorksApp` pero **no tienen me
 
 | Rama | Qué agrega |
 |---|---|
-| `cursor/aviso-academico-duoc-v2` | Banner de proyecto académico Duoc UC y páginas `/aviso-legal`, `/terminos` y `/privacidad` con texto basado en la Ley 19.628 |
-| `cursor/consola-bugs` | Arreglo de los 24 errores de la consola encontrados en la prueba del 20-nov. Trae la migración `20261120210000_consola_lectura_config_y_disputas.sql`, que no está aplicada |
+| `cursor/consola-bugs` | Quedó superada por el arreglo de la consola sobre `main`. No mergear: parte de un `main` viejo y revierte el menú y el isotipo |
+| `cursor/informe-cierre-5321` | Informe final con la sección P-18 y estos documentos de estado al 22-11. No sustituye el despliegue de la web ni de `oneclick-charge` |
 
 Además hay un **parche local de pruebas** (no es una rama en GitHub): 12 pruebas de `shared`, 2 pruebas SQL y la corrección de H1, en 3 commits sobre `d9d2c7c`. Se entrega aparte al Programador.
 

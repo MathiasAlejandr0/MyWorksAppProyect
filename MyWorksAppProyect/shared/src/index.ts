@@ -15,6 +15,7 @@ export {
 } from './domain';
 export type { JobStatus, PaymentStatus, PricingMode } from './domain';
 
+export * from './analytics/events';
 export * from './catalog';
 export * from './catalogOrder';
 export * from './database.types';

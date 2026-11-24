@@ -8,6 +8,7 @@ import '../utils/job_detail_helpers.dart';
 typedef OpenDisputeCallback = Future<void> Function(
   String reason,
   String? description,
+  String outcome,
 );
 
 typedef AddDisputeCommentCallback = Future<void> Function(String comment);
@@ -27,6 +28,7 @@ class DisputeSection extends StatelessWidget {
     this.onAppeal,
     this.onProposeAgreement,
     this.onRespondAgreement,
+    this.onCancelRequest,
     this.pendingAgreementType,
     this.pendingAgreementId,
   });
@@ -42,6 +44,9 @@ class DisputeSection extends StatelessWidget {
   final AppealDisputeCallback? onAppeal;
   final ProposeAgreementCallback? onProposeAgreement;
   final RespondAgreementCallback? onRespondAgreement;
+
+  /// Cancela el trabajo si la disputa se abrió por error.
+  final VoidCallback? onCancelRequest;
   final String? pendingAgreementType;
   final String? pendingAgreementId;
 
@@ -56,6 +61,7 @@ class DisputeSection extends StatelessWidget {
         onAppeal: onAppeal,
         onProposeAgreement: canNegotiate ? onProposeAgreement : null,
         onRespondAgreement: canNegotiate ? onRespondAgreement : null,
+        onCancelRequest: onCancelRequest,
         pendingAgreementType: canNegotiate ? pendingAgreementType : null,
         pendingAgreementId: canNegotiate ? pendingAgreementId : null,
       );
@@ -90,37 +96,13 @@ class DisputeSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Si los dos están de acuerdo, el sistema cierra el caso. Si abres una disputa, el pago queda retenido: los casos simples se cierran solos al vencer el plazo y el resto lo ve una persona.',
+            'Si abres una disputa, el trabajo queda en pausa y el pago sigue retenido. Elige qué quieres que pase y después el motivo.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: muted,
                   height: 1.4,
                   fontSize: 13,
                 ),
           ),
-            if (pendingAgreementType != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Acuerdo pendiente: '
-                '${JobDetailHelpers.agreementTypeLabel(pendingAgreementType)}',
-              ),
-              if (onRespondAgreement != null && pendingAgreementId != null)
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: () => onRespondAgreement!(true),
-                      child: const Text('Confirmar'),
-                    ),
-                    TextButton(
-                      onPressed: () => onRespondAgreement!(false),
-                      child: const Text('Rechazar'),
-                    ),
-                  ],
-                ),
-            ],
-            if (onProposeAgreement != null) ...[
-              const SizedBox(height: 16),
-              _AgreementActions(onPropose: onProposeAgreement!),
-            ],
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () => _openDisputeFlow(context),
@@ -138,9 +120,21 @@ class DisputeSection extends StatelessWidget {
   }
 
   Future<void> _openDisputeFlow(BuildContext context) async {
+    final start = await showDialog<_DisputeStartChoice>(
+      context: context,
+      builder: (ctx) => _DisputeStartDialog(
+        canCancelRequest: onCancelRequest != null,
+      ),
+    );
+    if (start == null || !context.mounted) return;
+    if (start.cancelRequest) {
+      onCancelRequest?.call();
+      return;
+    }
+
     final reason = await showDialog<String>(
       context: context,
-      builder: (ctx) => const _DisputeReasonDialog(),
+      builder: (ctx) => _DisputeReasonDialog(outcomeLabel: start.label!),
     );
     if (reason == null || !context.mounted) return;
 
@@ -155,6 +149,7 @@ class DisputeSection extends StatelessWidget {
     await onOpenDispute!(
       reason,
       description.isEmpty ? null : description,
+      start.outcome!,
     );
   }
 }
@@ -166,6 +161,7 @@ class _DisputeStatusCard extends StatefulWidget {
     this.onAppeal,
     this.onProposeAgreement,
     this.onRespondAgreement,
+    this.onCancelRequest,
     this.pendingAgreementType,
     this.pendingAgreementId,
   });
@@ -175,6 +171,7 @@ class _DisputeStatusCard extends StatefulWidget {
   final AppealDisputeCallback? onAppeal;
   final ProposeAgreementCallback? onProposeAgreement;
   final RespondAgreementCallback? onRespondAgreement;
+  final VoidCallback? onCancelRequest;
   final String? pendingAgreementType;
   final String? pendingAgreementId;
 
@@ -260,8 +257,15 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
                 'Acuerdo pendiente: '
                 '${JobDetailHelpers.agreementTypeLabel(widget.pendingAgreementType)}',
               ),
+            if (isOpen) ...[
+              const SizedBox(height: 10),
+              Text(
+                'El trabajo está en pausa. No se puede continuar hasta cerrar la disputa.',
+                style: TextStyle(color: muted, height: 1.35),
+              ),
+            ],
             if (isOpen && widget.onProposeAgreement != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _AgreementActions(onPropose: widget.onProposeAgreement!),
             ],
             if (isOpen &&
@@ -345,6 +349,18 @@ class _DisputeStatusCardState extends State<_DisputeStatusCard> {
                       ),
                 ),
               ),
+            if (isOpen && widget.onCancelRequest != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: widget.onCancelRequest,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error),
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                child: const Text('Cancelar solicitud'),
+              ),
+            ],
           ],
         ),
     );
@@ -423,6 +439,7 @@ class _DisputeIconBadge extends StatelessWidget {
     );
   }
 }
+
 
 class _AppealDialog extends StatefulWidget {
   const _AppealDialog();
@@ -511,6 +528,59 @@ class _DisputeDetailDialogState extends State<_DisputeDetailDialog> {
   }
 }
 
+class _AgreementActions extends StatelessWidget {
+  const _AgreementActions({required this.onPropose});
+
+  final ProposeAgreementCallback onPropose;
+
+  static const _actions = [
+    _Choice(
+      'aceptar',
+      'Aceptar entrega',
+      'El trabajo queda conforme y se puede liberar el pago.',
+      Icons.check_circle_outline,
+    ),
+    _Choice(
+      'rehacer',
+      'Rehacer',
+      'El profesional vuelve a hacer la parte que no quedó bien.',
+      Icons.replay,
+    ),
+    _Choice(
+      'anular',
+      'Anular',
+      'Se deja sin efecto el trabajo y se revisa la devolución.',
+      Icons.cancel_outlined,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Proponer un acuerdo',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 10),
+        for (var i = 0; i < _actions.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          _SelectableOptionCard(
+            title: _actions[i].title,
+            detail: _actions[i].detail,
+            icon: _actions[i].icon,
+            showRadio: false,
+            onTap: () => onPropose(_actions[i].value),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _Choice {
   const _Choice(this.value, this.title, this.detail, this.icon);
 
@@ -520,8 +590,123 @@ class _Choice {
   final IconData icon;
 }
 
+class _DisputeStartChoice {
+  const _DisputeStartChoice.outcome(this.outcome, this.label)
+      : cancelRequest = false;
+
+  const _DisputeStartChoice.cancelRequest()
+      : outcome = null,
+        label = null,
+        cancelRequest = true;
+
+  final String? outcome;
+  final String? label;
+  final bool cancelRequest;
+}
+
+class _DisputeStartDialog extends StatelessWidget {
+  const _DisputeStartDialog({required this.canCancelRequest});
+
+  final bool canCancelRequest;
+
+  static const _actions = [
+    _Choice(
+      'aceptar',
+      'Aceptar entrega',
+      'El trabajo queda conforme y se puede liberar el pago.',
+      Icons.check_circle_outline,
+    ),
+    _Choice(
+      'rehacer',
+      'Rehacer',
+      'El profesional vuelve a hacer la parte que no quedó bien.',
+      Icons.replay,
+    ),
+    _Choice(
+      'anular',
+      'Anular',
+      'Se deja sin efecto el trabajo y se revisa la devolución.',
+      Icons.cancel_outlined,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = AppColors.onCanvasMuted(Theme.of(context).brightness);
+    return Dialog(
+      backgroundColor: AppColors.surfaceOf(context),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Abrir disputa',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Elige qué quieres que pase. El trabajo queda en pausa y después indicas el motivo.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: muted,
+                      height: 1.35,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              for (var i = 0; i < _actions.length; i++) ...[
+                if (i > 0) const SizedBox(height: 10),
+                _SelectableOptionCard(
+                  title: _actions[i].title,
+                  detail: _actions[i].detail,
+                  icon: _actions[i].icon,
+                  showRadio: false,
+                  onTap: () => Navigator.pop(
+                    context,
+                    _DisputeStartChoice.outcome(
+                      _actions[i].value,
+                      _actions[i].title,
+                    ),
+                  ),
+                ),
+              ],
+              if (canCancelRequest) ...[
+                const SizedBox(height: 16),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(
+                    context,
+                    const _DisputeStartChoice.cancelRequest(),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(color: AppColors.error),
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: const Text('Cancelar solicitud'),
+                ),
+              ],
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Volver'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DisputeReasonDialog extends StatefulWidget {
-  const _DisputeReasonDialog();
+  const _DisputeReasonDialog({required this.outcomeLabel});
+
+  final String outcomeLabel;
 
   @override
   State<_DisputeReasonDialog> createState() => _DisputeReasonDialogState();
@@ -580,7 +765,7 @@ class _DisputeReasonDialogState extends State<_DisputeReasonDialog> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Elige una opción. El pago sigue retenido hasta cerrar el caso.',
+                'Elegiste ${widget.outcomeLabel}. Ahora indica el motivo. El pago sigue retenido hasta cerrar el caso.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: muted,
                       height: 1.35,
@@ -616,59 +801,6 @@ class _DisputeReasonDialogState extends State<_DisputeReasonDialog> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _AgreementActions extends StatelessWidget {
-  const _AgreementActions({required this.onPropose});
-
-  final ProposeAgreementCallback onPropose;
-
-  static const _actions = [
-    _Choice(
-      'aceptar',
-      'Aceptar entrega',
-      'El trabajo queda conforme y se puede liberar el pago.',
-      Icons.check_circle_outline,
-    ),
-    _Choice(
-      'rehacer',
-      'Rehacer',
-      'El profesional vuelve a hacer la parte que no quedó bien.',
-      Icons.replay,
-    ),
-    _Choice(
-      'anular',
-      'Anular',
-      'Se deja sin efecto el trabajo y se revisa la devolución.',
-      Icons.cancel_outlined,
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Proponer un acuerdo',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        const SizedBox(height: 10),
-        for (var i = 0; i < _actions.length; i++) ...[
-          if (i > 0) const SizedBox(height: 10),
-          _SelectableOptionCard(
-            title: _actions[i].title,
-            detail: _actions[i].detail,
-            icon: _actions[i].icon,
-            showRadio: false,
-            onTap: () => onPropose(_actions[i].value),
-          ),
-        ],
-      ],
     );
   }
 }

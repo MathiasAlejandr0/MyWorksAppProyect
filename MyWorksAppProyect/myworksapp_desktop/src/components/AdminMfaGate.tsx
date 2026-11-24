@@ -10,6 +10,7 @@ export function AdminMfaGate() {
   const { completeMfa, logout } = useAuth();
   const [factorId, setFactorId] = useState<string | null>(null);
   const [qr, setQr] = useState<string | null>(null);
+  const [secret, setSecret] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -44,6 +45,7 @@ export function AdminMfaGate() {
         return;
       }
       setFactorId(enrolled.data.id);
+      setSecret(enrolled.data.totp.secret);
       const qrSrc = await makeScannableTotpQr(enrolled.data.totp);
       if (cancelled) return;
       setQr(qrSrc);
@@ -61,7 +63,11 @@ export function AdminMfaGate() {
           className="login-card stack"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!factorId || code.trim().length < 6) return;
+            if (!factorId) return;
+            if (code.trim().length < 6) {
+              setError('El código tiene 6 dígitos.');
+              return;
+            }
             setBusy(true);
             setError(null);
             void (async () => {
@@ -87,8 +93,13 @@ export function AdminMfaGate() {
           }}
         >
           <h1>Segundo factor</h1>
-          <p className="muted">La consola pide un código de tu aplicación de autenticación.</p>
+          <p className="muted">
+            {qr
+              ? 'Escanea el código QR con tu aplicación de autenticación. Después escribe el código de 6 dígitos.'
+              : 'Escribe el código de 6 dígitos que muestra tu aplicación de autenticación.'}
+          </p>
           {qr ? <img className="totp-qr" src={qr} alt="Código QR para configurar el segundo factor" width={240} height={240} /> : null}
+          {secret ? <p>Si no puedes escanear el QR, escribe esta clave manual: <strong className="secret-key">{secret}</strong></p> : null}
           <label className="field">
             <span>Código de 6 dígitos</span>
             <input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value)} />

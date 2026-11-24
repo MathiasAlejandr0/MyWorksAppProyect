@@ -21,11 +21,11 @@ Registro de pruebas vigente: [`docs/anexos/2026-11-15-pruebas/REGISTRO.md`](docs
 
 | Parte | Qué es | Dónde está |
 |---|---|---|
-| App móvil | App Flutter para clientes y profesionales (versión 1.0.11+12) | [`myworksapp_app/`](myworksapp_app/) |
+| App móvil | App Flutter para clientes y profesionales (versión 1.0.15+16) | [`myworksapp_app/`](myworksapp_app/) |
 | Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`myworksapp_web/`](myworksapp_web/), publicado en https://myworksapp.cl |
 | Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`myworksapp_desktop/`](myworksapp_desktop/) |
 | Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`shared/`](shared/) |
-| Backend | Supabase: base PostgreSQL con RLS (60 tablas), 125 migraciones y 18 Edge Functions | [`myworksapp_app/supabase/`](myworksapp_app/supabase/) |
+| Backend | Supabase: PostgreSQL con RLS. El 22-11-2026 la base viva tenía 76 tablas. El diccionario está en [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md) | [`myworksapp_app/supabase/`](myworksapp_app/supabase/) |
 | Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`docs/`](docs/) |
 | Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](../docs/INDICE.md) (en la raíz del repositorio) |
 
@@ -114,7 +114,7 @@ Detalle: [`docs/DICCIONARIO_BASE_DATOS.md`](docs/DICCIONARIO_BASE_DATOS.md) y [`
 |--------------|---------------------------|
 | **Ágil / iterativo-incremental** | Se entrega por ciclos: auth → trabajos → RLS → Webpay → liquidación → hardening. |
 | **MVP primero** | Priorizamos lo demostrable y comercializable; lo demorado (payout automático, Transbank en producción) queda explícito como pendiente. |
-| **Fases Capstone (PTY4614)** | Fase 1 definición; Fase 2 y siguientes con evidencias académicas; el código vive en el monorepo. |
+| **Fases Capstone (PTY4614)** | Fase 1 definición; Fase 2 desarrollo, con la ventana cerrada el 22 de noviembre de 2026; Fase 3 vigente (pruebas, informe final y demostración). El código vive en el monorepo. |
 | **Trabajo por dominio** | Cada incremento toca un flujo (reserva, pago, admin) de punta a punta, no “páginas sueltas”. |
 | **Calidad continua** | CI (analyze/test Flutter; pruebas de `shared/`, lint, build y Playwright en la web; lint, pruebas y build de la consola; build Tauri en Windows), runbooks, diccionario de BD, auditorías de seguridad. |
 
@@ -149,11 +149,11 @@ graph TD
 
 | Carpeta | Rol |
 |---------|-----|
-| `myworksapp_app/` | App Flutter para clientes y profesionales (versión 1.0.11+12) |
+| `myworksapp_app/` | App Flutter para clientes y profesionales (versión 1.0.15+16) |
 | `myworksapp_web/` | Web de clientes (React 19 + Vite 8) |
 | `myworksapp_desktop/` | Consola operativa (Tauri 2 + React 19) |
 | `shared/` | Auth, repositorios, pagos, métricas y tipos TypeScript compartidos (web y consola) |
-| `myworksapp_app/supabase/migrations/` | 125 migraciones SQL (esquema, RLS, Webpay, consola, rate limit) |
+| `myworksapp_app/supabase/migrations/` | 133 archivos SQL al 22-11-2026 (esquema, RLS, Webpay, consola, rate limit). La base viva tiene versiones posteriores |
 | `myworksapp_app/supabase/functions/` | 18 Edge Functions y el código común `_shared/` |
 | `docs/` | Casos de uso, diccionario BD, runbooks, despliegue web y anexos de pruebas |
 

@@ -6,6 +6,7 @@ import { LandingHome } from './views/LandingHome';
 import { NotificationInbox } from './components/NotificationInbox';
 import type { SearchWorker } from './components/SearchResultsView';
 import { useAuth } from './context/useAuth';
+import { registrarEventoUso } from './analytics/registrarEvento';
 import { supabase } from './supabaseClient';
 import { useLiveJobLocation } from './hooks/useLiveJobLocation';
 import { queryKeys } from './queryClient';
@@ -25,6 +26,7 @@ import { ChangeOrderPanel } from './components/ChangeOrderPanel';
 import { SiteFooter } from './components/SiteFooter';
 import {
   CATALOG_STALE_MS,
+  EVENTOS_USO,
   chargeSavedCard,
   createGuestWebpayCheckout,
   getSavedCard,
@@ -295,6 +297,7 @@ export function App() {
     if (location.pathname !== target) navigate(target);
   };
   const [pendingAgreement, setPendingAgreement] = useState<{ id: string; tipo: string } | null>(null);
+  const [openDispute, setOpenDispute] = useState<{ openedBy: string | null } | null>(null);
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
   const [bookingSlots, setBookingSlots] = useState<string[]>([]);
   const [bookingSlotsLoading, setBookingSlotsLoading] = useState(false);
@@ -418,18 +421,43 @@ export function App() {
       });
     // supabase.rpc devuelve un PromiseLike (sin .catch): se envuelve en una Promise real.
     // Si la función aún no existe en la base, el acuerdo queda en null sin romper la vista.
-    void Promise.resolve(supabase.rpc('acuerdo_pendiente', { p_id_trabajo: checkoutJobId }))
-      .then(({ data, error }) => {
-        const row = error ? undefined : data?.[0];
-        if (!cancelled) setPendingAgreement(row ? { id: row.id, tipo: row.tipo } : null);
-      })
-      .catch(() => {
-        if (!cancelled) setPendingAgreement(null);
-      });
+    const loadAgreement = () => {
+      void Promise.resolve(supabase.rpc('acuerdo_pendiente', { p_id_trabajo: checkoutJobId }))
+        .then(({ data, error }) => {
+          const row = error ? undefined : data?.[0];
+          if (!cancelled) setPendingAgreement(row ? { id: row.id, tipo: row.tipo } : null);
+        })
+        .catch(() => {
+          if (!cancelled) setPendingAgreement(null);
+        });
+    };
+    const loadDispute = () => {
+      void supabase
+        .from('disputas')
+        .select('abierta_por')
+        .eq('id_trabajo', checkoutJobId)
+        .in('estado', ['abierta', 'en_revision', 'requiere_humano', 'reembolso_pendiente'])
+        .order('creado_en', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (cancelled) return;
+          if (error || !data) {
+            setOpenDispute(null);
+            return;
+          }
+          const row = data as { abierta_por?: string | null };
+          setOpenDispute({ openedBy: row.abierta_por ? String(row.abierta_por) : null });
+        });
+    };
     loadSnapshot();
+    loadDispute();
+    loadAgreement();
     const tick = () => {
       if (document.visibilityState === 'hidden') return;
       loadSnapshot();
+      loadDispute();
+      loadAgreement();
       void syncJobEvidencePhotos(supabase, checkoutJobId, jobEvidenceRef.current)
         .then((photos) => {
           if (!cancelled) setJobEvidence(photos);
@@ -462,6 +490,7 @@ export function App() {
     setPaymentNotice(null);
     setJobEvidence([]);
     setClientStartPin(null);
+    setOpenDispute(null);
     setView('landing');
   };
 
@@ -700,6 +729,7 @@ export function App() {
     const restorePending = () => {
       let workerName = '';
       let savedAmount = 0;
+      let workerId = '';
       try {
         const raw = sessionStorage.getItem('mwa-pending-checkout');
         if (raw) {
@@ -712,6 +742,7 @@ export function App() {
           if (saved.worker) {
             setSelectedWorker(saved.worker);
             workerName = saved.worker.name;
+            workerId = saved.worker.id;
           }
           if (saved.jobId) {
             setCheckoutJobId(saved.jobId);
@@ -730,7 +761,7 @@ export function App() {
       } catch {
         // el checkout pendiente no es JSON válido
       }
-      return { workerName, savedAmount };
+      return { workerName, savedAmount, workerId };
     };
 
     if (returned.kind === 'card') {
@@ -765,6 +796,10 @@ export function App() {
             if (jobIdParam) {
               await openJobForWorker(supabase, jobIdParam).catch(() => undefined);
             }
+            registrarEventoUso(EVENTOS_USO.confirmoPedido, {
+              ...(jobIdParam ? { id_trabajo: jobIdParam } : {}),
+              ...(pending.workerId ? { id_profesional: pending.workerId } : {}),
+            });
             setPaymentNotice(
               orderConfirmedMessage({
                 amountClp: amount,
@@ -817,6 +852,10 @@ export function App() {
               return;
             }
             if (jobIdParam) sessionStorage.setItem('mwa-active-job', jobIdParam);
+            registrarEventoUso(EVENTOS_USO.confirmoPedido, {
+              ...(jobIdParam ? { id_trabajo: jobIdParam } : {}),
+              ...(pending.workerId ? { id_profesional: pending.workerId } : {}),
+            });
             if (!returned.guest && pending.workerName) setView('tracking');
           })
           .catch(() => {
@@ -1179,6 +1218,10 @@ export function App() {
       setBookingError('Elige un horario publicado por el profesional para continuar.');
       return;
     }
+    registrarEventoUso(EVENTOS_USO.eligioHora, {
+      id_profesional: selectedWorker.id,
+      hora: slotIso,
+    });
     setScheduledAt(slotIso);
     setBookingError(null);
     if (authLoading) {
@@ -1338,11 +1381,13 @@ export function App() {
   if (view === 'notfound') return <NotFoundPage />;
   if (view === 'account') return <AccountPage />;
   if (view === 'trabaja') return <WorkWithUsPage />;
+  if (view === 'aviso') return <LegalPage kind="aviso" />;
   if (view === 'terminos') return <LegalPage kind="terminos" />;
   if (view === 'privacidad') return <LegalPage kind="privacidad" />;
 
   if (view === 'paid') {
     return (
+      <>
       <Suspense fallback={<ViewFallback />}>
         <PaidReturnView
           workerName={selectedWorker?.name}
@@ -1369,6 +1414,8 @@ export function App() {
           onGoHome={goHome}
         />
       </Suspense>
+      <SiteFooter />
+      </>
     );
   }
 
@@ -1450,6 +1497,8 @@ export function App() {
               workerId={jobSnapshot.workerId}
               workerName={selectedWorker.name}
               userId={profile.id}
+              disputeOpen={openDispute != null}
+              disputeOpenedBy={openDispute?.openedBy ?? null}
               onChanged={() => {
                 void fetchJobTrackingSnapshot(supabase, checkoutJobId)
                   .then((snapshot) => {
@@ -1496,9 +1545,11 @@ export function App() {
                     : 'No se pudo abrir la disputa.',
               );
             }
+            setOpenDispute({ openedBy: profile.id });
           } : undefined}
 
           pendingAgreement={pendingAgreement}
+          disputeOpen={openDispute != null}
           onProposeAgreement={profile ? async (tipo) => {
             if (!checkoutJobId) throw new Error('Falta el trabajo.');
             const { error } = await supabase.rpc('proponer_acuerdo', {
@@ -1592,6 +1643,7 @@ export function App() {
 
         )}
 
+        <SiteFooter />
       </div>
       </Suspense>
     );
@@ -1614,6 +1666,7 @@ export function App() {
               setShowAuth(true);
             }}
           />
+          <SiteFooter />
           <Suspense fallback={null}>
             <AuthModal open={showAuth} initialEmail={authInitialEmail} onClose={() => setShowAuth(false)} />
           </Suspense>
@@ -1748,6 +1801,10 @@ export function App() {
             onRemoveSavedCard={() => removeSavedCard(supabase)}
 
             onSuccess={(details) => {
+              registrarEventoUso(EVENTOS_USO.confirmoPedido, {
+                ...(checkoutJobId ? { id_trabajo: checkoutJobId } : {}),
+                id_profesional: selectedWorker.id,
+              });
               sessionStorage.removeItem('mwa-pending-checkout');
               setPaymentNotice(details.notice);
               void confirmBooking();
@@ -1800,6 +1857,7 @@ export function App() {
 
 
         <AuthModal open={showAuth} initialEmail={authInitialEmail} onClose={() => setShowAuth(false)} />
+        {view === 'search' ? <SiteFooter /> : null}
 
       </div>
       </Suspense>

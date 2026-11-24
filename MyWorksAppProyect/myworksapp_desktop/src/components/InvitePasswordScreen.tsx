@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AuthError, passwordPolicyMessage } from '@myworksapp/shared';
+import { friendlyError } from '../lib/errors';
 import { Button } from '../ui/kit';
 
 export function InvitePasswordScreen({
@@ -33,7 +34,10 @@ export function InvitePasswordScreen({
             }
             setBusy(true);
             void onSubmit(password).catch((reason: unknown) => {
-              setError(reason instanceof AuthError ? reason.message : 'No se pudo guardar la contraseña.');
+              const message = reason instanceof AuthError
+                ? friendlyError(reason, 'No se pudo guardar la contraseña.')
+                : 'No se pudo guardar la contraseña.';
+              setError(message);
               setBusy(false);
             });
           }}
