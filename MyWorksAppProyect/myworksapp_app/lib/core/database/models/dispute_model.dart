@@ -14,6 +14,7 @@ class DisputeModel {
   final String? resolution; // Resolución de la disputa
   final String? suggestedDecision;
   final String? rule;
+  final String? origin;
   final String? resolvedBy; // Admin que resolvió
   final DateTime? resolvedAt;
   final DateTime createdAt;
@@ -29,6 +30,7 @@ class DisputeModel {
     this.resolution,
     this.suggestedDecision,
     this.rule,
+    this.origin,
     this.resolvedBy,
     this.resolvedAt,
     required this.createdAt,
@@ -62,6 +64,7 @@ class DisputeModel {
       resolution: map['resolucion'] as String?,
       suggestedDecision: map['decision_sugerida'] as String?,
       rule: map['motivo_regla'] as String?,
+      origin: map['origen'] as String?,
       resolvedBy: map['resuelta_por'] as String?,
       resolvedAt: map['resuelta_en'] != null
           ? DateTime.parse(map['resuelta_en'] as String)
@@ -94,6 +97,7 @@ class DisputeModel {
       resolution: resolution ?? this.resolution,
       suggestedDecision: suggestedDecision,
       rule: rule,
+      origin: origin,
       resolvedBy: resolvedBy ?? this.resolvedBy,
       resolvedAt: resolvedAt ?? this.resolvedAt,
       createdAt: createdAt ?? this.createdAt,

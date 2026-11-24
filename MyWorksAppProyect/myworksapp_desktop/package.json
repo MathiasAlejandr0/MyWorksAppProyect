@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "node --import tsx --test src/authAccess.test.ts src/lib/format.test.ts src/lib/csv.test.ts src/lib/idle.test.ts src/lib/redirect.test.ts src/lib/authCallback.test.ts src/lib/totpQr.test.ts src/features/seguridad-model.test.ts src/features/seguridad-checks.test.ts src/features/premium/modelo.test.ts",
+    "test": "node --import tsx --test src/authAccess.test.ts src/lib/format.test.ts src/lib/csv.test.ts src/lib/idle.test.ts src/lib/redirect.test.ts src/lib/authCallback.test.ts src/lib/totpQr.test.ts src/features/seguridad-model.test.ts src/features/seguridad-checks.test.ts src/features/premium/modelo.test.ts src/features/disputas/bandeja.test.ts",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },

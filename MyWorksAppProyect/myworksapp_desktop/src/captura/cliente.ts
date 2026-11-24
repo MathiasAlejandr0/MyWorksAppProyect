@@ -42,6 +42,19 @@ function rpc(nombre: string, args?: Record<string, unknown>): unknown {
     });
   }
   if (nombre === 'consola_disputas_abiertas') return disputasCaptura();
+  if (nombre === 'evidencia_disputa') {
+    return [{
+      id: 'foto-1',
+      imagen_base64: '',
+      origen_captura: 'web_archivo',
+      tipo_evidencia: 'detalle',
+      confianza: 'no_verificada',
+      distancia_metros: 2400,
+      duplicado: true,
+      hash_perceptual: '8080808080808080',
+      luz_amarilla: true,
+    }];
+  }
   if (nombre === 'consola_disputas_resueltas') return [];
   if (nombre === 'consola_resumen_periodo') {
     return {

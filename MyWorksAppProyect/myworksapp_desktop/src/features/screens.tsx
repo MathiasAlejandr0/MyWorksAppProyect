@@ -16,6 +16,7 @@ import { useToast } from '../ui/toast-store';
 import { PagedTable, type PageResult } from './table';
 import { Banda } from './premium/Banda';
 import { capturaActiva } from './premium/captura';
+import { filtrarDisputas, ordenarDisputas, textoProcedencia } from './disputas/bandeja';
 export { ResenasPage } from './premium/resenas';
 
 const PAGE = 25;
@@ -186,6 +187,24 @@ function PedidoFicha({ id }: { id: string }) {
   );
 }
 
+type FilaDisputa = {
+  id: string;
+  motivo: string;
+  estado: string;
+  nombre_cliente: string;
+  nombre_profesional: string;
+  monto_retenido: number;
+  decision_sugerida: string | null;
+  motivo_regla: string | null;
+  vence_en: string | null;
+  resolucion: string | null;
+  resuelta_en: string | null;
+  prioridad: string | null;
+  asignado_a: string | null;
+  nombre_asignado: string | null;
+  puntaje_riesgo: number | null;
+};
+
 export function DisputasPage() {
   const { profile } = useAuth();
   const permissions = consolePermissions(profile?.role ?? '');
@@ -194,48 +213,149 @@ export function DisputasPage() {
   const [decision, setDecision] = useState<{ id: string; decision: 'liberar' | 'reembolsar'; monto: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<'abiertas' | 'resueltas'>('abiertas');
+  const [filtro, setFiltro] = useState('todas');
+  const [asignar, setAsignar] = useState<Record<string, string>>({});
+  const equipo = useQuery({
+    queryKey: ['equipo-disputas'],
+    enabled: permissions.resolveDisputes && tab === 'abiertas',
+    queryFn: () => callRpc<Array<{ id: string; nombre: string; rol: string }>>('consola_listar_equipo'),
+  });
   const query = useQuery({
     queryKey: ['disputas', tab],
     queryFn: async () => {
       if (tab === 'resueltas') {
         const { data, error } = await supabase.rpc('consola_disputas_resueltas');
         if (error) throw error;
-        return (data ?? []).map((row) => ({ ...row, decision_sugerida: null as string | null, motivo_regla: null as string | null, vence_en: null as string | null }));
+        return (data ?? []).map((row) => ({
+          ...row,
+          decision_sugerida: null as string | null,
+          motivo_regla: null as string | null,
+          vence_en: null as string | null,
+          prioridad: null as string | null,
+          asignado_a: null as string | null,
+          nombre_asignado: null as string | null,
+          puntaje_riesgo: null as number | null,
+        }));
       }
       const { data, error } = await supabase.rpc('consola_disputas_abiertas');
       if (error) throw error;
-      return (data ?? []).map((row) => ({ ...row, resolucion: null as string | null, resuelta_en: null as string | null }));
+      return (data ?? []).map((row) => ({
+        ...row,
+        resolucion: null as string | null,
+        resuelta_en: null as string | null,
+        prioridad: (row.prioridad ?? null) as string | null,
+        asignado_a: (row.asignado_a ?? null) as string | null,
+        nombre_asignado: (row.nombre_asignado ?? null) as string | null,
+        puntaje_riesgo: (row.puntaje_riesgo ?? null) as number | null,
+      }));
     },
     refetchInterval: tab === 'abiertas' ? 30_000 : false,
   });
+  const visibles = tab === 'abiertas'
+    ? ordenarDisputas(filtrarDisputas((query.data ?? []) as FilaDisputa[], filtro, profile?.id ?? null))
+    : ((query.data ?? []) as FilaDisputa[]);
   return (
     <Gate allow={permissions.supportQueue}>
       <h1>Disputas</h1>
-      <p className="muted">Bandeja de casos. La cola incluye abierta y en revisión.</p>
+      <p className="muted">Bandeja de casos. La cola incluye abierta, en revisión y apelaciones. La sugerencia no mueve el dinero.</p>
       <Banda seccion="disputas" />
+      {tab === 'abiertas' ? (
+        <label className="field">
+          <span>Prioridad</span>
+          <select aria-label="Filtrar por prioridad" value={filtro} onChange={(event) => setFiltro(event.target.value)}>
+            <option value="todas">Todas</option>
+            <option value="alta">Alta</option>
+            <option value="media">Media</option>
+            <option value="baja">Baja</option>
+            <option value="sin_asignar">Sin asignar</option>
+            <option value="mias">Asignadas a mí</option>
+          </select>
+        </label>
+      ) : null}
       <div className="tabs">
         <button type="button" className={tab === 'abiertas' ? 'is-active' : undefined} onClick={() => setTab('abiertas')}>Abiertas</button>
         <button type="button" className={tab === 'resueltas' ? 'is-active' : undefined} onClick={() => setTab('resueltas')}>Resueltas</button>
       </div>
       {query.isLoading ? <SkeletonRows /> : null}
       {query.isError ? <ErrorState message="No se pudo cargar la cola." onRetry={() => void query.refetch()} /> : null}
-      {!query.isLoading && query.data?.length === 0 ? (
-        <EmptyState title={tab === 'abiertas' ? 'No hay disputas que requieran una persona.' : 'Aún no hay disputas resueltas.'} />
+      {!query.isLoading && visibles.length === 0 ? (
+        <EmptyState title={tab === 'abiertas' ? (filtro === 'todas' ? 'No hay disputas que requieran una persona.' : 'Ninguna disputa en este filtro.') : 'Aún no hay disputas resueltas.'} />
       ) : null}
       <div className="stack">
-        {(query.data ?? []).map((row) => (
+        {visibles.map((row) => (
           <article key={row.id} className="panel stack">
             <div className="spread">
               <strong>{row.motivo}</strong>
-              <Badge value={row.estado} />
+              <span className="row">
+                {row.prioridad ? <Badge value={row.prioridad} /> : null}
+                <Badge value={row.estado} />
+              </span>
             </div>
             <p>{row.nombre_cliente} · {row.nombre_profesional} · {formatClp(row.monto_retenido)}</p>
+            <p className="muted">Asignada a {row.nombre_asignado || 'nadie'}</p>
             {tab === 'resueltas' ? (
               <p className="muted">Resolución: {row.resolucion || 'Sin texto de resolución.'} · {formatDateTime(row.resuelta_en)}</p>
             ) : (
               <>
                 <p className="muted">Sugerencia, no es una decisión: {statusLabel(row.decision_sugerida)} · {row.motivo_regla || 'Sin regla'} · vence {formatDateTime(row.vence_en)}</p>
+                <p className="muted">Propuesta de riesgo {row.puntaje_riesgo ?? '—'}. No mueve el dinero.</p>
                 <p className={vencePronto(row.vence_en) ? 'sla-bad' : 'sla-ok'}>Plazo {formatDateTime(row.vence_en)}</p>
+                {permissions.resolveDisputes ? (
+                  <div className="row">
+                    <label className="field">
+                      <span>Asignar</span>
+                      <select
+                        aria-label={`Asignar ${row.motivo}`}
+                        value={asignar[row.id] ?? row.asignado_a ?? ''}
+                        onChange={(event) => setAsignar((prev) => ({ ...prev, [row.id]: event.target.value }))}
+                      >
+                        <option value="">Sin asignar</option>
+                        {(equipo.data ?? []).filter((persona) => persona.rol === 'administrador' || persona.rol === 'soporte').map((persona) => (
+                          <option key={persona.id} value={persona.id}>{persona.nombre}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <Button onClick={() => {
+                      const elegido = asignar[row.id] ?? row.asignado_a ?? '';
+                      if (capturaActiva()) {
+                        toast('Captura local: la asignación no se envió.');
+                        return;
+                      }
+                      void callRpc('consola_premium_asignar_disputa', {
+                        p_id: row.id,
+                        p_asignado: elegido || null,
+                        p_motivo: 'Asignación desde la bandeja de disputas',
+                      }).then(() => {
+                        toast('Asignación guardada.');
+                        return client.invalidateQueries({ queryKey: ['disputas'] });
+                      }).catch(() => toast('No se pudo asignar.'));
+                    }}>Guardar asignación</Button>
+                    <label className="field">
+                      <span>Prioridad</span>
+                      <select
+                        aria-label={`Prioridad de ${row.motivo}`}
+                        value={row.prioridad ?? 'media'}
+                        onChange={(event) => {
+                          const valor = event.target.value;
+                          if (capturaActiva()) {
+                            toast('Captura local: la prioridad no se envió.');
+                            return;
+                          }
+                          void callRpc('consola_premium_prioridad_disputa', {
+                            p_id: row.id,
+                            p_prioridad: valor,
+                            p_motivo: 'Prioridad desde la bandeja de disputas',
+                          }).then(() => client.invalidateQueries({ queryKey: ['disputas'] }))
+                            .catch(() => toast('No se pudo cambiar la prioridad.'));
+                        }}
+                      >
+                        <option value="alta">Alta</option>
+                        <option value="media">Media</option>
+                        <option value="baja">Baja</option>
+                      </select>
+                    </label>
+                  </div>
+                ) : null}
               </>
             )}
             {permissions.disputeEvidence ? <Evidencia id={row.id} /> : <p className="muted">Tu rol no ve la evidencia.</p>}
@@ -304,9 +424,15 @@ function Evidencia({ id }: { id: string }) {
   });
   if (!query.data?.length) return <p className="muted">Sin fotos de evidencia.</p>;
   return (
-    <div className="row">
+    <div className="stack">
       {query.data.map((photo) => (
-        <img key={photo.id} alt="Evidencia del trabajo" width={120} height={90} src={`data:image/webp;base64,${photo.imagen_base64}`} />
+        <figure key={photo.id} className="stack">
+          {photo.imagen_base64 ? (
+            <img alt="Evidencia del trabajo" width={120} height={90} src={`data:image/webp;base64,${photo.imagen_base64}`} />
+          ) : null}
+          <figcaption>{textoProcedencia(photo)}</figcaption>
+          {photo.luz_amarilla ? <p className="muted">Luz amarilla: esta foto no decide el dinero.</p> : null}
+        </figure>
       ))}
     </div>
   );

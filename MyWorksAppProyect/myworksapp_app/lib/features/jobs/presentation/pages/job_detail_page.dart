@@ -293,6 +293,28 @@ class _JobDetailPageState extends ConsumerState<JobDetailPage> {
   bool _canOpenDispute(JobModel job) =>
       JobDetailHelpers.canOpenDispute(job, _dispute);
 
+  Future<void> _appealDispute(String motivo) async {
+    final dispute = _dispute;
+    if (dispute == null) return;
+    try {
+      await DisputeService.instance.appeal(
+        disputeId: dispute.id,
+        motivo: motivo,
+      );
+      await _loadDispute(dispute.jobId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La revisión quedó pedida. El dinero no se movió otra vez.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is AppError ? e.message : 'No se pudo pedir la revisión';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
   Future<void> _addDisputeComment(String comment) async {
     final dispute = _dispute;
     if (dispute == null) return;
