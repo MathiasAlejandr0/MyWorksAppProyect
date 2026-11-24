@@ -14,12 +14,13 @@ void main() {
     expect(dhashDesdeLuma(marcas), '8080808080808080');
   });
 
-  test('la evidencia del trabajo no ofrece galería ni archivo', () {
+  test('la cámara queda verificada y la galería o el video no verificados', () {
     final source = File('lib/features/jobs/presentation/pages/job_photos_page.dart')
         .readAsStringSync();
-    expect(source.contains('ImageSource.gallery'), isFalse);
-    expect(source.contains('pickVideo'), isFalse);
     expect(source.contains('ImageSource.camera'), isTrue);
     expect(source.contains('pedir_nonce_evidencia'), isTrue);
+    expect(source.contains('ImageSource.gallery'), isTrue);
+    expect(source.contains('pickVideo'), isTrue);
+    expect(source.contains('no verificados'), isTrue);
   });
 }
