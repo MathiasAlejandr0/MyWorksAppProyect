@@ -80,6 +80,8 @@ test('el catálogo web usa por defecto el orden cercanía, nota y precio', async
   expect(await names()).toEqual(['Bruno Top', 'Carla Barata', 'Diego Caro', 'Ana Nueva']);
   expect(rpcBody).toMatchObject({ p_categoria: 'plomeria', p_offset: 0, p_latitud: null, p_longitud: null });
 
-  await page.getByLabel('Ordenar por', { exact: true }).selectOption('price');
+  const orden = page.getByRole('button', { name: 'Ordenar por', exact: true });
+  await orden.click();
+  await page.getByRole('option', { name: 'Precio', exact: true }).click();
   expect(await names()).toEqual(['Ana Nueva', 'Carla Barata', 'Diego Caro', 'Bruno Top']);
 });
