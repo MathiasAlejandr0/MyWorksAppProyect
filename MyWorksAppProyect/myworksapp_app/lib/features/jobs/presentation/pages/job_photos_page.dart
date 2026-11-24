@@ -15,6 +15,7 @@ import '../../../../core/services/evidence_dhash.dart';
 import '../../../../core/services/evidence_luma.dart';
 import '../../../../core/services/evidence_storage_path.dart';
 import '../../../../core/services/evidence_uploader.dart';
+import '../../../../core/services/evidence_video_limits.dart';
 import '../../../../core/services/evidence_webp.dart';
 import '../../../../core/utils/bytea_codec.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -23,6 +24,7 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/widgets/design_system/empty_state_widget.dart';
 import '../../../../core/widgets/evidence_photo_image.dart';
+import 'evidence_shutter_camera_page.dart';
 
 class JobPhotosPage extends StatefulWidget {
   final String jobId;
@@ -166,18 +168,136 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
     );
   }
 
-  /// Cámara de la app: evidencia con nonce, hash y GPS.
+  /// Cámara de la app: un toque saca foto; mantener presionado graba video.
   Future<void> _capturar(String tipo) async {
-    try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.camera,
+    if (kIsWeb) {
+      if (!mounted) return;
+      showAppSnackBar(
+        context,
+        'La cámara de evidencia verificada está en la app Android e iOS.',
+        type: AppSnackBarType.error,
       );
-      if (image == null) return;
-      await _registrarCaptura(image, tipo);
+      return;
+    }
+    try {
+      final capture = await Navigator.of(context).push<EvidenceCapture>(
+        MaterialPageRoute(
+          builder: (_) => const EvidenceShutterCameraPage(),
+        ),
+      );
+      if (capture == null) return;
+      if (capture.isVideo) {
+        await _registrarVideoCaptura(capture, tipo);
+      } else {
+        await _registrarCaptura(capture.file, tipo);
+      }
     } catch (e) {
       if (!mounted) return;
       showAppSnackBar(context, ErrorHandler.getErrorMessage(e),
           type: AppSnackBarType.error);
+    }
+  }
+
+  Future<void> _registrarVideoCaptura(
+    EvidenceCapture capture,
+    String tipo,
+  ) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Inicia sesión para subir evidencia');
+    }
+    final file = capture.file;
+    final mime = _mimeFor(file, video: true);
+    final length = await file.length();
+    final duration = capture.duration ?? Duration.zero;
+    final limite = EvidenceVideoLimits.validate(
+      byteLength: length,
+      duration: duration,
+      mime: mime,
+    );
+    if (limite != null) {
+      throw StateError(limite);
+    }
+    final gps = await _gpsDeLaCaptura();
+    final nonce = await supabase.rpc('pedir_nonce_evidencia', params: {
+      'p_id_trabajo': widget.jobId,
+    });
+    final hash = await sha256OfBytesStream(file.openRead());
+    final procedencia = EvidenceVideoProvenance.validate(
+      nonce: '$nonce',
+      hashSha256: hash,
+      byteLength: length,
+      duration: duration,
+      mime: mime,
+      lat: gps.latitude,
+      lng: gps.longitude,
+    );
+    if (procedencia != null) {
+      throw StateError(procedencia);
+    }
+    setState(() {
+      _uploading = true;
+      _uploadFraction = 0;
+      _uploadError = null;
+      _pendingRetry = _PendingEvidence(
+        file,
+        mime,
+        tipo: tipo,
+        verifiedVideo: true,
+        duration: duration,
+      );
+    });
+    final fileId = const Uuid().v4();
+    try {
+      await _uploader.saveFile(
+        jobId: widget.jobId,
+        userId: userId,
+        fileId: fileId,
+        filePath: file.path,
+        byteLength: length,
+        mime: mime,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() => _uploadFraction = progress.fraction);
+        },
+      );
+      final duracionSeg = duration.inSeconds.clamp(1, EvidenceVideoLimits.maxDurationSecondsGrace);
+      final registro = await supabase.rpc(
+        'registrar_evidencia_video_captura',
+        params: {
+          'p_id_foto': fileId,
+          'p_id_trabajo': widget.jobId,
+          'p_nonce': nonce,
+          'p_hash_sha256': hash,
+          'p_lat': gps.latitude,
+          'p_lng': gps.longitude,
+          'p_tipo': tipo,
+          'p_bytes': length,
+          'p_duracion_seg': duracionSeg,
+          'p_capturada_en': null,
+        },
+      );
+      if (!mounted) return;
+      setState(() => _pendingRetry = null);
+      await _loadPhotos();
+      if (!mounted) return;
+      final confianza = registro is Map ? registro['confianza'] : null;
+      showAppSnackBar(
+        context,
+        confianza == 'confiable'
+            ? 'Video registrado con procedencia verificada'
+            : 'El video quedó guardado, pero no cuenta como evidencia verificada',
+        type: confianza == 'confiable'
+            ? AppSnackBarType.success
+            : AppSnackBarType.error,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _uploadError = ErrorHandler.getErrorMessage(e));
+      showAppSnackBar(context, ErrorHandler.getErrorMessage(e),
+          type: AppSnackBarType.error);
+    } finally {
+      if (mounted) setState(() => _uploading = false);
     }
   }
 
@@ -200,7 +320,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
       _uploading = true;
       _uploadFraction = 0;
       _uploadError = null;
-      _pendingRetry = _PendingEvidence(file, 'image/webp', tipo);
+      _pendingRetry = _PendingEvidence(file, 'image/webp', tipo: tipo);
     });
     final fileId = const Uuid().v4();
     try {
@@ -304,8 +424,10 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera),
-              title: const Text('Foto del antes'),
-              subtitle: const Text('Cámara de la app, con procedencia'),
+              title: const Text('Evidencia del antes'),
+              subtitle: const Text(
+                'Toque para foto, mantenga para video. Queda verificada.',
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _capturar('antes');
@@ -313,8 +435,10 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Foto del después'),
-              subtitle: const Text('Cámara de la app, con procedencia'),
+              title: const Text('Evidencia del después'),
+              subtitle: const Text(
+                'Toque para foto, mantenga para video. Queda verificada.',
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _capturar('despues');
@@ -323,7 +447,9 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
             ListTile(
               leading: const Icon(Icons.center_focus_strong),
               title: const Text('Detalle del trabajo'),
-              subtitle: const Text('Cámara de la app, con procedencia'),
+              subtitle: const Text(
+                'Toque para foto, mantenga para video. Queda verificada.',
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _capturar('detalle');
@@ -340,7 +466,7 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
             ),
             ListTile(
               leading: const Icon(Icons.videocam),
-              title: const Text('Elegir video'),
+              title: const Text('Elegir video de galería'),
               subtitle: const Text('Queda como no verificado'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -426,15 +552,30 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
                               child: TextButton(
                                 onPressed: _uploading
                                     ? null
-                                    : () => _pendingRetry!.tipo != null
-                                        ? _registrarCaptura(
-                                            _pendingRetry!.file,
-                                            _pendingRetry!.tipo!,
-                                          )
-                                        : _saveEvidence(
-                                            _pendingRetry!.file,
-                                            _pendingRetry!.mime,
-                                          ),
+                                    : () {
+                                        final pending = _pendingRetry!;
+                                        if (pending.tipo != null &&
+                                            pending.verifiedVideo) {
+                                          _registrarVideoCaptura(
+                                            EvidenceCapture(
+                                              file: pending.file,
+                                              isVideo: true,
+                                              duration: pending.duration,
+                                            ),
+                                            pending.tipo!,
+                                          );
+                                        } else if (pending.tipo != null) {
+                                          _registrarCaptura(
+                                            pending.file,
+                                            pending.tipo!,
+                                          );
+                                        } else {
+                                          _saveEvidence(
+                                            pending.file,
+                                            pending.mime,
+                                          );
+                                        }
+                                      },
                                 child: const Text('Reintentar'),
                               ),
                             ),
@@ -555,10 +696,18 @@ class _JobPhotosPageState extends State<JobPhotosPage> {
 }
 
 class _PendingEvidence {
-  const _PendingEvidence(this.file, this.mime, [this.tipo]);
+  const _PendingEvidence(
+    this.file,
+    this.mime, {
+    this.tipo,
+    this.verifiedVideo = false,
+    this.duration,
+  });
   final XFile file;
   final String mime;
   final String? tipo;
+  final bool verifiedVideo;
+  final Duration? duration;
 }
 
 class _EvidenceThumb extends StatelessWidget {
