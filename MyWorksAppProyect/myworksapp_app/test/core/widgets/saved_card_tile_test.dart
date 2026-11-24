@@ -12,7 +12,9 @@ class _FakePayments extends PaymentService {
   int removed = 0;
 
   @override
-  Future<({bool enrolled, String last4, String cardType})> savedCard() async =>
+  Future<({bool enrolled, String last4, String cardType})> savedCard({
+    bool recoverAbandoned = false,
+  }) async =>
       (enrolled: enrolled, last4: enrolled ? '6623' : '', cardType: 'Visa');
 
   @override
