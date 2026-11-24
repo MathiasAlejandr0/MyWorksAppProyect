@@ -215,7 +215,7 @@
 >
 > Otros ejemplos de 4NF en el modelo: horarios separados de servicios, dispositivos push separados de notificaciones, y eventos de verificación separados del estado actual del trabajador.
 >
-> **Normalización:** El modelo cumple 3NF en todas las tablas y 4NF en todas las relaciones muchos a muchos descompuestas correctamente. Esto está documentado en `docs/normalizacion.md` y verificado en las auditorías de base de datos."
+> **Normalización:** El modelo cumple 3NF en todas las tablas y 4NF en todas las relaciones muchos a muchos descompuestas correctamente. Esto está documentado en [`MyWorksAppProyect/docs/normalizacion.md`](../MyWorksAppProyect/docs/normalizacion.md) y verificado en las auditorías de base de datos."
 
 **QUÉ MUESTRA:**
 - Diapositiva 9: Arquitectura de Software
