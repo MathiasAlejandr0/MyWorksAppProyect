@@ -57,6 +57,9 @@ class FakeBackend {
   /// Si es true, toda petición REST/RPC responde 500.
   bool failAll = false;
 
+  /// Respuesta de error propia para Auth: (status HTTP, mensaje).
+  (int, String)? authFailure;
+
   Map<String, dynamic>? user;
 
   /// Filas que devuelve una tabla no sembrada (null = lista vacía).
@@ -85,6 +88,7 @@ class FakeBackend {
     requests.clear();
     failing.clear();
     failAll = false;
+    authFailure = null;
     user = null;
   }
 
@@ -323,6 +327,14 @@ class FakeBackend {
       };
 
   http.Response _auth(FakeRequest r, String path) {
+    final custom = authFailure;
+    if (custom != null && !path.startsWith('logout')) {
+      return _json({
+        'code': custom.$1,
+        'msg': custom.$2,
+        'message': custom.$2,
+      }, status: custom.$1);
+    }
     if (failing.contains('auth') || failing.contains('auth:$path')) {
       return _json({
         'code': 400,
