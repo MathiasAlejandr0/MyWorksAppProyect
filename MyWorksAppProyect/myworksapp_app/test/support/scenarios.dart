@@ -53,6 +53,37 @@ final List<Scenario> scenarios = [
     },
   ),
   (
+    name: 'funciones y RPC responden con error de negocio',
+    apply: () async {
+      final b = await setUpFakeSupabase(signedIn: true);
+      b.defaultRows = [universalRow];
+      b.tableDefaults = tableRows;
+      b.defaultRpc = (_) => {'error': 'Operación rechazada', 'ok': false};
+      b.defaultFunction = (_) => {'error': 'Operación rechazada', 'ok': false};
+    },
+  ),
+  (
+    name: 'funciones y RPC responden con datos',
+    apply: () async {
+      final b = await setUpFakeSupabase(signedIn: true);
+      b.defaultRows = [universalRow];
+      b.tableDefaults = tableRows;
+      final datos = {
+        ...universalRow,
+        'ok': true,
+        'success': true,
+        'url': 'https://webpay.invalid/pago',
+        'token': 'token-falso',
+        'token_ws': 'token-falso',
+        'estado': 'AUTHORIZED',
+        'status': 'AUTHORIZED',
+        'response_code': 0,
+      };
+      b.defaultRpc = (_) => datos;
+      b.defaultFunction = (_) => datos;
+    },
+  ),
+  (
     name: 'sin sesión',
     apply: () async {
       await setUpFakeSupabase();

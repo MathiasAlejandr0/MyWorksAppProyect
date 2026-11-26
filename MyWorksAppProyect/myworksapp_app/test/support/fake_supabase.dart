@@ -42,6 +42,9 @@ class FakeBackend {
   final Map<String, List<Map<String, dynamic>>> tables = {};
   final Map<String, FakeHandler> rpcs = {};
   final Map<String, FakeHandler> functions = {};
+
+  /// Respuesta de las Edge Functions sin manejador propio (null: {'ok': true}).
+  FakeHandler? defaultFunction;
   final List<FakeRequest> requests = [];
 
   /// Tablas creadas desde [defaultRows]: sus filas aceptan cualquier filtro.
@@ -77,6 +80,7 @@ class FakeBackend {
     tables.clear();
     rpcs.clear();
     functions.clear();
+    defaultFunction = null;
     requests.clear();
     failing.clear();
     failAll = false;
@@ -108,7 +112,9 @@ class FakeBackend {
       final name = path.substring(14);
       if (failing.contains('fn:$name')) return _err(500, 'falla simulada');
       final h = functions[name];
-      return _json(h == null ? {'ok': true} : h(r));
+      if (h != null) return _json(h(r));
+      return _json(
+          defaultFunction == null ? {'ok': true} : defaultFunction!(r));
     }
     return _json({});
   }
