@@ -1,12 +1,16 @@
 // Plataformas falsas de plugins federados (path_provider, image_picker y
 // flutter_image_compress): en los tests no hay implementación nativa y los
 // flujos de fotos se cortarían en el primer paso.
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_image_compress_platform_interface/flutter_image_compress_platform_interface.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 /// Si es false, el selector de imágenes simula que el usuario canceló.
 bool fakePickerReturnsImage = true;
@@ -115,10 +119,76 @@ class _FakeCompress extends FlutterImageCompressPlatform {
   }
 }
 
+/// Reproductor de video falso: inicializa con 12 s y 640×360, o falla.
+class FakeVideoPlatform extends VideoPlayerPlatform {
+  FakeVideoPlatform({this.fails = false});
+  final bool fails;
+  int _next = 1;
+  final Map<int, StreamController<VideoEvent>> _streams = {};
+
+  @override
+  Future<void> init() async {}
+  @override
+  Future<int?> create(DataSource dataSource) async => _next++;
+  @override
+  Future<int?> createWithOptions(VideoCreationOptions options) async => _next++;
+  @override
+  Stream<VideoEvent> videoEventsFor(int playerId) {
+    final c = _streams[playerId] = StreamController<VideoEvent>();
+    scheduleMicrotask(() {
+      if (fails) {
+        c.addError(PlatformException(code: 'VideoError', message: 'falla'));
+      } else {
+        c.add(VideoEvent(
+          eventType: VideoEventType.initialized,
+          duration: const Duration(seconds: 12),
+          size: const Size(640, 360),
+        ));
+      }
+    });
+    return c.stream;
+  }
+
+  @override
+  Future<void> dispose(int playerId) async =>
+      _streams.remove(playerId)?.close();
+  @override
+  Future<void> setLooping(int playerId, bool looping) async {}
+  @override
+  Future<void> play(int playerId) async {}
+  @override
+  Future<void> pause(int playerId) async {}
+  @override
+  Future<void> setVolume(int playerId, double volume) async {}
+  @override
+  Future<void> seekTo(int playerId, Duration position) async {}
+  @override
+  Future<void> setPlaybackSpeed(int playerId, double speed) async {}
+  @override
+  Future<Duration> getPosition(int playerId) async =>
+      const Duration(seconds: 1);
+  @override
+  Widget buildView(int playerId) => const SizedBox.expand();
+  @override
+  Widget buildViewWithOptions(VideoViewOptions options) =>
+      const SizedBox.expand();
+  @override
+  Future<void> setMixWithOthers(bool mixWithOthers) async {}
+}
+
+VideoPlayerPlatform? _videoOriginal;
+
+/// Activa el reproductor falso solo para la prueba que lo pide.
+void installFakeVideo({bool fails = false}) {
+  _videoOriginal ??= VideoPlayerPlatform.instance;
+  VideoPlayerPlatform.instance = FakeVideoPlatform(fails: fails);
+}
+
 /// Instala las plataformas falsas (idempotente).
 void installFakePlugins() {
   fakePickerReturnsImage = true;
   fakeCompressReturnsNull = false;
+  if (_videoOriginal != null) VideoPlayerPlatform.instance = _videoOriginal!;
   if (PathProviderPlatform.instance is! _FakePaths) {
     PathProviderPlatform.instance = _FakePaths();
   }
