@@ -7,6 +7,8 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:myworksapp/core/database/repositories/service_repository.dart';
+import 'package:myworksapp/core/database/repositories/user_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -412,10 +414,26 @@ bool _initialized = false;
 
 /// Inicializa Supabase con el backend falso (una sola vez por isolate) y
 /// reinicia su estado. Llamar en `setUp`.
+/// Preferencias iniciales que usa [setUpFakeSupabase] (p. ej. onboarding).
+Map<String, Object> fakePrefs = {};
+
 Future<FakeBackend> setUpFakeSupabase({bool signedIn = false}) async {
   TestWidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues(fakePrefs);
   FakeBackend.instance.reset();
+  // Las cachés estáticas de los repositorios guardarían el resultado de un
+  // escenario anterior (p. ej. "no encontrado"): se limpian en cada escenario.
+  ServiceRepository.clearCache();
+  for (final id in const [
+    fakeUserId,
+    '00000000-0000-4000-8000-0000000000aa',
+    'id-1',
+    'v_id',
+    'v_id_usuario',
+    'v_id_trabajador',
+  ]) {
+    UserRepository.invalidateCachedUser(id);
+  }
   if (!_initialized) {
     _initialized = true;
     await Supabase.initialize(

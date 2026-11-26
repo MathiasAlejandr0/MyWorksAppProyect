@@ -94,8 +94,8 @@ final sampleJobModel = <String, dynamic>{
   'id_servicio': 'v_id_servicio',
   'estado': 'v_estado',
   'direccion': 'v_direccion',
-  'latitud': 1000,
-  'longitud': 1000,
+  'latitud': -41.4693,
+  'longitud': -72.9424,
   'descripcion': 'v_descripcion',
   'fecha_programada': '2026-01-02T03:04:05.000Z',
   'modalidad_cobro': 'v_modalidad_cobro',
@@ -241,7 +241,8 @@ final sampleReportModel = <String, dynamic>{
 final sampleServiceConfigModel = <String, dynamic>{
   'id': 'v_id',
   'id_servicio': 'v_id_servicio',
-  'esquema_config': 'v_esquema_config',
+  'esquema_config':
+      '{"fields": [{"name": "detalle", "type": "text", "label": "Detalle", "required": true}, {"name": "tipo", "type": "select", "label": "Tipo", "required": true, "options": ["Básico", "Completo"]}, {"name": "cantidad", "type": "number", "label": "Cantidad", "required": true}, {"name": "urgente", "type": "boolean", "label": "Urgente"}, {"name": "otro", "type": "desconocido"}], "variants": [{"id": "basica", "name": "Básica", "price": 15000}, {"id": "premium", "name": "Premium", "price": 30000}]}',
   'creado_en': '2026-01-02T03:04:05.000Z',
   'actualizado_en': '2026-01-02T03:04:05.000Z'
 };
@@ -304,16 +305,16 @@ final sampleWorkerModel = <String, dynamic>{
   'trabajador_servicios_extra': 'v_trabajador_servicios_extra',
   'precios_configurados': 1000,
   'zona_trabajo': 'v_zona_trabajo',
-  'latitud_base': 1500.0,
-  'longitud_base': 1500.0,
-  'radio_servicio_km': 1500.0,
+  'latitud_base': -41.4693,
+  'longitud_base': -72.9424,
+  'radio_servicio_km': 25.0,
   'origen_base': 'v_origen_base',
   'conteo_rechazos': 1500.0,
   'score_listado': 1500.0,
   'prioridad_manual': 1500.0,
   'trabajos_completados': 1500.0,
   'es_elite': true,
-  'radio_urbano_km': 1500.0,
+  'radio_urbano_km': 10.0,
   'tarifa_fuera_radio_clp': 1500.0,
   'horas_publicadas': 'v_horas_publicadas'
 };
@@ -400,8 +401,8 @@ final sampleJobDTO = <String, dynamic>{
   'serviceId': 'v_serviceId',
   'status': 'v_status',
   'address': 'v_address',
-  'latitude': 1000,
-  'longitude': 1000,
+  'latitude': -41.4693,
+  'longitude': -72.9424,
   'description': 'v_description',
   'scheduledDate': '2026-01-02T03:04:05.000Z',
   'createdAt': '2026-01-02T03:04:05.000Z',
@@ -458,8 +459,8 @@ final universalRow = <String, dynamic>{
   'instantanea_precio': 1000,
   'id_servicio': 'v_id_servicio',
   'direccion': 'v_direccion',
-  'latitud': 1000,
-  'longitud': 1000,
+  'latitud': -41.4693,
+  'longitud': -72.9424,
   'fecha_programada': '2026-01-02T03:04:05.000Z',
   'modalidad_cobro': 'v_modalidad_cobro',
   'estado_pago': 'v_estado_pago',
@@ -522,7 +523,8 @@ final universalRow = <String, dynamic>{
   'id_calificado': 'v_id_calificado',
   'id_reportante': 'v_id_reportante',
   'id_usuario_reportado': 'v_id_usuario_reportado',
-  'esquema_config': 'v_esquema_config',
+  'esquema_config':
+      '{"fields": [{"name": "detalle", "type": "text", "label": "Detalle", "required": true}, {"name": "tipo", "type": "select", "label": "Tipo", "required": true, "options": ["Básico", "Completo"]}, {"name": "cantidad", "type": "number", "label": "Cantidad", "required": true}, {"name": "urgente", "type": "boolean", "label": "Urgente"}, {"name": "otro", "type": "desconocido"}], "variants": [{"id": "basica", "name": "Básica", "price": 15000}, {"id": "premium", "name": "Premium", "price": 30000}]}',
   'nombre': 'Ana Pérez',
   'categoria': 'v_categoria',
   'activo': 1,
@@ -550,16 +552,16 @@ final universalRow = <String, dynamic>{
   'trabajador_servicios_extra': 'v_trabajador_servicios_extra',
   'precios_configurados': 1000,
   'zona_trabajo': 'v_zona_trabajo',
-  'latitud_base': 1500.0,
-  'longitud_base': 1500.0,
-  'radio_servicio_km': 1500.0,
+  'latitud_base': -41.4693,
+  'longitud_base': -72.9424,
+  'radio_servicio_km': 25.0,
   'origen_base': 'v_origen_base',
   'conteo_rechazos': 1500.0,
   'score_listado': 1500.0,
   'prioridad_manual': 1500.0,
   'trabajos_completados': 1500.0,
   'es_elite': true,
-  'radio_urbano_km': 1500.0,
+  'radio_urbano_km': 10.0,
   'tarifa_fuera_radio_clp': 1500.0,
   'horas_publicadas': 'v_horas_publicadas',
   'banco': 'v_banco',
@@ -608,8 +610,8 @@ final universalRow = <String, dynamic>{
   'serviceId': 'v_serviceId',
   'status': 'v_status',
   'address': 'v_address',
-  'latitude': 1000,
-  'longitude': 1000,
+  'latitude': -41.4693,
+  'longitude': -72.9424,
   'description': 'v_description',
   'scheduledDate': '2026-01-02T03:04:05.000Z',
   'createdAt': '2026-01-02T03:04:05.000Z',
@@ -630,7 +632,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'banderas_funcionalidad': {
@@ -643,7 +653,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'bloqueos_usuario': {
@@ -655,7 +673,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'calificaciones': {
@@ -668,7 +694,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'cancelaciones_trabajo': {
@@ -681,7 +715,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'configuraciones_servicio': {
@@ -694,7 +736,19 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
+    },
+    ...{
+      'esquema_config':
+          '{"fields": [{"name": "detalle", "type": "text", "label": "Detalle", "required": true}, {"name": "tipo", "type": "select", "label": "Tipo", "required": true, "options": ["Básico", "Completo"]}, {"name": "cantidad", "type": "number", "label": "Cantidad", "required": true}, {"name": "urgente", "type": "boolean", "label": "Urgente"}, {"name": "otro", "type": "desconocido"}], "variants": [{"id": "basica", "name": "Básica", "price": 15000}, {"id": "premium", "name": "Premium", "price": 30000}]}'
     }
   },
   'consentimientos_usuario': {
@@ -707,7 +761,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'cuentas_bancarias': {
@@ -720,7 +782,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'disputas': {
@@ -733,7 +803,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'eventos_abuso': {
@@ -746,7 +824,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'eventos_analitica': {
@@ -759,7 +845,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'fotos_trabajo': {
@@ -772,7 +866,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'ia_resumen_resenas': {
@@ -784,7 +886,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'impulsos': {
@@ -797,7 +907,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'liquidaciones': {
@@ -809,7 +927,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'mensajes': {
@@ -822,7 +948,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'notificaciones': {
@@ -835,7 +969,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'ordenes_cambio': {
@@ -848,7 +990,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'pagos': {
@@ -861,7 +1011,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'perfiles': {
@@ -874,7 +1032,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'portafolio_trabajador': {
@@ -887,7 +1053,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'propuesta_cotizacion_items': {
@@ -900,7 +1074,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'propuestas_cotizacion': {
@@ -913,7 +1095,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'registros_error_app': {
@@ -926,7 +1116,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'reportes': {
@@ -939,7 +1137,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'reprogramaciones_trabajo': {
@@ -952,7 +1158,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'senales_resena': {
@@ -964,7 +1178,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'servicios': {
@@ -977,7 +1199,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'suscripciones': {
@@ -990,7 +1220,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'trabajador_horarios': {
@@ -1002,7 +1240,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'trabajador_horas_publicadas': {
@@ -1014,7 +1260,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'trabajador_precios': {
@@ -1026,7 +1280,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'trabajador_servicios': {
@@ -1038,7 +1300,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'trabajador_servicios_extra': {
@@ -1050,7 +1320,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'trabajadores': {
@@ -1063,7 +1341,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'trabajos': {
@@ -1076,7 +1362,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'ubicacion_en_vivo': {
@@ -1088,7 +1382,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
   'verificacion_eventos': {
@@ -1100,7 +1402,15 @@ final Map<String, Map<String, dynamic>> tableRows = {
       'rol': 'cliente',
       'nombre': 'Ana Pérez',
       'correo': 'ana@test.invalid',
-      'email': 'ana@test.invalid'
+      'email': 'ana@test.invalid',
+      'latitud': -41.4693,
+      'longitud': -72.9424,
+      'latitude': -41.4693,
+      'longitude': -72.9424,
+      'latitud_base': -41.4693,
+      'longitud_base': -72.9424,
+      'radio_servicio_km': 25.0,
+      'radio_urbano_km': 10.0
     }
   },
 };

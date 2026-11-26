@@ -5,8 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:myworksapp/core/utils/constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/fake_supabase.dart';
 import 'support/widget_harness.dart';
 
 const _id = '00000000-0000-4000-8000-0000000000aa';
@@ -69,10 +69,11 @@ const _routes = [
 ];
 
 void main() {
+  tearDown(() => fakePrefs = {});
   for (final role in ['usuario', 'trabajador', 'administrador']) {
     for (final route in _routes) {
       testWidgets('ruta $route con rol $role', (tester) async {
-        SharedPreferences.setMockInitialValues({'onboarding_completed': true});
+        fakePrefs = {'onboarding_completed': true};
         await smokeWidget(
           tester,
           () => const SizedBox(),
@@ -87,9 +88,7 @@ void main() {
     for (final route in _routes) {
       testWidgets('ruta $route sin sesión (onboarding $onboarded)',
           (tester) async {
-        SharedPreferences.setMockInitialValues(
-          {'onboarding_completed': onboarded},
-        );
+        fakePrefs = {'onboarding_completed': onboarded};
         await smokeWidget(
           tester,
           () => const SizedBox(),
