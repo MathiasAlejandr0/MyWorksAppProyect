@@ -15,7 +15,7 @@
 | Web de clientes | Sitio React/Vite: buscar, reservar, pagar y seguir el pedido | [`MyWorksAppProyect/myworksapp_web/`](MyWorksAppProyect/myworksapp_web/), publicado en https://myworksapp.cl |
 | Consola de escritorio | App Tauri para el equipo interno: pedidos, pagos, disputas, profesionales y equipo | [`MyWorksAppProyect/myworksapp_desktop/`](MyWorksAppProyect/myworksapp_desktop/) |
 | Módulo compartido | Código TypeScript común a la web y la consola (sesión, pagos, chat, tipos) | [`MyWorksAppProyect/shared/`](MyWorksAppProyect/shared/) |
-| Backend | Supabase: PostgreSQL con RLS. El 22-11-2026 la base viva tenía 76 tablas. El detalle y la forma normal están en el diccionario y en `docs/normalizacion.md` | [`MyWorksAppProyect/myworksapp_app/supabase/`](MyWorksAppProyect/myworksapp_app/supabase/) |
+| Backend | Supabase: PostgreSQL con RLS. El 22-11-2026 la base viva tenía 76 tablas. El detalle y la forma normal están en el diccionario y en [`MyWorksAppProyect/docs/normalizacion.md`](MyWorksAppProyect/docs/normalizacion.md) | [`MyWorksAppProyect/myworksapp_app/supabase/`](MyWorksAppProyect/myworksapp_app/supabase/) |
 | Documentación técnica | Casos de uso, diccionario de datos, guías de despliegue y pruebas | [`MyWorksAppProyect/docs/`](MyWorksAppProyect/docs/) |
 | Índice de toda la documentación | Qué documento leer para cada tema | [`docs/INDICE.md`](docs/INDICE.md) |
 
@@ -190,11 +190,40 @@ Priorizar un flujo → acordar estados en BD → implementar (apps + Edge + SQL)
 | `Fase 1/` | Entregables y evidencias de definición del proyecto |
 | `Fase 2/` | Informe, guía, pauta, presentación y demás entregables que la comisión lee en la Fase 3. No hay carpeta `Fase 3/` |
 | `Documentos Guia/` | Guías e instructivos del programa |
-| `Capstone_Project.mpp` | Planificación del proyecto |
+| [`docs/Capstone_Project.mpp`](docs/Capstone_Project.mpp) | Planificación del proyecto (MS Project) |
 | **`MyWorksAppProyect/`** | **Monorepo del producto** (app, web, desktop, shared, docs técnicos, CI) |
 | `MyWorksAppProyect/docs/` | Casos de uso, diccionario BD, runbooks (Transbank, liquidación, despliegue web) y anexos de pruebas |
-| `docs/` | Artefactos Scrum: visión, backlog, sprints, retrospectiva, RNF, objetivos y solución |
-| `MyWorksAppProyect/INSTALL.md` | Instalación y demo técnica |
+| [`docs/`](docs/) | Artefactos Scrum, carta Gantt, defensa y [índice](docs/INDICE.md) |
+| [`MyWorksAppProyect/INSTALL.md`](MyWorksAppProyect/INSTALL.md) | Instalación y demo técnica |
+
+### Documentos del título (dónde está cada uno)
+
+El índice temático está en [`docs/INDICE.md`](docs/INDICE.md). Cada carpeta académica tiene un README corto.
+
+**Informe y Fase 2**
+
+- [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](Fase%202/Myworksapp_Informe_Final_PTY4614.docx) y [`.pdf`](Fase%202/Myworksapp_Informe_Final_PTY4614.pdf) — informe final vigente
+- [`Fase 2/Guia_de_Usuario_MyWorksApp.pdf`](Fase%202/Guia_de_Usuario_MyWorksApp.pdf) ([`.docx`](Fase%202/Guia_de_Usuario_MyWorksApp.docx))
+- [`Fase 2/Casos_de_uso_MyWorksApp.docx`](Fase%202/Casos_de_uso_MyWorksApp.docx) y [`Anexo_A_Diccionario_de_tablas.md`](Fase%202/Anexo_A_Diccionario_de_tablas.md)
+- [`Fase 2/Auditoria_BD_MyWorksApp.pdf`](Fase%202/Auditoria_BD_MyWorksApp.pdf) ([`.docx`](Fase%202/Auditoria_BD_MyWorksApp.docx))
+- [`Fase 2/Prueba_de_carga_MyWorksApp.docx`](Fase%202/Prueba_de_carga_MyWorksApp.docx)
+- [`Fase 2/Presentacion_final_MyWorksApp.pdf`](Fase%202/Presentacion_final_MyWorksApp.pdf) ([`.pptx`](Fase%202/Presentacion_final_MyWorksApp.pptx))
+- [`Fase 2/Pauta_presentacion_demo.pdf`](Fase%202/Pauta_presentacion_demo.pdf)
+- Diarios de reflexión Fase 2, guía 2.6, desarrollo 2.4, figuras y modelo ER: [`Fase 2/`](Fase%202/)
+
+**Fase 1, guías y planificación**
+
+- Definición del proyecto, guía del estudiante, pauta y presentación: [`Fase 1/Evidencias Grupales/`](Fase%201/Evidencias%20Grupales/)
+- Autoevaluaciones y diarios (Chiguay, Jara, Valderas): [`Fase 1/Evidencias Individual/`](Fase%201/Evidencias%20Individual/)
+- Guías del programa y plantilla de autoevaluación: [`Documentos Guia/`](Documentos%20Guia/)
+- Carta Gantt: [`docs/CARTA_GANTT_ACTUALIZADA.md`](docs/CARTA_GANTT_ACTUALIZADA.md) y [`docs/Capstone_Project.mpp`](docs/Capstone_Project.mpp)
+
+**Documentación de producto y estado**
+
+- Cómo ejecutar y demostrar: [`INSTALL.md`](MyWorksAppProyect/INSTALL.md), [`DEMO.md`](MyWorksAppProyect/DEMO.md)
+- Estado vigente del software: [`ESTADO_DEL_PROYECTO.md`](MyWorksAppProyect/ESTADO_DEL_PROYECTO.md)
+- Casos de uso, diccionario, UML y runbooks: [`MyWorksAppProyect/docs/`](MyWorksAppProyect/docs/)
+- Auditoría de la web (22-11-2026): [`AUDITORIA_WEB_22NOV2026.md`](MyWorksAppProyect/docs/AUDITORIA_WEB_22NOV2026.md)
 
 ---
 

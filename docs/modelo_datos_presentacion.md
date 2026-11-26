@@ -478,7 +478,7 @@ verificacion_eventos (id_trabajador, evento, creado_en, motivo)
 | **3NF** | ✅ 100% | Sin dependencias transitivas |
 | **4FN** | Solo las listas N:M | El resto del esquema no se declara en 4FN |
 
-**Documento completo:** `docs/normalizacion.md`
+**Documento completo:** [`MyWorksAppProyect/docs/normalizacion.md`](../MyWorksAppProyect/docs/normalizacion.md)
 
 ---
 

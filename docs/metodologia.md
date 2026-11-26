@@ -147,7 +147,7 @@ Evidencia de revisión de código en el repositorio: GitHub registra 74 pull req
 | Dato | Valor | Fuente |
 |------|-------|--------|
 | Tablero Scrum o Kanban | GitHub Projects | Confirmado por el equipo (2026-11-17). |
-| Carta Gantt | Archivo `Capstone_Project.mpp` (formato de Microsoft Project, por su extensión) | Commit `363a0f7`, 2026-09-13, autor Nicolas Chiguay, mensaje «Adjunto Carta Gantt». |
+| Carta Gantt | Archivo [`Capstone_Project.mpp`](Capstone_Project.mpp) (formato de Microsoft Project, por su extensión) | Commit `363a0f7`, 2026-09-13, autor Nicolas Chiguay, mensaje «Adjunto Carta Gantt». |
 | Seguimiento del trabajo | Ramas y pull requests en GitHub, con mensajes de commit validados por `commitlint` | `.github/workflows/commitlint.yml`; `MyWorksAppProyect/commitlint.config.mjs`. |
 | Backlog en el repositorio | `Fase 2/historias_de_usuario.txt` (dos historias narrativas) y `MyWorksAppProyect/docs/casos_de_uso.md` (34 casos de uso) | Archivos del repositorio. |
 | Canal de comunicación del equipo | Discord (Daily Scrum y coordinación) | Confirmado por el equipo (2026-11-17). |

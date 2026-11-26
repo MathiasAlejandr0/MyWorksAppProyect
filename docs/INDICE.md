@@ -101,12 +101,48 @@ Este índice ordena toda la documentación del repositorio por tema. Fase vigent
 
 ## 9. Entregables académicos
 
-| Carpeta o documento | Contenido |
+Cada carpeta tiene un README con el mismo listado. El informe vigente es
+[`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](../Fase%202/Myworksapp_Informe_Final_PTY4614.docx)
+y su [PDF](../Fase%202/Myworksapp_Informe_Final_PTY4614.pdf). No hay carpeta `Fase 3/`.
+
+### Fase 1
+
+| Documento | Ruta |
 |---|---|
-| [`Fase 1/`](../Fase%201/) | Definición del proyecto y evidencias |
-| [`Fase 2/Myworksapp_Informe_Final_PTY4614.docx`](../Fase%202/Myworksapp_Informe_Final_PTY4614.docx) y `.pdf` | Informe final. El 22-11-2026, 23:07 hora de Chile, se agregó la nota de que el proyecto está en la Fase 3 |
-| [`Fase 2/`](../Fase%202/) | Casos de uso, guía de usuario, auditoría de la base, prueba de carga, presentación y diarios de reflexión. Es el material que la comisión lee en la Fase 3. No existe una carpeta `Fase 3/` |
-| [`Documentos Guia/`](../Documentos%20Guia/) | Guías del programa |
+| Definición del proyecto | [`Fase 1/Evidencias Grupales/Definicion Proyecto APT - Fase 1_ My Works App.docx`](../Fase%201/Evidencias%20Grupales/Definicion%20Proyecto%20APT%20-%20Fase%201_%20My%20Works%20App.docx) |
+| Guía del estudiante (Fase 1) | [`1.5_GuiaEstudiante_…docx`](../Fase%201/Evidencias%20Grupales/1.5_GuiaEstudiante_Fase%201_Definicion%20Proyecto%20APT%20(Español).docx) |
+| Formativa 1.4 | [`1.4_APT122_FormativaFase1.docx`](../Fase%201/Evidencias%20Grupales/1.4_APT122_FormativaFase1.docx) |
+| Planilla de evaluación | [`PLANILLA DE EVALUACIÓN FASE 1.xlsx`](../Fase%201/Evidencias%20Grupales/PLANILLA%20DE%20EVALUACIÓN%20FASE%201.xlsx) |
+| Presentación | [`Presentación Proyecto.pptx`](../Fase%201/Evidencias%20Grupales/Presentación%20Proyecto.pptx) |
+| Evidencias individuales | [`Fase 1/Evidencias Individual/`](../Fase%201/Evidencias%20Individual/) |
+
+### Fase 2
+
+| Documento | Ruta |
+|---|---|
+| Informe final (vigente) | [`.docx`](../Fase%202/Myworksapp_Informe_Final_PTY4614.docx) y [`.pdf`](../Fase%202/Myworksapp_Informe_Final_PTY4614.pdf) |
+| Guía del estudiante (informe final) | [`2.6_GuiaEstudiante_…docx`](../Fase%202/2.6_GuiaEstudiante_Fase%202_Informe%20Final%20Proyecto%20APT.docx) |
+| Desarrollo del proyecto 2.4 | [`2.4_DesarrolloProyecto_APT_MyWorksApp.docx`](../Fase%202/2.4_DesarrolloProyecto_APT_MyWorksApp.docx) |
+| Guía de usuario | [`.pdf`](../Fase%202/Guia_de_Usuario_MyWorksApp.pdf) y [`.docx`](../Fase%202/Guia_de_Usuario_MyWorksApp.docx) |
+| Casos de uso | [`Casos_de_uso_MyWorksApp.docx`](../Fase%202/Casos_de_uso_MyWorksApp.docx) |
+| Anexo A (diccionario) | [`Anexo_A_Diccionario_de_tablas.md`](../Fase%202/Anexo_A_Diccionario_de_tablas.md) |
+| Auditoría de la base | [`.pdf`](../Fase%202/Auditoria_BD_MyWorksApp.pdf) y [`.docx`](../Fase%202/Auditoria_BD_MyWorksApp.docx) |
+| Prueba de carga | [`Prueba_de_carga_MyWorksApp.docx`](../Fase%202/Prueba_de_carga_MyWorksApp.docx) |
+| Presentación final | [`.pdf`](../Fase%202/Presentacion_final_MyWorksApp.pdf) y [`.pptx`](../Fase%202/Presentacion_final_MyWorksApp.pptx) |
+| Pauta de la demo | [`.pdf`](../Fase%202/Pauta_presentacion_demo.pdf) |
+| Diarios de reflexión | [`Fase 2/`](../Fase%202/) (Chiguay, Jara, Valderas) |
+| Modelo ER y figuras | [`modelo_entidad_relacion/`](../Fase%202/modelo_entidad_relacion/) y [`figuras/`](../Fase%202/figuras/) |
+
+### Guías y planificación
+
+| Documento | Ruta |
+|---|---|
+| Autenticación por roles | [`Documentos Guia/`](../Documentos%20Guia/) |
+| Políticas RLS | [`Documentos Guia/`](../Documentos%20Guia/) |
+| Plantilla de autoevaluación Fase 1 | [`1.3_APT122_AutoevaluacionFase1_plantilla.docx`](../Documentos%20Guia/1.3_APT122_AutoevaluacionFase1_plantilla.docx) |
+| Carta Gantt (markdown) | [`CARTA_GANTT_ACTUALIZADA.md`](CARTA_GANTT_ACTUALIZADA.md) |
+| Carta Gantt (MS Project) | [`Capstone_Project.mpp`](Capstone_Project.mpp) |
+| Defensa (guion y corrección) | [`guion_demo_sincronizado.md`](guion_demo_sincronizado.md), [`presentacion_defensa_corregida.md`](presentacion_defensa_corregida.md) |
 
 ## 10. Documentos históricos
 
