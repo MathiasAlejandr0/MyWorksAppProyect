@@ -48,7 +48,15 @@ class FakeBackend {
 
   Map<String, dynamic>? user;
 
+  /// Filas que devuelve una tabla no sembrada (null = lista vacía).
+  List<Map<String, dynamic>>? defaultRows;
+
+  /// Respuesta de RPC no registradas (null = devuelve null).
+  FakeHandler? defaultRpc;
+
   void reset() {
+    defaultRows = null;
+    defaultRpc = null;
     tables.clear();
     rpcs.clear();
     functions.clear();
@@ -103,7 +111,7 @@ class FakeBackend {
 
   http.Response _rpc(FakeRequest r, String name) {
     if (failAll || failing.contains(name)) return _err(400, 'rpc falla: $name');
-    final h = rpcs[name];
+    final h = rpcs[name] ?? defaultRpc;
     final result = h == null ? null : h(r);
     return _json(result);
   }
@@ -131,7 +139,12 @@ class FakeBackend {
     if (failAll || failing.contains(table)) {
       return _err(400, 'tabla falla: $table');
     }
-    final rows = tables.putIfAbsent(table, () => []);
+    final rows = tables.putIfAbsent(
+      table,
+      () => [
+        for (final d in defaultRows ?? const []) Map<String, dynamic>.from(d)
+      ],
+    );
     final params = r.url.queryParameters;
     final filters = Map.of(params)
       ..remove('select')
