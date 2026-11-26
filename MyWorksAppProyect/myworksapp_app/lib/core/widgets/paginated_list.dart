@@ -62,8 +62,8 @@ class _PaginatedListState<T> extends State<PaginatedList<T>> {
   }
 
   Future<void> _loadInitialData() async {
+    // _loadPage marca la carga; si se marcara aquí, retornaría sin cargar.
     setState(() {
-      _isLoading = true;
       _hasError = false;
       _items.clear();
       _currentPage = 0;
