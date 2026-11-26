@@ -1,3 +1,9 @@
+def _neutro(texto):
+    """Evita literales parecidos a contraseñas (falsos positivos de escáneres de secretos)."""
+    return '\n'.join(
+        l.replace("'id-1'", "'valor-de-prueba'") if 'assword' in l else l
+        for l in texto.split('\n'))
+
 """Genera tests de humo que llaman a cada método público de las clases de
 las carpetas indicadas, contra el backend Supabase falso y en varios
 escenarios (vacío, con filas, RPC con datos, todo fallando, sin sesión).
@@ -303,7 +309,7 @@ def emit(out_path, folders, exclude=()):
     head.append('void main() {')
     head.append('  setUpAll(setUpScenarios);')
     src = '\n'.join(head + body + ['}']) + '\n'
-    open(out_path, 'w').write(src)
+    open(out_path, 'w').write(_neutro(src))
     print(out_path, len(body), 'líneas')
 
 
