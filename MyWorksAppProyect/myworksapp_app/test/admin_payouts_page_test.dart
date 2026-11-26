@@ -55,9 +55,6 @@ void main() {
         () => const AdminPayoutsPage(),
         role: 'admin',
         interact: false,
-        // El botón "Pagado" va en el trailing de un ListTile y el tema le da
-        // ancho mínimo infinito (bug B1): se acota para poder dibujarlo.
-        boundedButtons: true,
         setup: (b) {
           b.seed('cobros_profesional', _cobros());
           b.seed('liquidaciones', [
@@ -88,11 +85,12 @@ void main() {
             await t.tap(r);
             await _pasos(t, 3);
           }
-          // Al cancelar, los controladores se liberan mientras el diálogo
-          // aún se cierra (bug B5): va al final para no cortar el guion.
           await _marcar(t, 'Cancelar');
         },
       );
+      // Regresión B1 ("Pagado" se dibuja con el tema real) y B5 (cancelar no
+      // usa los controladores ya liberados).
+      expect(lastSmokeErrors, isEmpty);
     });
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fake_supabase.dart';
 import 'support/job_detail_script.dart';
+import 'support/widget_harness.dart';
 
 Map<String, dynamic> _propuesta(String id, {String estado = 'enviada'}) => {
       'id': id,
@@ -48,7 +49,7 @@ final _casos = [
         'Enviar propuesta',
       ],
       extra: _abierta,
-      width: 1100),
+      bounded: false),
   const DetailCase(
       'cotizar con error',
       'trabajador',
@@ -62,11 +63,11 @@ final _casos = [
       ],
       extra: _abierta,
       failing: ['propuestas_cotizacion'],
-      width: 1100),
+      bounded: false),
   const DetailCase('cotizar sin invitación', 'trabajador',
       'esperando_cotizaciones', ['Responder cotización'],
       extra: {'modalidad_cobro': 'cotizacion_abierta'},
-      width: 1100),
+      bounded: false),
   DetailCase(
       'cliente acepta y rechaza cotización',
       'usuario',
@@ -104,14 +105,14 @@ final _casos = [
   ], extra: {
     'modalidad_cobro': 'bloque_horas',
     'horas_bloque': 4,
-  }),
+  }, bounded: false),
   const DetailCase('horas extra cancelar', 'trabajador', 'en_curso', [
     'Solicitar horas extra',
     'Cancelar',
   ], extra: {
     'modalidad_cobro': 'bloque_horas',
     'horas_bloque': 4,
-  }),
+  }, bounded: false),
   const DetailCase('pagar en garantía', 'usuario', 'esperando_pago',
       ['Pagar y confirmar reserva'],
       functionResult: {'url': 'https://webpay.test/x', 'token': 't'}),
@@ -133,20 +134,20 @@ final _casos = [
     'No estoy conforme',
     'campo:Qué no quedó bien=Quedó goteando',
     'Abrir ticket',
-  ]),
+  ], bounded: false),
   const DetailCase('cobro adicional', 'trabajador', 'en_curso', [
     'Solicitar',
     'campo:Título=Cañería extra',
     'campo:Descripción=Tramo dañado',
     'campo:Monto (CLP)=25000',
     'Enviar',
-  ]),
+  ], bounded: false),
   const DetailCase('cobro adicional inválido', 'trabajador', 'en_curso', [
     'Solicitar',
     'campo:Título=X',
     'campo:Monto (CLP)=10',
     'Enviar',
-  ]),
+  ], bounded: false),
   DetailCase('cliente revisa cobro adicional', 'usuario', 'en_curso', [
     'Revisar y decidir',
     'Rechazar',
@@ -162,6 +163,12 @@ final _casos = [
 
 void main() {
   for (final c in _casos) {
-    testWidgets('JobDetailPage flujo: ${c.name}', (t) => runDetailCase(t, c));
+    testWidgets('JobDetailPage flujo: ${c.name}', (t) async {
+      await runDetailCase(t, c);
+      // Regresión B1 (botones con el tema real) y B6 (diálogos sin usar
+      // controladores ya liberados).
+      if (c.bounded) return;
+      expect(smokeBugErrors(), isEmpty);
+    });
   }
 }

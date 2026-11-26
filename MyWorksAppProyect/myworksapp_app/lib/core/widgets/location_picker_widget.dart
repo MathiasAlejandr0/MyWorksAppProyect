@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart' as ll;
 import '../services/user_location_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/chile_comunas.dart';
+import 'dialog_controllers_scope.dart';
 import 'job_location_map.dart';
 import '../map/app_map_tiles.dart';
 
@@ -193,30 +194,32 @@ class _LocationPickerWidgetState extends State<LocationPickerWidget> {
     );
     final text = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Editar dirección'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Calle y número, comuna',
+      builder: (ctx) => DialogControllersScope(
+        controllers: [controller],
+        child: AlertDialog(
+          title: const Text('Editar dirección'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'Calle y número, comuna',
+            ),
+            textInputAction: TextInputAction.done,
+            onSubmitted: (v) => Navigator.of(ctx).pop(v),
           ),
-          textInputAction: TextInputAction.done,
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text),
+              child: const Text('Usar dirección'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Usar dirección'),
-          ),
-        ],
       ),
     );
-    controller.dispose();
     final query = text?.trim() ?? '';
     if (query.isEmpty || !mounted) return;
 
@@ -620,6 +623,9 @@ class _ClientMapPickerSheetState extends State<_ClientMapPickerSheet> {
                 const Spacer(),
                 FilledButton(
                   onPressed: () => Navigator.pop(context, _point),
+                  // El tema global usa ancho mínimo infinito; dentro de un
+                  // Row hay que acotarlo para que el botón se pueda dibujar.
+                  style: FilledButton.styleFrom(minimumSize: const Size(0, 52)),
                   child: const Text('Usar este punto'),
                 ),
               ],

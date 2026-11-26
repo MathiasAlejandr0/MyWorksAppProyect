@@ -88,12 +88,14 @@ Future<void> _montar(WidgetTester t, GeolocatorPlatform gps, GeoModo modo,
     await smokeWidget(t, _host,
         signedIn: false,
         interact: false,
-        boundedButtons: true,
         size: const Size(500, 1000), script: (t) async {
       await _pasos(t, 4);
       await extra?.call(t);
       await t.pump(const Duration(seconds: 8));
     });
+    // Regresión B1, B2 y B10: con el tema real ("Usar este punto" se dibuja)
+    // y sin usar el controlador del editor después de liberarlo.
+    expect(lastSmokeErrors, isEmpty);
   } finally {
     GeolocatorPlatform.instance = original;
     geoModo = GeoModo.lugar;

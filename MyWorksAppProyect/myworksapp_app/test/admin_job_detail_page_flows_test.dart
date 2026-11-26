@@ -150,6 +150,9 @@ void main() {
   testWidgets('detalle completo con disputa abierta', (t) async {
     await smokeWidget(t, () => const AdminJobDetailPage(jobId: _job),
         interact: false, role: 'admin', setup: _seed, script: _recorrido);
+    // Regresión B8: cerrar el diálogo de resolución no usa el controlador
+    // ya liberado.
+    expect(smokeBugErrors(), isEmpty);
   });
 
   testWidgets('disputa en revisión y fallas al cancelar', (t) async {
@@ -160,6 +163,7 @@ void main() {
       b.failing.add('trabajos:patch');
       b.defaultFunction = (_) => {'error': 'reembolso rechazado'};
     }, script: _recorrido);
+    expect(smokeBugErrors(), isEmpty);
   });
 
   testWidgets('detalle sin datos adicionales', (t) async {
