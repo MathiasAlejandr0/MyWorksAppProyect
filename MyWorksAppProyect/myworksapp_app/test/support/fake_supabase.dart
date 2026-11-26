@@ -57,6 +57,9 @@ class FakeBackend {
   /// Si es true, toda petición REST/RPC responde 500.
   bool failAll = false;
 
+  /// RPC que responden error de negocio con este mensaje.
+  final Map<String, String> rpcErrors = {};
+
   /// Respuesta de error propia para Auth: (status HTTP, mensaje).
   (int, String)? authFailure;
 
@@ -89,6 +92,7 @@ class FakeBackend {
     failing.clear();
     failAll = false;
     authFailure = null;
+    rpcErrors.clear();
     user = null;
   }
 
@@ -139,6 +143,8 @@ class FakeBackend {
 
   http.Response _rpc(FakeRequest r, String name) {
     if (failAll || failing.contains(name)) return _err(400, 'rpc falla: $name');
+    final negocio = rpcErrors[name];
+    if (negocio != null) return _err(400, negocio, code: 'P0001');
     final h = rpcs[name] ?? defaultRpc;
     final result = h == null ? null : h(r);
     return _json(result);
