@@ -212,7 +212,9 @@ class PricingQuoteCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          Flexible(
+            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          ),
           Text(
             value,
             style: (bold

@@ -114,6 +114,9 @@ Future<void> _recorrido(WidgetTester t) async {
 }
 
 void main() {
+  // Regresión O1: sin desbordes ni aserciones de layout ya corregidos.
+  tearDown(() => expect(smokeBugErrors(), isEmpty));
+
   testWidgets('sin trabajos activos: mercado abierto y disponibilidad',
       (t) async {
     await smokeWidget(t, () => const WorkerHomePage(),

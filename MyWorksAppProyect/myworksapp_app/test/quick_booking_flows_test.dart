@@ -101,6 +101,9 @@ Future<void> _pagar(WidgetTester t, {bool cancelar = false}) async {
 }
 
 void main() {
+  // Regresión O5: sin desbordes ni aserciones de layout ya corregidos.
+  tearDown(() => expect(smokeBugErrors(), isEmpty));
+
   testWidgets('QuickBookingPage validaciones y fecha', (t) async {
     await smokeWidget(
       t,

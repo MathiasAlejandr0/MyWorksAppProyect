@@ -77,8 +77,9 @@ void main() {
 
   testWidgets('MaintenancePage: reintento fallido, exitoso y soporte',
       (t) async {
-    // Con 600 px de alto la columna desborda (observación O3 del informe).
-    t.view.physicalSize = const Size(800, 1400);
+    // Regresión O3: con 600 px de alto la columna ya no desborda (se
+    // desplaza); un desborde haría fallar la prueba.
+    t.view.physicalSize = const Size(800, 600);
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     late FakeBackend b;

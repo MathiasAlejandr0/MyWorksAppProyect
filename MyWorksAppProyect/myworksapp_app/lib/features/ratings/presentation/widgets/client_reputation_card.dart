@@ -50,8 +50,11 @@ class ClientReputationCard extends StatelessWidget {
                                 ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                          '${plural(data?.ratings ?? 0, 'nota')} de especialistas'),
+                      // Flexible: en pantallas angostas el texto baja de línea.
+                      Flexible(
+                        child: Text(
+                            '${plural(data?.ratings ?? 0, 'nota')} de especialistas'),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),

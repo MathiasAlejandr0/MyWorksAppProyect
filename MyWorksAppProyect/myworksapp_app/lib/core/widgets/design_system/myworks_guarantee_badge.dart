@@ -79,17 +79,20 @@ class MyWorksGuaranteeBadge extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      'Garantía con Escrow',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.onCanvas(
-                          Theme.of(context).brightness,
+                    // Expanded (en vez de Spacer): el título se ajusta en
+                    // pantallas angostas sin desbordar.
+                    Expanded(
+                      child: Text(
+                        'Garantía con Escrow',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.onCanvas(
+                            Theme.of(context).brightness,
+                          ),
                         ),
                       ),
                     ),
-                    const Spacer(),
                     const Text(
                       '100% Seguro',
                       style: TextStyle(
