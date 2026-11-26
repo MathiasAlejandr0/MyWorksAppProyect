@@ -101,8 +101,11 @@ class _FakeCompress extends FlutterImageCompressPlatform {
       );
     }
     if (name.contains('compressWithList')) {
-      return Future<Uint8List>.value(
-          Uint8List.fromList(fakeJpegBytes.take(512).toList()));
+      // Cabecera RIFF/WEBP mínima: basta para isWebpBytes.
+      return Future<Uint8List>.value(Uint8List.fromList([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x02, 0x00, 0x00, //
+        0x57, 0x45, 0x42, 0x50, ...List<int>.filled(500, 0x22),
+      ]));
     }
     if (name.contains('compressAndGetFile')) {
       return Future<XFile?>.value(XFile(fakeImagePath()));

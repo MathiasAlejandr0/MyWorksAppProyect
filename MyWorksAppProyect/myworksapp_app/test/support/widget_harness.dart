@@ -127,6 +127,11 @@ Future<void> smokeWidget(
   // Si se indica, usa el router real de la app (routerProvider) y navega a
   // esta ruta en vez de montar [build] directamente.
   String? appRoute,
+  // Ajustes del backend falso después de la siembra genérica.
+  void Function(FakeBackend b)? setup,
+  // Guion propio que corre tras montar la pantalla (antes del recorrido
+  // genérico, que solo se ejecuta si [interact] es true).
+  Future<void> Function(WidgetTester tester)? script,
 }) async {
   lastSmokeErrors.clear();
   final container = ProviderContainer();
@@ -183,11 +188,12 @@ Future<void> smokeWidget(
             .loadCurrentUser(fakeUserId)
             .timeout(const Duration(seconds: 2), onTimeout: () {});
       }
+      setup?.call(b);
     });
     await runZonedGuarded(() async {
       try {
-        await _drive(
-            tester, build, interact, container, boundedButtons, appRoute);
+        await _drive(tester, build, interact, container, boundedButtons,
+            appRoute, script);
       } catch (e) {
         lastSmokeErrors.add(e);
       }
@@ -235,6 +241,7 @@ Future<void> _drive(
   ProviderContainer container,
   bool boundedButtons, [
   String? appRoute,
+  Future<void> Function(WidgetTester tester)? script,
 ]) async {
   final router = appRoute != null
       ? container.read(routerProvider)
@@ -296,6 +303,7 @@ Future<void> _drive(
     print(
         'SMOKE_REQ: ${FakeBackend.instance.requests.map((r) => '${r.method} ${r.url.path}').join(', ')}');
   }
+  if (script != null) await script(tester);
   if (!interact) return;
   // Escribe en los campos de texto visibles.
   final fields = find.byType(EditableText, skipOffstage: true);
