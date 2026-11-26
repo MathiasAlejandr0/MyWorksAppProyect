@@ -29,6 +29,8 @@ def guess(key,t,body):
     if t=='bool': return True
     if t=='list': return []
     if t=='map': return {}
+    # Valor neutro para 'password': evita falsos positivos de escáneres de secretos.
+    if key=='password': return 'valor_de_prueba'
     if t=='str': return 'v_'+key
     # unknown
     if any(s in k for s in ['monto','precio','total','tarifa','comision','calificacion','puntaje','latitud','longitud','lat','lng','cantidad','conteo','peso','radio','distancia','porcentaje','latitude','longitude','rating','price','amount','score','count','radius']): return 1000

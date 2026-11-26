@@ -92,5 +92,7 @@ for tb in sorted(votes):
 L.append('};')
 out = '\n'.join(L) + '\n'
 out = out.replace("'esquema_config': 'v_esquema_config'", "'esquema_config': '%s'" % _SCHEMA)
+# Valor neutro: evita falsos positivos de escáneres de secretos.
+out = out.replace("'v_password'", "'valor_de_prueba'")
 open(ROOT + '/test/support/model_samples.dart', 'w').write(out)
 print('ok', len(t), len(uni))
