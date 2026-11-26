@@ -179,7 +179,10 @@ class FakeBackend {
   }
 
   http.Response _rest(FakeRequest r, String table) {
-    if (failAll || failing.contains(table)) {
+    // 'tabla:patch', 'tabla:post'… hace fallar solo ese método.
+    if (failAll ||
+        failing.contains(table) ||
+        failing.contains('$table:${r.method.toLowerCase()}')) {
       return _err(400, 'tabla falla: $table');
     }
     if (!tables.containsKey(table) && defaultRows != null) {
