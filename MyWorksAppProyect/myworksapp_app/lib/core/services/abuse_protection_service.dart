@@ -226,13 +226,18 @@ class AbuseProtectionService {
     try {
       AbuseAction action;
 
+      // _recordAbuse guarda AbuseType.<tipo>.name (camelCase); se aceptan
+      // también las claves snake_case históricas.
       switch (abuseEvent.abuseType) {
+        case 'excessiveJobs':
         case 'excessive_jobs':
           action = AbuseAction.shadowBan;
           break;
+        case 'excessiveRejections':
         case 'excessive_rejections':
           action = AbuseAction.trustPenalty;
           break;
+        case 'excessiveCancellations':
         case 'excessive_cancellations':
           action = AbuseAction.trustPenalty;
           break;
@@ -267,6 +272,13 @@ class AbuseProtectionService {
 
       // Actualizar en SQLite
       await _abuseRepository.updateAbuseEvent(updatedEvent);
+
+      // Reflejar la acción en la caché (la usa _isShadowBanned).
+      final cached = _abuseCache[abuseEvent.userId];
+      if (cached != null) {
+        final index = cached.indexWhere((event) => event.id == abuseEvent.id);
+        if (index >= 0) cached[index] = updatedEvent;
+      }
 
       // Registrar en analytics
       if (action == AbuseAction.shadowBan) {
