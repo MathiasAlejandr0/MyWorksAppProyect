@@ -1,0 +1,380 @@
+// Backend Supabase falso para tests. Nunca sale a la red: todas las
+// peticiones (REST, RPC, Auth, Storage, Functions) se responden en memoria.
+// La URL apunta a un host inexistente para que, si algo escapara del cliente
+// falso, no pueda llegar a producción.
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+const fakeSupabaseUrl = 'http://fake-supabase.invalid';
+const fakeUserId = '00000000-0000-4000-8000-000000000001';
+const fakeUserEmail = 'cliente@test.invalid';
+
+/// Petición registrada por el backend falso.
+class FakeRequest {
+  FakeRequest(this.method, this.url, this.body, this.headers);
+  final String method;
+  final Uri url;
+  final String body;
+  final Map<String, String> headers;
+
+  String get path => url.path;
+  dynamic get json => body.isEmpty ? null : jsonDecode(body);
+  @override
+  String toString() => '$method $url $body';
+}
+
+typedef FakeHandler = Object? Function(FakeRequest req);
+
+/// Estado mutable del backend falso. Se reinicia con [reset].
+class FakeBackend {
+  FakeBackend._();
+  static final FakeBackend instance = FakeBackend._();
+
+  final Map<String, List<Map<String, dynamic>>> tables = {};
+  final Map<String, FakeHandler> rpcs = {};
+  final Map<String, FakeHandler> functions = {};
+  final List<FakeRequest> requests = [];
+
+  /// Tablas o RPC que deben responder con error 400 (para ramas de error).
+  final Set<String> failing = {};
+
+  /// Si es true, toda petición REST/RPC responde 500.
+  bool failAll = false;
+
+  Map<String, dynamic>? user;
+
+  void reset() {
+    tables.clear();
+    rpcs.clear();
+    functions.clear();
+    requests.clear();
+    failing.clear();
+    failAll = false;
+    user = null;
+  }
+
+  void seed(String table, List<Map<String, dynamic>> rows) {
+    tables[table] = rows.map((r) => Map<String, dynamic>.from(r)).toList();
+  }
+
+  void rpc(String name, Object? result) => rpcs[name] = (_) => result;
+
+  Iterable<FakeRequest> calls(String pathPart) =>
+      requests.where((r) => r.url.toString().contains(pathPart));
+
+  Future<http.Response> handle(http.Request req) async {
+    final r = FakeRequest(req.method, req.url, req.body, req.headers);
+    requests.add(r);
+    final path = req.url.path;
+    if (path.startsWith('/rest/v1/rpc/')) {
+      return _rpc(r, path.substring('/rest/v1/rpc/'.length));
+    }
+    if (path.startsWith('/rest/v1/')) {
+      return _rest(r, path.substring('/rest/v1/'.length));
+    }
+    if (path.startsWith('/auth/v1/')) return _auth(r, path.substring(9));
+    if (path.startsWith('/storage/v1/')) return _storage(r, path.substring(12));
+    if (path.startsWith('/functions/v1/')) {
+      final name = path.substring(14);
+      if (failing.contains('fn:$name')) return _err(500, 'falla simulada');
+      final h = functions[name];
+      return _json(h == null ? {'ok': true} : h(r));
+    }
+    return _json({});
+  }
+
+  http.Response _json(Object? body,
+      {int status = 200, Map<String, String>? h}) {
+    return http.Response(
+      jsonEncode(body),
+      status,
+      headers: {'content-type': 'application/json; charset=utf-8', ...?h},
+    );
+  }
+
+  http.Response _err(int status, String msg, {String code = 'XX000'}) =>
+      _json({'message': msg, 'code': code, 'details': null, 'hint': null},
+          status: status);
+
+  http.Response _rpc(FakeRequest r, String name) {
+    if (failAll || failing.contains(name)) return _err(400, 'rpc falla: $name');
+    final h = rpcs[name];
+    final result = h == null ? null : h(r);
+    return _json(result);
+  }
+
+  bool _matches(Map<String, dynamic> row, String key, String value) {
+    if (!row.containsKey(key)) return true;
+    final cell = row[key];
+    String s(Object? v) => v == null ? 'null' : '$v';
+    if (value.startsWith('eq.')) return s(cell) == value.substring(3);
+    if (value.startsWith('neq.')) return s(cell) != value.substring(4);
+    if (value.startsWith('is.')) {
+      final want = value.substring(3);
+      if (want == 'null') return cell == null;
+      return s(cell) == want;
+    }
+    if (value.startsWith('in.(')) {
+      final inner = value.substring(4, value.length - 1);
+      final opts = inner.split(',').map((e) => e.replaceAll('"', '')).toSet();
+      return opts.contains(s(cell));
+    }
+    return true;
+  }
+
+  http.Response _rest(FakeRequest r, String table) {
+    if (failAll || failing.contains(table)) {
+      return _err(400, 'tabla falla: $table');
+    }
+    final rows = tables.putIfAbsent(table, () => []);
+    final params = r.url.queryParameters;
+    final filters = Map.of(params)
+      ..remove('select')
+      ..remove('order')
+      ..remove('limit')
+      ..remove('offset')
+      ..remove('on_conflict')
+      ..remove('columns');
+    final accept = r.headers['Accept'] ?? r.headers['accept'] ?? '';
+    final single = accept.contains('vnd.pgrst.object');
+    final prefer = r.headers['Prefer'] ?? r.headers['prefer'] ?? '';
+
+    List<Map<String, dynamic>> selected() => rows
+        .where((row) =>
+            filters.entries.every((e) => _matches(row, e.key, e.value)))
+        .toList();
+
+    switch (r.method) {
+      case 'GET':
+      case 'HEAD':
+        var out = selected();
+        final limit = int.tryParse(params['limit'] ?? '');
+        if (limit != null && out.length > limit) out = out.sublist(0, limit);
+        final headers = <String, String>{
+          'content-range':
+              '0-${out.isEmpty ? 0 : out.length - 1}/${out.length}',
+        };
+        if (single) {
+          if (out.length != 1) {
+            return _json({
+              'code': 'PGRST116',
+              'details': 'The result contains ${out.length} rows',
+              'hint': null,
+              'message':
+                  'JSON object requested, multiple (or no) rows returned',
+            }, status: 406);
+          }
+          return _json(out.first, h: headers);
+        }
+        if (r.method == 'HEAD') {
+          return http.Response('', 200, headers: headers);
+        }
+        return _json(out, h: headers);
+      case 'POST':
+        final body = r.json;
+        final list = body is List ? body : [body];
+        final inserted = <Map<String, dynamic>>[];
+        for (final item in list) {
+          if (item is Map) {
+            final m = Map<String, dynamic>.from(item);
+            m.putIfAbsent('id', () => 'gen-${rows.length + 1}');
+            rows.add(m);
+            inserted.add(m);
+          }
+        }
+        if (!prefer.contains('return=representation')) {
+          return http.Response('', 201);
+        }
+        if (single)
+          return _json(inserted.isEmpty ? {} : inserted.first, status: 201);
+        return _json(inserted, status: 201);
+      case 'PATCH':
+        final patch = Map<String, dynamic>.from((r.json as Map?) ?? {});
+        final hit = selected();
+        for (final row in hit) {
+          row.addAll(patch);
+        }
+        if (!prefer.contains('return=representation')) {
+          return http.Response('', 204);
+        }
+        if (single) return _json(hit.isEmpty ? patch : hit.first);
+        return _json(hit);
+      case 'DELETE':
+        final hit = selected();
+        rows.removeWhere(hit.contains);
+        if (!prefer.contains('return=representation')) {
+          return http.Response('', 204);
+        }
+        return _json(hit);
+    }
+    return _json([]);
+  }
+
+  Map<String, dynamic> get _userJson =>
+      user ??
+      {
+        'id': fakeUserId,
+        'aud': 'authenticated',
+        'role': 'authenticated',
+        'email': fakeUserEmail,
+        'phone': '',
+        'app_metadata': {'provider': 'email'},
+        'user_metadata': {'nombre': 'Cliente Test', 'rol': 'cliente'},
+        'created_at': '2026-01-01T00:00:00Z',
+        'email_confirmed_at': '2026-01-01T00:00:00Z',
+      };
+
+  Map<String, dynamic> get sessionJson => {
+        'access_token': fakeJwt(),
+        'token_type': 'bearer',
+        'expires_in': 3600,
+        'expires_at': DateTime.now()
+                .add(const Duration(hours: 1))
+                .millisecondsSinceEpoch ~/
+            1000,
+        'refresh_token': 'refresh-fake',
+        'user': _userJson,
+      };
+
+  http.Response _auth(FakeRequest r, String path) {
+    if (failing.contains('auth') || failing.contains('auth:$path')) {
+      return _json({
+        'code': 400,
+        'error_code': 'invalid_credentials',
+        'msg': 'Invalid login credentials',
+        'message': 'Invalid login credentials'
+      }, status: 400);
+    }
+    if (path.startsWith('token')) return _json(sessionJson);
+    if (path.startsWith('signup')) return _json(sessionJson);
+    if (path.startsWith('user')) return _json(_userJson);
+    if (path.startsWith('logout')) return http.Response('', 204);
+    if (path.startsWith('otp') ||
+        path.startsWith('recover') ||
+        path.startsWith('resend')) {
+      return _json({});
+    }
+    if (path.startsWith('verify')) return _json(sessionJson);
+    return _json({});
+  }
+
+  http.Response _storage(FakeRequest r, String path) {
+    if (failing.contains('storage')) return _err(400, 'storage falla');
+    if (path.startsWith('object/sign/')) {
+      return _json({'signedURL': '/object/sign/fake?token=t'});
+    }
+    if (path.startsWith('object/list/')) return _json([]);
+    if (path.startsWith('object/') && r.method == 'DELETE') return _json([]);
+    if (path.startsWith('object/')) {
+      if (r.method == 'GET') return http.Response.bytes([1, 2, 3], 200);
+      return _json({'Key': path, 'Id': 'obj-1'});
+    }
+    if (path.startsWith('bucket')) return _json([]);
+    return _json({});
+  }
+}
+
+String fakeJwt({String sub = fakeUserId}) {
+  String b64(Map<String, dynamic> m) =>
+      base64Url.encode(utf8.encode(jsonEncode(m))).replaceAll('=', '');
+  final exp =
+      DateTime.now().add(const Duration(days: 365)).millisecondsSinceEpoch ~/
+          1000;
+  return '${b64({'alg': 'HS256', 'typ': 'JWT'})}.'
+      '${b64({
+        'sub': sub,
+        'exp': exp,
+        'role': 'authenticated',
+        'email': fakeUserEmail
+      })}.'
+      'firma';
+}
+
+class _FakeHttpClient extends http.BaseClient {
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final bytes = await request.finalize().toBytes();
+    final req = http.Request(request.method, request.url)
+      ..headers.addAll(request.headers)
+      ..bodyBytes = bytes;
+    final res = await FakeBackend.instance.handle(req);
+    return http.StreamedResponse(
+      Stream.value(res.bodyBytes),
+      res.statusCode,
+      headers: res.headers,
+      request: request,
+    );
+  }
+}
+
+class _MemoryStorage extends LocalStorage {
+  String? _value;
+  @override
+  Future<void> initialize() async {}
+  @override
+  Future<String?> accessToken() async => _value;
+  @override
+  Future<bool> hasAccessToken() async => _value != null;
+  @override
+  Future<void> persistSession(String persistSessionString) async =>
+      _value = persistSessionString;
+  @override
+  Future<void> removePersistedSession() async => _value = null;
+}
+
+class _MemoryAsyncStorage extends GotrueAsyncStorage {
+  final Map<String, String> _m = {};
+  @override
+  Future<String?> getItem({required String key}) async => _m[key];
+  @override
+  Future<void> removeItem({required String key}) async => _m.remove(key);
+  @override
+  Future<void> setItem({required String key, required String value}) async =>
+      _m[key] = value;
+}
+
+bool _initialized = false;
+
+/// Inicializa Supabase con el backend falso (una sola vez por isolate) y
+/// reinicia su estado. Llamar en `setUp`.
+Future<FakeBackend> setUpFakeSupabase({bool signedIn = false}) async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
+  FakeBackend.instance.reset();
+  if (!_initialized) {
+    _initialized = true;
+    await Supabase.initialize(
+      url: fakeSupabaseUrl,
+      publishableKey: 'anon-fake',
+      httpClient: _FakeHttpClient(),
+      authOptions: FlutterAuthClientOptions(
+        localStorage: _MemoryStorage(),
+        pkceAsyncStorage: _MemoryAsyncStorage(),
+        autoRefreshToken: false,
+        detectSessionInUri: false,
+      ),
+      realtimeClientOptions: const RealtimeClientOptions(
+        logLevel: RealtimeLogLevel.info,
+      ),
+      debug: false,
+    );
+  }
+  final auth = Supabase.instance.client.auth;
+  if (auth.currentSession != null && !signedIn) {
+    try {
+      await auth.signOut(scope: SignOutScope.local);
+    } catch (_) {}
+  }
+  if (signedIn) await signInFake();
+  return FakeBackend.instance;
+}
+
+Future<void> signInFake() async {
+  await Supabase.instance.client.auth
+      .signInWithPassword(email: fakeUserEmail, password: 'valor-de-prueba');
+}
