@@ -165,42 +165,40 @@ void main() {
     });
   }
 
-  testWidgets('grilla con evidencia: abrir visor, cancelar y eliminar',
-      (t) async {
-    await smokeWidget(
-      t,
-      () => const JobPhotosPage(jobId: _job),
-      interact: false,
-      setup: (b) => b.tables['fotos_trabajo'] = _fotos(),
-      script: (t) async {
-        for (var i = 0; i < 3; i++) {
-          final celdas = find.byType(GestureDetector);
+  // Regresión B4: el botón Eliminar del visor abre la confirmación y, al
+  // confirmar, borra la evidencia (antes el pop cerraba el diálogo).
+  for (final confirmar in [false, true]) {
+    testWidgets('visor: eliminar evidencia (confirmar=$confirmar)', (t) async {
+      late FakeBackend b;
+      await smokeWidget(
+        t,
+        () => const JobPhotosPage(jobId: _job),
+        interact: false,
+        setup: (backend) {
+          b = backend;
+          b.tables['fotos_trabajo'] = _fotos();
+        },
+        script: (t) async {
+          await _step(t, 4);
           final grid = find.descendant(
             of: find.byType(GridView),
-            matching: celdas,
+            matching: find.byType(GestureDetector),
           );
-          if (grid.evaluate().length <= i) break;
-          await t.tap(grid.at(i), warnIfMissed: false);
+          expect(grid, findsWidgets);
+          await t.tap(grid.first, warnIfMissed: false);
           await _step(t, 4);
-          final del = find.byIcon(Icons.delete_outline);
-          final del2 = find.byIcon(Icons.delete);
-          final borrar = del.evaluate().isNotEmpty ? del : del2;
-          if (borrar.evaluate().isNotEmpty) {
-            await t.tap(borrar.first);
-            await _step(t, 3);
-            final opcion = i == 0 ? 'Cancelar' : 'Eliminar';
-            if (find.text(opcion).evaluate().isNotEmpty) {
-              await t.tap(find.text(opcion).last);
-              await _step(t, 6);
-            }
-          }
-          final nav = t.state<NavigatorState>(find.byType(Navigator).last);
-          if (nav.canPop()) nav.pop();
+          await t.tap(find.byTooltip('Eliminar').last);
           await _step(t, 3);
-        }
-      },
-    );
-  });
+          expect(find.text('Eliminar evidencia'), findsOneWidget);
+          await t.tap(find.text(confirmar ? 'Eliminar' : 'Cancelar').last);
+          await _step(t, 6);
+          expect(find.text('Eliminar evidencia'), findsNothing);
+        },
+      );
+      final ids = [for (final r in b.tables['fotos_trabajo']!) r['id']];
+      expect(ids.length, confirmar ? 2 : 3);
+    });
+  }
 
   testWidgets('solo lectura y carga con error', (t) async {
     await smokeWidget(
