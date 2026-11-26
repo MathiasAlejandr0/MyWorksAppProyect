@@ -12,6 +12,7 @@ import 'package:myworksapp/core/database/repositories/user_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fake_geocoding.dart';
+import 'fake_plugins.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const fakeSupabaseUrl = 'http://fake-supabase.invalid';
@@ -430,6 +431,7 @@ Future<FakeBackend> setUpFakeSupabase({bool signedIn = false}) async {
   SharedPreferences.setMockInitialValues(fakePrefs);
   FakeBackend.instance.reset();
   installFakeGeocoding();
+  installFakePlugins();
   geoModo = GeoModo.lugar;
   // Las cachés estáticas de los repositorios guardarían el resultado de un
   // escenario anterior (p. ej. "no encontrado"): se limpian en cada escenario.
