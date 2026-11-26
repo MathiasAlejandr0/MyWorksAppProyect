@@ -1,4 +1,4 @@
-import 'dart:io' if (dart.library.html) 'dart:html';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -813,8 +813,10 @@ class _EvidenceViewerState extends State<_EvidenceViewer> {
               tooltip: 'Eliminar',
               icon: const Icon(Icons.delete, color: AppColors.error),
               onPressed: () {
-                widget.onDelete!();
+                // Cerrar primero el visor: si se hace después, el pop cierra
+                // el diálogo de confirmación recién abierto.
                 Navigator.pop(context);
+                widget.onDelete!();
               },
             ),
         ],

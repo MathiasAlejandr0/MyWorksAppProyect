@@ -58,6 +58,7 @@ import '../widgets/worker_gps_publisher.dart';
 import '../widgets/client_live_tracking.dart';
 import '../widgets/client_start_pin_card.dart';
 import '../../../../core/widgets/design_system/service_pin_dialog.dart';
+import '../../../../core/widgets/dialog_controllers_scope.dart';
 import '../../../../core/services/gps_publish_gate.dart';
 import '../../../../core/utils/plural.dart';
 

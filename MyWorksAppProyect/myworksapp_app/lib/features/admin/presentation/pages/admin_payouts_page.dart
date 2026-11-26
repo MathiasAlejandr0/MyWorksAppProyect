@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/design_system/app_gradient_app_bar.dart';
 import '../../../../core/utils/clp_format.dart';
+import '../../../../core/widgets/dialog_controllers_scope.dart';
 
 class AdminPayoutsPage extends ConsumerStatefulWidget {
   const AdminPayoutsPage({super.key});
@@ -48,45 +49,44 @@ class _AdminPayoutsPageState extends ConsumerState<AdminPayoutsPage> {
     final notes = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Marcar transferencia'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Pago ${row['id']}\n'
-              'Transferir \$${row['neto_clp'] ?? row['monto']} '
-              '(bruto \$${row['monto']} − comisión \$${row['comision_clp'] ?? 0})',
-            ),
-            TextField(
-              controller: reference,
-              decoration: const InputDecoration(
-                labelText: 'Referencia (mín. 4)',
+      builder: (context) => DialogControllersScope(
+        controllers: [reference, notes],
+        child: AlertDialog(
+          title: const Text('Marcar transferencia'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Pago ${row['id']}\n'
+                'Transferir \$${row['neto_clp'] ?? row['monto']} '
+                '(bruto \$${row['monto']} − comisión \$${row['comision_clp'] ?? 0})',
               ),
+              TextField(
+                controller: reference,
+                decoration: const InputDecoration(
+                  labelText: 'Referencia (mín. 4)',
+                ),
+              ),
+              TextField(
+                controller: notes,
+                decoration: const InputDecoration(labelText: 'Nota'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
             ),
-            TextField(
-              controller: notes,
-              decoration: const InputDecoration(labelText: 'Nota'),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Marcar pagado'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Marcar pagado'),
-          ),
-        ],
       ),
     );
-    if (confirmed != true) {
-      reference.dispose();
-      notes.dispose();
-      return;
-    }
+    if (confirmed != true) return;
     try {
       await _repo.markPaid(
         paymentId: row['id'] as String,
@@ -103,9 +103,6 @@ class _AdminPayoutsPageState extends ConsumerState<AdminPayoutsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
       );
-    } finally {
-      reference.dispose();
-      notes.dispose();
     }
   }
 
@@ -151,6 +148,9 @@ class _AdminPayoutsPageState extends ConsumerState<AdminPayoutsPage> {
                           onPressed: () => _mark(row),
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.brandOrange,
+                            // Acota el ancho mínimo infinito del tema global:
+                            // como trailing de ListTile no puede ocupar todo.
+                            minimumSize: const Size(0, 40),
                           ),
                           child: const Text('Pagado'),
                         ),

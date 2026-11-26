@@ -30,148 +30,152 @@ class _MaintenancePageState extends State<MaintenancePage> {
     return Scaffold(
       backgroundColor: AppColors.surfaceLight,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icono de mantenimiento
-              const Icon(
-                Icons.build_circle_outlined,
-                size: 80,
-                color: AppColors.warning,
-              ),
-              const SizedBox(height: 24),
+        child: Center(
+          // Desplazable: con un fallo registrado y pantallas bajas desbordaba.
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icono de mantenimiento
+                const Icon(
+                  Icons.build_circle_outlined,
+                  size: 80,
+                  color: AppColors.warning,
+                ),
+                const SizedBox(height: 24),
 
-              // Título
-              Text(
-                'Modo Mantenimiento',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.grayDark,
+                // Título
+                Text(
+                  'Modo Mantenimiento',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.grayDark,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+
+                // Mensaje principal
+                Text(
+                  'No pudimos conectar con el servidor.\nRevisa tu conexión a internet.',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.grayMedium,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+
+                // Información del error (si está disponible)
+                if (failureType != null || failureMessage != null)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: AppColors.error.withValues(alpha: 0.3)),
                     ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Mensaje principal
-              Text(
-                'No pudimos conectar con el servidor.\nRevisa tu conexión a internet.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.grayMedium,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-
-              // Información del error (si está disponible)
-              if (failureType != null || failureMessage != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: AppColors.error.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (failureType != null)
-                        Text(
-                          'Tipo: ${_formatFailureType(failureType)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.error,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (failureType != null)
+                          Text(
+                            'Tipo: ${_formatFailureType(failureType)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.error,
+                            ),
                           ),
-                        ),
-                      if (failureMessage != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          failureMessage,
-                          style: const TextStyle(
-                            color: AppColors.grayDark,
-                            fontSize: 12,
+                        if (failureMessage != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            failureMessage,
+                            style: const TextStyle(
+                              color: AppColors.grayDark,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
+                    ),
+                  ),
+
+                const SizedBox(height: 32),
+
+                // Mensaje de recuperación (si está en proceso)
+                if (_isRecovering)
+                  Column(
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      if (_recoveryMessage != null)
+                        Text(
+                          _recoveryMessage!,
+                          style: const TextStyle(color: AppColors.info),
+                          textAlign: TextAlign.center,
+                        ),
                     ],
                   ),
-                ),
 
-              const SizedBox(height: 32),
-
-              // Mensaje de recuperación (si está en proceso)
-              if (_isRecovering)
-                Column(
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    if (_recoveryMessage != null)
-                      Text(
-                        _recoveryMessage!,
-                        style: const TextStyle(color: AppColors.info),
-                        textAlign: TextAlign.center,
+                if (!_isRecovering) ...[
+                  // Botón: Reintentar
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _handleRetry,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reintentar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryLight,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                  ],
-                ),
-
-              if (!_isRecovering) ...[
-                // Botón: Reintentar
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _handleRetry,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryLight,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                // Botón: Contactar Soporte
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton.icon(
-                    onPressed: _handleContactSupport,
-                    icon: const Icon(Icons.support_agent),
-                    label: const Text('Contactar Soporte'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.grayDark,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 32),
-
-              // Información de diagnóstico (colapsable)
-              ExpansionTile(
-                title: const Text(
-                  'Información Técnica',
-                  style: TextStyle(fontSize: 12),
-                ),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      diagnostics.entries
-                          .map((e) => '${e.key}: ${e.value}')
-                          .join('\n'),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontFamily: 'monospace',
+                  // Botón: Contactar Soporte
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: _handleContactSupport,
+                      icon: const Icon(Icons.support_agent),
+                      label: const Text('Contactar Soporte'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.grayDark,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
                   ),
                 ],
-              ),
-            ],
+
+                const SizedBox(height: 32),
+
+                // Información de diagnóstico (colapsable)
+                ExpansionTile(
+                  title: const Text(
+                    'Información Técnica',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        diagnostics.entries
+                            .map((e) => '${e.key}: ${e.value}')
+                            .join('\n'),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

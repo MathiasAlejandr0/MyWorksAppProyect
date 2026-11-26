@@ -101,25 +101,27 @@ extension JobDetailWorkflows on _JobDetailPageState {
     final hoursCtrl = TextEditingController(text: '1');
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Horas extra'),
-        content: TextField(
-          controller: hoursCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Horas adicionales (1-8)',
-            helperText: 'Fuera del bloque ya pagado por el cliente',
+      builder: (ctx) => DialogControllersScope(
+        controllers: [hoursCtrl],
+        child: AlertDialog(
+          title: const Text('Horas extra'),
+          content: TextField(
+            controller: hoursCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Horas adicionales (1-8)',
+              helperText: 'Fuera del bloque ya pagado por el cliente',
+            ),
+            keyboardType: TextInputType.number,
           ),
-          keyboardType: TextInputType.number,
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Solicitar')),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Solicitar')),
-        ],
       ),
     );
 
     final extra = int.tryParse(hoursCtrl.text.trim());
-    hoursCtrl.dispose();
     if (ok != true || !mounted || extra == null) return;
 
     try {
@@ -294,32 +296,34 @@ extension JobDetailWorkflows on _JobDetailPageState {
     final descriptionCtrl = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('No estoy conforme'),
-        content: TextField(
-          controller: descriptionCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Qué no quedó bien',
-            helperText:
-                'El pago sigue retenido. Soporte revisa la evidencia y el chat.',
+      builder: (context) => DialogControllersScope(
+        controllers: [descriptionCtrl],
+        child: AlertDialog(
+          title: const Text('No estoy conforme'),
+          content: TextField(
+            controller: descriptionCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Qué no quedó bien',
+              helperText:
+                  'El pago sigue retenido. Soporte revisa la evidencia y el chat.',
+            ),
+            maxLines: 4,
           ),
-          maxLines: 4,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              child: const Text('Abrir ticket'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Abrir ticket'),
-          ),
-        ],
       ),
     );
     final description = descriptionCtrl.text.trim();
-    descriptionCtrl.dispose();
     if (confirm != true || !mounted) return;
 
     await _openDispute(
@@ -339,42 +343,42 @@ extension JobDetailWorkflows on _JobDetailPageState {
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Solicitar cobro adicional'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: tituloCtrl,
-                decoration: const InputDecoration(labelText: 'Título'),
-              ),
-              TextField(
-                controller: descCtrl,
-                decoration: const InputDecoration(labelText: 'Descripción'),
-                maxLines: 2,
-              ),
-              TextField(
-                controller: montoCtrl,
-                decoration: const InputDecoration(labelText: 'Monto (CLP)'),
-                keyboardType: TextInputType.number,
-              ),
-            ],
+      builder: (ctx) => DialogControllersScope(
+        controllers: [tituloCtrl, descCtrl, montoCtrl],
+        child: AlertDialog(
+          title: const Text('Solicitar cobro adicional'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: tituloCtrl,
+                  decoration: const InputDecoration(labelText: 'Título'),
+                ),
+                TextField(
+                  controller: descCtrl,
+                  decoration: const InputDecoration(labelText: 'Descripción'),
+                  maxLines: 2,
+                ),
+                TextField(
+                  controller: montoCtrl,
+                  decoration: const InputDecoration(labelText: 'Monto (CLP)'),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enviar')),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enviar')),
-        ],
       ),
     );
 
     final titulo = tituloCtrl.text.trim();
     final descripcion = descCtrl.text.trim();
     final monto = int.tryParse(montoCtrl.text.trim());
-    tituloCtrl.dispose();
-    descCtrl.dispose();
-    montoCtrl.dispose();
 
     if (ok != true || !mounted) return;
 

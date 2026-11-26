@@ -141,7 +141,13 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
   }
 
   Future<void> _loadSelectedWorker(String workerId) async {
-    final worker = await _workerRepository.getWorkerByUserId(workerId);
+    WorkerModel? worker;
+    try {
+      worker = await _workerRepository.getWorkerByUserId(workerId);
+    } catch (_) {
+      // Sin ficha: el envío la vuelve a pedir antes de cotizar.
+      worker = null;
+    }
     final user = await _userRepository.getPublicProfile(workerId);
     List<DateTime> slots = const [];
     WeeklySchedule? schedule;
@@ -545,8 +551,22 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
       }
 
       if (_pricingMode == PricingConstants.modeHourlyBlock) {
+        // La ficha pudo no cargar al abrir: se reintenta antes de cotizar.
+        final worker = _selectedWorker ??
+            await _workerRepository.getWorkerByUserId(_selectedWorkerId!);
+        if (worker == null) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No pudimos cargar la tarifa del profesional. Intenta nuevamente.',
+              ),
+            ),
+          );
+          return;
+        }
         final rate = PricingService.instance
-            .estimateHourlyRateFromVisitFee(roundClp(_selectedWorker!.visitFee));
+            .estimateHourlyRateFromVisitFee(roundClp(worker.visitFee));
         final bookingService = ref.read(jobBookingServiceProvider);
         final booking = await bookingService.createHourlyBlockBooking(
           userId: user.id,
@@ -742,7 +762,11 @@ class _ServiceRequestPageState extends ConsumerState<ServiceRequestPage> {
                   ],
                   const SizedBox(height: 24),
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedServiceId,
+                    // Un servicio inactivo no está en la lista: sin esto el
+                    // desplegable falla con "exactly one item with value".
+                    initialValue: _services.any((s) => s.id == _selectedServiceId)
+                        ? _selectedServiceId
+                        : null,
                     decoration: const InputDecoration(
                       labelText: 'Tipo de servicio',
                       prefixIcon: Icon(Icons.category),

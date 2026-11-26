@@ -41,10 +41,15 @@ class QuoteProposalsSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Propuestas de cotización', style: Theme.of(context).textTheme.titleLarge),
+            Expanded(
+              child: Text('Propuestas de cotización', style: Theme.of(context).textTheme.titleLarge),
+            ),
             if (canSubmit)
               FilledButton.icon(
                 onPressed: onSubmitQuote,
+                // El tema global usa ancho mínimo infinito; dentro de un Row
+                // hay que acotarlo para que el botón se pueda dibujar.
+                style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
                 icon: const Icon(Icons.send_outlined, size: 18),
                 label: const Text('Responder cotización'),
               ),

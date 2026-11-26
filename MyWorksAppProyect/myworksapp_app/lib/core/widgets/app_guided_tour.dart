@@ -499,22 +499,28 @@ class _TourTooltipCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.brandOrangeSoft,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    badge,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.brandOrange,
-                          fontWeight: FontWeight.w700,
-                        ),
+                // Expanded + Align (en vez de Spacer): la etiqueta se ajusta
+                // en pantallas angostas sin desbordar.
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.brandOrangeSoft,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        badge,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: AppColors.brandOrange,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ),
                   ),
                 ),
-                const Spacer(),
                 TextButton(
                   onPressed: onSkip,
                   style: TextButton.styleFrom(

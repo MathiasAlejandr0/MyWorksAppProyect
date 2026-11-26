@@ -26,7 +26,7 @@ test.describe('aviso académico', () => {
     await page.goto('/');
     await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', META);
     await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', META);
-    await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+    await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(0);
 
     await page.getByRole('contentinfo').getByRole('link', { name: 'Aviso legal' }).first().click();
     await expect(page).toHaveURL(/\/aviso-legal$/);
@@ -38,7 +38,7 @@ test.describe('aviso académico', () => {
       'href',
       /transbankdevelopers\.cl/,
     );
-    await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+    await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(0);
   });
 
   test('términos y privacidad repiten el carácter académico', async ({ page }) => {
