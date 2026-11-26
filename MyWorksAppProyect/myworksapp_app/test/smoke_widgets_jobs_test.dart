@@ -83,7 +83,11 @@ void main() {
       'EvidenceShutterCameraPage estado pendiente rol trabajador (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        role: 'trabajador', overrides: const {'estado': 'pendiente'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'pendiente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado aceptado rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -95,7 +99,11 @@ void main() {
       'EvidenceShutterCameraPage estado aceptado rol trabajador (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        role: 'trabajador', overrides: const {'estado': 'aceptado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'aceptado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado en_camino rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -107,7 +115,11 @@ void main() {
       'EvidenceShutterCameraPage estado en_camino rol trabajador (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        role: 'trabajador', overrides: const {'estado': 'en_camino'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'en_camino',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado en_curso rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -119,7 +131,11 @@ void main() {
       'EvidenceShutterCameraPage estado en_curso rol trabajador (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        role: 'trabajador', overrides: const {'estado': 'en_curso'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'en_curso',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado completado rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -131,7 +147,11 @@ void main() {
       'EvidenceShutterCameraPage estado completado rol trabajador (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        role: 'trabajador', overrides: const {'estado': 'completado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'completado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado cancelado rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -143,7 +163,11 @@ void main() {
       'EvidenceShutterCameraPage estado cancelado rol trabajador (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        role: 'trabajador', overrides: const {'estado': 'cancelado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'cancelado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado expirado rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -155,7 +179,11 @@ void main() {
       'EvidenceShutterCameraPage estado expirado rol trabajador (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        role: 'trabajador', overrides: const {'estado': 'expirado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'expirado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado no_asistio rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -167,7 +195,11 @@ void main() {
       'EvidenceShutterCameraPage estado no_asistio rol trabajador (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        role: 'trabajador', overrides: const {'estado': 'no_asistio'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'no_asistio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado esperando_pago rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -179,7 +211,11 @@ void main() {
       'EvidenceShutterCameraPage estado esperando_pago rol trabajador (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        role: 'trabajador', overrides: const {'estado': 'esperando_pago'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'esperando_pago',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado esperando_cotizaciones rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -192,7 +228,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_cotizaciones'});
+        overrides: const {
+          'estado': 'esperando_cotizaciones',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado cotizacion_seleccionada rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -206,7 +245,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
         role: 'trabajador',
-        overrides: const {'estado': 'cotizacion_seleccionada'});
+        overrides: const {
+          'estado': 'cotizacion_seleccionada',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado pausado_orden_cambio rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -219,7 +261,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
         role: 'trabajador',
-        overrides: const {'estado': 'pausado_orden_cambio'});
+        overrides: const {
+          'estado': 'pausado_orden_cambio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage estado esperando_aprobacion_cliente rol usuario (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -233,7 +278,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+        overrides: const {
+          'estado': 'esperando_aprobacion_cliente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'EvidenceShutterCameraPage completo (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
@@ -253,7 +301,11 @@ void main() {
       (tester) async {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
-        role: 'trabajador', overrides: const {'estado': 'pendiente'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'pendiente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado aceptado rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -267,7 +319,11 @@ void main() {
       (tester) async {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
-        role: 'trabajador', overrides: const {'estado': 'aceptado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'aceptado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado en_camino rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -281,7 +337,11 @@ void main() {
       (tester) async {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
-        role: 'trabajador', overrides: const {'estado': 'en_camino'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'en_camino',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado en_curso rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -295,7 +355,11 @@ void main() {
       (tester) async {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
-        role: 'trabajador', overrides: const {'estado': 'en_curso'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'en_curso',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado completado rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -309,7 +373,11 @@ void main() {
       (tester) async {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
-        role: 'trabajador', overrides: const {'estado': 'completado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'completado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado cancelado rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -323,7 +391,11 @@ void main() {
       (tester) async {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
-        role: 'trabajador', overrides: const {'estado': 'cancelado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'cancelado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado expirado rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -337,7 +409,11 @@ void main() {
       (tester) async {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
-        role: 'trabajador', overrides: const {'estado': 'expirado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'expirado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado no_asistio rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -351,7 +427,11 @@ void main() {
       (tester) async {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
-        role: 'trabajador', overrides: const {'estado': 'no_asistio'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'no_asistio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado esperando_pago rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -365,7 +445,11 @@ void main() {
       (tester) async {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
-        role: 'trabajador', overrides: const {'estado': 'esperando_pago'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'esperando_pago',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado esperando_cotizaciones rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -380,7 +464,10 @@ void main() {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_cotizaciones'});
+        overrides: const {
+          'estado': 'esperando_cotizaciones',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado cotizacion_seleccionada rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -396,7 +483,10 @@ void main() {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'cotizacion_seleccionada'});
+        overrides: const {
+          'estado': 'cotizacion_seleccionada',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado pausado_orden_cambio rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -411,7 +501,10 @@ void main() {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'pausado_orden_cambio'});
+        overrides: const {
+          'estado': 'pausado_orden_cambio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage estado esperando_aprobacion_cliente rol usuario (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -427,7 +520,10 @@ void main() {
     await smokeWidget(tester,
         () => f1.JobDetailPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+        overrides: const {
+          'estado': 'esperando_aprobacion_cliente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobDetailPage completo (features/jobs/presentation/pages/job_detail_page.dart)',
@@ -446,7 +542,11 @@ void main() {
       'JobHistoryPage estado pendiente rol trabajador (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
-        role: 'trabajador', overrides: const {'estado': 'pendiente'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'pendiente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado aceptado rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -458,7 +558,11 @@ void main() {
       'JobHistoryPage estado aceptado rol trabajador (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
-        role: 'trabajador', overrides: const {'estado': 'aceptado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'aceptado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado en_camino rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -470,7 +574,11 @@ void main() {
       'JobHistoryPage estado en_camino rol trabajador (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
-        role: 'trabajador', overrides: const {'estado': 'en_camino'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'en_camino',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado en_curso rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -482,7 +590,11 @@ void main() {
       'JobHistoryPage estado en_curso rol trabajador (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
-        role: 'trabajador', overrides: const {'estado': 'en_curso'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'en_curso',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado completado rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -494,7 +606,11 @@ void main() {
       'JobHistoryPage estado completado rol trabajador (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
-        role: 'trabajador', overrides: const {'estado': 'completado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'completado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado cancelado rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -506,7 +622,11 @@ void main() {
       'JobHistoryPage estado cancelado rol trabajador (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
-        role: 'trabajador', overrides: const {'estado': 'cancelado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'cancelado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado expirado rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -518,7 +638,11 @@ void main() {
       'JobHistoryPage estado expirado rol trabajador (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
-        role: 'trabajador', overrides: const {'estado': 'expirado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'expirado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado no_asistio rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -530,7 +654,11 @@ void main() {
       'JobHistoryPage estado no_asistio rol trabajador (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
-        role: 'trabajador', overrides: const {'estado': 'no_asistio'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'no_asistio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado esperando_pago rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -542,7 +670,11 @@ void main() {
       'JobHistoryPage estado esperando_pago rol trabajador (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
-        role: 'trabajador', overrides: const {'estado': 'esperando_pago'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'esperando_pago',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado esperando_cotizaciones rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -555,7 +687,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_cotizaciones'});
+        overrides: const {
+          'estado': 'esperando_cotizaciones',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado cotizacion_seleccionada rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -569,7 +704,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
         role: 'trabajador',
-        overrides: const {'estado': 'cotizacion_seleccionada'});
+        overrides: const {
+          'estado': 'cotizacion_seleccionada',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado pausado_orden_cambio rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -582,7 +720,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
         role: 'trabajador',
-        overrides: const {'estado': 'pausado_orden_cambio'});
+        overrides: const {
+          'estado': 'pausado_orden_cambio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage estado esperando_aprobacion_cliente rol usuario (features/jobs/presentation/pages/job_history_page.dart)',
@@ -596,7 +737,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f2.JobHistoryPage(),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+        overrides: const {
+          'estado': 'esperando_aprobacion_cliente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobHistoryPage completo (features/jobs/presentation/pages/job_history_page.dart)',
@@ -622,7 +766,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'pendiente'});
+        overrides: const {
+          'estado': 'pendiente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado aceptado rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -642,7 +789,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'aceptado'});
+        overrides: const {
+          'estado': 'aceptado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado en_camino rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -662,7 +812,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'en_camino'});
+        overrides: const {
+          'estado': 'en_camino',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado en_curso rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -682,7 +835,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'en_curso'});
+        overrides: const {
+          'estado': 'en_curso',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado completado rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -702,7 +858,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'completado'});
+        overrides: const {
+          'estado': 'completado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado cancelado rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -722,7 +881,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'cancelado'});
+        overrides: const {
+          'estado': 'cancelado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado expirado rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -742,7 +904,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'expirado'});
+        overrides: const {
+          'estado': 'expirado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado no_asistio rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -762,7 +927,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'no_asistio'});
+        overrides: const {
+          'estado': 'no_asistio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado esperando_pago rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -782,7 +950,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_pago'});
+        overrides: const {
+          'estado': 'esperando_pago',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado esperando_cotizaciones rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -802,7 +973,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_cotizaciones'});
+        overrides: const {
+          'estado': 'esperando_cotizaciones',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado cotizacion_seleccionada rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -822,7 +996,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'cotizacion_seleccionada'});
+        overrides: const {
+          'estado': 'cotizacion_seleccionada',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado pausado_orden_cambio rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -842,7 +1019,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'pausado_orden_cambio'});
+        overrides: const {
+          'estado': 'pausado_orden_cambio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage estado esperando_aprobacion_cliente rol usuario (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -862,7 +1042,10 @@ void main() {
         () => f3.JobPhotosPage(
             jobId: '00000000-0000-4000-8000-0000000000aa', canAddPhotos: true),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+        overrides: const {
+          'estado': 'esperando_aprobacion_cliente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobPhotosPage completo (features/jobs/presentation/pages/job_photos_page.dart)',
@@ -891,7 +1074,11 @@ void main() {
       'JobSchedulePage estado pendiente rol trabajador (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
-        role: 'trabajador', overrides: const {'estado': 'pendiente'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'pendiente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado aceptado rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -903,7 +1090,11 @@ void main() {
       'JobSchedulePage estado aceptado rol trabajador (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
-        role: 'trabajador', overrides: const {'estado': 'aceptado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'aceptado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado en_camino rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -915,7 +1106,11 @@ void main() {
       'JobSchedulePage estado en_camino rol trabajador (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
-        role: 'trabajador', overrides: const {'estado': 'en_camino'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'en_camino',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado en_curso rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -927,7 +1122,11 @@ void main() {
       'JobSchedulePage estado en_curso rol trabajador (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
-        role: 'trabajador', overrides: const {'estado': 'en_curso'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'en_curso',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado completado rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -939,7 +1138,11 @@ void main() {
       'JobSchedulePage estado completado rol trabajador (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
-        role: 'trabajador', overrides: const {'estado': 'completado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'completado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado cancelado rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -951,7 +1154,11 @@ void main() {
       'JobSchedulePage estado cancelado rol trabajador (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
-        role: 'trabajador', overrides: const {'estado': 'cancelado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'cancelado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado expirado rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -963,7 +1170,11 @@ void main() {
       'JobSchedulePage estado expirado rol trabajador (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
-        role: 'trabajador', overrides: const {'estado': 'expirado'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'expirado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado no_asistio rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -975,7 +1186,11 @@ void main() {
       'JobSchedulePage estado no_asistio rol trabajador (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
-        role: 'trabajador', overrides: const {'estado': 'no_asistio'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'no_asistio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado esperando_pago rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -987,7 +1202,11 @@ void main() {
       'JobSchedulePage estado esperando_pago rol trabajador (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
-        role: 'trabajador', overrides: const {'estado': 'esperando_pago'});
+        role: 'trabajador',
+        overrides: const {
+          'estado': 'esperando_pago',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado esperando_cotizaciones rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -1000,7 +1219,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_cotizaciones'});
+        overrides: const {
+          'estado': 'esperando_cotizaciones',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado cotizacion_seleccionada rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -1014,7 +1236,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
         role: 'trabajador',
-        overrides: const {'estado': 'cotizacion_seleccionada'});
+        overrides: const {
+          'estado': 'cotizacion_seleccionada',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado pausado_orden_cambio rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -1027,7 +1252,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
         role: 'trabajador',
-        overrides: const {'estado': 'pausado_orden_cambio'});
+        overrides: const {
+          'estado': 'pausado_orden_cambio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage estado esperando_aprobacion_cliente rol usuario (features/jobs/presentation/pages/job_schedule_page.dart)',
@@ -1041,7 +1269,10 @@ void main() {
       (tester) async {
     await smokeWidget(tester, () => f4.JobSchedulePage(),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+        overrides: const {
+          'estado': 'esperando_aprobacion_cliente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'JobSchedulePage completo (features/jobs/presentation/pages/job_schedule_page.dart)',

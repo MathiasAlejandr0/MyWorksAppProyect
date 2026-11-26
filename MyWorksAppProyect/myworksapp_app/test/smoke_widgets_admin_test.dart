@@ -91,7 +91,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'pendiente'});
+        overrides: const {
+          'estado': 'pendiente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado aceptado rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -111,7 +114,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'aceptado'});
+        overrides: const {
+          'estado': 'aceptado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado en_camino rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -131,7 +137,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'en_camino'});
+        overrides: const {
+          'estado': 'en_camino',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado en_curso rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -151,7 +160,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'en_curso'});
+        overrides: const {
+          'estado': 'en_curso',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado completado rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -171,7 +183,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'completado'});
+        overrides: const {
+          'estado': 'completado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado cancelado rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -191,7 +206,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'cancelado'});
+        overrides: const {
+          'estado': 'cancelado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado expirado rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -211,7 +229,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'expirado'});
+        overrides: const {
+          'estado': 'expirado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado no_asistio rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -231,7 +252,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'no_asistio'});
+        overrides: const {
+          'estado': 'no_asistio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado esperando_pago rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -251,7 +275,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_pago'});
+        overrides: const {
+          'estado': 'esperando_pago',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado esperando_cotizaciones rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -271,7 +298,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_cotizaciones'});
+        overrides: const {
+          'estado': 'esperando_cotizaciones',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado cotizacion_seleccionada rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -291,7 +321,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'cotizacion_seleccionada'});
+        overrides: const {
+          'estado': 'cotizacion_seleccionada',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado pausado_orden_cambio rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -311,7 +344,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'pausado_orden_cambio'});
+        overrides: const {
+          'estado': 'pausado_orden_cambio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage estado esperando_aprobacion_cliente rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
@@ -331,7 +367,10 @@ void main() {
         () => f5.AdminJobDetailPage(
             jobId: '00000000-0000-4000-8000-0000000000aa'),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+        overrides: const {
+          'estado': 'esperando_aprobacion_cliente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'AdminJobDetailPage completo (features/admin/presentation/pages/admin_job_detail_page.dart)',

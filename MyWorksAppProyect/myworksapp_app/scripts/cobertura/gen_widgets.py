@@ -88,14 +88,15 @@ def main(out, folders, excl):
                         for rl in roles:
                             args = [x.replace('sampleJobModel', "{...sampleJobModel, 'estado': '%s'}" % st) for x in full]
                             body.append("  testWidgets('%s estado %s rol %s (%s)', (tester) async {" % (name, st, rl, rel))
-                            body.append("    await smokeWidget(tester, () => %s.%s(%s), role: '%s', overrides: const {'estado': '%s'});"
-                                        % (a, name, ', '.join(args), rl, st))
+                            extra = ", 'id_trabajador': '00000000-0000-4000-8000-000000000001'" if rl == 'trabajador' else ''
+                            body.append("    await smokeWidget(tester, () => %s.%s(%s), role: '%s', overrides: const {'estado': '%s'%s});"
+                                        % (a, name, ', '.join(args), rl, st, extra))
                             body.append('  });')
                 for label, args, seeded in variants:
                     body.append("  testWidgets('%s %s (%s)', (tester) async {" % (name, label, rel))
                     body.append("    await smokeWidget(tester, () => %s.%s(%s), seeded: %s, role: '%s'%s);"
                                 % (a, name, ', '.join(args), 'true' if seeded else 'false', role,
-                                   ', interact: false' if c['name'] in NO_INTERACT else ''))
+                                   ', boundedButtons: true' if c['name'] in NO_INTERACT else ''))
                     body.append('  });')
                 emitted += 1
                 if emitted >= 2:

@@ -135,7 +135,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'pendiente'});
+        overrides: const {
+          'estado': 'pendiente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado aceptado rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -147,7 +150,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'aceptado'});
+        overrides: const {
+          'estado': 'aceptado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado en_camino rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -160,7 +166,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'en_camino'});
+        overrides: const {
+          'estado': 'en_camino',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado en_curso rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -172,7 +181,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'en_curso'});
+        overrides: const {
+          'estado': 'en_curso',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado completado rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -185,7 +197,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'completado'});
+        overrides: const {
+          'estado': 'completado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado cancelado rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -198,7 +213,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'cancelado'});
+        overrides: const {
+          'estado': 'cancelado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado expirado rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -210,7 +228,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'expirado'});
+        overrides: const {
+          'estado': 'expirado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado no_asistio rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -223,7 +244,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'no_asistio'});
+        overrides: const {
+          'estado': 'no_asistio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado esperando_pago rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -236,7 +260,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_pago'});
+        overrides: const {
+          'estado': 'esperando_pago',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado esperando_cotizaciones rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -249,7 +276,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_cotizaciones'});
+        overrides: const {
+          'estado': 'esperando_cotizaciones',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado cotizacion_seleccionada rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -262,7 +292,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'cotizacion_seleccionada'});
+        overrides: const {
+          'estado': 'cotizacion_seleccionada',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado pausado_orden_cambio rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -275,7 +308,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'pausado_orden_cambio'});
+        overrides: const {
+          'estado': 'pausado_orden_cambio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner estado esperando_aprobacion_cliente rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -288,7 +324,10 @@ void main() {
             onTap: () {},
             onChat: () {}),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+        overrides: const {
+          'estado': 'esperando_aprobacion_cliente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerActiveJobBanner completo (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -434,7 +473,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'pendiente'});
+        overrides: const {
+          'estado': 'pendiente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado aceptado rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -448,7 +490,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'aceptado'});
+        overrides: const {
+          'estado': 'aceptado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado en_camino rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -463,7 +508,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'en_camino'});
+        overrides: const {
+          'estado': 'en_camino',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado en_curso rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -477,7 +525,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'en_curso'});
+        overrides: const {
+          'estado': 'en_curso',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado completado rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -492,7 +543,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'completado'});
+        overrides: const {
+          'estado': 'completado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado cancelado rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -507,7 +561,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'cancelado'});
+        overrides: const {
+          'estado': 'cancelado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado expirado rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -521,7 +578,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'expirado'});
+        overrides: const {
+          'estado': 'expirado',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado no_asistio rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -536,7 +596,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'no_asistio'});
+        overrides: const {
+          'estado': 'no_asistio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado esperando_pago rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -551,7 +614,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_pago'});
+        overrides: const {
+          'estado': 'esperando_pago',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado esperando_cotizaciones rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -566,7 +632,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_cotizaciones'});
+        overrides: const {
+          'estado': 'esperando_cotizaciones',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado cotizacion_seleccionada rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -581,7 +650,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'cotizacion_seleccionada'});
+        overrides: const {
+          'estado': 'cotizacion_seleccionada',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado pausado_orden_cambio rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -596,7 +668,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'pausado_orden_cambio'});
+        overrides: const {
+          'estado': 'pausado_orden_cambio',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard estado esperando_aprobacion_cliente rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -611,7 +686,10 @@ void main() {
             clientName: 'id-1',
             priceLabel: 'id-1'),
         role: 'trabajador',
-        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+        overrides: const {
+          'estado': 'esperando_aprobacion_cliente',
+          'id_trabajador': '00000000-0000-4000-8000-000000000001'
+        });
   });
   testWidgets(
       'WorkerJobCard completo (features/worker/presentation/widgets/worker_job_card.dart)',

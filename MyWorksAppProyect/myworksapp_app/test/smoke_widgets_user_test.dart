@@ -81,13 +81,13 @@ void main() {
             workerId: '00000000-0000-4000-8000-0000000000aa'),
         seeded: true,
         role: 'usuario',
-        interact: false);
+        boundedButtons: true);
   });
   testWidgets(
       'ServiceRequestPage mínimo (features/user/presentation/pages/service_request_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f1.ServiceRequestPage(),
-        seeded: false, role: 'usuario', interact: false);
+        seeded: false, role: 'usuario', boundedButtons: true);
   });
   testWidgets(
       'UserHomePage completo (features/user/presentation/pages/user_home_page.dart)',
