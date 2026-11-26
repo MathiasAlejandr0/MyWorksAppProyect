@@ -18,9 +18,8 @@ EXTRA = {
     'FocusNode': 'FocusNode()', 'Key': None,
 }
 _orig_val = g.val
-# Widgets cuyo recorrido de toques deja el árbol de Flutter en mal estado
-# (un FilledButton recibe ancho infinito, ver informe) y contamina el test
-# siguiente: se montan sin tocar botones.
+# Widgets que abren el selector de mapa, cuyo FilledButton recibe ancho infinito
+# con el tema de la app (bug B1 del informe): se recorren con botones acotados.
 NO_INTERACT = {'ServiceRequestPage'}
 STATUSES = ['pendiente', 'aceptado', 'en_camino', 'en_curso', 'completado', 'cancelado',
             'expirado', 'no_asistio', 'esperando_pago', 'esperando_cotizaciones',

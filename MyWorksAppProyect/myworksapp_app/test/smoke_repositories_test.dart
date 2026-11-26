@@ -260,11 +260,11 @@ void main() {
             longitude: 1.0,
             description: 'id-1',
             scheduledDate: DateTime.utc(2026, 1, 2, 15),
-            serviceMetadata: const {},
+            serviceMetadata: <String, dynamic>{'id': 'id-1'},
             pricingMode: 'id-1',
             paymentStatus: 'id-1',
             comunaId: '00000000-0000-4000-8000-0000000000aa',
-            pricingSnapshot: const {},
+            pricingSnapshot: <String, dynamic>{'id': 'id-1'},
             serviceSkuId: '00000000-0000-4000-8000-0000000000aa',
             hourlyBlockHours: 1,
             selectedQuoteId: '00000000-0000-4000-8000-0000000000aa',
@@ -396,7 +396,7 @@ void main() {
             umbralAutoExcluir: 1.0,
             aprendizajeActivo: true,
             tasaAprendizaje: 1.0,
-            pesosSenal: const {}));
+            pesosSenal: <String, double>{}));
       }
     });
   });
@@ -537,7 +537,7 @@ void main() {
             isAvailable: true,
             visitFee: 1.0,
             serviceCategory: 'id-1',
-            pricingTiers: const {},
+            pricingTiers: <String, int>{},
             customServices: [
               f26.WorkerCustomService.fromMap(sampleWorkerCustomService)
             ],
@@ -781,7 +781,7 @@ void main() {
             userId: '00000000-0000-4000-8000-0000000000aa',
             errorType: 'id-1',
             stackTrace: 'id-1',
-            metadata: const {},
+            metadata: <String, dynamic>{'id': 'id-1'},
             appVersion: 'id-1',
             platform: 'id-1'));
         await call(() => o.listLogs(status: 'id-1', limit: 1));
@@ -949,7 +949,7 @@ void main() {
             o.getActiveJobsByWorkerId('00000000-0000-4000-8000-0000000000aa'));
         await call(
             () => o.hasActiveJobs('00000000-0000-4000-8000-0000000000aa'));
-        await call(() => o.getBusyWorkerIds(['id-1']));
+        await call(() => o.getBusyWorkerIds(<String>['id-1']));
         await call(
             () => o.countJobsByUserId('00000000-0000-4000-8000-0000000000aa'));
         await call(() =>
@@ -960,7 +960,7 @@ void main() {
         await call(() => o.rejectPendingJobByWorker(
             jobId: '00000000-0000-4000-8000-0000000000aa',
             workerId: '00000000-0000-4000-8000-0000000000aa',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.updateJobStatus(
             '00000000-0000-4000-8000-0000000000aa', 'id-1',
             pin: 'id-1'));
@@ -982,7 +982,7 @@ void main() {
         await call(() => o.syncPaymentStatusFromLedger(
             '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.listOpenMarketplaceJobs());
-        await call(() => o.getWorkerJobStats(['id-1']));
+        await call(() => o.getWorkerJobStats(<String>['id-1']));
         await call(
             () => o.getWorkerJobs('00000000-0000-4000-8000-0000000000aa'));
       }
@@ -1052,7 +1052,7 @@ void main() {
             newStatus: 'id-1',
             transferRef: 'id-1',
             notes: 'id-1'));
-        await call(() => o.listByJobIds(['id-1']));
+        await call(() => o.listByJobIds(<String>['id-1']));
       }
     });
   });
@@ -1086,7 +1086,7 @@ void main() {
             actionType: 'id-1',
             entityType: 'id-1',
             entityId: '00000000-0000-4000-8000-0000000000aa',
-            data: const {}));
+            data: <String, dynamic>{'id': 'id-1'}));
         await call(
             () => o.getPendingActions('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.updateActionStatus(
@@ -1172,7 +1172,7 @@ void main() {
         await call(() => o.getRatingByJobId(
             '00000000-0000-4000-8000-0000000000aa',
             direction: 'id-1'));
-        await call(() => o.clientSummaries(['id-1']));
+        await call(() => o.clientSummaries(<String>['id-1']));
         await call(() =>
             o.getRatingsByWorkerId('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.getAverageRatingByWorkerId(
@@ -1316,7 +1316,7 @@ void main() {
       if (o != null) {
         await call(() => o.createUser(f24.UserModel.fromMap(sampleUserModel)));
         await call(() => o.getUserById('00000000-0000-4000-8000-0000000000aa'));
-        await call(() => o.getPublicProfilesByIds(['id-1']));
+        await call(() => o.getPublicProfilesByIds(<String>['id-1']));
         await call(
             () => o.getPublicProfile('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.getUserByEmail('id-1'));
@@ -1405,7 +1405,7 @@ void main() {
       final dynamic o = probe(() => f67.WorkerScheduleRepository());
       if (o != null) {
         await call(() => o.load('00000000-0000-4000-8000-0000000000aa'));
-        await call(() => o.loadMany(['id-1']));
+        await call(() => o.loadMany(<String>['id-1']));
         await call(() =>
             o.ensureDefault(userId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.save(

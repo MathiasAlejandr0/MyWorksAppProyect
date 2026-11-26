@@ -5,6 +5,7 @@
 // existen en la VM de tests, etc.) se registran pero no fallan el test: el
 // objetivo es recorrer el código, no validar el diseño.
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:myworksapp/core/providers/auth_provider.dart';
+import 'package:myworksapp/core/router/app_router.dart';
 import 'package:myworksapp/core/theme/app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -45,8 +47,68 @@ void _mockPlatformChannels() {
     'com.llfbandit.app_links/messages',
     'com.llfbandit.app_links/events',
   ]) {
-    messenger.setMockMethodCallHandler(MethodChannel(name), (_) async => null);
+    messenger.setMockMethodCallHandler(MethodChannel(name), _pluginAnswer);
   }
+}
+
+/// Respuestas plausibles de plugins (permiso concedido, GPS en Puerto Montt,
+/// imagen temporal), para que los flujos sigan más allá del primer paso.
+Future<Object?> _pluginAnswer(MethodCall call) async {
+  switch (call.method) {
+    case 'checkPermission':
+    case 'requestPermission':
+      return 3; // LocationPermission.always
+    case 'isLocationServiceEnabled':
+      return true;
+    case 'getCurrentPosition':
+    case 'getLastKnownPosition':
+      return <String, dynamic>{
+        'latitude': -41.4693,
+        'longitude': -72.9424,
+        'timestamp': DateTime.utc(2026, 1, 2).millisecondsSinceEpoch,
+        'accuracy': 5.0,
+        'altitude': 0.0,
+        'altitude_accuracy': 0.0,
+        'heading': 0.0,
+        'heading_accuracy': 0.0,
+        'speed': 0.0,
+        'speed_accuracy': 0.0,
+        'is_mocked': false,
+      };
+    case 'checkPermissionStatus':
+    case 'checkServiceStatus':
+      return 1;
+    case 'requestPermissions':
+      final perms = (call.arguments as List?) ?? const [];
+      return {for (final p in perms) p: 1};
+    case 'shouldShowRequestPermissionRationale':
+      return false;
+    case 'pickImage':
+    case 'pickVideo':
+      return _tempImagePath();
+    case 'pickMultiImage':
+    case 'pickMultipleMedia':
+      return [_tempImagePath()];
+    case 'getTemporaryDirectory':
+    case 'getApplicationDocumentsDirectory':
+    case 'getApplicationSupportDirectory':
+    case 'getApplicationCacheDirectory':
+      return Directory.systemTemp.path;
+    case 'canLaunch':
+    case 'launch':
+      return true;
+    default:
+      return null;
+  }
+}
+
+String _tempImagePath() {
+  final f = File('${Directory.systemTemp.path}/smoke_evidencia.jpg');
+  if (!f.existsSync()) {
+    f.writeAsBytesSync(
+        const [0xFF, 0xD8, 0xFF, 0xE0, 0, 0x10, 0x4A, 0x46, 0xFF, 0xD9]);
+  }
+  return f.path;
 }
 
 Future<void> smokeWidget(
@@ -62,6 +124,9 @@ Future<void> smokeWidget(
   // da ancho mínimo infinito a FilledButton y el botón "Usar este punto" (en una
   // Row) no se puede dibujar. Ver el informe de bugs; aquí se acota para seguir.
   bool boundedButtons = false,
+  // Si se indica, usa el router real de la app (routerProvider) y navega a
+  // esta ruta en vez de montar [build] directamente.
+  String? appRoute,
 }) async {
   lastSmokeErrors.clear();
   final container = ProviderContainer();
@@ -121,7 +186,8 @@ Future<void> smokeWidget(
     });
     await runZonedGuarded(() async {
       try {
-        await _drive(tester, build, interact, container, boundedButtons);
+        await _drive(
+            tester, build, interact, container, boundedButtons, appRoute);
       } catch (e) {
         lastSmokeErrors.add(e);
       }
@@ -167,31 +233,34 @@ Future<void> _drive(
   Widget Function() build,
   bool interact,
   ProviderContainer container,
-  bool boundedButtons,
-) async {
-  final router = GoRouter(
-    initialLocation: '/',
-    routes: [
-      GoRoute(path: '/', builder: (_, __) => build()),
-      GoRoute(
-        path: '/:a',
-        builder: (_, __) => const Scaffold(body: Text('ruta')),
-        routes: [
-          GoRoute(
-            path: ':b',
-            builder: (_, __) => const Scaffold(body: Text('ruta')),
-            routes: [
-              GoRoute(
-                path: ':c',
-                builder: (_, __) => const Scaffold(body: Text('ruta')),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ],
-    errorBuilder: (_, __) => const Scaffold(body: Text('ruta')),
-  );
+  bool boundedButtons, [
+  String? appRoute,
+]) async {
+  final router = appRoute != null
+      ? container.read(routerProvider)
+      : GoRouter(
+          initialLocation: '/',
+          routes: [
+            GoRoute(path: '/', builder: (_, __) => build()),
+            GoRoute(
+              path: '/:a',
+              builder: (_, __) => const Scaffold(body: Text('ruta')),
+              routes: [
+                GoRoute(
+                  path: ':b',
+                  builder: (_, __) => const Scaffold(body: Text('ruta')),
+                  routes: [
+                    GoRoute(
+                      path: ':c',
+                      builder: (_, __) => const Scaffold(body: Text('ruta')),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+          errorBuilder: (_, __) => const Scaffold(body: Text('ruta')),
+        );
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
@@ -207,6 +276,9 @@ Future<void> _drive(
       ),
     ),
   );
+  if (appRoute != null) {
+    router.go(appRoute);
+  }
   for (var i = 0; i < 6; i++) {
     await _step(tester, 250);
   }

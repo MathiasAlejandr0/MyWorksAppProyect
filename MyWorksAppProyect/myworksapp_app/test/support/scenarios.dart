@@ -93,5 +93,11 @@ Future<void> call(Object? Function() f) async {
       await Future<void>.delayed(const Duration(milliseconds: 300));
       await sub.cancel();
     }
-  } catch (_) {}
+  } catch (e) {
+    if (const bool.fromEnvironment('SMOKE_DEBUG') &&
+        (e is NoSuchMethodError || e is TypeError)) {
+      // ignore: avoid_print
+      print('SMOKE_CALL: ${e.toString().split('\n').first}');
+    }
+  }
 }

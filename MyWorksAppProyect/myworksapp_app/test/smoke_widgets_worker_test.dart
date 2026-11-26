@@ -743,7 +743,7 @@ void main() {
         tester,
         () => f25.WorkerPricingTiersEditor(
             category: 'id-1',
-            initialTiers: const {},
+            initialTiers: <String, int>{},
             onChanged: (_) {},
             enabled: true),
         seeded: true,
@@ -755,7 +755,7 @@ void main() {
     await smokeWidget(
         tester,
         () => f25.WorkerPricingTiersEditor(
-            category: 'id-1', initialTiers: const {}, onChanged: (_) {}),
+            category: 'id-1', initialTiers: <String, int>{}, onChanged: (_) {}),
         seeded: false,
         role: 'trabajador');
   });
@@ -767,7 +767,7 @@ void main() {
         () => f26.WorkerProfileSectionCard(
             icon: Icons.star,
             title: 'id-1',
-            summary: ['id-1'],
+            summary: <String>['id-1'],
             editing: true,
             onEdit: () {},
             onCancel: () {},
@@ -788,7 +788,7 @@ void main() {
         () => f26.WorkerProfileSectionCard(
             icon: Icons.star,
             title: 'id-1',
-            summary: ['id-1'],
+            summary: <String>['id-1'],
             editing: true,
             onEdit: () {}),
         seeded: false,

@@ -117,6 +117,14 @@ def construct(name, depth):
     return None
 
 
+BUILTIN = {'String', 'int', 'double', 'num', 'bool', 'dynamic', 'Object', 'DateTime',
+           'Map', 'List', 'Set', 'Iterable'}
+
+
+def builtin_type(t):
+    return all(w in BUILTIN for w in re.findall(r'[A-Za-z_]\w*', t))
+
+
 def val(t, depth=0):
     if depth > 4:
         return None
@@ -139,15 +147,27 @@ def val(t, depth=0):
     }
     if head in simple:
         return simple[head]
+    if ga and not all(builtin_type(x) for x in ga) and head in ('List', 'Iterable', 'Set', 'Map'):
+        if head in ('List', 'Iterable') and ga:
+            v = val(ga[0], depth + 1)
+            if v is not None and v != 'null':
+                return '[%s]' % v
+        return 'const []' if head in ('List', 'Iterable') else 'const {}'
     if head in ('List', 'Iterable'):
         if ga:
             v = val(ga[0], depth + 1)
             if v is not None and v != 'null':
-                return '[%s]' % v
+                return '<%s>[%s]' % (ga[0], v)
+            return '<%s>[]' % ga[0]
         return 'const []'
     if head == 'Set':
-        return 'const {}'
+        return ('<%s>{}' % ga[0]) if ga else 'const {}'
     if head == 'Map':
+        if len(ga) == 2:
+            if ga[0].strip() == 'String':
+                return "<String, %s>{'id': %s}" % (ga[1], "'id-1'" if ga[1].strip() in ('dynamic', 'Object?', 'Object', 'String') else 'null') \
+                    if ga[1].strip() in ('dynamic', 'Object?', 'String') else '<%s, %s>{}' % (ga[0], ga[1])
+            return '<%s, %s>{}' % (ga[0], ga[1])
         return 'const {}'
     if head in ('Future', 'FutureOr'):
         inner = ga[0] if ga else 'void'

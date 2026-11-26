@@ -244,7 +244,7 @@ void main() {
             skuCode: 'id-1',
             variantKey: 'id-1',
             blockHours: 1,
-            questionnaireAnswers: const {}));
+            questionnaireAnswers: <String, dynamic>{'id': 'id-1'}));
       }
     });
   });
@@ -264,9 +264,9 @@ void main() {
           scheduledAt: DateTime.utc(2026, 1, 2, 15),
           workerId: '00000000-0000-4000-8000-0000000000aa',
           now: DateTime.utc(2026, 1, 2, 15)));
-      await call(() => f22.RescheduleRules.slotOptions(
-          [DateTime.utc(2026, 1, 2, 15)], DateTime.utc(2026, 1, 2, 15),
-          now: DateTime.utc(2026, 1, 2, 15)));
+      await call(() => f22.RescheduleRules.slotOptions(<DateTime>[
+            DateTime.utc(2026, 1, 2, 15)
+          ], DateTime.utc(2026, 1, 2, 15), now: DateTime.utc(2026, 1, 2, 15)));
       await call(() => f22.RescheduleRules.canRespond(
           f22.RescheduleProposal.fromMap(sampleRescheduleProposal),
           '00000000-0000-4000-8000-0000000000aa'));
@@ -710,8 +710,8 @@ void main() {
     await forEachScenario(() async {
       await call(() => f76.JobDetailHelpers.quoteFromJob(
           f61.JobModel.fromMap(sampleJobModel)));
-      await call(
-          () => f76.JobDetailHelpers.quoteFromMetadata(const {}, 'id-1'));
+      await call(() => f76.JobDetailHelpers.quoteFromMetadata(
+          <String, dynamic>{'id': 'id-1'}, 'id-1'));
       await call(() => f76.JobDetailHelpers.isWorkerTierInvitation(
           f61.JobModel.fromMap(sampleJobModel)));
       await call(() => f76.JobDetailHelpers.completionTargetStatus(

@@ -180,43 +180,43 @@ void main() {
         await call(() => o.registrarUso(
             eventName: 'id-1',
             userId: '00000000-0000-4000-8000-0000000000aa',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.trackEvent(
             eventName: 'id-1',
             userId: '00000000-0000-4000-8000-0000000000aa',
             role: 'id-1',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.trackAppOpened(
             userId: '00000000-0000-4000-8000-0000000000aa', role: 'id-1'));
         await call(() => o.trackRegisterCompleted(
             userId: '00000000-0000-4000-8000-0000000000aa',
             role: 'id-1',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.trackLoginSuccess(
             userId: '00000000-0000-4000-8000-0000000000aa', role: 'id-1'));
         await call(() => o.trackJobCreated(
             userId: '00000000-0000-4000-8000-0000000000aa',
             jobId: '00000000-0000-4000-8000-0000000000aa',
             serviceId: '00000000-0000-4000-8000-0000000000aa',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.trackJobAccepted(
             workerId: '00000000-0000-4000-8000-0000000000aa',
             jobId: '00000000-0000-4000-8000-0000000000aa',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.trackJobExpired(
             jobId: '00000000-0000-4000-8000-0000000000aa',
             userId: '00000000-0000-4000-8000-0000000000aa',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.trackJobCancelled(
             jobId: '00000000-0000-4000-8000-0000000000aa',
             userId: '00000000-0000-4000-8000-0000000000aa',
             role: 'id-1',
             reason: 'id-1',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.trackJobCompleted(
             jobId: '00000000-0000-4000-8000-0000000000aa',
             workerId: '00000000-0000-4000-8000-0000000000aa',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.trackWorkerNoResponse(
             jobId: '00000000-0000-4000-8000-0000000000aa',
             userId: '00000000-0000-4000-8000-0000000000aa'));
@@ -240,7 +240,7 @@ void main() {
             category: 'id-1',
             userId: '00000000-0000-4000-8000-0000000000aa',
             role: 'id-1',
-            metadata: const {}));
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.calculateUserToRequestConversion(
             startDate: DateTime.utc(2026, 1, 2, 15),
             endDate: DateTime.utc(2026, 1, 2, 15)));
@@ -268,7 +268,7 @@ void main() {
           userToRequestConversion: 1.0,
           workerAcceptanceRate: 1.0,
           averageResponseTimeMinutes: 1.0,
-          cancellationRateByService: const {},
+          cancellationRateByService: <String, double>{},
           userRepeatRate: 1.0));
       if (o != null) {
         await call(() => o.toMap());
@@ -401,7 +401,9 @@ void main() {
         await call(() => o.isInitialized);
         await call(() => o.initialize());
         await call(() => o.recordError(null, null,
-            reason: 'id-1', fatal: true, additionalData: const {}));
+            reason: 'id-1',
+            fatal: true,
+            additionalData: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.recordAppError(
             f18.AppError(message: 'id-1', originalError: null),
             stackTrace: null));
@@ -483,7 +485,7 @@ void main() {
             () => o.upload('id-1', Uint8List.fromList([1, 2, 3, 4]), 'id-1'));
         await call(() => o.uploadFile('id-1', 'id-1', 'id-1'));
         await call(() => o.remove('id-1'));
-        await call(() => o.insertRow(const {}));
+        await call(() => o.insertRow(<String, dynamic>{'id': 'id-1'}));
         await call(() => o.signedUrl('id-1'));
       }
     });
@@ -619,7 +621,7 @@ void main() {
             comunaKey: 'id-1',
             latitude: 1.0,
             longitude: 1.0,
-            serviceMetadata: const {}));
+            serviceMetadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.createWorkerTierBooking(
             userId: '00000000-0000-4000-8000-0000000000aa',
             workerId: '00000000-0000-4000-8000-0000000000aa',
@@ -633,7 +635,7 @@ void main() {
             comunaKey: 'id-1',
             latitude: 1.0,
             longitude: 1.0,
-            serviceMetadata: const {},
+            serviceMetadata: <String, dynamic>{'id': 'id-1'},
             priceUnit: 'id-1',
             squareMeters: 1,
             unitRateClp: 1,
@@ -650,7 +652,7 @@ void main() {
             comunaKey: 'id-1',
             latitude: 1.0,
             longitude: 1.0,
-            serviceMetadata: const {}));
+            serviceMetadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.createWorkerTierInvitation(
             userId: '00000000-0000-4000-8000-0000000000aa',
             workerId: '00000000-0000-4000-8000-0000000000aa',
@@ -664,7 +666,7 @@ void main() {
             comunaKey: 'id-1',
             latitude: 1.0,
             longitude: 1.0,
-            serviceMetadata: const {},
+            serviceMetadata: <String, dynamic>{'id': 'id-1'},
             priceUnit: 'id-1',
             squareMeters: 1,
             unitRateClp: 1,
@@ -679,7 +681,7 @@ void main() {
             comunaKey: 'id-1',
             latitude: 1.0,
             longitude: 1.0,
-            serviceMetadata: const {}));
+            serviceMetadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.confirmCompletionAndPay(
             jobId: '00000000-0000-4000-8000-0000000000aa',
             userId: '00000000-0000-4000-8000-0000000000aa'));
@@ -721,7 +723,7 @@ void main() {
             latitude: 1.0,
             longitude: 1.0,
             scheduledDate: DateTime.utc(2026, 1, 2, 15),
-            serviceMetadata: const {}));
+            serviceMetadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.acceptJob(
             jobId: '00000000-0000-4000-8000-0000000000aa',
             workerId: '00000000-0000-4000-8000-0000000000aa'));
@@ -828,7 +830,7 @@ void main() {
             type: 'id-1',
             relatedId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.notifyUsers(
-            userIds: ['id-1'],
+            userIds: <String>['id-1'],
             title: 'id-1',
             body: 'id-1',
             type: 'id-1',
@@ -919,7 +921,8 @@ void main() {
             decision: 'id-1',
             resolution: 'id-1'));
         await call(() => o.refundBecauseWorkerRejected(
-            jobId: '00000000-0000-4000-8000-0000000000aa', metadata: const {}));
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            metadata: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.releasePayment(
             '00000000-0000-4000-8000-0000000000aa',
             transferRef: 'id-1',
@@ -1166,7 +1169,7 @@ void main() {
             () => o.validateService('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.validateServiceRestrictions(
             serviceId: '00000000-0000-4000-8000-0000000000aa',
-            serviceData: const {}));
+            serviceData: <String, dynamic>{'id': 'id-1'}));
         await call(() => o.buildConfirmationText(
             serviceId: '00000000-0000-4000-8000-0000000000aa',
             serviceName: 'id-1'));
@@ -1210,7 +1213,7 @@ void main() {
   });
   test('TestingSurvey (core/services/testing_feedback_store.dart)', () async {
     await forEachScenario(() async {
-      await call(() => f66.TestingSurvey.susScore([1]));
+      await call(() => f66.TestingSurvey.susScore(<int>[1]));
     });
   });
   test('TestingFeedbackDraft (core/services/testing_feedback_store.dart)',
@@ -1337,7 +1340,9 @@ void main() {
       () async {
     await forEachScenario(() async {
       final dynamic o = probe(() => f73.WorkerOnboardingStatus(
-          isComplete: true, completionPercentage: 1, missingItems: ['id-1']));
+          isComplete: true,
+          completionPercentage: 1,
+          missingItems: <String>['id-1']));
       if (o != null) {
         await call(() => o.toMap());
       }
