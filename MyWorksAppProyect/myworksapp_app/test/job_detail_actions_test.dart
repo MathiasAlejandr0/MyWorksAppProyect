@@ -100,7 +100,7 @@ const _casos = [
       evidencia: 1,
       extra: {
         'metadatos_servicio': {'request_type': 'worker_tier_invitation'},
-        'modo_precio': 'bloque_horas',
+        'modalidad_cobro': 'bloque_horas',
       }),
   _Caso('finalizar con error', 'trabajador', 'en_curso', ['Finalizar Trabajo'],
       evidencia: 1, fallaRpc: 'transicionar_trabajo'),
@@ -130,7 +130,7 @@ void main() {
               'id_usuario': esTrabajador ? _otro : fakeUserId,
               'id_trabajador': esTrabajador ? fakeUserId : _otro,
               'metadatos_servicio': <String, dynamic>{},
-              'modo_precio': 'precio_fijo',
+              'modalidad_cobro': 'precio_fijo',
               ...c.extra,
             },
           ]);
