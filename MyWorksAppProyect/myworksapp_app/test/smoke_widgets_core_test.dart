@@ -800,11 +800,11 @@ void main() {
     await smokeWidget(
         tester,
         () => f38.EscrowCheckoutSheet(
-            jobId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
             quote: f39.PriceQuote.fromJson(samplePriceQuote),
             workerName: 'id-1',
             serviceName: 'id-1',
-            changeOrderId: 'id-1'),
+            changeOrderId: '00000000-0000-4000-8000-0000000000aa'),
         seeded: true,
         role: 'usuario');
   });
@@ -814,7 +814,8 @@ void main() {
     await smokeWidget(
         tester,
         () => f38.EscrowCheckoutSheet(
-            jobId: 'id-1', quote: f39.PriceQuote.fromJson(samplePriceQuote)),
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            quote: f39.PriceQuote.fromJson(samplePriceQuote)),
         seeded: false,
         role: 'usuario');
   });
@@ -1057,7 +1058,7 @@ void main() {
     await smokeWidget(
         tester,
         () => f56.ServerAlignedQuoteCard(
-            jobId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
             quote: f39.PriceQuote.fromJson(samplePriceQuote),
             workerName: 'id-1',
             serviceName: 'id-1'),
@@ -1070,7 +1071,8 @@ void main() {
     await smokeWidget(
         tester,
         () => f56.ServerAlignedQuoteCard(
-            jobId: 'id-1', quote: f39.PriceQuote.fromJson(samplePriceQuote)),
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            quote: f39.PriceQuote.fromJson(samplePriceQuote)),
         seeded: false,
         role: 'usuario');
   });
@@ -1177,7 +1179,9 @@ void main() {
     await smokeWidget(
         tester,
         () => f59.ServiceDisclaimerDialog(
-            serviceId: 'id-1', serviceName: 'id-1', chargeAmountClp: 1),
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
+            serviceName: 'id-1',
+            chargeAmountClp: 1),
         seeded: true,
         role: 'usuario');
   });
@@ -1186,8 +1190,9 @@ void main() {
       (tester) async {
     await smokeWidget(
         tester,
-        () =>
-            f59.ServiceDisclaimerDialog(serviceId: 'id-1', serviceName: 'id-1'),
+        () => f59.ServiceDisclaimerDialog(
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
+            serviceName: 'id-1'),
         seeded: false,
         role: 'usuario');
   });

@@ -20,7 +20,8 @@ void main() {
   testWidgets(
       'ChatPage completo (features/chat/presentation/pages/chat_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.ChatPage(jobId: 'id-1'),
+    await smokeWidget(tester,
+        () => f0.ChatPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
         seeded: true, role: 'usuario');
   });
   testWidgets(

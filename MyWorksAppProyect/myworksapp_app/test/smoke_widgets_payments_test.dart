@@ -77,7 +77,7 @@ void main() {
     await smokeWidget(
         tester,
         () => f3.PaymentScreen(
-            jobId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
             amount: 1.0,
             serviceName: 'id-1',
             specialistName: 'id-1'),
@@ -88,7 +88,10 @@ void main() {
       'PaymentScreen mínimo (features/payments/presentation/pages/payment_screen.dart)',
       (tester) async {
     await smokeWidget(
-        tester, () => f3.PaymentScreen(jobId: 'id-1', amount: 1.0),
-        seeded: false, role: 'usuario');
+        tester,
+        () => f3.PaymentScreen(
+            jobId: '00000000-0000-4000-8000-0000000000aa', amount: 1.0),
+        seeded: false,
+        role: 'usuario');
   });
 }

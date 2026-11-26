@@ -108,12 +108,18 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f0.AbuseProtectionService.instance);
       if (o != null) {
-        await call(() => o.canCreateJob('id-1'));
-        await call(() => o.canRejectJob('id-1'));
-        await call(() => o.canCancelJob('id-1'));
-        await call(() => o.isShadowBanned('id-1'));
-        await call(() => o.resolveAbuseEvent('id-1'));
-        await call(() => o.getAbuseEventsByUserId('id-1'));
+        await call(
+            () => o.canCreateJob('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.canRejectJob('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.canCancelJob('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.isShadowBanned('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.resolveAbuseEvent('00000000-0000-4000-8000-0000000000aa'));
+        await call(() =>
+            o.getAbuseEventsByUserId('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -122,8 +128,10 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f1.AccountDeletionService.instance);
       if (o != null) {
-        await call(() => o.deleteAccount('id-1'));
-        await call(() => o.isAccountDeleted('id-1'));
+        await call(
+            () => o.deleteAccount('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.isAccountDeleted('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.getAnonymizedName('id-1'));
         await call(() => o.getAnonymizedEmail('id-1'));
       }
@@ -136,20 +144,20 @@ void main() {
       final dynamic o = probe(() => f3.AdminNotificationService.instance);
       if (o != null) {
         await call(() => o.notifyReportStatusChange(
-            reporterId: 'id-1',
-            reportedUserId: 'id-1',
+            reporterId: '00000000-0000-4000-8000-0000000000aa',
+            reportedUserId: '00000000-0000-4000-8000-0000000000aa',
             status: 'id-1',
-            reportId: 'id-1',
+            reportId: '00000000-0000-4000-8000-0000000000aa',
             reason: 'id-1'));
         await call(() => o.notifyDisputeUnderReview(
-            userId: 'id-1',
-            workerId: 'id-1',
-            jobId: 'id-1',
-            disputeId: 'id-1'));
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            disputeId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.notifyDisputeResolved(
-            userId: 'id-1',
-            workerId: 'id-1',
-            disputeId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            disputeId: '00000000-0000-4000-8000-0000000000aa',
             resolution: 'id-1'));
       }
     });
@@ -170,39 +178,58 @@ void main() {
       if (o != null) {
         await call(() => o.setEnabled(true));
         await call(() => o.registrarUso(
-            eventName: 'id-1', userId: 'id-1', metadata: const {}));
+            eventName: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            metadata: const {}));
         await call(() => o.trackEvent(
             eventName: 'id-1',
-            userId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
             role: 'id-1',
             metadata: const {}));
-        await call(() => o.trackAppOpened(userId: 'id-1', role: 'id-1'));
+        await call(() => o.trackAppOpened(
+            userId: '00000000-0000-4000-8000-0000000000aa', role: 'id-1'));
         await call(() => o.trackRegisterCompleted(
-            userId: 'id-1', role: 'id-1', metadata: const {}));
-        await call(() => o.trackLoginSuccess(userId: 'id-1', role: 'id-1'));
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            role: 'id-1',
+            metadata: const {}));
+        await call(() => o.trackLoginSuccess(
+            userId: '00000000-0000-4000-8000-0000000000aa', role: 'id-1'));
         await call(() => o.trackJobCreated(
-            userId: 'id-1',
-            jobId: 'id-1',
-            serviceId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             metadata: const {}));
         await call(() => o.trackJobAccepted(
-            workerId: 'id-1', jobId: 'id-1', metadata: const {}));
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            metadata: const {}));
         await call(() => o.trackJobExpired(
-            jobId: 'id-1', userId: 'id-1', metadata: const {}));
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            metadata: const {}));
         await call(() => o.trackJobCancelled(
-            jobId: 'id-1',
-            userId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            userId: '00000000-0000-4000-8000-0000000000aa',
             role: 'id-1',
             reason: 'id-1',
             metadata: const {}));
         await call(() => o.trackJobCompleted(
-            jobId: 'id-1', workerId: 'id-1', metadata: const {}));
-        await call(
-            () => o.trackWorkerNoResponse(jobId: 'id-1', userId: 'id-1'));
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            metadata: const {}));
+        await call(() => o.trackWorkerNoResponse(
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            userId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.trackDisputeOpened(
-            disputeId: 'id-1', jobId: 'id-1', userId: 'id-1', reason: 'id-1'));
+            disputeId: '00000000-0000-4000-8000-0000000000aa',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            reason: 'id-1'));
         await call(() => o.trackRatingSubmitted(
-            jobId: 'id-1', workerId: 'id-1', score: 1, hasComment: true));
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            score: 1,
+            hasComment: true));
         await call(() => o.getEventStats(
             startDate: DateTime.utc(2026, 1, 2, 15),
             endDate: DateTime.utc(2026, 1, 2, 15)));
@@ -211,7 +238,7 @@ void main() {
         await call(() => o.trackEventWithCategory(
             eventName: 'id-1',
             category: 'id-1',
-            userId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
             role: 'id-1',
             metadata: const {}));
         await call(() => o.calculateUserToRequestConversion(
@@ -289,7 +316,7 @@ void main() {
         await call(() => o.completeOAuthSession());
         await call(() => o.logout());
         await call(() => o.restoreSession());
-        await call(() => o.loadUser('id-1'));
+        await call(() => o.loadUser('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.changePassword('valor-de-prueba'));
       }
     });
@@ -331,11 +358,14 @@ void main() {
       final dynamic o = probe(() => f14.BoostService.instance);
       if (o != null) {
         await call(() => o.createBoost(
-            workerId: 'id-1',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
             boostType: f14.BoostType.values.first,
             durationDays: 1));
-        await call(() => o.hasActiveBoost('id-1', f14.BoostType.values.first));
-        await call(() => o.getActiveBoosts('id-1'));
+        await call(() => o.hasActiveBoost(
+            '00000000-0000-4000-8000-0000000000aa',
+            f14.BoostType.values.first));
+        await call(
+            () => o.getActiveBoosts('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.cleanExpiredBoosts());
       }
     });
@@ -346,8 +376,8 @@ void main() {
       final dynamic o = probe(() => f15.ChangeOrderService.instance);
       if (o != null) {
         await call(() => o.submit(
-            jobId: 'id-1',
-            workerId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
             titulo: 'id-1',
             descripcion: 'id-1',
             montoClp: 1,
@@ -356,10 +386,10 @@ void main() {
             o.buildQuote(f16.ChangeOrderModel.fromMap(sampleChangeOrderModel)));
         await call(() => o.prepareWebpayCheckout(
             order: f16.ChangeOrderModel.fromMap(sampleChangeOrderModel),
-            clientUserId: 'id-1'));
+            clientUserId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.reject(
             order: f16.ChangeOrderModel.fromMap(sampleChangeOrderModel),
-            clientUserId: 'id-1'));
+            clientUserId: '00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -375,7 +405,7 @@ void main() {
         await call(() => o.recordAppError(
             f18.AppError(message: 'id-1', originalError: null),
             stackTrace: null));
-        await call(() => o.setUserId('id-1'));
+        await call(() => o.setUserId('00000000-0000-4000-8000-0000000000aa'));
         await call(
             () => o.setUserInfo(email: 'id-1', name: 'id-1', role: 'id-1'));
         await call(() => o.log('id-1'));
@@ -402,23 +432,31 @@ void main() {
       await call(() => f20.DisputeService.isOpenStatus('id-1'));
       if (o != null) {
         await call(() => o.openDispute(
-            jobId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
             openedBy: 'id-1',
             reason: 'id-1',
             description: 'id-1'));
         await call(() => o.resolveDispute(
-            disputeId: 'id-1',
+            disputeId: '00000000-0000-4000-8000-0000000000aa',
             resolvedBy: 'id-1',
             resolution: 'id-1',
             decision: 'id-1'));
-        await call(() => o.appeal(disputeId: 'id-1', motivo: 'id-1'));
-        await call(() => o.addComment(disputeId: 'id-1', comment: 'id-1'));
-        await call(() => o.hasOpenDispute('id-1'));
-        await call(() => o.canRateJob('id-1'));
-        await call(() => o.proposeAgreement(jobId: 'id-1', type: 'id-1'));
-        await call(() => o.pendingAgreement('id-1'));
-        await call(() => o.respondAgreement(id: 'id-1', accept: true));
-        await call(() => o.getDisputeByJobId('id-1'));
+        await call(() => o.appeal(
+            disputeId: '00000000-0000-4000-8000-0000000000aa', motivo: 'id-1'));
+        await call(() => o.addComment(
+            disputeId: '00000000-0000-4000-8000-0000000000aa',
+            comment: 'id-1'));
+        await call(
+            () => o.hasOpenDispute('00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.canRateJob('00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.proposeAgreement(
+            jobId: '00000000-0000-4000-8000-0000000000aa', type: 'id-1'));
+        await call(
+            () => o.pendingAgreement('00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.respondAgreement(
+            id: '00000000-0000-4000-8000-0000000000aa', accept: true));
+        await call(
+            () => o.getDisputeByJobId('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -429,7 +467,10 @@ void main() {
       await call(
           () => f21.EvidenceStoragePath.validate(mime: 'id-1', byteLength: 1));
       await call(() => f21.EvidenceStoragePath.objectPath(
-          jobId: 'id-1', userId: 'id-1', fileId: 'id-1', mime: 'id-1'));
+          jobId: '00000000-0000-4000-8000-0000000000aa',
+          userId: '00000000-0000-4000-8000-0000000000aa',
+          fileId: '00000000-0000-4000-8000-0000000000aa',
+          mime: 'id-1'));
       await call(() => f21.EvidenceStoragePath.isStoragePath('id-1'));
     });
   });
@@ -452,17 +493,17 @@ void main() {
       final dynamic o = probe(() => f22.EvidenceUploader());
       if (o != null) {
         await call(() => o.save(
-            jobId: 'id-1',
-            userId: 'id-1',
-            fileId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            fileId: '00000000-0000-4000-8000-0000000000aa',
             bytes: Uint8List.fromList([1, 2, 3, 4]),
             mime: 'id-1',
             imageWebp: Uint8List.fromList([1, 2, 3, 4]),
             onProgress: (_) {}));
         await call(() => o.saveFile(
-            jobId: 'id-1',
-            userId: 'id-1',
-            fileId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            fileId: '00000000-0000-4000-8000-0000000000aa',
             filePath: 'id-1',
             byteLength: 1,
             mime: 'id-1',
@@ -506,11 +547,12 @@ void main() {
             flagName: 'id-1',
             appVersion: 'id-1',
             role: 'id-1',
-            userId: 'id-1'));
+            userId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.setGlobalFlag('id-1', true));
         await call(() => o.setVersionFlag('id-1', 'id-1', true));
         await call(() => o.setRoleFlag('id-1', 'id-1', true));
-        await call(() => o.setUserFlag('id-1', 'id-1', true));
+        await call(() => o.setUserFlag(
+            'id-1', '00000000-0000-4000-8000-0000000000aa', true));
         await call(() => o.getAllFlags());
         await call(() => o.initializeDefaultFlags());
         await call(() => o.syncFromServer());
@@ -522,15 +564,20 @@ void main() {
       final dynamic o = probe(() => f25.GdprService.instance);
       if (o != null) {
         await call(() => o.recordConsent(
-            userId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
             accepted: true,
             ipAddress: 'id-1',
             userAgent: 'id-1'));
-        await call(() => o.hasAcceptedCurrentTerms('id-1'));
-        await call(() => o.exportUserData('id-1'));
-        await call(() => o.exportUserDataAsJson('id-1'));
-        await call(() => o.requestAccountDeletion('id-1'));
-        await call(() => o.getConsentHistory('id-1'));
+        await call(() =>
+            o.hasAcceptedCurrentTerms('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.exportUserData('00000000-0000-4000-8000-0000000000aa'));
+        await call(() =>
+            o.exportUserDataAsJson('00000000-0000-4000-8000-0000000000aa'));
+        await call(() =>
+            o.requestAccountDeletion('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.getConsentHistory('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -548,9 +595,9 @@ void main() {
       final dynamic o = probe(() => f28.JobBookingService.instance);
       if (o != null) {
         await call(() => o.createVisitBooking(
-            userId: 'id-1',
-            workerId: 'id-1',
-            serviceId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             address: 'id-1',
             visitFeeClp: 1,
             scheduledDate: DateTime.utc(2026, 1, 2, 15),
@@ -560,9 +607,9 @@ void main() {
             longitude: 1.0,
             transportExtraClp: 1));
         await call(() => o.createFixedSkuBooking(
-            userId: 'id-1',
-            workerId: 'id-1',
-            serviceId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             address: 'id-1',
             skuCode: 'id-1',
             visitFeeClp: 1,
@@ -574,11 +621,11 @@ void main() {
             longitude: 1.0,
             serviceMetadata: const {}));
         await call(() => o.createWorkerTierBooking(
-            userId: 'id-1',
-            workerId: 'id-1',
-            serviceId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             address: 'id-1',
-            tierOptionId: 'id-1',
+            tierOptionId: '00000000-0000-4000-8000-0000000000aa',
             tierLabel: 'id-1',
             amountClp: 1,
             description: 'id-1',
@@ -592,9 +639,9 @@ void main() {
             unitRateClp: 1,
             transportExtraClp: 1));
         await call(() => o.createHourlyBlockBooking(
-            userId: 'id-1',
-            workerId: 'id-1',
-            serviceId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             address: 'id-1',
             hourlyRateClp: 1,
             blockHours: 1,
@@ -605,11 +652,11 @@ void main() {
             longitude: 1.0,
             serviceMetadata: const {}));
         await call(() => o.createWorkerTierInvitation(
-            userId: 'id-1',
-            workerId: 'id-1',
-            serviceId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             address: 'id-1',
-            tierOptionId: 'id-1',
+            tierOptionId: '00000000-0000-4000-8000-0000000000aa',
             tierLabel: 'id-1',
             amountClp: 1,
             description: 'id-1',
@@ -623,9 +670,9 @@ void main() {
             unitRateClp: 1,
             transportExtraClp: 1));
         await call(() => o.createOpenQuoteJob(
-            userId: 'id-1',
-            invitedWorkerId: 'id-1',
-            serviceId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            invitedWorkerId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             address: 'id-1',
             description: 'id-1',
             scheduledDate: DateTime.utc(2026, 1, 2, 15),
@@ -633,12 +680,15 @@ void main() {
             latitude: 1.0,
             longitude: 1.0,
             serviceMetadata: const {}));
-        await call(
-            () => o.confirmCompletionAndPay(jobId: 'id-1', userId: 'id-1'));
-        await call(
-            () => o.abandonUnpaidCheckout(jobId: 'id-1', userId: 'id-1'));
-        await call(
-            () => o.confirmEscrowAndAccept(jobId: 'id-1', userId: 'id-1'));
+        await call(() => o.confirmCompletionAndPay(
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            userId: '00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.abandonUnpaidCheckout(
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            userId: '00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.confirmEscrowAndAccept(
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            userId: '00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -648,12 +698,14 @@ void main() {
       final dynamic o = probe(() => f29.JobCancellationService());
       if (o != null) {
         await call(() => o.cancelJob(
-            jobId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
             cancelledBy: 'id-1',
             reason: 'id-1',
             userRole: 'id-1'));
-        await call(() => o.canCancelJob('id-1', 'id-1', 'id-1'));
-        await call(() => o.getCancellationReason('id-1'));
+        await call(() => o.canCancelJob('00000000-0000-4000-8000-0000000000aa',
+            '00000000-0000-4000-8000-0000000000aa', 'id-1'));
+        await call(() =>
+            o.getCancellationReason('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -662,22 +714,30 @@ void main() {
       final dynamic o = probe(() => f30.JobService.instance);
       if (o != null) {
         await call(() => o.createJob(
-            userId: 'id-1',
-            serviceId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             description: 'id-1',
             address: 'id-1',
             latitude: 1.0,
             longitude: 1.0,
             scheduledDate: DateTime.utc(2026, 1, 2, 15),
             serviceMetadata: const {}));
-        await call(() => o.acceptJob(jobId: 'id-1', workerId: 'id-1'));
-        await call(() => o.rejectJob(jobId: 'id-1', workerId: 'id-1'));
+        await call(() => o.acceptJob(
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.rejectJob(
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.updateJobStatus(
-            jobId: 'id-1', newStatus: 'id-1', userId: 'id-1', pin: null));
-        await call(() => o.getUserJobs('id-1'));
-        await call(() => o.getWorkerJobs('id-1'));
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            newStatus: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            pin: null));
+        await call(() => o.getUserJobs('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.getWorkerJobs('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.getAvailableJobs());
-        await call(() => o.getJobById('id-1'));
+        await call(() => o.getJobById('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -690,7 +750,10 @@ void main() {
         await call(
             () => o.isValidTransition('id-1', 'id-1', pricingMode: 'id-1'));
         await call(() => o.transitionTo(
-            jobId: 'id-1', newStatus: 'id-1', userId: 'id-1', pin: 'id-1'));
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            newStatus: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            pin: 'id-1'));
         await call(() => o.processTimeouts());
         await call(() =>
             o.getSuggestedNextStatus(f32.JobModel.fromMap(sampleJobModel)));
@@ -714,14 +777,14 @@ void main() {
           () => f35.MatchingService.calculateDistance(1.0, 1.0, 1.0, 1.0));
       if (o != null) {
         await call(() => o.automaticMatching(
-            jobId: 'id-1',
-            serviceId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             userLatitude: 1.0,
             userLongitude: 1.0,
             maxResults: 1));
         await call(() => o.manualMatching(
-            jobId: 'id-1',
-            serviceId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
             userLatitude: 1.0,
             userLongitude: 1.0,
             minRating: 1.0,
@@ -747,7 +810,7 @@ void main() {
       final dynamic o = probe(() => f39.NotificationRealtimeService.instance);
       if (o != null) {
         await call(() => o.onIncoming);
-        await call(() => o.subscribe('id-1'));
+        await call(() => o.subscribe('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.unsubscribe());
       }
     });
@@ -761,24 +824,24 @@ void main() {
         await call(() => o.showNotification(
             title: 'id-1',
             body: 'id-1',
-            userId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
             type: 'id-1',
-            relatedId: 'id-1'));
+            relatedId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.notifyUsers(
             userIds: ['id-1'],
             title: 'id-1',
             body: 'id-1',
             type: 'id-1',
-            relatedId: 'id-1'));
+            relatedId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.showIncomingNotification(
             f41.NotificationModel.fromMap(sampleNotificationModel)));
         await call(() => o.scheduleNotification(
             title: 'id-1',
             body: 'id-1',
             scheduledDate: DateTime.utc(2026, 1, 2, 15),
-            userId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
             type: 'id-1',
-            relatedId: 'id-1'));
+            relatedId: '00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.cancelNotification(1));
         await call(() => o.cancelAllNotifications());
       }
@@ -802,8 +865,8 @@ void main() {
       final dynamic o = probe(() => f43.OpenQuoteNotificationService.instance);
       if (o != null) {
         await call(() => o.notifyInvitedWorker(
-            jobId: 'id-1',
-            workerId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
             jobRepository: f44.JobRepository(),
             jobLabel: 'id-1',
             isTierInvitation: true));
@@ -815,8 +878,10 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f45.MockPaymentGateway());
       if (o != null) {
-        await call(
-            () => o.authorizeHold(jobId: 'id-1', amountClp: 1, userId: 'id-1'));
+        await call(() => o.authorizeHold(
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            amountClp: 1,
+            userId: '00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -842,47 +907,65 @@ void main() {
       final dynamic o = probe(() => f48.PaymentService.instance);
       if (o != null) {
         await call(() => o.createPayment(
-            jobId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
             amount: 1.0,
             currency: 'id-1',
             paymentMethod: 'id-1'));
-        await call(() => o.authorizePayment('id-1'));
-        await call(() => o.holdPayment('id-1'));
-        await call(() => o.resolveDisputeFunds(
-            disputeId: 'id-1', decision: 'id-1', resolution: 'id-1'));
-        await call(() =>
-            o.refundBecauseWorkerRejected(jobId: 'id-1', metadata: const {}));
         await call(
-            () => o.releasePayment('id-1', transferRef: 'id-1', notes: 'id-1'));
-        await call(() => o.refundPayment('id-1'));
-        await call(() => o.getPrimaryPayment('id-1'));
-        await call(() => o.getPaymentByJobId('id-1'));
+            () => o.authorizePayment('00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.holdPayment('00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.resolveDisputeFunds(
+            disputeId: '00000000-0000-4000-8000-0000000000aa',
+            decision: 'id-1',
+            resolution: 'id-1'));
+        await call(() => o.refundBecauseWorkerRejected(
+            jobId: '00000000-0000-4000-8000-0000000000aa', metadata: const {}));
+        await call(() => o.releasePayment(
+            '00000000-0000-4000-8000-0000000000aa',
+            transferRef: 'id-1',
+            notes: 'id-1'));
+        await call(
+            () => o.refundPayment('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.getPrimaryPayment('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.getPaymentByJobId('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.createSupplementalPayment(
-            jobId: 'id-1',
-            changeOrderId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            changeOrderId: '00000000-0000-4000-8000-0000000000aa',
             paymentType: 'id-1',
             quote: f49.PriceQuote.fromJson(samplePriceQuote),
             paymentMethod: 'id-1'));
         await call(() => o.createPrimaryPayment(
-            jobId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
             quote: f49.PriceQuote.fromJson(samplePriceQuote),
             paymentMethod: 'id-1'));
-        await call(() => o.authorizePrimaryForJob('id-1'));
-        await call(() => o.releasePrimaryOnJobCompleted('id-1',
-            transferRef: 'id-1', notes: 'id-1'));
-        await call(() => o.refundPrimaryOnCancellation('id-1'));
-        await call(() => o.hasAuthorizedPrimaryPayment('id-1'));
-        await call(() => o.hasPayment('id-1'));
+        await call(() =>
+            o.authorizePrimaryForJob('00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.releasePrimaryOnJobCompleted(
+            '00000000-0000-4000-8000-0000000000aa',
+            transferRef: 'id-1',
+            notes: 'id-1'));
+        await call(() => o.refundPrimaryOnCancellation(
+            '00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.hasAuthorizedPrimaryPayment(
+            '00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.hasPayment('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.hasSavedCard(recoverAbandoned: true));
         await call(() => o.savedCard(recoverAbandoned: true));
         await call(() => o.removeSavedCard());
         await call(() => o.restoreReplacedCard());
         await call(() => o.startCardEnrollment(replacing: true));
-        await call(() => o.chargeSavedCard(jobId: 'id-1', amount: 1.0));
-        await call(() => o.previewJobCharge('id-1'));
+        await call(() => o.chargeSavedCard(
+            jobId: '00000000-0000-4000-8000-0000000000aa', amount: 1.0));
+        await call(
+            () => o.previewJobCharge('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.initiateWebpayPayment(
-            jobId: 'id-1', amount: 1.0, changeOrderId: 'id-1'));
-        await call(() => o.webpayCheckoutSettled('id-1'));
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            amount: 1.0,
+            changeOrderId: '00000000-0000-4000-8000-0000000000aa'));
+        await call(() =>
+            o.webpayCheckoutSettled('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.confirmWebpayPayment(token: 'id-1'));
       }
     });
@@ -893,13 +976,16 @@ void main() {
       if (o != null) {
         await call(() => o.pickImage());
         await call(() => o.compressImage(File('/tmp/no-existe.jpg')));
-        await call(() => o.saveJobPhoto(File('/tmp/no-existe.jpg'), 'id-1'));
+        await call(() => o.saveJobPhoto(File('/tmp/no-existe.jpg'),
+            '00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.saveProfilePhoto(File('/tmp/no-existe.jpg'),
+            '00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.savePortfolioPhoto(File('/tmp/no-existe.jpg'),
+            '00000000-0000-4000-8000-0000000000aa'));
         await call(
-            () => o.saveProfilePhoto(File('/tmp/no-existe.jpg'), 'id-1'));
-        await call(
-            () => o.savePortfolioPhoto(File('/tmp/no-existe.jpg'), 'id-1'));
-        await call(() => o.deleteJobPhotos('id-1'));
-        await call(() => o.deletePortfolioPhotos('id-1'));
+            () => o.deleteJobPhotos('00000000-0000-4000-8000-0000000000aa'));
+        await call(() =>
+            o.deletePortfolioPhotos('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.getFileSizeKB('id-1'));
         await call(() => o.fileExists('id-1'));
       }
@@ -910,7 +996,8 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f52.PricingGuardService.instance);
       if (o != null) {
-        await call(() => o.checkPrice(serviceId: 'id-1', price: 1.0));
+        await call(() => o.checkPrice(
+            serviceId: '00000000-0000-4000-8000-0000000000aa', price: 1.0));
       }
     });
   });
@@ -934,7 +1021,7 @@ void main() {
       final dynamic o = probe(() => f54.PricingService.instance);
       if (o != null) {
         await call(() => o.calculateWorkerTierPrice(
-            optionId: 'id-1',
+            optionId: '00000000-0000-4000-8000-0000000000aa',
             optionLabel: 'id-1',
             amountClp: 1,
             comunaKey: 'id-1',
@@ -998,7 +1085,7 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f59.PushService.instance);
       if (o != null) {
-        await call(() => o.register('id-1'));
+        await call(() => o.register('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.unregister());
       }
     });
@@ -1008,10 +1095,10 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f60.QuoteProposalService.instance);
       if (o != null) {
-        await call(() => o.listForJob('id-1'));
+        await call(() => o.listForJob('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.submit(
-            jobId: 'id-1',
-            workerId: 'id-1',
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa',
             montoTotalClp: 1,
             descripcion: 'id-1',
             validezDias: 1,
@@ -1019,8 +1106,12 @@ void main() {
             manoObraClp: 1,
             horasEstimadas: 1));
         await call(() => o.selectProposal(
-            jobId: 'id-1', proposalId: 'id-1', clientUserId: 'id-1'));
-        await call(() => o.withdraw(proposalId: 'id-1', workerId: 'id-1'));
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            proposalId: '00000000-0000-4000-8000-0000000000aa',
+            clientUserId: '00000000-0000-4000-8000-0000000000aa'));
+        await call(() => o.withdraw(
+            proposalId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -1036,11 +1127,14 @@ void main() {
               window: const Duration(milliseconds: 1))));
       if (o != null) {
         await call(() => o.canPerformAction(
-            userId: 'id-1', action: f61.RateLimitAction.values.first));
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            action: f61.RateLimitAction.values.first));
         await call(() => o.recordAction(
-            userId: 'id-1', action: f61.RateLimitAction.values.first));
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            action: f61.RateLimitAction.values.first));
         await call(() => o.clearHistory(
-            userId: 'id-1', action: f61.RateLimitAction.values.first));
+            userId: '00000000-0000-4000-8000-0000000000aa',
+            action: f61.RateLimitAction.values.first));
       }
     });
   });
@@ -1049,12 +1143,14 @@ void main() {
       final dynamic o = probe(() => f62.ReportService());
       if (o != null) {
         await call(() => o.createReport(
-            reporterId: 'id-1',
-            reportedUserId: 'id-1',
+            reporterId: '00000000-0000-4000-8000-0000000000aa',
+            reportedUserId: '00000000-0000-4000-8000-0000000000aa',
             reason: 'id-1',
             description: 'id-1'));
-        await call(() => o.getReportsByReporter('id-1'));
-        await call(() => o.getReportsAboutUser('id-1'));
+        await call(() =>
+            o.getReportsByReporter('00000000-0000-4000-8000-0000000000aa'));
+        await call(() =>
+            o.getReportsAboutUser('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -1066,12 +1162,16 @@ void main() {
       await call(
           () => f63.ServiceLegalValidator.paymentNotice(chargeAmountClp: 1));
       if (o != null) {
-        await call(() => o.validateService('id-1'));
+        await call(
+            () => o.validateService('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.validateServiceRestrictions(
-            serviceId: 'id-1', serviceData: const {}));
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
+            serviceData: const {}));
+        await call(() => o.buildConfirmationText(
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
+            serviceName: 'id-1'));
         await call(() =>
-            o.buildConfirmationText(serviceId: 'id-1', serviceName: 'id-1'));
-        await call(() => o.getServiceDisclaimer('id-1'));
+            o.getServiceDisclaimer('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -1079,7 +1179,8 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f64.SessionManager.instance);
       if (o != null) {
-        await call(() => o.saveSession('id-1', 'id-1'));
+        await call(() =>
+            o.saveSession('00000000-0000-4000-8000-0000000000aa', 'id-1'));
         await call(() => o.restoreSession());
         await call(() => o.getSavedRole());
         await call(() => o.clearSession());
@@ -1094,12 +1195,15 @@ void main() {
       final dynamic o = probe(() => f65.SubscriptionService.instance);
       if (o != null) {
         await call(() => o.createSubscription(
-            userId: 'id-1',
+            userId: '00000000-0000-4000-8000-0000000000aa',
             plan: f65.SubscriptionPlan.values.first,
             durationDays: 1));
-        await call(() => o.hasActiveSubscription('id-1'));
-        await call(() => o.getActiveSubscription('id-1'));
-        await call(() => o.cancelSubscription('id-1'));
+        await call(() =>
+            o.hasActiveSubscription('00000000-0000-4000-8000-0000000000aa'));
+        await call(() =>
+            o.getActiveSubscription('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.cancelSubscription('00000000-0000-4000-8000-0000000000aa'));
         await call(() => o.checkExpiredSubscriptions());
       }
     });
@@ -1137,8 +1241,10 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f67.TransbankWebpayGateway());
       if (o != null) {
-        await call(
-            () => o.authorizeHold(jobId: 'id-1', amountClp: 1, userId: 'id-1'));
+        await call(() => o.authorizeHold(
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            amountClp: 1,
+            userId: '00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -1146,13 +1252,20 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f68.TrustScoreService.instance);
       if (o != null) {
-        await call(() => o.calculateTrustScore('id-1'));
-        await call(() => o.canCancelJob('id-1'));
-        await call(() => o.isSoftBanned('id-1'));
-        await call(() => o.recordCancellation('id-1'));
-        await call(() => o.recordNoShow('id-1'));
-        await call(() => o.recordCompletedJob('id-1'));
-        await call(() => o.getWarningMessage('id-1'));
+        await call(() =>
+            o.calculateTrustScore('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.canCancelJob('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.isSoftBanned('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.recordCancellation('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.recordNoShow('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.recordCompletedJob('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.getWarningMessage('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -1184,7 +1297,7 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f71.WorkerEarningsService.instance);
       if (o != null) {
-        await call(() => o.getSnapshot('id-1'));
+        await call(() => o.getSnapshot('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });
@@ -1194,8 +1307,9 @@ void main() {
     await forEachScenario(() async {
       final dynamic o = probe(() => f72.WorkerJobRejectionService.instance);
       if (o != null) {
-        await call(() =>
-            o.rejectAndSuggestAlternatives(jobId: 'id-1', workerId: 'id-1'));
+        await call(() => o.rejectAndSuggestAlternatives(
+            jobId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa'));
         await call(
             () => o.alternativesForJob(f32.JobModel.fromMap(sampleJobModel)));
       }
@@ -1208,10 +1322,13 @@ void main() {
       final dynamic o =
           probe(() => f73.WorkerOnboardingChecklistService.instance);
       if (o != null) {
-        await call(() => o.checkStatus('id-1'));
-        await call(() => o.canReceiveJobs('id-1'));
-        await call(() => o.isListedInSearch('id-1'));
-        await call(() => o.getNextPendingStep('id-1'));
+        await call(() => o.checkStatus('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.canReceiveJobs('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.isListedInSearch('00000000-0000-4000-8000-0000000000aa'));
+        await call(
+            () => o.getNextPendingStep('00000000-0000-4000-8000-0000000000aa'));
       }
     });
   });

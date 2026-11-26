@@ -125,6 +125,172 @@ void main() {
         seeded: true, role: 'trabajador');
   });
   testWidgets(
+      'WorkerActiveJobBanner estado pendiente rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job:
+                f9.JobModel.fromMap({...sampleJobModel, 'estado': 'pendiente'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'pendiente'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado aceptado rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap({...sampleJobModel, 'estado': 'aceptado'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'aceptado'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado en_camino rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job:
+                f9.JobModel.fromMap({...sampleJobModel, 'estado': 'en_camino'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'en_camino'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado en_curso rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap({...sampleJobModel, 'estado': 'en_curso'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'en_curso'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado completado rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'completado'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'completado'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado cancelado rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job:
+                f9.JobModel.fromMap({...sampleJobModel, 'estado': 'cancelado'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'cancelado'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado expirado rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap({...sampleJobModel, 'estado': 'expirado'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'expirado'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado no_asistio rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'no_asistio'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'no_asistio'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado esperando_pago rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'esperando_pago'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'esperando_pago'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado esperando_cotizaciones rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'esperando_cotizaciones'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'esperando_cotizaciones'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado cotizacion_seleccionada rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'cotizacion_seleccionada'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'cotizacion_seleccionada'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado pausado_orden_cambio rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'pausado_orden_cambio'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'pausado_orden_cambio'});
+  });
+  testWidgets(
+      'WorkerActiveJobBanner estado esperando_aprobacion_cliente rol trabajador (features/worker/presentation/widgets/worker_active_job_banner.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f8.WorkerActiveJobBanner(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'esperando_aprobacion_cliente'}),
+            onTap: () {},
+            onChat: () {}),
+        role: 'trabajador',
+        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+  });
+  testWidgets(
       'WorkerActiveJobBanner completo (features/worker/presentation/widgets/worker_active_job_banner.dart)',
       (tester) async {
     await smokeWidget(
@@ -199,15 +365,23 @@ void main() {
   testWidgets(
       'WorkerEarningsSummary completo (features/worker/presentation/widgets/worker_earnings_summary.dart)',
       (tester) async {
-    await smokeWidget(tester,
-        () => f17.WorkerEarningsSummary(workerId: 'id-1', onViewDetails: () {}),
-        seeded: true, role: 'trabajador');
+    await smokeWidget(
+        tester,
+        () => f17.WorkerEarningsSummary(
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            onViewDetails: () {}),
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerEarningsSummary mínimo (features/worker/presentation/widgets/worker_earnings_summary.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f17.WorkerEarningsSummary(workerId: 'id-1'),
-        seeded: false, role: 'trabajador');
+    await smokeWidget(
+        tester,
+        () => f17.WorkerEarningsSummary(
+            workerId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: false,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerEarningsCard completo (features/worker/presentation/widgets/worker_earnings_summary.dart)',
@@ -248,6 +422,198 @@ void main() {
         role: 'trabajador');
   });
   testWidgets(
+      'WorkerJobCard estado pendiente rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job:
+                f9.JobModel.fromMap({...sampleJobModel, 'estado': 'pendiente'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'pendiente'});
+  });
+  testWidgets(
+      'WorkerJobCard estado aceptado rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap({...sampleJobModel, 'estado': 'aceptado'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'aceptado'});
+  });
+  testWidgets(
+      'WorkerJobCard estado en_camino rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job:
+                f9.JobModel.fromMap({...sampleJobModel, 'estado': 'en_camino'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'en_camino'});
+  });
+  testWidgets(
+      'WorkerJobCard estado en_curso rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap({...sampleJobModel, 'estado': 'en_curso'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'en_curso'});
+  });
+  testWidgets(
+      'WorkerJobCard estado completado rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'completado'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'completado'});
+  });
+  testWidgets(
+      'WorkerJobCard estado cancelado rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job:
+                f9.JobModel.fromMap({...sampleJobModel, 'estado': 'cancelado'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'cancelado'});
+  });
+  testWidgets(
+      'WorkerJobCard estado expirado rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap({...sampleJobModel, 'estado': 'expirado'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'expirado'});
+  });
+  testWidgets(
+      'WorkerJobCard estado no_asistio rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'no_asistio'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'no_asistio'});
+  });
+  testWidgets(
+      'WorkerJobCard estado esperando_pago rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'esperando_pago'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'esperando_pago'});
+  });
+  testWidgets(
+      'WorkerJobCard estado esperando_cotizaciones rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'esperando_cotizaciones'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'esperando_cotizaciones'});
+  });
+  testWidgets(
+      'WorkerJobCard estado cotizacion_seleccionada rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'cotizacion_seleccionada'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'cotizacion_seleccionada'});
+  });
+  testWidgets(
+      'WorkerJobCard estado pausado_orden_cambio rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'pausado_orden_cambio'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'pausado_orden_cambio'});
+  });
+  testWidgets(
+      'WorkerJobCard estado esperando_aprobacion_cliente rol trabajador (features/worker/presentation/widgets/worker_job_card.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f23.WorkerJobCard(
+            job: f9.JobModel.fromMap(
+                {...sampleJobModel, 'estado': 'esperando_aprobacion_cliente'}),
+            onTap: () {},
+            clientRatingLabel: 'id-1',
+            clientName: 'id-1',
+            priceLabel: 'id-1'),
+        role: 'trabajador',
+        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+  });
+  testWidgets(
       'WorkerJobCard completo (features/worker/presentation/widgets/worker_job_card.dart)',
       (tester) async {
     await smokeWidget(
@@ -274,15 +640,23 @@ void main() {
   testWidgets(
       'WorkerOnboardingCard completo (features/worker/presentation/widgets/worker_onboarding_card.dart)',
       (tester) async {
-    await smokeWidget(tester,
-        () => f24.WorkerOnboardingCard(workerId: 'id-1', onCompleted: () {}),
-        seeded: true, role: 'trabajador');
+    await smokeWidget(
+        tester,
+        () => f24.WorkerOnboardingCard(
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            onCompleted: () {}),
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerOnboardingCard mínimo (features/worker/presentation/widgets/worker_onboarding_card.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f24.WorkerOnboardingCard(workerId: 'id-1'),
-        seeded: false, role: 'trabajador');
+    await smokeWidget(
+        tester,
+        () => f24.WorkerOnboardingCard(
+            workerId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: false,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerPricingTiersEditor completo (features/worker/presentation/widgets/worker_pricing_tiers_editor.dart)',
@@ -382,8 +756,12 @@ void main() {
   testWidgets(
       'WorkerVerificationCard completo (features/worker/presentation/widgets/worker_verification_card.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f30.WorkerVerificationCard(userId: 'id-1'),
-        seeded: true, role: 'trabajador');
+    await smokeWidget(
+        tester,
+        () => f30.WorkerVerificationCard(
+            userId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerWorkZoneField completo (features/worker/presentation/widgets/worker_work_zone_field.dart)',

@@ -180,10 +180,21 @@ def val(t, depth=0):
     return 'null' if nullable else None
 
 
+SEED_ID = "'00000000-0000-4000-8000-0000000000aa'"
+
+
+def pval(p):
+    """Valor para un parámetro: los ids usan el id de las filas sembradas."""
+    base, _ = strip_null(p['type'])
+    if base == 'String' and re.search(r'(^id$|Id$|^id[A-Z])', p['name']):
+        return SEED_ID
+    return val(p['type'])
+
+
 def args_for(params):
     out = []
     for p in params:
-        v = val(p['type'])
+        v = pval(p)
         if v is None:
             if p['required']:
                 return None

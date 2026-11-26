@@ -8,6 +8,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -62,7 +63,14 @@ Future<void> smokeWidget(
   final container = ProviderContainer();
   addTearDown(container.dispose);
   final originalOnError = FlutterError.onError;
-  FlutterError.onError = (d) => lastSmokeErrors.add(d.exception);
+  FlutterError.onError = (d) {
+    lastSmokeErrors.add(d.exception);
+    if (const bool.fromEnvironment('SMOKE_DEBUG_FULL')) {
+      // ignore: avoid_print
+      print(
+          'SMOKE_FULL: ${d.toString().split('\n').where((l) => l.contains('dart:') == false).take(60).join(' | ')}');
+    }
+  };
   final originalPrint = debugPrint;
   debugPrint = (String? m, {int? wrapWidth}) {};
   tester.view.physicalSize = size;
@@ -106,7 +114,14 @@ Future<void> smokeWidget(
     }, (e, _) => lastSmokeErrors.add(e));
   } finally {
     try {
+      final before = lastSmokeErrors.length;
       await tester.pumpWidget(const SizedBox());
+      if (const bool.fromEnvironment('SMOKE_DEBUG')) {
+        // ignore: avoid_print
+        print('SMOKE_TEARDOWN: errores=${lastSmokeErrors.length - before} '
+            'callbacks=${SchedulerBinding.instance.transientCallbackCount} '
+            '${lastSmokeErrors.skip(before).take(2).map((e) => '$e'.split('\n').first)}');
+      }
       await tester.pump(const Duration(seconds: 1));
       final client = Supabase.instance.client;
       unawaited(client.removeAllChannels().catchError((_) => <String>[]));
@@ -187,7 +202,8 @@ Future<void> _drive(
     // ignore: avoid_print
     print('SMOKE_TEXT: $texts');
     // ignore: avoid_print
-    print('SMOKE_REQ: ${FakeBackend.instance.requests.map((r) => '${r.method} ${r.url.path}').join(', ')}');
+    print(
+        'SMOKE_REQ: ${FakeBackend.instance.requests.map((r) => '${r.method} ${r.url.path}').join(', ')}');
   }
   if (!interact) return;
   // Escribe en los campos de texto visibles.

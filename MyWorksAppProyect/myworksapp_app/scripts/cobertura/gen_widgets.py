@@ -18,6 +18,13 @@ EXTRA = {
     'FocusNode': 'FocusNode()', 'Key': None,
 }
 _orig_val = g.val
+# Widgets cuyo recorrido de toques deja el árbol de Flutter en mal estado
+# (un FilledButton recibe ancho infinito, ver informe) y contamina el test
+# siguiente: se montan sin tocar botones.
+NO_INTERACT = {'ServiceRequestPage'}
+STATUSES = ['pendiente', 'aceptado', 'en_camino', 'en_curso', 'completado', 'cancelado',
+            'expirado', 'no_asistio', 'esperando_pago', 'esperando_cotizaciones',
+            'cotizacion_seleccionada', 'pausado_orden_cambio', 'esperando_aprobacion_cliente']
 
 
 def val(t, depth=0):
@@ -54,7 +61,7 @@ def main(out, folders, excl):
                 for p in ct['params']:
                     if p['name'] == 'key':
                         continue
-                    v = val(p['type'])
+                    v = g.pval(p) if not g.strip_null(p['type'])[0].startswith(('List', 'Map')) else val(p['type'])
                     optional = not p['required'] or p['has_default']
                     if v is None:
                         if not optional:
@@ -72,10 +79,23 @@ def main(out, folders, excl):
                 if minimal != full:
                     variants.append(('mínimo', minimal, False))
                 role = 'trabajador' if '/worker/' in rel else ('administrador' if '/admin/' in rel else 'usuario')
+                joined = ', '.join(full)
+                status_target = ('features/jobs/presentation/pages' in rel or 'admin_job_detail' in rel
+                                 or 'sampleJobModel' in joined)
+                if status_target and emitted == 0:
+                    roles = ['usuario', 'trabajador'] if '/pages/' in rel else [role]
+                    for st in STATUSES:
+                        for rl in roles:
+                            args = [x.replace('sampleJobModel', "{...sampleJobModel, 'estado': '%s'}" % st) for x in full]
+                            body.append("  testWidgets('%s estado %s rol %s (%s)', (tester) async {" % (name, st, rl, rel))
+                            body.append("    await smokeWidget(tester, () => %s.%s(%s), role: '%s', overrides: const {'estado': '%s'});"
+                                        % (a, name, ', '.join(args), rl, st))
+                            body.append('  });')
                 for label, args, seeded in variants:
                     body.append("  testWidgets('%s %s (%s)', (tester) async {" % (name, label, rel))
-                    body.append("    await smokeWidget(tester, () => %s.%s(%s), seeded: %s, role: '%s');"
-                                % (a, name, ', '.join(args), 'true' if seeded else 'false', role))
+                    body.append("    await smokeWidget(tester, () => %s.%s(%s), seeded: %s, role: '%s'%s);"
+                                % (a, name, ', '.join(args), 'true' if seeded else 'false', role,
+                                   ', interact: false' if c['name'] in NO_INTERACT else ''))
                     body.append('  });')
                 emitted += 1
                 if emitted >= 2:

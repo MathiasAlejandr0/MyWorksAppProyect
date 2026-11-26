@@ -125,7 +125,8 @@ void main() {
   test('DemoFreeMedia (core/config/demo_free_media.dart)', () async {
     await forEachScenario(() async {
       await call(() => f3.DemoFreeMedia.url('id-1'));
-      await call(() => f3.DemoFreeMedia.profileForWorker('id-1'));
+      await call(() => f3.DemoFreeMedia.profileForWorker(
+          '00000000-0000-4000-8000-0000000000aa'));
       await call(() => f3.DemoFreeMedia.profileForDemoUser());
       await call(() => f3.DemoFreeMedia.portfolioForKey('id-1'));
       await call(() => f3.DemoFreeMedia.portfolioThumbnailForKey('id-1'));
@@ -261,13 +262,14 @@ void main() {
       await call(() => f22.RescheduleRules.canPropose(
           status: 'id-1',
           scheduledAt: DateTime.utc(2026, 1, 2, 15),
-          workerId: 'id-1',
+          workerId: '00000000-0000-4000-8000-0000000000aa',
           now: DateTime.utc(2026, 1, 2, 15)));
       await call(() => f22.RescheduleRules.slotOptions(
           [DateTime.utc(2026, 1, 2, 15)], DateTime.utc(2026, 1, 2, 15),
           now: DateTime.utc(2026, 1, 2, 15)));
       await call(() => f22.RescheduleRules.canRespond(
-          f22.RescheduleProposal.fromMap(sampleRescheduleProposal), 'id-1'));
+          f22.RescheduleProposal.fromMap(sampleRescheduleProposal),
+          '00000000-0000-4000-8000-0000000000aa'));
       await call(() => f22.RescheduleRules.statusLabel('id-1'));
     });
   });
@@ -390,10 +392,11 @@ void main() {
       await call(() =>
           f29.WorkerServiceOptionsCatalog.categorySupportsLargeProjects(
               'id-1'));
-      await call(
-          () => f29.WorkerServiceOptionsCatalog.findOption('id-1', 'id-1'));
+      await call(() => f29.WorkerServiceOptionsCatalog.findOption(
+          'id-1', '00000000-0000-4000-8000-0000000000aa'));
       await call(() => f29.WorkerServiceOptionsCatalog.findOptionForWorker(
-          f35.WorkerModel.fromMap(sampleWorkerModel), 'id-1'));
+          f35.WorkerModel.fromMap(sampleWorkerModel),
+          '00000000-0000-4000-8000-0000000000aa'));
     });
   });
   test('JobDTO (core/dto/job_dto.dart)', () async {
@@ -630,7 +633,8 @@ void main() {
       await call(() => f67.OpenQuoteUtils.invitedWorkerId(
           f61.JobModel.fromMap(sampleJobModel)));
       await call(() => f67.OpenQuoteUtils.canWorkerSubmitQuote(
-          f61.JobModel.fromMap(sampleJobModel), 'id-1'));
+          f61.JobModel.fromMap(sampleJobModel),
+          '00000000-0000-4000-8000-0000000000aa'));
     });
   });
   test('AppPlatform (core/utils/platform_support.dart)', () async {
@@ -725,7 +729,7 @@ void main() {
       await call(() => f76.JobDetailHelpers.clientCanCancelRequest(
           job: f61.JobModel.fromMap(sampleJobModel),
           dispute: f77.DisputeModel.fromMap(sampleDisputeModel),
-          userId: 'id-1'));
+          userId: '00000000-0000-4000-8000-0000000000aa'));
       await call(() => f76.JobDetailHelpers.agreementTypeLabel('id-1'));
       await call(() => f76.JobDetailHelpers.statusColor('id-1'));
       await call(() => f76.JobDetailHelpers.paymentStatusLabel('id-1'));

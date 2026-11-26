@@ -24,7 +24,8 @@ void main() {
   testWidgets(
       'RatingPage completo (features/ratings/presentation/pages/rating_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.RatingPage(jobId: 'id-1'),
+    await smokeWidget(tester,
+        () => f0.RatingPage(jobId: '00000000-0000-4000-8000-0000000000aa'),
         seeded: true, role: 'usuario');
   });
   testWidgets(
@@ -36,20 +37,31 @@ void main() {
   testWidgets(
       'ClientReputationCard completo (features/ratings/presentation/widgets/client_reputation_card.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f2.ClientReputationCard(clientId: 'id-1'),
-        seeded: true, role: 'usuario');
+    await smokeWidget(
+        tester,
+        () => f2.ClientReputationCard(
+            clientId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'RateClientButton completo (features/ratings/presentation/widgets/rate_client_button.dart)',
       (tester) async {
     await smokeWidget(
-        tester, () => f3.RateClientButton(jobId: 'id-1', onSaved: () {}),
-        seeded: true, role: 'usuario');
+        tester,
+        () => f3.RateClientButton(
+            jobId: '00000000-0000-4000-8000-0000000000aa', onSaved: () {}),
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'RateClientButton mínimo (features/ratings/presentation/widgets/rate_client_button.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f3.RateClientButton(jobId: 'id-1'),
-        seeded: false, role: 'usuario');
+    await smokeWidget(
+        tester,
+        () =>
+            f3.RateClientButton(jobId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: false,
+        role: 'usuario');
   });
 }

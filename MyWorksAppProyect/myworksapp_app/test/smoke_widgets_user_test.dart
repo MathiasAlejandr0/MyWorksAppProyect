@@ -64,21 +64,30 @@ void main() {
       'QuickBookingPage completo (features/user/presentation/pages/quick_booking_page.dart)',
       (tester) async {
     await smokeWidget(
-        tester, () => f0.QuickBookingPage(workerId: 'id-1', serviceId: 'id-1'),
-        seeded: true, role: 'usuario');
+        tester,
+        () => f0.QuickBookingPage(
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'ServiceRequestPage completo (features/user/presentation/pages/service_request_page.dart)',
       (tester) async {
-    await smokeWidget(tester,
-        () => f1.ServiceRequestPage(serviceId: 'id-1', workerId: 'id-1'),
-        seeded: true, role: 'usuario');
+    await smokeWidget(
+        tester,
+        () => f1.ServiceRequestPage(
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
+            workerId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: true,
+        role: 'usuario',
+        interact: false);
   });
   testWidgets(
       'ServiceRequestPage mínimo (features/user/presentation/pages/service_request_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f1.ServiceRequestPage(),
-        seeded: false, role: 'usuario');
+        seeded: false, role: 'usuario', interact: false);
   });
   testWidgets(
       'UserHomePage completo (features/user/presentation/pages/user_home_page.dart)',
@@ -96,21 +105,33 @@ void main() {
       'WorkerDetailPage completo (features/user/presentation/pages/worker_detail_page.dart)',
       (tester) async {
     await smokeWidget(
-        tester, () => f4.WorkerDetailPage(workerId: 'id-1', serviceId: 'id-1'),
-        seeded: true, role: 'usuario');
+        tester,
+        () => f4.WorkerDetailPage(
+            workerId: '00000000-0000-4000-8000-0000000000aa',
+            serviceId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'WorkerDetailPage mínimo (features/user/presentation/pages/worker_detail_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f4.WorkerDetailPage(workerId: 'id-1'),
-        seeded: false, role: 'usuario');
+    await smokeWidget(
+        tester,
+        () => f4.WorkerDetailPage(
+            workerId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'WorkerListPage completo (features/user/presentation/pages/worker_list_page.dart)',
       (tester) async {
     await smokeWidget(
-        tester, () => f5.WorkerListPage(serviceId: 'id-1', jobId: 'id-1'),
-        seeded: true, role: 'usuario');
+        tester,
+        () => f5.WorkerListPage(
+            serviceId: '00000000-0000-4000-8000-0000000000aa',
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'WorkerListPage mínimo (features/user/presentation/pages/worker_list_page.dart)',
@@ -351,7 +372,7 @@ void main() {
             workers: [f21.WorkerModel.fromMap(sampleWorkerModel)],
             users: const {},
             onSelectWorker: (_) {},
-            selectedWorkerId: 'id-1',
+            selectedWorkerId: '00000000-0000-4000-8000-0000000000aa',
             clientLatitude: 1.0,
             clientLongitude: 1.0,
             categoryLabel: 'id-1',
@@ -395,7 +416,7 @@ void main() {
             worker: f21.WorkerModel.fromMap(sampleWorkerModel),
             category: 'id-1',
             onSelected: (_) {},
-            initialOptionId: 'id-1'),
+            initialOptionId: '00000000-0000-4000-8000-0000000000aa'),
         seeded: true,
         role: 'usuario');
   });
@@ -446,7 +467,7 @@ void main() {
         () => f24.WorkerUnavailableDialog(
             workerName: 'id-1',
             alternatives: [f21.WorkerModel.fromMap(sampleWorkerModel)],
-            serviceId: 'id-1'),
+            serviceId: '00000000-0000-4000-8000-0000000000aa'),
         seeded: true,
         role: 'usuario');
   });

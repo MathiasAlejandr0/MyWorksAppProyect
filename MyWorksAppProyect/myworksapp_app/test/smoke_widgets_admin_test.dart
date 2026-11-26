@@ -74,10 +74,274 @@ void main() {
         seeded: true, role: 'administrador');
   });
   testWidgets(
+      'AdminJobDetailPage estado pendiente rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'pendiente'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado pendiente rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'pendiente'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado aceptado rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'aceptado'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado aceptado rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'aceptado'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado en_camino rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'en_camino'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado en_camino rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'en_camino'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado en_curso rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'en_curso'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado en_curso rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'en_curso'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado completado rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'completado'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado completado rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'completado'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado cancelado rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'cancelado'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado cancelado rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'cancelado'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado expirado rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'expirado'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado expirado rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'expirado'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado no_asistio rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'no_asistio'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado no_asistio rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'no_asistio'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado esperando_pago rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'esperando_pago'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado esperando_pago rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'esperando_pago'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado esperando_cotizaciones rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'esperando_cotizaciones'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado esperando_cotizaciones rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'esperando_cotizaciones'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado cotizacion_seleccionada rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'cotizacion_seleccionada'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado cotizacion_seleccionada rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'cotizacion_seleccionada'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado pausado_orden_cambio rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'pausado_orden_cambio'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado pausado_orden_cambio rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'pausado_orden_cambio'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado esperando_aprobacion_cliente rol usuario (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'usuario',
+        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+  });
+  testWidgets(
+      'AdminJobDetailPage estado esperando_aprobacion_cliente rol trabajador (features/admin/presentation/pages/admin_job_detail_page.dart)',
+      (tester) async {
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        role: 'trabajador',
+        overrides: const {'estado': 'esperando_aprobacion_cliente'});
+  });
+  testWidgets(
       'AdminJobDetailPage completo (features/admin/presentation/pages/admin_job_detail_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f5.AdminJobDetailPage(jobId: 'id-1'),
-        seeded: true, role: 'administrador');
+    await smokeWidget(
+        tester,
+        () => f5.AdminJobDetailPage(
+            jobId: '00000000-0000-4000-8000-0000000000aa'),
+        seeded: true,
+        role: 'administrador');
   });
   testWidgets(
       'AdminJobsPage completo (features/admin/presentation/pages/admin_jobs_page.dart)',
