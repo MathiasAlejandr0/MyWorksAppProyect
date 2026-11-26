@@ -617,3 +617,490 @@ final universalRow = <String, dynamic>{
   'metadata': <String, dynamic>{},
   'email': 'ana@test.invalid'
 };
+
+/// Fila de ejemplo por tabla: universal + el modelo que la lee.
+final Map<String, Map<String, dynamic>> tableRows = {
+  'acciones_pendientes': {
+    ...universalRow,
+    ...samplePendingActionModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'banderas_funcionalidad': {
+    ...universalRow,
+    ...sampleFeatureFlagModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'bloqueos_usuario': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'calificaciones': {
+    ...universalRow,
+    ...sampleRatingModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'cancelaciones_trabajo': {
+    ...universalRow,
+    ...sampleJobCancellationModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'configuraciones_servicio': {
+    ...universalRow,
+    ...sampleServiceConfigModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'consentimientos_usuario': {
+    ...universalRow,
+    ...sampleUserConsentModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'cuentas_bancarias': {
+    ...universalRow,
+    ...sampleBankAccount,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'disputas': {
+    ...universalRow,
+    ...sampleDisputeModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'eventos_abuso': {
+    ...universalRow,
+    ...sampleAbuseEventModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'eventos_analitica': {
+    ...universalRow,
+    ...sampleAnalyticsEventModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'fotos_trabajo': {
+    ...universalRow,
+    ...sampleJobPhotoModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'ia_resumen_resenas': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'impulsos': {
+    ...universalRow,
+    ...sampleBoostModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'liquidaciones': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'mensajes': {
+    ...universalRow,
+    ...sampleMessageModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'notificaciones': {
+    ...universalRow,
+    ...sampleNotificationModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'ordenes_cambio': {
+    ...universalRow,
+    ...sampleChangeOrderModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'pagos': {
+    ...universalRow,
+    ...samplePaymentModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'perfiles': {
+    ...universalRow,
+    ...sampleUserModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'portafolio_trabajador': {
+    ...universalRow,
+    ...samplePortfolioModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'propuesta_cotizacion_items': {
+    ...universalRow,
+    ...sampleQuoteProposalModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'propuestas_cotizacion': {
+    ...universalRow,
+    ...sampleQuoteProposalModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'registros_error_app': {
+    ...universalRow,
+    ...sampleAppErrorLogModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'reportes': {
+    ...universalRow,
+    ...sampleReportModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'reprogramaciones_trabajo': {
+    ...universalRow,
+    ...sampleRescheduleProposal,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'senales_resena': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'servicios': {
+    ...universalRow,
+    ...sampleServiceModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'suscripciones': {
+    ...universalRow,
+    ...sampleSubscriptionModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'trabajador_horarios': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'trabajador_horas_publicadas': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'trabajador_precios': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'trabajador_servicios': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'trabajador_servicios_extra': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'trabajadores': {
+    ...universalRow,
+    ...sampleWorkerModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'trabajos': {
+    ...universalRow,
+    ...sampleJobModel,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'ubicacion_en_vivo': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+  'verificacion_eventos': {
+    ...universalRow,
+    ...{
+      'id': '00000000-0000-4000-8000-0000000000aa',
+      'estado': 'pendiente',
+      'id_usuario': '00000000-0000-4000-8000-000000000001',
+      'rol': 'cliente',
+      'nombre': 'Ana Pérez',
+      'correo': 'ana@test.invalid',
+      'email': 'ana@test.invalid'
+    }
+  },
+};

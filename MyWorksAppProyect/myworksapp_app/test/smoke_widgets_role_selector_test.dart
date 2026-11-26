@@ -20,11 +20,13 @@ void main() {
   testWidgets(
       'RoleSelectorPage completo (features/role_selector/presentation/pages/role_selector_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.RoleSelectorPage(), seeded: true);
+    await smokeWidget(tester, () => f0.RoleSelectorPage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'WelcomePage completo (features/role_selector/presentation/pages/welcome_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f1.WelcomePage(), seeded: true);
+    await smokeWidget(tester, () => f1.WelcomePage(),
+        seeded: true, role: 'usuario');
   });
 }

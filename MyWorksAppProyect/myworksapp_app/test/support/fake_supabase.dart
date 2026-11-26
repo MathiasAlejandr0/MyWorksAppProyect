@@ -40,6 +40,9 @@ class FakeBackend {
   final Map<String, FakeHandler> functions = {};
   final List<FakeRequest> requests = [];
 
+  /// Tablas creadas desde [defaultRows]: sus filas aceptan cualquier filtro.
+  final Set<String> lenient = {};
+
   /// Tablas o RPC que deben responder con error 400 (para ramas de error).
   final Set<String> failing = {};
 
@@ -51,12 +54,22 @@ class FakeBackend {
   /// Filas que devuelve una tabla no sembrada (null = lista vacía).
   List<Map<String, dynamic>>? defaultRows;
 
+  /// Fila de ejemplo por tabla; si hay [defaultRows], la tabla devuelve dos
+  /// copias de su fila (con ids distintos) en vez de [defaultRows].
+  Map<String, Map<String, dynamic>> tableDefaults = const {};
+
+  /// Cambios que se aplican a cada fila por defecto (p. ej. el rol).
+  Map<String, dynamic> rowOverrides = const {};
+
   /// Respuesta de RPC no registradas (null = devuelve null).
   FakeHandler? defaultRpc;
 
   void reset() {
     defaultRows = null;
     defaultRpc = null;
+    tableDefaults = const {};
+    rowOverrides = const {};
+    lenient.clear();
     tables.clear();
     rpcs.clear();
     functions.clear();
@@ -116,6 +129,21 @@ class FakeBackend {
     return _json(result);
   }
 
+  List<Map<String, dynamic>> _defaultsFor(String table) {
+    final base = defaultRows;
+    if (base == null) return [];
+    final row = tableDefaults[table];
+    if (row == null) {
+      return [
+        for (final d in base) {...d, ...rowOverrides},
+      ];
+    }
+    return [
+      {...row, ...rowOverrides},
+      {...row, ...rowOverrides, 'id': '${row['id']}-2'},
+    ];
+  }
+
   bool _matches(Map<String, dynamic> row, String key, String value) {
     if (!row.containsKey(key)) return true;
     final cell = row[key];
@@ -139,12 +167,11 @@ class FakeBackend {
     if (failAll || failing.contains(table)) {
       return _err(400, 'tabla falla: $table');
     }
-    final rows = tables.putIfAbsent(
-      table,
-      () => [
-        for (final d in defaultRows ?? const []) Map<String, dynamic>.from(d)
-      ],
-    );
+    if (!tables.containsKey(table) && defaultRows != null) {
+      lenient.add(table);
+    }
+    final rows = tables.putIfAbsent(table, () => _defaultsFor(table));
+    final isLenient = lenient.contains(table);
     final params = r.url.queryParameters;
     final filters = Map.of(params)
       ..remove('select')
@@ -157,10 +184,37 @@ class FakeBackend {
     final single = accept.contains('vnd.pgrst.object');
     final prefer = r.headers['Prefer'] ?? r.headers['prefer'] ?? '';
 
-    List<Map<String, dynamic>> selected() => rows
-        .where((row) =>
-            filters.entries.every((e) => _matches(row, e.key, e.value)))
-        .toList();
+    List<Map<String, dynamic>> selected() {
+      if (!isLenient) {
+        return rows
+            .where(
+              (row) =>
+                  filters.entries.every((e) => _matches(row, e.key, e.value)),
+            )
+            .toList();
+      }
+      // Tablas por defecto: las filas se adaptan a los filtros `eq`.
+      for (final row in rows) {
+        for (final e in filters.entries) {
+          if (e.value.startsWith('eq.')) {
+            final v = e.value.substring(3);
+            final old = row[e.key];
+            row[e.key] = old is int
+                ? int.tryParse(v) ?? old
+                : old is bool
+                    ? v == 'true'
+                    : v;
+          }
+        }
+      }
+      // Un filtro por id devuelve una sola fila (como una clave única).
+      final byId = filters.entries.any(
+        (e) =>
+            (e.key == 'id' || e.key.startsWith('id_')) &&
+            e.value.startsWith('eq.'),
+      );
+      return byId ? rows.take(1).toList() : rows;
+    }
 
     switch (r.method) {
       case 'GET':
@@ -172,6 +226,9 @@ class FakeBackend {
           'content-range':
               '0-${out.isEmpty ? 0 : out.length - 1}/${out.length}',
         };
+        if (single && isLenient && out.isNotEmpty) {
+          return _json(out.first, h: headers);
+        }
         if (single) {
           if (out.length != 1) {
             return _json({

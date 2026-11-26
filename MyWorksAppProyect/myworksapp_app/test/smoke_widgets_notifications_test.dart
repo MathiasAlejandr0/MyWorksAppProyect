@@ -18,6 +18,7 @@ void main() {
   testWidgets(
       'NotificationsPage completo (features/notifications/presentation/pages/notifications_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.NotificationsPage(), seeded: true);
+    await smokeWidget(tester, () => f0.NotificationsPage(),
+        seeded: true, role: 'usuario');
   });
 }

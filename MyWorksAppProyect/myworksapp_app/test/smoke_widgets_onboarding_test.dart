@@ -18,7 +18,8 @@ void main() {
   testWidgets(
       'OnboardingPage completo (features/onboarding/presentation/pages/onboarding_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.OnboardingPage(), seeded: true);
+    await smokeWidget(tester, () => f0.OnboardingPage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'OnboardingNavBar completo (features/onboarding/presentation/pages/onboarding_page.dart)',
@@ -31,6 +32,7 @@ void main() {
             onPrevious: () {},
             onNext: () {},
             onFinish: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
 }

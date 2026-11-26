@@ -13,6 +13,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:myworksapp/core/providers/auth_provider.dart';
 import 'package:myworksapp/core/theme/app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -53,9 +54,13 @@ Future<void> smokeWidget(
   bool seeded = true,
   bool signedIn = true,
   bool interact = true,
+  String role = 'usuario',
+  Map<String, dynamic> overrides = const {},
   Size size = const Size(420, 900),
 }) async {
   lastSmokeErrors.clear();
+  final container = ProviderContainer();
+  addTearDown(container.dispose);
   final originalOnError = FlutterError.onError;
   FlutterError.onError = (d) => lastSmokeErrors.add(d.exception);
   final originalPrint = debugPrint;
@@ -69,12 +74,32 @@ Future<void> smokeWidget(
       final b = await setUpFakeSupabase(signedIn: signedIn);
       if (seeded) {
         b.defaultRows = [universalRow, universalRow];
-        b.defaultRpc = (_) => [universalRow];
+        b.tableDefaults = tableRows;
+        b.rowOverrides = {'rol': role, ...overrides};
+        b.defaultRpc = (_) => [
+              {...universalRow, 'rol': role, ...overrides},
+            ];
+      }
+      if (signedIn) {
+        b.user = {
+          'id': fakeUserId,
+          'aud': 'authenticated',
+          'role': 'authenticated',
+          'email': fakeUserEmail,
+          'app_metadata': {'provider': 'email', 'rol': role},
+          'user_metadata': {'nombre': 'Ana Pérez', 'rol': role},
+          'created_at': '2026-01-01T00:00:00Z',
+        };
+        await signInFake();
+        await container
+            .read(authProvider.notifier)
+            .loadCurrentUser(fakeUserId)
+            .timeout(const Duration(seconds: 2), onTimeout: () {});
       }
     });
     await runZonedGuarded(() async {
       try {
-        await _drive(tester, build, interact);
+        await _drive(tester, build, interact, container);
       } catch (e) {
         lastSmokeErrors.add(e);
       }
@@ -93,6 +118,12 @@ Future<void> smokeWidget(
     } catch (e) {
       lastSmokeErrors.add(e);
     }
+    if (const bool.fromEnvironment('SMOKE_DEBUG')) {
+      for (final e in lastSmokeErrors.take(8)) {
+        // ignore: avoid_print
+        print('SMOKE_ERR: ${'$e'.split('\n').take(4).join(' | ')}');
+      }
+    }
     // Descarta excepciones pendientes del framework.
     while (tester.takeException() != null) {}
     FlutterError.onError = originalOnError;
@@ -104,6 +135,7 @@ Future<void> _drive(
   WidgetTester tester,
   Widget Function() build,
   bool interact,
+  ProviderContainer container,
 ) async {
   final router = GoRouter(
     initialLocation: '/',
@@ -129,7 +161,8 @@ Future<void> _drive(
     errorBuilder: (_, __) => const Scaffold(body: Text('ruta')),
   );
   await tester.pumpWidget(
-    ProviderScope(
+    UncontrolledProviderScope(
+      container: container,
       child: MaterialApp.router(
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
@@ -141,7 +174,20 @@ Future<void> _drive(
     ),
   );
   for (var i = 0; i < 6; i++) {
-    await tester.pump(const Duration(milliseconds: 250));
+    await _step(tester, 250);
+  }
+  if (const bool.fromEnvironment('SMOKE_DEBUG')) {
+    final texts = find
+        .byType(Text)
+        .evaluate()
+        .map((e) => (e.widget as Text).data ?? '')
+        .where((t) => t.isNotEmpty)
+        .take(25)
+        .join(' / ');
+    // ignore: avoid_print
+    print('SMOKE_TEXT: $texts');
+    // ignore: avoid_print
+    print('SMOKE_REQ: ${FakeBackend.instance.requests.map((r) => '${r.method} ${r.url.path}').join(', ')}');
   }
   if (!interact) return;
   // Escribe en los campos de texto visibles.
@@ -150,7 +196,7 @@ Future<void> _drive(
   for (var i = 0; i < nFields && i < 8; i++) {
     try {
       await tester.enterText(fields.at(i), i.isEven ? '12' : 'texto de prueba');
-      await tester.pump(const Duration(milliseconds: 50));
+      await _step(tester, 50);
     } catch (e) {
       lastSmokeErrors.add(e);
     }
@@ -175,8 +221,8 @@ Future<void> _drive(
         final current = f.evaluate().length;
         if (i >= current) break;
         await tester.tap(f.at(i), warnIfMissed: false);
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 300));
+        await _step(tester, 300);
+        await _step(tester, 300);
         // Cierra diálogos y hojas abiertas.
         final nav = tester.state<NavigatorState>(find.byType(Navigator).last);
         if (nav.canPop()) {
@@ -187,10 +233,10 @@ Future<void> _drive(
           );
           if (dialogButtons.evaluate().isNotEmpty) {
             await tester.tap(dialogButtons.last, warnIfMissed: false);
-            await tester.pump(const Duration(milliseconds: 300));
+            await _step(tester, 300);
           }
           if (nav.mounted && nav.canPop()) nav.pop();
-          await tester.pump(const Duration(milliseconds: 300));
+          await _step(tester, 300);
         }
       } catch (e) {
         lastSmokeErrors.add(e);
@@ -203,12 +249,22 @@ Future<void> _drive(
     if (scrollables.evaluate().isNotEmpty) {
       await tester.drag(scrollables.first, const Offset(0, -600),
           warnIfMissed: false);
-      await tester.pump(const Duration(milliseconds: 300));
+      await _step(tester, 300);
     }
   } catch (e) {
     lastSmokeErrors.add(e);
   }
   for (var i = 0; i < 4; i++) {
-    await tester.pump(const Duration(milliseconds: 500));
+    await _step(tester, 500);
   }
+}
+
+/// Avanza el reloj falso y deja correr un poco de tiempo real: postgrest
+/// decodifica el JSON en otro isolate, y esa respuesta solo llega con tiempo
+/// real.
+Future<void> _step(WidgetTester tester, int ms) async {
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 15)),
+  );
+  await tester.pump(Duration(milliseconds: ms));
 }

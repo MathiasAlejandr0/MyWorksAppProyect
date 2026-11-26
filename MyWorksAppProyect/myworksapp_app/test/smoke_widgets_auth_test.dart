@@ -35,49 +35,55 @@ void main() {
       (tester) async {
     await smokeWidget(
         tester, () => f0.ForgotPasswordPage(sendReset: (_) async {}),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'ForgotPasswordPage mínimo (features/auth/presentation/pages/forgot_password_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.ForgotPasswordPage(), seeded: false);
+    await smokeWidget(tester, () => f0.ForgotPasswordPage(),
+        seeded: false, role: 'usuario');
   });
   testWidgets(
       'LoginPage completo (features/auth/presentation/pages/login_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f1.LoginPage(role: 'id-1'), seeded: true);
+    await smokeWidget(tester, () => f1.LoginPage(role: 'id-1'),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'LoginPage mínimo (features/auth/presentation/pages/login_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f1.LoginPage(), seeded: false);
+    await smokeWidget(tester, () => f1.LoginPage(),
+        seeded: false, role: 'usuario');
   });
   testWidgets(
       'ProfilePage completo (features/auth/presentation/pages/profile_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f2.ProfilePage(), seeded: true);
+    await smokeWidget(tester, () => f2.ProfilePage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'RegisterPage completo (features/auth/presentation/pages/register_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f3.RegisterPage(role: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'RegisterPage mínimo (features/auth/presentation/pages/register_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f3.RegisterPage(), seeded: false);
+    await smokeWidget(tester, () => f3.RegisterPage(),
+        seeded: false, role: 'usuario');
   });
   testWidgets(
       'ResetPasswordNewPage completo (features/auth/presentation/pages/reset_password_new_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f4.ResetPasswordNewPage(), seeded: true);
+    await smokeWidget(tester, () => f4.ResetPasswordNewPage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'PasswordStrengthMeter completo (features/auth/presentation/widgets/password_strength_meter.dart)',
       (tester) async {
     await smokeWidget(tester, () => f5.PasswordStrengthMeter(value: 'valor-de-prueba'),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'RoleSelectorChips completo (features/auth/presentation/widgets/role_selector_chips.dart)',
@@ -88,7 +94,8 @@ void main() {
             selected: f7.UserRole.values.first,
             onChanged: (_) {},
             roles: [f7.UserRole.values.first]),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'RoleSelectorChips mínimo (features/auth/presentation/widgets/role_selector_chips.dart)',
@@ -97,17 +104,19 @@ void main() {
         tester,
         () => f6.RoleSelectorChips(
             selected: f7.UserRole.values.first, onChanged: (_) {}),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'SignOutButton completo (features/auth/presentation/widgets/sign_out_button.dart)',
       (tester) async {
     await smokeWidget(tester, () => f8.SignOutButton(label: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'SignOutButton mínimo (features/auth/presentation/widgets/sign_out_button.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f8.SignOutButton(), seeded: false);
+    await smokeWidget(tester, () => f8.SignOutButton(),
+        seeded: false, role: 'usuario');
   });
 }

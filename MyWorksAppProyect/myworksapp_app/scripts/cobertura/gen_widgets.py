@@ -71,10 +71,11 @@ def main(out, folders, excl):
                 variants = [('completo', full, True)]
                 if minimal != full:
                     variants.append(('mínimo', minimal, False))
+                role = 'trabajador' if '/worker/' in rel else ('administrador' if '/admin/' in rel else 'usuario')
                 for label, args, seeded in variants:
                     body.append("  testWidgets('%s %s (%s)', (tester) async {" % (name, label, rel))
-                    body.append('    await smokeWidget(tester, () => %s.%s(%s), seeded: %s);'
-                                % (a, name, ', '.join(args), 'true' if seeded else 'false'))
+                    body.append("    await smokeWidget(tester, () => %s.%s(%s), seeded: %s, role: '%s');"
+                                % (a, name, ', '.join(args), 'true' if seeded else 'false', role))
                     body.append('  });')
                 emitted += 1
                 if emitted >= 2:

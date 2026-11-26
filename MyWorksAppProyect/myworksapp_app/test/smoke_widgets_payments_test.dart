@@ -25,17 +25,19 @@ void main() {
       'CardEnrollmentPage completo (features/payments/presentation/pages/card_enrollment_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.CardEnrollmentPage(replacing: true),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'CardEnrollmentPage mínimo (features/payments/presentation/pages/card_enrollment_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.CardEnrollmentPage(), seeded: false);
+    await smokeWidget(tester, () => f0.CardEnrollmentPage(),
+        seeded: false, role: 'usuario');
   });
   testWidgets(
       'PaymentMethodsPage completo (features/payments/presentation/pages/payment_methods_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f1.PaymentMethodsPage(), seeded: true);
+    await smokeWidget(tester, () => f1.PaymentMethodsPage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'PaymentMethodsBody completo (features/payments/presentation/pages/payment_methods_page.dart)',
@@ -50,7 +52,8 @@ void main() {
             onRemove: () {},
             onRetry: () {},
             error: 'id-1'),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'PaymentMethodsBody mínimo (features/payments/presentation/pages/payment_methods_page.dart)',
@@ -59,13 +62,14 @@ void main() {
         tester,
         () => f1.PaymentMethodsBody(
             loading: true, busy: true, cardLabel: 'id-1', onAdd: () {}),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'PaymentResultScreen completo (features/payments/presentation/pages/payment_result_screen.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.PaymentResultScreen(token: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'PaymentScreen completo (features/payments/presentation/pages/payment_screen.dart)',
@@ -77,13 +81,14 @@ void main() {
             amount: 1.0,
             serviceName: 'id-1',
             specialistName: 'id-1'),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'PaymentScreen mínimo (features/payments/presentation/pages/payment_screen.dart)',
       (tester) async {
     await smokeWidget(
         tester, () => f3.PaymentScreen(jobId: 'id-1', amount: 1.0),
-        seeded: false);
+        seeded: false, role: 'usuario');
   });
 }

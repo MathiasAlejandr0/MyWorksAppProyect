@@ -20,11 +20,13 @@ void main() {
   testWidgets(
       'MyDisputesPage completo (features/inbox/presentation/pages/my_disputes_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.MyDisputesPage(), seeded: true);
+    await smokeWidget(tester, () => f0.MyDisputesPage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'MyRatingsPage completo (features/inbox/presentation/pages/my_ratings_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f1.MyRatingsPage(), seeded: true);
+    await smokeWidget(tester, () => f1.MyRatingsPage(),
+        seeded: true, role: 'usuario');
   });
 }

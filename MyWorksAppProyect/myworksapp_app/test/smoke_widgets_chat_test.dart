@@ -20,11 +20,13 @@ void main() {
   testWidgets(
       'ChatPage completo (features/chat/presentation/pages/chat_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.ChatPage(jobId: 'id-1'), seeded: true);
+    await smokeWidget(tester, () => f0.ChatPage(jobId: 'id-1'),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'ConversationsPage completo (features/chat/presentation/pages/conversations_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f1.ConversationsPage(), seeded: true);
+    await smokeWidget(tester, () => f1.ConversationsPage(),
+        seeded: true, role: 'usuario');
   });
 }

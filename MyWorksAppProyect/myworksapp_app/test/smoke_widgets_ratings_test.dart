@@ -24,31 +24,32 @@ void main() {
   testWidgets(
       'RatingPage completo (features/ratings/presentation/pages/rating_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.RatingPage(jobId: 'id-1'), seeded: true);
+    await smokeWidget(tester, () => f0.RatingPage(jobId: 'id-1'),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'ClientRatingBadge completo (features/ratings/presentation/widgets/client_rating_badge.dart)',
       (tester) async {
     await smokeWidget(tester, () => f1.ClientRatingBadge(label: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'ClientReputationCard completo (features/ratings/presentation/widgets/client_reputation_card.dart)',
       (tester) async {
     await smokeWidget(tester, () => f2.ClientReputationCard(clientId: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'RateClientButton completo (features/ratings/presentation/widgets/rate_client_button.dart)',
       (tester) async {
     await smokeWidget(
         tester, () => f3.RateClientButton(jobId: 'id-1', onSaved: () {}),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'RateClientButton mínimo (features/ratings/presentation/widgets/rate_client_button.dart)',
       (tester) async {
     await smokeWidget(tester, () => f3.RateClientButton(jobId: 'id-1'),
-        seeded: false);
+        seeded: false, role: 'usuario');
   });
 }

@@ -77,36 +77,38 @@ void main() {
       'EvidenceShutterCameraPage completo (features/jobs/presentation/pages/evidence_shutter_camera_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f0.EvidenceShutterCameraPage(),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'JobDetailPage completo (features/jobs/presentation/pages/job_detail_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f1.JobDetailPage(jobId: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'JobHistoryPage completo (features/jobs/presentation/pages/job_history_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f2.JobHistoryPage(), seeded: true);
+    await smokeWidget(tester, () => f2.JobHistoryPage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'JobPhotosPage completo (features/jobs/presentation/pages/job_photos_page.dart)',
       (tester) async {
     await smokeWidget(
         tester, () => f3.JobPhotosPage(jobId: 'id-1', canAddPhotos: true),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'JobPhotosPage mínimo (features/jobs/presentation/pages/job_photos_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f3.JobPhotosPage(jobId: 'id-1'),
-        seeded: false);
+        seeded: false, role: 'usuario');
   });
   testWidgets(
       'JobSchedulePage completo (features/jobs/presentation/pages/job_schedule_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f4.JobSchedulePage(), seeded: true);
+    await smokeWidget(tester, () => f4.JobSchedulePage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'ChangeOrdersSection completo (features/jobs/presentation/widgets/change_orders_section.dart)',
@@ -119,7 +121,8 @@ void main() {
             onReview: (_) {},
             onRequest: () {},
             canRequest: true),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'ChangeOrdersSection mínimo (features/jobs/presentation/widgets/change_orders_section.dart)',
@@ -129,7 +132,8 @@ void main() {
         () => f5.ChangeOrdersSection(
             orders: [f6.ChangeOrderModel.fromMap(sampleChangeOrderModel)],
             isWorker: true),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'ClientLiveTracking completo (features/jobs/presentation/widgets/client_live_tracking.dart)',
@@ -141,20 +145,21 @@ void main() {
             jobStatus: 'id-1',
             destinationLat: 1.0,
             destinationLng: 1.0),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'ClientLiveTracking mínimo (features/jobs/presentation/widgets/client_live_tracking.dart)',
       (tester) async {
     await smokeWidget(
         tester, () => f7.ClientLiveTracking(jobId: 'id-1', jobStatus: 'id-1'),
-        seeded: false);
+        seeded: false, role: 'usuario');
   });
   testWidgets(
       'ClientStartPinCard completo (features/jobs/presentation/widgets/client_start_pin_card.dart)',
       (tester) async {
     await smokeWidget(tester, () => f8.ClientStartPinCard(pin: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'DisputeSection completo (features/jobs/presentation/widgets/dispute_section.dart)',
@@ -173,7 +178,8 @@ void main() {
             onCancelRequest: () {},
             pendingAgreementType: 'id-1',
             pendingAgreementId: 'id-1'),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'DisputeSection mínimo (features/jobs/presentation/widgets/dispute_section.dart)',
@@ -184,7 +190,8 @@ void main() {
             dispute: f10.DisputeModel.fromMap(sampleDisputeModel),
             canOpenDispute: true,
             isParticipant: true),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'EvidenceShutterButton completo (features/jobs/presentation/widgets/evidence_shutter_button.dart)',
@@ -196,7 +203,8 @@ void main() {
             onVideoStart: () {},
             onVideoEnd: () {},
             isRecording: true),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'EvidenceShutterButton mínimo (features/jobs/presentation/widgets/evidence_shutter_button.dart)',
@@ -205,7 +213,8 @@ void main() {
         tester,
         () => f11.EvidenceShutterButton(
             onPhoto: () {}, onVideoStart: () {}, onVideoEnd: () {}),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'JobAcceptedLocationCard completo (features/jobs/presentation/widgets/job_accepted_location_card.dart)',
@@ -218,7 +227,8 @@ void main() {
             longitude: 1.0,
             scheduledDate: DateTime.utc(2026, 1, 2, 15),
             isLoadingAddress: true),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobAcceptedLocationCard mínimo (features/jobs/presentation/widgets/job_accepted_location_card.dart)',
@@ -227,7 +237,8 @@ void main() {
         tester,
         () => f12.JobAcceptedLocationCard(
             address: 'id-1', latitude: 1.0, longitude: 1.0),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'JobDetailActionsSection completo (features/jobs/presentation/widgets/job_detail_actions_section.dart)',
@@ -252,7 +263,8 @@ void main() {
             ratingBlockedByDispute: true,
             alreadyRated: true,
             onRatingChanged: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobDetailActionsSection mínimo (features/jobs/presentation/widgets/job_detail_actions_section.dart)',
@@ -273,7 +285,8 @@ void main() {
             onStartJob: () {},
             onRequestOvertimeHours: () {},
             onCompleteJob: () {}),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'JobDetailClientApprovalCard completo (features/jobs/presentation/widgets/job_detail_client_approval_card.dart)',
@@ -285,7 +298,8 @@ void main() {
             quote: f16.PriceQuote.fromJson(samplePriceQuote),
             onApprove: () {},
             onReject: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobDetailDescriptionSection completo (features/jobs/presentation/widgets/job_detail_description_section.dart)',
@@ -294,7 +308,8 @@ void main() {
         tester,
         () => f17.JobDetailDescriptionSection(
             job: f14.JobModel.fromMap(sampleJobModel)),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobDetailPaymentEscrowSection completo (features/jobs/presentation/widgets/job_detail_payment_escrow_section.dart)',
@@ -315,7 +330,8 @@ void main() {
             onApproveCompletion: () {},
             onRejectCompletion: () {},
             blockedByDispute: true),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobDetailPaymentEscrowSection mínimo (features/jobs/presentation/widgets/job_detail_payment_escrow_section.dart)',
@@ -335,7 +351,8 @@ void main() {
             onPayEscrow: () {},
             onApproveCompletion: () {},
             onRejectCompletion: () {}),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'JobDetailScheduledDateRow completo (features/jobs/presentation/widgets/job_detail_scheduled_date_row.dart)',
@@ -344,7 +361,8 @@ void main() {
         tester,
         () => f20.JobDetailScheduledDateRow(
             scheduledDate: DateTime.utc(2026, 1, 2, 15)),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobDetailStatusHeader completo (features/jobs/presentation/widgets/job_detail_status_header.dart)',
@@ -353,7 +371,8 @@ void main() {
         tester,
         () => f21.JobDetailStatusHeader(
             job: f14.JobModel.fromMap(sampleJobModel)),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobHistoryLiveCard completo (features/jobs/presentation/widgets/job_history_cards.dart)',
@@ -366,7 +385,8 @@ void main() {
             dateLabel: 'id-1',
             status: 'id-1',
             onTap: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobHistoryCompletedCard completo (features/jobs/presentation/widgets/job_history_cards.dart)',
@@ -379,7 +399,8 @@ void main() {
             dateLabel: 'id-1',
             paymentStatus: 'id-1',
             onTap: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobHistoryClosedCard completo (features/jobs/presentation/widgets/job_history_cards.dart)',
@@ -392,7 +413,8 @@ void main() {
             dateLabel: 'id-1',
             status: 'id-1',
             onTap: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobLocationPreviewSection completo (features/jobs/presentation/widgets/job_location_preview_section.dart)',
@@ -404,7 +426,8 @@ void main() {
             latitude: 1.0,
             longitude: 1.0,
             isLoadingAddress: true),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'JobLocationPreviewSection mínimo (features/jobs/presentation/widgets/job_location_preview_section.dart)',
@@ -413,13 +436,14 @@ void main() {
         tester,
         () => f23.JobLocationPreviewSection(
             address: 'id-1', latitude: 1.0, longitude: 1.0),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'JobStatusTimeline completo (features/jobs/presentation/widgets/job_status_timeline.dart)',
       (tester) async {
     await smokeWidget(tester, () => f24.JobStatusTimeline(status: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'OpenQuoteStatusBanner completo (features/jobs/presentation/widgets/open_quote_status_banner.dart)',
@@ -431,14 +455,15 @@ void main() {
             isClient: true,
             workerName: 'id-1',
             proposalsCount: 1),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'OpenQuoteStatusBanner mínimo (features/jobs/presentation/widgets/open_quote_status_banner.dart)',
       (tester) async {
     await smokeWidget(tester,
         () => f25.OpenQuoteStatusBanner(jobStatus: 'id-1', isClient: true),
-        seeded: false);
+        seeded: false, role: 'usuario');
   });
   testWidgets(
       'QuoteProposalsSection completo (features/jobs/presentation/widgets/quote_proposals_section.dart)',
@@ -453,7 +478,8 @@ void main() {
                 jobStatus: 'id-1',
                 onSelect: (_) {},
                 onSubmitQuote: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'QuoteProposalsSection mínimo (features/jobs/presentation/widgets/quote_proposals_section.dart)',
@@ -463,7 +489,8 @@ void main() {
         () => f26.QuoteProposalsSection(proposals: [
               f19.QuoteProposalModel.fromMap(sampleQuoteProposalModel)
             ], isClient: true, jobStatus: 'id-1'),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'RescheduleSection completo (features/jobs/presentation/widgets/reschedule_section.dart)',
@@ -476,7 +503,8 @@ void main() {
             onChanged: () async {},
             repository: f28.RescheduleRepository(),
             workerRepository: f29.WorkerRepository()),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'RescheduleSection mínimo (features/jobs/presentation/widgets/reschedule_section.dart)',
@@ -487,18 +515,20 @@ void main() {
             job: f14.JobModel.fromMap(sampleJobModel),
             currentUserId: 'id-1',
             onChanged: () async {}),
-        seeded: false);
+        seeded: false,
+        role: 'usuario');
   });
   testWidgets(
       'WorkerGpsPublisher completo (features/jobs/presentation/widgets/worker_gps_publisher.dart)',
       (tester) async {
     await smokeWidget(
         tester, () => f30.WorkerGpsPublisher(jobId: 'id-1', active: true),
-        seeded: true);
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'WorkerQuoteFormDialog completo (features/jobs/presentation/widgets/worker_quote_form_dialog.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f31.WorkerQuoteFormDialog(), seeded: true);
+    await smokeWidget(tester, () => f31.WorkerQuoteFormDialog(),
+        seeded: true, role: 'usuario');
   });
 }

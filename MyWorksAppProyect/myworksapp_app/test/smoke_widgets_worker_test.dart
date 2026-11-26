@@ -73,48 +73,56 @@ void main() {
   testWidgets(
       'StatisticsPage completo (features/worker/presentation/pages/statistics_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.StatisticsPage(), seeded: true);
+    await smokeWidget(tester, () => f0.StatisticsPage(),
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerHomePage completo (features/worker/presentation/pages/worker_home_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f1.WorkerHomePage(), seeded: true);
+    await smokeWidget(tester, () => f1.WorkerHomePage(),
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerPayoutsPage completo (features/worker/presentation/pages/worker_payouts_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f2.WorkerPayoutsPage(), seeded: true);
+    await smokeWidget(tester, () => f2.WorkerPayoutsPage(),
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerPricingSetupPage completo (features/worker/presentation/pages/worker_pricing_setup_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f3.WorkerPricingSetupPage(editMode: true),
-        seeded: true);
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerPricingSetupPage mínimo (features/worker/presentation/pages/worker_pricing_setup_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f3.WorkerPricingSetupPage(), seeded: false);
+    await smokeWidget(tester, () => f3.WorkerPricingSetupPage(),
+        seeded: false, role: 'trabajador');
   });
   testWidgets(
       'WorkerProfilePage completo (features/worker/presentation/pages/worker_profile_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f4.WorkerProfilePage(), seeded: true);
+    await smokeWidget(tester, () => f4.WorkerProfilePage(),
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerRegisterPage completo (features/worker/presentation/pages/worker_register_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f5.WorkerRegisterPage(), seeded: true);
+    await smokeWidget(tester, () => f5.WorkerRegisterPage(),
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerSchedulePage completo (features/worker/presentation/pages/worker_schedule_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f6.WorkerSchedulePage(), seeded: true);
+    await smokeWidget(tester, () => f6.WorkerSchedulePage(),
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'SiiTaxInfoWidget completo (features/worker/presentation/widgets/sii_tax_info_widget.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f7.SiiTaxInfoWidget(), seeded: true);
+    await smokeWidget(tester, () => f7.SiiTaxInfoWidget(),
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerActiveJobBanner completo (features/worker/presentation/widgets/worker_active_job_banner.dart)',
@@ -125,7 +133,8 @@ void main() {
             job: f9.JobModel.fromMap(sampleJobModel),
             onTap: () {},
             onChat: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerBaseLocationCard completo (features/worker/presentation/widgets/worker_base_location_card.dart)',
@@ -139,7 +148,8 @@ void main() {
             origin: 'id-1',
             enabled: true,
             onSave: (_, __, ___) async {}),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerCustomServicesEditor completo (features/worker/presentation/widgets/worker_custom_services_editor.dart)',
@@ -149,7 +159,8 @@ void main() {
         () => f11.WorkerCustomServicesEditor(services: [
               f12.WorkerCustomService.fromMap(sampleWorkerCustomService)
             ], onChanged: (_) {}, enabled: true),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerCustomServicesEditor mínimo (features/worker/presentation/widgets/worker_custom_services_editor.dart)',
@@ -159,7 +170,8 @@ void main() {
         () => f11.WorkerCustomServicesEditor(services: [
               f12.WorkerCustomService.fromMap(sampleWorkerCustomService)
             ], onChanged: (_) {}),
-        seeded: false);
+        seeded: false,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerDayWindowsEditor completo (features/worker/presentation/widgets/worker_day_windows_editor.dart)',
@@ -170,7 +182,8 @@ void main() {
             name: 'id-1',
             day: f14.DayWindow(weekday: 1, startMinute: 1, endMinute: 1),
             onChanged: (_) {}),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerDemoTourOverlay completo (features/worker/presentation/widgets/worker_demo_tour_overlay.dart)',
@@ -180,20 +193,21 @@ void main() {
         () => f15.WorkerDemoTourOverlay(
             child: const SizedBox(),
             steps: [f16.GuidedTourStep(title: 'id-1', description: 'id-1')]),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerEarningsSummary completo (features/worker/presentation/widgets/worker_earnings_summary.dart)',
       (tester) async {
     await smokeWidget(tester,
         () => f17.WorkerEarningsSummary(workerId: 'id-1', onViewDetails: () {}),
-        seeded: true);
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerEarningsSummary mínimo (features/worker/presentation/widgets/worker_earnings_summary.dart)',
       (tester) async {
     await smokeWidget(tester, () => f17.WorkerEarningsSummary(workerId: 'id-1'),
-        seeded: false);
+        seeded: false, role: 'trabajador');
   });
   testWidgets(
       'WorkerEarningsCard completo (features/worker/presentation/widgets/worker_earnings_summary.dart)',
@@ -204,7 +218,8 @@ void main() {
             data: f18.WorkerEarningsSnapshot(
                 escrowClp: 1, releasedClp: 1, pendingClp: 1, paymentCount: 1),
             onViewDetails: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerEarningsCard mínimo (features/worker/presentation/widgets/worker_earnings_summary.dart)',
@@ -214,7 +229,8 @@ void main() {
         () => f17.WorkerEarningsCard(
             data: f18.WorkerEarningsSnapshot(
                 escrowClp: 1, releasedClp: 1, pendingClp: 1, paymentCount: 1)),
-        seeded: false);
+        seeded: false,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerHoursEditor completo (features/worker/presentation/widgets/worker_hours_editor.dart)',
@@ -228,7 +244,8 @@ void main() {
             onAddHour: (_) async {},
             onRemoveHour: (_) {},
             saving: true),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerJobCard completo (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -241,7 +258,8 @@ void main() {
             clientRatingLabel: 'id-1',
             clientName: 'id-1',
             priceLabel: 'id-1'),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerJobCard mínimo (features/worker/presentation/widgets/worker_job_card.dart)',
@@ -250,20 +268,21 @@ void main() {
         tester,
         () => f23.WorkerJobCard(
             job: f9.JobModel.fromMap(sampleJobModel), onTap: () {}),
-        seeded: false);
+        seeded: false,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerOnboardingCard completo (features/worker/presentation/widgets/worker_onboarding_card.dart)',
       (tester) async {
     await smokeWidget(tester,
         () => f24.WorkerOnboardingCard(workerId: 'id-1', onCompleted: () {}),
-        seeded: true);
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerOnboardingCard mínimo (features/worker/presentation/widgets/worker_onboarding_card.dart)',
       (tester) async {
     await smokeWidget(tester, () => f24.WorkerOnboardingCard(workerId: 'id-1'),
-        seeded: false);
+        seeded: false, role: 'trabajador');
   });
   testWidgets(
       'WorkerPricingTiersEditor completo (features/worker/presentation/widgets/worker_pricing_tiers_editor.dart)',
@@ -275,7 +294,8 @@ void main() {
             initialTiers: const {},
             onChanged: (_) {},
             enabled: true),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerPricingTiersEditor mínimo (features/worker/presentation/widgets/worker_pricing_tiers_editor.dart)',
@@ -284,7 +304,8 @@ void main() {
         tester,
         () => f25.WorkerPricingTiersEditor(
             category: 'id-1', initialTiers: const {}, onChanged: (_) {}),
-        seeded: false);
+        seeded: false,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerProfileSectionCard completo (features/worker/presentation/widgets/worker_profile_section_card.dart)',
@@ -304,7 +325,8 @@ void main() {
             alwaysShowBody: true,
             showSaveActions: true,
             saveLabel: 'id-1'),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerProfileSectionCard mínimo (features/worker/presentation/widgets/worker_profile_section_card.dart)',
@@ -317,7 +339,8 @@ void main() {
             summary: ['id-1'],
             editing: true,
             onEdit: () {}),
-        seeded: false);
+        seeded: false,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerQuickActionsRow completo (features/worker/presentation/widgets/worker_quick_actions_row.dart)',
@@ -326,7 +349,8 @@ void main() {
         tester,
         () => f27.WorkerQuickActionsRow(
             onCalendar: () {}, onHistory: () {}, onEarnings: () {}),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerStatsRow completo (features/worker/presentation/widgets/worker_stats_row.dart)',
@@ -339,7 +363,8 @@ void main() {
             completed: 1,
             selectedIndex: 1,
             onTap: (_) {}),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerUrbanCoverageCard completo (features/worker/presentation/widgets/worker_urban_coverage_card.dart)',
@@ -351,19 +376,20 @@ void main() {
             outsideFeeClp: 1,
             enabled: true,
             onSave: (_, __) async {}),
-        seeded: true);
+        seeded: true,
+        role: 'trabajador');
   });
   testWidgets(
       'WorkerVerificationCard completo (features/worker/presentation/widgets/worker_verification_card.dart)',
       (tester) async {
     await smokeWidget(tester, () => f30.WorkerVerificationCard(userId: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'trabajador');
   });
   testWidgets(
       'WorkerWorkZoneField completo (features/worker/presentation/widgets/worker_work_zone_field.dart)',
       (tester) async {
     await smokeWidget(
         tester, () => f31.WorkerWorkZoneField(value: 'id-1', onChanged: (_) {}),
-        seeded: true);
+        seeded: true, role: 'trabajador');
   });
 }

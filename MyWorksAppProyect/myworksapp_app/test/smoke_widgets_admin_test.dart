@@ -46,69 +46,80 @@ void main() {
   testWidgets(
       'AdminDashboardPage completo (features/admin/presentation/pages/admin_dashboard_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.AdminDashboardPage(), seeded: true);
+    await smokeWidget(tester, () => f0.AdminDashboardPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminDesktopManagementPage completo (features/admin/presentation/pages/admin_desktop_management_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f1.AdminDesktopManagementPage(),
-        seeded: true);
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminDisputesPage completo (features/admin/presentation/pages/admin_disputes_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f2.AdminDisputesPage(), seeded: true);
+    await smokeWidget(tester, () => f2.AdminDisputesPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminErrorsPage completo (features/admin/presentation/pages/admin_errors_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f3.AdminErrorsPage(), seeded: true);
+    await smokeWidget(tester, () => f3.AdminErrorsPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminFeatureFlagsPage completo (features/admin/presentation/pages/admin_feature_flags_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f4.AdminFeatureFlagsPage(), seeded: true);
+    await smokeWidget(tester, () => f4.AdminFeatureFlagsPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminJobDetailPage completo (features/admin/presentation/pages/admin_job_detail_page.dart)',
       (tester) async {
     await smokeWidget(tester, () => f5.AdminJobDetailPage(jobId: 'id-1'),
-        seeded: true);
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminJobsPage completo (features/admin/presentation/pages/admin_jobs_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f6.AdminJobsPage(), seeded: true);
+    await smokeWidget(tester, () => f6.AdminJobsPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminPayoutsPage completo (features/admin/presentation/pages/admin_payouts_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f7.AdminPayoutsPage(), seeded: true);
+    await smokeWidget(tester, () => f7.AdminPayoutsPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminRankingPage completo (features/admin/presentation/pages/admin_ranking_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f8.AdminRankingPage(), seeded: true);
+    await smokeWidget(tester, () => f8.AdminRankingPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminReportsPage completo (features/admin/presentation/pages/admin_reports_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f9.AdminReportsPage(), seeded: true);
+    await smokeWidget(tester, () => f9.AdminReportsPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminServicesPage completo (features/admin/presentation/pages/admin_services_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f10.AdminServicesPage(), seeded: true);
+    await smokeWidget(tester, () => f10.AdminServicesPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminUsersPage completo (features/admin/presentation/pages/admin_users_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f11.AdminUsersPage(), seeded: true);
+    await smokeWidget(tester, () => f11.AdminUsersPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminWorkersPage completo (features/admin/presentation/pages/admin_workers_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f12.AdminWorkersPage(), seeded: true);
+    await smokeWidget(tester, () => f12.AdminWorkersPage(),
+        seeded: true, role: 'administrador');
   });
   testWidgets(
       'AdminNavTile completo (features/admin/presentation/widgets/admin_nav_tile.dart)',
@@ -121,7 +132,8 @@ void main() {
             subtitle: 'id-1',
             onTap: () {},
             badge: 1),
-        seeded: true);
+        seeded: true,
+        role: 'administrador');
   });
   testWidgets(
       'AdminNavTile mínimo (features/admin/presentation/widgets/admin_nav_tile.dart)',
@@ -130,7 +142,8 @@ void main() {
         tester,
         () => f13.AdminNavTile(
             icon: Icons.star, title: 'id-1', subtitle: 'id-1', onTap: () {}),
-        seeded: false);
+        seeded: false,
+        role: 'administrador');
   });
   testWidgets(
       'AdminSearchField completo (features/admin/presentation/widgets/admin_search_field.dart)',
@@ -139,13 +152,14 @@ void main() {
         tester,
         () =>
             f14.AdminSearchField(hint: 'id-1', onSearch: (_) {}, debounceMs: 1),
-        seeded: true);
+        seeded: true,
+        role: 'administrador');
   });
   testWidgets(
       'AdminSearchField mínimo (features/admin/presentation/widgets/admin_search_field.dart)',
       (tester) async {
     await smokeWidget(
         tester, () => f14.AdminSearchField(hint: 'id-1', onSearch: (_) {}),
-        seeded: false);
+        seeded: false, role: 'administrador');
   });
 }

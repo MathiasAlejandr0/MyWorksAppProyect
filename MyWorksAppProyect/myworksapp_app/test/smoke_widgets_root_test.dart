@@ -15,6 +15,7 @@ import 'support/widget_harness.dart';
 
 void main() {
   testWidgets('MyWorksApp completo (app.dart)', (tester) async {
-    await smokeWidget(tester, () => f0.MyWorksApp(), seeded: true);
+    await smokeWidget(tester, () => f0.MyWorksApp(),
+        seeded: true, role: 'usuario');
   });
 }

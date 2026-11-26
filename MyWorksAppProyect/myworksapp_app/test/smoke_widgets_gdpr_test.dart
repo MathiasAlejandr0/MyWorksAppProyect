@@ -24,17 +24,20 @@ void main() {
   testWidgets(
       'PrivacyPolicyPage completo (features/gdpr/presentation/pages/privacy_policy_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.PrivacyPolicyPage(), seeded: true);
+    await smokeWidget(tester, () => f0.PrivacyPolicyPage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'TermsPage completo (features/gdpr/presentation/pages/terms_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f1.TermsPage(), seeded: true);
+    await smokeWidget(tester, () => f1.TermsPage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'UserRightsPage completo (features/gdpr/presentation/pages/user_rights_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f2.UserRightsPage(), seeded: true);
+    await smokeWidget(tester, () => f2.UserRightsPage(),
+        seeded: true, role: 'usuario');
   });
   testWidgets(
       'ConsentCheckbox completo (features/gdpr/presentation/widgets/consent_checkbox.dart)',
@@ -43,13 +46,14 @@ void main() {
         tester,
         () => f3.ConsentCheckbox(
             value: true, onChanged: (_) {}, consentVersion: 'id-1'),
-        seeded: true);
+        seeded: true,
+        role: 'usuario');
   });
   testWidgets(
       'ConsentCheckbox mínimo (features/gdpr/presentation/widgets/consent_checkbox.dart)',
       (tester) async {
     await smokeWidget(
         tester, () => f3.ConsentCheckbox(value: true, onChanged: (_) {}),
-        seeded: false);
+        seeded: false, role: 'usuario');
   });
 }

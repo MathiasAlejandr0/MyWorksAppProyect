@@ -18,6 +18,7 @@ void main() {
   testWidgets(
       'SettingsPage completo (features/settings/presentation/pages/settings_page.dart)',
       (tester) async {
-    await smokeWidget(tester, () => f0.SettingsPage(), seeded: true);
+    await smokeWidget(tester, () => f0.SettingsPage(),
+        seeded: true, role: 'usuario');
   });
 }
