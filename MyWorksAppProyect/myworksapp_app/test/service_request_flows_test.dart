@@ -2,6 +2,8 @@
 // precio fijo, bloque por horas, cotización abierta y tarifa del profesional)
 // con aceptación de condiciones y hoja de pago. Los callbacks del mapa y del
 // cuestionario se invocan directo para no depender de GPS ni de la UI hija.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:myworksapp/core/domain/pricing_constants.dart';
@@ -166,6 +168,9 @@ Widget _page({String? service = catalogServiceId, String? worker}) =>
     ServiceRequestPage(serviceId: service, workerId: worker);
 
 void main() {
+  // Regresión O2 y O5: sin desbordes ni aserciones de layout ya corregidos.
+  tearDown(() => expect(smokeBugErrors(), isEmpty));
+
   testWidgets('validaciones previas al envío', (t) async {
     await smokeWidget(t, () => _page(),
         interact: false, role: 'usuario', setup: _seed, script: (t) async {
@@ -233,6 +238,16 @@ void main() {
         script: (t) => _flujoModo(t, _rec(PricingConstants.modeLegacy)));
   });
 
+  // Regresión O2: un serviceId que no está entre los servicios activos ya no
+  // dispara la aserción del desplegable (la verifica el tearDown).
+  testWidgets('servicio inactivo en la ruta', (t) async {
+    await smokeWidget(t, () => _page(service: 'servicio-desactivado'),
+        interact: false, role: 'usuario', setup: _seed, script: (t) async {
+      await _pasos(t, 5);
+      expect(find.text('Tipo de servicio'), findsWidgets);
+    });
+  });
+
   testWidgets('legado falla al crear el trabajo', (t) async {
     await smokeWidget(t, () => _page(),
         interact: false,
@@ -250,11 +265,24 @@ void main() {
     PricingConstants.modeOpenQuote,
   ]) {
     testWidgets('modo $modo con profesional sin ficha', (t) async {
-      await smokeWidget(t, () => _page(worker: catalogProId(1)),
-          interact: false,
-          role: 'usuario',
-          setup: (b) => _seed(b, conPro: false),
-          script: (t) => _flujoModo(t, _rec(modo, variant: 'llave', horas: 3)));
+      // Regresión B7: sin ficha cargada al abrir, el envío ya no usa
+      // `_selectedWorker!` (antes: "Null check operator used on a null value").
+      final salida = <String>[];
+      await runZoned(
+        () => smokeWidget(t, () => _page(worker: catalogProId(1)),
+            interact: false,
+            role: 'usuario',
+            setup: (b) => _seed(b, conPro: false),
+            script: (t) =>
+                _flujoModo(t, _rec(modo, variant: 'llave', horas: 3))),
+        zoneSpecification: ZoneSpecification(
+          print: (self, parent, zone, line) {
+            salida.add(line);
+            parent.print(zone, line);
+          },
+        ),
+      );
+      expect(salida.where((l) => l.contains('Null check operator')), isEmpty);
     });
   }
 
